@@ -6,13 +6,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 const schema = z.object({ email: z.string().min(1,'Email required').email('Invalid email') });
 
+type ForgotPasswordFormInputs = z.infer<typeof schema>;
+
 export default function ForgotPasswordForm() {
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ForgotPasswordFormInputs>({
     resolver: zodResolver(schema),
     defaultValues: { email: '' }
   });
 
-  async function onSubmit(data) {
+  async function onSubmit(data: ForgotPasswordFormInputs) {
     try {
       // stub - call API to send reset email
       alert('Password reset link sent to ' + data.email);

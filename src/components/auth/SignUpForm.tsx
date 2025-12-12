@@ -10,13 +10,15 @@ const schema = z.object({
   password: z.string().min(6, 'Password must be at least 6'),
 });
 
-export default function SignUpForm({ onSuccess }) {
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+type SignUpFormInputs = z.infer<typeof schema>;
+
+export default function SignUpForm({ onSuccess }: { onSuccess?: () => void }) {
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignUpFormInputs>({
     resolver: zodResolver(schema),
     defaultValues: { name:'', email:'', password:'' }
   });
 
-  async function onSubmit(data) {
+  async function onSubmit(data: SignUpFormInputs) {
     try {
       // TODO: call your signup endpoint
       alert('Signed up (mock): ' + data.email);
