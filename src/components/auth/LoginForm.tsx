@@ -1,5 +1,7 @@
+"use client";
+
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -61,7 +63,7 @@ const LoginForm = () => {
               Password
             </Label>
             <Link 
-              to="/forgot-password"
+              href="/forgot-password"
               className="text-sm text-primary hover:text-purple-700 transition-colors font-medium"
             >
               Forgot password?
@@ -156,7 +158,7 @@ const LoginForm = () => {
       {/* Sign up link */}
       <p className="text-center text-sm text-muted-foreground">
         Don't have an account?{" "}
-        <Link to="/signup" className="font-semibold text-primary hover:text-purple-700 transition-colors">
+        <Link href="/signup" className="font-semibold text-primary hover:text-purple-700 transition-colors">
           Sign up
         </Link>
       </p>
