@@ -1,4 +1,15 @@
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* add any global helpers below */
+html, body { height: 100%; }
+/* small helpers for the onboarding card */
+.bg-onboard {
+  background: linear-gradient(180deg,#5A2DD8 0%, #8B63F5 100%);
+}
+
 
 :root {
   --background: #ffffff;
