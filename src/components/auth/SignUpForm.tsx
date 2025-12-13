@@ -3,6 +3,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import styles from './SignUpForm.module.css';
 
 const schema = z.object({
   name: z.string().min(1, 'Enter name'),
@@ -29,27 +30,26 @@ export default function SignUpForm({ onSuccess }: { onSuccess?: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-full">
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700">Full name</label>
-        <input {...register('name')} className="mt-1 w-full rounded-lg border px-3 py-2" placeholder="Your name" />
-        {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name.message}</p>}
+    <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+      <div className={styles.formGroup}>
+        <label className={styles.label}>Full name</label>
+        <input {...register('name')} className={styles.input} placeholder="Your name" />
+        {errors.name && <p className={styles.errorText}>{errors.name.message}</p>}
       </div>
 
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700">Email</label>
-        <input {...register('email')} className="mt-1 w-full rounded-lg border px-3 py-2" placeholder="you@example.com" />
-        {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
+      <div className={styles.formGroup}>
+        <label className={styles.label}>Email</label>
+        <input {...register('email')} className={styles.input} placeholder="you@example.com" />
+        {errors.email && <p className={styles.errorText}>{errors.email.message}</p>}
       </div>
 
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700">Password</label>
-        <input {...register('password')} type="password" className="mt-1 w-full rounded-lg border px-3 py-2" placeholder="Create a password" />
-        {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password.message}</p>}
+      <div className={styles.formGroupLarge}>
+        <label className={styles.label}>Password</label>
+        <input {...register('password')} type="password" className={styles.input} placeholder="Create a password" />
+        {errors.password && <p className={styles.errorText}>{errors.password.message}</p>}
       </div>
 
-      <button type="submit" disabled={isSubmitting}
-        className="w-full py-3 bg-gradient-to-r from-purple-600 to-purple-400 text-white rounded-lg font-semibold">
+      <button type="submit" disabled={isSubmitting} className={styles.submitButton}>
         {isSubmitting ? 'Creating...' : 'Create account'}
       </button>
     </form>
