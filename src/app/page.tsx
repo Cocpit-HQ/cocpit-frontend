@@ -1,5 +1,5 @@
 import LoginForm from "@/components/auth/LoginForm";
-import HandshakeAnimation from "@/components/auth/HandshakeAnimation";
+import Image from "next/image";
 import { Briefcase } from "lucide-react";
 
 export default function Home() {
@@ -48,7 +48,7 @@ export default function Home() {
             <div className="absolute top-1/3 left-16 w-8 h-8 rounded-full bg-accent/40 animate-pulse-glow" />
 
             {/* Content */}
-            <div className="relative z-10 text-center space-y-6 max-w-sm">
+            <div className="relative z-10 text-center space-y-6 w-full flex flex-col items-center">
               <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground leading-tight animate-fade-in-up">
                 Connect. Grow. Succeed.
               </h2>
@@ -56,9 +56,15 @@ export default function Home() {
                 Where professionals meet opportunities. Build meaningful connections that accelerate your career.
               </p>
 
-              {/* Handshake animation */}
-              <div className="py-6 animate-fade-in-up animation-delay-400">
-                <HandshakeAnimation />
+              {/* Handshake image */}
+              <div className="py-8 animate-fade-in-up animation-delay-400 flex-1 flex items-center justify-center">
+                <Image
+                  src="/assets/pngegg.png"
+                  alt="Handshake"
+                  width={400}
+                  height={300}
+                  className="w-full h-auto max-w-md"
+                />
               </div>
 
               {/* Social proof */}

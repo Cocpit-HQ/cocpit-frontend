@@ -1,4 +1,5 @@
 import OnboardingPage from "@/components/onboarding/OnboardingPage";
+import Image from "next/image";
 import { Briefcase } from "lucide-react";
 
 export default function OnboardingRoute() {
@@ -47,13 +48,24 @@ export default function OnboardingRoute() {
             <div className="absolute top-1/3 left-16 w-8 h-8 rounded-full bg-accent/40 animate-pulse-glow" />
 
             {/* Content */}
-            <div className="relative z-10 text-center space-y-6 max-w-sm">
+            <div className="relative z-10 text-center space-y-6 w-full flex flex-col items-center">
               <h2 className="text-3xl md:text-4xl font-display font-bold text-white leading-tight">
                 Upload Your Profile Picture.
               </h2>
               <p className="text-white/80 text-base md:text-lg">
                 Where professionals meet opportunities. Build meaningful connections that accelerate your career.
               </p>
+
+              {/* Handshake / branding image */}
+              <div className="py-8 animate-fade-in-up animation-delay-400 flex-1 flex items-center justify-center w-full">
+                <Image
+                  src="/assets/pngegg.png"
+                  alt="Handshake"
+                  width={600}
+                  height={420}
+                  className="w-full h-auto max-w-none"
+                />
+              </div>
 
               {/* Avatar group */}
               <div className="flex items-center justify-center gap-3 pt-6">

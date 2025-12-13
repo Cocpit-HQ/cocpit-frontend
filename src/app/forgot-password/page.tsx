@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
-import HandshakeAnimation from "@/components/auth/HandshakeAnimation";
+import Image from "next/image";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -264,7 +264,7 @@ export default function ForgotPassword() {
             <div className="absolute top-1/3 left-16 w-8 h-8 rounded-full bg-accent/40 animate-pulse-glow" />
             
             {/* Content */}
-            <div className="relative z-10 text-center space-y-6 max-w-sm">
+            <div className="relative z-10 text-center space-y-6 w-full flex flex-col items-center">
               <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground leading-tight animate-fade-in-up">
                 Reset Your Password
               </h2>
@@ -272,9 +272,15 @@ export default function ForgotPassword() {
                 Don't worry! It happens to the best of us. We'll help you get back into your account.
               </p>
               
-              {/* Handshake animation */}
-              <div className="py-6 animate-fade-in-up animation-delay-400">
-                <HandshakeAnimation />
+              {/* Handshake image */}
+              <div className="py-8 animate-fade-in-up animation-delay-400 flex-1 flex items-center justify-center">
+                <Image
+                  src="/assets/pngegg.png"
+                  alt="Handshake"
+                  width={400}
+                  height={300}
+                  className="w-full h-auto max-w-none"
+                />
               </div>
               
               {/* Steps */}
