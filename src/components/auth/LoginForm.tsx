@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -12,13 +13,16 @@ const LoginForm = () => {
   const [password, setPassword] = useState("");
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     toast({
       title: "Sign in attempted",
-      description: "Connect Supabase to enable authentication.",
+      description: "Redirecting to profile setup...",
     });
+    // Redirect to onboarding/profile page
+    router.push("/onboarding");
   };
 
   return (

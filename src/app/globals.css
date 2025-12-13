@@ -70,7 +70,7 @@
     --navy-900: hsl(215 40% 6%);
 
     /* Gradients */
-    --gradient-primary: linear-gradient(180deg, #5A2DD8 0%, #be57fa 100%);
+    --gradient-primary: linear-gradient(120deg, #5A2DD8 10%, #be57fa 90%);
     --gradient-subtle: linear-gradient(180deg, hsl(215 35% 14%) 0%, hsl(215 35% 10%) 100%);
     
     /* Shadows */
