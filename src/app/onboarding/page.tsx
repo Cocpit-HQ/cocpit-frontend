@@ -3,7 +3,7 @@ import { Briefcase } from "lucide-react";
 
 export default function OnboardingRoute() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted p-4 md:p-8">
+    <div className="min-h-screen flex items-center justify-center bg-muted p-3 sm:p-4 md:p-8">
       {/* Subtle background pattern */}
       <div className="absolute inset-0 opacity-30">
         <div className="absolute inset-0" style={{
@@ -13,17 +13,17 @@ export default function OnboardingRoute() {
       </div>
 
       {/* Centered container */}
-      <div className="relative z-10 w-full max-w-5xl bg-card rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up">
+      <div className="relative z-10 w-full max-w-5xl bg-card rounded-xl sm:rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up">
         <div className="flex flex-col lg:flex-row-reverse">
 
           {/* Right side - Form */}
-          <div className="w-full lg:w-1/2 p-8 md:p-12">
+          <div className="w-full lg:w-1/2 p-4 sm:p-6 md:p-8 lg:p-12">
             {/* Logo */}
-            <div className="flex items-center gap-3 mb-8">
-              <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-primary shadow-purple">
-                <Briefcase className="w-5 h-5 text-primary-foreground" />
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 md:mb-8">
+              <div className="flex items-center justify-center w-9 sm:w-11 h-9 sm:h-11 rounded-lg sm:rounded-xl bg-primary shadow-purple">
+                <Briefcase className="w-4 sm:w-5 h-4 sm:h-5 text-primary-foreground" />
               </div>
-              <span className="text-2xl font-display font-bold text-foreground">
+              <span className="text-lg sm:text-xl md:text-2xl font-display font-bold text-foreground">
                 Cocpit
               </span>
             </div>
@@ -31,8 +31,8 @@ export default function OnboardingRoute() {
             <OnboardingPage />
           </div>
 
-          {/* Left side - Branding */}
-          <div className="w-full lg:w-1/2 gradient-primary p-8 md:p-12 flex flex-col justify-center items-center relative overflow-hidden">
+          {/* Left side - Branding - Hidden on mobile */}
+          <div className="hidden lg:flex w-full lg:w-1/2 gradient-primary p-8 md:p-12 flex-col justify-center items-center relative overflow-hidden">
             {/* Background decorative elements */}
             <div className="absolute inset-0 opacity-20">
               <div className="absolute inset-0" style={{

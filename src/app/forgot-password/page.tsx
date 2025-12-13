@@ -102,7 +102,7 @@ export default function ForgotPassword() {
         <div className="flex flex-col lg:flex-row-reverse">
           
           {/* Right side - Form */}
-          <div className="w-full lg:w-1/2 p-8 md:p-12">
+          <div className="w-full lg:w-1/2 p-4 sm:p-6 md:p-8 lg:p-12">
             {/* Logo */}
             <div className="flex items-center gap-3 mb-6">
               <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-primary shadow-purple">
@@ -249,7 +249,7 @@ export default function ForgotPassword() {
           </div>
 
           {/* Left side - Branding with animation */}
-          <div className="w-full lg:w-1/2 gradient-primary p-8 md:p-12 flex flex-col justify-center items-center relative overflow-hidden">
+          <div className="hidden lg:flex w-full lg:w-1/2 gradient-primary p-8 md:p-12 flex-col justify-center items-center relative overflow-hidden">
             {/* Background decorative elements */}
             <div className="absolute inset-0 opacity-20">
               <div className="absolute inset-0" style={{
