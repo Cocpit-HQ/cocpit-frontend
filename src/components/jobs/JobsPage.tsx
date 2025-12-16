@@ -199,7 +199,7 @@ export default function JobsPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-8 py-8">
-          <div className="max-w-4xl mx-auto mb-12">
+          <div className="w-full max-w-none mb-12">
             <div
               className={`${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} border rounded-2xl p-8 shadow-lg`}
             >
@@ -234,9 +234,11 @@ export default function JobsPage() {
                   />
                 </div>
               </div>
-              <button className="w-full mt-4 px-6 py-4 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white rounded-xl hover:opacity-90 transition-all">
-                Search Jobs
-              </button>
+              <div className="mt-4 flex justify-center">
+                <button className="px-16 py-5 text-lg bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white rounded-xl hover:opacity-90 transition-all w-full max-w-4xl">
+                  Search Jobs
+                </button>
+              </div>
             </div>
           </div>
 
