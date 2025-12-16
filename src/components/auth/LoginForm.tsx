@@ -19,10 +19,10 @@ const LoginForm = () => {
     e.preventDefault();
     toast({
       title: "Sign in attempted",
-      description: "Redirecting to profile setup...",
+      description: "Redirecting to your feed...",
     });
-    // Redirect to onboarding/profile page
-    router.push("/onboarding");
+    // Redirect to feed page after sign in
+    router.push("/feed");
   };
 
   return (
