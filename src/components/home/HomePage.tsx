@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTheme } from 'next-themes'
 import { Search } from 'lucide-react'
 
 import FeedPost from './FeedPost'
@@ -27,7 +28,8 @@ type Post = {
 
 export default function HomePage() {
   const router = useRouter()
-  const isDark = true
+  const { resolvedTheme, theme } = useTheme()
+  const isDark = useMemo(() => resolvedTheme === 'dark', [resolvedTheme])
 
   const [loading, setLoading] = useState(true)
   const [posts, setPosts] = useState<Post[]>([])
@@ -104,7 +106,7 @@ export default function HomePage() {
       <DarkSidebar
         navigateTo={navigateTo}
         currentPage="home"
-        theme={isDark ? 'dark' : 'light'}
+        theme={(theme ?? 'system') as 'dark' | 'light' | 'system'}
       />
 
       <div className="ml-64">

@@ -2,6 +2,9 @@
  * Common Types used across the application
  */
 
+export type Page = string;
+export type Theme = "dark" | "light" | "system";
+
 export type Status = "idle" | "loading" | "success" | "error";
 
 export interface LoadingState {
