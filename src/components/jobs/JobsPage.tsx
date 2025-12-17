@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useMemo, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import {
@@ -10,8 +10,9 @@ import {
   Clock,
   Bookmark,
   Filter,
-  Upload,
   X,
+  Check,
+  Plus
 } from "lucide-react"
 
 import { AppShell } from "@/components/layout/AppShell"
@@ -19,7 +20,7 @@ import type { Page, Theme } from "@/types/common"
 import type { Job, JobFormData, JobListMode, JobStatus } from "@/types/jobs"
 
 const jobs: Job[] = [
-  // Open jobs (for \"View Jobs\" tab)
+  // Open jobs (for "View Jobs" tab)
   {
     id: 1,
     title: "Senior Financial Analyst",
@@ -64,7 +65,7 @@ const jobs: Job[] = [
     salary: "$110k - $130k",
     logo: "gradient-4",
   },
-  // Offer cards (for \"Offers\" tab)
+  // Offer cards (for "Offers" tab)
   {
     id: 5,
     title: "Senior Financial Analyst",
@@ -160,6 +161,9 @@ const routes: Record<string, string> = {
   achievements: "/achievements",
 }
 
+const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Remote", "Internship"]
+const EXPERIENCE_LEVELS = ["Entry Level", "Mid Level", "Senior Level", "Lead/Manager"]
+
 function useSystemTheme() {
   const [systemTheme, setSystemTheme] = useState<Theme>("light")
 
@@ -194,41 +198,79 @@ export default function JobsPage() {
     router.push(routes[page] ?? "/feed")
   }
 
-  const [showUploadModal, setShowUploadModal] = useState(false)
+  // --- Search State ---
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false)
+  const [searchKeywords, setSearchKeywords] = useState("")
+  // Desktop Search Location State
+  const [searchLocations, setSearchLocations] = useState<string[]>([])
+  const [searchLocationInput, setSearchLocationInput] = useState("")
+
+  // --- Sidebar Filter State ---
+  const [filterJobTypes, setFilterJobTypes] = useState<string[]>([])
+  const [filterLocations, setFilterLocations] = useState<string[]>([])
+  const [filterLocationInput, setFilterLocationInput] = useState("")
+
+  // --- Mobile UI State ---
   const [showMobileSearch, setShowMobileSearch] = useState(false)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
+
+  // --- Tab State ---
   const [mode, setMode] = useState<JobListMode>("view")
   const [myJobsTab, setMyJobsTab] = useState<JobStatus>("in-progress")
-  const [formData, setFormData] = useState<JobFormData>({
-    jobTitle: "",
-    companyName: "",
-    jobDescription: "",
-    location: "",
-    experience: "",
-    jobType: "",
-    salaryRange: "",
-  })
 
-  const handleChange =
-    (field: keyof JobFormData) =>
-    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-      setFormData((prev) => ({ ...prev, [field]: event.target.value }))
+  // --- Handlers ---
+
+  // Desktop Search - Add Location Tag
+  const handleAddSearchLocation = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && searchLocationInput.trim()) {
+      e.preventDefault()
+      if (!searchLocations.includes(searchLocationInput.trim())) {
+        setSearchLocations([...searchLocations, searchLocationInput.trim()])
+      }
+      setSearchLocationInput("")
     }
-
-  const handleSubmitJob = () => {
-    console.log("Job submission payload", formData)
-    setShowUploadModal(false)
-    setFormData({
-      jobTitle: "",
-      companyName: "",
-      jobDescription: "",
-      location: "",
-      experience: "",
-      jobType: "",
-      salaryRange: "",
-    })
   }
 
+  const handleRemoveSearchLocation = (loc: string) => {
+    setSearchLocations(searchLocations.filter((l) => l !== loc))
+  }
+
+  const handleSearch = () => {
+    setIsSearchExpanded(false)
+    // Here you would trigger the actual search/filter logic
+  }
+
+  // Sidebar Filters - Job Type
+  const toggleJobType = (type: string) => {
+    setFilterJobTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    )
+  }
+
+  // Sidebar Filters - Location Tag
+  const handleAddFilterLocation = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && filterLocationInput.trim()) {
+      e.preventDefault()
+      if (!filterLocations.includes(filterLocationInput.trim())) {
+        setFilterLocations([...filterLocations, filterLocationInput.trim()])
+      }
+      setFilterLocationInput("")
+    }
+  }
+
+  const handleRemoveFilterLocation = (loc: string) => {
+    setFilterLocations(filterLocations.filter((l) => l !== loc))
+  }
+
+  // Computed display string for collapsed search bar
+  const collapsedSearchText = useMemo(() => {
+    const parts = []
+    if (searchKeywords) parts.push(searchKeywords)
+    if (searchLocations.length > 0) parts.push(searchLocations.join(", "))
+    return parts.join(" • ")
+  }, [searchKeywords, searchLocations])
+
+  // Filter the jobs based on mode/tabs (Simplified filtering for UI demo)
   const openJobs = jobs.filter((job) => !job.isOffer && !job.status)
   const offers = jobs.filter((job) => job.isOffer)
   const myJobs = jobs.filter((job) => job.status)
@@ -240,6 +282,7 @@ export default function JobsPage() {
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
       <AppShell currentPage="jobs" navigateTo={navigateTo}>
+        {/* Header */}
         <div
           className={`${isDark ? "bg-[#1a1f2e] border-[#2d3548]" : "bg-white border-gray-200"} border-b sticky top-0 z-10`}
         >
@@ -250,93 +293,134 @@ export default function JobsPage() {
                 <p className={isDark ? "text-gray-400" : "text-gray-600"}>Find your next career opportunity</p>
               </div>
 
-              <button
-                onClick={() => setShowUploadModal(true)}
-                className="px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white rounded-lg hover:opacity-90 transition-all flex items-center gap-2 text-sm md:text-base"
-              >
-                <Upload className="w-5 h-5" />
-                <span>Upload Job</span>
-              </button>
+              {/* "Upload Job" button removed as requested */}
             </div>
           </div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
-          <div className="w-full max-w-none mb-6 md:mb-8">
-            {/* Desktop search block */}
-            <div
-              className={`hidden md:block border rounded-2xl p-8 shadow-lg ${
-                isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
-              }`}
-            >
-              <h2 className={`text-center mb-6 ${isDark ? "text-white" : "text-gray-900"}`}>
-                Search for Jobs
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="relative">
-                  <Search
-                    className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${
-                      isDark ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Job title or keyword"
-                    className={`w-full pl-12 pr-4 py-4 border rounded-xl focus:outline-none focus:border-[#5B7CFF] transition-colors ${
-                      isDark
-                        ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-400"
-                        : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
-                    }`}
-                  />
-                </div>
-                <div className="relative">
-                  <MapPin
-                    className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${
-                      isDark ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Location"
-                    className={`w-full pl-12 pr-4 py-4 border rounded-xl focus:outline-none focus:border-[#5B7CFF] transition-colors ${
-                      isDark
-                        ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-400"
-                        : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
-                    }`}
-                  />
-                </div>
-              </div>
-              <div className="mt-4 flex justify-center">
-                <button className="w-full max-w-4xl rounded-xl bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] px-16 py-5 text-lg text-white hover:opacity-90 transition-all">
-                  Search Jobs
-                </button>
-              </div>
-            </div>
 
-            {/* Mobile search pill */}
+          {/* Desktop Search Section (Redesigned) */}
+          <div className="hidden md:block w-full max-w-4xl mx-auto mb-8">
             <div
-              className={`md:hidden border rounded-2xl p-4 ${
+              className={`transition-all duration-300 ease-in-out border rounded-2xl shadow-lg overflow-hidden ${
                 isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
               }`}
             >
-              <button
-                type="button"
-                onClick={() => setShowMobileSearch(true)}
-                className={`flex w-full items-center gap-3 rounded-full border px-4 py-2 ${
-                  isDark
-                    ? "border-[#2d3548] bg-[#171c28] text-gray-300"
-                    : "border-gray-300 bg-white text-gray-700"
-                }`}
-              >
-                <Search className="h-5 w-5 text-gray-400" />
-                <span className="text-sm text-left flex-1">
-                  Search jobs by title or location
-                </span>
-              </button>
+              {!isSearchExpanded ? (
+                // Collapsed State
+                <div
+                  onClick={() => setIsSearchExpanded(true)}
+                  className="cursor-pointer p-6 flex items-center gap-4 hover:opacity-95"
+                >
+                  <Search className={`w-6 h-6 ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                  <div className={`flex-1 text-lg ${!collapsedSearchText ? "text-gray-400" : "text-gray-400 opacity-70"}`}>
+                    {collapsedSearchText || "Search by title, skill, or company..."}
+                  </div>
+                  <button className="bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-8 py-2 rounded-xl text-sm font-medium">
+                    Search
+                  </button>
+                </div>
+              ) : (
+                // Expanded State
+                <div className="p-6">
+                  <div className="flex flex-col gap-4">
+                     <div className="flex gap-4 items-start">
+                        {/* Keyword Input */}
+                        <div className="flex-1">
+                          <label className={`block text-xs font-medium mb-1.5 ml-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                            Keywords
+                          </label>
+                          <div className={`flex items-center gap-3 px-4 py-3 border rounded-xl ${
+                            isDark ? "bg-[#171c28] border-[#2d3548]" : "bg-gray-50 border-gray-300"
+                          }`}>
+                            <Search className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                            <input
+                              autoFocus
+                              type="text"
+                              value={searchKeywords}
+                              onChange={(e) => setSearchKeywords(e.target.value)}
+                              placeholder="Job title, keywords, or company"
+                              className={`w-full bg-transparent focus:outline-none ${
+                                isDark ? "text-white placeholder-gray-500" : "text-gray-900 placeholder-gray-400"
+                              }`}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Location Input (Multi-select) */}
+                        <div className="flex-1">
+                          <label className={`block text-xs font-medium mb-1.5 ml-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                            Locations
+                          </label>
+                          <div className={`flex flex-wrap items-center gap-2 px-4 py-2 border rounded-xl min-h-[50px] ${
+                             isDark ? "bg-[#171c28] border-[#2d3548]" : "bg-gray-50 border-gray-300"
+                          }`}>
+                            <MapPin className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+
+                            {/* Selected Locations Tags */}
+                            {searchLocations.map((loc, idx) => (
+                              <span key={idx} className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm ${
+                                isDark ? "bg-[#2d3548] text-blue-300" : "bg-blue-50 text-blue-700"
+                              }`}>
+                                {loc}
+                                <button onClick={() => handleRemoveSearchLocation(loc)} className="hover:opacity-70">
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </span>
+                            ))}
+
+                            <input
+                              type="text"
+                              value={searchLocationInput}
+                              onChange={(e) => setSearchLocationInput(e.target.value)}
+                              onKeyDown={handleAddSearchLocation}
+                              placeholder={searchLocations.length === 0 ? "Type city & hit Enter..." : "Add another..."}
+                              className={`flex-1 bg-transparent min-w-[120px] focus:outline-none py-1 ${
+                                isDark ? "text-white placeholder-gray-500" : "text-gray-900 placeholder-gray-400"
+                              }`}
+                            />
+                          </div>
+                        </div>
+                     </div>
+
+                     <div className="flex justify-end pt-2">
+                       <button
+                          onClick={handleSearch}
+                          className="w-full md:w-auto px-12 py-3 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white rounded-xl font-medium hover:opacity-90 transition-all shadow-md"
+                        >
+                          Search Jobs
+                        </button>
+                     </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Top-level tabs: View Jobs / My Jobs / Offers */}
+          {/* Mobile search pill (Unchanged design, just simple state binding) */}
+          <div
+            className={`md:hidden mb-6 border rounded-2xl p-4 ${
+              isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => setShowMobileSearch(true)}
+              className={`flex w-full items-center gap-3 rounded-full border px-4 py-2 ${
+                isDark
+                  ? "border-[#2d3548] bg-[#171c28] text-gray-300"
+                  : "border-gray-300 bg-white text-gray-700"
+              }`}
+            >
+              <Search className="h-5 w-5 text-gray-400" />
+              <span className="text-sm text-left flex-1">
+                Search jobs by title or location
+              </span>
+            </button>
+          </div>
+
+          {/* Top-level tabs */}
           <div className="mb-4 md:mb-6 flex gap-2 overflow-x-auto rounded-full bg-transparent">
             {[
               { id: "view" as JobListMode, label: "View Jobs" },
@@ -411,24 +495,70 @@ export default function JobsPage() {
                   <h3 className={isDark ? "text-white" : "text-gray-900"}>Filters</h3>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {/* Job Type - Multi Select */}
                   <div>
-                    <label className={`block text-sm mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>Job Type</label>
-                    <select
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-[#5B7CFF] transition-colors ${
-                        isDark ? "bg-[#171c28] border-[#2d3548] text-white" : "bg-gray-50 border-gray-300 text-gray-900"
-                      }`}
-                    >
-                      <option>All Types</option>
-                      <option>Full-time</option>
-                      <option>Part-time</option>
-                      <option>Contract</option>
-                      <option>Remote</option>
-                    </select>
+                    <label className={`block text-sm font-medium mb-3 ${isDark ? "text-gray-400" : "text-gray-600"}`}>Job Type</label>
+                    <div className="space-y-2">
+                      {JOB_TYPES.map((type) => {
+                         const isSelected = filterJobTypes.includes(type)
+                         return (
+                           <label key={type} className="flex items-center gap-3 cursor-pointer group">
+                             <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                               isSelected
+                                ? "bg-[#5B7CFF] border-[#5B7CFF]"
+                                : isDark ? "border-[#2d3548] bg-[#171c28]" : "border-gray-300 bg-white"
+                             }`}>
+                               {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                             </div>
+                             <input
+                               type="checkbox"
+                               className="hidden"
+                               checked={isSelected}
+                               onChange={() => toggleJobType(type)}
+                             />
+                             <span className={`text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}>{type}</span>
+                           </label>
+                         )
+                      })}
+                    </div>
                   </div>
 
+                  {/* Location - Tag Input */}
                   <div>
-                    <label className={`block text-sm mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                    <label className={`block text-sm font-medium mb-3 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                      Location
+                    </label>
+                    <div className={`flex flex-wrap gap-2 p-2 border rounded-lg min-h-[42px] ${
+                      isDark ? "bg-[#171c28] border-[#2d3548]" : "bg-gray-50 border-gray-300"
+                    }`}>
+                       {filterLocations.map((loc, idx) => (
+                          <span key={idx} className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${
+                            isDark ? "bg-[#2d3548] text-blue-300" : "bg-blue-50 text-blue-700"
+                          }`}>
+                            {loc}
+                            <button onClick={() => handleRemoveFilterLocation(loc)} className="hover:opacity-70">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                       ))}
+                       <input
+                          type="text"
+                          value={filterLocationInput}
+                          onChange={(e) => setFilterLocationInput(e.target.value)}
+                          onKeyDown={handleAddFilterLocation}
+                          placeholder={filterLocations.length === 0 ? "Type city..." : "Add..."}
+                          className={`flex-1 bg-transparent text-sm focus:outline-none min-w-[60px] ${
+                            isDark ? "text-white placeholder-gray-500" : "text-gray-900 placeholder-gray-400"
+                          }`}
+                       />
+                    </div>
+                    <p className="text-[10px] mt-1 text-gray-500">Press Enter to add location</p>
+                  </div>
+
+                  {/* Experience Level (Kept as select for now, but matched style) */}
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                       Experience Level
                     </label>
                     <select
@@ -437,15 +567,14 @@ export default function JobsPage() {
                       }`}
                     >
                       <option>All Levels</option>
-                      <option>Entry Level</option>
-                      <option>Mid Level</option>
-                      <option>Senior Level</option>
-                      <option>Lead/Manager</option>
+                      {EXPERIENCE_LEVELS.map(level => (
+                        <option key={level}>{level}</option>
+                      ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className={`block text-sm mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>Salary Range</label>
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>Salary Range</label>
                     <select
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-[#5B7CFF] transition-colors ${
                         isDark ? "bg-[#171c28] border-[#2d3548] text-white" : "bg-gray-50 border-gray-300 text-gray-900"
@@ -460,7 +589,7 @@ export default function JobsPage() {
                   </div>
 
                   <div>
-                    <label className={`block text-sm mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>Date Posted</label>
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>Date Posted</label>
                     <select
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-[#5B7CFF] transition-colors ${
                         isDark ? "bg-[#171c28] border-[#2d3548] text-white" : "bg-gray-50 border-gray-300 text-gray-900"
@@ -727,6 +856,8 @@ export default function JobsPage() {
                 <input
                   type="text"
                   placeholder="Job title or keyword"
+                  value={searchKeywords}
+                  onChange={(e) => setSearchKeywords(e.target.value)}
                   className={`w-full rounded-lg border px-10 py-3 text-sm focus:outline-none focus:border-[#5B7CFF] ${
                     isDark
                       ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-400"
@@ -916,156 +1047,6 @@ export default function JobsPage() {
           </div>
         </div>
       )}
-
-      {showUploadModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className={`${isDark ? "bg-[#242b3d]" : "bg-white"} rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto`}>
-            <div
-              className={`sticky top-0 ${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} border-b px-6 py-4 flex items-center justify-between`}
-            >
-              <h2 className={isDark ? "text-white" : "text-gray-900"}>Upload Job Posting</h2>
-              <button
-                onClick={() => setShowUploadModal(false)}
-                className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-[#171c28] text-gray-400" : "hover:bg-gray-100 text-gray-600"}`}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6">
-              <div className="space-y-6">
-                <div>
-                  <label className={`block text-sm mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>Job Title *</label>
-                  <input
-                    type="text"
-                    value={formData.jobTitle}
-                    onChange={handleChange("jobTitle")}
-                    placeholder="e.g. Senior Product Designer"
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-[#5B7CFF] transition-colors ${
-                      isDark
-                        ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-400"
-                        : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <label className={`block text-sm mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>Company Name *</label>
-                  <input
-                    type="text"
-                    value={formData.companyName}
-                    onChange={handleChange("companyName")}
-                    placeholder="e.g. Google"
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-[#5B7CFF] transition-colors ${
-                      isDark
-                        ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-400"
-                        : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <label className={`block text-sm mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>Job Description *</label>
-                  <textarea
-                    value={formData.jobDescription}
-                    onChange={handleChange("jobDescription")}
-                    placeholder="Describe the role, responsibilities, and requirements..."
-                    rows={6}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-[#5B7CFF] transition-colors resize-none ${
-                      isDark
-                        ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-400"
-                        : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <label className={`block text-sm mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>Location *</label>
-                  <input
-                    type="text"
-                    value={formData.location}
-                    onChange={handleChange("location")}
-                    placeholder="e.g. San Francisco, CA or Remote"
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-[#5B7CFF] transition-colors ${
-                      isDark
-                        ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-400"
-                        : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <label className={`block text-sm mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>Experience Required *</label>
-                  <select
-                    value={formData.experience}
-                    onChange={handleChange("experience")}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-[#5B7CFF] transition-colors ${
-                      isDark ? "bg-[#171c28] border-[#2d3548] text-white" : "bg-gray-50 border-gray-300 text-gray-900"
-                    }`}
-                  >
-                    <option value="">Select experience level</option>
-                    <option value="Entry Level">Entry Level (0-2 years)</option>
-                    <option value="Mid Level">Mid Level (3-5 years)</option>
-                    <option value="Senior Level">Senior Level (6-10 years)</option>
-                    <option value="Lead/Manager">Lead/Manager (10+ years)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className={`block text-sm mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>Job Type *</label>
-                  <select
-                    value={formData.jobType}
-                    onChange={handleChange("jobType")}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-[#5B7CFF] transition-colors ${
-                      isDark ? "bg-[#171c28] border-[#2d3548] text-white" : "bg-gray-50 border-gray-300 text-gray-900"
-                    }`}
-                  >
-                    <option value="">Select job type</option>
-                    <option value="Full-time">Full-time</option>
-                    <option value="Part-time">Part-time</option>
-                    <option value="Contract">Contract</option>
-                    <option value="Remote">Remote</option>
-                    <option value="Hybrid">Hybrid</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className={`block text-sm mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>Salary Range *</label>
-                  <input
-                    type="text"
-                    value={formData.salaryRange}
-                    onChange={handleChange("salaryRange")}
-                    placeholder="e.g. $120k - $160k"
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-[#5B7CFF] transition-colors ${
-                      isDark
-                        ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-400"
-                        : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
-                    }`}
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-8">
-                <button
-                  onClick={() => setShowUploadModal(false)}
-                  className={`flex-1 px-6 py-3 border rounded-lg transition-colors ${
-                    isDark ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28]" : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSubmitJob}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white rounded-lg hover:opacity-90 transition-all"
-                >
-                  Post Job
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
-
