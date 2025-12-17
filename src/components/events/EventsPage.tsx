@@ -3,12 +3,12 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
-import { Calendar, MapPin, Search, Users } from "lucide-react"
-import { Plus } from "lucide-react"
+import { Calendar, MapPin, Search, Users, Plus, X } from "lucide-react"
 
 import { DarkSidebar } from "@/components/DarkSidebar"
 import type { Page, Theme } from "@/types/common"
 import type { EventCard } from "@/types/events"
+import { CreateEventForm } from "@/components/events/CreateEventForm"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -159,6 +159,7 @@ export default function EventsPage() {
 
   const [loading, setLoading] = useState(true)
   const [events, setEvents] = useState<EventCard[]>([])
+  const [showCreateForm, setShowCreateForm] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -180,7 +181,7 @@ export default function EventsPage() {
               <p className={isDark ? "text-gray-400" : "text-gray-600"}>Discover and join professional events</p>
             </div>
             <button
-              onClick={() => navigateTo("create-event")}
+              onClick={() => setShowCreateForm(true)}
               className="flex items-center gap-2 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-6 py-3 rounded-lg hover:opacity-90 transition-all"
             >
               <Plus className="w-5 h-5" />
@@ -213,6 +214,28 @@ export default function EventsPage() {
           </div>
         </div>
       </div>
+
+      {showCreateForm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className={`${isDark ? "bg-[#242b3d]" : "bg-white"} rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto`}>
+            <div
+              className={`sticky top-0 ${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} border-b px-6 py-4 flex items-center justify-between`}
+            >
+              <h2 className={isDark ? "text-white" : "text-gray-900"}>Create New Event</h2>
+              <button
+                onClick={() => setShowCreateForm(false)}
+                className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-[#171c28] text-gray-400" : "hover:bg-gray-100 text-gray-600"}`}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <CreateEventForm isDark={isDark} onCancel={() => setShowCreateForm(false)} onCreated={() => setShowCreateForm(false)} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

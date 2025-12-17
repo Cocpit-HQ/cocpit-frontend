@@ -3,13 +3,13 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
-import { Eye, MessageCircle, Play, Share2, ThumbsUp, X, Send } from "lucide-react"
-import { Plus } from "lucide-react"
+import { Eye, MessageCircle, Play, Share2, ThumbsUp, X, Send, Plus } from "lucide-react"
 
 import { DarkSidebar } from "@/components/DarkSidebar"
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import type { Page, Theme } from "@/types/common"
 import type { StoryCard, StoryDetail } from "@/types/showcase"
+import { CreateStoryForm } from "@/components/showcase/CreateStoryForm"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -418,6 +418,7 @@ export default function ShowcaseContent() {
   const [loading, setLoading] = useState(true)
   const [stories, setStories] = useState<StoryDetail[]>([])
   const [selectedStory, setSelectedStory] = useState<StoryDetail | null>(null)
+  const [showCreateStory, setShowCreateStory] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -438,7 +439,10 @@ export default function ShowcaseContent() {
               <h1 className={isDark ? "text-white mb-2" : "text-gray-900 mb-2"}>Showcase</h1>
               <p className={isDark ? "text-gray-400" : "text-gray-600"}>Share your professional journey through stories</p>
             </div>
-            <button className="bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-6 py-3 rounded-lg hover:opacity-90 transition-all flex items-center gap-2">
+            <button
+              onClick={() => setShowCreateStory(true)}
+              className="bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-6 py-3 rounded-lg hover:opacity-90 transition-all flex items-center gap-2"
+            >
               <Plus className="w-5 h-5" />
               Create Story
             </button>
@@ -531,6 +535,28 @@ export default function ShowcaseContent() {
       </div>
       {selectedStory && (
         <StoryModal story={selectedStory} onClose={() => setSelectedStory(null)} isDark={isDark} />
+      )}
+
+      {showCreateStory && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className={`${isDark ? "bg-[#242b3d]" : "bg-white"} rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto`}>
+            <div
+              className={`sticky top-0 ${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} border-b px-6 py-4 flex items-center justify-between`}
+            >
+              <h2 className={isDark ? "text-white" : "text-gray-900"}>Create Story</h2>
+              <button
+                onClick={() => setShowCreateStory(false)}
+                className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-[#171c28] text-gray-400" : "hover:bg-gray-100 text-gray-600"}`}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <CreateStoryForm isDark={isDark} onCancel={() => setShowCreateStory(false)} onCreated={() => setShowCreateStory(false)} />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

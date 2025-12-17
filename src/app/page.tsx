@@ -52,7 +52,7 @@ export default function Home() {
               <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground leading-tight animate-fade-in-up">
                 Connect. Grow. Succeed.
               </h2>
-              <p className="text-muted-foreground text-base md:text-lg animate-fade-in-up animation-delay-200">
+              <p className="text-white text-base md:text-lg animate-fade-in-up animation-delay-200">
                 Where professionals meet opportunities. Build meaningful connections that accelerate your career.
               </p>
 
@@ -77,7 +77,7 @@ export default function Home() {
                     />
                   ))}
                 </div>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-white">
                   10K+ professionals
                 </span>
               </div>
