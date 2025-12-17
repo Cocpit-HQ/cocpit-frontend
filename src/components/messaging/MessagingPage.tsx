@@ -74,7 +74,7 @@ export default function MessagingPage() {
 
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
-      <DarkSidebar navigateTo={navigateTo} currentPage="messaging" theme={(theme ?? "system") as Theme} />
+      <DarkSidebar navigateTo={navigateTo} currentPage="messaging" />
 
       <div className="ml-64 max-w-7xl mx-auto px-4 py-6">
         <div

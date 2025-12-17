@@ -1,19 +1,27 @@
 "use client"
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import { useTheme } from 'next-themes'
 import { Home, Users, Calendar, User, Settings, Briefcase, BarChart3, Award, Crown } from 'lucide-react'
 
 type Page = string
-type Theme = 'dark' | 'light' | 'system'
 
 interface DarkSidebarProps {
   navigateTo?: (page: Page) => void
   currentPage?: string
-  theme?: Theme
 }
 
-export function DarkSidebar({ navigateTo = () => {}, currentPage = 'home', theme = 'dark' }: DarkSidebarProps) {
-  const isDark = theme === 'dark' || theme === 'system'
+export function DarkSidebar({ navigateTo = () => {}, currentPage = 'home' }: DarkSidebarProps) {
+  const { resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // During SSR or before hydration, use light theme to match server render
+  // After hydration, use the actual resolved theme
+  const isDark = mounted && resolvedTheme === 'dark'
   
   const navItems = [
     { icon: Home, label: 'Feed', subtext: 'Latest updates', page: 'home' as Page },

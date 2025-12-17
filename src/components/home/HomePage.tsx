@@ -7,6 +7,8 @@ import { Search } from 'lucide-react'
 
 import FeedPost from './FeedPost'
 import PostSkeleton from './PostSkeleton'
+import CreatePost from './CreatePost'
+import CreatePostModal from './CreatePostModal'
 import DarkSidebar from '@/components/DarkSidebar'
 import SuggestionsPanel from '@/components/SuggestionsPanel'
 
@@ -34,6 +36,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [posts, setPosts] = useState<Post[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   /* -------------------- Effects -------------------- */
 
@@ -106,7 +109,6 @@ export default function HomePage() {
       <DarkSidebar
         navigateTo={navigateTo}
         currentPage="home"
-        theme={(theme ?? 'system') as 'dark' | 'light' | 'system'}
       />
 
       <div className="ml-64">
@@ -144,48 +146,7 @@ export default function HomePage() {
               {/* Feed */}
               <section className="lg:col-span-8">
                 {/* Create Post */}
-                <div
-                  className={`rounded-xl border p-6 mb-6 ${
-                    isDark
-                      ? 'bg-[#242b3d] border-[#2d3548]'
-                      : 'bg-white border-gray-200'
-                  }`}
-                >
-                  <div className="flex gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-purple-500">
-                      <img
-                        src="/assets/egg.png"
-                        alt="profile"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <textarea
-                      rows={3}
-                      placeholder="Share your professional insights..."
-                      className={`flex-1 px-4 py-3 rounded-lg border resize-none focus:outline-none focus:border-[#5B7CFF]
-                        ${
-                          isDark
-                            ? 'bg-[#1a1f2e] text-white placeholder-gray-500 border-[#2d3548]'
-                            : 'bg-gray-50 text-gray-900 placeholder-gray-500 border-gray-300'
-                        }`}
-                    />
-                  </div>
-
-                  <div
-                    className={`flex justify-between items-center pt-4 border-t ${
-                      isDark ? 'border-[#2d3548]' : 'border-gray-200'
-                    }`}
-                  >
-                    <div className="flex gap-4 text-gray-400">
-                      <button>Photo</button>
-                      <button>Video</button>
-                      <button>Poll</button>
-                    </div>
-                    <button className="bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-6 py-2.5 rounded-lg">
-                      Post
-                    </button>
-                  </div>
-                </div>
+                <CreatePost onOpenModal={() => setIsModalOpen(true)} />
 
                 {/* Posts */}
                 <div className="space-y-6">
@@ -225,6 +186,7 @@ export default function HomePage() {
           </div>
         </main>
       </div>
+      <CreatePostModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   )
 }

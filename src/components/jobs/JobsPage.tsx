@@ -174,7 +174,7 @@ export default function JobsPage() {
 
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
-      <DarkSidebar navigateTo={navigateTo} currentPage="jobs" theme={theme as Theme} />
+      <DarkSidebar navigateTo={navigateTo} currentPage="jobs" />
 
       <div className="ml-64 min-h-screen">
         <div
