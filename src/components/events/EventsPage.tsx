@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import { Calendar, MapPin, Search, Users, Plus, X } from "lucide-react"
 
-import { DarkSidebar } from "@/components/DarkSidebar"
+import { AppShell } from "@/components/layout/AppShell"
 import type { Page, Theme } from "@/types/common"
 import type { EventCard } from "@/types/events"
 import { CreateEventForm } from "@/components/events/CreateEventForm"
@@ -171,25 +171,23 @@ export default function EventsPage() {
 
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
-      <DarkSidebar navigateTo={navigateTo} currentPage="events" />
-
-      <div className="ml-64 min-h-screen">
-        <div className="max-w-7xl mx-auto px-8 py-8">
-          <div className="flex items-center justify-between mb-8">
+      <AppShell currentPage="events" navigateTo={navigateTo} onAdd={() => setShowCreateForm(true)}>
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
+          <div className="flex items-center justify-between mb-6 md:mb-8 gap-4">
             <div>
               <h1 className={isDark ? "text-white mb-2" : "text-gray-900 mb-2"}>Events</h1>
               <p className={isDark ? "text-gray-400" : "text-gray-600"}>Discover and join professional events</p>
             </div>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-6 py-3 rounded-lg hover:opacity-90 transition-all"
+              className="flex items-center gap-2 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:opacity-90 transition-all text-sm md:text-base"
             >
               <Plus className="w-5 h-5" />
               Create Event
             </button>
           </div>
 
-          <div className="mb-8">
+          <div className="mb-6 md:mb-8">
             <div className="relative">
               <Search
                 className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
@@ -201,19 +199,19 @@ export default function EventsPage() {
                   isDark
                     ? "bg-[#242b3d] border-[#2d3548] text-white placeholder-gray-400"
                     : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                } border rounded-xl pl-12 pr-4 py-4 focus:outline-none focus:border-[#5B7CFF] transition-colors`}
+                } border rounded-xl pl-12 pr-4 py-3 md:py-4 focus:outline-none focus:border-[#5B7CFF] transition-colors`}
               />
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             {loading &&
               Array.from({ length: 3 }).map((_, idx) => <EventSkeletonCard key={idx} />)}
 
             {!loading && events.map((event) => <EventCardItem key={event.id} event={event} isDark={isDark} />)}
           </div>
         </div>
-      </div>
+      </AppShell>
 
       {showCreateForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">

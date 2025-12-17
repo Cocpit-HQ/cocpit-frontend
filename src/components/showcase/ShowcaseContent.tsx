@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import { Eye, MessageCircle, Play, Share2, ThumbsUp, X, Send, Plus } from "lucide-react"
 
-import { DarkSidebar } from "@/components/DarkSidebar"
 import SuggestionsPanel from "@/components/SuggestionsPanel"
+import { AppShell } from "@/components/layout/AppShell"
 import type { Page, Theme } from "@/types/common"
 import type { StoryCard, StoryDetail } from "@/types/showcase"
 import { CreateStoryForm } from "@/components/showcase/CreateStoryForm"
@@ -430,25 +430,23 @@ export default function ShowcaseContent() {
 
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
-      <DarkSidebar navigateTo={navigateTo} currentPage="network" />
-
-      <div className="ml-64 min-h-screen">
-        <div className="max-w-7xl mx-auto px-8 py-8">
-          <div className="mb-8 flex items-center justify-between">
+      <AppShell currentPage="network" navigateTo={navigateTo} onAdd={() => setShowCreateStory(true)}>
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8">
+          <div className="mb-6 md:mb-8 flex items-center justify-between">
             <div>
               <h1 className={isDark ? "text-white mb-2" : "text-gray-900 mb-2"}>Showcase</h1>
               <p className={isDark ? "text-gray-400" : "text-gray-600"}>Share your professional journey through stories</p>
             </div>
             <button
               onClick={() => setShowCreateStory(true)}
-              className="bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-6 py-3 rounded-lg hover:opacity-90 transition-all flex items-center gap-2"
+              className="bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:opacity-90 transition-all flex items-center gap-2 text-sm md:text-base"
             >
               <Plus className="w-5 h-5" />
               Create Story
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 pb-4">
             {/* Stories Grid */}
             <section className="lg:col-span-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -526,18 +524,18 @@ export default function ShowcaseContent() {
 
             {/* Suggestions */}
             <aside className="lg:col-span-4">
-              <div className="sticky top-28">
+              <div className="sticky top-24 md:top-28">
                 <SuggestionsPanel theme={isDark ? "dark" : "light"} />
               </div>
             </aside>
           </div>
         </div>
-      </div>
+      </AppShell>
       {selectedStory && (
         <StoryModal story={selectedStory} onClose={() => setSelectedStory(null)} isDark={isDark} />
       )}
 
-      {showCreateStory && (
+       {showCreateStory && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className={`${isDark ? "bg-[#242b3d]" : "bg-white"} rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto`}>
             <div

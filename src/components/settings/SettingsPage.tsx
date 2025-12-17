@@ -14,8 +14,8 @@ import {
   Settings as SettingsIcon,
 } from "lucide-react"
 
-import { DarkSidebar } from "@/components/DarkSidebar"
 import SuggestionsPanel from "@/components/SuggestionsPanel"
+import { AppShell } from "@/components/layout/AppShell"
 import type { Page, Theme } from "@/types/common"
 
 type SettingsSection = "appearance" | "notifications" | "privacy" | "account"
@@ -213,11 +213,9 @@ export default function SettingsPage() {
 
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
-      <DarkSidebar navigateTo={navigateTo} currentPage="settings" />
-
-      <div className="ml-64 min-h-screen">
-        <div className="max-w-7xl mx-auto px-8 py-8">
-          <div className="mb-8">
+      <AppShell currentPage="settings" navigateTo={navigateTo}>
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
+          <div className="mb-6 md:mb-8">
             <h1 className={`mb-2 ${isDark ? "text-white" : "text-[#1A1A1A]"}`}>Settings</h1>
             <p className={isDark ? "text-gray-400" : "text-[#666666]"}>Manage your account preferences and privacy settings</p>
           </div>
@@ -375,7 +373,7 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-      </div>
+      </AppShell>
     </div>
   )
 }

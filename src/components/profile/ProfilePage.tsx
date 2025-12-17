@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap } from "lucide-react"
 
-import { DarkSidebar } from "@/components/DarkSidebar"
 import SuggestionsPanel from "@/components/SuggestionsPanel"
+import { AppShell } from "@/components/layout/AppShell"
 import type { Page, Theme } from "@/types/common"
 
 const routes: Record<string, string> = {
@@ -94,11 +94,9 @@ export default function ProfilePage() {
 
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
-      <DarkSidebar navigateTo={navigateTo} currentPage="profile" />
-
-      <div className="ml-64 min-h-screen">
-        <div className="max-w-7xl mx-auto px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <AppShell currentPage="profile" navigateTo={navigateTo}>
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
             <div className="lg:col-span-8">
               <div
                 className={`${
@@ -278,7 +276,7 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-      </div>
+      </AppShell>
     </div>
   )
 }

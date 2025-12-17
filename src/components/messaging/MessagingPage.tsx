@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import { Search, Phone, Video, MoreHorizontal, Send, Smile, Paperclip, Image as ImageIcon } from "lucide-react"
 
-import { DarkSidebar } from "@/components/DarkSidebar"
+import { AppShell } from "@/components/layout/AppShell"
 import type { Page, Theme } from "@/types/common"
 import type { ChatThread, Message } from "@/types/messaging"
 
@@ -74,13 +74,12 @@ export default function MessagingPage() {
 
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
-      <DarkSidebar navigateTo={navigateTo} currentPage="messaging" />
-
-      <div className="ml-64 max-w-7xl mx-auto px-4 py-6">
-        <div
-          className={`${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} rounded-lg border overflow-hidden`}
-          style={{ height: "calc(100vh - 140px)" }}
-        >
+      <AppShell currentPage="messaging" navigateTo={navigateTo}>
+        <div className="max-w-7xl mx-auto px-4 py-4 md:py-6 pb-20 md:pb-10">
+          <div
+            className={`${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} rounded-lg border overflow-hidden`}
+            style={{ height: "calc(100vh - 160px)" }}
+          >
           <div className="grid grid-cols-1 md:grid-cols-3 h-full">
             <div className={`border-r ${isDark ? "border-[#2d3548]" : "border-gray-200"} flex flex-col`}>
               <div className={`p-4 border-b ${isDark ? "border-[#2d3548]" : "border-gray-200"}`}>
@@ -218,8 +217,9 @@ export default function MessagingPage() {
               </div>
             </div>
           </div>
+          </div>
         </div>
-      </div>
+      </AppShell>
     </div>
   )
 }

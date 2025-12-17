@@ -9,8 +9,8 @@ import FeedPost from './FeedPost'
 import PostSkeleton from './PostSkeleton'
 import CreatePost from './CreatePost'
 import CreatePostModal from './CreatePostModal'
-import DarkSidebar from '@/components/DarkSidebar'
 import SuggestionsPanel from '@/components/SuggestionsPanel'
+import { AppShell } from '@/components/layout/AppShell'
 
 /* -------------------- Types -------------------- */
 
@@ -106,21 +106,16 @@ export default function HomePage() {
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-[#171c28]' : 'bg-[#F3F2EF]'}`}>
-      <DarkSidebar
-        navigateTo={navigateTo}
-        currentPage="home"
-      />
-
-      <div className="ml-64">
+      <AppShell currentPage="home" navigateTo={navigateTo} onAdd={() => setIsModalOpen(true)}>
         {/* Top Search Bar */}
         <header
-          className={`fixed top-0 left-64 right-0 z-20 border-b p-4 ${
+          className={`sticky top-0 z-20 border-b px-4 py-4 md:px-4 ${
             isDark
               ? 'bg-[#171c28] border-[#2d3548]'
               : 'bg-[#F3F2EF] border-gray-200'
           }`}
         >
-          <div className="max-w-5xl mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
             <div className="flex items-center gap-3 max-w-2xl">
               <Search className="w-5 h-5 text-gray-400" />
               <input
@@ -140,16 +135,16 @@ export default function HomePage() {
         </header>
 
         {/* Main Content */}
-        <main className="pt-20">
-          <div className="max-w-5xl mx-auto px-4 py-6">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <main className="pt-4 md:pt-6 pb-4 md:pb-8">
+          <div className="max-w-5xl mx-auto px-4 md:px-4">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
               {/* Feed */}
               <section className="lg:col-span-8">
                 {/* Create Post */}
                 <CreatePost onOpenModal={() => setIsModalOpen(true)} />
 
                 {/* Posts */}
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                   {loading &&
                     Array.from({ length: 2 }).map((_, i) => (
                       <PostSkeleton key={i} />
@@ -178,15 +173,17 @@ export default function HomePage() {
 
               {/* Suggestions */}
               <aside className="lg:col-span-4">
-                <div className="sticky top-28">
+                <div className="sticky top-24 md:top-28">
                   <SuggestionsPanel theme={isDark ? 'dark' : 'light'} />
                 </div>
               </aside>
             </div>
           </div>
         </main>
-      </div>
+      </AppShell>
+
       <CreatePostModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   )
 }
+

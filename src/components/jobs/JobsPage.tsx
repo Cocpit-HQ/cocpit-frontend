@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react"
 
-import { DarkSidebar } from "@/components/DarkSidebar"
+import { AppShell } from "@/components/layout/AppShell"
 import type { Page, Theme } from "@/types/common"
 import type { Job, JobFormData } from "@/types/jobs"
 
@@ -174,14 +174,12 @@ export default function JobsPage() {
 
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
-      <DarkSidebar navigateTo={navigateTo} currentPage="jobs" />
-
-      <div className="ml-64 min-h-screen">
+      <AppShell currentPage="jobs" navigateTo={navigateTo}>
         <div
           className={`${isDark ? "bg-[#1a1f2e] border-[#2d3548]" : "bg-white border-gray-200"} border-b sticky top-0 z-10`}
         >
-          <div className="max-w-7xl mx-auto px-8 py-4">
-            <div className="flex items-center justify-between">
+          <div className="max-w-7xl mx-auto px-4 md:px-8 py-4">
+            <div className="flex items-center justify-between gap-4">
               <div>
                 <h1 className={`mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>Job Opportunities</h1>
                 <p className={isDark ? "text-gray-400" : "text-gray-600"}>Find your next career opportunity</p>
@@ -189,7 +187,7 @@ export default function JobsPage() {
 
               <button
                 onClick={() => setShowUploadModal(true)}
-                className="px-6 py-3 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white rounded-lg hover:opacity-90 transition-all flex items-center gap-2"
+                className="px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white rounded-lg hover:opacity-90 transition-all flex items-center gap-2 text-sm md:text-base"
               >
                 <Upload className="w-5 h-5" />
                 <span>Upload Job</span>
@@ -198,7 +196,7 @@ export default function JobsPage() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
           <div className="w-full max-w-none mb-12">
             <div
               className={`${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} border rounded-2xl p-8 shadow-lg`}
@@ -382,7 +380,7 @@ export default function JobsPage() {
             </div>
           </div>
         </div>
-      </div>
+      </AppShell>
 
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
