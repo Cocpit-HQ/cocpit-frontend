@@ -170,7 +170,7 @@ export default function EventsPage() {
 
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
-      <DarkSidebar navigateTo={navigateTo} currentPage="events" theme={theme as Theme} />
+      <DarkSidebar navigateTo={navigateTo} currentPage="events" />
 
       <div className="ml-64 min-h-screen">
         <div className="max-w-7xl mx-auto px-8 py-8">

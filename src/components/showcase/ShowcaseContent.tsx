@@ -7,6 +7,7 @@ import { Eye, MessageCircle, Play, Share2, ThumbsUp, X, Send } from "lucide-reac
 import { Plus } from "lucide-react"
 
 import { DarkSidebar } from "@/components/DarkSidebar"
+import SuggestionsPanel from "@/components/SuggestionsPanel"
 import type { Page, Theme } from "@/types/common"
 import type { StoryCard, StoryDetail } from "@/types/showcase"
 
@@ -144,14 +145,24 @@ function useSystemTheme() {
   return systemTheme
 }
 
-function ShowcaseSkeletonCard() {
+function ShowcaseSkeletonCard({ isDark }: { isDark: boolean }) {
   return (
-    <div className="bg-[#242b3d] rounded-xl overflow-hidden border border-[#2d3548] animate-pulse">
-      <div className="h-48 bg-[#1f2534]" />
+    <div
+      className={`rounded-xl overflow-hidden border animate-pulse ${
+        isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
+      }`}
+    >
+      <div className={`h-48 ${isDark ? "bg-[#1f2534]" : "bg-gray-200"}`} />
       <div className="p-4 space-y-3">
-        <div className="h-5 bg-[#323a4b] rounded w-3/4" />
-        <div className="h-4 bg-[#323a4b] rounded w-1/2" />
-        <div className="h-4 bg-[#323a4b] rounded w-full" />
+        <div
+          className={`h-5 rounded w-3/4 ${isDark ? "bg-[#323a4b]" : "bg-gray-200"}`}
+        />
+        <div
+          className={`h-4 rounded w-1/2 ${isDark ? "bg-[#323a4b]" : "bg-gray-200"}`}
+        />
+        <div
+          className={`h-4 rounded w-full ${isDark ? "bg-[#323a4b]" : "bg-gray-200"}`}
+        />
       </div>
     </div>
   )
@@ -418,7 +429,7 @@ export default function ShowcaseContent() {
 
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
-      <DarkSidebar navigateTo={navigateTo} currentPage="network" theme={theme as Theme} />
+      <DarkSidebar navigateTo={navigateTo} currentPage="network" />
 
       <div className="ml-64 min-h-screen">
         <div className="max-w-7xl mx-auto px-8 py-8">
@@ -433,60 +444,88 @@ export default function ShowcaseContent() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {loading &&
-              Array.from({ length: 4 }).map((_, idx) => <ShowcaseSkeletonCard key={idx} />)}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Stories Grid */}
+            <section className="lg:col-span-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {loading &&
+                  Array.from({ length: 4 }).map((_, idx) => (
+                    <ShowcaseSkeletonCard key={idx} isDark={isDark} />
+                  ))}
 
-            {!loading &&
-              stories.map((story) => (
-                <div
-                  key={story.id}
-                  className="bg-[#242b3d] rounded-xl overflow-hidden border border-[#2d3548] hover:border-[#404968] transition-all group cursor-pointer"
-                  onClick={() => setSelectedStory(story)}
-                >
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={story.image}
-                      alt={story.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {story.isVideo && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                          <Play className="w-8 h-8 text-white ml-1" />
-                        </div>
-                      </div>
-                    )}
-                    <AuthorBadge story={story} />
-                  </div>
-
-                  <div className="p-4">
-                    <h3 className="text-white mb-2 group-hover:text-[#5B7CFF] transition-colors">{story.title}</h3>
-                    <div className="flex items-center justify-between text-sm text-gray-400">
-                      <span>{story.timeAgo}</span>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1">
-                          <Eye className="w-4 h-4" />
-                          <span>{story.views.toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <ThumbsUp className="w-4 h-4" />
-                          <span>{story.likes}</span>
-                        </div>
-                        {story.comments ? (
-                          <div className="flex items-center gap-1">
-                            <MessageCircle className="w-4 h-4" />
-                            <span>{story.comments}</span>
+                {!loading &&
+                  stories.map((story) => (
+                    <div
+                      key={story.id}
+                      className={`rounded-xl overflow-hidden border transition-all group cursor-pointer ${
+                        isDark
+                          ? "bg-[#242b3d] border-[#2d3548] hover:border-[#404968]"
+                          : "bg-white border-gray-200 hover:border-gray-300 shadow-sm"
+                      }`}
+                      onClick={() => setSelectedStory(story)}
+                    >
+                      <div className="relative h-48 overflow-hidden">
+                        <img
+                          src={story.image}
+                          alt={story.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {story.isVideo && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                              <Play className="w-8 h-8 text-white ml-1" />
+                            </div>
                           </div>
-                        ) : null}
-                        <button className="hover:text-white transition-colors">
-                          <Share2 className="w-4 h-4" />
-                        </button>
+                        )}
+                        <AuthorBadge story={story} />
+                      </div>
+
+                      <div className="p-4">
+                        <h3
+                          className={`mb-2 group-hover:text-[#5B7CFF] transition-colors ${
+                            isDark ? "text-white" : "text-gray-900"
+                          }`}
+                        >
+                          {story.title}
+                        </h3>
+                        <div className={`flex items-center justify-between text-sm ${
+                          isDark ? "text-gray-400" : "text-gray-600"
+                        }`}>
+                          <span>{story.timeAgo}</span>
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-1">
+                              <Eye className="w-4 h-4" />
+                              <span>{story.views.toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <ThumbsUp className="w-4 h-4" />
+                              <span>{story.likes}</span>
+                            </div>
+                            {story.comments ? (
+                              <div className="flex items-center gap-1">
+                                <MessageCircle className="w-4 h-4" />
+                                <span>{story.comments}</span>
+                              </div>
+                            ) : null}
+                            <button className={`transition-colors ${
+                              isDark ? "hover:text-white" : "hover:text-gray-900"
+                            }`}>
+                              <Share2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  ))}
+              </div>
+            </section>
+
+            {/* Suggestions */}
+            <aside className="lg:col-span-4">
+              <div className="sticky top-28">
+                <SuggestionsPanel theme={isDark ? "dark" : "light"} />
+              </div>
+            </aside>
           </div>
         </div>
       </div>
