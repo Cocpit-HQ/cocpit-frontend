@@ -21,7 +21,7 @@
 
 .subtitle {
   font-size: 0.875rem;
-  color: var(--color-muted);
+  color: var(--color-muted-foreground);
 }
 
 .form {
@@ -71,7 +71,7 @@
   transform: translateY(-50%);
   width: 1rem;
   height: 1rem;
-  color: var(--color-muted);
+  color: var(--color-muted-foreground);
   pointer-events: none;
   display: flex;
   align-items: center;
@@ -97,7 +97,7 @@
 }
 
 .input::placeholder {
-  color: var(--color-muted);
+  color: var(--color-muted-foreground);
 }
 
 .inputWithToggle {
@@ -133,7 +133,7 @@
 
 .checkboxLabel {
   font-size: 0.875rem;
-  color: var(--color-muted);
+  color: var(--color-muted-foreground);
   cursor: pointer;
   user-select: none;
 }
@@ -216,7 +216,7 @@
 .footer {
   text-align: center;
   font-size: 0.875rem;
-  color: var(--color-muted);
+  color: var(--color-muted-foreground);
 }
 
 .signupLink {

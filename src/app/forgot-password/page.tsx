@@ -268,7 +268,7 @@ export default function ForgotPassword() {
               <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground leading-tight animate-fade-in-up">
                 Reset Your Password
               </h2>
-              <p className="text-muted-foreground text-base md:text-lg animate-fade-in-up animation-delay-200">
+              <p className="text-white text-base md:text-lg animate-fade-in-up animation-delay-200">
                 Don't worry! It happens to the best of us. We'll help you get back into your account.
               </p>
               
@@ -285,15 +285,15 @@ export default function ForgotPassword() {
               
               {/* Steps */}
               <div className="space-y-3 text-left animate-fade-in-up animation-delay-600">
-                <div className="flex items-center gap-3 text-foreground/90">
+                <div className="flex items-center gap-3 text-white">
                   <div className="w-6 h-6 rounded-full bg-foreground/20 flex items-center justify-center text-xs font-medium">1</div>
                   <span className="text-sm">Enter your email address</span>
                 </div>
-                <div className="flex items-center gap-3 text-foreground/90">
+                <div className="flex items-center gap-3 text-white">
                   <div className="w-6 h-6 rounded-full bg-foreground/20 flex items-center justify-center text-xs font-medium">2</div>
                   <span className="text-sm">Verify with OTP</span>
                 </div>
-                <div className="flex items-center gap-3 text-foreground/90">
+                <div className="flex items-center gap-3 text-white">
                   <div className="w-6 h-6 rounded-full bg-foreground/20 flex items-center justify-center text-xs font-medium">3</div>
                   <span className="text-sm">Set your new password</span>
                 </div>

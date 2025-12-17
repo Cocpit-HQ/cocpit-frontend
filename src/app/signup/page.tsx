@@ -254,8 +254,8 @@ export default function SignUp() {
               <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground leading-tight animate-fade-in-up">
                 Start Your Journey
               </h2>
-              <p className="text-muted-foreground text-base md:text-lg animate-fade-in-up animation-delay-200">
-                Join thousands of professionals building their careers on Cocpit.
+              <p className="text-white text-base md:text-lg animate-fade-in-up animation-delay-200">
+                Where professionals meet opportunities. Build meaningful connections that accelerate your career.
               </p>
               
               {/* Handshake image */}
@@ -271,15 +271,15 @@ export default function SignUp() {
               
               {/* Feature highlights */}
               <div className="space-y-3 text-left animate-fade-in-up animation-delay-600">
-                <div className="flex items-center gap-3 text-foreground/90">
+                <div className="flex items-center gap-3 text-white">
                   <div className="w-2 h-2 rounded-full bg-foreground/60" />
                   <span className="text-sm">Connect with industry leaders</span>
                 </div>
-                <div className="flex items-center gap-3 text-foreground/90">
+                <div className="flex items-center gap-3 text-white">
                   <div className="w-2 h-2 rounded-full bg-foreground/60" />
                   <span className="text-sm">Discover career opportunities</span>
                 </div>
-                <div className="flex items-center gap-3 text-foreground/90">
+                <div className="flex items-center gap-3 text-white">
                   <div className="w-2 h-2 rounded-full bg-foreground/60" />
                   <span className="text-sm">Showcase your skills</span>
                 </div>
