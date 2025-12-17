@@ -16,74 +16,127 @@ import {
 
 import { AppShell } from "@/components/layout/AppShell"
 import type { Page, Theme } from "@/types/common"
-import type { Job, JobFormData } from "@/types/jobs"
+import type { Job, JobFormData, JobListMode, JobStatus } from "@/types/jobs"
 
 const jobs: Job[] = [
+  // Open jobs (for \"View Jobs\" tab)
   {
     id: 1,
-    title: "Senior Product Designer",
-    company: "Google",
-    location: "Mountain View, CA",
+    title: "Senior Financial Analyst",
+    company: "JPMorgan Chase",
+    location: "New York, NY",
     type: "Full-time",
     postedTime: "2 days ago",
-    applicants: 42,
-    salary: "$140k - $180k",
+    applicants: 25,
+    salary: "$125k - $155k",
     logo: "gradient-1",
   },
   {
     id: 2,
-    title: "UX Researcher",
-    company: "Meta",
-    location: "Menlo Park, CA",
+    title: "Business Analyst",
+    company: "McKinsey & Company",
+    location: "Boston, MA",
     type: "Full-time",
     postedTime: "3 days ago",
-    applicants: 28,
-    salary: "$130k - $170k",
+    applicants: 18,
+    salary: "$110k - $140k",
     logo: "gradient-2",
   },
   {
     id: 3,
-    title: "Product Designer",
-    company: "Apple",
-    location: "Cupertino, CA",
+    title: "Product Manager",
+    company: "Google",
+    location: "San Francisco, CA",
     type: "Full-time",
-    postedTime: "5 days ago",
-    applicants: 67,
-    salary: "$135k - $175k",
+    postedTime: "1 day ago",
+    applicants: 40,
+    salary: "$120k - $180k",
     logo: "gradient-3",
   },
   {
     id: 4,
-    title: "Design System Lead",
-    company: "Netflix",
-    location: "Los Gatos, CA",
-    type: "Full-time",
-    postedTime: "1 week ago",
-    applicants: 31,
-    salary: "$150k - $190k",
+    title: "Data Analyst",
+    company: "Meta",
+    location: "Remote",
+    type: "Contract",
+    postedTime: "3 days ago",
+    applicants: 30,
+    salary: "$110k - $130k",
     logo: "gradient-4",
   },
+  // Offer cards (for \"Offers\" tab)
   {
     id: 5,
-    title: "UI/UX Designer",
-    company: "Spotify",
-    location: "San Francisco, CA",
+    title: "Senior Financial Analyst",
+    company: "JPMorgan Chase",
+    location: "New York, NY",
     type: "Full-time",
-    postedTime: "1 week ago",
-    applicants: 45,
-    salary: "$120k - $160k",
+    postedTime: "Today",
+    applicants: 0,
+    salary: "$125k - $155k",
     logo: "gradient-5",
+    isOffer: true,
   },
   {
     id: 6,
-    title: "Lead Product Designer",
-    company: "Airbnb",
+    title: "Business Analyst",
+    company: "McKinsey & Company",
+    location: "Boston, MA",
+    type: "Full-time",
+    postedTime: "1 day ago",
+    applicants: 0,
+    salary: "$110k - $140k",
+    logo: "gradient-6",
+    isOffer: true,
+  },
+  // My jobs (various statuses)
+  {
+    id: 7,
+    title: "Senior Product Analyst",
+    company: "Netflix",
+    location: "New York, NY",
+    type: "Full-time",
+    postedTime: "Applied 2 days ago",
+    applicants: 12,
+    salary: "$130k - $150k",
+    logo: "gradient-1",
+    status: "applied",
+  },
+  {
+    id: 8,
+    title: "Product Designer",
+    company: "Adobe",
+    location: "Remote",
+    type: "Full-time",
+    postedTime: "Interview scheduled",
+    applicants: 8,
+    salary: "$120k - $140k",
+    logo: "gradient-2",
+    status: "in-progress",
+  },
+  {
+    id: 9,
+    title: "UX Researcher",
+    company: "Spotify",
+    location: "Remote",
+    type: "Full-time",
+    postedTime: "Closed 1 week ago",
+    applicants: 60,
+    salary: "$100k - $130k",
+    logo: "gradient-3",
+    status: "in-past",
+  },
+  {
+    id: 10,
+    title: "Product Owner",
+    company: "Stripe",
     location: "San Francisco, CA",
     type: "Full-time",
-    postedTime: "2 weeks ago",
-    applicants: 53,
-    salary: "$145k - $185k",
-    logo: "gradient-6",
+    postedTime: "Saved yesterday",
+    applicants: 0,
+    salary: "$140k - $170k",
+    logo: "gradient-4",
+    status: "saved",
   },
 ]
 
@@ -142,6 +195,10 @@ export default function JobsPage() {
   }
 
   const [showUploadModal, setShowUploadModal] = useState(false)
+  const [showMobileSearch, setShowMobileSearch] = useState(false)
+  const [showMobileFilters, setShowMobileFilters] = useState(false)
+  const [mode, setMode] = useState<JobListMode>("view")
+  const [myJobsTab, setMyJobsTab] = useState<JobStatus>("in-progress")
   const [formData, setFormData] = useState<JobFormData>({
     jobTitle: "",
     companyName: "",
@@ -172,6 +229,14 @@ export default function JobsPage() {
     })
   }
 
+  const openJobs = jobs.filter((job) => !job.isOffer && !job.status)
+  const offers = jobs.filter((job) => job.isOffer)
+  const myJobs = jobs.filter((job) => job.status)
+  const filteredMyJobs = myJobs.filter((job) => job.status === myJobsTab)
+
+  const jobsToRender =
+    mode === "offers" ? offers : mode === "my-jobs" ? filteredMyJobs : openJobs
+
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
       <AppShell currentPage="jobs" navigateTo={navigateTo}>
@@ -197,15 +262,22 @@ export default function JobsPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
-          <div className="w-full max-w-none mb-12">
+          <div className="w-full max-w-none mb-6 md:mb-8">
+            {/* Desktop search block */}
             <div
-              className={`${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} border rounded-2xl p-8 shadow-lg`}
+              className={`hidden md:block border rounded-2xl p-8 shadow-lg ${
+                isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
+              }`}
             >
-              <h2 className={`text-center mb-6 ${isDark ? "text-white" : "text-gray-900"}`}>Search for Jobs</h2>
+              <h2 className={`text-center mb-6 ${isDark ? "text-white" : "text-gray-900"}`}>
+                Search for Jobs
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="relative">
                   <Search
-                    className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                    className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
                   />
                   <input
                     type="text"
@@ -219,7 +291,9 @@ export default function JobsPage() {
                 </div>
                 <div className="relative">
                   <MapPin
-                    className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                    className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
                   />
                   <input
                     type="text"
@@ -233,15 +307,102 @@ export default function JobsPage() {
                 </div>
               </div>
               <div className="mt-4 flex justify-center">
-                <button className="px-16 py-5 text-lg bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white rounded-xl hover:opacity-90 transition-all w-full max-w-4xl">
+                <button className="w-full max-w-4xl rounded-xl bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] px-16 py-5 text-lg text-white hover:opacity-90 transition-all">
                   Search Jobs
                 </button>
               </div>
             </div>
+
+            {/* Mobile search pill */}
+            <div
+              className={`md:hidden border rounded-2xl p-4 ${
+                isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => setShowMobileSearch(true)}
+                className={`flex w-full items-center gap-3 rounded-full border px-4 py-2 ${
+                  isDark
+                    ? "border-[#2d3548] bg-[#171c28] text-gray-300"
+                    : "border-gray-300 bg-white text-gray-700"
+                }`}
+              >
+                <Search className="h-5 w-5 text-gray-400" />
+                <span className="text-sm text-left flex-1">
+                  Search jobs by title or location
+                </span>
+              </button>
+            </div>
           </div>
 
+          {/* Top-level tabs: View Jobs / My Jobs / Offers */}
+          <div className="mb-4 md:mb-6 flex gap-2 overflow-x-auto rounded-full bg-transparent">
+            {[
+              { id: "view" as JobListMode, label: "View Jobs" },
+              { id: "my-jobs" as JobListMode, label: "My Jobs" },
+              { id: "offers" as JobListMode, label: "Offers", badge: offers.length },
+            ].map((tab) => {
+              const isActive = mode === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setMode(tab.id)}
+                  className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                    isActive
+                      ? "bg-gradient-to-r from-[#5B7CFF] to-[#F472B6] text-white shadow-md"
+                      : isDark
+                        ? "bg-[#1f2937] text-gray-300 hover:bg-[#111827]"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  {tab.badge !== undefined && tab.badge > 0 && (
+                    <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-pink-500 px-1 text-[10px] font-semibold text-white">
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* My Jobs sub-tabs */}
+          {mode === "my-jobs" && (
+            <div className="mb-6 flex gap-2 overflow-x-auto">
+              {(
+                [
+                  { id: "in-progress", label: "In Progress" },
+                  { id: "applied", label: "Applied" },
+                  { id: "in-past", label: "In Past" },
+                  { id: "saved", label: "Saved" },
+                ] as const
+              ).map((tab) => {
+                const isActive = myJobsTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setMyJobsTab(tab.id)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
+                      isActive
+                        ? "bg-gradient-to-r from-[#5B7CFF] to-[#F472B6] text-white"
+                        : isDark
+                          ? "bg-[#1f2937] text-gray-300 hover:bg-[#111827]"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-1">
+            {/* Desktop sidebar filters */}
+            <div className="hidden md:block lg:col-span-1">
               <div
                 className={`${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} border rounded-xl p-6 sticky top-32`}
               >
@@ -320,67 +481,441 @@ export default function JobsPage() {
             </div>
 
             <div className="lg:col-span-3">
-              <div className="mb-4">
+              <div className="mb-4 flex items-center justify-between">
                 <p className={isDark ? "text-gray-400" : "text-gray-600"}>{jobs.length} jobs found</p>
+                <button
+                  type="button"
+                  className={`flex items-center gap-2 rounded-full border px-3 py-2 text-sm md:hidden ${
+                    isDark
+                      ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28]"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                  }`}
+                  onClick={() => setShowMobileFilters(true)}
+                >
+                  <Filter className="h-4 w-4" />
+                  <span>Filters</span>
+                </button>
               </div>
 
               <div className="space-y-4">
-                {jobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className={`${isDark ? "bg-[#242b3d] border-[#2d3548] hover:border-[#3d4558]" : "bg-white border-gray-200 hover:border-gray-300"} border rounded-xl p-6 transition-all`}
-                  >
-                    <div className="flex gap-4">
-                      <div className={`w-16 h-16 bg-gradient-to-br ${logoGradients[job.logo]} rounded-lg flex-shrink-0`} />
+                {jobsToRender.map((job) => {
+                  const baseCardClasses = `${
+                    isDark
+                      ? "bg-[#242b3d] border-[#2d3548] hover:border-[#3d4558]"
+                      : "bg-white border-gray-200 hover:border-gray-300"
+                  } border rounded-xl p-6 transition-all`
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1 min-w-0">
-                            <h3 className={`mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>{job.title}</h3>
-                            <p className={`mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>{job.company}</p>
+                  // Offers layout
+                  if (mode === "offers" || job.isOffer) {
+                    return (
+                      <div key={job.id} className={baseCardClasses}>
+                        <div className="mb-3 flex items-center justify-between text-xs">
+                          <span className="rounded-full bg-pink-500/15 px-3 py-1 text-[11px] font-medium text-pink-300">
+                            Direct Offer
+                          </span>
+                        </div>
+                        <div className="flex gap-4">
+                          <div
+                            className={`h-12 w-12 flex-shrink-0 rounded-lg bg-gradient-to-br ${logoGradients[job.logo]}`}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <h3 className={`mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+                              {job.title}
+                            </h3>
+                            <p className={`mb-2 text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                              {job.company}
+                            </p>
+                            <div className={`mb-3 flex flex-wrap gap-3 text-xs ${
+                              isDark ? "text-gray-400" : "text-gray-600"
+                            }`}>
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-4 w-4" />
+                                {job.location}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Briefcase className="h-4 w-4" />
+                                {job.type}
+                              </span>
+                            </div>
+                            <p className="mb-4 text-sm text-[#A5B4FC]">{job.salary}</p>
+                            <div className="flex flex-col gap-3 md:flex-row">
+                              <button className="flex-1 rounded-full bg-gradient-to-r from-[#5B7CFF] to-[#F472B6] px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
+                                Accept Offer
+                              </button>
+                              <button
+                                className={`flex-1 rounded-full border px-4 py-2 text-sm font-semibold ${
+                                  isDark
+                                    ? "border-red-500/40 text-red-300 hover:bg-red-500/10"
+                                    : "border-red-500/60 text-red-600 hover:bg-red-50"
+                                }`}
+                              >
+                                Reject
+                              </button>
+                            </div>
                           </div>
-                          <button
-                            className={`p-2 rounded-full transition-colors flex-shrink-0 ${isDark ? "hover:bg-[#171c28]" : "hover:bg-gray-100"}`}
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  // My Jobs layout
+                  if (mode === "my-jobs" && job.status) {
+                    const secondary =
+                      job.status === "applied"
+                        ? "Withdraw"
+                        : job.status === "in-progress"
+                          ? "View Details"
+                          : job.status === "saved"
+                            ? "Remove"
+                            : "View Details"
+
+                    return (
+                      <div key={job.id} className={baseCardClasses}>
+                        <div className="flex gap-4">
+                          <div
+                            className={`h-12 w-12 flex-shrink-0 rounded-lg bg-gradient-to-br ${logoGradients[job.logo]}`}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <h3 className={`mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+                              {job.title}
+                            </h3>
+                            <p className={`mb-1 text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                              {job.company}
+                            </p>
+                            <div className={`mb-2 flex items-center gap-2 text-xs ${
+                              isDark ? "text-gray-400" : "text-gray-600"
+                            }`}>
+                              <MapPin className="h-4 w-4" />
+                              <span>{job.location}</span>
+                            </div>
+                            <p className={`mb-4 text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                              {job.postedTime}
+                            </p>
+                            <div className="flex flex-col gap-3 sm:flex-row">
+                              <button className="flex-1 rounded-full bg-[#111827] px-4 py-2 text-sm font-medium text-white hover:bg-[#1f2937]">
+                                View Details
+                              </button>
+                              <button
+                                className={`flex-1 rounded-full px-4 py-2 text-sm font-medium ${
+                                  secondary === "Withdraw"
+                                    ? "bg-red-600 text-white hover:bg-red-700"
+                                    : isDark
+                                      ? "border border-[#2d3548] text-gray-300 hover:bg-[#171c28]"
+                                      : "border border-gray-300 text-gray-700 hover:bg-gray-100"
+                                }`}
+                              >
+                                {secondary}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  // Default open job listing layout (View Jobs)
+                  return (
+                    <div
+                      key={job.id}
+                      className={baseCardClasses}
+                    >
+                      <div className="flex gap-4">
+                        <div
+                          className={`w-16 h-16 bg-gradient-to-br ${logoGradients[job.logo]} rounded-lg flex-shrink-0`}
+                        />
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 min-w-0">
+                              <h3 className={`mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+                                {job.title}
+                              </h3>
+                              <p className={`mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                                {job.company}
+                              </p>
+                            </div>
+                            <button
+                              className={`p-2 rounded-full transition-colors flex-shrink-0 ${
+                                isDark ? "hover:bg-[#171c28]" : "hover:bg-gray-100"
+                              }`}
+                            >
+                              <Bookmark
+                                className={`w-5 h-5 ${
+                                  isDark
+                                    ? "text-gray-400 hover:text-[#5B7CFF]"
+                                    : "text-gray-500 hover:text-[#5B7CFF]"
+                                }`}
+                              />
+                            </button>
+                          </div>
+
+                          <div
+                            className={`flex flex-wrap gap-3 text-sm mb-3 ${
+                              isDark ? "text-gray-400" : "text-gray-600"
+                            }`}
                           >
-                            <Bookmark
-                              className={`w-5 h-5 ${isDark ? "text-gray-400 hover:text-[#5B7CFF]" : "text-gray-500 hover:text-[#5B7CFF]"}`}
-                            />
-                          </button>
-                        </div>
-
-                        <div className={`flex flex-wrap gap-3 text-sm mb-3 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            {job.location}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Briefcase className="w-4 h-4" />
-                            {job.type}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {job.postedTime}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <span className="text-sm text-[#5B7CFF]">{job.salary}</span>
-                            <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>{job.applicants} applicants</span>
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-4 h-4" />
+                              {job.location}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Briefcase className="w-4 h-4" />
+                              {job.type}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-4 h-4" />
+                              {job.postedTime}
+                            </span>
                           </div>
-                          <button className="px-6 py-2 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white rounded-lg hover:opacity-90 transition-all">
-                            Apply Now
-                          </button>
+
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <span className="text-sm text-[#5B7CFF]">{job.salary}</span>
+                              <span
+                                className={`text-sm ${
+                                  isDark ? "text-gray-400" : "text-gray-600"
+                                }`}
+                              >
+                                {job.applicants} applicants
+                              </span>
+                            </div>
+                            <button className="px-6 py-2 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white rounded-lg hover:opacity-90 transition-all">
+                              Apply Now
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>
         </div>
       </AppShell>
+
+      {/* Mobile search widget */}
+      {showMobileSearch && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm md:hidden">
+          <div
+            className={`w-full max-w-md rounded-t-2xl p-4 pb-6 ${
+              isDark ? "bg-[#242b3d]" : "bg-white"
+            }`}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className={isDark ? "text-white" : "text-gray-900"}>Search jobs</h2>
+              <button
+                type="button"
+                onClick={() => setShowMobileSearch(false)}
+                className={`rounded-full p-2 ${
+                  isDark
+                    ? "text-gray-400 hover:bg-[#171c28]"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="relative">
+                <Search
+                  className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                />
+                <input
+                  type="text"
+                  placeholder="Job title or keyword"
+                  className={`w-full rounded-lg border px-10 py-3 text-sm focus:outline-none focus:border-[#5B7CFF] ${
+                    isDark
+                      ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-400"
+                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
+                  }`}
+                />
+              </div>
+
+              <div className="relative">
+                <MapPin
+                  className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                />
+                <input
+                  type="text"
+                  placeholder="Location"
+                  className={`w-full rounded-lg border px-10 py-3 text-sm focus:outline-none focus:border-[#5B7CFF] ${
+                    isDark
+                      ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-400"
+                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowMobileSearch(false)}
+                className={`flex-1 rounded-lg border px-4 py-2 text-sm ${
+                  isDark
+                    ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28]"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowMobileSearch(false)}
+                className="flex-1 rounded-lg bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+              >
+                Search
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile filters widget */}
+      {showMobileFilters && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm md:hidden">
+          <div
+            className={`w-full max-w-md rounded-t-2xl p-4 pb-6 ${
+              isDark ? "bg-[#242b3d]" : "bg-white"
+            }`}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className={isDark ? "text-white" : "text-gray-900"}>Filters</h2>
+              <button
+                type="button"
+                onClick={() => setShowMobileFilters(false)}
+                className={`rounded-full p-2 ${
+                  isDark
+                    ? "text-gray-400 hover:bg-[#171c28]"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+              <div>
+                <label
+                  className={`mb-2 block text-sm ${
+                    isDark ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
+                  Job Type
+                </label>
+                <select
+                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-[#5B7CFF] ${
+                    isDark
+                      ? "bg-[#171c28] border-[#2d3548] text-white"
+                      : "bg-gray-50 border-gray-300 text-gray-900"
+                  }`}
+                >
+                  <option>All Types</option>
+                  <option>Full-time</option>
+                  <option>Part-time</option>
+                  <option>Contract</option>
+                  <option>Remote</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  className={`mb-2 block text-sm ${
+                    isDark ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
+                  Experience Level
+                </label>
+                <select
+                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-[#5B7CFF] ${
+                    isDark
+                      ? "bg-[#171c28] border-[#2d3548] text-white"
+                      : "bg-gray-50 border-gray-300 text-gray-900"
+                  }`}
+                >
+                  <option>All Levels</option>
+                  <option>Entry Level</option>
+                  <option>Mid Level</option>
+                  <option>Senior Level</option>
+                  <option>Lead/Manager</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  className={`mb-2 block text-sm ${
+                    isDark ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
+                  Salary Range
+                </label>
+                <select
+                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-[#5B7CFF] ${
+                    isDark
+                      ? "bg-[#171c28] border-[#2d3548] text-white"
+                      : "bg-gray-50 border-gray-300 text-gray-900"
+                  }`}
+                >
+                  <option>Any</option>
+                  <option>$80k - $100k</option>
+                  <option>$100k - $130k</option>
+                  <option>$130k - $160k</option>
+                  <option>$160k+</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  className={`mb-2 block text-sm ${
+                    isDark ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
+                  Date Posted
+                </label>
+                <select
+                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-[#5B7CFF] ${
+                    isDark
+                      ? "bg-[#171c28] border-[#2d3548] text-white"
+                      : "bg-gray-50 border-gray-300 text-gray-900"
+                  }`}
+                >
+                  <option>Any Time</option>
+                  <option>Past 24 hours</option>
+                  <option>Past week</option>
+                  <option>Past month</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowMobileFilters(false)}
+                className={`flex-1 rounded-lg border px-4 py-2 text-sm ${
+                  isDark
+                    ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28]"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowMobileFilters(false)}
+                className="flex-1 rounded-lg bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">

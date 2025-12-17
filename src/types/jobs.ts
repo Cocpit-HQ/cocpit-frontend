@@ -1,3 +1,7 @@
+export type JobListMode = "view" | "my-jobs" | "offers";
+
+export type JobStatus = "in-progress" | "applied" | "in-past" | "saved";
+
 export interface Job {
   id: number;
   title: string;
@@ -8,6 +12,8 @@ export interface Job {
   applicants: number;
   salary: string;
   logo: string;
+  isOffer?: boolean;
+  status?: JobStatus;
 }
 
 export interface JobFilters {
