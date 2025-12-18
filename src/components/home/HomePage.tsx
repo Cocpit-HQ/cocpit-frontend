@@ -11,6 +11,13 @@ import CreatePost from './CreatePost'
 import SuggestionsPanel from '@/components/SuggestionsPanel'
 import { AppShell } from '@/components/layout/AppShell'
 import { useActionModal } from '@/context/ActionModalContext'
+import { StoryRail } from './StoryRail'
+import { FeedTabs } from './FeedTabs'
+import { CreateStoryForm } from '@/components/showcase/CreateStoryForm'
+import { StoryModal } from '@/components/showcase/StoryModal'
+import { storiesSeed } from '@/constants/stories'
+import { StoryDetail } from '@/types/showcase'
+import { X } from 'lucide-react'
 
 /* -------------------- Types -------------------- */
 
@@ -43,6 +50,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [posts, setPosts] = useState<Post[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [showCreateStory, setShowCreateStory] = useState(false)
+  const [selectedStory, setSelectedStory] = useState<StoryDetail | null>(null)
 
   /* -------------------- Effects -------------------- */
 
@@ -150,6 +159,21 @@ export default function HomePage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
               {/* Feed */}
               <section className="lg:col-span-8">
+                {/* Mobile Story Rail */}
+                <div className="md:hidden">
+                  <StoryRail
+                    isDark={isDark}
+                    stories={storiesSeed}
+                    onCreateClick={() => setShowCreateStory(true)}
+                    onStoryClick={(story) => setSelectedStory(story)}
+                  />
+                </div>
+
+                {/* Feed Tabs */}
+                <div className="md:hidden">
+                  <FeedTabs isDark={isDark} />
+                </div>
+
                 {/* Create Post */}
                 <div className="hidden md:block">
                   <CreatePost onOpenModal={openModal} />
@@ -193,6 +217,37 @@ export default function HomePage() {
           </div>
         </main>
       </AppShell>
+
+      {/* Modals */}
+      {selectedStory && (
+        <StoryModal
+          story={selectedStory}
+          onClose={() => setSelectedStory(null)}
+          isDark={isDark}
+        />
+      )}
+
+      {showCreateStory && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className={`${isDark ? "bg-[#242b3d]" : "bg-white"} rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto`}>
+            <div
+              className={`sticky top-0 ${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} border-b px-6 py-4 flex items-center justify-between`}
+            >
+              <h2 className={isDark ? "text-white" : "text-gray-900"}>Create Story</h2>
+              <button
+                onClick={() => setShowCreateStory(false)}
+                className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-[#171c28] text-gray-400" : "hover:bg-gray-100 text-gray-600"}`}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <CreateStoryForm isDark={isDark} onCancel={() => setShowCreateStory(false)} onCreated={() => setShowCreateStory(false)} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
