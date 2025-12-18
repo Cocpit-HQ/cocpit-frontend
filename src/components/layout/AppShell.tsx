@@ -1,23 +1,30 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { DarkSidebar } from "@/components/DarkSidebar";
 import type { Page } from "@/types/common";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import PostWithOptions from "@/components/home/PostWithOptions";
+import CreatePostModal from "@/components/home/CreatePostModal";
 
 interface AppShellProps {
   currentPage: Page;
   children: React.ReactNode;
   navigateTo?: (page: Page) => void;
-  onAdd?: () => void;
 }
 
 export function AppShell({
   currentPage,
   children,
   navigateTo,
-  onAdd,
 }: AppShellProps) {
+  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const onAdd = () => {
+    setIsOptionsOpen(!isOptionsOpen);
+  };
+
   return (
     <div className="relative flex min-h-screen">
       {/* Desktop sidebar */}
@@ -30,6 +37,21 @@ export function AppShell({
 
       {/* Mobile bottom navigation */}
       <MobileBottomNav currentPage={currentPage} onAdd={onAdd} />
+
+      {isOptionsOpen && (
+        <PostWithOptions
+          onClose={() => setIsOptionsOpen(false)}
+          onOptionClick={(option) => {
+            if (option === 'photo') {
+              setIsModalOpen(true);
+            }
+            // Handle other options here
+            setIsOptionsOpen(false);
+          }}
+        />
+      )}
+
+      <CreatePostModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }

@@ -630,7 +630,7 @@ export default function JobsPage() {
                             Direct Offer
                           </span>
                         </div>
-                        <div className="flex gap-4">
+                        <div className="flex flex-col md:flex-row gap-4">
                           <div
                             className={`h-12 w-12 flex-shrink-0 rounded-lg bg-gradient-to-br ${logoGradients[job.logo]}`}
                           />
@@ -687,7 +687,7 @@ export default function JobsPage() {
 
                     return (
                       <div key={job.id} className={baseCardClasses}>
-                        <div className="flex gap-4">
+                        <div className="flex flex-col sm:flex-row gap-4">
                           <div
                             className={`h-12 w-12 flex-shrink-0 rounded-lg bg-gradient-to-br ${logoGradients[job.logo]}`}
                           />
@@ -735,7 +735,7 @@ export default function JobsPage() {
                       key={job.id}
                       className={baseCardClasses}
                     >
-                      <div className="flex gap-4">
+                      <div className="flex flex-col sm:flex-row gap-4">
                         <div
                           className={`w-16 h-16 bg-gradient-to-br ${logoGradients[job.logo]} rounded-lg flex-shrink-0`}
                         />
@@ -784,8 +784,8 @@ export default function JobsPage() {
                             </span>
                           </div>
 
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
+                          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                               <span className="text-sm text-[#5B7CFF]">{job.salary}</span>
                               <span
                                 className={`text-sm ${
@@ -795,7 +795,7 @@ export default function JobsPage() {
                                 {job.applicants} applicants
                               </span>
                             </div>
-                            <button className="px-6 py-2 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white rounded-lg hover:opacity-90 transition-all">
+                            <button className="px-6 py-2 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white rounded-lg hover:opacity-90 transition-all text-center">
                               Apply Now
                             </button>
                           </div>

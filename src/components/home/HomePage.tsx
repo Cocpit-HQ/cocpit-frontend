@@ -8,7 +8,6 @@ import { Search } from 'lucide-react'
 import FeedPost from './FeedPost'
 import PostSkeleton from './PostSkeleton'
 import CreatePost from './CreatePost'
-import CreatePostModal from './CreatePostModal'
 import SuggestionsPanel from '@/components/SuggestionsPanel'
 import { AppShell } from '@/components/layout/AppShell'
 
@@ -31,6 +30,12 @@ type Post = {
 export default function HomePage() {
   const router = useRouter()
   const { resolvedTheme, theme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const isDark = useMemo(() => resolvedTheme === 'dark', [resolvedTheme])
 
   const [loading, setLoading] = useState(true)
@@ -104,9 +109,13 @@ export default function HomePage() {
 
   /* -------------------- Render -------------------- */
 
+  if (!mounted) {
+    return null
+  }
+
   return (
     <div className={`min-h-screen ${isDark ? 'bg-[#171c28]' : 'bg-[#F3F2EF]'}`}>
-      <AppShell currentPage="home" navigateTo={navigateTo} onAdd={() => setIsModalOpen(true)}>
+      <AppShell currentPage="home" navigateTo={navigateTo}>
         {/* Top Search Bar */}
         <header
           className={`sticky top-0 z-20 border-b px-4 py-4 md:px-4 ${
@@ -141,7 +150,9 @@ export default function HomePage() {
               {/* Feed */}
               <section className="lg:col-span-8">
                 {/* Create Post */}
-                <CreatePost onOpenModal={() => setIsModalOpen(true)} />
+                <div className="hidden md:block">
+                  <CreatePost onOpenModal={() => setIsModalOpen(true)} />
+                </div>
 
                 {/* Posts */}
                 <div className="space-y-4 md:space-y-6">
@@ -181,8 +192,6 @@ export default function HomePage() {
           </div>
         </main>
       </AppShell>
-
-      <CreatePostModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   )
 }
