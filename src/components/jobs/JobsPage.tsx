@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useMemo, useState, useRef } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import {
@@ -165,35 +165,16 @@ const routes: Record<string, string> = {
 const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Remote", "Internship"]
 const EXPERIENCE_LEVELS = ["Entry Level", "Mid Level", "Senior Level", "Lead/Manager"]
 
-function useSystemTheme() {
-  const [systemTheme, setSystemTheme] = useState<Theme>("light")
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return
-
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-    const updateTheme = (matches: boolean) => {
-      setSystemTheme(matches ? "dark" : "light")
-    }
-
-    updateTheme(mediaQuery.matches)
-    const listener = (event: MediaQueryListEvent) => updateTheme(event.matches)
-    mediaQuery.addEventListener("change", listener)
-    return () => mediaQuery.removeEventListener("change", listener)
-  }, [])
-
-  return systemTheme
-}
-
 export default function JobsPage() {
   const router = useRouter()
-  const { theme } = useTheme()
-  const systemTheme = useSystemTheme()
+  const { resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
 
-  const isDark = useMemo(
-    () => theme === "dark" || (theme === "system" && systemTheme === "dark"),
-    [systemTheme, theme]
-  )
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const isDark = resolvedTheme === "dark"
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
@@ -281,11 +262,15 @@ export default function JobsPage() {
   const jobsToRender =
     mode === "offers" ? offers : mode === "my-jobs" ? filteredMyJobs : openJobs
 
+  if (!mounted) {
+    return null
+  }
+
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
       <AppShell currentPage="jobs" navigateTo={navigateTo}>
         {/* Header */}
-        <div
+        {/* <div
           className={`${isDark ? "bg-[#1a1f2e] border-[#2d3548]" : "bg-white border-gray-200"} border-b sticky top-0 z-10`}
         >
           <div className="max-w-7xl mx-auto px-4 md:px-8 py-4">
@@ -295,10 +280,10 @@ export default function JobsPage() {
                 <p className={isDark ? "text-gray-400" : "text-gray-600"}>Find your next career opportunity</p>
               </div>
 
-              {/* "Upload Job" button removed as requested */}
+              
             </div>
           </div>
-        </div>
+        </div> */}
 
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
 
