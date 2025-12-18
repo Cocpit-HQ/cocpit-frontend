@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { DarkSidebar } from "@/components/DarkSidebar";
 import type { Page } from "@/types/common";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
-import PostWithOptions from "@/components/home/PostWithOptions";
-import CreatePostModal from "@/components/home/CreatePostModal";
+import { useActionModal } from "@/context/ActionModalContext";
 
 interface AppShellProps {
   currentPage: Page;
@@ -18,12 +17,7 @@ export function AppShell({
   children,
   navigateTo,
 }: AppShellProps) {
-  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const onAdd = () => {
-    setIsOptionsOpen(!isOptionsOpen);
-  };
+  const { toggleOptions } = useActionModal();
 
   return (
     <div className="relative flex min-h-screen">
@@ -36,25 +30,9 @@ export function AppShell({
       <main className="flex-1 w-full md:ml-64 pb-16 md:pb-0">{children}</main>
 
       {/* Mobile bottom navigation */}
-      <MobileBottomNav currentPage={currentPage} onAdd={onAdd} />
-
-      {isOptionsOpen && (
-        <PostWithOptions
-          onClose={() => setIsOptionsOpen(false)}
-          onOptionClick={(option) => {
-            if (option === 'photo') {
-              setIsModalOpen(true);
-            }
-            // Handle other options here
-            setIsOptionsOpen(false);
-          }}
-        />
-      )}
-
-      <CreatePostModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <MobileBottomNav currentPage={currentPage} onAdd={toggleOptions} />
     </div>
   );
 }
 
 export default AppShell;
-

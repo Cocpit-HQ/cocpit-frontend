@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "@/components/providers";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { ActionModalProvider } from "@/context/ActionModalContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,9 +32,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          {children}
-          <Toaster />
-          <Sonner />
+          <ActionModalProvider>
+            {children}
+            <Toaster />
+            <Sonner />
+          </ActionModalProvider>
         </Providers>
       </body>
     </html>

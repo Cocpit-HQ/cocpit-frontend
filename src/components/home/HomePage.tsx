@@ -10,6 +10,7 @@ import PostSkeleton from './PostSkeleton'
 import CreatePost from './CreatePost'
 import SuggestionsPanel from '@/components/SuggestionsPanel'
 import { AppShell } from '@/components/layout/AppShell'
+import { useActionModal } from '@/context/ActionModalContext'
 
 /* -------------------- Types -------------------- */
 
@@ -31,6 +32,7 @@ export default function HomePage() {
   const router = useRouter()
   const { resolvedTheme, theme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const { openModal } = useActionModal()
 
   useEffect(() => {
     setMounted(true)
@@ -41,7 +43,6 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [posts, setPosts] = useState<Post[]>([])
   const [searchQuery, setSearchQuery] = useState('')
-  const [isModalOpen, setIsModalOpen] = useState(false)
 
   /* -------------------- Effects -------------------- */
 
@@ -151,7 +152,7 @@ export default function HomePage() {
               <section className="lg:col-span-8">
                 {/* Create Post */}
                 <div className="hidden md:block">
-                  <CreatePost onOpenModal={() => setIsModalOpen(true)} />
+                  <CreatePost onOpenModal={openModal} />
                 </div>
 
                 {/* Posts */}
@@ -195,4 +196,3 @@ export default function HomePage() {
     </div>
   )
 }
-
