@@ -12,7 +12,8 @@ import {
   Filter,
   X,
   Check,
-  Plus
+  Plus,
+  ArrowLeft
 } from "lucide-react"
 
 import { AppShell } from "@/components/layout/AppShell"
@@ -237,6 +238,7 @@ export default function JobsPage() {
 
   const handleSearch = () => {
     setIsSearchExpanded(false)
+    setShowMobileSearch(false)
     // Here you would trigger the actual search/filter logic
   }
 
@@ -398,7 +400,7 @@ export default function JobsPage() {
             </div>
           </div>
 
-          {/* Mobile search pill (Unchanged design, just simple state binding) */}
+          {/* Mobile search pill */}
           <div
             className={`md:hidden mb-6 border rounded-2xl p-4 ${
               isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
@@ -415,7 +417,7 @@ export default function JobsPage() {
             >
               <Search className="h-5 w-5 text-gray-400" />
               <span className="text-sm text-left flex-1">
-                Search jobs by title or location
+                {collapsedSearchText || "Search jobs by title or location"}
               </span>
             </button>
           </div>
@@ -823,92 +825,97 @@ export default function JobsPage() {
         </div>
       </AppShell>
 
-      {/* Mobile search widget */}
+      {/* Mobile search widget - UPDATED */}
       {showMobileSearch && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm md:hidden">
-          <div
-            className={`w-full max-w-md rounded-t-2xl p-4 pb-6 ${
-              isDark ? "bg-[#242b3d]" : "bg-white"
-            }`}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className={isDark ? "text-white" : "text-gray-900"}>Search jobs</h2>
-              <button
-                type="button"
-                onClick={() => setShowMobileSearch(false)}
-                className={`rounded-full p-2 ${
-                  isDark
-                    ? "text-gray-400 hover:bg-[#171c28]"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+        <div className="fixed inset-0 z-50 flex flex-col bg-white md:hidden">
+           {/* Mobile Header with Back Arrow */}
+           <div className={`p-4 border-b flex items-center gap-3 ${
+              isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
+           }`}>
+             <button
+               onClick={() => setShowMobileSearch(false)}
+               className={`p-2 rounded-full ${
+                 isDark ? "text-gray-400 hover:bg-[#171c28]" : "text-gray-600 hover:bg-gray-100"
+               }`}
+             >
+               <ArrowLeft className="w-6 h-6" />
+             </button>
+             <h2 className={`text-lg font-medium ${isDark ? "text-white" : "text-gray-900"}`}>Search Jobs</h2>
+           </div>
 
-            <div className="space-y-4">
-              <div className="relative">
-                <Search
-                  className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${
-                    isDark ? "text-gray-400" : "text-gray-500"
-                  }`}
-                />
-                <input
-                  type="text"
-                  placeholder="Job title or keyword"
-                  value={searchKeywords}
-                  onChange={(e) => setSearchKeywords(e.target.value)}
-                  className={`w-full rounded-lg border px-10 py-3 text-sm focus:outline-none focus:border-[#5B7CFF] ${
-                    isDark
-                      ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-400"
-                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
-                  }`}
-                />
+          <div className={`flex-1 p-4 overflow-y-auto ${isDark ? "bg-[#171c28]" : "bg-gray-50"}`}>
+            <div className="space-y-6">
+
+              {/* Keywords Input */}
+              <div>
+                <label className={`block text-xs font-medium mb-1.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  Keywords
+                </label>
+                <div className={`relative ${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-300"} border rounded-xl`}>
+                  <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                  <input
+                    type="text"
+                    value={searchKeywords}
+                    onChange={(e) => setSearchKeywords(e.target.value)}
+                    placeholder="Job title, keywords, or company"
+                    className={`w-full bg-transparent pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#5B7CFF] rounded-xl ${
+                      isDark ? "text-white placeholder-gray-500" : "text-gray-900 placeholder-gray-400"
+                    }`}
+                  />
+                </div>
               </div>
 
-              <div className="relative">
-                <MapPin
-                  className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${
-                    isDark ? "text-gray-400" : "text-gray-500"
-                  }`}
-                />
-                <input
-                  type="text"
-                  placeholder="Location"
-                  className={`w-full rounded-lg border px-10 py-3 text-sm focus:outline-none focus:border-[#5B7CFF] ${
-                    isDark
-                      ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-400"
-                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
-                  }`}
-                />
-              </div>
-            </div>
+              {/* Locations Input (Multi-select) */}
+              <div>
+                <label className={`block text-xs font-medium mb-1.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  Locations
+                </label>
+                <div className={`flex flex-wrap items-center gap-2 p-3 border rounded-xl min-h-[50px] ${
+                  isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-300"
+                }`}>
+                  <MapPin className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-gray-400" : "text-gray-500"}`} />
 
-            <div className="mt-6 flex gap-3">
+                  {/* Selected Locations Tags */}
+                  {searchLocations.map((loc, idx) => (
+                    <span key={idx} className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm ${
+                      isDark ? "bg-[#171c28] text-blue-300 border border-[#2d3548]" : "bg-blue-50 text-blue-700"
+                    }`}>
+                      {loc}
+                      <button onClick={() => handleRemoveSearchLocation(loc)} className="hover:opacity-70">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+
+                  <input
+                    type="text"
+                    value={searchLocationInput}
+                    onChange={(e) => setSearchLocationInput(e.target.value)}
+                    onKeyDown={handleAddSearchLocation}
+                    placeholder={searchLocations.length === 0 ? "Type city & hit Enter..." : "Add..."}
+                    className={`flex-1 bg-transparent min-w-[100px] focus:outline-none py-1 text-sm ${
+                      isDark ? "text-white placeholder-gray-500" : "text-gray-900 placeholder-gray-400"
+                    }`}
+                  />
+                </div>
+                <p className={`text-[10px] mt-1.5 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+                  Type a city name and press Enter to add it
+                </p>
+              </div>
+
               <button
                 type="button"
-                onClick={() => setShowMobileSearch(false)}
-                className={`flex-1 rounded-lg border px-4 py-2 text-sm ${
-                  isDark
-                    ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28]"
-                    : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                }`}
+                onClick={handleSearch}
+                className="w-full mt-4 rounded-xl bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] px-4 py-3.5 text-base font-medium text-white hover:opacity-90 shadow-md"
               >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowMobileSearch(false)}
-                className="flex-1 rounded-lg bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-              >
-                Search
+                Search Results
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Mobile filters widget */}
+      {/* Mobile filters widget - UPDATED */}
       {showMobileFilters && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm md:hidden">
           <div
@@ -932,27 +939,43 @@ export default function JobsPage() {
             </div>
 
             <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+
+              {/* Job Type Multi-select (Matched Desktop Logic) */}
               <div>
                 <label
-                  className={`mb-2 block text-sm ${
+                  className={`mb-2 block text-sm font-medium ${
                     isDark ? "text-gray-400" : "text-gray-600"
                   }`}
                 >
                   Job Type
                 </label>
-                <select
-                  className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-[#5B7CFF] ${
-                    isDark
-                      ? "bg-[#171c28] border-[#2d3548] text-white"
-                      : "bg-gray-50 border-gray-300 text-gray-900"
-                  }`}
-                >
-                  <option>All Types</option>
-                  <option>Full-time</option>
-                  <option>Part-time</option>
-                  <option>Contract</option>
-                  <option>Remote</option>
-                </select>
+                <div className="grid grid-cols-2 gap-2">
+                   {JOB_TYPES.map((type) => {
+                      const isSelected = filterJobTypes.includes(type)
+                      return (
+                        <label key={type} className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
+                          isSelected
+                           ? "border-[#5B7CFF] bg-[#5B7CFF]/5"
+                           : isDark ? "border-[#2d3548] bg-[#171c28]" : "border-gray-200 bg-gray-50"
+                        }`}>
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${
+                            isSelected
+                             ? "bg-[#5B7CFF] border-[#5B7CFF]"
+                             : isDark ? "border-[#2d3548] bg-[#242b3d]" : "border-gray-300 bg-white"
+                          }`}>
+                            {isSelected && <Check className="w-3 h-3 text-white" />}
+                          </div>
+                          <input
+                            type="checkbox"
+                            className="hidden"
+                            checked={isSelected}
+                            onChange={() => toggleJobType(type)}
+                          />
+                          <span className={`text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}>{type}</span>
+                        </label>
+                      )
+                   })}
+                </div>
               </div>
 
               <div>
