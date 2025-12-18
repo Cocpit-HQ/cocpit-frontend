@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { Plus, Check, X } from "lucide-react";
-
-type Theme = "dark" | "light" | "system";
 
 type Suggestion = {
   id: string;
@@ -14,12 +13,17 @@ type Suggestion = {
   verified: boolean;
 };
 
-interface SuggestionsPanelProps {
-  theme?: Theme;
-}
+interface SuggestionsPanelProps {}
 
-export function SuggestionsPanel({ theme = "dark" }: SuggestionsPanelProps) {
-  const isDark = theme === "dark" || theme === "system";
+export function SuggestionsPanel({}: SuggestionsPanelProps) {
+  const { resolvedTheme } = useTheme();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const isDark = resolvedTheme === "dark";
 
   const suggestions: Suggestion[] = [
     {
@@ -79,13 +83,12 @@ export function SuggestionsPanel({ theme = "dark" }: SuggestionsPanelProps) {
     setHiddenIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
   };
 
-  if (visibleSuggestions.length === 0) {
+  if (!isMounted || visibleSuggestions.length === 0) {
     return null;
   }
 
   return (
     <div
-      suppressHydrationWarning
       className={`${
         isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
       } rounded-xl border overflow-hidden`}
@@ -110,7 +113,9 @@ export function SuggestionsPanel({ theme = "dark" }: SuggestionsPanelProps) {
             <div
               key={person.id}
               className={`relative flex min-w-[220px] flex-col gap-2 rounded-xl p-3 snap-start ${
-                isDark ? "bg-[#1a1f2e] border border-[#2d3548]" : "bg-white border border-gray-200"
+                isDark
+                  ? "bg-[#1a1f2e] border border-[#2d3548]"
+                  : "bg-white border border-gray-200"
               }`}
             >
               <button
@@ -247,7 +252,9 @@ export function SuggestionsPanel({ theme = "dark" }: SuggestionsPanelProps) {
       <div className="px-4 pb-4">
         <button
           className={`text-sm transition-all ${
-            isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"
+            isDark
+              ? "text-gray-400 hover:text-white"
+              : "text-gray-600 hover:text-gray-900"
           }`}
         >
           View more suggestions →

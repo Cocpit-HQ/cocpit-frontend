@@ -160,6 +160,11 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true)
   const [events, setEvents] = useState<EventCard[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -169,9 +174,13 @@ export default function EventsPage() {
     return () => clearTimeout(timer)
   }, [])
 
+  if (!mounted) {
+    return null
+  }
+
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
-      <AppShell currentPage="events" navigateTo={navigateTo} onAdd={() => setShowCreateForm(true)}>
+      <AppShell currentPage="events" navigateTo={navigateTo}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
           <div className="flex items-center justify-between mb-6 md:mb-8 gap-4">
             <div>

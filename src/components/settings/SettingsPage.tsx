@@ -11,6 +11,7 @@ import {
   Monitor,
   Sun,
   Moon,
+  ArrowLeft,
   Settings as SettingsIcon,
 } from "lucide-react"
 
@@ -215,9 +216,22 @@ export default function SettingsPage() {
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
       <AppShell currentPage="settings" navigateTo={navigateTo}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
-          <div className="mb-6 md:mb-8">
-            <h1 className={`mb-2 ${isDark ? "text-white" : "text-[#1A1A1A]"}`}>Settings</h1>
-            <p className={isDark ? "text-gray-400" : "text-[#666666]"}>Manage your account preferences and privacy settings</p>
+          <div className="mb-6 md:mb-8 flex items-center gap-4">
+            <button
+              onClick={() => router.push("/profile")}
+              className={`p-2 rounded-full transition-all ${
+                isDark ? "hover:bg-white/10" : "hover:bg-black/10"
+              }
+              `}
+            >
+              <ArrowLeft className={`w-5 h-5 ${isDark ? "text-white" : "text-[#1A1A1A]"}`} />
+            </button>
+            <div>
+              <h1 className={`mb-2 ${isDark ? "text-white" : "text-[#1A1A1A]"}`}>Settings</h1>
+              <p className={isDark ? "text-gray-400" : "text-[#666666]"}>
+                Manage your account preferences and privacy settings
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -368,7 +382,7 @@ export default function SettingsPage() {
 
             <div className="lg:col-span-3">
               <div className="sticky top-8">
-                <SuggestionsPanel theme={theme as Theme} />
+                <SuggestionsPanel />
               </div>
             </div>
           </div>

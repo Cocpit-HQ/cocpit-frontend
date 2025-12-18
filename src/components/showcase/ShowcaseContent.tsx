@@ -430,7 +430,7 @@ export default function ShowcaseContent() {
 
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
-      <AppShell currentPage="network" navigateTo={navigateTo} onAdd={() => setShowCreateStory(true)}>
+      <AppShell currentPage="network" navigateTo={navigateTo}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8">
           <div className="mb-6 md:mb-8 flex items-center justify-between">
             <div>
@@ -525,7 +525,7 @@ export default function ShowcaseContent() {
             {/* Suggestions */}
             <aside className="lg:col-span-4">
               <div className="sticky top-24 md:top-28">
-                <SuggestionsPanel theme={isDark ? "dark" : "light"} />
+                <SuggestionsPanel />
               </div>
             </aside>
           </div>

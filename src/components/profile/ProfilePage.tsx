@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
-import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap } from "lucide-react"
+import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap, Settings } from "lucide-react"
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import { AppShell } from "@/components/layout/AppShell"
@@ -57,9 +57,9 @@ function ExperienceItem({
         <Briefcase className="w-6 h-6 text-white" />
       </div>
       <div className="flex-1">
-        <h3 className={`mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>{title}</h3>
-        <p className={`mb-1 ${isDark ? "text-gray-400" : "text-gray-600"}`}>{company}</p>
-        <div className={`flex items-center gap-2 text-sm mb-2 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+        <h3 className={`font-semibold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>{title}</h3>
+        <p className={`text-sm mb-1 ${isDark ? "text-gray-400" : "text-gray-600"}`}>{company}</p>
+        <div className={`flex items-center gap-2 text-xs mb-2 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
           <span>{duration}</span>
           <span>•</span>
           <span>{location}</span>
@@ -103,17 +103,23 @@ export default function ProfilePage() {
                   isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
                 } rounded-xl overflow-hidden border mb-6 relative`}
               >
-                <div className="h-48 bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899] relative">
-                  <button className="absolute top-4 right-4 bg-[#5B7CFF] text-white px-4 py-2 rounded-lg hover:bg-[#4A6BEF] transition-all flex items-center gap-2">
+                <div className="h-36 bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899] relative">
+                  <button
+                    onClick={() => router.push("/settings")}
+                    className="absolute top-3 right-3 bg-transparent text-white p-2 rounded-full hover:bg-white/10 transition-all flex items-center gap-2 md:hidden"
+                  >
+                    <Settings className="w-5 h-5" />
+                  </button>
+                  <button className="hidden md:flex absolute top-3 right-3 bg-[#5B7CFF] text-white px-4 py-2 rounded-lg hover:bg-[#4A6BEF] transition-all items-center gap-2 text-sm">
                     <Edit2 className="w-4 h-4" />
                     Edit Profile
                   </button>
                 </div>
 
                 <div className="px-6 pb-6">
-                  <div className="flex items-start justify-between -mt-16 mb-6">
+                  <div className="flex items-start justify-between -mt-14 mb-4">
                     <div
-                      className={`w-40 h-40 rounded-full border-4 ${
+                      className={`w-32 h-32 rounded-full border-4 ${
                         isDark ? "border-[#242b3d]" : "border-white"
                       } bg-white overflow-hidden flex-shrink-0 relative`}
                     >
@@ -123,20 +129,24 @@ export default function ProfilePage() {
                         className="w-full h-full object-cover"
                       />
                     </div>
+                    <button className="md:hidden mt-16 bg-[#5B7CFF] text-white px-4 py-2 rounded-lg hover:bg-[#4A6BEF] transition-all flex items-center gap-2 text-sm">
+                      <Edit2 className="w-4 h-4" />
+                      Edit Profile
+                    </button>
                   </div>
 
                   <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <h1 className={isDark ? "text-white" : "text-gray-900"}>Sally Liang</h1>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h1 className={`text-2xl ${isDark ? "text-white" : "text-gray-900"}`}>Sally Liang</h1>
                       <CheckCircle className="w-5 h-5 text-[#5B7CFF] fill-[#5B7CFF]" />
-                      <span className={isDark ? "text-gray-400" : "text-gray-600"}>· 2nd</span>
+                      <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>· 2nd</span>
                     </div>
 
-                    <p className={`text-lg mb-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                    <p className={`text-base mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                       Senior Financial Analyst at Johnson & Johnson
                     </p>
 
-                    <div className={`flex items-center gap-2 text-sm mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                    <div className={`flex items-center gap-2 text-xs mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                       <span>Berkeley, California, United States</span>
                       <span>·</span>
                       <a href="#" className="text-[#5B7CFF] hover:underline">
@@ -144,7 +154,7 @@ export default function ProfilePage() {
                       </a>
                     </div>
 
-                    <p className={isDark ? "text-gray-400 mb-4" : "text-gray-600 mb-4"}>500+ connections</p>
+                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"} mb-4`}>500+ connections</p>
                   </div>
                 </div>
               </div>
@@ -152,20 +162,20 @@ export default function ProfilePage() {
               <div
                 className={`${
                   isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
-                } rounded-xl border p-6 mb-6`}
+                } rounded-xl border p-4 mb-6`}
               >
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
-                    <p className={`text-2xl mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>500+</p>
-                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Connections</p>
+                    <p className={`text-xl mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>500+</p>
+                    <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Connections</p>
                   </div>
                   <div className={`text-center border-l border-r ${isDark ? "border-[#2d3548]" : "border-gray-200"}`}>
-                    <p className={`text-2xl mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>1,234</p>
-                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Profile Views</p>
+                    <p className={`text-xl mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>1,234</p>
+                    <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Profile Views</p>
                   </div>
                   <div className="text-center">
-                    <p className={`text-2xl mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>87</p>
-                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Posts</p>
+                    <p className={`text-xl mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>87</p>
+                    <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Posts</p>
                   </div>
                 </div>
               </div>
@@ -175,8 +185,8 @@ export default function ProfilePage() {
                   isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
                 } rounded-xl border p-6 mb-6`}
               >
-                <h2 className={isDark ? "text-white mb-4" : "text-gray-900 mb-4"}>About</h2>
-                <p className={`leading-relaxed ${isDark ? "text-gray-400" : "text-gray-700"}`}>
+                <h2 className={`text-xl ${isDark ? "text-white" : "text-gray-900"} mb-4`}>About</h2>
+                <p className={`text-sm leading-relaxed ${isDark ? "text-gray-400" : "text-gray-700"}`}>
                   Passionate product manager with 7+ years of experience building user-centric solutions that drive business growth.
                   Proven track record in agile development, user research, and cross-functional team leadership. Successfully launched 15+
                   features that improved user engagement by 40% and increased revenue by $2M annually.
@@ -188,8 +198,8 @@ export default function ProfilePage() {
                   isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
                 } rounded-xl border p-6 mb-6`}
               >
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className={isDark ? "text-white" : "text-gray-900"}>Experience</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className={`text-xl ${isDark ? "text-white" : "text-gray-900"}`}>Experience</h2>
                   <button className="text-[#5B7CFF] hover:underline text-sm">Add</button>
                 </div>
 
@@ -218,8 +228,8 @@ export default function ProfilePage() {
                   isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
                 } rounded-xl border p-6 mb-6`}
               >
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className={isDark ? "text-white" : "text-gray-900"}>Skills</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className={`text-xl ${isDark ? "text-white" : "text-gray-900"}`}>Skills</h2>
                   <button className="text-[#5B7CFF] hover:underline text-sm">Add</button>
                 </div>
 
@@ -244,8 +254,8 @@ export default function ProfilePage() {
               </div>
 
               <div className={`${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} rounded-xl border p-6`}>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className={isDark ? "text-white" : "text-gray-900"}>Education</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className={`text-xl ${isDark ? "text-white" : "text-gray-900"}`}>Education</h2>
                   <button className="text-[#5B7CFF] hover:underline text-sm">Add</button>
                 </div>
 
@@ -254,9 +264,11 @@ export default function ProfilePage() {
                     <GraduationCap className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h3 className={isDark ? "text-white mb-1" : "text-gray-900 mb-1"}>MBA in Business Administration</h3>
-                    <p className={`mb-1 ${isDark ? "text-gray-400" : "text-gray-600"}`}>Stanford University</p>
-                    <div className={`flex items-center gap-2 text-sm mb-2 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+                    <h3 className={`font-semibold ${isDark ? "text-white" : "text-gray-900"} mb-1`}>
+                      MBA in Business Administration
+                    </h3>
+                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"} mb-1`}>Stanford University</p>
+                    <div className={`flex items-center gap-2 text-xs mb-2 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
                       <span>2016 - 2018</span>
                       <span>•</span>
                       <span>Stanford, CA</span>
@@ -271,7 +283,7 @@ export default function ProfilePage() {
 
             <div className="lg:col-span-4">
               <div className="sticky top-8 space-y-6">
-                <SuggestionsPanel theme={theme as Theme} />
+                <SuggestionsPanel />
               </div>
             </div>
           </div>

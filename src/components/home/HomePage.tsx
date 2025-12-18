@@ -186,7 +186,7 @@ export default function HomePage() {
               {/* Suggestions */}
               <aside className="lg:col-span-4">
                 <div className="sticky top-24 md:top-28">
-                  <SuggestionsPanel theme={isDark ? 'dark' : 'light'} />
+                  <SuggestionsPanel />
                 </div>
               </aside>
             </div>
