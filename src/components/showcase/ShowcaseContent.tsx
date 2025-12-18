@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
-import { Eye, MessageCircle, Play, Share2, ThumbsUp, X, Send, Plus } from "lucide-react"
+import { ArrowLeft, Eye, MessageCircle, Play, Share2, ThumbsUp, X, Send, Plus, Search } from "lucide-react"
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import { AppShell } from "@/components/layout/AppShell"
@@ -48,8 +48,8 @@ function ShowcaseSkeletonCard({ isDark }: { isDark: boolean }) {
         isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
       }`}
     >
-      <div className={`h-48 ${isDark ? "bg-[#1f2534]" : "bg-gray-200"}`} />
-      <div className="p-4 space-y-3">
+      <div className={`h-32 ${isDark ? "bg-[#1f2534]" : "bg-gray-200"}`} />
+      <div className="p-3 space-y-3">
         <div
           className={`h-5 rounded w-3/4 ${isDark ? "bg-[#323a4b]" : "bg-gray-200"}`}
         />
@@ -82,6 +82,7 @@ export default function ShowcaseContent() {
   const [stories, setStories] = useState<StoryDetail[]>([])
   const [selectedStory, setSelectedStory] = useState<StoryDetail | null>(null)
   const [showCreateStory, setShowCreateStory] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -91,15 +92,65 @@ export default function ShowcaseContent() {
     return () => clearTimeout(timer)
   }, [])
 
+  const filteredStories = useMemo(() => {
+    const q = searchQuery.toLowerCase()
+    if (!q) {
+      return stories
+    }
+    return stories.filter((story) =>
+      story.author.name.toLowerCase().includes(q)
+    )
+  }, [stories, searchQuery])
+
+  const formatCompactNumber = (number: number) => {
+    if (number >= 1000000) {
+      return (number / 1000000).toFixed(1).replace(/\.0$/, '') + 'm';
+    }
+    if (number >= 1000) {
+      return (number / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return number.toString();
+  };
+
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
       <AppShell currentPage="network" navigateTo={navigateTo}>
+        <header
+          className={`sticky top-0 z-20 border-b px-4 py-3 md:py-4 ${
+            isDark
+              ? 'bg-[#171c28] border-[#2d3548]'
+              : 'bg-[#F3F2EF] border-gray-200'
+          }`}
+        >
+          <div className="max-w-7xl mx-auto flex items-center gap-3">
+            <button
+              onClick={() => router.back()}
+              className={`md:hidden p-2 rounded-full transition-colors -ml-2 ${
+                isDark ? "hover:bg-[#242b3d]" : "hover:bg-gray-200"
+              }`}
+            >
+              <ArrowLeft className={`w-5 h-5 ${isDark ? "text-white" : "text-gray-900"}`} />
+            </button>
+            <div className="flex items-center gap-3 max-w-2xl w-full">
+              <Search className="w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search stories by author..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:border-[#5B7CFF]
+                  ${
+                    isDark
+                      ? 'bg-[#242b3d] text-white placeholder-gray-500 border-[#2d3548]'
+                      : 'bg-white text-gray-900 placeholder-gray-500 border-gray-300'
+                  }`}
+              />
+            </div>
+          </div>
+        </header>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8">
           <div className="mb-6 md:mb-8 flex items-center justify-between">
-            <div>
-              <h1 className={isDark ? "text-white mb-2" : "text-gray-900 mb-2"}>Showcase</h1>
-              <p className={isDark ? "text-gray-400" : "text-gray-600"}>Share your professional journey through stories</p>
-            </div>
+            
             <button
               onClick={() => setShowCreateStory(true)}
               className="bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:opacity-90 transition-all flex items-center gap-2 text-sm md:text-base"
@@ -112,14 +163,14 @@ export default function ShowcaseContent() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 pb-4">
             {/* Stories Grid */}
             <section className="lg:col-span-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-2 md:gap-6">
                 {loading &&
                   Array.from({ length: 4 }).map((_, idx) => (
                     <ShowcaseSkeletonCard key={idx} isDark={isDark} />
                   ))}
 
                 {!loading &&
-                  stories.map((story) => (
+                  filteredStories.map((story) => (
                     <div
                       key={story.id}
                       className={`rounded-xl overflow-hidden border transition-all group cursor-pointer ${
@@ -129,7 +180,7 @@ export default function ShowcaseContent() {
                       }`}
                       onClick={() => setSelectedStory(story)}
                     >
-                      <div className="relative h-48 overflow-hidden">
+                      <div className="relative h-32 overflow-hidden">
                         <img
                           src={story.image}
                           alt={story.title}
@@ -145,31 +196,31 @@ export default function ShowcaseContent() {
                         <AuthorBadge story={story} />
                       </div>
 
-                      <div className="p-4">
+                      <div className="p-3">
                         <h3
-                          className={`mb-2 group-hover:text-[#5B7CFF] transition-colors ${
+                          className={`mb-1 group-hover:text-[#5B7CFF] transition-colors ${
                             isDark ? "text-white" : "text-gray-900"
                           }`}
                         >
                           {story.title}
                         </h3>
-                        <div className={`flex items-center justify-between text-sm ${
+                        <div className={`flex flex-wrap items-center justify-between text-xs gap-y-1 ${
                           isDark ? "text-gray-400" : "text-gray-600"
                         }`}>
                           <span>{story.timeAgo}</span>
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1.5">
                             <div className="flex items-center gap-1">
                               <Eye className="w-4 h-4" />
-                              <span>{story.views.toLocaleString()}</span>
+                              <span>{formatCompactNumber(story.views)}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <ThumbsUp className="w-4 h-4" />
-                              <span>{story.likes}</span>
+                              <span>{formatCompactNumber(story.likes)}</span>
                             </div>
                             {story.comments ? (
                               <div className="flex items-center gap-1">
                                 <MessageCircle className="w-4 h-4" />
-                                <span>{story.comments}</span>
+                                <span>{formatCompactNumber(story.comments)}</span>
                               </div>
                             ) : null}
                             <button className={`transition-colors ${
@@ -182,6 +233,15 @@ export default function ShowcaseContent() {
                       </div>
                     </div>
                   ))}
+                {!loading && searchQuery && filteredStories.length === 0 && (
+                    <p
+                      className={`text-center py-12 ${
+                        isDark ? 'text-gray-400' : 'text-gray-600'
+                      } col-span-2`}
+                    >
+                      No stories found matching "{searchQuery}"
+                    </p>
+                  )}
               </div>
             </section>
 
