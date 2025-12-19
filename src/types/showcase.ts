@@ -24,5 +24,7 @@ export interface ShowcaseState extends LoadingState {
 export interface StoryDetail extends StoryCard {
   authorTitle?: string;
   description?: string;
+  viewers?: StoryAuthor[];
+  likers?: StoryAuthor[];
 }
 

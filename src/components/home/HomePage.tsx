@@ -15,6 +15,7 @@ import { StoryRail } from './StoryRail'
 import { FeedTabs } from './FeedTabs'
 import { CreateStoryForm } from '@/components/showcase/CreateStoryForm'
 import { StoryModal } from '@/components/showcase/StoryModal'
+import { MobileStoryViewer } from '@/components/showcase/MobileStoryViewer'
 import { storiesSeed } from '@/constants/stories'
 import { StoryDetail } from '@/types/showcase'
 import { X } from 'lucide-react'
@@ -49,9 +50,15 @@ export default function HomePage() {
 
   const [loading, setLoading] = useState(true)
   const [posts, setPosts] = useState<Post[]>([])
+  const [stories, setStories] = useState<StoryDetail[]>(storiesSeed)
   const [searchQuery, setSearchQuery] = useState('')
   const [showCreateStory, setShowCreateStory] = useState(false)
   const [selectedStory, setSelectedStory] = useState<StoryDetail | null>(null)
+
+  const handleCreateStory = (newStory: StoryDetail) => {
+    setStories((prev) => [newStory, ...prev])
+    setShowCreateStory(false)
+  }
 
   /* -------------------- Effects -------------------- */
 
@@ -163,7 +170,7 @@ export default function HomePage() {
                 <div className="md:hidden">
                   <StoryRail
                     isDark={isDark}
-                    stories={storiesSeed}
+                    stories={stories}
                     onCreateClick={() => setShowCreateStory(true)}
                     onStoryClick={(story) => setSelectedStory(story)}
                   />
@@ -220,11 +227,23 @@ export default function HomePage() {
 
       {/* Modals */}
       {selectedStory && (
-        <StoryModal
-          story={selectedStory}
-          onClose={() => setSelectedStory(null)}
-          isDark={isDark}
-        />
+        <>
+          <div className="md:hidden">
+            <MobileStoryViewer
+              stories={stories}
+              initialStoryId={selectedStory.id}
+              onClose={() => setSelectedStory(null)}
+              isDark={isDark}
+            />
+          </div>
+          <div className="hidden md:block">
+            <StoryModal
+              story={selectedStory}
+              onClose={() => setSelectedStory(null)}
+              isDark={isDark}
+            />
+          </div>
+        </>
       )}
 
       {showCreateStory && (
@@ -243,7 +262,11 @@ export default function HomePage() {
             </div>
 
             <div className="p-6">
-              <CreateStoryForm isDark={isDark} onCancel={() => setShowCreateStory(false)} onCreated={() => setShowCreateStory(false)} />
+              <CreateStoryForm
+                isDark={isDark}
+                onCancel={() => setShowCreateStory(false)}
+                onCreated={handleCreateStory}
+              />
             </div>
           </div>
         </div>

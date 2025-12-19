@@ -2,11 +2,12 @@
 
 import React, { useState, useRef } from "react"
 import { Image, Video, FileText } from "lucide-react"
+import { StoryDetail } from "@/types/showcase"
 
 type Props = {
   isDark: boolean
   onCancel?: () => void
-  onCreated?: () => void
+  onCreated?: (story: StoryDetail) => void
 }
 
 export function CreateStoryForm({ isDark, onCancel, onCreated }: Props) {
@@ -21,8 +22,28 @@ export function CreateStoryForm({ isDark, onCancel, onCreated }: Props) {
   }
 
   const handleCreate = () => {
-    // TODO: Handle story creation
-    onCreated?.()
+    if (!selectedImage && !selectedVideo) return
+
+    const newStory: StoryDetail = {
+      id: Date.now(),
+      image: selectedImage || selectedVideo || "", // Just using the data URL for now
+      isVideo: !!selectedVideo,
+      author: {
+        name: "You",
+        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop",
+      },
+      title: "My New Story",
+      timeAgo: "Just now",
+      views: 0,
+      likes: 0,
+      comments: 0,
+      authorTitle: "Me",
+      description: description,
+      viewers: [],
+      likers: []
+    }
+
+    onCreated?.(newStory)
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
