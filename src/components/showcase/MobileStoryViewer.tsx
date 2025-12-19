@@ -89,7 +89,8 @@ const UserStorySlide = ({
             setStoryIndex(prev => prev + 1)
             setProgress(0)
         } else {
-            onNextUser()
+            // Defer to next tick to avoid state update during render
+            setTimeout(onNextUser, 0)
         }
     }
 
@@ -98,7 +99,8 @@ const UserStorySlide = ({
             setStoryIndex(prev => prev - 1)
             setProgress(0)
         } else {
-            onPrevUser()
+            // Defer to next tick to avoid state update during render
+            setTimeout(onPrevUser, 0)
         }
     }
 
