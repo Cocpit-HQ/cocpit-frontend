@@ -15,6 +15,7 @@ import { StoryRail } from './StoryRail'
 import { FeedTabs } from './FeedTabs'
 import { CreateStoryForm } from '@/components/showcase/CreateStoryForm'
 import { StoryModal } from '@/components/showcase/StoryModal'
+import { MobileStoryViewer } from '@/components/showcase/MobileStoryViewer'
 import { storiesSeed } from '@/constants/stories'
 import { StoryDetail } from '@/types/showcase'
 import { X } from 'lucide-react'
@@ -220,11 +221,23 @@ export default function HomePage() {
 
       {/* Modals */}
       {selectedStory && (
-        <StoryModal
-          story={selectedStory}
-          onClose={() => setSelectedStory(null)}
-          isDark={isDark}
-        />
+        <>
+          <div className="md:hidden">
+            <MobileStoryViewer
+              stories={storiesSeed}
+              initialStoryId={selectedStory.id}
+              onClose={() => setSelectedStory(null)}
+              isDark={isDark}
+            />
+          </div>
+          <div className="hidden md:block">
+            <StoryModal
+              story={selectedStory}
+              onClose={() => setSelectedStory(null)}
+              isDark={isDark}
+            />
+          </div>
+        </>
       )}
 
       {showCreateStory && (

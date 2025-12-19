@@ -2,6 +2,28 @@ import { StoryDetail } from "@/types/showcase";
 
 export const storiesSeed: StoryDetail[] = [
   {
+    id: 999,
+    image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMHByZXNlbnRhdGlvbnxlbnwxfHx8fDE3NjUzMjU3MjR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+    author: {
+      name: "You",
+      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop",
+    },
+    title: "My Update",
+    timeAgo: "1m ago",
+    views: 45,
+    likes: 12,
+    comments: 3,
+    authorTitle: "Me",
+    description: "Just sharing my latest update with my close friends!",
+    viewers: [
+      { name: "Sarah Chen", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop" },
+      { name: "Mike Torres", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop" },
+    ],
+    likers: [
+      { name: "Emma Peterson", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop" },
+    ],
+  },
+  {
     id: 1,
     image:
       "https://images.unsplash.com/photo-1709715357520-5e1047a2b691?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMHRlYW0lMjBtZWV0aW5nfGVufDF8fHx8MTc2NTM5NzQ5M3ww&ixlib=rb-4.1.0&q=80&w=1080",
