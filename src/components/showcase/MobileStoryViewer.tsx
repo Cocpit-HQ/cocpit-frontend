@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
-import { X, MoreVertical } from "lucide-react"
+import { X, MoreVertical, Heart } from "lucide-react"
 import useEmblaCarousel from "embla-carousel-react"
 import { EmblaCarouselType } from "embla-carousel"
 import { StoryDetail } from "@/types/showcase"
@@ -40,6 +40,8 @@ const UserStorySlide = ({
     const [storyIndex, setStoryIndex] = useState(0)
     const [progress, setProgress] = useState(0)
     const [showInteraction, setShowInteraction] = useState(false)
+    const [isPaused, setIsPaused] = useState(false)
+    const [isLiked, setIsLiked] = useState(false)
 
     // Sort stories chronologically (Oldest -> Newest)
     // We assume ID correlates with time.
@@ -55,12 +57,19 @@ const UserStorySlide = ({
         if (isActiveUser) {
             setStoryIndex(0)
             setProgress(0)
+            setIsLiked(false) // Reset like state for new user? Or keep per story.
+            // Ideally we should sync with story.likes but we don't have that detail.
         }
     }, [isActiveUser])
 
+    // Reset like when story changes
+    useEffect(() => {
+        setIsLiked(false)
+    }, [storyIndex])
+
     // Auto-advance
     useEffect(() => {
-        if (!isActiveUser || showInteraction) return
+        if (!isActiveUser || showInteraction || isPaused) return
 
         const interval = setInterval(() => {
             setProgress((prev) => {
@@ -73,7 +82,7 @@ const UserStorySlide = ({
         }, 50) // 5s per story
 
         return () => clearInterval(interval)
-    }, [isActiveUser, showInteraction, storyIndex])
+    }, [isActiveUser, showInteraction, storyIndex, isPaused])
 
     const handleNext = () => {
         if (storyIndex < sortedStories.length - 1) {
@@ -98,11 +107,13 @@ const UserStorySlide = ({
     const touchStartX = useRef<number | null>(null)
 
     const handleTouchStart = (e: React.TouchEvent) => {
+        setIsPaused(true)
         touchStartY.current = e.touches[0].clientY
         touchStartX.current = e.touches[0].clientX
     }
 
     const handleTouchEnd = (e: React.TouchEvent) => {
+        setIsPaused(false)
         if (touchStartY.current === null || touchStartX.current === null) return
 
         const deltaY = e.changedTouches[0].clientY - touchStartY.current
@@ -197,12 +208,27 @@ const UserStorySlide = ({
                     className="w-full h-full object-cover"
                 />
                  {!showInteraction && (
-                    <div className="absolute bottom-20 left-0 right-0 text-center pointer-events-none">
-                        <div className="flex flex-col items-center gap-1 opacity-60 animate-bounce">
-                            <div className="w-6 h-1 bg-white/50 rounded-full" />
-                            <p className="text-white text-xs font-medium drop-shadow-md">Swipe up for details</p>
+                    <>
+                        <div className="absolute bottom-20 left-0 right-0 text-center pointer-events-none">
+                            <div className="flex flex-col items-center gap-1 opacity-60 animate-bounce">
+                                <div className="w-6 h-1 bg-white/50 rounded-full" />
+                                <p className="text-white text-xs font-medium drop-shadow-md">Swipe up for details</p>
+                            </div>
                         </div>
-                    </div>
+
+                        {/* Like Button */}
+                        <div className="absolute bottom-6 right-4 pointer-events-auto">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    setIsLiked(!isLiked)
+                                }}
+                                className="p-3 rounded-full bg-black/20 backdrop-blur-sm active:scale-95 transition-transform"
+                            >
+                                <Heart className={`w-8 h-8 ${isLiked ? "fill-red-500 text-red-500" : "text-white"}`} />
+                            </button>
+                        </div>
+                    </>
                 )}
              </div>
         </div>
@@ -253,7 +279,10 @@ export function MobileStoryViewer({ stories, initialStoryId, onClose, isDark }: 
 
   // Sync index on select
   const onSelect = useCallback((emblaApi: EmblaCarouselType) => {
-    setCurrentIndex(emblaApi.selectedScrollSnap())
+    // Avoid synchronous state update during render/effect cycle
+    requestAnimationFrame(() => {
+        setCurrentIndex(emblaApi.selectedScrollSnap())
+    })
   }, [])
 
   // Cube Effect Logic
