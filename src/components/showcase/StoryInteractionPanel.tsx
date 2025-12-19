@@ -29,14 +29,24 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory, isDar
   }
 
   return (
-    <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/50 backdrop-blur-sm transition-all duration-300">
+    <div
+        className="absolute inset-0 z-50 flex flex-col justify-end bg-black/50 backdrop-blur-sm transition-all duration-300"
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
+    >
         {/* Click outside to close area */}
-        <div className="flex-1" onClick={onClose} />
+        <div className="flex-1" />
 
-        <div className={`
-            w-full rounded-t-2xl overflow-hidden flex flex-col max-h-[70vh]
-            ${isDark ? "bg-[#242b3d] text-white" : "bg-white text-gray-900"}
-        `}>
+        <div
+            className={`
+                w-full rounded-t-2xl overflow-hidden flex flex-col max-h-[70vh] cursor-default
+                ${isDark ? "bg-[#242b3d] text-white" : "bg-white text-gray-900"}
+            `}
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+        >
             {/* Handle/Grabber */}
             <div className="w-full flex items-center justify-center pt-3 pb-2 cursor-pointer" onClick={onClose}>
                 <div className="w-10 h-1 bg-gray-300 rounded-full" />

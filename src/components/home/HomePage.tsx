@@ -50,9 +50,15 @@ export default function HomePage() {
 
   const [loading, setLoading] = useState(true)
   const [posts, setPosts] = useState<Post[]>([])
+  const [stories, setStories] = useState<StoryDetail[]>(storiesSeed)
   const [searchQuery, setSearchQuery] = useState('')
   const [showCreateStory, setShowCreateStory] = useState(false)
   const [selectedStory, setSelectedStory] = useState<StoryDetail | null>(null)
+
+  const handleCreateStory = (newStory: StoryDetail) => {
+    setStories((prev) => [newStory, ...prev])
+    setShowCreateStory(false)
+  }
 
   /* -------------------- Effects -------------------- */
 
@@ -164,7 +170,7 @@ export default function HomePage() {
                 <div className="md:hidden">
                   <StoryRail
                     isDark={isDark}
-                    stories={storiesSeed}
+                    stories={stories}
                     onCreateClick={() => setShowCreateStory(true)}
                     onStoryClick={(story) => setSelectedStory(story)}
                   />
@@ -224,7 +230,7 @@ export default function HomePage() {
         <>
           <div className="md:hidden">
             <MobileStoryViewer
-              stories={storiesSeed}
+              stories={stories}
               initialStoryId={selectedStory.id}
               onClose={() => setSelectedStory(null)}
               isDark={isDark}
@@ -256,7 +262,11 @@ export default function HomePage() {
             </div>
 
             <div className="p-6">
-              <CreateStoryForm isDark={isDark} onCancel={() => setShowCreateStory(false)} onCreated={() => setShowCreateStory(false)} />
+              <CreateStoryForm
+                isDark={isDark}
+                onCancel={() => setShowCreateStory(false)}
+                onCreated={handleCreateStory}
+              />
             </div>
           </div>
         </div>
