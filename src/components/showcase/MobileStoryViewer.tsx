@@ -140,6 +140,13 @@ const UserStorySlide = ({
         // But Taps need to be handled.
         // If swipe distance is very small, treat as tap.
         if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10) {
+            // TAP
+            // If description is expanded and we tap outside of it (this container), close it
+            if (isDescriptionExpanded) {
+                setIsDescriptionExpanded(false)
+                return
+            }
+
             const screenWidth = window.innerWidth
             const tapX = e.changedTouches[0].clientX
 
@@ -218,7 +225,7 @@ const UserStorySlide = ({
                             <div
                                 className={`absolute transition-all duration-300 z-30 pointer-events-auto
                                     ${isDescriptionExpanded
-                                        ? "inset-x-0 bottom-0 bg-black/80 rounded-t-xl p-6 max-h-[50vh] overflow-y-auto"
+                                        ? "left-4 right-4 bottom-4 bg-black/80 rounded-xl p-6 max-h-[50vh] overflow-y-auto"
                                         : "left-4 right-16 bottom-10"
                                     }
                                 `}
