@@ -40,6 +40,7 @@ const UserStorySlide = ({
     const [storyIndex, setStoryIndex] = useState(0)
     const [progress, setProgress] = useState(0)
     const [showInteraction, setShowInteraction] = useState(false)
+    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
     const [isPaused, setIsPaused] = useState(false)
     const [isLiked, setIsLiked] = useState(false)
 
@@ -57,19 +58,20 @@ const UserStorySlide = ({
         if (isActiveUser) {
             setStoryIndex(0)
             setProgress(0)
-            setIsLiked(false) // Reset like state for new user? Or keep per story.
-            // Ideally we should sync with story.likes but we don't have that detail.
+            setIsLiked(false)
+            setIsDescriptionExpanded(false)
         }
     }, [isActiveUser])
 
-    // Reset like when story changes
+    // Reset like/description when story changes
     useEffect(() => {
         setIsLiked(false)
+        setIsDescriptionExpanded(false)
     }, [storyIndex])
 
     // Auto-advance
     useEffect(() => {
-        if (!isActiveUser || showInteraction || isPaused) return
+        if (!isActiveUser || showInteraction || isPaused || isDescriptionExpanded) return
 
         const interval = setInterval(() => {
             setProgress((prev) => {
@@ -82,7 +84,7 @@ const UserStorySlide = ({
         }, 50) // 5s per story
 
         return () => clearInterval(interval)
-    }, [isActiveUser, showInteraction, storyIndex, isPaused])
+    }, [isActiveUser, showInteraction, storyIndex, isPaused, isDescriptionExpanded])
 
     const handleNext = () => {
         if (storyIndex < sortedStories.length - 1) {
@@ -211,12 +213,53 @@ const UserStorySlide = ({
                 />
                  {!showInteraction && (
                     <>
-                        <div className="absolute bottom-20 left-0 right-0 text-center pointer-events-none">
-                            <div className="flex flex-col items-center gap-1 opacity-60 animate-bounce">
-                                <div className="w-6 h-1 bg-white/50 rounded-full" />
-                                <p className="text-white text-xs font-medium drop-shadow-md">Swipe up for details</p>
+                        {/* Description Overlay */}
+                        {currentStory.description && (
+                            <div
+                                className={`absolute transition-all duration-300 z-30 pointer-events-auto
+                                    ${isDescriptionExpanded
+                                        ? "inset-x-0 bottom-0 bg-black/80 rounded-t-xl p-6 max-h-[50vh] overflow-y-auto"
+                                        : "left-4 right-16 bottom-10"
+                                    }
+                                `}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    // Toggle expansion
+                                    setIsDescriptionExpanded(!isDescriptionExpanded)
+                                }}
+                            >
+                                <p className={`text-white text-sm leading-relaxed drop-shadow-md transition-opacity duration-300 ${isDescriptionExpanded ? 'opacity-100' : 'opacity-90'}`}>
+                                    {isDescriptionExpanded ? (
+                                        currentStory.description
+                                    ) : (
+                                        <>
+                                            {(() => {
+                                                const limit = 100;
+                                                if (currentStory.description.length <= limit) return currentStory.description;
+                                                // Truncate at the last space before the limit
+                                                const truncated = currentStory.description.slice(0, limit);
+                                                const lastSpace = truncated.lastIndexOf(' ');
+                                                return truncated.slice(0, lastSpace > 0 ? lastSpace : limit);
+                                            })()}
+                                            {currentStory.description.length > 100 && (
+                                                <>
+                                                    ... <span className="font-semibold underline ml-1 text-white/90">Read more</span>
+                                                </>
+                                            )}
+                                        </>
+                                    )}
+                                </p>
                             </div>
-                        </div>
+                        )}
+
+                        {!isDescriptionExpanded && (
+                            <div className="absolute bottom-24 left-0 right-0 text-center pointer-events-none">
+                                <div className="flex flex-col items-center gap-1 opacity-60 animate-bounce">
+                                    <div className="w-6 h-1 bg-white/50 rounded-full" />
+                                    <p className="text-white text-xs font-medium drop-shadow-md">Swipe up for details</p>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Like Button */}
                         <div className="absolute bottom-6 right-4 pointer-events-auto">
