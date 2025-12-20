@@ -3,7 +3,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
-import { Search } from 'lucide-react'
+import { Search, MessageCircle } from 'lucide-react'
+import Link from 'next/link'
 
 import FeedPost from './FeedPost'
 import PostSkeleton from './PostSkeleton'
@@ -16,6 +17,7 @@ import { FeedTabs } from './FeedTabs'
 import { CreateStoryForm } from '@/components/showcase/CreateStoryForm'
 import { StoryModal } from '@/components/showcase/StoryModal'
 import { MobileStoryViewer } from '@/components/showcase/MobileStoryViewer'
+import { NotificationPopover } from '@/components/notifications/NotificationPopover'
 import { storiesSeed } from '@/constants/stories'
 import { StoryDetail } from '@/types/showcase'
 import { X } from 'lucide-react'
@@ -141,8 +143,8 @@ export default function HomePage() {
               : 'bg-[#F3F2EF] border-gray-200'
           }`}
         >
-          <div className="max-w-5xl mx-auto">
-            <div className="flex items-center gap-3 max-w-2xl">
+          <div className="max-w-5xl mx-auto flex items-center gap-4">
+            <div className="flex-1 flex items-center gap-3 max-w-2xl">
               <Search className="w-5 h-5 text-gray-400" />
               <input
                 type="text"
@@ -156,6 +158,20 @@ export default function HomePage() {
                       : 'bg-white text-gray-900 placeholder-gray-500 border-gray-300'
                   }`}
               />
+            </div>
+
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Link
+                href="/messaging"
+                className={`p-2 rounded-full transition-colors ${
+                  isDark
+                    ? 'hover:bg-[#2d3548] text-gray-400'
+                    : 'hover:bg-gray-100 text-gray-600'
+                }`}
+              >
+                <MessageCircle className="w-6 h-6" />
+              </Link>
+              <NotificationPopover isDark={isDark} />
             </div>
           </div>
         </header>
