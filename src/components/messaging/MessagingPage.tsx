@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
-import { Search, Phone, Video, MoreHorizontal, Send, Smile, Paperclip, Image as ImageIcon } from "lucide-react"
+import { Search, Phone, Video, MoreHorizontal, Send, Smile, Paperclip, Image as ImageIcon, ArrowLeft } from "lucide-react"
 
 import { AppShell } from "@/components/layout/AppShell"
 import type { Page, Theme } from "@/types/common"
@@ -141,6 +141,9 @@ export default function MessagingPage() {
             <div className="md:col-span-2 flex flex-col">
               <div className={`p-4 border-b ${isDark ? "border-[#2d3548]" : "border-gray-200"} flex items-center justify-between`}>
                 <div className="flex items-center gap-3">
+                  <button onClick={() => router.back()} className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors md:hidden`}>
+                    <ArrowLeft className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+                  </button>
                   <div className="relative">
                     <div className={`w-10 h-10 bg-gradient-to-br ${avatarGradients[selectedChat.avatar]} rounded-full`} />
                     {selectedChat.online && (
