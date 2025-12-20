@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import { Calendar, MapPin, Search, Users, Plus, X } from "lucide-react"
@@ -8,67 +9,8 @@ import { Calendar, MapPin, Search, Users, Plus, X } from "lucide-react"
 import { AppShell } from "@/components/layout/AppShell"
 import type { Page, Theme } from "@/types/common"
 import type { EventCard } from "@/types/events"
+import { eventsSeed } from "@/lib/data/events";
 import { CreateEventForm } from "@/components/events/CreateEventForm"
-
-const routes: Record<string, string> = {
-  home: "/feed",
-  network: "/showcase",
-  events: "/events",
-  profile: "/profile",
-  settings: "/settings",
-  jobs: "/jobs",
-  analytics: "/analytics",
-  achievements: "/achievements",
-  "create-event": "/events/create",
-}
-
-const eventsSeed: EventCard[] = [
-  {
-    id: 1,
-    title: "Product Management Summit 2025",
-    date: "March 15, 2025",
-    time: "10:00 AM - 5:00 PM",
-    location: "San Francisco, CA",
-    attendees: "234",
-    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop",
-  },
-  {
-    id: 2,
-    title: "Tech Networking Mixer",
-    date: "March 20, 2025",
-    time: "6:00 PM - 9:00 PM",
-    location: "Virtual Event",
-    attendees: "156",
-    image: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&h=400&fit=crop",
-  },
-  {
-    id: 3,
-    title: "Web Development Workshop",
-    date: "March 25, 2025",
-    time: "2:00 PM - 6:00 PM",
-    location: "New York, NY",
-    attendees: "89",
-    image: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&h=400&fit=crop",
-  },
-  {
-    id: 4,
-    title: "AI & Machine Learning Conference",
-    date: "April 5, 2025",
-    time: "9:00 AM - 6:00 PM",
-    location: "Seattle, WA",
-    attendees: "412",
-    image: "https://images.unsplash.com/photo-1591115765373-5207764f72e7?w=800&h=400&fit=crop",
-  },
-  {
-    id: 5,
-    title: "Design Thinking Masterclass",
-    date: "April 12, 2025",
-    time: "1:00 PM - 4:00 PM",
-    location: "Los Angeles, CA",
-    attendees: "67",
-    image: "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&h=400&fit=crop",
-  },
-]
 
 function useSystemTheme() {
   const [systemTheme, setSystemTheme] = useState<Theme>("light")
@@ -105,8 +47,8 @@ function EventCardItem({ event, isDark }: { event: EventCard; isDark: boolean })
     <div
       className={`${isDark ? "bg-[#242b3d] border-[#2d3548] hover:border-[#3d4558]" : "bg-white border-gray-200 hover:border-gray-300"} rounded-xl border overflow-hidden transition-all`}
     >
-      <div className="flex flex-col md:flex-row">
-        <div className="md:w-80 h-56 md:h-auto flex-shrink-0">
+      <div className="flex flex-col">
+        <div className="h-56 flex-shrink-0">
           <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
         </div>
 
@@ -133,9 +75,9 @@ function EventCardItem({ event, isDark }: { event: EventCard; isDark: boolean })
           </div>
 
           <div>
-            <button className="bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-6 py-3 rounded-full hover:opacity-90 transition-all">
+            <Link href={`/events/${event.id}`} className="bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-6 py-3 rounded-full hover:opacity-90 transition-all">
               Event Info
-            </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -148,6 +90,18 @@ export default function EventsPage() {
   const { theme } = useTheme()
   const systemTheme = useSystemTheme()
 
+  const routes: Record<string, string> = {
+    home: "/feed",
+    network: "/showcase",
+    events: "/events",
+    profile: "/profile",
+    settings: "/settings",
+    jobs: "/jobs",
+    analytics: "/analytics",
+    achievements: "/achievements",
+    "create-event": "/events/create",
+  }
+
   const isDark = useMemo(
     () => theme === "dark" || (theme === "system" && systemTheme === "dark"),
     [systemTheme, theme]
@@ -157,22 +111,20 @@ export default function EventsPage() {
     router.push(routes[page] ?? "/feed")
   }
 
-  const [loading, setLoading] = useState(true)
-  const [events, setEvents] = useState<EventCard[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [currentView, setCurrentView] = useState<'all' | 'participated'>('all');
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setEvents(eventsSeed)
-      setLoading(false)
-    }, 800)
-    return () => clearTimeout(timer)
-  }, [])
+  const filteredEvents = useMemo(() => {
+    if (currentView === 'participated') {
+      return eventsSeed.filter(event => event.participated);
+    }
+    return eventsSeed;
+  }, [currentView]);
 
   if (!mounted) {
     return null
@@ -213,11 +165,38 @@ export default function EventsPage() {
             </div>
           </div>
 
-          <div className="space-y-4 md:space-y-6">
-            {loading &&
-              Array.from({ length: 3 }).map((_, idx) => <EventSkeletonCard key={idx} />)}
+          <div className={`mb-6 md:mb-8 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setCurrentView('all')}
+                className={`px-4 py-2 text-sm font-medium ${
+                  currentView === 'all'
+                    ? `border-b-2 border-[#5B7CFF] text-[#5B7CFF]`
+                    : `${isDark ? 'text-gray-400' : 'text-gray-500'} hover:text-[#5B7CFF]`
+                }`}
+              >
+                All Events
+              </button>
+              <button
+                onClick={() => setCurrentView('participated')}
+                className={`px-4 py-2 text-sm font-medium ${
+                  currentView === 'participated'
+                    ? `border-b-2 border-[#5B7CFF] text-[#5B7CFF]`
+                    : `${isDark ? 'text-gray-400' : 'text-gray-500'} hover:text-[#5B7CFF]`
+                }`}
+              >
+                Participated Events
+              </button>
+            </div>
+          </div>
 
-            {!loading && events.map((event) => <EventCardItem key={event.id} event={event} isDark={isDark} />)}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {filteredEvents.map((event) => <EventCardItem key={event.id} event={event} isDark={isDark} />)}
+            {filteredEvents.length === 0 && (
+              <div className={`text-center py-12 ${isDark ? 'text-gray-400' : 'text-gray-600'} md:col-span-2`}>
+                <p>No events found.</p>
+              </div>
+            )}
           </div>
         </div>
       </AppShell>

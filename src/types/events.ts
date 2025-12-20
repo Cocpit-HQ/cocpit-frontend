@@ -8,6 +8,9 @@ export interface EventCard {
   location: string;
   attendees: string;
   image: string;
+  participated?: boolean;
+  type?: 'Free' | 'Premium';
+  price?: number;
 }
 
 export interface EventsState extends LoadingState {
