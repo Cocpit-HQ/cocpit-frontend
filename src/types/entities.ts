@@ -18,7 +18,7 @@ export interface Experience {
   title: string;
   company: string;
   duration: string;
-  location: string;
+  location:string;
   description: string;
 }
 
@@ -29,4 +29,28 @@ export interface Education {
   fieldOfStudy: string;
   duration: string;
   description: string;
+}
+
+export interface Comment {
+  id: number;
+  author: {
+    name: string;
+    avatar: string;
+  };
+  text: string;
+  timeAgo: string;
+  likes: number;
+}
+
+export interface Post {
+  id: number;
+  author: string;
+  title: string;
+  timeAgo: string;
+  content: string;
+  imageSrc: string;
+  likes: string;
+  comments: string;
+  shares: string;
+  commentData?: Comment[];
 }

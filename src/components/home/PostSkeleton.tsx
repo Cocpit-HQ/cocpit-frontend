@@ -4,7 +4,7 @@ import React from 'react'
 
 export default function PostSkeleton() {
   return (
-    <div className="rounded-xl border p-6 animate-pulse bg-gray-100 dark:bg-[#242b3d] border-gray-200 dark:border-[#2d3548]">
+    <div className="md:rounded-xl border p-6 animate-pulse bg-gray-100 dark:bg-[#242b3d] border-gray-200 dark:border-[#2d3548]">
       <div className="flex items-start gap-4 mb-4">
         <div className="w-12 h-12 rounded-full bg-gray-300 dark:bg-[#2b3345]" />
         <div className="flex-1">
