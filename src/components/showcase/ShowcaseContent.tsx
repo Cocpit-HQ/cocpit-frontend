@@ -13,6 +13,7 @@ import { CreateStoryForm } from "@/components/showcase/CreateStoryForm"
 import { storiesSeed } from "@/constants/stories"
 import { AuthorBadge } from "@/components/showcase/AuthorBadge"
 import { StoryModal } from "@/components/showcase/StoryModal"
+import { MobileStoryViewer } from "@/components/showcase/MobileStoryViewer"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -81,6 +82,7 @@ export default function ShowcaseContent() {
   const [loading, setLoading] = useState(true)
   const [stories, setStories] = useState<StoryDetail[]>([])
   const [selectedStory, setSelectedStory] = useState<StoryDetail | null>(null)
+  const [mobileSelectedStoryId, setMobileSelectedStoryId] = useState<number | null>(null)
   const [showCreateStory, setShowCreateStory] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -178,7 +180,14 @@ export default function ShowcaseContent() {
                           ? "bg-[#242b3d] border-[#2d3548] hover:border-[#404968]"
                           : "bg-white border-gray-200 hover:border-gray-300 shadow-sm"
                       }`}
-                      onClick={() => setSelectedStory(story)}
+                      onClick={() => {
+                        const isMobile = window.matchMedia("(max-width: 768px)").matches
+                        if (isMobile) {
+                          setMobileSelectedStoryId(story.id)
+                        } else {
+                          setSelectedStory(story)
+                        }
+                      }}
                     >
                       <div className="relative h-32 overflow-hidden">
                         <img
@@ -256,6 +265,15 @@ export default function ShowcaseContent() {
       </AppShell>
       {selectedStory && (
         <StoryModal story={selectedStory} onClose={() => setSelectedStory(null)} isDark={isDark} />
+      )}
+
+      {mobileSelectedStoryId !== null && (
+        <MobileStoryViewer
+          stories={filteredStories}
+          initialStoryId={mobileSelectedStoryId}
+          onClose={() => setMobileSelectedStoryId(null)}
+          isDark={isDark}
+        />
       )}
 
        {showCreateStory && (

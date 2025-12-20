@@ -237,6 +237,8 @@ const UserStorySlide = ({
                                     // Toggle expansion
                                     setIsDescriptionExpanded(!isDescriptionExpanded)
                                 }}
+                                onTouchStart={(e) => e.stopPropagation()}
+                                onTouchEnd={(e) => e.stopPropagation()}
                             >
                                 <p className={`text-white text-sm leading-relaxed drop-shadow-md transition-opacity duration-300 ${isDescriptionExpanded ? 'opacity-100' : 'opacity-90'}`}>
                                     {isDescriptionExpanded ? (
