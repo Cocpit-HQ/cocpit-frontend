@@ -1,3 +1,18 @@
+export interface User {
+  id: number;
+  email: string;
+  username: string;
+  fullName: string;
+  headline?: string;
+  jobTitle?: string;
+  company?: string;
+  school?: string;
+  degree?: string;
+  location?: string;
+  about?: string;
+  avatar?: string;
+}
+
 export interface Experience {
   id: number;
   title: string;
