@@ -31,21 +31,7 @@ const routes: Record<string, string> = {
   achievements: "/achievements",
 }
 
-function useSystemTheme() {
-  const [systemTheme, setSystemTheme] = useState<Theme>("light")
 
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-    const updateTheme = (matches: boolean) => setSystemTheme(matches ? "dark" : "light")
-    updateTheme(mediaQuery.matches)
-    const listener = (event: MediaQueryListEvent) => updateTheme(event.matches)
-    mediaQuery.addEventListener("change", listener)
-    return () => mediaQuery.removeEventListener("change", listener)
-  }, [])
-
-  return systemTheme
-}
 
 function ExperienceItem({
   isDark,
@@ -169,8 +155,8 @@ const initialEducations: Education[] = [
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { theme } = useTheme()
-  const systemTheme = useSystemTheme()
+  const { theme, resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false);
   const [isAddSkillModalOpen, setIsAddSkillModalOpen] = useState(false);
   const [isAddExperienceModalOpen, setIsAddExperienceModalOpen] = useState(false);
   const [isAddEducationModalOpen, setIsAddEducationModalOpen] = useState(false);
@@ -180,11 +166,19 @@ export default function ProfilePage() {
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const isDark = useMemo(
-    () => theme === "dark" || (theme === "system" && systemTheme === "dark"),
-    [systemTheme, theme]
+    () => resolvedTheme === "dark",
+    [resolvedTheme]
   )
 
+  if (!mounted) {
+    return null;
+  }
+  
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
   }
