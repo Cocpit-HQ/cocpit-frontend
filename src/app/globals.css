@@ -265,6 +265,18 @@
   }
 }
 
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+}
+
 /* Retaining some simple animations from old globals if unique */
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -315,6 +327,10 @@
 
 .animate-twinkle {
   animation: twinkle 1.2s ease-in-out infinite;
+}
+
+.animate-wiggle {
+  animation: wiggle 0.2s ease-in-out;
 }
 
 .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
