@@ -66,7 +66,7 @@ export function StoryRail({ isDark, stories, onCreateClick, onStoryClick }: Stor
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
               <Plus className="w-6 h-6 text-white" />
             </div>
-            <span className="text-white text-sm font-medium mt-auto mb-2">Your Update</span>
+            <span className="text-white text-sm font-medium absolute bottom-2 left-0 w-full text-center md:static md:text-left md:mt-auto md:mb-2">Your Update</span>
           </div>
         </button>
 

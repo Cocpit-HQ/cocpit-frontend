@@ -43,6 +43,7 @@ const UserStorySlide = ({
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
     const [isPaused, setIsPaused] = useState(false)
     const [isLiked, setIsLiked] = useState(false)
+    const [likeKey, setLikeKey] = useState(0)
 
     // Sort stories chronologically (Oldest -> Newest)
     // We assume ID correlates with time.
@@ -59,6 +60,7 @@ const UserStorySlide = ({
             setStoryIndex(0)
             setProgress(0)
             setIsLiked(false)
+            setLikeKey(0)
             setIsDescriptionExpanded(false)
         }
     }, [isActiveUser])
@@ -66,6 +68,7 @@ const UserStorySlide = ({
     // Reset like/description when story changes
     useEffect(() => {
         setIsLiked(false)
+        setLikeKey(0)
         setIsDescriptionExpanded(false)
     }, [storyIndex])
 
@@ -269,15 +272,23 @@ const UserStorySlide = ({
                         )}
 
                         {/* Like Button */}
-                        <div className="absolute bottom-6 right-4 pointer-events-auto">
+                        <div
+                            className="absolute bottom-6 right-4 pointer-events-auto"
+                            onTouchStart={(e) => e.stopPropagation()}
+                            onTouchEnd={(e) => e.stopPropagation()}
+                        >
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation()
+                                    setLikeKey(prev => prev + 1)
                                     setIsLiked(!isLiked)
                                 }}
-                                className="p-3 rounded-full bg-black/20 backdrop-blur-sm active:scale-95 transition-transform"
+                                className="p-3 rounded-full active:scale-95 transition-transform"
                             >
-                                <Heart className={`w-8 h-8 ${isLiked ? "fill-red-500 text-red-500" : "text-white"}`} />
+                                <Heart
+                                    key={likeKey}
+                                    className={`w-8 h-8 ${isLiked ? "fill-red-500 text-red-500" : "text-white"} ${likeKey > 0 ? 'animate-wiggle' : ''}`}
+                                />
                             </button>
                         </div>
                     </>
