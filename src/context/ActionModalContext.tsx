@@ -1,12 +1,14 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import PostWithOptions from '@/components/home/PostWithOptions';
 import CreatePostModal from '@/components/home/CreatePostModal';
+import MobileCreateMenu from '@/components/home/MobileCreateMenu';
+
+type PostType = 'text' | 'photo' | 'video' | 'poll';
 
 interface ActionModalContextType {
   toggleOptions: () => void;
-  openModal: () => void;
+  openModal: (type?: PostType) => void;
 }
 
 const ActionModalContext = createContext<ActionModalContextType | undefined>(undefined);
@@ -24,34 +26,40 @@ interface ActionModalProviderProps {
 }
 
 export const ActionModalProvider = ({ children }: ActionModalProviderProps) => {
+  // isOptionsOpen now controls the MobileCreateMenu (Drawer)
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [initialPostType, setInitialPostType] = useState<PostType>('text');
 
   const toggleOptions = () => setIsOptionsOpen(prev => !prev);
   const closeOptions = () => setIsOptionsOpen(false);
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
 
-  const handleOptionClick = (option: string) => {
-    closeOptions();
-    if (option === 'photo') {
-      openModal();
-    }
-    // Handle other options like 'video' or 'poll' here
+  const openModal = (type: PostType = 'text') => {
+    setInitialPostType(type);
+    setIsModalOpen(true);
   };
+
+  const closeModal = () => setIsModalOpen(false);
 
   return (
     <ActionModalContext.Provider value={{ toggleOptions, openModal }}>
       {children}
       
-      {isOptionsOpen && (
-        <PostWithOptions
-          onClose={closeOptions}
-          onOptionClick={handleOptionClick}
-        />
-      )}
+      {/* Replaced PostWithOptions with MobileCreateMenu */}
+      <MobileCreateMenu
+        open={isOptionsOpen}
+        onOpenChange={setIsOptionsOpen}
+        onOptionClick={(type) => {
+          closeOptions();
+          openModal(type);
+        }}
+      />
       
-      <CreatePostModal isOpen={isModalOpen} onClose={closeModal} />
+      <CreatePostModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        initialPostType={initialPostType}
+      />
     </ActionModalContext.Provider>
   );
 };
