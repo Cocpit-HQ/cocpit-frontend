@@ -1,7 +1,8 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { ThumbsUp, MessageCircle, Share2, MoreHorizontal } from 'lucide-react'
+import useEmblaCarousel from 'embla-carousel-react'
 import { Post, Comment as CommentType } from '@/types/entities'
 import CommentSection from './CommentSection'
 import MobileCommentDrawer from './MobileCommentDrawer'
@@ -19,6 +20,7 @@ export default function FeedPost({
   timeAgo = '1h', 
   content, 
   imageSrc,
+  images,
   videoSrc,
   aspectRatio,
   likes = '0', 
@@ -34,7 +36,38 @@ export default function FeedPost({
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
   const [postComments, setPostComments] = useState<CommentType[]>(initialComments)
   
-  const imgSrc = imageSrc || '/assets/pngegg.png'
+  // Carousel State
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false })
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [showBadge, setShowBadge] = useState(false)
+  const badgeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const imgSrc = imageSrc || (images && images.length > 0 ? images[0] : null) || '/assets/pngegg.png'
+  const hasMultipleImages = images && images.length > 1
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return
+    setCurrentSlide(emblaApi.selectedScrollSnap())
+    triggerBadgeVisibility()
+  }, [emblaApi])
+
+  const triggerBadgeVisibility = useCallback(() => {
+    setShowBadge(true)
+    if (badgeTimeoutRef.current) clearTimeout(badgeTimeoutRef.current)
+    badgeTimeoutRef.current = setTimeout(() => {
+      setShowBadge(false)
+    }, 2000)
+  }, [])
+
+  useEffect(() => {
+    if (!emblaApi) return
+    emblaApi.on('select', onSelect)
+    emblaApi.on('reInit', onSelect)
+    emblaApi.on('scroll', triggerBadgeVisibility)
+    return () => {
+      if (badgeTimeoutRef.current) clearTimeout(badgeTimeoutRef.current)
+    }
+  }, [emblaApi, onSelect, triggerBadgeVisibility])
 
   const handleLike = () => {
     setIsLiked(!isLiked)
@@ -90,23 +123,48 @@ export default function FeedPost({
         <p className={`leading-relaxed mb-4 text-sm md:text-base ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{content}</p>
       </div>
 
-      {(imageSrc || videoSrc) && (
+      {(hasMultipleImages || imageSrc || videoSrc) && (
         <div
-          className="w-full overflow-hidden bg-black/5"
+          className="w-full overflow-hidden bg-black/5 relative group"
           style={aspectRatio && aspectRatio !== 'auto' ? { aspectRatio } : undefined}
+          onMouseEnter={triggerBadgeVisibility}
+          onTouchStart={triggerBadgeVisibility}
         >
           {videoSrc ? (
             <video
               src={videoSrc}
               controls
-              className={`w-full ${aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'h-auto'} object-cover`}
+              className={`w-full ${aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'h-auto'} object-contain bg-black`}
             />
+          ) : hasMultipleImages ? (
+            <div className="overflow-hidden h-full" ref={emblaRef}>
+              <div className="flex h-full">
+                {images?.map((src, index) => (
+                  <div className="flex-[0_0_100%] min-w-0 relative h-full bg-black" key={index}>
+                    <img
+                      src={src}
+                      alt={`Slide ${index + 1}`}
+                      className={`w-full h-full object-contain`}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : (
             <img
               src={imgSrc}
               alt="Post content"
-              className={`w-full ${aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'h-auto'} object-cover`}
+              className={`w-full ${aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'h-auto'} object-contain bg-black`}
             />
+          )}
+
+          {/* Slide Counter Badge */}
+          {hasMultipleImages && (
+            <div
+              className={`absolute top-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded-full transition-opacity duration-300 ${showBadge ? 'opacity-100' : 'opacity-0'}`}
+            >
+              {currentSlide + 1}/{images?.length}
+            </div>
           )}
         </div>
       )}

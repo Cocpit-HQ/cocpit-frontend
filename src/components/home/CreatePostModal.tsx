@@ -52,7 +52,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
     { label: 'Original', value: 'auto' },
     { label: '1:1', value: '1/1' },
     { label: '4:5', value: '4/5' },
-    { label: '16:9', value: '16/9' },
+    { label: '1.91:1', value: '1.91/1' },
+    { label: '9:16', value: '9/16' },
   ]
 
   useEffect(() => {
@@ -134,6 +135,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
       content: description,
       // Add other fields based on postType (images, video, poll)
       imageSrc: uploadedImages.length > 0 ? uploadedImages[0].url : undefined,
+      images: uploadedImages.map(img => img.url),
       videoSrc: videoUrl,
       aspectRatio: selectedAspectRatio,
       likes: '0',
@@ -305,7 +307,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                         <img
                           src={image.url}
                           alt="Upload preview"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain bg-black/5"
                           style={{
                             transform: `scale(${image.crop.zoom}) translate(${image.crop.x}px, ${image.crop.y}px)`,
                           }}
