@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { Search, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
-
 import FeedPost from './FeedPost'
 import PostSkeleton from './PostSkeleton'
 import CreatePost from './CreatePost'
@@ -18,23 +17,10 @@ import { CreateStoryForm } from '@/components/showcase/CreateStoryForm'
 import { StoryModal } from '@/components/showcase/StoryModal'
 import { MobileStoryViewer } from '@/components/showcase/MobileStoryViewer'
 import { NotificationPopover } from '@/components/notifications/NotificationPopover'
+import { Post, Comment } from '@/types/entities';
 import { storiesSeed } from '@/constants/stories'
 import { StoryDetail } from '@/types/showcase'
 import { X } from 'lucide-react'
-
-/* -------------------- Types -------------------- */
-
-type Post = {
-  id: number
-  author: string
-  title: string
-  timeAgo: string
-  content: string
-  imageSrc: string
-  likes: string
-  comments: string
-  shares: string
-}
 
 /* -------------------- Component -------------------- */
 
@@ -77,8 +63,12 @@ export default function HomePage() {
             '🎨 Just launched our new design system! Working with an amazing team to create consistent, accessible experiences across all our products.',
           imageSrc: '/assets/pngegg.png',
           likes: '10k',
-          comments: '18',
+          comments: '2',
           shares: '2',
+          commentData: [
+            { id: 1, author: { name: 'Alex Johnson', avatar: '/assets/pngegg.png' }, text: 'This looks amazing! Can\'t wait to see it in action.', timeAgo: '2h', likes: 15 },
+            { id: 2, author: { name: 'Maria Garcia', avatar: '/assets/pngegg.png' }, text: 'Great work, Sarah! The component library is so clean.', timeAgo: '1h', likes: 8 },
+          ]
         },
         {
           id: 2,
@@ -89,8 +79,11 @@ export default function HomePage() {
             'Excited to announce that our team just shipped a major feature update! 🚀',
           imageSrc: '/assets/pngegg.png',
           likes: '8.5k',
-          comments: '42',
+          comments: '1',
           shares: '5',
+          commentData: [
+            { id: 1, author: { name: 'David Lee', avatar: '/assets/pngegg.png' }, text: 'Congratulations to the whole team!', timeAgo: '4h', likes: 22 },
+          ]
         },
       ])
       setLoading(false)
@@ -224,8 +217,8 @@ export default function HomePage() {
         </header>
 
         {/* Main Content */}
-        <main className="pt-4 md:pt-6 pb-20 md:pb-8">
-          <div className="max-w-5xl mx-auto px-4 md:px-4">
+        <main className="pt-4 md:pt-6 pb-4 md:pb-8">
+          <div className="max-w-5xl mx-auto px-0 md:px-4">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
               {/* Feed */}
               <section className="lg:col-span-8">
@@ -250,7 +243,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Posts */}
-                <div className="space-y-4 md:space-y-6">
+                <div className="space-y-3 md:space-y-4">
                   {loading &&
                     Array.from({ length: 2 }).map((_, i) => (
                       <PostSkeleton key={i} />
@@ -261,6 +254,7 @@ export default function HomePage() {
                       <FeedPost
                         key={post.id}
                         {...post}
+                        initialComments={post.commentData}
                         isDark={isDark}
                       />
                     ))}

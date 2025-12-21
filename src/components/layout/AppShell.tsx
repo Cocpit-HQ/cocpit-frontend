@@ -20,14 +20,14 @@ export function AppShell({
   const { toggleOptions } = useActionModal();
 
   return (
-    <div className="relative flex min-h-screen">
+    <div className="relative flex h-screen">
       {/* Desktop sidebar */}
       <div className="hidden md:block">
         <DarkSidebar navigateTo={navigateTo} currentPage={currentPage} />
       </div>
 
       {/* Main content */}
-      <main className="flex-1 w-full md:ml-64 pb-16 md:pb-0">{children}</main>
+      <main className="flex-1 w-full md:ml-64 pb-16 md:pb-0 overflow-y-auto">{children}</main>
 
       {/* Mobile bottom navigation */}
       <MobileBottomNav currentPage={currentPage} onAdd={toggleOptions} />

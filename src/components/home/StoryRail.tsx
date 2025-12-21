@@ -55,7 +55,7 @@ export function StoryRail({ isDark, stories, onCreateClick, onStoryClick }: Stor
         </Link>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
         {/* Your Update Card */}
         <button
           onClick={onCreateClick}
