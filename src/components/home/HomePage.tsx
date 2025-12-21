@@ -89,51 +89,87 @@ export default function HomePage() {
       <AppShell currentPage="home" navigateTo={navigateTo}>
         {/* Top Search Bar */}
         <header
-          className={`sticky top-0 z-20 border-b px-4 py-4 md:px-4 ${
+          className={`sticky top-0 z-20 border-b px-4 py-3 md:py-4 ${
             isDark
               ? 'bg-[#171c28] border-[#2d3548]'
               : 'bg-[#F3F2EF] border-gray-200'
           }`}
         >
-          <div className="max-w-5xl mx-auto flex items-center gap-4">
-            <div
-              className={`flex-1 flex items-center gap-3 max-w-2xl transition-all duration-300 ${
-                isSearchFocused ? 'md:max-w-2xl max-w-full' : ''
-              }`}
-            >
-              <Search className="w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search posts, professionals..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
-                className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:border-[#5B7CFF]
-                  ${
+          <div className="max-w-5xl mx-auto">
+            {/* --- Desktop Header (Visible from md screens up) --- */}
+            <div className="hidden md:flex items-center gap-4">
+              {/* Desktop Search Bar */}
+              <div
+                className={`flex-1 flex items-center gap-3 max-w-2xl transition-all duration-300 ${
+                  isSearchFocused ? 'md:max-w-2xl' : ''
+                }`}
+              >
+                <Search className="w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search posts, professionals..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
+                  className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:border-[#5B7CFF] ${
                     isDark
                       ? 'bg-[#242b3d] text-white placeholder-gray-500 border-[#2d3548]'
                       : 'bg-white text-gray-900 placeholder-gray-500 border-gray-300'
                   }`}
-              />
+                />
+              </div>
+
+              {/* Desktop Icons */}
+              <div className="flex items-center gap-1 sm:gap-2">
+                <NotificationPopover isDark={isDark} />
+                <Link
+                  href="/messaging"
+                  className={`p-2 rounded-full transition-colors ${
+                    isDark
+                      ? 'hover:bg-[#2d3548] text-gray-400'
+                      : 'hover:bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  <MessageCircle className="w-6 h-6" />
+                </Link>
+              </div>
             </div>
 
-            <div
-              className={`flex items-center gap-1 sm:gap-2 transition-all duration-300 ${
-                isSearchFocused ? 'hidden md:flex' : 'flex'
-              }`}
-            >
-              <NotificationPopover isDark={isDark} />
-              <Link
-                href="/messaging"
-                className={`p-2 rounded-full transition-colors ${
-                  isDark
-                    ? 'hover:bg-[#2d3548] text-gray-400'
-                    : 'hover:bg-gray-100 text-gray-600'
-                }`}
-              >
-                <MessageCircle className="w-6 h-6" />
-              </Link>
+            {/* --- Mobile Header (Hidden from md screens up) --- */}
+            <div className="md:hidden relative flex items-center">
+              {/* Mobile Search Bar */}
+              <div className="flex-1 flex items-center gap-3">
+                <Search className="w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
+                  className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:border-[#5B7CFF] pr-20 ${
+                    isDark
+                      ? 'bg-[#242b3d] text-white placeholder-gray-500 border-[#2d3548]'
+                      : 'bg-white text-gray-900 placeholder-gray-500 border-gray-300'
+                  }`}
+                />
+              </div>
+
+              {/* Mobile Icons (Absolutely Positioned) */}
+              <div className="absolute top-1/2 right-0 -translate-y-1/2 flex items-center gap-1">
+                <NotificationPopover isDark={isDark} />
+                <Link
+                  href="/messaging"
+                  className={`p-2 rounded-full transition-colors ${
+                    isDark
+                      ? 'text-gray-400'
+                      : 'text-gray-600'
+                  }`}
+                >
+                  <MessageCircle className="w-6 h-6" />
+                </Link>
+              </div>
             </div>
           </div>
         </header>
