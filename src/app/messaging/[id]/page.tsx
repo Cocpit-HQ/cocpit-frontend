@@ -39,7 +39,7 @@ export default function ConversationPage() {
     // If chat not found, redirect or show error
     if (!chat) {
          return (
-            <div className={`min-h-screen ${isDark ? "bg-background" : "bg-[#F3F2EF]"}`}>
+            <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
                 <AppShell currentPage="messaging" navigateTo={navigateTo}>
                     <div className="flex items-center justify-center h-full">
                         <p>Chat not found.</p>
@@ -64,7 +64,7 @@ export default function ConversationPage() {
 
     // On desktop, show the same split view as the main page, but with the specific chat selected
     return (
-        <div className={`min-h-screen ${isDark ? "bg-background" : "bg-[#F3F2EF]"}`}>
+        <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
             <AppShell currentPage="messaging" navigateTo={navigateTo}>
                 <div className="max-w-7xl mx-auto px-0 md:px-4 md:py-6 pb-20 md:pb-10 h-full">
                 <div

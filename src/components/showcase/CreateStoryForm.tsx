@@ -80,7 +80,7 @@ export function CreateStoryForm({ isDark, onCancel, onCreated }: Props) {
         </label>
         <div
           className={`flex items-center justify-between rounded-lg border px-4 py-4 ${
-            isDark ? "bg-background border-[#2d3548] text-white" : "bg-[#0b1020]/5 border-gray-300 text-gray-900"
+            isDark ? "bg-[#171c28] border-[#2d3548] text-white" : "bg-[#0b1020]/5 border-gray-300 text-gray-900"
           }`}
         >
           {selectedImage ? (
@@ -122,7 +122,7 @@ export function CreateStoryForm({ isDark, onCancel, onCreated }: Props) {
         </label>
         <div
           className={`flex items-center justify-between rounded-lg border px-4 py-4 ${
-            isDark ? "bg-background border-[#2d3548] text-white" : "bg-[#0b1020]/5 border-gray-300 text-gray-900"
+            isDark ? "bg-[#171c28] border-[#2d3548] text-white" : "bg-[#0b1020]/5 border-gray-300 text-gray-900"
           }`}
         >
           {selectedVideo ? (
@@ -164,7 +164,7 @@ export function CreateStoryForm({ isDark, onCancel, onCreated }: Props) {
         </label>
         <div
           className={`flex items-start rounded-lg border px-4 py-3 ${
-            isDark ? "bg-background border-[#2d3548] text-white" : "bg-[#0b1020]/5 border-gray-300 text-gray-900"
+            isDark ? "bg-[#171c28] border-[#2d3548] text-white" : "bg-[#0b1020]/5 border-gray-300 text-gray-900"
           }`}
         >
           <FileText className="w-4 h-4 mr-3 text-gray-500 mt-1 flex-shrink-0" />
@@ -185,7 +185,7 @@ export function CreateStoryForm({ isDark, onCancel, onCreated }: Props) {
         <button
           onClick={handleCancel}
           className={`px-6 py-3 rounded-lg border text-sm ${
-            isDark ? "border-[#2d3548] text-gray-300 hover:bg-background" : "border-gray-300 text-gray-700 hover:bg-gray-50"
+            isDark ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28]" : "border-gray-300 text-gray-700 hover:bg-gray-50"
           }`}
         >
           Cancel

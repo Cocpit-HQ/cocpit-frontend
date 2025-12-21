@@ -213,7 +213,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-background" : "bg-[#F3F2EF]"}`}>
+    <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
       <AppShell currentPage="settings" navigateTo={navigateTo}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
           <div className="mb-6 md:mb-8 flex items-center gap-4">

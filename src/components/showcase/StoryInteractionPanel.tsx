@@ -136,7 +136,7 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory, isDar
                              {/* Mock Comments */}
                              <div className="flex gap-3">
                                 <div className="w-8 h-8 rounded-full bg-gray-200" />
-                                <div className={`${isDark ? "bg-background" : "bg-gray-100"} rounded-lg p-3 flex-1`}>
+                                <div className={`${isDark ? "bg-[#171c28]" : "bg-gray-100"} rounded-lg p-3 flex-1`}>
                                     <p className="text-sm font-semibold mb-1">Alice</p>
                                     <p className="text-sm">Great shot! 🔥</p>
                                 </div>
@@ -144,7 +144,7 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory, isDar
                              {localComments.map((c, i) => (
                                 <div key={i} className="flex gap-3">
                                     <div className="w-8 h-8 rounded-full bg-blue-500" />
-                                    <div className={`${isDark ? "bg-background" : "bg-gray-100"} rounded-lg p-3 flex-1`}>
+                                    <div className={`${isDark ? "bg-[#171c28]" : "bg-gray-100"} rounded-lg p-3 flex-1`}>
                                         <p className="text-sm font-semibold mb-1">You</p>
                                         <p className="text-sm">{c}</p>
                                     </div>
@@ -160,7 +160,7 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory, isDar
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
                                 className={`flex-1 px-4 py-2 rounded-full border focus:outline-none focus:border-[#5B7CFF]
-                                    ${isDark ? "bg-background border-gray-700" : "bg-gray-50 border-gray-300"}
+                                    ${isDark ? "bg-[#171c28] border-gray-700" : "bg-gray-50 border-gray-300"}
                                 `}
                              />
                              <button
