@@ -64,7 +64,7 @@ export default function AddExperienceForm({ onCancel, onSave, onDelete, isDark, 
   }
 
   const inputStyles = isDark
-    ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-500"
+    ? "bg-background border-[#2d3548] text-white placeholder-gray-500"
     : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
   
   const labelStyles = `text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`
@@ -157,7 +157,7 @@ export default function AddExperienceForm({ onCancel, onSave, onDelete, isDark, 
             type="button" 
             variant="outline" 
             onClick={onCancel}
-            className={isDark ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28] bg-transparent" : "border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent"}
+            className={isDark ? "border-[#2d3548] text-gray-300 hover:bg-background bg-transparent" : "border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent"}
           >
             Cancel
           </Button>

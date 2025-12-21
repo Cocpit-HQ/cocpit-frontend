@@ -46,7 +46,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, isDark
           <Button
             variant="outline"
             onClick={onClose}
-            className={isDark ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28] bg-transparent" : "border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent"}
+            className={isDark ? "border-[#2d3548] text-gray-300 hover:bg-background bg-transparent" : "border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent"}
           >
             Cancel
           </Button>

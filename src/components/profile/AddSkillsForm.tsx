@@ -15,7 +15,7 @@ const AddSkillsForm: React.FC<AddSkillsFormProps> = ({ isDark, onSave, onCancel 
   const [skillInput, setSkillInput] = useState<string>("");
 
   const inputStyles = isDark
-    ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-500"
+    ? "bg-background border-[#2d3548] text-white placeholder-gray-500"
     : "bg-[#0b1020]/5 border-gray-300 text-gray-900 placeholder-gray-500";
   const labelStyles = `text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`;
 
@@ -48,7 +48,7 @@ const AddSkillsForm: React.FC<AddSkillsFormProps> = ({ isDark, onSave, onCancel 
           onClick={onCancel}
           className={
             isDark
-              ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28] bg-transparent"
+              ? "border-[#2d3548] text-gray-300 hover:bg-background bg-transparent"
               : "border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent"
           }
         >

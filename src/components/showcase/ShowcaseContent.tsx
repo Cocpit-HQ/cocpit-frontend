@@ -115,12 +115,12 @@ export default function ShowcaseContent() {
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
+    <div className={`min-h-screen ${isDark ? "bg-background" : "bg-[#F3F2EF]"}`}>
       <AppShell currentPage="network" navigateTo={navigateTo}>
         <header
           className={`sticky top-0 z-20 border-b px-4 py-3 md:py-4 ${
             isDark
-              ? 'bg-[#171c28] border-[#2d3548]'
+              ? 'bg-background border-[#2d3548]'
               : 'bg-[#F3F2EF] border-gray-200'
           }`}
         >
@@ -285,7 +285,7 @@ export default function ShowcaseContent() {
               <h2 className={isDark ? "text-white" : "text-gray-900"}>Create Story</h2>
               <button
                 onClick={() => setShowCreateStory(false)}
-                className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-[#171c28] text-gray-400" : "hover:bg-gray-100 text-gray-600"}`}
+                className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-background text-gray-400" : "hover:bg-gray-100 text-gray-600"}`}
               >
                 <X className="w-5 h-5" />
               </button>

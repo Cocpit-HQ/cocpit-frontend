@@ -245,7 +245,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
+    <div className={`min-h-screen ${isDark ? "bg-background" : "bg-[#F3F2EF]"}`}>
       <AppShell currentPage="profile" navigateTo={navigateTo}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">

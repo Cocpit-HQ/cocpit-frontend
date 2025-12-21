@@ -40,7 +40,7 @@ export function MobileBottomNav({ currentPage, onAdd }: MobileBottomNavProps) {
   return (
     <nav
       className={`fixed bottom-0 inset-x-0 z-40 md:hidden border-t ${
-        isDark ? "bg-[#171c28]/95 border-[#2d3548]" : "bg-white/95 border-gray-200"
+        isDark ? "bg-[#101112f2] border-[#2d3548]" : "bg-white/95 border-gray-200"
       } backdrop-blur-md`}
     >
       <div className="max-w-md mx-auto flex items-center justify-between px-4 py-2">

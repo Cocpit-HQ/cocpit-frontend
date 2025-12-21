@@ -83,12 +83,12 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
   }
 
   const inputStyles = isDark
-    ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-500"
+    ? bg-background border-[#2d3548] text-white placeholder-gray-500"
     : "bg-[#0b1020]/5 border-gray-300 text-gray-900 placeholder-gray-500"
   const labelStyles = `text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
+    <div className={`min-h-screen ${isDark ? bg-background" : "bg-[#F3F2EF]"}`}>
       <AppShell currentPage="profile" navigateTo={navigateTo}>
         <div className="max-w-4xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
           
@@ -107,7 +107,7 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
               <Button 
                 variant="outline" 
                 onClick={() => router.back()}
-                className={isDark ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28] bg-transparent" : "border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent"}
+                className={isDark ? "border-[#2d3548] text-gray-300 hover:bg-background bg-transparent" : "border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent"}
               >
                 Cancel
               </Button>

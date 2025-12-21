@@ -42,7 +42,7 @@ export function StoryModal({ story, onClose, isDark }: StoryModalProps) {
             </div>
           </div>
           <button
-            className={`${isDark ? "bg-[#171c28] hover:bg-[#2d3548]" : "bg-gray-100 hover:bg-gray-200"} rounded-full p-2 ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"} transition-colors`}
+            className={`${isDark ? "bg-background hover:bg-[#2d3548]" : "bg-gray-100 hover:bg-gray-200"} rounded-full p-2 ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"} transition-colors`}
             onClick={onClose}
             aria-label="Close"
           >
@@ -118,7 +118,7 @@ export function StoryModal({ story, onClose, isDark }: StoryModalProps) {
                   isLiked
                     ? "bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white"
                     : isDark
-                      ? "bg-[#171c28] text-gray-400 hover:text-white hover:bg-[#2d3548]"
+                      ? "bg-background text-gray-400 hover:text-white hover:bg-[#2d3548]"
                       : "bg-gray-100 text-gray-600 hover:text-gray-900 hover:bg-gray-200"
                 }`}
               >
@@ -131,7 +131,7 @@ export function StoryModal({ story, onClose, isDark }: StoryModalProps) {
                   showComments
                     ? "bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white"
                     : isDark
-                      ? "bg-[#171c28] text-gray-400 hover:text-white hover:bg-[#2d3548]"
+                      ? "bg-background text-gray-400 hover:text-white hover:bg-[#2d3548]"
                       : "bg-gray-100 text-gray-600 hover:text-gray-900 hover:bg-gray-200"
                 }`}
               >
@@ -141,7 +141,7 @@ export function StoryModal({ story, onClose, isDark }: StoryModalProps) {
               <button
                 className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg ${
                   isDark
-                    ? "bg-[#171c28] text-gray-400 hover:text-white hover:bg-[#2d3548]"
+                    ? "bg-background text-gray-400 hover:text-white hover:bg-[#2d3548]"
                     : "bg-gray-100 text-gray-600 hover:text-gray-900 hover:bg-gray-200"
                 } transition-all`}
               >
@@ -162,7 +162,7 @@ export function StoryModal({ story, onClose, isDark }: StoryModalProps) {
                     placeholder="Add a comment..."
                     className={`flex-1 ${
                       isDark
-                        ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-400"
+                        ? "bg-background border-[#2d3548] text-white placeholder-gray-400"
                         : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
                     } border rounded-lg px-4 py-3 focus:outline-none focus:border-[#5B7CFF] transition-colors`}
                     onKeyDown={(e) => e.key === "Enter" && handleAddComment()}
@@ -178,7 +178,7 @@ export function StoryModal({ story, onClose, isDark }: StoryModalProps) {
                 {comments.length > 0 && (
                   <div className="space-y-3">
                     {comments.map((commentText, index) => (
-                      <div key={index} className={`${isDark ? "bg-[#171c28]" : "bg-gray-50"} rounded-lg p-4`}>
+                      <div key={index} className={`${isDark ? "bg-background" : "bg-gray-50"} rounded-lg p-4`}>
                         <div className="flex items-start gap-3">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex-shrink-0" />
                           <div className="flex-1">
@@ -197,7 +197,7 @@ export function StoryModal({ story, onClose, isDark }: StoryModalProps) {
                     { name: "Sarah Johnson", text: "Great insights! Would love to learn more about this.", time: "3h ago" },
                     { name: "Michael Brown", text: "This is exactly what I needed to see today!", time: "5h ago" },
                   ].map((item, idx) => (
-                    <div key={idx} className={`${isDark ? "bg-[#171c28]" : "bg-gray-50"} rounded-lg p-4`}>
+                    <div key={idx} className={`${isDark ? "bg-background" : "bg-gray-50"} rounded-lg p-4`}>
                       <div className="flex items-start gap-3">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex-shrink-0" />
                         <div className="flex-1">
