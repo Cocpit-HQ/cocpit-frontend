@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Comment as CommentType } from '@/types/entities';
-import Comment from './Comment';
+import CommentList from './CommentList';
 
 interface CommentSectionProps {
   comments: CommentType[];
@@ -52,10 +52,8 @@ export default function CommentSection({ comments, isDark = false, onAddComment 
       </form>
 
       {/* Comments List */}
-      <div className="space-y-4 md:max-h-96 overflow-y-auto">
-        {comments.map((comment) => (
-          <Comment key={comment.id} comment={comment} isDark={isDark} />
-        ))}
+      <div className="md:max-h-96 overflow-y-auto">
+        <CommentList comments={comments} isDark={isDark} />
       </div>
     </div>
   );
