@@ -55,7 +55,7 @@ export default function MessagingPage() {
     router.push(routes[page] ?? "/feed")
   }
 
-  const [selectedChat, setSelectedChat] = useState<ChatThread>(chats[0])
+  const [selectedChat, setSelectedChat] = useState<ChatThread | null>(chats[0])
   const [messageText, setMessageText] = useState("")
   const [messages, setMessages] = useState<Message[]>(messagesSeed)
 
@@ -75,13 +75,13 @@ export default function MessagingPage() {
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
       <AppShell currentPage="messaging" navigateTo={navigateTo}>
-        <div className="max-w-7xl mx-auto px-4 py-4 md:py-6 pb-20 md:pb-10">
+        <div className="max-w-7xl mx-auto h-full flex flex-col p-4 md:p-6">
           <div
-            className={`${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} rounded-lg border overflow-hidden`}
-            style={{ height: "calc(100vh - 160px)" }}
+            className={`${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} rounded-lg border overflow-hidden flex-1 flex`}
           >
           <div className="grid grid-cols-1 md:grid-cols-3 h-full">
-            <div className={`border-r ${isDark ? "border-[#2d3548]" : "border-gray-200"} flex flex-col`}>
+            {/* Chat List */}
+            <div className={`border-r ${isDark ? "border-[#2d3548]" : "border-gray-200"} ${selectedChat ? 'hidden md:flex' : 'flex'} flex-col`}>
               <div className={`p-4 border-b ${isDark ? "border-[#2d3548]" : "border-gray-200"}`}>
                 <h2 className={`mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>Messages</h2>
                 <div className="relative">
@@ -104,7 +104,7 @@ export default function MessagingPage() {
                     className={`p-4 cursor-pointer ${
                       isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-50"
                     } transition-colors border-b ${isDark ? "border-[#2d3548]" : "border-gray-200"} ${
-                      selectedChat.id === chat.id ? (isDark ? "bg-[#2d3548]" : "bg-[#EAF4FF]") : ""
+                      selectedChat?.id === chat.id ? (isDark ? "bg-[#2d3548]" : "bg-[#EAF4FF]") : ""
                     }`}
                   >
                     <div className="flex gap-3">
@@ -138,10 +138,12 @@ export default function MessagingPage() {
               </div>
             </div>
 
-            <div className="md:col-span-2 flex flex-col">
+            {/* Chat Window */}
+            {selectedChat && (
+            <div className={`md:col-span-2 ${selectedChat ? 'flex' : 'hidden'} md:flex flex-col`}>
               <div className={`p-4 border-b ${isDark ? "border-[#2d3548]" : "border-gray-200"} flex items-center justify-between`}>
                 <div className="flex items-center gap-3">
-                  <button onClick={() => router.back()} className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors md:hidden`}>
+                  <button onClick={() => setSelectedChat(null)} className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors md:hidden`}>
                     <ArrowLeft className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
                   </button>
                   <div className="relative">
@@ -189,15 +191,15 @@ export default function MessagingPage() {
                 ))}
               </div>
 
-              <div className={`p-4 border-t ${isDark ? "border-[#2d3548]" : "border-gray-200"}`}>
+              <div className={`px-4 py-2 border-t ${isDark ? "border-[#2d3548]" : "border-gray-200"}`}>
                 <div className="flex items-center gap-2">
-                  <button className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
+                  <button className={`w-9 h-9 flex items-center justify-center flex-shrink-0 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
                     <Paperclip className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
                   </button>
-                  <button className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
+                  <button className={`w-9 h-9 flex items-center justify-center flex-shrink-0 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
                     <ImageIcon className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
                   </button>
-                  <button className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
+                  <button className={`w-9 h-9 flex items-center justify-center flex-shrink-0 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
                     <Smile className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
                   </button>
                   <input
@@ -206,19 +208,20 @@ export default function MessagingPage() {
                     onChange={(e) => setMessageText(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                     placeholder="Write a message..."
-                    className={`flex-1 px-4 py-2 ${
+                    className={`h-9 flex-1 px-4 ${
                       isDark ? "bg-[#1e2535] text-white placeholder-gray-400" : "bg-gray-100 text-gray-900 placeholder-gray-500"
                     } border-0 rounded-full focus:outline-none focus:ring-2 focus:ring-[#5B7CFF]`}
                   />
                   <button
                     onClick={handleSendMessage}
-                    className="p-2 bg-[#5B7CFF] text-white rounded-full hover:bg-[#4A6BEF] transition-colors"
+                    className="w-9 h-9 flex items-center justify-center flex-shrink-0 bg-[#5B7CFF] text-white rounded-full hover:bg-[#4A6BEF] transition-colors"
                   >
                     <Send className="w-5 h-5" />
                   </button>
                 </div>
               </div>
             </div>
+            )}
           </div>
           </div>
         </div>
