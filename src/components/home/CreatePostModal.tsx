@@ -3,13 +3,15 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useTheme } from 'next-themes'
 import { X, Image, Video, BarChart2, Plus, Trash2, Crop, MoveHorizontal, MoveVertical } from 'lucide-react'
+import { useFeed } from '@/context/FeedContext'
+
+type PostType = 'text' | 'photo' | 'video' | 'poll'
 
 interface CreatePostModalProps {
   isOpen: boolean
   onClose: () => void
+  initialPostType?: PostType
 }
-
-type PostType = 'text' | 'photo' | 'video' | 'poll'
 
 interface PollOption {
   id: string
@@ -27,15 +29,17 @@ interface UploadedImage {
   }
 }
 
-export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
+export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: CreatePostModalProps) {
   const { resolvedTheme } = useTheme()
+  const { addPost } = useFeed()
   const [mounted, setMounted] = useState(false)
-  const [postType, setPostType] = useState<PostType>('text')
+  const [postType, setPostType] = useState<PostType>(initialPostType)
   const [description, setDescription] = useState('')
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
   const [selectedImageForCrop, setSelectedImageForCrop] = useState<string | null>(null)
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [videoPreview, setVideoPreview] = useState<string | null>(null)
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>('auto')
   const [pollQuestion, setPollQuestion] = useState('')
   const [pollOptions, setPollOptions] = useState<PollOption[]>([
     { id: '1', text: '' },
@@ -44,9 +48,23 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
 
+  const aspectRatios = [
+    { label: 'Original', value: 'auto' },
+    { label: '1:1', value: '1/1' },
+    { label: '4:5', value: '4/5' },
+    { label: '1.91:1', value: '1.91/1' },
+    { label: '9:16', value: '9/16' },
+  ]
+
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (isOpen) {
+      setPostType(initialPostType)
+    }
+  }, [isOpen, initialPostType])
 
   const isDark = mounted && resolvedTheme === 'dark'
 
@@ -103,6 +121,31 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
   }
 
   const handlePost = () => {
+    // Create new post object
+    let videoUrl = undefined;
+    if (videoFile) {
+        videoUrl = URL.createObjectURL(videoFile);
+    }
+
+    const newPost = {
+      id: Date.now(),
+      author: 'You', // In a real app, this would come from auth context
+      title: 'Software Engineer',
+      timeAgo: 'Just now',
+      content: description,
+      // Add other fields based on postType (images, video, poll)
+      imageSrc: uploadedImages.length > 0 ? uploadedImages[0].url : undefined,
+      images: uploadedImages.map(img => img.url),
+      videoSrc: videoUrl,
+      aspectRatio: selectedAspectRatio,
+      likes: '0',
+      comments: '0',
+      shares: '0',
+      commentData: []
+    }
+
+    addPost(newPost)
+
     // Handle post submission logic here
     console.log('Posting:', { postType, description, uploadedImages, videoFile, pollQuestion, pollOptions })
     onClose()
@@ -112,6 +155,7 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
     setUploadedImages([])
     setVideoFile(null)
     setVideoPreview(null)
+    setSelectedAspectRatio('auto')
     setPollQuestion('')
     setPollOptions([{ id: '1', text: '' }, { id: '2', text: '' }])
   }
@@ -263,7 +307,7 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
                         <img
                           src={image.url}
                           alt="Upload preview"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain bg-black/5"
                           style={{
                             transform: `scale(${image.crop.zoom}) translate(${image.crop.x}px, ${image.crop.y}px)`,
                           }}
@@ -300,62 +344,92 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
                 </div>
               )}
 
-              {/* Crop Controls */}
-              {selectedImage && (
+              {/* Crop & Aspect Ratio Controls */}
+              {uploadedImages.length > 0 && (
                 <div
                   className={`p-4 rounded-lg border space-y-3 ${
                     isDark ? 'bg-[#1a1f2e] border-[#2d3548]' : 'bg-gray-50 border-gray-300'
                   }`}
                 >
-                  <h4 className={`text-sm mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Crop & Adjust</h4>
+                  <h4 className={`text-sm mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Edit Image</h4>
 
-                  {/* Zoom Control */}
+                  {/* Aspect Ratio Selection */}
                   <div className="space-y-2">
-                    <label className={`text-sm flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                      <span>Zoom</span>
+                    <label className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Aspect Ratio
                     </label>
-                    <input
-                      type="range"
-                      min="1"
-                      max="3"
-                      step="0.1"
-                      value={selectedImage.crop.zoom}
-                      onChange={(e) => updateImageCrop(selectedImage.id, { zoom: parseFloat(e.target.value) })}
-                      className="w-full"
-                    />
+                    <div className="flex gap-2 flex-wrap">
+                        {aspectRatios.map((ratio) => (
+                            <button
+                                key={ratio.value}
+                                onClick={() => setSelectedAspectRatio(ratio.value)}
+                                className={`px-3 py-1.5 rounded text-xs transition-colors border ${
+                                    selectedAspectRatio === ratio.value
+                                        ? 'bg-[#5B7CFF] text-white border-[#5B7CFF]'
+                                        : isDark
+                                        ? 'bg-[#242b3d] text-gray-300 border-[#2d3548] hover:bg-[#2d3548]'
+                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                                }`}
+                            >
+                                {ratio.label}
+                            </button>
+                        ))}
+                    </div>
                   </div>
+
+                  {selectedImage && (
+                    <>
+                      {/* Zoom Control */}
+                      <div className="space-y-2">
+                        <label className={`text-sm flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                          <span>Zoom</span>
+                        </label>
+                        <input
+                          type="range"
+                          min="1"
+                          max="3"
+                          step="0.1"
+                          value={selectedImage.crop.zoom}
+                          onChange={(e) => updateImageCrop(selectedImage.id, { zoom: parseFloat(e.target.value) })}
+                          className="w-full"
+                        />
+                      </div>
+                    </>
+                  )}
 
                   {/* Position Controls */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <label className={`text-sm flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        <MoveHorizontal className="w-4 h-4" />
-                        <span>Horizontal</span>
-                      </label>
-                      <input
-                        type="range"
-                        min="-100"
-                        max="100"
-                        value={selectedImage.crop.x}
-                        onChange={(e) => updateImageCrop(selectedImage.id, { x: parseInt(e.target.value) })}
-                        className="w-full"
-                      />
+                  {selectedImage && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <label className={`text-sm flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                          <MoveHorizontal className="w-4 h-4" />
+                          <span>Horizontal</span>
+                        </label>
+                        <input
+                          type="range"
+                          min="-100"
+                          max="100"
+                          value={selectedImage.crop.x}
+                          onChange={(e) => updateImageCrop(selectedImage.id, { x: parseInt(e.target.value) })}
+                          className="w-full"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className={`text-sm flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                          <MoveVertical className="w-4 h-4" />
+                          <span>Vertical</span>
+                        </label>
+                        <input
+                          type="range"
+                          min="-100"
+                          max="100"
+                          value={selectedImage.crop.y}
+                          onChange={(e) => updateImageCrop(selectedImage.id, { y: parseInt(e.target.value) })}
+                          className="w-full"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className={`text-sm flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        <MoveVertical className="w-4 h-4" />
-                        <span>Vertical</span>
-                      </label>
-                      <input
-                        type="range"
-                        min="-100"
-                        max="100"
-                        value={selectedImage.crop.y}
-                        onChange={(e) => updateImageCrop(selectedImage.id, { y: parseInt(e.target.value) })}
-                        className="w-full"
-                      />
-                    </div>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
@@ -405,6 +479,34 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
+              )}
+
+              {/* Video Aspect Ratio Controls */}
+              {videoPreview && (
+                  <div
+                    className={`p-4 rounded-lg border space-y-3 ${
+                      isDark ? 'bg-[#1a1f2e] border-[#2d3548]' : 'bg-gray-50 border-gray-300'
+                    }`}
+                  >
+                    <h4 className={`text-sm mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Video Ratio</h4>
+                    <div className="flex gap-2 flex-wrap">
+                        {aspectRatios.map((ratio) => (
+                            <button
+                                key={ratio.value}
+                                onClick={() => setSelectedAspectRatio(ratio.value)}
+                                className={`px-3 py-1.5 rounded text-xs transition-colors border ${
+                                    selectedAspectRatio === ratio.value
+                                        ? 'bg-[#5B7CFF] text-white border-[#5B7CFF]'
+                                        : isDark
+                                        ? 'bg-[#242b3d] text-gray-300 border-[#2d3548] hover:bg-[#2d3548]'
+                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                                }`}
+                            >
+                                {ratio.label}
+                            </button>
+                        ))}
+                    </div>
+                  </div>
               )}
             </div>
           )}
