@@ -49,6 +49,7 @@ export interface Post {
   timeAgo: string;
   content: string;
   imageSrc?: string;
+  images?: string[];
   videoSrc?: string;
   aspectRatio?: string;
   likes: string;
