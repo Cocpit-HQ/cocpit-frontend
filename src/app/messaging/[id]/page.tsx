@@ -1,21 +1,14 @@
 "use client";
 
 import { useParams, useRouter } from 'next/navigation'
-import ConversationView from '@/components/messaging/ConversationView'
-import type { ChatThread } from "@/types/messaging"
 import type { Page } from "@/types/common"
 import { AppShell } from '@/components/layout/AppShell'
 import { useTheme } from 'next-themes'
-import { useMemo } from 'react';
-
-// This would in reality be an API call
-const chats: ChatThread[] = [
-  { id: 1, name: "Michael Chen", lastMessage: "Thanks for connecting! Looking forward to chatting.", time: "2m ago", unread: 2, avatar: "gradient-1", online: true },
-  { id: 2, name: "Emily Rodriguez", lastMessage: "That sounds great! When would be a good time?", time: "1h ago", unread: 0, avatar: "gradient-2", online: true },
-  { id: 3, name: "David Park", lastMessage: "I saw your recent post about AI trends...", time: "3h ago", unread: 1, avatar: "gradient-3", online: false },
-  { id: 4, name: "Jessica Williams", lastMessage: "Happy to help with that project!", time: "1d ago", unread: 0, avatar: "gradient-4", online: false },
-  { id: 5, name: "Alex Thompson", lastMessage: "Let me know if you need anything else.", time: "2d ago", unread: 0, avatar: "gradient-5", online: false },
-]
+import { useMemo, useState } from 'react';
+import { useIsMobile } from "@/hooks/use-mobile"
+import ChatWindow from '@/components/messaging/ui/ChatWindow';
+import ChatList from '@/components/messaging/ui/ChatList';
+import { mockChats } from '@/data/mockMessaging';
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -34,15 +27,18 @@ export default function ConversationPage() {
     const router = useRouter()
     const { resolvedTheme } = useTheme();
     const isDark = useMemo(() => resolvedTheme === "dark", [resolvedTheme]);
+    const isMobile = useIsMobile();
+
     const chatId = params.id;
-    const chat = chats.find(c => c.id.toString() === chatId);
+    const chat = mockChats.find(c => c.id.toString() === chatId);
 
     const navigateTo = (page: Page) => {
         router.push(routes[page] ?? "/feed")
     }
 
+    // If chat not found, redirect or show error
     if (!chat) {
-        return (
+         return (
             <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
                 <AppShell currentPage="messaging" navigateTo={navigateTo}>
                     <div className="flex items-center justify-center h-full">
@@ -53,14 +49,41 @@ export default function ConversationPage() {
         )
     }
 
+    // On mobile, show full screen chat window
+    if (isMobile) {
+        return (
+             <div className={`h-dvh flex flex-col ${isDark ? "bg-[#171c28]" : "bg-white"}`}>
+                {/* We don't wrap in AppShell on mobile for the immersive chat experience,
+                    or we use a specialized layout. The user requested "opens a full-screen chat page".
+                    If we use AppShell, we get the bottom nav which might distract.
+                    Let's render ChatWindow directly for maximum space. */}
+                <ChatWindow chat={chat} isMobile={true} />
+            </div>
+        )
+    }
+
+    // On desktop, show the same split view as the main page, but with the specific chat selected
     return (
         <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
             <AppShell currentPage="messaging" navigateTo={navigateTo}>
-                <div 
-                  className={`${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} rounded-lg border overflow-hidden`}
-                  style={{ height: "calc(100vh - 80px)" }}
+                <div className="max-w-7xl mx-auto px-0 md:px-4 md:py-6 pb-20 md:pb-10 h-full">
+                <div
+                    className={`${
+                    isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
+                    } md:rounded-lg md:border overflow-hidden h-full`}
                 >
-                    <ConversationView chat={chat} isMobileOnly={true} />
+                    <div className="grid grid-cols-1 md:grid-cols-3 h-full">
+                        <ChatList
+                            chats={mockChats}
+                            selectedChatId={chat.id}
+                            onSelectChat={(c) => router.push(`/messaging/${c.id}`)}
+                            isMobile={false}
+                        />
+                        <div className="md:col-span-2 flex flex-col h-full overflow-hidden">
+                            <ChatWindow chat={chat} isMobile={false} />
+                        </div>
+                    </div>
+                </div>
                 </div>
             </AppShell>
         </div>
