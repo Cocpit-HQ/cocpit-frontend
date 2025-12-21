@@ -3,13 +3,15 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useTheme } from 'next-themes'
 import { X, Image, Video, BarChart2, Plus, Trash2, Crop, MoveHorizontal, MoveVertical } from 'lucide-react'
+import { useFeed } from '@/context/FeedContext'
+
+type PostType = 'text' | 'photo' | 'video' | 'poll'
 
 interface CreatePostModalProps {
   isOpen: boolean
   onClose: () => void
+  initialPostType?: PostType
 }
-
-type PostType = 'text' | 'photo' | 'video' | 'poll'
 
 interface PollOption {
   id: string
@@ -27,10 +29,11 @@ interface UploadedImage {
   }
 }
 
-export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
+export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: CreatePostModalProps) {
   const { resolvedTheme } = useTheme()
+  const { addPost } = useFeed()
   const [mounted, setMounted] = useState(false)
-  const [postType, setPostType] = useState<PostType>('text')
+  const [postType, setPostType] = useState<PostType>(initialPostType)
   const [description, setDescription] = useState('')
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
   const [selectedImageForCrop, setSelectedImageForCrop] = useState<string | null>(null)
@@ -47,6 +50,12 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (isOpen) {
+      setPostType(initialPostType)
+    }
+  }, [isOpen, initialPostType])
 
   const isDark = mounted && resolvedTheme === 'dark'
 
@@ -103,6 +112,24 @@ export function CreatePostModal({ isOpen, onClose }: CreatePostModalProps) {
   }
 
   const handlePost = () => {
+    // Create new post object
+    const newPost = {
+      id: Date.now(),
+      author: 'You', // In a real app, this would come from auth context
+      title: 'Software Engineer',
+      timeAgo: 'Just now',
+      content: description,
+      // Add other fields based on postType (images, video, poll)
+      // For now, handling photo type simply
+      imageSrc: uploadedImages.length > 0 ? uploadedImages[0].url : '',
+      likes: '0',
+      comments: '0',
+      shares: '0',
+      commentData: []
+    }
+
+    addPost(newPost)
+
     // Handle post submission logic here
     console.log('Posting:', { postType, description, uploadedImages, videoFile, pollQuestion, pollOptions })
     onClose()

@@ -2,10 +2,13 @@
 
 import React, { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
-import { Image, Calendar, FileText, BarChart3 } from 'lucide-react'
+import { Image, Video, FileText, BarChart3 } from 'lucide-react'
+import { useActionModal } from '@/context/ActionModalContext'
+
+type PostType = 'text' | 'photo' | 'video' | 'poll';
 
 interface CreatePostProps {
-  onOpenModal: () => void
+  onOpenModal: (type?: PostType) => void
 }
 
 function PostButton({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
@@ -47,7 +50,7 @@ export function CreatePost({ onOpenModal }: CreatePostProps) {
         <input
           type="text"
           placeholder="Start a post"
-          onClick={onOpenModal}
+          onClick={() => onOpenModal('text')}
           className={`flex-1 px-4 py-3 border rounded-full hover:bg-[#F3F2EF] cursor-pointer focus:outline-none transition-colors ${
             isDark
               ? 'bg-[#1a1f2e] text-white placeholder-gray-500 border-[#2d3548] hover:border-[#5B7CFF]'
@@ -60,22 +63,22 @@ export function CreatePost({ onOpenModal }: CreatePostProps) {
         <PostButton
           icon={<Image className="w-5 h-5 text-[#0A66C2]" />}
           label="Photo"
-          onClick={onOpenModal}
+          onClick={() => onOpenModal('photo')}
         />
         <PostButton
-          icon={<Calendar className="w-5 h-5 text-green-600" />}
-          label="Event"
-          onClick={onOpenModal}
+          icon={<Video className="w-5 h-5 text-green-600" />}
+          label="Video"
+          onClick={() => onOpenModal('video')}
         />
         <PostButton
           icon={<FileText className="w-5 h-5 text-orange-600" />}
           label="Article"
-          onClick={onOpenModal}
+          onClick={() => onOpenModal('text')}
         />
         <PostButton
           icon={<BarChart3 className="w-5 h-5 text-purple-600" />}
           label="Poll"
-          onClick={onOpenModal}
+          onClick={() => onOpenModal('poll')}
         />
       </div>
     </div>

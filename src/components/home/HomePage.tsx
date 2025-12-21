@@ -11,6 +11,7 @@ import CreatePost from './CreatePost'
 import SuggestionsPanel from '@/components/SuggestionsPanel'
 import { AppShell } from '@/components/layout/AppShell'
 import { useActionModal } from '@/context/ActionModalContext'
+import { useFeed } from '@/context/FeedContext'
 import { StoryRail } from './StoryRail'
 import { FeedTabs } from './FeedTabs'
 import { CreateStoryForm } from '@/components/showcase/CreateStoryForm'
@@ -29,6 +30,7 @@ export default function HomePage() {
   const { resolvedTheme, theme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const { openModal } = useActionModal()
+  const { posts } = useFeed()
 
   useEffect(() => {
     setMounted(true)
@@ -36,8 +38,7 @@ export default function HomePage() {
 
   const isDark = useMemo(() => resolvedTheme === 'dark', [resolvedTheme])
 
-  const [loading, setLoading] = useState(true)
-  const [posts, setPosts] = useState<Post[]>([])
+  const [loading, setLoading] = useState(false)
   const [stories, setStories] = useState<StoryDetail[]>(storiesSeed)
   const [searchQuery, setSearchQuery] = useState('')
   const [showCreateStory, setShowCreateStory] = useState(false)
@@ -48,49 +49,6 @@ export default function HomePage() {
     setStories((prev) => [newStory, ...prev])
     setShowCreateStory(false)
   }
-
-  /* -------------------- Effects -------------------- */
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setPosts([
-        {
-          id: 1,
-          author: 'Sarah Chen',
-          title: 'UX Designer at Design Studio',
-          timeAgo: '2h',
-          content:
-            '🎨 Just launched our new design system! Working with an amazing team to create consistent, accessible experiences across all our products.',
-          imageSrc: '/assets/pngegg.png',
-          likes: '10k',
-          comments: '2',
-          shares: '2',
-          commentData: [
-            { id: 1, author: { name: 'Alex Johnson', avatar: '/assets/pngegg.png' }, text: 'This looks amazing! Can\'t wait to see it in action.', timeAgo: '2h', likes: 15 },
-            { id: 2, author: { name: 'Maria Garcia', avatar: '/assets/pngegg.png' }, text: 'Great work, Sarah! The component library is so clean.', timeAgo: '1h', likes: 8 },
-          ]
-        },
-        {
-          id: 2,
-          author: 'Michael Torres',
-          title: 'Product Manager at TechCorp',
-          timeAgo: '5h',
-          content:
-            'Excited to announce that our team just shipped a major feature update! 🚀',
-          imageSrc: '/assets/pngegg.png',
-          likes: '8.5k',
-          comments: '1',
-          shares: '5',
-          commentData: [
-            { id: 1, author: { name: 'David Lee', avatar: '/assets/pngegg.png' }, text: 'Congratulations to the whole team!', timeAgo: '4h', likes: 22 },
-          ]
-        },
-      ])
-      setLoading(false)
-    }, 1100)
-
-    return () => clearTimeout(timer)
-  }, [])
 
   /* -------------------- Derived State -------------------- */
 
