@@ -5,9 +5,10 @@ import { Comment as CommentType } from '@/types/entities';
 interface CommentProps {
   comment: CommentType;
   isDark?: boolean;
+  onReply?: (authorName: string) => void;
 }
 
-export default function Comment({ comment, isDark = false }: CommentProps) {
+export default function Comment({ comment, isDark = false, onReply }: CommentProps) {
   const { author, text, timeAgo, likes } = comment;
 
   return (
@@ -25,7 +26,12 @@ export default function Comment({ comment, isDark = false }: CommentProps) {
         </div>
         <div className="flex items-center gap-4 mt-1 px-3">
           <button className={`text-xs font-semibold ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>Like</button>
-          <button className={`text-xs font-semibold ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>Reply</button>
+          <button
+            className={`text-xs font-semibold ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+            onClick={() => onReply?.(author.name)}
+          >
+            Reply
+          </button>
           {likes > 0 && <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{likes} likes</span>}
         </div>
       </div>

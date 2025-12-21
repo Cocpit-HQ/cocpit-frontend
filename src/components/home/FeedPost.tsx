@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { ThumbsUp, MessageCircle, Share2, MoreHorizontal } from 'lucide-react'
 import { Post, Comment as CommentType } from '@/types/entities'
 import CommentSection from './CommentSection'
+import MobileCommentDrawer from './MobileCommentDrawer'
 
 interface FeedPostProps extends Omit<Post, 'id' | 'commentData'> {
   initialComments?: CommentType[]
@@ -28,6 +29,7 @@ export default function FeedPost({
 }: FeedPostProps) {
   const [isLiked, setIsLiked] = useState(false)
   const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false)
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
   const [postComments, setPostComments] = useState<CommentType[]>(initialComments)
   
   const imgSrc = imageSrc || '/assets/pngegg.png'
@@ -38,7 +40,14 @@ export default function FeedPost({
   }
 
   const handleToggleCommentSection = () => {
-    setIsCommentSectionOpen(!isCommentSectionOpen)
+    // Check if device is mobile (width < 768px matches tailwind 'md')
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+
+    if (isMobile) {
+      setIsMobileDrawerOpen(true)
+    } else {
+      setIsCommentSectionOpen(!isCommentSectionOpen)
+    }
   }
   
   const handleAddComment = (commentText: string) => {
@@ -123,6 +132,14 @@ export default function FeedPost({
           onAddComment={handleAddComment} 
         />
       )}
+
+      <MobileCommentDrawer
+        open={isMobileDrawerOpen}
+        onOpenChange={setIsMobileDrawerOpen}
+        comments={postComments}
+        isDark={isDark}
+        onAddComment={handleAddComment}
+      />
     </div>
   )
 }
