@@ -18,7 +18,9 @@ export default function FeedPost({
   title, 
   timeAgo = '1h', 
   content, 
-  imageSrc, 
+  imageSrc,
+  videoSrc,
+  aspectRatio,
   likes = '0', 
   comments: initialCommentsCount = '0', 
   shares = '0',
@@ -88,9 +90,24 @@ export default function FeedPost({
         <p className={`leading-relaxed mb-4 text-sm md:text-base ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{content}</p>
       </div>
 
-      {imageSrc && (
-        <div className="w-full">
-            <img src={imgSrc} alt="Post content" className="w-full h-auto object-cover" />
+      {(imageSrc || videoSrc) && (
+        <div
+          className="w-full overflow-hidden bg-black/5"
+          style={aspectRatio && aspectRatio !== 'auto' ? { aspectRatio } : undefined}
+        >
+          {videoSrc ? (
+            <video
+              src={videoSrc}
+              controls
+              className={`w-full ${aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'h-auto'} object-cover`}
+            />
+          ) : (
+            <img
+              src={imgSrc}
+              alt="Post content"
+              className={`w-full ${aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'h-auto'} object-cover`}
+            />
+          )}
         </div>
       )}
 
