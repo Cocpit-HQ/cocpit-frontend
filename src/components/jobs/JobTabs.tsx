@@ -3,7 +3,6 @@
 import type { JobListMode, JobStatus } from "@/types/jobs"
 
 interface JobTabsProps {
-  isDark: boolean
   mode: JobListMode
   setMode: (mode: JobListMode) => void
   myJobsTab: JobStatus
@@ -11,7 +10,7 @@ interface JobTabsProps {
   offersCount: number
 }
 
-export function JobTabs({ isDark, mode, setMode, myJobsTab, setMyJobsTab, offersCount }: JobTabsProps) {
+export function JobTabs({ mode, setMode, myJobsTab, setMyJobsTab, offersCount }: JobTabsProps) {
   return (
     <>
       {/* Top-level tabs */}
@@ -30,9 +29,7 @@ export function JobTabs({ isDark, mode, setMode, myJobsTab, setMyJobsTab, offers
               className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
                 isActive
                   ? "bg-gradient-to-r from-[#5B7CFF] to-[#F472B6] text-white shadow-md"
-                  : isDark
-                    ? "bg-[#1f2937] text-gray-300 hover:bg-[#111827]"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
               }`}
             >
               <span>{tab.label}</span>
@@ -66,9 +63,7 @@ export function JobTabs({ isDark, mode, setMode, myJobsTab, setMyJobsTab, offers
                 className={`rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
                   isActive
                     ? "bg-gradient-to-r from-[#5B7CFF] to-[#F472B6] text-white"
-                    : isDark
-                      ? "bg-[#1f2937] text-gray-300 hover:bg-[#111827]"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                 }`}
               >
                 {tab.label}

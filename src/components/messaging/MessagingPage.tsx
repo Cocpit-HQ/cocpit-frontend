@@ -1,16 +1,14 @@
 "use client"
 
-import React, { useMemo, useState } from "react"
+import React, { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
-
-import { AppShell } from "@/components/layout/AppShell"
-import type { Page } from "@/types/common"
 import { useIsMobile } from "@/hooks/use-mobile"
-import ChatList from "./ui/ChatList"
-import ChatWindow from "./ui/ChatWindow"
 import { mockChats } from "@/data/mockMessaging"
 import { ChatThread } from "@/types/messaging"
+import ChatList from "./ui/ChatList"
+import ChatWindow from "./ui/ChatWindow"
+import { AppShell } from "@/components/layout/AppShell"
+import type { Page } from "@/types/common"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -26,8 +24,7 @@ const routes: Record<string, string> = {
 
 export default function MessagingPage() {
   const router = useRouter()
-  const { resolvedTheme } = useTheme()
-  const isDark = useMemo(() => resolvedTheme === "dark", [resolvedTheme])
+  // Removed useTheme
   const isMobile = useIsMobile()
 
   const navigateTo = (page: Page) => {
@@ -37,13 +34,11 @@ export default function MessagingPage() {
   const [selectedChat, setSelectedChat] = useState<ChatThread>(mockChats[0])
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
+    <div className="min-h-screen bg-background">
       <AppShell currentPage="messaging" navigateTo={navigateTo}>
         <div className="max-w-7xl mx-auto px-0 md:px-4 md:py-6 pb-20 md:pb-10 h-full">
           <div
-            className={`${
-              isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
-            } md:rounded-lg md:border overflow-hidden h-full`}
+            className="bg-card border border-border md:rounded-lg overflow-hidden h-full"
           >
             {isMobile ? (
               <ChatList chats={mockChats} isMobile={true} />
@@ -59,7 +54,7 @@ export default function MessagingPage() {
                   {selectedChat ? (
                     <ChatWindow chat={selectedChat} isMobile={false} />
                   ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
                         Select a conversation to start chatting
                     </div>
                   )}

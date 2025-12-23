@@ -47,11 +47,7 @@ const mockNotifications: Notification[] = [
   },
 ]
 
-interface NotificationPopoverProps {
-  isDark: boolean
-}
-
-export function NotificationPopover({ isDark }: NotificationPopoverProps) {
+export function NotificationPopover() {
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications)
   const [isOpen, setIsOpen] = useState(false)
 
@@ -65,28 +61,24 @@ export function NotificationPopover({ isDark }: NotificationPopoverProps) {
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <button
-          className={`relative p-2 rounded-full transition-colors ${
-            isDark ? "hover:bg-[#2d3548] text-gray-400" : "hover:bg-gray-100 text-gray-600"
-          }`}
+          className="relative p-2 rounded-full transition-colors hover:bg-muted text-muted-foreground"
         >
           <Bell className="w-6 h-6" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-[#171c28]" />
+            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background" />
           )}
         </button>
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        className={`w-80 p-0 overflow-hidden ${
-          isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
-        }`}
+        className="w-80 p-0 overflow-hidden bg-popover border-border"
       >
-        <div className={`p-4 border-b ${isDark ? "border-[#2d3548]" : "border-gray-200"} flex items-center justify-between`}>
-          <h3 className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>Notifications</h3>
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          <h3 className="font-semibold text-popover-foreground">Notifications</h3>
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="text-xs text-[#5B7CFF] hover:underline font-medium"
+              className="text-xs text-primary hover:underline font-medium"
             >
               Mark all as read
             </button>
@@ -96,26 +88,24 @@ export function NotificationPopover({ isDark }: NotificationPopoverProps) {
           {notifications.map((notification) => (
             <div
               key={notification.id}
-              className={`p-4 flex gap-3 hover:bg-opacity-50 transition-colors cursor-pointer ${
-                isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-50"
-              } ${!notification.read ? (isDark ? "bg-[#2d3548]/30" : "bg-blue-50/50") : ""}`}
+              className={`p-4 flex gap-3 hover:bg-muted/50 transition-colors cursor-pointer ${!notification.read ? "bg-muted/30" : ""}`}
             >
               <div className={`w-10 h-10 rounded-full flex-shrink-0 ${notification.avatarColor}`} />
               <div className="flex-1 min-w-0">
-                <p className={`text-sm ${isDark ? "text-gray-200" : "text-gray-800"}`}>
+                <p className="text-sm text-popover-foreground">
                   {notification.text}
                 </p>
-                <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+                <p className="text-xs mt-1 text-muted-foreground">
                   {notification.time}
                 </p>
               </div>
               {!notification.read && (
-                <div className="w-2 h-2 rounded-full bg-[#5B7CFF] mt-2 flex-shrink-0" />
+                <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
               )}
             </div>
           ))}
           {notifications.length === 0 && (
-            <div className={`p-8 text-center text-sm ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+            <div className="p-8 text-center text-sm text-muted-foreground">
               No notifications
             </div>
           )}

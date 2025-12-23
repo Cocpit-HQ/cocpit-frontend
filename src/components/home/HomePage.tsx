@@ -2,8 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTheme } from 'next-themes'
-import { Search, MessageCircle } from 'lucide-react'
+import { Search, MessageCircle, X } from 'lucide-react'
 import Link from 'next/link'
 import FeedPost from './FeedPost'
 import PostSkeleton from './PostSkeleton'
@@ -21,13 +20,12 @@ import { NotificationPopover } from '@/components/notifications/NotificationPopo
 import { Post, Comment } from '@/types/entities';
 import { storiesSeed } from '@/constants/stories'
 import { StoryDetail } from '@/types/showcase'
-import { X } from 'lucide-react'
 
 /* -------------------- Component -------------------- */
 
 export default function HomePage() {
   const router = useRouter()
-  const { resolvedTheme, theme } = useTheme()
+  // Removed useTheme logic - relying on CSS variables
   const [mounted, setMounted] = useState(false)
   const { openModal } = useActionModal()
   const { posts } = useFeed()
@@ -35,8 +33,6 @@ export default function HomePage() {
   useEffect(() => {
     setMounted(true)
   }, [])
-
-  const isDark = useMemo(() => resolvedTheme === 'dark', [resolvedTheme])
 
   const [loading, setLoading] = useState(false)
   const [stories, setStories] = useState<StoryDetail[]>(storiesSeed)
@@ -85,15 +81,11 @@ export default function HomePage() {
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-[#171c28]' : 'bg-[#F3F2EF]'}`}>
+    <div className="min-h-screen bg-background">
       <AppShell currentPage="home" navigateTo={navigateTo}>
         {/* Top Search Bar */}
         <header
-          className={`sticky top-0 z-20 border-b px-4 py-3 md:py-4 ${
-            isDark
-              ? 'bg-[#171c28] border-[#2d3548]'
-              : 'bg-[#F3F2EF] border-gray-200'
-          }`}
+          className="sticky top-0 z-20 border-b px-4 py-3 md:py-4 bg-background border-border"
         >
           <div className="max-w-5xl mx-auto">
             {/* --- Desktop Header (Visible from md screens up) --- */}
@@ -104,7 +96,7 @@ export default function HomePage() {
                   isSearchFocused ? 'md:max-w-2xl' : ''
                 }`}
               >
-                <Search className="w-5 h-5 text-gray-400" />
+                <Search className="w-5 h-5 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Search posts, professionals..."
@@ -112,24 +104,16 @@ export default function HomePage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => setIsSearchFocused(false)}
-                  className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:border-[#5B7CFF] ${
-                    isDark
-                      ? 'bg-[#242b3d] text-white placeholder-gray-500 border-[#2d3548]'
-                      : 'bg-white text-gray-900 placeholder-gray-500 border-gray-300'
-                  }`}
+                  className="w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:border-primary bg-card text-foreground placeholder-muted-foreground border-border"
                 />
               </div>
 
               {/* Desktop Icons */}
               <div className="flex items-center gap-1 sm:gap-2">
-                <NotificationPopover isDark={isDark} />
+                <NotificationPopover />
                 <Link
                   href="/messaging"
-                  className={`p-2 rounded-full transition-colors ${
-                    isDark
-                      ? 'hover:bg-[#2d3548] text-gray-400'
-                      : 'hover:bg-gray-100 text-gray-600'
-                  }`}
+                  className="p-2 rounded-full transition-colors hover:bg-muted text-muted-foreground"
                 >
                   <MessageCircle className="w-6 h-6" />
                 </Link>
@@ -140,7 +124,7 @@ export default function HomePage() {
             <div className="md:hidden relative flex items-center">
               {/* Mobile Search Bar */}
               <div className="flex-1 flex items-center gap-3">
-                <Search className="w-5 h-5 text-gray-400" />
+                <Search className="w-5 h-5 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Search..."
@@ -148,24 +132,16 @@ export default function HomePage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => setIsSearchFocused(false)}
-                  className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:border-[#5B7CFF] pr-20 ${
-                    isDark
-                      ? 'bg-[#242b3d] text-white placeholder-gray-500 border-[#2d3548]'
-                      : 'bg-white text-gray-900 placeholder-gray-500 border-gray-300'
-                  }`}
+                  className="w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:border-primary pr-20 bg-card text-foreground placeholder-muted-foreground border-border"
                 />
               </div>
 
               {/* Mobile Icons (Absolutely Positioned) */}
               <div className="absolute top-1/2 right-0 -translate-y-1/2 flex items-center gap-1">
-                <NotificationPopover isDark={isDark} />
+                <NotificationPopover />
                 <Link
                   href="/messaging"
-                  className={`p-2 rounded-full transition-colors ${
-                    isDark
-                      ? 'text-gray-400'
-                      : 'text-gray-600'
-                  }`}
+                  className="p-2 rounded-full transition-colors text-muted-foreground"
                 >
                   <MessageCircle className="w-6 h-6" />
                 </Link>
@@ -183,7 +159,6 @@ export default function HomePage() {
                 {/* Mobile Story Rail */}
                 <div className="md:hidden">
                   <StoryRail
-                    isDark={isDark}
                     stories={stories}
                     onCreateClick={() => setShowCreateStory(true)}
                     onStoryClick={(story) => setSelectedStory(story)}
@@ -192,7 +167,7 @@ export default function HomePage() {
 
                 {/* Feed Tabs */}
                 <div className="md:hidden">
-                  <FeedTabs isDark={isDark} />
+                  <FeedTabs />
                 </div>
 
                 {/* Create Post */}
@@ -213,15 +188,12 @@ export default function HomePage() {
                         key={post.id}
                         {...post}
                         initialComments={post.commentData}
-                        isDark={isDark}
                       />
                     ))}
 
                   {!loading && searchQuery && filteredPosts.length === 0 && (
                     <p
-                      className={`text-center py-12 ${
-                        isDark ? 'text-gray-400' : 'text-gray-600'
-                      }`}
+                      className="text-center py-12 text-muted-foreground"
                     >
                       No posts found matching "{searchQuery}"
                     </p>
@@ -248,14 +220,12 @@ export default function HomePage() {
               stories={stories}
               initialStoryId={selectedStory.id}
               onClose={() => setSelectedStory(null)}
-              isDark={isDark}
             />
           </div>
           <div className="hidden md:block">
             <StoryModal
               story={selectedStory}
               onClose={() => setSelectedStory(null)}
-              isDark={isDark}
             />
           </div>
         </>
@@ -263,14 +233,14 @@ export default function HomePage() {
 
       {showCreateStory && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className={`${isDark ? "bg-[#242b3d]" : "bg-white"} rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto`}>
+          <div className="bg-card rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div
-              className={`sticky top-0 ${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} border-b px-6 py-4 flex items-center justify-between`}
+              className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between"
             >
-              <h2 className={isDark ? "text-white" : "text-gray-900"}>Create Story</h2>
+              <h2 className="text-foreground">Create Story</h2>
               <button
                 onClick={() => setShowCreateStory(false)}
-                className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-[#171c28] text-gray-400" : "hover:bg-gray-100 text-gray-600"}`}
+                className="p-2 rounded-lg transition-colors hover:bg-muted text-muted-foreground"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -278,7 +248,6 @@ export default function HomePage() {
 
             <div className="p-6">
               <CreateStoryForm
-                isDark={isDark}
                 onCancel={() => setShowCreateStory(false)}
                 onCreated={handleCreateStory}
               />

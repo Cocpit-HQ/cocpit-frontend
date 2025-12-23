@@ -1,7 +1,6 @@
 "use client"
 
-import React, { useMemo, useState } from "react"
-import { useTheme } from "next-themes"
+import React, { useState } from "react"
 import { MoreHorizontal, Phone, Video } from "lucide-react"
 import { ChatThread, Message } from "@/types/messaging"
 import { avatarGradients, mockMessages } from "@/data/mockMessaging"
@@ -15,9 +14,6 @@ interface ChatWindowProps {
 }
 
 export default function ChatWindow({ chat, isMobile }: ChatWindowProps) {
-  const { resolvedTheme } = useTheme()
-  const isDark = useMemo(() => resolvedTheme === "dark", [resolvedTheme])
-
   // Local state for messages to allow adding new ones
   const [messages, setMessages] = useState<Message[]>(mockMessages[chat.id] || [])
 
@@ -33,43 +29,41 @@ export default function ChatWindow({ chat, isMobile }: ChatWindowProps) {
 
   // Desktop Header
   const DesktopHeader = () => (
-    <div className={`p-4 border-b flex items-center justify-between ${isDark ? "border-[#2d3548]" : "border-gray-200"}`}>
+    <div className="p-4 border-b border-border flex items-center justify-between">
       <div className="flex items-center gap-3">
         <div className="relative">
           <div className={`w-10 h-10 bg-gradient-to-br ${avatarGradients[chat.avatar]} rounded-full`} />
           {chat.online && (
-            <div className={`absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 ${isDark ? "border-[#242b3d]" : "border-white"}`} />
+            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-card" />
           )}
         </div>
         <div>
-          <h3 className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>{chat.name}</h3>
-          <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+          <h3 className="font-semibold text-foreground">{chat.name}</h3>
+          <p className="text-xs text-muted-foreground">
             {chat.role ? chat.role : (chat.online ? "Active now" : "Offline")}
           </p>
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <button className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
-            <Phone className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+        <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground">
+            <Phone className="w-5 h-5" />
         </button>
-        <button className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
-            <Video className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+        <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground">
+            <Video className="w-5 h-5" />
         </button>
-        <button className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
-            <MoreHorizontal className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+        <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground">
+            <MoreHorizontal className="w-5 h-5" />
         </button>
       </div>
     </div>
   )
 
   return (
-    <div className={`flex flex-col h-full ${isMobile ? "h-dvh bg-white dark:bg-[#171c28]" : ""}`}>
+    <div className={`flex flex-col h-full ${isMobile ? "h-dvh bg-background" : ""}`}>
       {isMobile ? <MobileChatHeader chat={chat} /> : <DesktopHeader />}
 
       {chat.pinnedContext && (
-        <div className={`px-4 py-2 text-xs text-center font-medium ${
-            isDark ? "bg-blue-900/20 text-blue-300" : "bg-blue-50 text-blue-700"
-        }`}>
+        <div className="px-4 py-2 text-xs text-center font-medium bg-primary/20 text-primary">
             Context: {chat.pinnedContext}
         </div>
       )}

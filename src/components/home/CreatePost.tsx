@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { useTheme } from 'next-themes'
 import { Image, Video, FileText, BarChart3 } from 'lucide-react'
 import { useActionModal } from '@/context/ActionModalContext'
 
@@ -15,29 +14,18 @@ function PostButton({ icon, label, onClick }: { icon: React.ReactNode; label: st
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-4 py-2 hover:bg-[#F3F2EF] rounded-lg transition-colors"
+      className="flex items-center gap-2 px-4 py-2 hover:bg-muted rounded-lg transition-colors"
     >
       {icon}
-      <span className="text-[#666666] hidden sm:block">{label}</span>
+      <span className="text-muted-foreground hidden sm:block">{label}</span>
     </button>
   )
 }
 
 export function CreatePost({ onOpenModal }: CreatePostProps) {
-  const { resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const isDark = mounted && resolvedTheme === 'dark'
-
   return (
     <div
-      className={`rounded-xl border p-6 mb-6 ${
-        isDark ? 'bg-[#242b3d] border-[#2d3548]' : 'bg-white border-gray-200 shadow-sm'
-      }`}
+      className="rounded-xl border p-6 mb-6 bg-card border-border shadow-sm"
     >
       <div className="flex gap-3 mb-4">
         <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex-shrink-0 overflow-hidden">
@@ -51,17 +39,13 @@ export function CreatePost({ onOpenModal }: CreatePostProps) {
           type="text"
           placeholder="Start a post"
           onClick={() => onOpenModal('text')}
-          className={`flex-1 px-4 py-3 border rounded-full hover:bg-[#F3F2EF] cursor-pointer focus:outline-none transition-colors ${
-            isDark
-              ? 'bg-[#1a1f2e] text-white placeholder-gray-500 border-[#2d3548] hover:border-[#5B7CFF]'
-              : 'bg-gray-50 text-gray-900 placeholder-gray-500 border-[#E1E1E1] hover:bg-[#F3F2EF]'
-          }`}
+          className="flex-1 px-4 py-3 border rounded-full hover:bg-muted cursor-pointer focus:outline-none transition-colors bg-muted/50 text-foreground placeholder-muted-foreground border-border hover:border-primary"
         />
       </div>
 
       <div className="flex items-center justify-around">
         <PostButton
-          icon={<Image className="w-5 h-5 text-[#0A66C2]" />}
+          icon={<Image className="w-5 h-5 text-primary" />}
           label="Photo"
           onClick={() => onOpenModal('photo')}
         />
@@ -86,4 +70,3 @@ export function CreatePost({ onOpenModal }: CreatePostProps) {
 }
 
 export default CreatePost
-

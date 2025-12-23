@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
 import { Search, Filter } from "lucide-react"
 
 import { jobs } from "@/lib/data/jobs"
@@ -29,7 +28,7 @@ const routes: Record<string, string> = {
 
 export default function JobsPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   const router = useRouter()
-  const { resolvedTheme } = useTheme()
+  // Removed useTheme logic - relying on CSS variables
   const [mounted, setMounted] = useState(false)
 
   // --- Tab State ---
@@ -48,8 +47,6 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
       }
     }
   }, [searchParams])
-
-  const isDark = resolvedTheme === "dark"
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
@@ -138,11 +135,10 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
+    <div className="min-h-screen bg-background">
       <AppShell currentPage="jobs" navigateTo={navigateTo}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
           <JobSearchBar
-            isDark={isDark}
             isSearchExpanded={isSearchExpanded}
             setIsSearchExpanded={setIsSearchExpanded}
             searchKeywords={searchKeywords}
@@ -158,20 +154,14 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
 
           {/* Mobile search pill */}
           <div
-            className={`md:hidden mb-6 border rounded-2xl p-4 ${
-              isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
-            }`}
+            className="md:hidden mb-6 border rounded-2xl p-4 bg-card border-border"
           >
             <button
               type="button"
               onClick={() => setShowMobileSearch(true)}
-              className={`flex w-full items-center gap-3 rounded-full border px-4 py-2 ${
-                isDark
-                  ? "border-[#2d3548] bg-[#171c28] text-gray-300"
-                  : "border-gray-300 bg-white text-gray-700"
-              }`}
+              className="flex w-full items-center gap-3 rounded-full border px-4 py-2 border-border bg-muted text-muted-foreground"
             >
-              <Search className="h-5 w-5 text-gray-400" />
+              <Search className="h-5 w-5 text-muted-foreground" />
               <span className="text-sm text-left flex-1">
                 {collapsedSearchText || "Search jobs by title or location"}
               </span>
@@ -179,7 +169,6 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
           </div>
 
           <JobTabs
-            isDark={isDark}
             mode={mode}
             setMode={setMode}
             myJobsTab={myJobsTab}
@@ -189,7 +178,6 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <JobFiltersSidebar
-              isDark={isDark}
               filterJobTypes={filterJobTypes}
               toggleJobType={toggleJobType}
               filterLocations={filterLocations}
@@ -201,14 +189,10 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
 
             <div className="lg:col-span-3">
               <div className="mb-4 flex items-center justify-between">
-                <p className={isDark ? "text-gray-400" : "text-gray-600"}>{jobs.length} jobs found</p>
+                <p className="text-muted-foreground">{jobs.length} jobs found</p>
                 <button
                   type="button"
-                  className={`flex items-center gap-2 rounded-full border px-3 py-2 text-sm md:hidden ${
-                    isDark
-                      ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28]"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                  }`}
+                  className="flex items-center gap-2 rounded-full border px-3 py-2 text-sm md:hidden border-border text-muted-foreground hover:bg-muted"
                   onClick={() => setShowMobileFilters(true)}
                 >
                   <Filter className="h-4 w-4" />
@@ -218,7 +202,7 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
 
               <div className="space-y-4">
                 {jobsToRender.map((job) => (
-                  <JobCard key={job.id} job={job} isDark={isDark} mode={mode} />
+                  <JobCard key={job.id} job={job} mode={mode} />
                 ))}
               </div>
             </div>
@@ -227,7 +211,6 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
       </AppShell>
 
       <MobileJobSearch
-        isDark={isDark}
         showMobileSearch={showMobileSearch}
         setShowMobileSearch={setShowMobileSearch}
         searchKeywords={searchKeywords}
@@ -241,7 +224,6 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
       />
 
       <MobileJobFilters
-        isDark={isDark}
         showMobileFilters={showMobileFilters}
         setShowMobileFilters={setShowMobileFilters}
         filterJobTypes={filterJobTypes}

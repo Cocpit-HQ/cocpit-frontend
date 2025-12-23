@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { useTheme } from "next-themes"
 import { Home, Briefcase, Plus, Calendar, User } from "lucide-react"
 
 import type { Page } from "@/types/common"
@@ -22,14 +21,6 @@ const NAV_ROUTES: Record<string, string> = {
 export function MobileBottomNav({ currentPage, onAdd }: MobileBottomNavProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const { resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const isDark = mounted && resolvedTheme === "dark"
 
   const handleNavigate = (page: Page) => {
     const target = NAV_ROUTES[page] ?? "/feed"
@@ -39,9 +30,7 @@ export function MobileBottomNav({ currentPage, onAdd }: MobileBottomNavProps) {
 
   return (
     <nav
-      className={`fixed bottom-0 inset-x-0 z-40 md:hidden border-t ${
-        isDark ? "bg-[#171c28]/95 border-[#2d3548]" : "bg-white/95 border-gray-200"
-      } backdrop-blur-md`}
+      className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t bg-background/95 border-border backdrop-blur-md"
     >
       <div className="max-w-md mx-auto flex items-center justify-between px-4 py-2">
         <button
@@ -51,12 +40,12 @@ export function MobileBottomNav({ currentPage, onAdd }: MobileBottomNavProps) {
         >
           <Home
             className={`w-5 h-5 ${
-              currentPage === "home" ? "text-[#5B7CFF]" : isDark ? "text-gray-400" : "text-gray-600"
+              currentPage === "home" ? "text-primary" : "text-muted-foreground"
             }`}
           />
           <span
             className={`text-xs ${
-              currentPage === "home" ? "text-[#5B7CFF]" : isDark ? "text-gray-400" : "text-gray-600"
+              currentPage === "home" ? "text-primary" : "text-muted-foreground"
             }`}
           >
             Feed
@@ -70,12 +59,12 @@ export function MobileBottomNav({ currentPage, onAdd }: MobileBottomNavProps) {
         >
           <Briefcase
             className={`w-5 h-5 ${
-              currentPage === "jobs" ? "text-[#5B7CFF]" : isDark ? "text-gray-400" : "text-gray-600"
+              currentPage === "jobs" ? "text-primary" : "text-muted-foreground"
             }`}
           />
           <span
             className={`text-xs ${
-              currentPage === "jobs" ? "text-[#5B7CFF]" : isDark ? "text-gray-400" : "text-gray-600"
+              currentPage === "jobs" ? "text-primary" : "text-muted-foreground"
             }`}
           >
             Jobs
@@ -88,8 +77,8 @@ export function MobileBottomNav({ currentPage, onAdd }: MobileBottomNavProps) {
           className="flex items-center justify-center -mt-6"
           aria-label="Create"
         >
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] flex items-center justify-center shadow-lg shadow-[#5B7CFF]/40">
-            <Plus className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/40">
+            <Plus className="w-6 h-6 text-primary-foreground" />
           </div>
         </button>
 
@@ -100,12 +89,12 @@ export function MobileBottomNav({ currentPage, onAdd }: MobileBottomNavProps) {
         >
           <Calendar
             className={`w-5 h-5 ${
-              currentPage === "events" ? "text-[#5B7CFF]" : isDark ? "text-gray-400" : "text-gray-600"
+              currentPage === "events" ? "text-primary" : "text-muted-foreground"
             }`}
           />
           <span
             className={`text-xs ${
-              currentPage === "events" ? "text-[#5B7CFF]" : isDark ? "text-gray-400" : "text-gray-600"
+              currentPage === "events" ? "text-primary" : "text-muted-foreground"
             }`}
           >
             Events
@@ -119,12 +108,12 @@ export function MobileBottomNav({ currentPage, onAdd }: MobileBottomNavProps) {
         >
           <User
             className={`w-5 h-5 ${
-              currentPage === "profile" ? "text-[#5B7CFF]" : isDark ? "text-gray-400" : "text-gray-600"
+              currentPage === "profile" ? "text-primary" : "text-muted-foreground"
             }`}
           />
           <span
             className={`text-xs ${
-              currentPage === "profile" ? "text-[#5B7CFF]" : isDark ? "text-gray-400" : "text-gray-600"
+              currentPage === "profile" ? "text-primary" : "text-muted-foreground"
             }`}
           >
             Profile
@@ -136,5 +125,3 @@ export function MobileBottomNav({ currentPage, onAdd }: MobileBottomNavProps) {
 }
 
 export default MobileBottomNav
-
-

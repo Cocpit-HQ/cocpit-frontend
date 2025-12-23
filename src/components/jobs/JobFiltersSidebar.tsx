@@ -1,23 +1,21 @@
 "use client"
 
-import { Filter, X, Check } from "lucide-react"
+import { X, Check } from "lucide-react"
 
-const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Remote", "Internship"]
-const EXPERIENCE_LEVELS = ["Entry Level", "Mid Level", "Senior Level", "Lead/Manager"]
+const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Freelance", "Remote"]
+const EXPERIENCE_LEVELS = ["Entry Level", "Mid Level", "Senior Level", "Lead / Manager"]
 
 interface JobFiltersSidebarProps {
-  isDark: boolean
   filterJobTypes: string[]
   toggleJobType: (type: string) => void
   filterLocations: string[]
   filterLocationInput: string
-  setFilterLocationInput: (value: string) => void
+  setFilterLocationInput: (input: string) => void
   handleAddFilterLocation: (e: React.KeyboardEvent<HTMLInputElement>) => void
   handleRemoveFilterLocation: (loc: string) => void
 }
 
 export function JobFiltersSidebar({
-  isDark,
   filterJobTypes,
   toggleJobType,
   filterLocations,
@@ -27,30 +25,27 @@ export function JobFiltersSidebar({
   handleRemoveFilterLocation,
 }: JobFiltersSidebarProps) {
   return (
-    <div className="hidden md:block lg:col-span-1">
-      <div
-        className={`${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} border rounded-xl p-6 sticky top-32`}
-      >
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="w-5 h-5 text-[#5B7CFF]" />
-          <h3 className={isDark ? "text-white" : "text-gray-900"}>Filters</h3>
-        </div>
+    <div className="hidden lg:block lg:col-span-1 space-y-6">
+      <div className="bg-card border border-border rounded-xl p-6">
+        <h3 className="font-semibold mb-4 text-foreground">Filters</h3>
 
         <div className="space-y-6">
-          {/* Job Type - Multi Select */}
+          {/* Job Type */}
           <div>
-            <label className={`block text-sm font-medium mb-3 ${isDark ? "text-gray-400" : "text-gray-600"}`}>Job Type</label>
+            <label className="block text-sm font-medium mb-3 text-muted-foreground">
+              Job Type
+            </label>
             <div className="space-y-2">
-              {JOB_TYPES.map((type) => {
-                 const isSelected = filterJobTypes.includes(type)
-                 return (
-                   <label key={type} className="flex items-center gap-3 cursor-pointer group">
-                     <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+               {JOB_TYPES.map((type) => {
+                  const isSelected = filterJobTypes.includes(type)
+                  return (
+                    <label key={type} className="flex items-center gap-3 cursor-pointer group">
+                     <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                        isSelected
-                        ? "bg-[#5B7CFF] border-[#5B7CFF]"
-                        : isDark ? "border-[#2d3548] bg-[#171c28]" : "border-gray-300 bg-white"
+                        ? "bg-primary border-primary"
+                        : "border-muted-foreground/50 group-hover:border-primary"
                      }`}>
-                       {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                       {isSelected && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
                      </div>
                      <input
                        type="checkbox"
@@ -58,7 +53,7 @@ export function JobFiltersSidebar({
                        checked={isSelected}
                        onChange={() => toggleJobType(type)}
                      />
-                     <span className={`text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}>{type}</span>
+                     <span className="text-sm text-foreground group-hover:text-primary transition-colors">{type}</span>
                    </label>
                  )
               })}
@@ -67,16 +62,12 @@ export function JobFiltersSidebar({
 
           {/* Location - Tag Input */}
           <div>
-            <label className={`block text-sm font-medium mb-3 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            <label className="block text-sm font-medium mb-3 text-muted-foreground">
               Location
             </label>
-            <div className={`flex flex-wrap gap-2 p-2 border rounded-lg min-h-[42px] ${
-              isDark ? "bg-[#171c28] border-[#2d3548]" : "bg-gray-50 border-gray-300"
-            }`}>
+            <div className="flex flex-wrap gap-2 p-2 border rounded-lg min-h-[42px] bg-muted/30 border-border">
                {filterLocations.map((loc, idx) => (
-                  <span key={idx} className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${
-                    isDark ? "bg-[#2d3548] text-blue-300" : "bg-blue-50 text-blue-700"
-                  }`}>
+                  <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-primary/10 text-primary">
                     {loc}
                     <button onClick={() => handleRemoveFilterLocation(loc)} className="hover:opacity-70">
                       <X className="w-3 h-3" />
@@ -89,23 +80,19 @@ export function JobFiltersSidebar({
                   onChange={(e) => setFilterLocationInput(e.target.value)}
                   onKeyDown={handleAddFilterLocation}
                   placeholder={filterLocations.length === 0 ? "Type city..." : "Add..."}
-                  className={`flex-1 bg-transparent text-sm focus:outline-none min-w-[60px] ${
-                    isDark ? "text-white placeholder-gray-500" : "text-gray-900 placeholder-gray-400"
-                  }`}
+                  className="flex-1 bg-transparent text-sm focus:outline-none min-w-[60px] text-foreground placeholder-muted-foreground"
                />
             </div>
-            <p className="text-[10px] mt-1 text-gray-500">Press Enter to add location</p>
+            <p className="text-[10px] mt-1 text-muted-foreground">Press Enter to add location</p>
           </div>
 
-          {/* Experience Level (Kept as select for now, but matched style) */}
+          {/* Experience Level */}
           <div>
-            <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            <label className="block text-sm font-medium mb-2 text-muted-foreground">
               Experience Level
             </label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-[#5B7CFF] transition-colors ${
-                isDark ? "bg-[#171c28] border-[#2d3548] text-white" : "bg-gray-50 border-gray-300 text-gray-900"
-              }`}
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-primary transition-colors bg-muted/30 border-border text-foreground"
             >
               <option>All Levels</option>
               {EXPERIENCE_LEVELS.map(level => (
@@ -115,11 +102,9 @@ export function JobFiltersSidebar({
           </div>
 
           <div>
-            <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>Salary Range</label>
+            <label className="block text-sm font-medium mb-2 text-muted-foreground">Salary Range</label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-[#5B7CFF] transition-colors ${
-                isDark ? "bg-[#171c28] border-[#2d3548] text-white" : "bg-gray-50 border-gray-300 text-gray-900"
-              }`}
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-primary transition-colors bg-muted/30 border-border text-foreground"
             >
               <option>Any</option>
               <option>$80k - $100k</option>
@@ -130,11 +115,9 @@ export function JobFiltersSidebar({
           </div>
 
           <div>
-            <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>Date Posted</label>
+            <label className="block text-sm font-medium mb-2 text-muted-foreground">Date Posted</label>
             <select
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-[#5B7CFF] transition-colors ${
-                isDark ? "bg-[#171c28] border-[#2d3548] text-white" : "bg-gray-50 border-gray-300 text-gray-900"
-              }`}
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-primary transition-colors bg-muted/30 border-border text-foreground"
             >
               <option>Any Time</option>
               <option>Past 24 hours</option>

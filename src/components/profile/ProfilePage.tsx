@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
 import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap, Settings, X, Trash2 } from "lucide-react"
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
@@ -31,33 +30,29 @@ const routes: Record<string, string> = {
   achievements: "/achievements",
 }
 
-
-
 function ExperienceItem({
-  isDark,
   experience,
   onEdit,
 }: {
-  isDark: boolean
   experience: Experience
   onEdit: () => void
 }) {
   return (
     <div className="flex gap-4 group relative">
-      <div className="flex-shrink-0 w-12 h-12 bg-[#7B5CFF] rounded-lg flex items-center justify-center">
-        <Briefcase className="w-6 h-6 text-white" />
+      <div className="flex-shrink-0 w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+        <Briefcase className="w-6 h-6 text-primary-foreground" />
       </div>
       <div className="flex-1">
-        <h3 className={`font-semibold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>{experience.title}</h3>
-        <p className={`text-sm mb-1 ${isDark ? "text-gray-400" : "text-gray-600"}`}>{experience.company}</p>
-        <div className={`flex items-center gap-2 text-xs mb-2 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+        <h3 className="font-semibold mb-1 text-foreground">{experience.title}</h3>
+        <p className="text-sm mb-1 text-muted-foreground">{experience.company}</p>
+        <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
           <span>{experience.duration}</span>
           <span>•</span>
           <span>{experience.location}</span>
         </div>
-        <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>{experience.description}</p>
+        <p className="text-sm text-muted-foreground">{experience.description}</p>
       </div>
-      <button onClick={onEdit} className="absolute top-0 right-0 p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-opacity">
+      <button onClick={onEdit} className="absolute top-0 right-0 p-2 text-muted-foreground hover:text-foreground transition-opacity">
         <Edit2 className="w-4 h-4" />
       </button>
     </div>
@@ -65,32 +60,30 @@ function ExperienceItem({
 }
 
 function EducationItem({
-  isDark,
   education,
   onEdit,
 }: {
-  isDark: boolean
   education: Education
   onEdit: () => void
 }) {
   return (
     <div className="flex gap-4 group relative">
-      <div className="flex-shrink-0 w-12 h-12 bg-[#5B7CFF] rounded-lg flex items-center justify-center">
-        <GraduationCap className="w-6 h-6 text-white" />
+      <div className="flex-shrink-0 w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+        <GraduationCap className="w-6 h-6 text-primary-foreground" />
       </div>
       <div className="flex-1">
-        <h3 className={`font-semibold ${isDark ? "text-white" : "text-gray-900"} mb-1`}>
+        <h3 className="font-semibold text-foreground mb-1">
           {education.school}
         </h3>
-        <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"} mb-1`}>{education.degree}, {education.fieldOfStudy}</p>
-        <div className={`flex items-center gap-2 text-xs mb-2 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+        <p className="text-sm text-muted-foreground mb-1">{education.degree}, {education.fieldOfStudy}</p>
+        <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
           <span>{education.duration}</span>
         </div>
-        <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+        <p className="text-sm text-muted-foreground">
           {education.description}
         </p>
       </div>
-      <button onClick={onEdit} className="absolute top-0 right-0 p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-opacity">
+      <button onClick={onEdit} className="absolute top-0 right-0 p-2 text-muted-foreground hover:text-foreground transition-opacity">
         <Edit2 className="w-4 h-4" />
       </button>
     </div>
@@ -99,9 +92,9 @@ function EducationItem({
 
 function SkillTag({ skill, onDelete }: { skill: string, onDelete: (skill: string) => void }) {
   return (
-    <div className="group relative bg-[#5B7CFF]/20 text-[#5B7CFF] px-3 py-1.5 rounded-lg text-sm hover:bg-[#5B7CFF]/30 transition-all">
+    <div className="group relative bg-primary/20 text-primary px-3 py-1.5 rounded-lg text-sm hover:bg-primary/30 transition-all">
       {skill}
-      <button onClick={() => onDelete(skill)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+      <button onClick={() => onDelete(skill)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
         <X className="w-3 h-3" />
       </button>
     </div>
@@ -155,7 +148,7 @@ const initialEducations: Education[] = [
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { theme, resolvedTheme } = useTheme()
+  // Removed useTheme
   const [mounted, setMounted] = useState(false);
   const [isAddSkillModalOpen, setIsAddSkillModalOpen] = useState(false);
   const [isAddExperienceModalOpen, setIsAddExperienceModalOpen] = useState(false);
@@ -169,11 +162,6 @@ export default function ProfilePage() {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const isDark = useMemo(
-    () => resolvedTheme === "dark",
-    [resolvedTheme]
-  )
 
   if (!mounted) {
     return null;
@@ -245,15 +233,13 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
+    <div className="min-h-screen bg-background">
       <AppShell currentPage="profile" navigateTo={navigateTo}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
             <div className="lg:col-span-8">
               <div
-                className={`${
-                  isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
-                } rounded-xl overflow-hidden border mb-6 relative`}
+                className="rounded-xl overflow-hidden border mb-6 relative bg-card border-border"
               >
                 <div className="h-36 bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899] relative">
                   <button
@@ -262,7 +248,7 @@ export default function ProfilePage() {
                   >
                     <Settings className="w-5 h-5" />
                   </button>
-                  <button onClick={() => router.push('/profile/edit')} className="hidden md:flex absolute top-3 right-3 bg-[#5B7CFF] text-white px-4 py-2 rounded-lg hover:bg-[#4A6BEF] transition-all items-center gap-2 text-sm">
+                  <button onClick={() => router.push('/profile/edit')} className="hidden md:flex absolute top-3 right-3 bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all items-center gap-2 text-sm border border-white/20">
                     <Edit2 className="w-4 h-4" />
                     Edit Profile
                   </button>
@@ -271,9 +257,7 @@ export default function ProfilePage() {
                 <div className="px-6 pb-6">
                   <div className="flex items-start justify-between -mt-14 mb-4">
                     <div
-                      className={`w-32 h-32 rounded-full border-4 ${
-                        isDark ? "border-[#242b3d]" : "border-white"
-                      } bg-white overflow-hidden flex-shrink-0 relative`}
+                      className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 relative"
                     >
                       <img
                         src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop"
@@ -281,7 +265,7 @@ export default function ProfilePage() {
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <button onClick={() => router.push('/profile/edit')} className="md:hidden mt-16 bg-[#5B7CFF] text-white px-4 py-2 rounded-lg hover:bg-[#4A6BEF] transition-all flex items-center gap-2 text-sm">
+                    <button onClick={() => router.push('/profile/edit')} className="md:hidden mt-16 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center gap-2 text-sm">
                       <Edit2 className="w-4 h-4" />
                       Edit Profile
                     </button>
@@ -289,56 +273,52 @@ export default function ProfilePage() {
 
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <h1 className={`text-2xl ${isDark ? "text-white" : "text-gray-900"}`}>Sally Liang</h1>
-                      <CheckCircle className="w-5 h-5 text-[#5B7CFF] fill-[#5B7CFF]" />
-                      <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>· 2nd</span>
+                      <h1 className="text-2xl text-foreground">Sally Liang</h1>
+                      <CheckCircle className="w-5 h-5 text-primary fill-primary/10" />
+                      <span className="text-sm text-muted-foreground">· 2nd</span>
                     </div>
 
-                    <p className={`text-base mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                    <p className="text-base mb-2 text-foreground">
                       Senior Financial Analyst at Johnson & Johnson
                     </p>
 
-                    <div className={`flex items-center gap-2 text-xs mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                    <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
                       <span>Berkeley, California, United States</span>
                       <span>·</span>
-                      <a href="#" className="text-[#5B7CFF] hover:underline">
+                      <a href="#" className="text-primary hover:underline">
                         Contact info
                       </a>
                     </div>
 
-                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"} mb-4`}>500+ connections</p>
+                    <p className="text-sm text-muted-foreground mb-4">500+ connections</p>
                   </div>
                 </div>
               </div>
 
               <div
-                className={`${
-                  isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
-                } rounded-xl border p-4 mb-6`}
+                className="rounded-xl border p-4 mb-6 bg-card border-border"
               >
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
-                    <p className={`text-xl mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>500+</p>
-                    <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Connections</p>
+                    <p className="text-xl mb-1 text-foreground">500+</p>
+                    <p className="text-xs text-muted-foreground">Connections</p>
                   </div>
-                  <div className={`text-center border-l border-r ${isDark ? "border-[#2d3548]" : "border-gray-200"}`}>
-                    <p className={`text-xl mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>1,234</p>
-                    <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Profile Views</p>
+                  <div className="text-center border-l border-r border-border">
+                    <p className="text-xl mb-1 text-foreground">1,234</p>
+                    <p className="text-xs text-muted-foreground">Profile Views</p>
                   </div>
                   <div className="text-center">
-                    <p className={`text-xl mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>87</p>
-                    <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Posts</p>
+                    <p className="text-xl mb-1 text-foreground">87</p>
+                    <p className="text-xs text-muted-foreground">Posts</p>
                   </div>
                 </div>
               </div>
 
               <div
-                className={`${
-                  isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
-                } rounded-xl border p-6 mb-6`}
+                className="rounded-xl border p-6 mb-6 bg-card border-border"
               >
-                <h2 className={`text-xl ${isDark ? "text-white" : "text-gray-900"} mb-4`}>About</h2>
-                <p className={`text-sm leading-relaxed ${isDark ? "text-gray-400" : "text-gray-700"}`}>
+                <h2 className="text-xl text-foreground mb-4">About</h2>
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   Passionate product manager with 7+ years of experience building user-centric solutions that drive business growth.
                   Proven track record in agile development, user research, and cross-functional team leadership. Successfully launched 15+
                   features that improved user engagement by 40% and increased revenue by $2M annually.
@@ -346,20 +326,17 @@ export default function ProfilePage() {
               </div>
 
               <div
-                className={`${
-                  isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
-                } rounded-xl border p-6 mb-6`}
+                className="rounded-xl border p-6 mb-6 bg-card border-border"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className={`text-xl ${isDark ? "text-white" : "text-gray-900"}`}>Experience</h2>
-                  <button onClick={handleAddExperienceClick} className="text-[#5B7CFF] hover:underline text-sm">Add</button>
+                  <h2 className="text-xl text-foreground">Experience</h2>
+                  <button onClick={handleAddExperienceClick} className="text-primary hover:underline text-sm">Add</button>
                 </div>
 
                 <div className="space-y-6">
                   {experiences.map(exp => (
                     <ExperienceItem
                       key={exp.id}
-                      isDark={isDark}
                       experience={exp}
                       onEdit={() => handleEditExperienceClick(exp)}
                     />
@@ -368,13 +345,11 @@ export default function ProfilePage() {
               </div>
 
               <div
-                className={`${
-                  isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
-                } rounded-xl border p-6 mb-6`}
+                className="rounded-xl border p-6 mb-6 bg-card border-border"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className={`text-xl ${isDark ? "text-white" : "text-gray-900"}`}>Skills</h2>
-                  <button onClick={() => setIsAddSkillModalOpen(true)} className="text-[#5B7CFF] hover:underline text-sm">Add</button>
+                  <h2 className="text-xl text-foreground">Skills</h2>
+                  <button onClick={() => setIsAddSkillModalOpen(true)} className="text-primary hover:underline text-sm">Add</button>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -384,17 +359,16 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className={`${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} rounded-xl border p-6`}>
+              <div className="rounded-xl border p-6 bg-card border-border">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className={`text-xl ${isDark ? "text-white" : "text-gray-900"}`}>Education</h2>
-                  <button onClick={handleAddEducationClick} className="text-[#5B7CFF] hover:underline text-sm">Add</button>
+                  <h2 className="text-xl text-foreground">Education</h2>
+                  <button onClick={handleAddEducationClick} className="text-primary hover:underline text-sm">Add</button>
                 </div>
 
                 <div className="space-y-6">
                   {educations.map(edu => (
                     <EducationItem
                       key={edu.id}
-                      isDark={isDark}
                       education={edu}
                       onEdit={() => handleEditEducationClick(edu)}
                     />
@@ -417,13 +391,12 @@ export default function ProfilePage() {
         onClose={() => setIsAddSkillModalOpen(false)}
         initialSkills={skills}
         onSave={handleSaveSkills}
-        isDark={isDark}
       />
 
       <Dialog open={isAddExperienceModalOpen} onOpenChange={setIsAddExperienceModalOpen}>
-        <DialogContent className={isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white"}>
+        <DialogContent className="bg-card border-border">
           <DialogHeader>
-            <DialogTitle className={isDark ? "text-white" : "text-gray-900"}>
+            <DialogTitle className="text-foreground">
               {editingExperience ? "Edit Experience" : "Add Experience"}
             </DialogTitle>
             <DialogDescription>
@@ -431,7 +404,6 @@ export default function ProfilePage() {
             </DialogDescription>
           </DialogHeader>
           <AddExperienceForm
-            isDark={isDark}
             onSave={handleSaveExperience}
             onCancel={() => setIsAddExperienceModalOpen(false)}
             initialData={editingExperience}
@@ -441,9 +413,9 @@ export default function ProfilePage() {
       </Dialog>
 
       <Dialog open={isAddEducationModalOpen} onOpenChange={setIsAddEducationModalOpen}>
-        <DialogContent className={isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white"}>
+        <DialogContent className="bg-card border-border">
           <DialogHeader>
-            <DialogTitle className={isDark ? "text-white" : "text-gray-900"}>
+            <DialogTitle className="text-foreground">
               {editingEducation ? "Edit Education" : "Add Education"}
             </DialogTitle>
             <DialogDescription>
@@ -451,7 +423,6 @@ export default function ProfilePage() {
             </DialogDescription>
           </DialogHeader>
           <AddEducationForm
-            isDark={isDark}
             onSave={handleSaveEducation}
             onCancel={() => setIsAddEducationModalOpen(false)}
             initialData={editingEducation}
@@ -462,4 +433,3 @@ export default function ProfilePage() {
     </div>
   )
 }
-

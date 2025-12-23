@@ -11,11 +11,11 @@ interface AddEducationFormProps {
   onCancel?: () => void
   onSave?: (data: Partial<Education>) => void
   onDelete?: (id: number) => void
-  isDark?: boolean
+  isDark?: boolean // Optional
   initialData?: Education | null
 }
 
-export default function AddEducationForm({ onCancel, onSave, onDelete, isDark, initialData }: AddEducationFormProps) {
+export default function AddEducationForm({ onCancel, onSave, onDelete, initialData }: AddEducationFormProps) {
   const [formData, setFormData] = useState({
     school: "",
     degree: "",
@@ -63,11 +63,9 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, isDark, i
     }
   }
 
-  const inputStyles = isDark
-    ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-500"
-    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+  const inputStyles = "bg-input border-border text-foreground placeholder-muted-foreground"
   
-  const labelStyles = `text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`
+  const labelStyles = "text-sm font-medium text-foreground"
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -157,11 +155,11 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, isDark, i
             type="button" 
             variant="outline" 
             onClick={onCancel}
-            className={isDark ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28] bg-transparent" : "border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent"}
+            className="border-border text-muted-foreground hover:bg-muted bg-transparent"
           >
             Cancel
           </Button>
-          <Button type="submit" className="bg-[#5B7CFF] hover:bg-[#4A6BEF] text-white border-0">
+          <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground border-0">
             Save
           </Button>
         </div>

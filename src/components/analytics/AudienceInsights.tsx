@@ -8,24 +8,19 @@ import { AudienceMetric } from '@/app/analytics/data'
 interface AudienceInsightsProps {
   industries: AudienceMetric[]
   locations: AudienceMetric[]
-  isDark: boolean
+  isDark?: boolean // Optional
 }
 
 const COLORS = ['#5B7CFF', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 
-export function AudienceInsights({ industries, locations, isDark }: AudienceInsightsProps) {
+export function AudienceInsights({ industries, locations }: AudienceInsightsProps) {
   return (
-    <div className={`p-6 rounded-xl border
-      ${isDark
-        ? 'bg-[#242b3d] border-[#2d3548]'
-        : 'bg-white border-gray-200'
-      }`}
-    >
+    <div className="p-6 rounded-xl border bg-card border-border">
       <div className="mb-6">
-        <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+        <h3 className="text-lg font-bold text-foreground">
           Audience Demographics
         </h3>
-        <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+        <p className="text-sm mt-1 text-muted-foreground">
           Who is viewing your profile
         </p>
       </div>
@@ -35,8 +30,8 @@ export function AudienceInsights({ industries, locations, isDark }: AudienceInsi
         {/* Industries - Pie Chart */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Briefcase className="w-4 h-4 text-gray-500" />
-            <h4 className={`text-sm font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Top Industries</h4>
+            <Briefcase className="w-4 h-4 text-muted-foreground" />
+            <h4 className="text-sm font-semibold text-foreground">Top Industries</h4>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -58,10 +53,10 @@ export function AudienceInsights({ industries, locations, isDark }: AudienceInsi
                   </Pie>
                   <ReTooltip
                      contentStyle={{
-                      backgroundColor: isDark ? '#1f2937' : '#ffffff',
-                      borderColor: isDark ? '#374151' : '#e5e7eb',
+                      backgroundColor: "var(--card)",
+                      borderColor: "var(--border)",
                       borderRadius: '8px',
-                      color: isDark ? '#f3f4f6' : '#111827'
+                      color: "var(--foreground)"
                     }}
                     itemStyle={{ fontSize: '12px' }}
                   />
@@ -69,7 +64,7 @@ export function AudienceInsights({ industries, locations, isDark }: AudienceInsi
               </ResponsiveContainer>
               {/* Center Text */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                 <span className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Industries</span>
+                 <span className="text-xs font-medium text-muted-foreground">Industries</span>
               </div>
             </div>
 
@@ -82,9 +77,9 @@ export function AudienceInsights({ industries, locations, isDark }: AudienceInsi
                       className="w-2.5 h-2.5 rounded-full"
                       style={{ backgroundColor: COLORS[index % COLORS.length] }}
                     />
-                    <span className={isDark ? 'text-gray-300' : 'text-gray-600'}>{item.name}</span>
+                    <span className="text-muted-foreground">{item.name}</span>
                   </div>
-                  <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-900'}`}>
+                  <span className="font-medium text-foreground">
                     {item.percentage}%
                   </span>
                 </div>
@@ -96,22 +91,20 @@ export function AudienceInsights({ industries, locations, isDark }: AudienceInsi
         {/* Locations - Bar/List Visual */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <MapPin className="w-4 h-4 text-gray-500" />
-            <h4 className={`text-sm font-semibold ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Top Locations</h4>
+            <MapPin className="w-4 h-4 text-muted-foreground" />
+            <h4 className="text-sm font-semibold text-foreground">Top Locations</h4>
           </div>
 
           <div className="space-y-4">
             {locations.map((loc, index) => (
               <div key={loc.name} className="relative">
                 <div className="flex justify-between text-xs mb-1 z-10 relative">
-                  <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>{loc.name}</span>
-                  <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>{loc.percentage}%</span>
+                  <span className="text-foreground">{loc.name}</span>
+                  <span className="text-muted-foreground">{loc.percentage}%</span>
                 </div>
-                <div className={`w-full h-8 rounded-lg relative overflow-hidden flex items-center px-3
-                  ${isDark ? 'bg-[#1a1f2e]' : 'bg-gray-50'}`}
-                >
+                <div className="w-full h-8 rounded-lg relative overflow-hidden flex items-center px-3 bg-muted/30">
                    <div
-                      className="absolute left-0 top-0 bottom-0 bg-[#5B7CFF]/10 dark:bg-[#5B7CFF]/20 rounded-lg transition-all duration-1000"
+                      className="absolute left-0 top-0 bottom-0 bg-primary/20 rounded-lg transition-all duration-1000"
                       style={{ width: `${loc.percentage}%` }}
                    />
                 </div>

@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react'
-import { useTheme } from 'next-themes'
 import { X, Image, Video, BarChart2, Plus, Trash2, Crop, MoveHorizontal, MoveVertical } from 'lucide-react'
 import { useFeed } from '@/context/FeedContext'
 
@@ -30,9 +29,7 @@ interface UploadedImage {
 }
 
 export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: CreatePostModalProps) {
-  const { resolvedTheme } = useTheme()
   const { addPost } = useFeed()
-  const [mounted, setMounted] = useState(false)
   const [postType, setPostType] = useState<PostType>(initialPostType)
   const [description, setDescription] = useState('')
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
@@ -57,16 +54,10 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
   ]
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
     if (isOpen) {
       setPostType(initialPostType)
     }
   }, [isOpen, initialPostType])
-
-  const isDark = mounted && resolvedTheme === 'dark'
 
   if (!isOpen) return null
 
@@ -165,22 +156,16 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div
-        className={`relative w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl ${
-          isDark ? 'bg-[#242b3d]' : 'bg-white'
-        }`}
+        className="relative w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl bg-card"
       >
         {/* Header */}
         <div
-          className={`sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b ${
-            isDark ? 'bg-[#242b3d] border-[#2d3548]' : 'bg-white border-gray-200'
-          }`}
+          className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b bg-card border-border"
         >
-          <h2 className={`text-xl ${isDark ? 'text-white' : 'text-gray-900'}`}>Create a post</h2>
+          <h2 className="text-xl text-foreground">Create a post</h2>
           <button
             onClick={onClose}
-            className={`p-2 rounded-full transition-colors ${
-              isDark ? 'hover:bg-[#1a1f2e] text-gray-400' : 'hover:bg-gray-100 text-gray-600'
-            }`}
+            className="p-2 rounded-full transition-colors hover:bg-muted text-muted-foreground"
           >
             <X className="w-5 h-5" />
           </button>
@@ -197,8 +182,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
               />
             </div>
             <div>
-              <h3 className={`${isDark ? 'text-white' : 'text-gray-900'}`}>John Doe</h3>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Post to Anyone</p>
+              <h3 className="text-foreground">John Doe</h3>
+              <p className="text-sm text-muted-foreground">Post to Anyone</p>
             </div>
           </div>
         </div>
@@ -210,10 +195,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
               onClick={() => setPostType('photo')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all ${
                 postType === 'photo'
-                  ? 'bg-[#5B7CFF] text-white border-[#5B7CFF]'
-                  : isDark
-                  ? 'bg-[#1a1f2e] text-gray-400 border-[#2d3548] hover:border-[#5B7CFF]'
-                  : 'bg-gray-50 text-gray-600 border-gray-300 hover:border-[#5B7CFF]'
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-muted/50 text-muted-foreground border-border hover:border-primary'
               }`}
             >
               <Image className="w-4 h-4" />
@@ -223,10 +206,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
               onClick={() => setPostType('video')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all ${
                 postType === 'video'
-                  ? 'bg-[#5B7CFF] text-white border-[#5B7CFF]'
-                  : isDark
-                  ? 'bg-[#1a1f2e] text-gray-400 border-[#2d3548] hover:border-[#5B7CFF]'
-                  : 'bg-gray-50 text-gray-600 border-gray-300 hover:border-[#5B7CFF]'
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-muted/50 text-muted-foreground border-border hover:border-primary'
               }`}
             >
               <Video className="w-4 h-4" />
@@ -236,10 +217,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
               onClick={() => setPostType('poll')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all ${
                 postType === 'poll'
-                  ? 'bg-[#5B7CFF] text-white border-[#5B7CFF]'
-                  : isDark
-                  ? 'bg-[#1a1f2e] text-gray-400 border-[#2d3548] hover:border-[#5B7CFF]'
-                  : 'bg-gray-50 text-gray-600 border-gray-300 hover:border-[#5B7CFF]'
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-muted/50 text-muted-foreground border-border hover:border-primary'
               }`}
             >
               <BarChart2 className="w-4 h-4" />
@@ -255,11 +234,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder={postType === 'poll' ? 'Add context to your poll (optional)...' : 'What do you want to share?'}
-            className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:border-[#5B7CFF] resize-none ${
-              isDark
-                ? 'bg-[#1a1f2e] text-white placeholder-gray-500 border-[#2d3548]'
-                : 'bg-gray-50 text-gray-900 placeholder-gray-500 border-gray-300'
-            }`}
+            className="w-full px-4 py-3 rounded-lg border focus:outline-none focus:border-primary resize-none bg-muted/50 text-foreground placeholder-muted-foreground border-border"
             rows={4}
           />
 
@@ -269,11 +244,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
               {/* Upload Button */}
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className={`w-full py-8 rounded-lg border-2 border-dashed transition-all ${
-                  isDark
-                    ? 'bg-[#1a1f2e] border-[#2d3548] hover:border-[#5B7CFF] text-gray-400'
-                    : 'bg-gray-50 border-gray-300 hover:border-[#5B7CFF] text-gray-600'
-                }`}
+                className="w-full py-8 rounded-lg border-2 border-dashed transition-all bg-muted/20 border-border hover:border-primary text-muted-foreground"
               >
                 <div className="flex flex-col items-center gap-2">
                   <Image className="w-8 h-8" />
@@ -298,10 +269,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                       <div
                         className={`relative aspect-square rounded-lg overflow-hidden border-2 ${
                           selectedImageForCrop === image.id
-                            ? 'border-[#5B7CFF]'
-                            : isDark
-                            ? 'border-[#2d3548]'
-                            : 'border-gray-300'
+                            ? 'border-primary'
+                            : 'border-border'
                         }`}
                       >
                         <img
@@ -316,25 +285,17 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                       <div className="absolute top-2 right-2 flex gap-2">
                         <button
                           onClick={() => setSelectedImageForCrop(selectedImageForCrop === image.id ? null : image.id)}
-                          className={`p-2 rounded-full transition-all ${
-                            isDark ? 'bg-[#242b3d]/90' : 'bg-white/90'
-                          } ${
+                          className={`p-2 rounded-full transition-all bg-card/90 ${
                             selectedImageForCrop === image.id
-                              ? 'text-[#5B7CFF]'
-                              : isDark
-                              ? 'text-gray-400 hover:text-white'
-                              : 'text-gray-600 hover:text-gray-900'
+                              ? 'text-primary'
+                              : 'text-muted-foreground hover:text-foreground'
                           }`}
                         >
                           <Crop className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => removeImage(image.id)}
-                          className={`p-2 rounded-full transition-colors ${
-                            isDark
-                              ? 'bg-[#242b3d]/90 text-gray-400 hover:text-red-400'
-                              : 'bg-white/90 text-gray-600 hover:text-red-600'
-                          }`}
+                          className="p-2 rounded-full transition-colors bg-card/90 text-muted-foreground hover:text-destructive"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -347,15 +308,13 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
               {/* Crop & Aspect Ratio Controls */}
               {uploadedImages.length > 0 && (
                 <div
-                  className={`p-4 rounded-lg border space-y-3 ${
-                    isDark ? 'bg-[#1a1f2e] border-[#2d3548]' : 'bg-gray-50 border-gray-300'
-                  }`}
+                  className="p-4 rounded-lg border space-y-3 bg-muted/20 border-border"
                 >
-                  <h4 className={`text-sm mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Edit Image</h4>
+                  <h4 className="text-sm mb-2 text-foreground">Edit Image</h4>
 
                   {/* Aspect Ratio Selection */}
                   <div className="space-y-2">
-                    <label className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <label className="text-sm text-muted-foreground">
                       Aspect Ratio
                     </label>
                     <div className="flex gap-2 flex-wrap">
@@ -365,10 +324,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                                 onClick={() => setSelectedAspectRatio(ratio.value)}
                                 className={`px-3 py-1.5 rounded text-xs transition-colors border ${
                                     selectedAspectRatio === ratio.value
-                                        ? 'bg-[#5B7CFF] text-white border-[#5B7CFF]'
-                                        : isDark
-                                        ? 'bg-[#242b3d] text-gray-300 border-[#2d3548] hover:bg-[#2d3548]'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                                        ? 'bg-primary text-primary-foreground border-primary'
+                                        : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
                                 }`}
                             >
                                 {ratio.label}
@@ -381,7 +338,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                     <>
                       {/* Zoom Control */}
                       <div className="space-y-2">
-                        <label className={`text-sm flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                        <label className="text-sm flex items-center gap-2 text-muted-foreground">
                           <span>Zoom</span>
                         </label>
                         <input
@@ -401,7 +358,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                   {selectedImage && (
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
-                        <label className={`text-sm flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                        <label className="text-sm flex items-center gap-2 text-muted-foreground">
                           <MoveHorizontal className="w-4 h-4" />
                           <span>Horizontal</span>
                         </label>
@@ -415,7 +372,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className={`text-sm flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                        <label className="text-sm flex items-center gap-2 text-muted-foreground">
                           <MoveVertical className="w-4 h-4" />
                           <span>Vertical</span>
                         </label>
@@ -442,11 +399,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                 <>
                   <button
                     onClick={() => videoInputRef.current?.click()}
-                    className={`w-full py-12 rounded-lg border-2 border-dashed transition-all ${
-                      isDark
-                        ? 'bg-[#1a1f2e] border-[#2d3548] hover:border-[#5B7CFF] text-gray-400'
-                        : 'bg-gray-50 border-gray-300 hover:border-[#5B7CFF] text-gray-600'
-                    }`}
+                    className="w-full py-12 rounded-lg border-2 border-dashed transition-all bg-muted/20 border-border hover:border-primary text-muted-foreground"
                   >
                     <div className="flex flex-col items-center gap-2">
                       <Video className="w-10 h-10" />
@@ -470,11 +423,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                       setVideoFile(null)
                       setVideoPreview(null)
                     }}
-                    className={`absolute top-2 right-2 p-2 rounded-full transition-colors ${
-                      isDark
-                        ? 'bg-[#242b3d]/90 text-gray-400 hover:text-red-400'
-                        : 'bg-white/90 text-gray-600 hover:text-red-600'
-                    }`}
+                    className="absolute top-2 right-2 p-2 rounded-full transition-colors bg-card/90 text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -484,11 +433,9 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
               {/* Video Aspect Ratio Controls */}
               {videoPreview && (
                   <div
-                    className={`p-4 rounded-lg border space-y-3 ${
-                      isDark ? 'bg-[#1a1f2e] border-[#2d3548]' : 'bg-gray-50 border-gray-300'
-                    }`}
+                    className="p-4 rounded-lg border space-y-3 bg-muted/20 border-border"
                   >
-                    <h4 className={`text-sm mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Video Ratio</h4>
+                    <h4 className="text-sm mb-2 text-foreground">Video Ratio</h4>
                     <div className="flex gap-2 flex-wrap">
                         {aspectRatios.map((ratio) => (
                             <button
@@ -496,10 +443,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                                 onClick={() => setSelectedAspectRatio(ratio.value)}
                                 className={`px-3 py-1.5 rounded text-xs transition-colors border ${
                                     selectedAspectRatio === ratio.value
-                                        ? 'bg-[#5B7CFF] text-white border-[#5B7CFF]'
-                                        : isDark
-                                        ? 'bg-[#242b3d] text-gray-300 border-[#2d3548] hover:bg-[#2d3548]'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                                        ? 'bg-primary text-primary-foreground border-primary'
+                                        : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
                                 }`}
                             >
                                 {ratio.label}
@@ -516,7 +461,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
             <div className="mt-4 space-y-4">
               {/* Poll Question */}
               <div>
-                <label className={`block text-sm mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                <label className="block text-sm mb-2 text-muted-foreground">
                   Your question
                 </label>
                 <input
@@ -524,17 +469,13 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                   value={pollQuestion}
                   onChange={(e) => setPollQuestion(e.target.value)}
                   placeholder="Ask a question..."
-                  className={`w-full px-4 py-3 rounded-lg border focus:outline-none focus:border-[#5B7CFF] ${
-                    isDark
-                      ? 'bg-[#1a1f2e] text-white placeholder-gray-500 border-[#2d3548]'
-                      : 'bg-gray-50 text-gray-900 placeholder-gray-500 border-gray-300'
-                  }`}
+                  className="w-full px-4 py-3 rounded-lg border focus:outline-none focus:border-primary bg-muted/50 text-foreground placeholder-muted-foreground border-border"
                 />
               </div>
 
               {/* Poll Options */}
               <div>
-                <label className={`block text-sm mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                <label className="block text-sm mb-2 text-muted-foreground">
                   Answer options
                 </label>
                 <div className="space-y-3">
@@ -545,20 +486,12 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                         value={option.text}
                         onChange={(e) => updatePollOption(option.id, e.target.value)}
                         placeholder={`Option ${index + 1}`}
-                        className={`flex-1 px-4 py-3 rounded-lg border focus:outline-none focus:border-[#5B7CFF] ${
-                          isDark
-                            ? 'bg-[#1a1f2e] text-white placeholder-gray-500 border-[#2d3548]'
-                            : 'bg-gray-50 text-gray-900 placeholder-gray-500 border-gray-300'
-                        }`}
+                        className="flex-1 px-4 py-3 rounded-lg border focus:outline-none focus:border-primary bg-muted/50 text-foreground placeholder-muted-foreground border-border"
                       />
                       {pollOptions.length > 2 && (
                         <button
                           onClick={() => removePollOption(option.id)}
-                          className={`p-3 rounded-lg transition-colors ${
-                            isDark
-                              ? 'text-gray-400 hover:text-red-400 hover:bg-[#1a1f2e]'
-                              : 'text-gray-600 hover:text-red-600 hover:bg-gray-100'
-                          }`}
+                          className="p-3 rounded-lg transition-colors text-muted-foreground hover:text-destructive hover:bg-muted"
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>
@@ -569,11 +502,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                 {pollOptions.length < 6 && (
                   <button
                     onClick={addPollOption}
-                    className={`mt-3 flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
-                      isDark
-                        ? 'bg-[#1a1f2e] text-gray-400 border-[#2d3548] hover:border-[#5B7CFF]'
-                        : 'bg-gray-50 text-gray-600 border-gray-300 hover:border-[#5B7CFF]'
-                    }`}
+                    className="mt-3 flex items-center gap-2 px-4 py-2 rounded-lg border transition-all bg-muted/20 text-muted-foreground border-border hover:border-primary"
                   >
                     <Plus className="w-4 h-4" />
                     <span className="text-sm">Add option</span>
@@ -586,15 +515,11 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
 
         {/* Footer Actions */}
         <div
-          className={`sticky bottom-0 flex items-center justify-end gap-3 px-6 py-4 border-t ${
-            isDark ? 'bg-[#242b3d] border-[#2d3548]' : 'bg-white border-gray-200'
-          }`}
+          className="sticky bottom-0 flex items-center justify-end gap-3 px-6 py-4 border-t bg-card border-border"
         >
           <button
             onClick={onClose}
-            className={`px-6 py-2.5 rounded-lg transition-colors ${
-              isDark ? 'text-gray-400 hover:bg-[#1a1f2e]' : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className="px-6 py-2.5 rounded-lg transition-colors text-muted-foreground hover:bg-muted"
           >
             Cancel
           </button>
@@ -611,9 +536,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
               uploadedImages.length === 0 &&
               !videoFile &&
               !pollQuestion.trim()
-                ? isDark
-                  ? 'bg-[#2d3548] text-gray-600 cursor-not-allowed'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
                 : 'bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white hover:opacity-90'
             }`}
           >
@@ -624,6 +547,3 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
     </div>
   )
 }
-
-export default CreatePostModal
-

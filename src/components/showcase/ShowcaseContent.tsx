@@ -2,13 +2,12 @@
 
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
-import { ArrowLeft, Eye, MessageCircle, Play, Share2, ThumbsUp, X, Send, Plus, Search } from "lucide-react"
+import { ArrowLeft, Eye, MessageCircle, Play, Share2, ThumbsUp, X, Plus, Search } from "lucide-react"
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import { AppShell } from "@/components/layout/AppShell"
-import type { Page, Theme } from "@/types/common"
-import type { StoryCard, StoryDetail } from "@/types/showcase"
+import type { Page } from "@/types/common"
+import type { StoryDetail } from "@/types/showcase"
 import { CreateStoryForm } from "@/components/showcase/CreateStoryForm"
 import { storiesSeed } from "@/constants/stories"
 import { AuthorBadge } from "@/components/showcase/AuthorBadge"
@@ -26,39 +25,21 @@ const routes: Record<string, string> = {
   achievements: "/achievements",
 }
 
-function useSystemTheme() {
-  const [systemTheme, setSystemTheme] = useState<Theme>("light")
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-    const updateTheme = (matches: boolean) => setSystemTheme(matches ? "dark" : "light")
-    updateTheme(mediaQuery.matches)
-    const listener = (event: MediaQueryListEvent) => updateTheme(event.matches)
-    mediaQuery.addEventListener("change", listener)
-    return () => mediaQuery.removeEventListener("change", listener)
-  }, [])
-
-  return systemTheme
-}
-
-function ShowcaseSkeletonCard({ isDark }: { isDark: boolean }) {
+function ShowcaseSkeletonCard() {
   return (
     <div
-      className={`rounded-xl overflow-hidden border animate-pulse ${
-        isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
-      }`}
+      className="rounded-xl overflow-hidden border animate-pulse bg-card border-border"
     >
-      <div className={`h-32 ${isDark ? "bg-[#1f2534]" : "bg-gray-200"}`} />
+      <div className="h-32 bg-muted" />
       <div className="p-3 space-y-3">
         <div
-          className={`h-5 rounded w-3/4 ${isDark ? "bg-[#323a4b]" : "bg-gray-200"}`}
+          className="h-5 rounded w-3/4 bg-muted"
         />
         <div
-          className={`h-4 rounded w-1/2 ${isDark ? "bg-[#323a4b]" : "bg-gray-200"}`}
+          className="h-4 rounded w-1/2 bg-muted"
         />
         <div
-          className={`h-4 rounded w-full ${isDark ? "bg-[#323a4b]" : "bg-gray-200"}`}
+          className="h-4 rounded w-full bg-muted"
         />
       </div>
     </div>
@@ -67,13 +48,7 @@ function ShowcaseSkeletonCard({ isDark }: { isDark: boolean }) {
 
 export default function ShowcaseContent() {
   const router = useRouter()
-  const { resolvedTheme, theme } = useTheme()
-  const systemTheme = useSystemTheme()
-
-  const isDark = useMemo(
-    () => resolvedTheme === "dark",
-    [resolvedTheme]
-  )
+  // Removed useTheme
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
@@ -115,37 +90,26 @@ export default function ShowcaseContent() {
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
+    <div className="min-h-screen bg-background">
       <AppShell currentPage="network" navigateTo={navigateTo}>
         <header
-          className={`sticky top-0 z-20 border-b px-4 py-3 md:py-4 ${
-            isDark
-              ? 'bg-[#171c28] border-[#2d3548]'
-              : 'bg-[#F3F2EF] border-gray-200'
-          }`}
+          className="sticky top-0 z-20 border-b px-4 py-3 md:py-4 bg-background border-border"
         >
           <div className="max-w-7xl mx-auto flex items-center gap-3">
             <button
               onClick={() => router.back()}
-              className={`md:hidden p-2 rounded-full transition-colors -ml-2 ${
-                isDark ? "hover:bg-[#242b3d]" : "hover:bg-gray-200"
-              }`}
+              className="md:hidden p-2 rounded-full transition-colors -ml-2 hover:bg-muted text-foreground"
             >
-              <ArrowLeft className={`w-5 h-5 ${isDark ? "text-white" : "text-gray-900"}`} />
+              <ArrowLeft className="w-5 h-5 text-foreground" />
             </button>
             <div className="flex items-center gap-3 max-w-2xl w-full">
-              <Search className="w-5 h-5 text-gray-400" />
+              <Search className="w-5 h-5 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search stories by author..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:border-[#5B7CFF]
-                  ${
-                    isDark
-                      ? 'bg-[#242b3d] text-white placeholder-gray-500 border-[#2d3548]'
-                      : 'bg-white text-gray-900 placeholder-gray-500 border-gray-300'
-                  }`}
+                className="w-full px-4 py-2 rounded-lg border focus:outline-none focus:border-primary bg-card text-foreground placeholder-muted-foreground border-border"
               />
             </div>
           </div>
@@ -168,18 +132,14 @@ export default function ShowcaseContent() {
               <div className="grid grid-cols-2 gap-4 md:grid-cols-2 md:gap-6">
                 {loading &&
                   Array.from({ length: 4 }).map((_, idx) => (
-                    <ShowcaseSkeletonCard key={idx} isDark={isDark} />
+                    <ShowcaseSkeletonCard key={idx} />
                   ))}
 
                 {!loading &&
                   filteredStories.map((story) => (
                     <div
                       key={story.id}
-                      className={`rounded-xl overflow-hidden border transition-all group cursor-pointer ${
-                        isDark
-                          ? "bg-[#242b3d] border-[#2d3548] hover:border-[#404968]"
-                          : "bg-white border-gray-200 hover:border-gray-300 shadow-sm"
-                      }`}
+                      className="rounded-xl overflow-hidden border transition-all group cursor-pointer bg-card border-border hover:border-primary/50"
                       onClick={() => {
                         const isMobile = window.matchMedia("(max-width: 768px)").matches
                         if (isMobile) {
@@ -207,15 +167,11 @@ export default function ShowcaseContent() {
 
                       <div className="p-3">
                         <h3
-                          className={`mb-1 group-hover:text-[#5B7CFF] transition-colors ${
-                            isDark ? "text-white" : "text-gray-900"
-                          }`}
+                          className="mb-1 group-hover:text-primary transition-colors text-foreground"
                         >
                           {story.title}
                         </h3>
-                        <div className={`flex flex-wrap items-center justify-between text-xs gap-y-1 ${
-                          isDark ? "text-gray-400" : "text-gray-600"
-                        }`}>
+                        <div className="flex flex-wrap items-center justify-between text-xs gap-y-1 text-muted-foreground">
                           <span>{story.timeAgo}</span>
                           <div className="flex items-center gap-1.5">
                             <div className="flex items-center gap-1">
@@ -232,9 +188,7 @@ export default function ShowcaseContent() {
                                 <span>{formatCompactNumber(story.comments)}</span>
                               </div>
                             ) : null}
-                            <button className={`transition-colors ${
-                              isDark ? "hover:text-white" : "hover:text-gray-900"
-                            }`}>
+                            <button className="transition-colors hover:text-foreground">
                               <Share2 className="w-4 h-4" />
                             </button>
                           </div>
@@ -244,9 +198,7 @@ export default function ShowcaseContent() {
                   ))}
                 {!loading && searchQuery && filteredStories.length === 0 && (
                     <p
-                      className={`text-center py-12 ${
-                        isDark ? 'text-gray-400' : 'text-gray-600'
-                      } col-span-2`}
+                      className="text-center py-12 text-muted-foreground col-span-2"
                     >
                       No stories found matching "{searchQuery}"
                     </p>
@@ -264,7 +216,7 @@ export default function ShowcaseContent() {
         </div>
       </AppShell>
       {selectedStory && (
-        <StoryModal story={selectedStory} onClose={() => setSelectedStory(null)} isDark={isDark} />
+        <StoryModal story={selectedStory} onClose={() => setSelectedStory(null)} />
       )}
 
       {mobileSelectedStoryId !== null && (
@@ -272,27 +224,26 @@ export default function ShowcaseContent() {
           stories={filteredStories}
           initialStoryId={mobileSelectedStoryId}
           onClose={() => setMobileSelectedStoryId(null)}
-          isDark={isDark}
         />
       )}
 
        {showCreateStory && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className={`${isDark ? "bg-[#242b3d]" : "bg-white"} rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto`}>
+          <div className="bg-card rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div
-              className={`sticky top-0 ${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} border-b px-6 py-4 flex items-center justify-between`}
+              className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between"
             >
-              <h2 className={isDark ? "text-white" : "text-gray-900"}>Create Story</h2>
+              <h2 className="text-foreground">Create Story</h2>
               <button
                 onClick={() => setShowCreateStory(false)}
-                className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-[#171c28] text-gray-400" : "hover:bg-gray-100 text-gray-600"}`}
+                className="p-2 rounded-lg transition-colors hover:bg-muted text-muted-foreground"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-6">
-              <CreateStoryForm isDark={isDark} onCancel={() => setShowCreateStory(false)} onCreated={() => setShowCreateStory(false)} />
+              <CreateStoryForm onCancel={() => setShowCreateStory(false)} onCreated={() => setShowCreateStory(false)} />
             </div>
           </div>
         </div>

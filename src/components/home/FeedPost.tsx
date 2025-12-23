@@ -9,7 +9,7 @@ import MobileCommentDrawer from './MobileCommentDrawer'
 
 interface FeedPostProps extends Omit<Post, 'id' | 'commentData'> {
   initialComments?: CommentType[]
-  isDark?: boolean
+  isDark?: boolean // Optional for compatibility
   onLike?: () => void
   onShare?: () => void
 }
@@ -27,7 +27,6 @@ export default function FeedPost({
   comments: initialCommentsCount = '0', 
   shares = '0',
   initialComments = [],
-  isDark = false,
   onLike,
   onShare
 }: FeedPostProps) {
@@ -102,7 +101,7 @@ export default function FeedPost({
   const commentsCount = postComments.length > 0 ? postComments.length : initialCommentsCount;
 
   return (
-    <div className={`${isDark ? 'bg-[#242b3d] border-[#2d3548]' : 'bg-white border-gray-200'} md:rounded-xl border overflow-hidden`}>
+    <div className="bg-card border-border md:rounded-xl border overflow-hidden">
       <div className="p-4 md:p-6 pb-4">
         <div className="flex items-start justify-between mb-4">
           <div className="flex gap-3">
@@ -110,17 +109,17 @@ export default function FeedPost({
               <img src={imgSrc} alt={author} className="w-full h-full object-cover" />
             </div>
             <div>
-              <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} mb-0.5 text-sm md:text-base font-semibold`}>{author}</h3>
-              {title && <p className={`text-xs md:text-sm mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{title}</p>}
-              <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{timeAgo} ago</p>
+              <h3 className="text-foreground mb-0.5 text-sm md:text-base font-semibold">{author}</h3>
+              {title && <p className="text-xs md:text-sm mb-1 text-muted-foreground">{title}</p>}
+              <p className="text-xs text-muted-foreground">{timeAgo} ago</p>
             </div>
           </div>
-          <button className={`${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>
+          <button className="text-muted-foreground hover:text-foreground transition-colors">
             <MoreHorizontal className="w-5 h-5" />
           </button>
         </div>
 
-        <p className={`leading-relaxed mb-4 text-sm md:text-base ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{content}</p>
+        <p className="leading-relaxed mb-4 text-sm md:text-base text-foreground">{content}</p>
       </div>
 
       {(hasMultipleImages || imageSrc || videoSrc) && (
@@ -169,8 +168,8 @@ export default function FeedPost({
         </div>
       )}
 
-      <div className={`px-4 md:px-6 py-3 border-t ${isDark ? 'border-[#2d3548]' : 'border-gray-200'}`}>
-        <div className={`flex items-center justify-between text-xs md:text-sm mb-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+      <div className="px-4 md:px-6 py-3 border-t border-border">
+        <div className="flex items-center justify-between text-xs md:text-sm mb-3 text-muted-foreground">
           <span>{likes} likes</span>
           <div className="flex gap-3">
             <span className="cursor-pointer" onClick={handleToggleCommentSection}>{commentsCount} comments</span>
@@ -178,22 +177,22 @@ export default function FeedPost({
           </div>
         </div>
 
-        <div className={`flex items-center justify-between pt-3 border-t ${isDark ? 'border-[#2d3548]' : 'border-gray-200'}`}>
+        <div className="flex items-center justify-between pt-3 border-t border-border">
           <button 
             onClick={handleLike}
-            className={`flex items-center gap-2 ${isLiked ? 'text-blue-500' : (isDark ? 'text-gray-400 hover:text-[#5B7CFF]' : 'text-gray-600 hover:text-[#5B7CFF]')} transition-colors flex-1 justify-center text-xs md:text-sm`}>
+            className={`flex items-center gap-2 ${isLiked ? 'text-primary' : 'text-muted-foreground hover:text-primary'} transition-colors flex-1 justify-center text-xs md:text-sm`}>
             <ThumbsUp className={`w-4 h-4 md:w-5 md:h-5 ${isLiked ? 'fill-current' : ''}`} />
             <span>Like</span>
           </button>
           <button 
             onClick={handleToggleCommentSection}
-            className={`flex items-center gap-2 ${isDark ? 'text-gray-400 hover:text-[#5B7CFF]' : 'text-gray-600 hover:text-[#5B7CFF]'} transition-colors flex-1 justify-center text-xs md:text-sm`}>
+            className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center text-xs md:text-sm">
             <MessageCircle className="w-4 h-4 md:w-5 md:h-5" />
             <span>Comment</span>
           </button>
           <button 
             onClick={onShare}
-            className={`flex items-center gap-2 ${isDark ? 'text-gray-400 hover:text-[#5B7CFF]' : 'text-gray-600 hover:text-[#5B7CFF]'} transition-colors flex-1 justify-center text-xs md:text-sm`}>
+            className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center text-xs md:text-sm">
             <Share2 className="w-4 h-4 md:w-5 md:h-5" />
             <span>Share</span>
           </button>
@@ -203,7 +202,6 @@ export default function FeedPost({
       {isCommentSectionOpen && (
         <CommentSection 
           comments={postComments}
-          isDark={isDark}
           onAddComment={handleAddComment} 
         />
       )}
@@ -212,7 +210,6 @@ export default function FeedPost({
         open={isMobileDrawerOpen}
         onOpenChange={setIsMobileDrawerOpen}
         comments={postComments}
-        isDark={isDark}
         onAddComment={handleAddComment}
       />
     </div>

@@ -1,25 +1,19 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Bookmark, MapPin, Briefcase, Clock } from "lucide-react"
-
-import type { Job, JobListMode } from "@/types/jobs"
+import { MapPin, Briefcase, Bookmark, Clock } from "lucide-react"
 import { logoGradients } from "@/lib/data/jobs"
+import type { Job, JobListMode } from "@/types/jobs"
 
 interface JobCardProps {
   job: Job
-  isDark: boolean
   mode: JobListMode
 }
 
-export function JobCard({ job, isDark, mode }: JobCardProps) {
+export function JobCard({ job, mode }: JobCardProps) {
   const router = useRouter()
 
-  const baseCardClasses = `${
-    isDark
-      ? "bg-[#242b3d] border-[#2d3548] hover:border-[#3d4558]"
-      : "bg-white border-gray-200 hover:border-gray-300"
-  } border rounded-xl p-6 transition-all`
+  const baseCardClasses = "bg-card border-border border rounded-xl p-6 transition-all hover:border-primary"
 
   // Offers layout
   if (mode === "offers" || job.isOffer) {
@@ -35,15 +29,13 @@ export function JobCard({ job, isDark, mode }: JobCardProps) {
             className={`h-12 w-12 flex-shrink-0 rounded-lg bg-gradient-to-br ${logoGradients[job.logo]}`}
           />
           <div className="min-w-0 flex-1">
-            <h3 className={`mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+            <h3 className="mb-1 text-foreground font-semibold">
               {job.title}
             </h3>
-            <p className={`mb-2 text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            <p className="mb-2 text-sm text-muted-foreground">
               {job.company}
             </p>
-            <div className={`mb-3 flex flex-wrap gap-3 text-xs ${
-              isDark ? "text-gray-400" : "text-gray-600"
-            }`}>
+            <div className="mb-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <MapPin className="h-4 w-4" />
                 {job.location}
@@ -53,17 +45,13 @@ export function JobCard({ job, isDark, mode }: JobCardProps) {
                 {job.type}
               </span>
             </div>
-            <p className="mb-4 text-sm text-[#A5B4FC]">{job.salary}</p>
+            <p className="mb-4 text-sm text-primary">{job.salary}</p>
             <div className="flex flex-col gap-3 md:flex-row">
               <button className="flex-1 rounded-full bg-gradient-to-r from-[#5B7CFF] to-[#F472B6] px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
                 Accept Offer
               </button>
               <button
-                className={`flex-1 rounded-full border px-4 py-2 text-sm font-semibold ${
-                  isDark
-                    ? "border-red-500/40 text-red-300 hover:bg-red-500/10"
-                    : "border-red-500/60 text-red-600 hover:bg-red-50"
-                }`}
+                className="flex-1 rounded-full border px-4 py-2 text-sm font-semibold border-destructive/40 text-destructive hover:bg-destructive/10"
               >
                 Reject
               </button>
@@ -92,32 +80,28 @@ export function JobCard({ job, isDark, mode }: JobCardProps) {
             className={`h-12 w-12 flex-shrink-0 rounded-lg bg-gradient-to-br ${logoGradients[job.logo]}`}
           />
           <div className="min-w-0 flex-1">
-            <h3 className={`mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+            <h3 className="mb-1 text-foreground font-semibold">
               {job.title}
             </h3>
-            <p className={`mb-1 text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            <p className="mb-1 text-sm text-muted-foreground">
               {job.company}
             </p>
-            <div className={`mb-2 flex items-center gap-2 text-xs ${
-              isDark ? "text-gray-400" : "text-gray-600"
-            }`}>
+            <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
               <MapPin className="h-4 w-4" />
               <span>{job.location}</span>
             </div>
-            <p className={`mb-4 text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            <p className="mb-4 text-xs text-muted-foreground">
               {job.postedTime}
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <button className="flex-1 rounded-full bg-[#111827] px-4 py-2 text-sm font-medium text-white hover:bg-[#1f2937]">
+              <button className="flex-1 rounded-full bg-secondary text-secondary-foreground px-4 py-2 text-sm font-medium hover:opacity-90">
                 View Details
               </button>
               <button
                 className={`flex-1 rounded-full px-4 py-2 text-sm font-medium ${
                   secondary === "Withdraw"
-                    ? "bg-red-600 text-white hover:bg-red-700"
-                    : isDark
-                      ? "border border-[#2d3548] text-gray-300 hover:bg-[#171c28]"
-                      : "border border-gray-300 text-gray-700 hover:bg-gray-100"
+                    ? "bg-destructive text-destructive-foreground hover:opacity-90"
+                    : "border border-border text-muted-foreground hover:bg-muted"
                 }`}
               >
                 {secondary}
@@ -141,33 +125,23 @@ export function JobCard({ job, isDark, mode }: JobCardProps) {
             className={`w-12 h-12 bg-gradient-to-br ${logoGradients[job.logo]} rounded-lg flex-shrink-0`}
           />
           <div className="min-w-0">
-            <h3 className={`font-semibold leading-tight ${isDark ? "text-white" : "text-gray-800"}`}>
+            <h3 className="font-semibold leading-tight text-foreground">
               {job.title}
             </h3>
-            <p className={`text-sm truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+            <p className="text-sm truncate text-muted-foreground">
               {job.company}
             </p>
           </div>
         </div>
         <button
-          className={`p-2 -mr-2 -mt-1 rounded-full transition-colors flex-shrink-0 ${
-            isDark ? "hover:bg-[#171c28]" : "hover:bg-gray-100"
-          }`}
+          className="p-2 -mr-2 -mt-1 rounded-full transition-colors flex-shrink-0 hover:bg-muted text-muted-foreground hover:text-primary"
         >
-          <Bookmark
-            className={`w-5 h-5 ${
-              isDark
-                ? "text-gray-400 hover:text-[#5B7CFF]"
-                : "text-gray-500 hover:text-[#5B7CFF]"
-            }`}
-          />
+          <Bookmark className="w-5 h-5" />
         </button>
       </div>
 
       <div
-        className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs mt-3 ${
-          isDark ? "text-gray-400" : "text-gray-600"
-        }`}
+        className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs mt-3 text-muted-foreground"
       >
         <span className="flex items-center gap-1">
           <MapPin className="w-3.5 h-3.5" />
@@ -185,12 +159,8 @@ export function JobCard({ job, isDark, mode }: JobCardProps) {
 
       <div className="flex flex-col items-stretch gap-3 mt-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span className="text-sm font-medium text-[#5B7CFF]">{job.salary}</span>
-          <span
-              className={`text-xs ${
-              isDark ? "text-gray-500" : "text-gray-500"
-              }`}
-          >
+          <span className="text-sm font-medium text-primary">{job.salary}</span>
+          <span className="text-xs text-muted-foreground">
               {job.applicants} applicants
           </span>
           </div>

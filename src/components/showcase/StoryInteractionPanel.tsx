@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Eye, Heart, MessageCircle, X, Send, ChevronDown } from "lucide-react"
+import { Eye, Heart, MessageCircle, Send } from "lucide-react"
 import { StoryDetail } from "@/types/showcase"
 
 type StoryInteractionPanelProps = {
@@ -7,17 +7,13 @@ type StoryInteractionPanelProps = {
   onClose: () => void
   story: StoryDetail
   isMyStory: boolean
-  isDark: boolean
+  isDark?: boolean // Optional
 }
 
-export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory, isDark }: StoryInteractionPanelProps) {
+export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory }: StoryInteractionPanelProps) {
   const [activeTab, setActiveTab] = useState<"views" | "likes" | "comments">(isMyStory ? "views" : "comments")
   const [comment, setComment] = useState("")
   const [localComments, setLocalComments] = useState<string[]>([])
-
-  // Reset tab when story changes or panel opens
-  // Actually standard behavior is to remember or reset. We'll reset to sensible default.
-  // If my story -> views, else -> comments.
 
   if (!isOpen) return null
 
@@ -39,26 +35,23 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory, isDar
         <div className="flex-1" />
 
         <div
-            className={`
-                w-full rounded-t-2xl overflow-hidden flex flex-col max-h-[70vh] cursor-default
-                ${isDark ? "bg-[#242b3d] text-white" : "bg-white text-gray-900"}
-            `}
+            className="w-full rounded-t-2xl overflow-hidden flex flex-col max-h-[70vh] cursor-default bg-card text-foreground"
             onClick={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
         >
             {/* Handle/Grabber */}
             <div className="w-full flex items-center justify-center pt-3 pb-2 cursor-pointer" onClick={onClose}>
-                <div className="w-10 h-1 bg-gray-300 rounded-full" />
+                <div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
             </div>
 
             {/* Tabs (Only for My Story) */}
             {isMyStory && (
-                <div className="flex border-b border-gray-200 dark:border-gray-700">
+                <div className="flex border-b border-border">
                     <button
                         onClick={() => setActiveTab("views")}
                         className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2
-                            ${activeTab === "views" ? "border-[#5B7CFF] text-[#5B7CFF]" : "border-transparent text-gray-500"}`}
+                            ${activeTab === "views" ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}
                     >
                         <Eye className="w-4 h-4" />
                         <span>{story.views}</span>
@@ -66,7 +59,7 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory, isDar
                     <button
                         onClick={() => setActiveTab("likes")}
                         className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2
-                            ${activeTab === "likes" ? "border-[#5B7CFF] text-[#5B7CFF]" : "border-transparent text-gray-500"}`}
+                            ${activeTab === "likes" ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}
                     >
                         <Heart className="w-4 h-4" />
                         <span>{story.likes}</span>
@@ -74,7 +67,7 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory, isDar
                     <button
                         onClick={() => setActiveTab("comments")}
                         className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2
-                            ${activeTab === "comments" ? "border-[#5B7CFF] text-[#5B7CFF]" : "border-transparent text-gray-500"}`}
+                            ${activeTab === "comments" ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}
                     >
                         <MessageCircle className="w-4 h-4" />
                         <span>{(story.comments || 0) + localComments.length}</span>
@@ -84,9 +77,9 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory, isDar
 
             {/* Header for Others (Just counts, no tabs) */}
             {!isMyStory && (
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                      <h3 className="font-semibold text-lg">Comments</h3>
-                     <div className="flex gap-4 text-sm text-gray-500">
+                     <div className="flex gap-4 text-sm text-muted-foreground">
                          <div className="flex items-center gap-1">
                              <Eye className="w-4 h-4" /> {story.views}
                          </div>
@@ -108,7 +101,7 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory, isDar
                             </div>
                         ))}
                         {(!story.viewers || story.viewers.length === 0) && (
-                            <p className="text-center text-gray-500 py-4">No views yet</p>
+                            <p className="text-center text-muted-foreground py-4">No views yet</p>
                         )}
                     </div>
                 )}
@@ -125,7 +118,7 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory, isDar
                             </div>
                         ))}
                         {(!story.likers || story.likers.length === 0) && (
-                             <p className="text-center text-gray-500 py-4">No likes yet</p>
+                             <p className="text-center text-muted-foreground py-4">No likes yet</p>
                         )}
                     </div>
                 )}
@@ -135,8 +128,8 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory, isDar
                         <div className="flex-1 space-y-4 mb-4">
                              {/* Mock Comments */}
                              <div className="flex gap-3">
-                                <div className="w-8 h-8 rounded-full bg-gray-200" />
-                                <div className={`${isDark ? "bg-[#171c28]" : "bg-gray-100"} rounded-lg p-3 flex-1`}>
+                                <div className="w-8 h-8 rounded-full bg-muted" />
+                                <div className="bg-muted/50 rounded-lg p-3 flex-1">
                                     <p className="text-sm font-semibold mb-1">Alice</p>
                                     <p className="text-sm">Great shot! 🔥</p>
                                 </div>
@@ -144,7 +137,7 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory, isDar
                              {localComments.map((c, i) => (
                                 <div key={i} className="flex gap-3">
                                     <div className="w-8 h-8 rounded-full bg-blue-500" />
-                                    <div className={`${isDark ? "bg-[#171c28]" : "bg-gray-100"} rounded-lg p-3 flex-1`}>
+                                    <div className="bg-muted/50 rounded-lg p-3 flex-1">
                                         <p className="text-sm font-semibold mb-1">You</p>
                                         <p className="text-sm">{c}</p>
                                     </div>
@@ -159,13 +152,11 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory, isDar
                                 placeholder="Add a comment..."
                                 value={comment}
                                 onChange={(e) => setComment(e.target.value)}
-                                className={`flex-1 px-4 py-2 rounded-full border focus:outline-none focus:border-[#5B7CFF]
-                                    ${isDark ? "bg-[#171c28] border-gray-700" : "bg-gray-50 border-gray-300"}
-                                `}
+                                className="flex-1 px-4 py-2 rounded-full border focus:outline-none focus:border-primary bg-input border-border"
                              />
                              <button
                                 onClick={handleAddComment}
-                                className="p-2 rounded-full bg-[#5B7CFF] text-white"
+                                className="p-2 rounded-full bg-primary text-primary-foreground"
                              >
                                 <Send className="w-5 h-5" />
                              </button>

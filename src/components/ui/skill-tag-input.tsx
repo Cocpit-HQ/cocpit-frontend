@@ -6,10 +6,10 @@ import { X } from "lucide-react"
 interface SkillTagInputProps {
   initialTags?: string[]
   onTagsChange: (tags: string[]) => void
-  isDark: boolean
+  isDark?: boolean // Optional
 }
 
-export function SkillTagInput({ initialTags = [], onTagsChange, isDark }: SkillTagInputProps) {
+export function SkillTagInput({ initialTags = [], onTagsChange }: SkillTagInputProps) {
   const [tags, setTags] = useState<string[]>(initialTags)
   const [inputValue, setInputValue] = useState("")
 
@@ -42,20 +42,16 @@ export function SkillTagInput({ initialTags = [], onTagsChange, isDark }: SkillT
     onTagsChange(newTags)
   }
 
-  const inputStyles = isDark
-    ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-500"
-    : "bg-[#0b1020]/5 border-gray-300 text-gray-900 placeholder-gray-500"
+  const inputStyles = "bg-input border-border text-foreground placeholder-muted-foreground"
 
   return (
     <div
-      className={`flex flex-wrap items-center gap-2 p-2 rounded-lg border ${
-        isDark ? "border-[#2d3548]" : "border-gray-300"
-      } ${inputStyles}`}
+      className={`flex flex-wrap items-center gap-2 p-2 rounded-lg border border-border ${inputStyles}`}
     >
       {tags.map((tag) => (
         <div
           key={tag}
-          className="flex items-center gap-1 bg-[#5B7CFF]/20 text-[#5B7CFF] px-2 py-1 rounded-md text-sm"
+          className="flex items-center gap-1 bg-primary/20 text-primary px-2 py-1 rounded-md text-sm"
         >
           <span>{tag}</span>
           <button onClick={() => removeTag(tag)} className="p-0.5 rounded-full hover:bg-black/20">
@@ -69,7 +65,7 @@ export function SkillTagInput({ initialTags = [], onTagsChange, isDark }: SkillT
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         placeholder={tags.length === 0 ? "Add skills..." : ""}
-        className="bg-transparent outline-none flex-grow"
+        className="bg-transparent outline-none flex-grow text-foreground placeholder-muted-foreground"
       />
     </div>
   )

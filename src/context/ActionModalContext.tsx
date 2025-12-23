@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import CreatePostModal from '@/components/home/CreatePostModal';
+import { CreatePostModal } from '@/components/home/CreatePostModal';
 import MobileCreateMenu from '@/components/home/MobileCreateMenu';
 
 type PostType = 'text' | 'photo' | 'video' | 'poll';

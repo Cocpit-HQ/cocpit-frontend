@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -6,7 +5,6 @@ import {
 } from '@/components/events/EventRegistrationModal';
 import { useParams, useRouter } from 'next/navigation';
 import { eventsSeed } from '@/lib/data/events';
-import type { EventCard } from '@/types/events';
 import {
   Calendar,
   MapPin,
@@ -16,26 +14,7 @@ import {
   User,
   ChevronLeft,
 } from 'lucide-react';
-import { useTheme } from 'next-themes';
-import { useEffect, useMemo, useState } from 'react';
-import type { Theme } from '@/types/common';
-
-function useSystemTheme() {
-  const [systemTheme, setSystemTheme] = useState<Theme>('light');
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const updateTheme = (matches: boolean) =>
-      setSystemTheme(matches ? 'dark' : 'light');
-    updateTheme(mediaQuery.matches);
-    const listener = (event: MediaQueryListEvent) => updateTheme(event.matches);
-    mediaQuery.addEventListener('change', listener);
-    return () => mediaQuery.removeEventListener('change', listener);
-  }, []);
-
-  return systemTheme;
-}
+import { useState } from 'react';
 
 const EventDetailPage = () => {
   const params = useParams();
@@ -45,31 +24,19 @@ const EventDetailPage = () => {
   const event = eventsSeed.find((e) => e.id === eventId);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { theme } = useTheme();
-  const systemTheme = useSystemTheme();
-
-  const isDark = useMemo(
-    () => theme === 'dark' || (theme === 'system' && systemTheme === 'dark'),
-    [systemTheme, theme]
-  );
+  // Removed useTheme logic
 
   if (!event) {
     return <div>Event not found</div>;
   }
 
   return (
-    <div
-      className={`min-h-screen ${
-        isDark ? 'bg-[#171c28] text-white' : 'bg-[#F3F2EF] text-gray-900'
-      }`}
-    >
+    <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-4">
           <button
             onClick={() => router.back()}
-            className={`flex items-center gap-2 ${
-              isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'
-            } transition-colors`}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
             <span>Back</span>
@@ -90,7 +57,7 @@ const EventDetailPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-2">
             <h2 className="text-2xl font-bold mb-4">About this event</h2>
-            <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-8`}>
+            <p className="text-muted-foreground mb-8">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
               vestibulum in eros vel tincidunt. Donec ullamcorper, libero a
               fermentum facilisis, eros nisl lacinia a, vel aliquam turpis nunc
@@ -99,34 +66,28 @@ const EventDetailPage = () => {
 
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <Calendar className="w-6 h-6 text-[#5B7CFF]" />
+                <Calendar className="w-6 h-6 text-primary" />
                 <div>
                   <h3 className="font-semibold">Date and Time</h3>
-                  <p
-                    className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}
-                  >
+                  <p className="text-muted-foreground">
                     {event.date} · {event.time}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <MapPin className="w-6 h-6 text-[#5B7CFF]" />
+                <MapPin className="w-6 h-6 text-primary" />
                 <div>
                   <h3 className="font-semibold">Location</h3>
-                  <p
-                    className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}
-                  >
+                  <p className="text-muted-foreground">
                     {event.location}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <Users className="w-6 h-6 text-[#5B7CFF]" />
+                <Users className="w-6 h-6 text-primary" />
                 <div>
                   <h3 className="font-semibold">Attendees</h3>
-                  <p
-                    className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}
-                  >
+                  <p className="text-muted-foreground">
                     {event.attendees} going
                   </p>
                 </div>
@@ -135,43 +96,27 @@ const EventDetailPage = () => {
           </div>
 
           <div className="space-y-6">
-            <div
-              className={`${
-                isDark ? 'bg-[#242b3d]' : 'bg-white border'
-              } p-6 rounded-2xl`}
-            >
+            <div className="bg-card p-6 rounded-2xl border border-border">
               <h3 className="text-xl font-bold mb-4">Organizers</h3>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <User
-                    className={`w-5 h-5 ${
-                      isDark ? 'text-gray-400' : 'text-gray-600'
-                    }`}
-                  />
+                  <User className="w-5 h-5 text-muted-foreground" />
                   <span>The Company Inc.</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Mail
-                    className={`w-5 h-5 ${
-                      isDark ? 'text-gray-400' : 'text-gray-600'
-                    }`}
-                  />
+                  <Mail className="w-5 h-5 text-muted-foreground" />
                   <a
                     href="mailto:contact@thecompany.com"
-                    className="hover:text-[#5B7CFF] transition-colors"
+                    className="hover:text-primary transition-colors"
                   >
                     contact@thecompany.com
                   </a>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Phone
-                    className={`w-5 h-5 ${
-                      isDark ? 'text-gray-400' : 'text-gray-600'
-                    }`}
-                  />
+                  <Phone className="w-5 h-5 text-muted-foreground" />
                   <a
                     href="tel:+1234567890"
-                    className="hover:text-[#5B7CFF] transition-colors"
+                    className="hover:text-primary transition-colors"
                   >
                     +1 234 567 890
                   </a>
@@ -192,7 +137,6 @@ const EventDetailPage = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         event={event}
-        isDark={isDark}
       />
     </div>
   );
