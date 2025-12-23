@@ -33,7 +33,7 @@ export const EventRegistrationModal = ({
 
   if (!event) return null;
 
-  const isPremium = event.price !== 'Free';
+  const isPremium = event.price != null && event.price > 0;
 
   const handlePayment = () => {
     // Mock payment

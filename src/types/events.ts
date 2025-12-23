@@ -5,9 +5,11 @@ export interface EventCard {
   title: string;
   date: string;
   time: string;
+  description: string;
   location: string;
   attendees: string;
   image: string;
+  category: string;
   participated?: boolean;
   type?: 'Free' | 'Premium';
   price?: number;
