@@ -46,15 +46,15 @@ export function StoryRail({ stories, onCreateClick, onStoryClick }: StoryRailPro
   }, [stories])
 
   return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-3 px-1">
+    <div className="mb-4">
+      <div className="flex items-center justify-between mb-3 px-4 md:px-0">
         <h2 className="font-semibold text-lg text-foreground">Stories</h2>
         <Link href="/showcase" className="text-primary text-sm hover:underline">
           View All
         </Link>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide px-4 md:px-0">
         {/* Your Update Card */}
         <button
           onClick={onCreateClick}

@@ -157,7 +157,7 @@ export default function HomePage() {
               {/* Feed */}
               <section className="lg:col-span-8">
                 {/* Mobile Story Rail */}
-                <div className="md:hidden">
+                <div className="md:hidden border-b border-border">
                   <StoryRail
                     stories={stories}
                     onCreateClick={() => setShowCreateStory(true)}
@@ -166,7 +166,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Feed Tabs */}
-                <div className="md:hidden">
+                <div className="md:hidden mt-4">
                   <FeedTabs />
                 </div>
 
