@@ -1,15 +1,16 @@
 "use client"
 
 import { Search, MapPin, X } from "lucide-react"
+import { useJobs } from "@/context/JobsContext"
 
 interface JobSearchBarProps {
   isSearchExpanded: boolean
-  setIsSearchExpanded: (isExpanded: boolean) => void
+  setIsSearchExpanded: (expanded: boolean) => void
   searchKeywords: string
-  setSearchKeywords: (keywords: string) => void
+  setSearchKeywords: (val: string) => void
   searchLocations: string[]
   searchLocationInput: string
-  setSearchLocationInput: (input: string) => void
+  setSearchLocationInput: (val: string) => void
   handleAddSearchLocation: (e: React.KeyboardEvent<HTMLInputElement>) => void
   handleRemoveSearchLocation: (loc: string) => void
   handleSearch: () => void
@@ -19,8 +20,8 @@ interface JobSearchBarProps {
 export function JobSearchBar({
   isSearchExpanded,
   setIsSearchExpanded,
-  searchKeywords,
-  setSearchKeywords,
+  searchKeywords: _searchKeywords, // We use context instead
+  setSearchKeywords: _setSearchKeywords,
   searchLocations,
   searchLocationInput,
   setSearchLocationInput,
@@ -29,89 +30,104 @@ export function JobSearchBar({
   handleSearch,
   collapsedSearchText,
 }: JobSearchBarProps) {
+  const {
+    searchKeywords,
+    setSearchKeywords,
+    filters,
+    updateFilters,
+    filteredJobs
+  } = useJobs()
+
+  const activeFiltersCount =
+    filters.jobType.length +
+    filters.workMode.length +
+    filters.companyType.length +
+    filters.industry.length +
+    filters.locations.length +
+    (filters.easyApply ? 1 : 0) +
+    (filters.activelyHiring ? 1 : 0);
+
+  const removeFilter = (key: keyof typeof filters, val: string) => {
+    const current = filters[key] as string[];
+    updateFilters({ [key]: current.filter(item => item !== val) });
+  }
+
   return (
-    <div className="hidden md:block w-full max-w-4xl mx-auto mb-8">
-      <div
-        className="transition-all duration-300 ease-in-out border rounded-2xl shadow-lg overflow-hidden bg-card border-border"
-      >
-        {!isSearchExpanded ? (
-          // Collapsed State
-          <div
-            onClick={() => setIsSearchExpanded(true)}
-            className="cursor-pointer p-6 flex items-center gap-4 hover:opacity-95"
-          >
-            <Search className="w-6 h-6 text-muted-foreground" />
-            <div className={`flex-1 text-lg ${!collapsedSearchText ? "text-muted-foreground" : "text-muted-foreground opacity-70"}`}>
-              {collapsedSearchText || "Search by title, skill, or company..."}
+    <div className="mb-6 md:mb-8">
+      {/* Desktop Search Bar */}
+      <div className="hidden md:flex flex-col gap-4">
+         <div className="bg-card border border-border rounded-2xl p-2 shadow-sm flex items-center gap-2">
+            <div className="flex-1 flex items-center gap-3 px-4 py-2 border-r border-border">
+              <Search className="h-5 w-5 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchKeywords}
+                onChange={(e) => setSearchKeywords(e.target.value)}
+                placeholder="Job title, keywords, or company"
+                className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
+              />
             </div>
-            <button className="bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-8 py-2 rounded-xl text-sm font-medium">
+
+            <button
+               onClick={handleSearch}
+               className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-8 py-3 rounded-xl transition-colors"
+            >
               Search
             </button>
-          </div>
-        ) : (
-          // Expanded State
-          <div className="p-6">
-            <div className="flex flex-col gap-4">
-               <div className="flex gap-4 items-start">
-                  {/* Keyword Input */}
-                  <div className="flex-1">
-                    <label className="block text-xs font-medium mb-1.5 ml-1 text-muted-foreground">
-                      Keywords
-                    </label>
-                    <div className="flex items-center gap-3 px-4 py-3 border rounded-xl bg-muted/30 border-border">
-                      <Search className="w-5 h-5 text-muted-foreground" />
-                      <input
-                        autoFocus
-                        type="text"
-                        value={searchKeywords}
-                        onChange={(e) => setSearchKeywords(e.target.value)}
-                        placeholder="Job title, keywords, or company"
-                        className="w-full bg-transparent focus:outline-none text-foreground placeholder-muted-foreground"
-                      />
-                    </div>
-                  </div>
+         </div>
 
-                  {/* Location Input (Multi-select) */}
-                  <div className="flex-1">
-                    <label className="block text-xs font-medium mb-1.5 ml-1 text-muted-foreground">
-                      Locations
-                    </label>
-                    <div className="flex flex-wrap items-center gap-2 px-4 py-2 border rounded-xl min-h-[50px] bg-muted/30 border-border">
-                      <MapPin className="w-5 h-5 flex-shrink-0 text-muted-foreground" />
+         {/* Active Filters Chips */}
+         {activeFiltersCount > 0 && (
+           <div className="flex flex-wrap items-center gap-2">
+             <span className="text-sm text-muted-foreground mr-2">Active filters:</span>
 
-                      {/* Selected Locations Tags */}
-                      {searchLocations.map((loc, idx) => (
-                        <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm bg-primary/10 text-primary">
-                          {loc}
-                          <button onClick={() => handleRemoveSearchLocation(loc)} className="hover:opacity-70">
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
+             {filters.easyApply && (
+               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                  Easy Apply
+                  <button onClick={() => updateFilters({ easyApply: false })} className="hover:opacity-70"><X className="w-3 h-3" /></button>
+               </span>
+             )}
 
-                      <input
-                        type="text"
-                        value={searchLocationInput}
-                        onChange={(e) => setSearchLocationInput(e.target.value)}
-                        onKeyDown={handleAddSearchLocation}
-                        placeholder={searchLocations.length === 0 ? "Type city & hit Enter..." : "Add another..."}
-                        className="flex-1 bg-transparent min-w-[120px] focus:outline-none py-1 text-foreground placeholder-muted-foreground"
-                      />
-                    </div>
-                  </div>
-               </div>
+             {filters.activelyHiring && (
+               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                  Actively Hiring
+                  <button onClick={() => updateFilters({ activelyHiring: false })} className="hover:opacity-70"><X className="w-3 h-3" /></button>
+               </span>
+             )}
 
-               <div className="flex justify-end pt-2">
-                 <button
-                    onClick={handleSearch}
-                    className="w-full md:w-auto px-12 py-3 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white rounded-xl font-medium hover:opacity-90 transition-all shadow-md"
-                  >
-                    Search Jobs
-                  </button>
-               </div>
-            </div>
-          </div>
-        )}
+             {filters.jobType.map(f => (
+               <span key={f} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-foreground border border-border">
+                  {f}
+                  <button onClick={() => removeFilter('jobType', f)} className="hover:opacity-70"><X className="w-3 h-3" /></button>
+               </span>
+             ))}
+
+             {filters.workMode.map(f => (
+               <span key={f} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-foreground border border-border">
+                  {f}
+                  <button onClick={() => removeFilter('workMode', f)} className="hover:opacity-70"><X className="w-3 h-3" /></button>
+               </span>
+             ))}
+
+             {filters.locations.map(f => (
+               <span key={f} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-foreground border border-border">
+                  {f}
+                  <button onClick={() => removeFilter('locations', f)} className="hover:opacity-70"><X className="w-3 h-3" /></button>
+               </span>
+             ))}
+
+             {/* Add other filter categories as needed */}
+
+             <button
+               onClick={() => updateFilters({
+                  jobType: [], workMode: [], companyType: [], industry: [], locations: [], easyApply: false, activelyHiring: false
+               })}
+               className="text-xs text-muted-foreground hover:text-primary ml-2 underline"
+             >
+               Clear all
+             </button>
+           </div>
+         )}
       </div>
     </div>
   )

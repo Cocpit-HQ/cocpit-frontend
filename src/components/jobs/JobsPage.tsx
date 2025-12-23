@@ -1,10 +1,9 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Search, Filter } from "lucide-react"
+import { Filter, Plus, Search } from "lucide-react"
 
-import { jobs } from "@/lib/data/jobs"
 import { AppShell } from "@/components/layout/AppShell"
 import { JobCard } from "@/components/jobs/JobCard"
 import { JobFiltersSidebar } from "@/components/jobs/JobFiltersSidebar"
@@ -12,8 +11,9 @@ import { JobSearchBar } from "@/components/jobs/JobSearchBar"
 import { MobileJobSearch } from "@/components/jobs/MobileJobSearch"
 import { MobileJobFilters } from "@/components/jobs/MobileJobFilters"
 import { JobTabs } from "@/components/jobs/JobTabs"
+import { CreateJobModal } from "@/components/jobs/CreateJobModal"
+import { useJobs } from "@/context/JobsContext"
 import type { Page } from "@/types/common"
-import type { JobListMode, JobStatus } from "@/types/jobs"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -28,25 +28,37 @@ const routes: Record<string, string> = {
 
 export default function JobsPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   const router = useRouter()
-  // Removed useTheme logic - relying on CSS variables
   const [mounted, setMounted] = useState(false)
 
-  // --- Tab State ---
-  const [mode, setMode] = useState<JobListMode>("view")
-  const [myJobsTab, setMyJobsTab] = useState<JobStatus>("in-progress")
+  const {
+    filteredJobs,
+    myJobs,
+    activeTab,
+    setActiveTab,
+    myJobsTab,
+    setMyJobsTab,
+    searchKeywords,
+    setSearchKeywords,
+    filters
+  } = useJobs()
 
+  // Sync URL params with Context State
   useEffect(() => {
     setMounted(true)
     const tab = searchParams?.tab
     const subtab = searchParams?.subtab
 
     if (tab === 'my-jobs') {
-      setMode('my-jobs')
+      setActiveTab('my-jobs')
       if (subtab && ['in-progress', 'applied', 'in-past', 'saved'].includes(subtab as string)) {
-        setMyJobsTab(subtab as JobStatus)
+        setMyJobsTab(subtab as any)
       }
+    } else if (tab === 'offers') {
+      setActiveTab('offers')
+    } else {
+      setActiveTab('view')
     }
-  }, [searchParams])
+  }, [searchParams, setActiveTab, setMyJobsTab])
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
@@ -54,81 +66,29 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
 
   // --- Search State ---
   const [isSearchExpanded, setIsSearchExpanded] = useState(false)
-  const [searchKeywords, setSearchKeywords] = useState("")
-  // Desktop Search Location State
   const [searchLocations, setSearchLocations] = useState<string[]>([])
   const [searchLocationInput, setSearchLocationInput] = useState("")
-
-  // --- Sidebar Filter State ---
-  const [filterJobTypes, setFilterJobTypes] = useState<string[]>([])
-  const [filterLocations, setFilterLocations] = useState<string[]>([])
-  const [filterLocationInput, setFilterLocationInput] = useState("")
 
   // --- Mobile UI State ---
   const [showMobileSearch, setShowMobileSearch] = useState(false)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
+  const [showCreateJob, setShowCreateJob] = useState(false)
 
-  // --- Handlers ---
-
-  // Desktop Search - Add Location Tag
-  const handleAddSearchLocation = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && searchLocationInput.trim()) {
-      e.preventDefault()
-      if (!searchLocations.includes(searchLocationInput.trim())) {
-        setSearchLocations([...searchLocations, searchLocationInput.trim()])
-      }
-      setSearchLocationInput("")
-    }
-  }
-
-  const handleRemoveSearchLocation = (loc: string) => {
-    setSearchLocations(searchLocations.filter((l) => l !== loc))
-  }
-
+  // Dummy handlers for legacy prop compatibility (since we use context now)
+  const handleAddSearchLocation = () => {}
+  const handleRemoveSearchLocation = () => {}
   const handleSearch = () => {
     setIsSearchExpanded(false)
     setShowMobileSearch(false)
-    // Here you would trigger the actual search/filter logic
   }
 
-  // Sidebar Filters - Job Type
-  const toggleJobType = (type: string) => {
-    setFilterJobTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    )
-  }
-
-  // Sidebar Filters - Location Tag
-  const handleAddFilterLocation = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && filterLocationInput.trim()) {
-      e.preventDefault()
-      if (!filterLocations.includes(filterLocationInput.trim())) {
-        setFilterLocations([...filterLocations, filterLocationInput.trim()])
-      }
-      setFilterLocationInput("")
-    }
-  }
-
-  const handleRemoveFilterLocation = (loc: string) => {
-    setFilterLocations(filterLocations.filter((l) => l !== loc))
-  }
-
-  // Computed display string for collapsed search bar
-  const collapsedSearchText = useMemo(() => {
-    const parts = []
-    if (searchKeywords) parts.push(searchKeywords)
-    if (searchLocations.length > 0) parts.push(searchLocations.join(", "))
-    return parts.join(" • ")
-  }, [searchKeywords, searchLocations])
-
-  // Filter the jobs based on mode/tabs (Simplified filtering for UI demo)
-  const openJobs = jobs.filter((job) => !job.isOffer && !job.status)
-  const offers = jobs.filter((job) => job.isOffer)
-  const myJobs = jobs.filter((job) => job.status)
-  const filteredMyJobs = myJobs.filter((job) => job.status === myJobsTab)
+  // Determine which jobs to render based on tabs
+  const openJobs = filteredJobs.filter((job) => !job.isOffer && !job.status)
+  const offers = filteredJobs.filter((job) => job.isOffer)
+  const myFilteredJobs = myJobs.filter((job) => job.status === myJobsTab)
 
   const jobsToRender =
-    mode === "offers" ? offers : mode === "my-jobs" ? filteredMyJobs : openJobs
+    activeTab === "offers" ? offers : activeTab === "my-jobs" ? myFilteredJobs : openJobs
 
   if (!mounted) {
     return null
@@ -138,72 +98,103 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
     <div className="min-h-screen bg-background">
       <AppShell currentPage="jobs" navigateTo={navigateTo}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
-          <JobSearchBar
-            isSearchExpanded={isSearchExpanded}
-            setIsSearchExpanded={setIsSearchExpanded}
-            searchKeywords={searchKeywords}
-            setSearchKeywords={setSearchKeywords}
-            searchLocations={searchLocations}
-            searchLocationInput={searchLocationInput}
-            setSearchLocationInput={setSearchLocationInput}
-            handleAddSearchLocation={handleAddSearchLocation}
-            handleRemoveSearchLocation={handleRemoveSearchLocation}
-            handleSearch={handleSearch}
-            collapsedSearchText={collapsedSearchText}
-          />
 
-          {/* Mobile search pill */}
-          <div
-            className="md:hidden mb-6 border rounded-2xl p-4 bg-card border-border"
-          >
-            <button
-              type="button"
-              onClick={() => setShowMobileSearch(true)}
-              className="flex w-full items-center gap-3 rounded-full border px-4 py-2 border-border bg-muted text-muted-foreground"
-            >
-              <Search className="h-5 w-5 text-muted-foreground" />
-              <span className="text-sm text-left flex-1">
-                {collapsedSearchText || "Search jobs by title or location"}
-              </span>
-            </button>
-          </div>
-
-          <JobTabs
-            mode={mode}
-            setMode={setMode}
-            myJobsTab={myJobsTab}
-            setMyJobsTab={setMyJobsTab}
-            offersCount={offers.length}
-          />
-
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <JobFiltersSidebar
-              filterJobTypes={filterJobTypes}
-              toggleJobType={toggleJobType}
-              filterLocations={filterLocations}
-              filterLocationInput={filterLocationInput}
-              setFilterLocationInput={setFilterLocationInput}
-              handleAddFilterLocation={handleAddFilterLocation}
-              handleRemoveFilterLocation={handleRemoveFilterLocation}
+          <div className="flex flex-col gap-6">
+            <JobSearchBar
+              isSearchExpanded={isSearchExpanded}
+              setIsSearchExpanded={setIsSearchExpanded}
+              searchKeywords={searchKeywords}
+              setSearchKeywords={setSearchKeywords}
+              searchLocations={searchLocations}
+              searchLocationInput={searchLocationInput}
+              setSearchLocationInput={setSearchLocationInput}
+              handleAddSearchLocation={handleAddSearchLocation}
+              handleRemoveSearchLocation={handleRemoveSearchLocation}
+              handleSearch={handleSearch}
+              collapsedSearchText={searchKeywords || "Search jobs"}
             />
 
-            <div className="lg:col-span-3">
-              <div className="mb-4 flex items-center justify-between">
-                <p className="text-muted-foreground">{jobs.length} jobs found</p>
+            {/* Mobile search pill & Post Job Button */}
+            <div className="md:hidden flex gap-3 mb-2">
+              <button
+                type="button"
+                onClick={() => setShowMobileSearch(true)}
+                className="flex-1 flex items-center gap-3 rounded-full border px-4 py-2 border-border bg-muted text-muted-foreground"
+              >
+                <Search className="h-5 w-5 text-muted-foreground" />
+                <span className="text-sm text-left flex-1 truncate">
+                  {searchKeywords || "Search jobs..."}
+                </span>
+              </button>
+
+              <button
+                 onClick={() => setShowCreateJob(true)}
+                 className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-sm"
+              >
+                 <Plus className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <JobTabs
+                mode={activeTab}
+                setMode={(m) => {
+                  setActiveTab(m)
+                  // Update URL shallowly if possible, or just let client state handle it for now
+                }}
+                myJobsTab={myJobsTab}
+                setMyJobsTab={setMyJobsTab}
+                offersCount={offers.length}
+              />
+
+              {/* Desktop Post Job Button */}
+              <div className="hidden md:block">
                 <button
-                  type="button"
-                  className="flex items-center gap-2 rounded-full border px-3 py-2 text-sm md:hidden border-border text-muted-foreground hover:bg-muted"
-                  onClick={() => setShowMobileFilters(true)}
+                  onClick={() => setShowCreateJob(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-medium hover:opacity-90 transition-opacity"
                 >
-                  <Filter className="h-4 w-4" />
-                  <span>Filters</span>
+                  <Plus className="w-4 h-4" />
+                  Post a Job
                 </button>
               </div>
+            </div>
 
-              <div className="space-y-4">
-                {jobsToRender.map((job) => (
-                  <JobCard key={job.id} job={job} mode={mode} />
-                ))}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              <JobFiltersSidebar />
+
+              <div className="lg:col-span-3">
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="text-muted-foreground">{jobsToRender.length} jobs found</p>
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 rounded-full border px-3 py-2 text-sm lg:hidden border-border text-muted-foreground hover:bg-muted"
+                    onClick={() => setShowMobileFilters(true)}
+                  >
+                    <Filter className="h-4 w-4" />
+                    <span>Filters</span>
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {jobsToRender.length > 0 ? (
+                    jobsToRender.map((job) => (
+                      <JobCard key={job.id} job={job} mode={activeTab} />
+                    ))
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground bg-card rounded-xl border border-border border-dashed">
+                      <p>No jobs found matching your criteria.</p>
+                      <button
+                         onClick={() => {
+                           setSearchKeywords("")
+                           // clear filters via context if exposed or manual
+                         }}
+                         className="mt-2 text-primary hover:underline"
+                      >
+                        Clear filters
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -226,8 +217,11 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
       <MobileJobFilters
         showMobileFilters={showMobileFilters}
         setShowMobileFilters={setShowMobileFilters}
-        filterJobTypes={filterJobTypes}
-        toggleJobType={toggleJobType}
+      />
+
+      <CreateJobModal
+        open={showCreateJob}
+        onOpenChange={setShowCreateJob}
       />
     </div>
   )

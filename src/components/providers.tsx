@@ -1,6 +1,7 @@
 "use client";
 
 import { EventsProvider } from "@/context/EventsContext";
+import { JobsProvider } from "@/context/JobsContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
@@ -14,7 +15,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <EventsProvider>
-            {children}
+            <JobsProvider>
+              {children}
+            </JobsProvider>
           </EventsProvider>
         </TooltipProvider>
       </QueryClientProvider>
