@@ -2,7 +2,6 @@
 
 import React, { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
 import { Phone, Video, MoreHorizontal, Send, Smile, Paperclip, Image as ImageIcon, ArrowLeft } from "lucide-react"
 
 import type { ChatThread, Message } from "@/types/messaging"
@@ -31,8 +30,7 @@ interface ConversationViewProps {
 
 export default function ConversationView({ chat, isMobileOnly }: ConversationViewProps) {
     const router = useRouter();
-    const { resolvedTheme } = useTheme();
-    const isDark = useMemo(() => resolvedTheme === "dark", [resolvedTheme]);
+    // Removed useTheme
     
     const [messageText, setMessageText] = useState("")
     const [messages, setMessages] = useState<Message[]>(messagesSeed)
@@ -52,31 +50,31 @@ export default function ConversationView({ chat, isMobileOnly }: ConversationVie
 
     return (
         <div className="flex flex-col h-full">
-            <div className={`p-4 border-b ${isDark ? "border-[#2d3548]" : "border-gray-200"} flex items-center justify-between`}>
+            <div className="p-4 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                {isMobileOnly && <button onClick={() => router.back()} className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
-                    <ArrowLeft className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+                {isMobileOnly && <button onClick={() => router.back()} className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">
+                    <ArrowLeft className="w-5 h-5" />
                 </button>}
                 <div className="relative">
                     <div className={`w-10 h-10 bg-gradient-to-br ${avatarGradients[chat.avatar]} rounded-full`} />
                     {chat.online && (
-                    <div className={`absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 ${isDark ? "border-[#242b3d]" : "border-white"}`} />
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
                     )}
                 </div>
                 <div>
-                    <h3 className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>{chat.name}</h3>
-                    <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>{chat.online ? "Active now" : "Offline"}</p>
+                    <h3 className="font-semibold text-foreground">{chat.name}</h3>
+                    <p className="text-xs text-muted-foreground">{chat.online ? "Active now" : "Offline"}</p>
                 </div>
                 </div>
                 <div className="flex items-center gap-2">
-                <button className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
-                    <Phone className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+                <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">
+                    <Phone className="w-5 h-5" />
                 </button>
-                <button className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
-                    <Video className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+                <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">
+                    <Video className="w-5 h-5" />
                 </button>
-                <button className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
-                    <MoreHorizontal className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+                <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">
+                    <MoreHorizontal className="w-5 h-5" />
                 </button>
                 </div>
             </div>
@@ -88,30 +86,28 @@ export default function ConversationView({ chat, isMobileOnly }: ConversationVie
                     <div
                         className={`px-4 py-2 rounded-2xl ${
                         message.sender === "me"
-                            ? "bg-[#5B7CFF] text-white"
-                            : isDark
-                            ? "bg-[#1e2535] text-white"
-                            : "bg-gray-100 text-gray-900"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-foreground"
                         }`}
                     >
                         <p>{message.text}</p>
                     </div>
-                    <p className={`text-xs mt-1 px-2 ${isDark ? "text-gray-500" : "text-gray-500"}`}>{message.time}</p>
+                    <p className="text-xs mt-1 px-2 text-muted-foreground">{message.time}</p>
                     </div>
                 </div>
                 ))}
             </div>
 
-            <div className={`p-4 border-t ${isDark ? "border-[#2d3548]" : "border-gray-200"}`}>
+            <div className="p-4 border-t border-border">
                 <div className="flex items-center gap-2">
-                <button className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
-                    <Paperclip className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+                <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">
+                    <Paperclip className="w-5 h-5" />
                 </button>
-                <button className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
-                    <ImageIcon className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+                <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">
+                    <ImageIcon className="w-5 h-5" />
                 </button>
-                <button className={`p-2 ${isDark ? "hover:bg-[#2d3548]" : "hover:bg-gray-100"} rounded-full transition-colors`}>
-                    <Smile className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
+                <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">
+                    <Smile className="w-5 h-5" />
                 </button>
                 <input
                     type="text"
@@ -119,13 +115,11 @@ export default function ConversationView({ chat, isMobileOnly }: ConversationVie
                     onChange={(e) => setMessageText(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                     placeholder="Write a message..."
-                    className={`flex-1 px-4 py-2 ${
-                    isDark ? "bg-[#1e2535] text-white placeholder-gray-400" : "bg-gray-100 text-gray-900 placeholder-gray-500"
-                    } border-0 rounded-full focus:outline-none focus:ring-2 focus:ring-[#5B7CFF]`}
+                    className="flex-1 px-4 py-2 bg-muted text-foreground placeholder-muted-foreground border-0 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <button
                     onClick={handleSendMessage}
-                    className="p-2 bg-[#5B7CFF] text-white rounded-full hover:bg-[#4A6BEF] transition-colors"
+                    className="p-2 bg-primary text-primary-foreground rounded-full hover:opacity-90 transition-colors"
                 >
                     <Send className="w-5 h-5" />
                 </button>

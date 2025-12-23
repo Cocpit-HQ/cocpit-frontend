@@ -9,7 +9,7 @@ type MobileStoryViewerProps = {
   stories: StoryDetail[]
   initialStoryId: number
   onClose: () => void
-  isDark: boolean
+  isDark?: boolean
 }
 
 type UserGroup = {
@@ -35,7 +35,7 @@ const UserStorySlide = ({
     onNextUser: () => void
     onPrevUser: () => void
     onClose: () => void
-    isDark: boolean
+    isDark?: boolean
 }) => {
     const [storyIndex, setStoryIndex] = useState(0)
     const [progress, setProgress] = useState(0)
@@ -173,7 +173,7 @@ const UserStorySlide = ({
                 onClose={() => setShowInteraction(false)}
                 story={currentStory}
                 isMyStory={isMyStory}
-                isDark={isDark}
+                isDark={!!isDark}
             />
 
             {/* Header / Progress */}
@@ -349,51 +349,6 @@ export function MobileStoryViewer({ stories, initialStoryId, onClose, isDark }: 
         setCurrentIndex(emblaApi.selectedScrollSnap())
     })
   }, [])
-
-  // Cube Effect Logic
-  const TWEEN_FACTOR_BASE = 0.5;
-  const numberWithinRange = (number: number, min: number, max: number): number => Math.min(Math.max(number, min), max)
-
-  const tweenCube = useCallback((emblaApi: EmblaCarouselType, eventName?: string) => {
-    const engine = emblaApi.internalEngine()
-    const scrollProgress = emblaApi.scrollProgress()
-    const slidesInView = emblaApi.slidesInView()
-    const isScrollEvent = eventName === 'scroll'
-
-    emblaApi.scrollSnapList().forEach((scrollSnap, snapIndex) => {
-      let diffToTarget = scrollSnap - scrollProgress
-      const slidesInSnap = engine.slideRegistry[snapIndex]
-
-      slidesInSnap.forEach((slideIndex) => {
-        if (isScrollEvent && !slidesInView.includes(slideIndex)) return
-
-        // 3D Cube Transform
-        // Perspective needs to be on container
-        const slideNode = emblaApi.slideNodes()[slideIndex]
-
-        // Simple rotation based on distance
-        // Normalized distance: 0 = center, 1 = right, -1 = left
-        // Wait, embla scrollProgress is 0 to 1 total.
-
-        // Let's use simpler logic:
-        // Embla doesn't easily give "distance from center" in standard API as nicely as Swiper.
-        // But we can approximate.
-
-        // Actually, just simple slide is often better than a hacked cube.
-        // User requested "Cube effect".
-        // Let's try to simulate 3D rotation.
-
-        // For now, let's stick to a clean slide. Implementing true 3D cube manually with Embla requires deep dive into engine.location.
-        // However, I can add `perspective` to the container and maybe scale/opacity?
-      })
-    })
-  }, [])
-
-  // useEffect(() => {
-  //   if (!emblaApi) return
-  //   emblaApi.on('scroll', tweenCube)
-  //   emblaApi.on('reInit', tweenCube)
-  // }, [emblaApi, tweenCube])
 
   useEffect(() => {
     if (emblaApi) {

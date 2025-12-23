@@ -4,7 +4,6 @@ import { Plus, Play } from 'lucide-react'
 import { StoryDetail } from '@/types/showcase'
 
 type StoryRailProps = {
-  isDark: boolean
   stories: StoryDetail[]
   onCreateClick: () => void
   onStoryClick: (story: StoryDetail) => void
@@ -16,7 +15,7 @@ type UserGroup = {
   stories: StoryDetail[]
 }
 
-export function StoryRail({ isDark, stories, onCreateClick, onStoryClick }: StoryRailProps) {
+export function StoryRail({ stories, onCreateClick, onStoryClick }: StoryRailProps) {
 
   const userGroups = useMemo(() => {
     const groups: UserGroup[] = []
@@ -49,8 +48,8 @@ export function StoryRail({ isDark, stories, onCreateClick, onStoryClick }: Stor
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3 px-1">
-        <h2 className={`font-semibold text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>Stories</h2>
-        <Link href="/showcase" className="text-[#5B7CFF] text-sm hover:underline">
+        <h2 className="font-semibold text-lg text-foreground">Stories</h2>
+        <Link href="/showcase" className="text-primary text-sm hover:underline">
           View All
         </Link>
       </div>
@@ -61,12 +60,12 @@ export function StoryRail({ isDark, stories, onCreateClick, onStoryClick }: Stor
           onClick={onCreateClick}
           className="flex-shrink-0 w-28 h-40 rounded-xl relative overflow-hidden group text-left"
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-[#5B7CFF] to-[#7B5CFF] opacity-90 transition-opacity group-hover:opacity-100" />
+          <div className="absolute inset-0 bg-primary opacity-90 transition-opacity group-hover:opacity-100" />
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-2">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
-              <Plus className="w-6 h-6 text-white" />
+              <Plus className="w-6 h-6 text-primary-foreground" />
             </div>
-            <span className="text-white text-sm font-medium absolute bottom-2 left-0 w-full text-center md:static md:text-left md:mt-auto md:mb-2">Your Update</span>
+            <span className="text-primary-foreground text-sm font-medium absolute bottom-2 left-0 w-full text-center md:static md:text-left md:mt-auto md:mb-2">Your Update</span>
           </div>
         </button>
 

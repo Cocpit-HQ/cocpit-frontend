@@ -13,6 +13,7 @@ import {
   Moon,
   ArrowLeft,
   Settings as SettingsIcon,
+  Zap,
 } from "lucide-react"
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
@@ -52,7 +53,7 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: () =>
   return (
     <button
       onClick={onChange}
-      className={`relative w-12 h-6 rounded-full transition-colors ${checked ? "bg-[#5B7CFF]" : "bg-[#3d4558]"}`}
+      className={`relative w-12 h-6 rounded-full transition-colors ${checked ? "bg-primary" : "bg-secondary"}`}
     >
       <div
         className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
@@ -69,31 +70,27 @@ function SettingsNavCard({
   description,
   isActive,
   onClick,
-  isDark,
 }: {
   icon: React.ReactNode
   title: string
   description: string
   isActive: boolean
   onClick: () => void
-  isDark: boolean
 }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left p-4 rounded-xl transition-all ${
+      className={`w-full text-left p-4 rounded-xl transition-all border ${
         isActive
-          ? "bg-gradient-to-br from-[#5B7CFF] to-[#7B5CFF] border border-[#5B7CFF]"
-          : isDark
-            ? "bg-[#242b3d] border border-[#2d3548] hover:border-[#3d4558]"
-            : "bg-white border border-[#E1E1E1] hover:border-[#0A66C2] shadow-sm"
+          ? "bg-primary border-primary"
+          : "bg-card border-border hover:border-secondary shadow-sm"
       }`}
     >
       <div className="flex items-start gap-3">
-        <div className={`${isActive ? "text-white" : isDark ? "text-[#5B7CFF]" : "text-[#0A66C2]"}`}>{icon}</div>
+        <div className={`${isActive ? "text-primary-foreground" : "text-primary"}`}>{icon}</div>
         <div className="flex-1 min-w-0">
-          <h3 className={`mb-1 ${isActive ? "text-white" : isDark ? "text-white" : "text-[#1A1A1A]"}`}>{title}</h3>
-          <p className={`text-xs ${isActive ? "text-white/80" : isDark ? "text-gray-400" : "text-[#666666]"}`}>
+          <h3 className={`mb-1 ${isActive ? "text-primary-foreground" : "text-foreground"}`}>{title}</h3>
+          <p className={`text-xs ${isActive ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
             {description}
           </p>
         </div>
@@ -108,86 +105,72 @@ function ThemeOption({
   description,
   isSelected,
   onClick,
-  isDark,
 }: {
   icon: React.ReactNode
   title: string
   description: string
   isSelected: boolean
   onClick: () => void
-  isDark: boolean
 }) {
   return (
     <button
       onClick={onClick}
       className={`w-full flex items-center justify-between p-4 rounded-lg border transition-all ${
         isSelected
-          ? isDark
-            ? "bg-[#1a1f2e] border-[#5B7CFF]"
-            : "bg-[#EAF4FF] border-[#0A66C2]"
-          : isDark
-            ? "bg-[#1a1f2e] border-[#2d3548] hover:border-[#3d4558]"
-            : "bg-[#F3F2EF] border-[#E1E1E1] hover:border-[#0A66C2]"
+          ? "bg-sidebar border-primary"
+          : "bg-sidebar border-sidebar-border hover:border-secondary"
       }`}
     >
       <div className="flex items-center gap-3">
         <div
           className={`${
             isSelected
-              ? isDark
-                ? "text-[#5B7CFF]"
-                : "text-[#0A66C2]"
-              : isDark
-                ? "text-gray-400"
-                : "text-[#666666]"
+              ? "text-primary"
+              : "text-muted-foreground"
           }`}
         >
           {icon}
         </div>
         <div className="text-left">
-          <p className={isDark ? "text-white" : "text-[#1A1A1A]"}>{title}</p>
-          <p className={`text-sm ${isDark ? "text-gray-400" : "text-[#666666]"}`}>{description}</p>
+          <p className="text-foreground">{title}</p>
+          <p className="text-sm text-muted-foreground">{description}</p>
         </div>
       </div>
       <div
         className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
           isSelected
-            ? isDark
-              ? "border-[#5B7CFF]"
-              : "border-[#0A66C2]"
-            : isDark
-              ? "border-gray-600"
-              : "border-[#CCCCCC]"
+            ? "border-primary"
+            : "border-muted-foreground"
         }`}
       >
-        {isSelected && <div className={`w-3 h-3 rounded-full ${isDark ? "bg-[#5B7CFF]" : "bg-[#0A66C2]"}`} />}
+        {isSelected && <div className="w-3 h-3 rounded-full bg-primary" />}
       </div>
     </button>
   )
 }
 
-function ToggleSetting({ title, description, isDark }: { title: string; description: string; isDark: boolean }) {
+function ToggleSetting({ title, description }: { title: string; description: string }) {
   const [checked, setChecked] = useState(true)
 
   return (
     <div className="flex items-center justify-between py-2">
       <div className="flex-1">
-        <p className={`mb-1 ${isDark ? "text-white" : "text-[#1A1A1A]"}`}>{title}</p>
-        <p className={`text-sm ${isDark ? "text-gray-400" : "text-[#666666]"}`}>{description}</p>
+        <p className="mb-1 text-foreground">{title}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <ToggleSwitch checked={checked} onChange={() => setChecked(!checked)} />
     </div>
   )
 }
 
-function AccountSetting({ label, value, isDark }: { label: string; value: string; isDark: boolean }) {
+function AccountSetting({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between py-2">
       <div className="flex-1">
-        <p className={`text-sm mb-1 ${isDark ? "text-gray-400" : "text-[#666666]"}`}>{label}</p>
-        <p className={isDark ? "text-white" : "text-[#1A1A1A]"}>{value}</p>
+        <p className="text-sm mb-1 text-muted-foreground">{label}</p>
+        <p className="text-foreground">{value}</p>
       </div>
-      <button className={`text-sm hover:underline ${isDark ? "text-[#5B7CFF]" : "text-[#0A66C2]"}`}>Change</button>
+      <button className="text-sm hover:underline text-primary">Change</button>
     </div>
   )
 }
@@ -197,38 +180,32 @@ export default function SettingsPage() {
   const { theme, resolvedTheme, setTheme } = useTheme()
   const systemTheme = useSystemTheme()
 
-  const effectiveTheme = resolvedTheme ?? (theme === "system" ? systemTheme : theme)
-  const isDark = useMemo(() => effectiveTheme === "dark", [effectiveTheme])
-
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
   }
 
   const [activeSection, setActiveSection] = useState<SettingsSection>("appearance")
   const [compactMode, setCompactMode] = useState(false)
-  const [pendingTheme, setPendingTheme] = useState<Theme>(theme as Theme ?? "system")
+  const [pendingTheme, setPendingTheme] = useState<Theme>(theme as Theme ?? "navy")
 
   const handleSave = () => {
     setTheme(pendingTheme)
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
+    <div className="min-h-screen bg-background">
       <AppShell currentPage="settings" navigateTo={navigateTo}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
           <div className="mb-6 md:mb-8 flex items-center gap-4">
             <button
               onClick={() => router.push("/profile")}
-              className={`p-2 rounded-full transition-all ${
-                isDark ? "hover:bg-white/10" : "hover:bg-black/10"
-              }
-              `}
+              className="p-2 rounded-full transition-all hover:bg-muted"
             >
-              <ArrowLeft className={`w-5 h-5 ${isDark ? "text-white" : "text-[#1A1A1A]"}`} />
+              <ArrowLeft className="w-5 h-5 text-foreground" />
             </button>
             <div>
-              <h1 className={`mb-2 ${isDark ? "text-white" : "text-[#1A1A1A]"}`}>Settings</h1>
-              <p className={isDark ? "text-gray-400" : "text-[#666666]"}>
+              <h1 className="mb-2 text-foreground">Settings</h1>
+              <p className="text-muted-foreground">
                 Manage your account preferences and privacy settings
               </p>
             </div>
@@ -243,7 +220,6 @@ export default function SettingsPage() {
                   description="Customize your visual experience"
                   isActive={activeSection === "appearance"}
                   onClick={() => setActiveSection("appearance")}
-                  isDark={isDark}
                 />
                 <SettingsNavCard
                   icon={<Bell className="w-5 h-5" />}
@@ -251,7 +227,6 @@ export default function SettingsPage() {
                   description="Manage notification preferences"
                   isActive={activeSection === "notifications"}
                   onClick={() => setActiveSection("notifications")}
-                  isDark={isDark}
                 />
                 <SettingsNavCard
                   icon={<Lock className="w-5 h-5" />}
@@ -259,7 +234,6 @@ export default function SettingsPage() {
                   description="Control how you share your information"
                   isActive={activeSection === "privacy"}
                   onClick={() => setActiveSection("privacy")}
-                  isDark={isDark}
                 />
                 <SettingsNavCard
                   icon={<User className="w-5 h-5" />}
@@ -267,7 +241,6 @@ export default function SettingsPage() {
                   description="Manage your account settings"
                   isActive={activeSection === "account"}
                   onClick={() => setActiveSection("account")}
-                  isDark={isDark}
                 />
               </div>
             </div>
@@ -276,21 +249,27 @@ export default function SettingsPage() {
               {activeSection === "appearance" && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className={`mb-2 ${isDark ? "text-white" : "text-[#1A1A1A]"}`}>Appearance</h2>
-                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-[#666666]"}`}>Customize your visual experience</p>
+                    <h2 className="mb-2 text-foreground">Appearance</h2>
+                    <p className="text-sm text-muted-foreground">Customize your visual experience</p>
                   </div>
 
-                  <div className={`rounded-xl p-6 ${isDark ? "bg-[#242b3d] border border-[#2d3548]" : "bg-white shadow-sm"}`}>
-                    <h3 className={isDark ? "text-white mb-4" : "text-[#1A1A1A] mb-4"}>Theme</h3>
+                  <div className="rounded-xl p-6 bg-card border border-border">
+                    <h3 className="text-foreground mb-4">Theme</h3>
 
                     <div className="space-y-3">
+                      <ThemeOption
+                        icon={<Zap className="w-5 h-5" />}
+                        title="Navy Mode"
+                        description="The classic experience"
+                        isSelected={pendingTheme === "navy"}
+                        onClick={() => setPendingTheme("navy")}
+                      />
                       <ThemeOption
                         icon={<Sun className="w-5 h-5" />}
                         title="Light Mode"
                         description="Clean and bright interface"
                         isSelected={pendingTheme === "light"}
                         onClick={() => setPendingTheme("light")}
-                        isDark={isDark}
                       />
                       <ThemeOption
                         icon={<Moon className="w-5 h-5" />}
@@ -298,7 +277,6 @@ export default function SettingsPage() {
                         description="Easy on the eyes, perfect for night"
                         isSelected={pendingTheme === "dark"}
                         onClick={() => setPendingTheme("dark")}
-                        isDark={isDark}
                       />
                       <ThemeOption
                         icon={<Monitor className="w-5 h-5" />}
@@ -306,18 +284,17 @@ export default function SettingsPage() {
                         description="Follow your device's setting"
                         isSelected={pendingTheme === "system"}
                         onClick={() => setPendingTheme("system")}
-                        isDark={isDark}
                       />
                     </div>
                   </div>
 
-                  <div className={`rounded-xl p-6 ${isDark ? "bg-[#242b3d] border border-[#2d3548]" : "bg-white shadow-sm"}`}>
-                    <h3 className={`mb-4 ${isDark ? "text-white" : "text-[#1A1A1A]"}`}>Display</h3>
+                  <div className="rounded-xl p-6 bg-card border border-border">
+                    <h3 className="mb-4 text-foreground">Display</h3>
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className={`mb-1 ${isDark ? "text-white" : "text-[#1A1A1A]"}`}>Compact mode</p>
-                        <p className={`text-sm ${isDark ? "text-gray-400" : "text-[#666666]"}`}>Show more content in less space</p>
+                        <p className="mb-1 text-foreground">Compact mode</p>
+                        <p className="text-sm text-muted-foreground">Show more content in less space</p>
                       </div>
                       <ToggleSwitch checked={compactMode} onChange={() => setCompactMode(!compactMode)} />
                     </div>
@@ -325,7 +302,7 @@ export default function SettingsPage() {
 
                   <button
                     onClick={handleSave}
-                    className="w-full bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-6 py-3 rounded-lg hover:opacity-90 transition-all"
+                    className="w-full bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:opacity-90 transition-all"
                   >
                     Save Changes
                   </button>
@@ -335,15 +312,15 @@ export default function SettingsPage() {
               {activeSection === "notifications" && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className={`mb-2 ${isDark ? "text-white" : "text-[#1A1A1A]"}`}>Notifications</h2>
-                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-[#666666]"}`}>Manage notification preferences</p>
+                    <h2 className="mb-2 text-foreground">Notifications</h2>
+                    <p className="text-sm text-muted-foreground">Manage notification preferences</p>
                   </div>
 
-                  <div className={`rounded-xl p-6 space-y-4 ${isDark ? "bg-[#242b3d] border border-[#2d3548]" : "bg-white shadow-sm"}`}>
-                    <ToggleSetting title="Email notifications" description="Receive email updates about your activity" isDark={isDark} />
-                    <ToggleSetting title="Push notifications" description="Get notifications on your devices" isDark={isDark} />
-                    <ToggleSetting title="Message notifications" description="Get notified about new messages" isDark={isDark} />
-                    <ToggleSetting title="Job alerts" description="Receive notifications about job matches" isDark={isDark} />
+                  <div className="rounded-xl p-6 space-y-4 bg-card border border-border">
+                    <ToggleSetting title="Email notifications" description="Receive email updates about your activity" />
+                    <ToggleSetting title="Push notifications" description="Get notifications on your devices" />
+                    <ToggleSetting title="Message notifications" description="Get notified about new messages" />
+                    <ToggleSetting title="Job alerts" description="Receive notifications about job matches" />
                   </div>
                 </div>
               )}
@@ -351,14 +328,14 @@ export default function SettingsPage() {
               {activeSection === "privacy" && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className={`mb-2 ${isDark ? "text-white" : "text-[#1A1A1A]"}`}>Privacy & Security</h2>
-                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-[#666666]"}`}>Control how you share your information</p>
+                    <h2 className="mb-2 text-foreground">Privacy & Security</h2>
+                    <p className="text-sm text-muted-foreground">Control how you share your information</p>
                   </div>
 
-                  <div className={`rounded-xl p-6 space-y-4 ${isDark ? "bg-[#242b3d] border border-[#2d3548]" : "bg-white shadow-sm"}`}>
-                    <ToggleSetting title="Profile visibility" description="Make your profile visible to everyone" isDark={isDark} />
-                    <ToggleSetting title="Show activity status" description="Let others see when you're online" isDark={isDark} />
-                    <ToggleSetting title="Search engine indexing" description="Allow search engines to show your profile" isDark={isDark} />
+                  <div className="rounded-xl p-6 space-y-4 bg-card border border-border">
+                    <ToggleSetting title="Profile visibility" description="Make your profile visible to everyone" />
+                    <ToggleSetting title="Show activity status" description="Let others see when you're online" />
+                    <ToggleSetting title="Search engine indexing" description="Allow search engines to show your profile" />
                   </div>
                 </div>
               )}
@@ -366,15 +343,15 @@ export default function SettingsPage() {
               {activeSection === "account" && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className={`mb-2 ${isDark ? "text-white" : "text-[#1A1A1A]"}`}>Account</h2>
-                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-[#666666]"}`}>Manage your account settings</p>
+                    <h2 className="mb-2 text-foreground">Account</h2>
+                    <p className="text-sm text-muted-foreground">Manage your account settings</p>
                   </div>
 
-                  <div className={`rounded-xl p-6 space-y-4 ${isDark ? "bg-[#242b3d] border border-[#2d3548]" : "bg-white shadow-sm"}`}>
-                    <AccountSetting label="Email" value="alex.johnson@email.com" isDark={isDark} />
-                    <AccountSetting label="Phone" value="+1 (555) 123-4567" isDark={isDark} />
-                    <AccountSetting label="Password" value="••••••••" isDark={isDark} />
-                    <AccountSetting label="Two-factor authentication" value="Disabled" isDark={isDark} />
+                  <div className="rounded-xl p-6 space-y-4 bg-card border border-border">
+                    <AccountSetting label="Email" value="alex.johnson@email.com" />
+                    <AccountSetting label="Phone" value="+1 (555) 123-4567" />
+                    <AccountSetting label="Password" value="••••••••" />
+                    <AccountSetting label="Two-factor authentication" value="Disabled" />
                   </div>
                 </div>
               )}
@@ -391,4 +368,3 @@ export default function SettingsPage() {
     </div>
   )
 }
-

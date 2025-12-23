@@ -5,12 +5,11 @@ import { Image, Video, FileText } from "lucide-react"
 import { StoryDetail } from "@/types/showcase"
 
 type Props = {
-  isDark: boolean
   onCancel?: () => void
   onCreated?: (story: StoryDetail) => void
 }
 
-export function CreateStoryForm({ isDark, onCancel, onCreated }: Props) {
+export function CreateStoryForm({ onCancel, onCreated }: Props) {
   const [description, setDescription] = useState("")
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null)
@@ -73,23 +72,21 @@ export function CreateStoryForm({ isDark, onCancel, onCreated }: Props) {
       {/* Upload Image */}
       <div>
         <label
-          className={`block text-sm mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+          className="block text-sm mb-2 text-muted-foreground"
           htmlFor="story-image"
         >
           Upload Image
         </label>
         <div
-          className={`flex items-center justify-between rounded-lg border px-4 py-4 ${
-            isDark ? "bg-[#171c28] border-[#2d3548] text-white" : "bg-[#0b1020]/5 border-gray-300 text-gray-900"
-          }`}
+          className="flex items-center justify-between rounded-lg border px-4 py-4 bg-muted/50 border-border text-foreground"
         >
           {selectedImage ? (
             <div className="flex items-center gap-3">
               <img src={selectedImage} alt="Preview" className="w-16 h-16 object-cover rounded" />
-              <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Image selected</span>
+              <span className="text-sm text-muted-foreground">Image selected</span>
             </div>
           ) : (
-            <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            <span className="text-sm text-muted-foreground">
               Upload an image for your story
             </span>
           )}
@@ -97,7 +94,7 @@ export function CreateStoryForm({ isDark, onCancel, onCreated }: Props) {
             id="story-image"
             type="button"
             onClick={() => imageInputRef.current?.click()}
-            className="px-4 py-2 text-sm rounded-lg border border-dashed border-[#5B7CFF] text-[#5B7CFF] hover:bg-[#5B7CFF]/10 transition-colors flex items-center gap-2"
+            className="px-4 py-2 text-sm rounded-lg border border-dashed border-primary text-primary hover:bg-primary/10 transition-colors flex items-center gap-2"
           >
             <Image className="w-4 h-4" />
             Upload Image
@@ -115,23 +112,21 @@ export function CreateStoryForm({ isDark, onCancel, onCreated }: Props) {
       {/* Upload Video */}
       <div>
         <label
-          className={`block text-sm mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+          className="block text-sm mb-2 text-muted-foreground"
           htmlFor="story-video"
         >
           Upload Video
         </label>
         <div
-          className={`flex items-center justify-between rounded-lg border px-4 py-4 ${
-            isDark ? "bg-[#171c28] border-[#2d3548] text-white" : "bg-[#0b1020]/5 border-gray-300 text-gray-900"
-          }`}
+          className="flex items-center justify-between rounded-lg border px-4 py-4 bg-muted/50 border-border text-foreground"
         >
           {selectedVideo ? (
             <div className="flex items-center gap-3">
               <video src={selectedVideo} className="w-16 h-16 object-cover rounded" controls={false} />
-              <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Video selected</span>
+              <span className="text-sm text-muted-foreground">Video selected</span>
             </div>
           ) : (
-            <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            <span className="text-sm text-muted-foreground">
               Upload a video for your story
             </span>
           )}
@@ -139,7 +134,7 @@ export function CreateStoryForm({ isDark, onCancel, onCreated }: Props) {
             id="story-video"
             type="button"
             onClick={() => videoInputRef.current?.click()}
-            className="px-4 py-2 text-sm rounded-lg border border-dashed border-[#5B7CFF] text-[#5B7CFF] hover:bg-[#5B7CFF]/10 transition-colors flex items-center gap-2"
+            className="px-4 py-2 text-sm rounded-lg border border-dashed border-primary text-primary hover:bg-primary/10 transition-colors flex items-center gap-2"
           >
             <Video className="w-4 h-4" />
             Upload Video
@@ -157,26 +152,22 @@ export function CreateStoryForm({ isDark, onCancel, onCreated }: Props) {
       {/* Description */}
       <div>
         <label
-          className={`block text-sm mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}
+          className="block text-sm mb-2 text-muted-foreground"
           htmlFor="story-description"
         >
           Description
         </label>
         <div
-          className={`flex items-start rounded-lg border px-4 py-3 ${
-            isDark ? "bg-[#171c28] border-[#2d3548] text-white" : "bg-[#0b1020]/5 border-gray-300 text-gray-900"
-          }`}
+          className="flex items-start rounded-lg border px-4 py-3 bg-muted/50 border-border text-foreground"
         >
-          <FileText className="w-4 h-4 mr-3 text-gray-500 mt-1 flex-shrink-0" />
+          <FileText className="w-4 h-4 mr-3 text-muted-foreground mt-1 flex-shrink-0" />
           <textarea
             id="story-description"
             placeholder="Add a description to your story..."
             rows={6}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className={`flex-1 bg-transparent focus:outline-none resize-none ${
-              isDark ? "placeholder-gray-500" : "placeholder-gray-500"
-            }`}
+            className="flex-1 bg-transparent focus:outline-none resize-none placeholder-muted-foreground"
           />
         </div>
       </div>
@@ -184,15 +175,13 @@ export function CreateStoryForm({ isDark, onCancel, onCreated }: Props) {
       <div className="mt-10 flex items-center justify-between gap-4">
         <button
           onClick={handleCancel}
-          className={`px-6 py-3 rounded-lg border text-sm ${
-            isDark ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28]" : "border-gray-300 text-gray-700 hover:bg-gray-50"
-          }`}
+          className="px-6 py-3 rounded-lg border text-sm border-border text-muted-foreground hover:bg-muted"
         >
           Cancel
         </button>
         <button
           onClick={handleCreate}
-          className="flex-1 px-6 py-3 rounded-lg text-sm bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white hover:opacity-90 transition-all"
+          className="flex-1 px-6 py-3 rounded-lg text-sm bg-primary text-primary-foreground hover:opacity-90 transition-all"
         >
           Create Story
         </button>
@@ -200,4 +189,3 @@ export function CreateStoryForm({ isDark, onCancel, onCreated }: Props) {
     </div>
   )
 }
-

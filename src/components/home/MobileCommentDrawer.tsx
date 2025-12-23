@@ -21,7 +21,6 @@ export default function MobileCommentDrawer({
   open,
   onOpenChange,
   comments,
-  isDark = false,
   onAddComment,
 }: MobileCommentDrawerProps) {
   const [newComment, setNewComment] = useState('');
@@ -57,9 +56,9 @@ export default function MobileCommentDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className={`flex flex-col h-[95vh] rounded-t-xl ${isDark ? 'bg-[#1f2534] border-[#2d3548]' : 'bg-white'}`}>
-        <DrawerHeader className="flex-shrink-0 border-b border-gray-100 dark:border-gray-800 p-4">
-          <DrawerTitle className={`text-center text-base font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+      <DrawerContent className="flex flex-col h-[95vh] rounded-t-xl bg-card border-border">
+        <DrawerHeader className="flex-shrink-0 border-b border-border p-4">
+          <DrawerTitle className="text-center text-base font-semibold text-foreground">
             Comments
           </DrawerTitle>
         </DrawerHeader>
@@ -67,17 +66,16 @@ export default function MobileCommentDrawer({
         <div className="flex-1 overflow-y-auto p-4">
           <CommentList
             comments={comments}
-            isDark={isDark}
             onReply={handleReply}
           />
         </div>
 
         {/* Fixed Input Section */}
-        <div className={`flex-shrink-0 border-t ${isDark ? 'border-[#2d3548] bg-[#1f2534]' : 'border-gray-100 bg-white'} pb-safe`}>
+        <div className="flex-shrink-0 border-t border-border bg-card pb-safe">
           {replyingTo && (
-            <div className={`px-4 py-2 flex items-center justify-between text-xs ${isDark ? 'bg-[#2d3548] text-gray-300' : 'bg-gray-50 text-gray-600'}`}>
-              <span>Replying to <span className="font-semibold text-[#5B7CFF]">@{replyingTo}</span></span>
-              <button onClick={cancelReply} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full">
+            <div className="px-4 py-2 flex items-center justify-between text-xs bg-muted text-muted-foreground">
+              <span>Replying to <span className="font-semibold text-primary">@{replyingTo}</span></span>
+              <button onClick={cancelReply} className="p-1 hover:bg-muted/80 rounded-full">
                 <X className="w-3 h-3" />
               </button>
             </div>
@@ -94,11 +92,7 @@ export default function MobileCommentDrawer({
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder={replyingTo ? `Reply to ${replyingTo}...` : "Add a comment..."}
-                className={`w-full p-3 pr-12 rounded-2xl text-sm resize-none max-h-32 focus:outline-none border ${
-                  isDark
-                    ? 'bg-[#2d3548] text-white placeholder-gray-400 border-transparent focus:border-[#5B7CFF]'
-                    : 'bg-gray-100 text-gray-900 placeholder-gray-500 border-transparent focus:bg-white focus:border-gray-300'
-                }`}
+                className="w-full p-3 pr-12 rounded-2xl text-sm resize-none max-h-32 focus:outline-none border bg-muted text-foreground placeholder-muted-foreground border-transparent focus:border-primary"
                 rows={1}
                 style={{ minHeight: '44px' }}
                 onInput={(e) => {
@@ -110,7 +104,7 @@ export default function MobileCommentDrawer({
               <button
                 type="submit"
                 disabled={!newComment.trim()}
-                className="absolute right-2 bottom-2 p-1.5 text-[#5B7CFF] disabled:opacity-40 disabled:cursor-not-allowed font-semibold text-sm transition-opacity"
+                className="absolute right-2 bottom-2 p-1.5 text-primary disabled:opacity-40 disabled:cursor-not-allowed font-semibold text-sm transition-opacity"
               >
                 Post
               </button>

@@ -8,7 +8,6 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
-import { useTheme } from 'next-themes';
 
 type PostType = 'text' | 'photo' | 'video' | 'poll';
 
@@ -23,11 +22,10 @@ export default function MobileCreateMenu({
   onOpenChange,
   onOptionClick,
 }: MobileCreateMenuProps) {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
+  // Removed useTheme
 
   const options = [
-    { type: 'text' as const, label: 'Text', icon: FileText, color: 'text-gray-500' },
+    { type: 'text' as const, label: 'Text', icon: FileText, color: 'text-muted-foreground' },
     { type: 'photo' as const, label: 'Photo', icon: Image, color: 'text-blue-500' },
     { type: 'video' as const, label: 'Video', icon: Video, color: 'text-green-500' },
     { type: 'poll' as const, label: 'Poll', icon: BarChart2, color: 'text-orange-500' },
@@ -35,9 +33,9 @@ export default function MobileCreateMenu({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className={`rounded-t-xl ${isDark ? 'bg-[#1f2534] border-[#2d3548]' : 'bg-white'}`}>
-        <DrawerHeader className="border-b border-gray-100 dark:border-gray-800 p-4">
-          <DrawerTitle className={`text-center text-base font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+      <DrawerContent className="rounded-t-xl bg-card border-border">
+        <DrawerHeader className="border-b border-border p-4">
+          <DrawerTitle className="text-center text-base font-semibold text-foreground">
             Create
           </DrawerTitle>
         </DrawerHeader>
@@ -49,16 +47,12 @@ export default function MobileCreateMenu({
               <button
                 key={option.type}
                 onClick={() => onOptionClick(option.type)}
-                className={`flex items-center gap-4 p-4 rounded-xl transition-all ${
-                  isDark
-                    ? 'hover:bg-[#2d3548] bg-[#242b3d]'
-                    : 'hover:bg-gray-50 bg-gray-50/50 border border-gray-100'
-                }`}
+                className="flex items-center gap-4 p-4 rounded-xl transition-all hover:bg-muted bg-card border border-border"
               >
-                <div className={`p-3 rounded-full ${isDark ? 'bg-[#171c28]' : 'bg-white'} shadow-sm`}>
+                <div className="p-3 rounded-full bg-muted shadow-sm">
                   <Icon className={`w-6 h-6 ${option.color}`} />
                 </div>
-                <span className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <span className="text-lg font-medium text-foreground">
                   {option.label}
                 </span>
               </button>

@@ -6,18 +6,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 interface AddSkillsFormProps {
-  isDark: boolean;
+  isDark?: boolean; // Optional
   onSave: (newSkills: string[]) => void;
   onCancel: () => void;
 }
 
-const AddSkillsForm: React.FC<AddSkillsFormProps> = ({ isDark, onSave, onCancel }) => {
+const AddSkillsForm: React.FC<AddSkillsFormProps> = ({ onSave, onCancel }) => {
   const [skillInput, setSkillInput] = useState<string>("");
 
-  const inputStyles = isDark
-    ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-500"
-    : "bg-[#0b1020]/5 border-gray-300 text-gray-900 placeholder-gray-500";
-  const labelStyles = `text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`;
+  const inputStyles = "bg-input border-border text-foreground placeholder-muted-foreground";
+  const labelStyles = "text-sm font-medium text-foreground";
 
   const handleAddSkills = () => {
     const skillsArray = skillInput
@@ -46,11 +44,7 @@ const AddSkillsForm: React.FC<AddSkillsFormProps> = ({ isDark, onSave, onCancel 
         <Button
           variant="outline"
           onClick={onCancel}
-          className={
-            isDark
-              ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28] bg-transparent"
-              : "border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent"
-          }
+          className="border-border text-muted-foreground hover:bg-muted bg-transparent"
         >
           Cancel
         </Button>

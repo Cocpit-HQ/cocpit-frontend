@@ -4,18 +4,17 @@ import Comment from './Comment';
 
 interface CommentListProps {
   comments: CommentType[];
-  isDark?: boolean;
+  isDark?: boolean; // Optional
   onReply?: (authorName: string) => void;
 }
 
-export default function CommentList({ comments, isDark = false, onReply }: CommentListProps) {
+export default function CommentList({ comments, onReply }: CommentListProps) {
   return (
     <div className="space-y-4">
       {comments.map((comment) => (
         <Comment
           key={comment.id}
           comment={comment}
-          isDark={isDark}
           onReply={onReply}
         />
       ))}

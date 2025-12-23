@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
 import { Plus, Check, X } from "lucide-react";
 
 type Suggestion = {
@@ -16,14 +15,11 @@ type Suggestion = {
 interface SuggestionsPanelProps {}
 
 export function SuggestionsPanel({}: SuggestionsPanelProps) {
-  const { resolvedTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  const isDark = resolvedTheme === "dark";
 
   const suggestions: Suggestion[] = [
     {
@@ -89,19 +85,15 @@ export function SuggestionsPanel({}: SuggestionsPanelProps) {
 
   return (
     <div
-      className={`${
-        isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
-      } rounded-xl border overflow-hidden`}
+      className="bg-card border-border rounded-xl border overflow-hidden"
     >
       <div
-        className={`px-4 py-4 border-b flex items-center justify-between ${
-          isDark ? "border-[#2d3548]" : "border-gray-200"
-        }`}
+        className="px-4 py-4 border-b border-border flex items-center justify-between"
       >
-        <h3 className={isDark ? "text-white" : "text-gray-900"}>
+        <h3 className="text-foreground">
           Suggested for you
         </h3>
-        <button className="text-[#5B7CFF] text-sm hover:underline">
+        <button className="text-primary text-sm hover:underline">
           See all
         </button>
       </div>
@@ -112,20 +104,12 @@ export function SuggestionsPanel({}: SuggestionsPanelProps) {
           {visibleSuggestions.map((person) => (
             <div
               key={person.id}
-              className={`relative flex min-w-[220px] flex-col gap-2 rounded-xl p-3 snap-start ${
-                isDark
-                  ? "bg-[#1a1f2e] border border-[#2d3548]"
-                  : "bg-white border border-gray-200"
-              }`}
+              className="relative flex min-w-[220px] flex-col gap-2 rounded-xl p-3 snap-start bg-card border border-border"
             >
               <button
                 type="button"
                 onClick={() => handleDismiss(person.id)}
-                className={`absolute right-2 top-2 rounded-full p-1 text-xs ${
-                  isDark
-                    ? "text-gray-400 hover:bg-[#242b3d] hover:text-white"
-                    : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                }`}
+                className="absolute right-2 top-2 rounded-full p-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
                 aria-label="Dismiss suggestion"
               >
                 <X className="h-3 w-3" />
@@ -134,9 +118,7 @@ export function SuggestionsPanel({}: SuggestionsPanelProps) {
               <div className="flex items-center gap-2">
                 <div className="relative flex-shrink-0">
                   <div
-                    className={`h-10 w-10 overflow-hidden rounded-full ${
-                      isDark ? "bg-gray-700" : "bg-gray-200"
-                    }`}
+                    className="h-10 w-10 overflow-hidden rounded-full bg-muted"
                   >
                     <img
                       src={person.avatar}
@@ -146,35 +128,29 @@ export function SuggestionsPanel({}: SuggestionsPanelProps) {
                   </div>
                   {person.verified && (
                     <div
-                      className={`absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#5B7CFF] border-2 ${
-                        isDark ? "border-[#1a1f2e]" : "border-white"
-                      }`}
+                      className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary border-2 border-card"
                     >
-                      <Check className="h-2.5 w-2.5 text-white" />
+                      <Check className="h-2.5 w-2.5 text-primary-foreground" />
                     </div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div
-                    className={`truncate text-sm font-medium ${
-                      isDark ? "text-white" : "text-gray-900"
-                    }`}
+                    className="truncate text-sm font-medium text-foreground"
                   >
                     {person.name}
                   </div>
                   <div
-                    className={`truncate text-xs ${
-                      isDark ? "text-gray-400" : "text-gray-600"
-                    }`}
+                    className="truncate text-xs text-muted-foreground"
                   >
                     {person.title}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-gray-500">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>{person.followers}</span>
-                <button className="inline-flex items-center gap-1 rounded-lg bg-[#5B7CFF] px-3 py-1 text-xs font-medium text-white hover:bg-[#4B6DEF]">
+                <button className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:opacity-90">
                   <Plus className="h-3 w-3" />
                   <span>Follow</span>
                 </button>
@@ -190,9 +166,7 @@ export function SuggestionsPanel({}: SuggestionsPanelProps) {
           <div key={person.id} className="relative flex items-start gap-3">
             <div className="relative flex-shrink-0">
               <div
-                className={`h-12 w-12 overflow-hidden rounded-full ${
-                  isDark ? "bg-gray-700" : "bg-gray-200"
-                }`}
+                className="h-12 w-12 overflow-hidden rounded-full bg-muted"
               >
                 <img
                   src={person.avatar}
@@ -202,45 +176,35 @@ export function SuggestionsPanel({}: SuggestionsPanelProps) {
               </div>
               {person.verified && (
                 <div
-                  className={`absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#5B7CFF] border-2 ${
-                    isDark ? "border-[#242b3d]" : "border-white"
-                  }`}
+                  className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary border-2 border-card"
                 >
-                  <Check className="h-3 w-3 text-white" />
+                  <Check className="h-3 w-3 text-primary-foreground" />
                 </div>
               )}
             </div>
             <div className="min-w-0 flex-1">
               <div
-                className={`truncate flex items-center gap-1 ${
-                  isDark ? "text-white" : "text-gray-900"
-                }`}
+                className="truncate flex items-center gap-1 text-foreground"
               >
                 {person.name}
               </div>
               <div
-                className={`truncate text-sm ${
-                  isDark ? "text-gray-400" : "text-gray-600"
-                }`}
+                className="truncate text-sm text-muted-foreground"
               >
                 {person.title}
               </div>
-              <div className="text-xs text-gray-500">{person.followers}</div>
+              <div className="text-xs text-muted-foreground">{person.followers}</div>
             </div>
             <div className="flex flex-col items-end gap-1">
               <button
                 type="button"
                 onClick={() => handleDismiss(person.id)}
-                className={`rounded-full p-1 text-xs ${
-                  isDark
-                    ? "text-gray-400 hover:bg-[#242b3d] hover:text-white"
-                    : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-                }`}
+                className="rounded-full p-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
                 aria-label="Dismiss suggestion"
               >
                 <X className="h-3 w-3" />
               </button>
-              <button className="bg-[#5B7CFF] text-white px-4 py-1.5 rounded-lg hover:bg-[#4B6DEF] transition-all flex items-center gap-1 flex-shrink-0 text-sm">
+              <button className="bg-primary text-primary-foreground px-4 py-1.5 rounded-lg hover:opacity-90 transition-all flex items-center gap-1 flex-shrink-0 text-sm">
                 <Plus className="w-4 h-4" />
                 <span>Follow</span>
               </button>
@@ -251,11 +215,7 @@ export function SuggestionsPanel({}: SuggestionsPanelProps) {
 
       <div className="px-4 pb-4">
         <button
-          className={`text-sm transition-all ${
-            isDark
-              ? "text-gray-400 hover:text-white"
-              : "text-gray-600 hover:text-gray-900"
-          }`}
+          className="text-sm transition-all text-muted-foreground hover:text-foreground"
         >
           View more suggestions →
         </button>

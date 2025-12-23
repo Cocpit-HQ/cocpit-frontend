@@ -15,22 +15,17 @@ import { EngagementDataPoint } from '@/app/analytics/data'
 
 interface EngagementMetricsProps {
   data: EngagementDataPoint[]
-  isDark: boolean
+  isDark?: boolean // Optional
 }
 
-export function EngagementMetrics({ data, isDark }: EngagementMetricsProps) {
+export function EngagementMetrics({ data }: EngagementMetricsProps) {
   return (
-    <div className={`p-6 rounded-xl border h-full flex flex-col
-      ${isDark
-        ? 'bg-[#242b3d] border-[#2d3548]'
-        : 'bg-white border-gray-200'
-      }`}
-    >
+    <div className="p-6 rounded-xl border h-full flex flex-col bg-card border-border">
       <div className="mb-6">
-        <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+        <h3 className="text-lg font-bold text-foreground">
           Engagement Overview
         </h3>
-        <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+        <p className="text-sm mt-1 text-muted-foreground">
           Profile interactions over time
         </p>
       </div>
@@ -51,25 +46,25 @@ export function EngagementMetrics({ data, isDark }: EngagementMetricsProps) {
                 <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#2d3548' : '#e5e7eb'} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
             <XAxis
               dataKey="date"
-              tick={{ fill: isDark ? '#9ca3af' : '#6b7280', fontSize: 12 }}
+              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
               axisLine={false}
               tickLine={false}
               minTickGap={30}
             />
             <YAxis
-              tick={{ fill: isDark ? '#9ca3af' : '#6b7280', fontSize: 12 }}
+              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
               axisLine={false}
               tickLine={false}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: isDark ? '#1f2937' : '#ffffff',
-                borderColor: isDark ? '#374151' : '#e5e7eb',
+                backgroundColor: "var(--card)",
+                borderColor: "var(--border)",
                 borderRadius: '8px',
-                color: isDark ? '#f3f4f6' : '#111827'
+                color: "var(--foreground)"
               }}
               itemStyle={{ fontSize: '12px' }}
             />
@@ -77,7 +72,7 @@ export function EngagementMetrics({ data, isDark }: EngagementMetricsProps) {
               verticalAlign="top"
               height={36}
               iconType="circle"
-              wrapperStyle={{ fontSize: '12px', color: isDark ? '#9ca3af' : '#6b7280' }}
+              wrapperStyle={{ fontSize: '12px', color: "var(--muted-foreground)" }}
             />
             <Area
               type="monotone"

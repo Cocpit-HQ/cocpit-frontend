@@ -1,224 +1,176 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from "react"
-import Link from "next/link"
+import React, { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
-import { Calendar, MapPin, Search, Users, Plus, X } from "lucide-react"
-
+import { Search, MapPin, Calendar, Users, Filter, Plus } from "lucide-react"
 import { AppShell } from "@/components/layout/AppShell"
-import type { Page, Theme } from "@/types/common"
-import type { EventCard } from "@/types/events"
-import { eventsSeed } from "@/lib/data/events";
 import { CreateEventForm } from "@/components/events/CreateEventForm"
+import { eventsSeed } from "@/lib/data/events"
+import type { Page } from "@/types/common"
 
-function useSystemTheme() {
-  const [systemTheme, setSystemTheme] = useState<Theme>("light")
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-    const updateTheme = (matches: boolean) => setSystemTheme(matches ? "dark" : "light")
-    updateTheme(mediaQuery.matches)
-    const listener = (event: MediaQueryListEvent) => updateTheme(event.matches)
-    mediaQuery.addEventListener("change", listener)
-    return () => mediaQuery.removeEventListener("change", listener)
-  }, [])
-
-  return systemTheme
+const routes: Record<string, string> = {
+  home: "/feed",
+  network: "/showcase",
+  events: "/events",
+  profile: "/profile",
+  settings: "/settings",
+  jobs: "/jobs",
+  analytics: "/analytics",
+  achievements: "/achievements",
 }
 
-function EventSkeletonCard() {
-  return (
-    <div className="rounded-xl border border-[#2d3548] bg-[#242b3d] overflow-hidden animate-pulse">
-      <div className="h-56 bg-[#1f2534]" />
-      <div className="p-6 space-y-3">
-        <div className="h-5 w-3/4 bg-[#323a4b] rounded" />
-        <div className="h-4 w-1/2 bg-[#323a4b] rounded" />
-        <div className="h-4 w-2/3 bg-[#323a4b] rounded" />
-        <div className="h-10 w-32 bg-[#323a4b] rounded-full" />
-      </div>
-    </div>
-  )
-}
-
-function EventCardItem({ event, isDark }: { event: EventCard; isDark: boolean }) {
-  return (
-    <div
-      className={`${isDark ? "bg-[#242b3d] border-[#2d3548] hover:border-[#3d4558]" : "bg-white border-gray-200 hover:border-gray-300"} rounded-xl border overflow-hidden transition-all`}
-    >
-      <div className="flex flex-col">
-        <div className="h-56 flex-shrink-0">
-          <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
-        </div>
-
-        <div className="flex-1 p-6 flex flex-col justify-between">
-          <div>
-            <h3 className={`text-xl mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>{event.title}</h3>
-
-            <div className="space-y-3 mb-6">
-              <div className={`flex items-center gap-3 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                <Calendar className="w-5 h-5 text-[#5B7CFF]" />
-                <span>
-                  {event.date} · {event.time}
-                </span>
-              </div>
-              <div className={`flex items-center gap-3 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                <MapPin className="w-5 h-5 text-[#5B7CFF]" />
-                <span>{event.location}</span>
-              </div>
-              <div className={`flex items-center gap-3 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                <Users className="w-5 h-5 text-[#5B7CFF]" />
-                <span>{event.attendees} attendees</span>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <Link href={`/events/${event.id}`} className="bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-6 py-3 rounded-full hover:opacity-90 transition-all">
-              Event Info
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default function EventsPage() {
+export function EventsPage() {
   const router = useRouter()
-  const { theme } = useTheme()
-  const systemTheme = useSystemTheme()
+  // Removed useTheme
 
-  const routes: Record<string, string> = {
-    home: "/feed",
-    network: "/showcase",
-    events: "/events",
-    profile: "/profile",
-    settings: "/settings",
-    jobs: "/jobs",
-    analytics: "/analytics",
-    achievements: "/achievements",
-    "create-event": "/events/create",
-  }
-
-  const isDark = useMemo(
-    () => theme === "dark" || (theme === "system" && systemTheme === "dark"),
-    [systemTheme, theme]
-  )
+  const [searchQuery, setSearchQuery] = useState("")
+  const [activeTab, setActiveTab] = useState("upcoming")
+  const [showCreateEvent, setShowCreateEvent] = useState(false)
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
   }
 
-  const [showCreateForm, setShowCreateForm] = useState(false)
-  const [mounted, setMounted] = useState(false)
-  const [currentView, setCurrentView] = useState<'all' | 'participated'>('all');
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const filteredEvents = useMemo(() => {
-    if (currentView === 'participated') {
-      return eventsSeed.filter(event => event.participated);
-    }
-    return eventsSeed;
-  }, [currentView]);
-
-  if (!mounted) {
-    return null
-  }
+  const filteredEvents = eventsSeed.filter(event =>
+    event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    event.location.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
+    <div className="min-h-screen bg-background">
       <AppShell currentPage="events" navigateTo={navigateTo}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
-          <div className="flex items-center justify-between mb-6 md:mb-8 gap-4">
+
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground mb-2">Events</h1>
+              <p className="text-muted-foreground">Discover and join professional events</p>
+            </div>
             <button
-              onClick={() => setShowCreateForm(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:opacity-90 transition-all text-sm md:text-base"
+              onClick={() => setShowCreateEvent(true)}
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-6 py-3 rounded-xl hover:opacity-90 transition-all font-medium shadow-lg shadow-purple-500/20"
             >
               <Plus className="w-5 h-5" />
               Create Event
             </button>
           </div>
 
-          <div className="mb-6 md:mb-8">
-            <div className="relative">
-              <Search
-                className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-              />
+          {/* Search and Filter */}
+          <div className="flex flex-col md:flex-row gap-4 mb-8">
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search events..."
-                className={`w-full ${
-                  isDark
-                    ? "bg-[#242b3d] border-[#2d3548] text-white placeholder-gray-400"
-                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                } border rounded-xl pl-12 pr-4 py-3 md:py-4 focus:outline-none focus:border-[#5B7CFF] transition-colors`}
+                placeholder="Search events by title, location..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 rounded-xl border focus:outline-none focus:border-primary bg-card border-border text-foreground placeholder-muted-foreground"
               />
             </div>
+            <button className="flex items-center gap-2 px-6 py-3 rounded-xl border font-medium hover:bg-muted transition-colors bg-card border-border text-foreground">
+              <Filter className="w-5 h-5" />
+              Filters
+            </button>
           </div>
 
-          <div className={`mb-6 md:mb-8 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-            <div className="flex space-x-4">
+          {/* Tabs */}
+          <div className="flex gap-8 border-b border-border mb-8 overflow-x-auto">
+            {["upcoming", "popular", "online", "local"].map((tab) => (
               <button
-                onClick={() => setCurrentView('all')}
-                className={`px-4 py-2 text-sm font-medium ${
-                  currentView === 'all'
-                    ? `border-b-2 border-[#5B7CFF] text-[#5B7CFF]`
-                    : `${isDark ? 'text-gray-400' : 'text-gray-500'} hover:text-[#5B7CFF]`
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`pb-4 text-sm font-medium capitalize transition-all relative whitespace-nowrap ${
+                  activeTab === tab
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                All Events
+                {tab}
+                {activeTab === tab && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
+                )}
               </button>
-              <button
-                onClick={() => setCurrentView('participated')}
-                className={`px-4 py-2 text-sm font-medium ${
-                  currentView === 'participated'
-                    ? `border-b-2 border-[#5B7CFF] text-[#5B7CFF]`
-                    : `${isDark ? 'text-gray-400' : 'text-gray-500'} hover:text-[#5B7CFF]`
-                }`}
-              >
-                Participated Events
-              </button>
-            </div>
+            ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {filteredEvents.map((event) => <EventCardItem key={event.id} event={event} isDark={isDark} />)}
-            {filteredEvents.length === 0 && (
-              <div className={`text-center py-12 ${isDark ? 'text-gray-400' : 'text-gray-600'} md:col-span-2`}>
-                <p>No events found.</p>
+          {/* Events Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredEvents.map((event) => (
+              <div
+                key={event.id}
+                onClick={() => router.push(`/events/${event.id}`)}
+                className="rounded-2xl overflow-hidden border group cursor-pointer hover:-translate-y-1 transition-all duration-300 bg-card border-border hover:border-primary/50 hover:shadow-lg"
+              >
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={event.image}
+                    alt={event.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg text-xs font-bold text-black shadow-sm">
+                    ${event.price}
+                  </div>
+                  <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-medium text-white border border-white/20">
+                    {event.category}
+                  </div>
+                </div>
+
+                <div className="p-5">
+                  <div className="flex gap-3 mb-3">
+                    <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                      <span className="text-xs font-bold uppercase">{event.date.split(' ')[0]}</span>
+                      <span className="text-lg font-bold">{event.date.split(' ')[1].replace(',', '')}</span>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg leading-tight mb-1 line-clamp-1 group-hover:text-primary transition-colors text-foreground">
+                        {event.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground line-clamp-1">
+                        {event.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      {event.location}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Users className="w-4 h-4 text-primary" />
+                      {event.attendees} attendees
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-border flex items-center justify-between">
+                    <div className="flex -space-x-2">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="w-8 h-8 rounded-full border-2 border-card bg-muted" />
+                      ))}
+                      <div className="w-8 h-8 rounded-full border-2 border-card bg-muted flex items-center justify-center text-[10px] font-medium text-muted-foreground">
+                        +{parseInt(event.attendees) - 3}
+                      </div>
+                    </div>
+                    <button className="text-sm font-semibold text-primary hover:underline">
+                      View Details
+                    </button>
+                  </div>
+                </div>
               </div>
-            )}
+            ))}
           </div>
         </div>
       </AppShell>
 
-      {showCreateForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className={`${isDark ? "bg-[#242b3d]" : "bg-white"} rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto`}>
-            <div
-              className={`sticky top-0 ${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} border-b px-6 py-4 flex items-center justify-between`}
-            >
-              <h2 className={isDark ? "text-white" : "text-gray-900"}>Create New Event</h2>
-              <button
-                onClick={() => setShowCreateForm(false)}
-                className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-[#171c28] text-gray-400" : "hover:bg-gray-100 text-gray-600"}`}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6">
-              <CreateEventForm isDark={isDark} onCancel={() => setShowCreateForm(false)} onCreated={() => setShowCreateForm(false)} />
-            </div>
+      {/* Create Event Modal */}
+      {showCreateEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-card border border-border shadow-2xl">
+            <CreateEventForm onClose={() => setShowCreateEvent(false)} />
           </div>
         </div>
       )}
     </div>
   )
 }
-

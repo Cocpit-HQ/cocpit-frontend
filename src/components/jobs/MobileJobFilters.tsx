@@ -2,10 +2,9 @@
 
 import { X, Check } from "lucide-react"
 
-const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Remote", "Internship"]
+const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Freelance", "Remote"]
 
 interface MobileJobFiltersProps {
-  isDark: boolean
   showMobileFilters: boolean
   setShowMobileFilters: (show: boolean) => void
   filterJobTypes: string[]
@@ -13,33 +12,23 @@ interface MobileJobFiltersProps {
 }
 
 export function MobileJobFilters({
-  isDark,
   showMobileFilters,
   setShowMobileFilters,
   filterJobTypes,
-  toggleJobType
+  toggleJobType,
 }: MobileJobFiltersProps) {
   if (!showMobileFilters) {
     return null
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm md:hidden">
-      <div
-        className={`w-full max-w-md rounded-t-2xl p-4 pb-6 ${
-          isDark ? "bg-[#242b3d]" : "bg-white"
-        }`}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className={isDark ? "text-white" : "text-gray-900"}>Filters</h2>
+    <div className="fixed inset-0 z-50 flex flex-col bg-background md:hidden">
+      <div className="flex-1 p-4 overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-foreground">Filters</h2>
           <button
-            type="button"
             onClick={() => setShowMobileFilters(false)}
-            className={`rounded-full p-2 ${
-              isDark
-                ? "text-gray-400 hover:bg-[#171c28]"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
+            className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground"
           >
             <X className="h-5 w-5" />
           </button>
@@ -50,9 +39,7 @@ export function MobileJobFilters({
           {/* Job Type Multi-select (Matched Desktop Logic) */}
           <div>
             <label
-              className={`mb-2 block text-sm font-medium ${
-                isDark ? "text-gray-400" : "text-gray-600"
-              }`}
+              className="mb-2 block text-sm font-medium text-muted-foreground"
             >
               Job Type
             </label>
@@ -62,15 +49,15 @@ export function MobileJobFilters({
                   return (
                     <label key={type} className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
                       isSelected
-                       ? "border-[#5B7CFF] bg-[#5B7CFF]/5"
-                       : isDark ? "border-[#2d3548] bg-[#171c28]" : "border-gray-200 bg-gray-50"
+                       ? "border-primary bg-primary/5"
+                       : "border-border bg-muted/20"
                     }`}>
                       <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${
                         isSelected
-                         ? "bg-[#5B7CFF] border-[#5B7CFF]"
-                         : isDark ? "border-[#2d3548] bg-[#242b3d]" : "border-gray-300 bg-white"
+                         ? "bg-primary border-primary"
+                         : "border-muted-foreground bg-card"
                       }`}>
-                        {isSelected && <Check className="w-3 h-3 text-white" />}
+                        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
                       </div>
                       <input
                         type="checkbox"
@@ -78,7 +65,7 @@ export function MobileJobFilters({
                         checked={isSelected}
                         onChange={() => toggleJobType(type)}
                       />
-                      <span className={`text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}>{type}</span>
+                      <span className="text-xs text-foreground">{type}</span>
                     </label>
                   )
                })}
@@ -87,18 +74,12 @@ export function MobileJobFilters({
 
           <div>
             <label
-              className={`mb-2 block text-sm ${
-                isDark ? "text-gray-400" : "text-gray-600"
-              }`}
+              className="mb-2 block text-sm text-muted-foreground"
             >
               Experience Level
             </label>
             <select
-              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-[#5B7CFF] ${
-                isDark
-                  ? "bg-[#171c28] border-[#2d3548] text-white"
-                  : "bg-gray-50 border-gray-300 text-gray-900"
-              }`}
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-primary bg-muted/20 border-border text-foreground"
             >
               <option>All Levels</option>
               <option>Entry Level</option>
@@ -110,18 +91,12 @@ export function MobileJobFilters({
 
           <div>
             <label
-              className={`mb-2 block text-sm ${
-                isDark ? "text-gray-400" : "text-gray-600"
-              }`}
+              className="mb-2 block text-sm text-muted-foreground"
             >
               Salary Range
             </label>
             <select
-              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-[#5B7CFF] ${
-                isDark
-                  ? "bg-[#171c28] border-[#2d3548] text-white"
-                  : "bg-gray-50 border-gray-300 text-gray-900"
-              }`}
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-primary bg-muted/20 border-border text-foreground"
             >
               <option>Any</option>
               <option>$80k - $100k</option>
@@ -133,18 +108,12 @@ export function MobileJobFilters({
 
           <div>
             <label
-              className={`mb-2 block text-sm ${
-                isDark ? "text-gray-400" : "text-gray-600"
-              }`}
+              className="mb-2 block text-sm text-muted-foreground"
             >
               Date Posted
             </label>
             <select
-              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-[#5B7CFF] ${
-                isDark
-                  ? "bg-[#171c28] border-[#2d3548] text-white"
-                  : "bg-gray-50 border-gray-300 text-gray-900"
-              }`}
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-primary bg-muted/20 border-border text-foreground"
             >
               <option>Any Time</option>
               <option>Past 24 hours</option>
@@ -158,11 +127,7 @@ export function MobileJobFilters({
           <button
             type="button"
             onClick={() => setShowMobileFilters(false)}
-            className={`flex-1 rounded-lg border px-4 py-2 text-sm ${
-              isDark
-                ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28]"
-                : "border-gray-300 text-gray-700 hover:bg-gray-100"
-            }`}
+            className="flex-1 rounded-lg border px-4 py-2 text-sm border-border text-muted-foreground hover:bg-muted"
           >
             Cancel
           </button>

@@ -10,10 +10,10 @@ interface SkillModalProps {
   onClose: () => void
   initialSkills?: string[]
   onSave: (skills: string[]) => void
-  isDark?: boolean
+  isDark?: boolean // Optional
 }
 
-export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, isDark }: SkillModalProps) {
+export function SkillModal({ isOpen, onClose, initialSkills = [], onSave }: SkillModalProps) {
   const [skills, setSkills] = useState<string[]>(initialSkills)
 
   useEffect(() => {
@@ -30,27 +30,27 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, isDark
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className={`w-full max-w-md rounded-xl border shadow-lg ${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"}`}>
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-          <h2 className={`text-xl font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>Edit Skills</h2>
-          <button onClick={onClose} className={`p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+      <div className="w-full max-w-md rounded-xl border shadow-lg bg-card border-border">
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <h2 className="text-xl font-semibold text-foreground">Edit Skills</h2>
+          <button onClick={onClose} className="p-1 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-6 space-y-4">
-          <SkillTagInput initialTags={skills} onTagsChange={handleTagsChange} isDark={!!isDark} />
+          <SkillTagInput initialTags={skills} onTagsChange={handleTagsChange} />
         </div>
 
-        <div className="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
+        <div className="flex justify-end gap-3 p-6 border-t border-border">
           <Button
             variant="outline"
             onClick={onClose}
-            className={isDark ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28] bg-transparent" : "border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent"}
+            className="border-border text-muted-foreground hover:bg-muted bg-transparent"
           >
             Cancel
           </Button>
-          <Button onClick={() => onSave(skills)} className="bg-[#5B7CFF] hover:bg-[#4A6BEF] text-white border-0">
+          <Button onClick={() => onSave(skills)} className="bg-primary hover:bg-primary/90 text-primary-foreground border-0">
             Save Changes
           </Button>
         </div>

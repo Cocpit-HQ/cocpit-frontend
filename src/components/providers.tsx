@@ -9,7 +9,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="light">
+    <ThemeProvider attribute="data-theme" defaultTheme="navy" enableSystem={false} themes={['light', 'dark', 'navy']}>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>{children}</TooltipProvider>
       </QueryClientProvider>

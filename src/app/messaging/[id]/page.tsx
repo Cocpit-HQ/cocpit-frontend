@@ -3,8 +3,6 @@
 import { useParams, useRouter } from 'next/navigation'
 import type { Page } from "@/types/common"
 import { AppShell } from '@/components/layout/AppShell'
-import { useTheme } from 'next-themes'
-import { useMemo, useState } from 'react';
 import { useIsMobile } from "@/hooks/use-mobile"
 import ChatWindow from '@/components/messaging/ui/ChatWindow';
 import ChatList from '@/components/messaging/ui/ChatList';
@@ -25,8 +23,6 @@ const routes: Record<string, string> = {
 export default function ConversationPage() {
     const params = useParams();
     const router = useRouter()
-    const { resolvedTheme } = useTheme();
-    const isDark = useMemo(() => resolvedTheme === "dark", [resolvedTheme]);
     const isMobile = useIsMobile();
 
     const chatId = params.id;
@@ -39,7 +35,7 @@ export default function ConversationPage() {
     // If chat not found, redirect or show error
     if (!chat) {
          return (
-            <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
+            <div className="min-h-screen bg-background">
                 <AppShell currentPage="messaging" navigateTo={navigateTo}>
                     <div className="flex items-center justify-center h-full">
                         <p>Chat not found.</p>
@@ -52,11 +48,7 @@ export default function ConversationPage() {
     // On mobile, show full screen chat window
     if (isMobile) {
         return (
-             <div className={`h-dvh flex flex-col ${isDark ? "bg-[#171c28]" : "bg-white"}`}>
-                {/* We don't wrap in AppShell on mobile for the immersive chat experience,
-                    or we use a specialized layout. The user requested "opens a full-screen chat page".
-                    If we use AppShell, we get the bottom nav which might distract.
-                    Let's render ChatWindow directly for maximum space. */}
+             <div className="h-dvh flex flex-col bg-background">
                 <ChatWindow chat={chat} isMobile={true} />
             </div>
         )
@@ -64,13 +56,11 @@ export default function ConversationPage() {
 
     // On desktop, show the same split view as the main page, but with the specific chat selected
     return (
-        <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
+        <div className="min-h-screen bg-background">
             <AppShell currentPage="messaging" navigateTo={navigateTo}>
                 <div className="max-w-7xl mx-auto px-0 md:px-4 md:py-6 pb-20 md:pb-10 h-full">
                 <div
-                    className={`${
-                    isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"
-                    } md:rounded-lg md:border overflow-hidden h-full`}
+                    className="bg-card border border-border md:rounded-lg overflow-hidden h-full"
                 >
                     <div className="grid grid-cols-1 md:grid-cols-3 h-full">
                         <ChatList
