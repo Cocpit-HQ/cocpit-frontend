@@ -2,12 +2,14 @@
 
 import React, { useState } from "react"
 import { Calendar, MapPin, DollarSign, Image, X } from "lucide-react"
+import { useEvents } from "@/context/EventsContext"
 
 interface CreateEventFormProps {
   onClose: () => void
 }
 
 export function CreateEventForm({ onClose }: CreateEventFormProps) {
+  const { createEvent } = useEvents()
   const [formData, setFormData] = useState({
     title: "",
     date: "",
@@ -17,6 +19,29 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
     category: "Professional",
     description: ""
   })
+
+  const handleSubmit = () => {
+    // Basic validation
+    if (!formData.title || !formData.date) {
+        alert("Please fill in at least the title and date.");
+        return;
+    }
+
+    createEvent({
+        title: formData.title,
+        date: formData.date, // Note: Should probably format this better
+        time: formData.time || "10:00 AM",
+        location: formData.location || "Online",
+        price: formData.price ? parseFloat(formData.price) : 0,
+        category: formData.category,
+        description: formData.description,
+        attendees: "1", // Self
+        image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop", // Mock image
+        type: formData.price ? 'Premium' : 'Free'
+    });
+
+    onClose();
+  }
 
   return (
     <div className="bg-card">
@@ -161,7 +186,10 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
         >
           Cancel
         </button>
-        <button className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white font-medium hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/20">
+        <button
+          onClick={handleSubmit}
+          className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white font-medium hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/20"
+        >
           Create Event
         </button>
       </div>

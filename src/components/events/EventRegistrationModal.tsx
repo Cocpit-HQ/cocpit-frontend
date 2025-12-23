@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { EventCard } from '@/types/events';
+import { useEvents } from '@/context/EventsContext';
 
 interface EventRegistrationModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export const EventRegistrationModal = ({
   onClose,
   event,
 }: EventRegistrationModalProps) => {
+  const { registerForEvent } = useEvents();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
@@ -46,6 +48,9 @@ export const EventRegistrationModal = ({
     // Mock registration
     setTimeout(() => {
       setIsRegistered(true);
+      if (event) {
+        registerForEvent(event.id);
+      }
     }, 1000);
   };
 
@@ -178,9 +183,14 @@ export const EventRegistrationModal = ({
         </div>
         <DialogFooter>
           {isRegistered ? (
-            <Button type="button" onClick={handleCloseAndRedirect}>
-              Close
-            </Button>
+            <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => alert("Mock Ticket Download")}>
+                    Download Ticket
+                </Button>
+                <Button type="button" onClick={handleCloseAndRedirect}>
+                    Close
+                </Button>
+            </div>
           ) : (
             <>
               <Button type="button" variant="secondary" onClick={onClose}>
