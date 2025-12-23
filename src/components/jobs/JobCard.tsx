@@ -139,10 +139,10 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
         <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-border">
           <div className="flex flex-col gap-1">
              {job.recruiterInsight && (
-               <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+               <div className="text-xs text-muted-foreground flex items-center gap-1.5">
                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                  {job.recruiterInsight}
-               </p>
+               </div>
              )}
              <p className="text-xs text-muted-foreground">
                {job.applicants} applicants applied
