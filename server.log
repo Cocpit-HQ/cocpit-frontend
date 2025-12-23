@@ -7,17 +7,11 @@
    - Network:       http://192.168.0.2:3000
 
  ✓ Starting...
- ✓ Ready in 1058ms
+ ✓ Ready in 1090ms
  ○ Compiling / ...
- GET / 200 in 6.3s (compile: 5.9s, render: 438ms)
- GET / 200 in 91ms (compile: 5ms, render: 86ms)
- GET /feed 200 in 2.7s (compile: 2.7s, render: 35ms)
- GET /events 200 in 1169ms (compile: 1004ms, render: 164ms)
- GET / 200 in 101ms (compile: 4ms, render: 97ms)
- GET /feed 200 in 24ms (compile: 3ms, render: 21ms)
- GET /events 200 in 87ms (compile: 4ms, render: 83ms)
- GET /events/6 200 in 1667ms (compile: 1636ms, render: 31ms)
- GET / 200 in 106ms (compile: 6ms, render: 100ms)
- GET /feed 200 in 28ms (compile: 4ms, render: 23ms)
- GET /events 200 in 99ms (compile: 7ms, render: 93ms)
- GET /events/6 200 in 45ms (compile: 22ms, render: 23ms)
+ GET / 200 in 6.8s (compile: 6.4s, render: 476ms)
+ GET /feed 200 in 3.1s (compile: 3.0s, render: 66ms)
+ GET /events 200 in 1767ms (compile: 1626ms, render: 141ms)
+ GET / 200 in 67ms (compile: 4ms, render: 63ms)
+ GET /feed 200 in 24ms (compile: 4ms, render: 20ms)
+ GET /events 200 in 90ms (compile: 3ms, render: 87ms)
