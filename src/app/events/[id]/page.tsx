@@ -4,7 +4,7 @@ import {
   EventRegistrationModal,
 } from '@/components/events/EventRegistrationModal';
 import { useParams, useRouter } from 'next/navigation';
-import { eventsSeed } from '@/lib/data/events';
+import { useEvents } from '@/context/EventsContext';
 import {
   Calendar,
   MapPin,
@@ -13,6 +13,7 @@ import {
   Phone,
   User,
   ChevronLeft,
+  Bookmark,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -21,7 +22,10 @@ const EventDetailPage = () => {
   const router = useRouter();
   const { id } = params;
   const eventId = parseInt(id as string, 10);
-  const event = eventsSeed.find((e) => e.id === eventId);
+
+  const { events, isRegistered, isSaved, saveEvent, unsaveEvent, cancelRegistration } = useEvents();
+  const event = events.find((e) => e.id === eventId);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Removed useTheme logic
@@ -30,10 +34,13 @@ const EventDetailPage = () => {
     return <div>Event not found</div>;
   }
 
+  const registered = isRegistered(event.id);
+  const saved = isSaved(event.id);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <button
             onClick={() => router.back()}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -41,7 +48,20 @@ const EventDetailPage = () => {
             <ChevronLeft className="w-5 h-5" />
             <span>Back</span>
           </button>
+
+          <button
+            onClick={() => saved ? unsaveEvent(event.id) : saveEvent(event.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+              saved
+                ? 'bg-primary/10 border-primary/20 text-primary'
+                : 'bg-card border-border hover:bg-muted text-muted-foreground'
+            }`}
+          >
+            <Bookmark className={`w-5 h-5 ${saved ? 'fill-current' : ''}`} />
+            {saved ? 'Saved' : 'Save Event'}
+          </button>
         </div>
+
         <div className="relative h-96 rounded-2xl overflow-hidden mb-8">
           <img
             src={event.image}
@@ -49,8 +69,15 @@ const EventDetailPage = () => {
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-          <div className="absolute bottom-0 left-0 p-8">
-            <h1 className="text-4xl font-bold text-white">{event.title}</h1>
+          <div className="absolute bottom-0 left-0 p-8 w-full">
+            <div className="flex items-end justify-between">
+              <h1 className="text-4xl font-bold text-white max-w-2xl">{event.title}</h1>
+              {registered && (
+                <div className="bg-green-500 text-white px-4 py-2 rounded-xl font-bold shadow-lg">
+                  Registered
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -123,13 +150,33 @@ const EventDetailPage = () => {
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="w-full bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white font-bold px-6 py-4 rounded-xl hover:opacity-90 transition-all text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={event.participated}
-            >
-              {event.participated ? 'Already Registered' : 'Register for this event'}
-            </button>
+            {registered ? (
+              <div className="space-y-3">
+                <button
+                  onClick={() => alert('Mock Ticket Download')} // Implement mock download
+                  className="w-full bg-green-600 text-white font-bold px-6 py-4 rounded-xl hover:bg-green-700 transition-all text-lg shadow-lg"
+                >
+                  Download Ticket
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm('Are you sure you want to cancel your registration?')) {
+                      cancelRegistration(event.id);
+                    }
+                  }}
+                  className="w-full bg-card border border-red-200 text-red-500 font-bold px-6 py-3 rounded-xl hover:bg-red-50 transition-all"
+                >
+                  Cancel Registration
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="w-full bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white font-bold px-6 py-4 rounded-xl hover:opacity-90 transition-all text-lg shadow-lg shadow-purple-500/20"
+              >
+                Register for this event
+              </button>
+            )}
           </div>
         </div>
       </div>
