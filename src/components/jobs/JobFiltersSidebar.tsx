@@ -1,134 +1,232 @@
 "use client"
 
-import { X, Check } from "lucide-react"
+import { Check, ChevronDown, ChevronUp } from "lucide-react"
+import { useJobs } from "@/context/JobsContext"
+import { useState } from "react"
+import { cn } from "@/lib/utils"
 
 const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Freelance", "Remote"]
-const EXPERIENCE_LEVELS = ["Entry Level", "Mid Level", "Senior Level", "Lead / Manager"]
+const WORK_MODES = ["Remote", "Hybrid", "Onsite"]
+const COMPANY_TYPES = ["Startup", "MNC", "Product-based", "Service-based"]
+const INDUSTRIES = ["Technology", "Finance", "Healthcare", "Education", "Retail"]
+const EXPERIENCE_LEVELS = ["All Levels", "Entry Level", "Mid Level", "Senior Level", "Lead / Manager"]
+const SALARY_RANGES = ["Any", "$0 - $50k", "$50k - $100k", "$100k - $150k", "$150k+"]
+const DATE_POSTED_OPTIONS = ["Any Time", "Past 24 hours", "Past week", "Past month"]
 
-interface JobFiltersSidebarProps {
-  filterJobTypes: string[]
-  toggleJobType: (type: string) => void
-  filterLocations: string[]
-  filterLocationInput: string
-  setFilterLocationInput: (input: string) => void
-  handleAddFilterLocation: (e: React.KeyboardEvent<HTMLInputElement>) => void
-  handleRemoveFilterLocation: (loc: string) => void
+interface FilterSectionProps {
+  title: string
+  children: React.ReactNode
+  isOpen?: boolean
 }
 
-export function JobFiltersSidebar({
-  filterJobTypes,
-  toggleJobType,
-  filterLocations,
-  filterLocationInput,
-  setFilterLocationInput,
-  handleAddFilterLocation,
-  handleRemoveFilterLocation,
-}: JobFiltersSidebarProps) {
+function FilterSection({ title, children, isOpen = true }: FilterSectionProps) {
+  const [open, setOpen] = useState(isOpen)
+  return (
+    <div className="border-b border-border py-4 last:border-0">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full text-sm font-medium mb-2 hover:opacity-80 transition-opacity"
+      >
+        {title}
+        {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+      </button>
+      {open && <div className="space-y-2 mt-2">{children}</div>}
+    </div>
+  )
+}
+
+export function JobFiltersSidebar() {
+  const { filters, updateFilters } = useJobs()
+  const [locationInput, setLocationInput] = useState("")
+
+  const toggleArrayFilter = (key: keyof typeof filters, value: string) => {
+    const current = filters[key] as string[];
+    const updated = current.includes(value)
+      ? current.filter(item => item !== value)
+      : [...current, value];
+    updateFilters({ [key]: updated });
+  }
+
+  const handleAddLocation = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && locationInput.trim()) {
+      e.preventDefault()
+      if (!filters.locations.includes(locationInput.trim())) {
+        updateFilters({ locations: [...filters.locations, locationInput.trim()] })
+      }
+      setLocationInput("")
+    }
+  }
+
+  const removeLocation = (loc: string) => {
+    updateFilters({ locations: filters.locations.filter(l => l !== loc) })
+  }
+
   return (
     <div className="hidden lg:block lg:col-span-1 space-y-6">
       <div className="bg-card border border-border rounded-xl p-6">
-        <h3 className="font-semibold mb-4 text-foreground">Filters</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-foreground">Filters</h3>
+          <button
+            onClick={() => updateFilters({
+              jobType: [],
+              workMode: [],
+              companyType: [],
+              industry: [],
+              locations: [],
+              experience: "All Levels",
+              salaryRange: "Any",
+              datePosted: "Any Time",
+              easyApply: false,
+              activelyHiring: false
+            })}
+            className="text-xs text-primary hover:underline"
+          >
+            Clear all
+          </button>
+        </div>
 
-        <div className="space-y-6">
-          {/* Job Type */}
-          <div>
-            <label className="block text-sm font-medium mb-3 text-muted-foreground">
-              Job Type
-            </label>
-            <div className="space-y-2">
-               {JOB_TYPES.map((type) => {
-                  const isSelected = filterJobTypes.includes(type)
-                  return (
-                    <label key={type} className="flex items-center gap-3 cursor-pointer group">
-                     <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
-                       isSelected
-                        ? "bg-primary border-primary"
-                        : "border-muted-foreground/50 group-hover:border-primary"
-                     }`}>
-                       {isSelected && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
-                     </div>
-                     <input
-                       type="checkbox"
-                       className="hidden"
-                       checked={isSelected}
-                       onChange={() => toggleJobType(type)}
-                     />
-                     <span className="text-sm text-foreground group-hover:text-primary transition-colors">{type}</span>
-                   </label>
-                 )
-              })}
-            </div>
+        <div className="">
+          {/* Toggles */}
+          <div className="space-y-3 pb-4 border-b border-border">
+             <label className="flex items-center justify-between cursor-pointer">
+               <span className="text-sm">Easy Apply</span>
+               <div className={cn("w-10 h-6 rounded-full p-1 transition-colors", filters.easyApply ? "bg-primary" : "bg-muted")}>
+                 <div className={cn("w-4 h-4 bg-white rounded-full transition-transform", filters.easyApply ? "translate-x-4" : "")} />
+               </div>
+               <input type="checkbox" className="hidden" checked={filters.easyApply} onChange={(e) => updateFilters({ easyApply: e.target.checked })} />
+             </label>
+             <label className="flex items-center justify-between cursor-pointer">
+               <span className="text-sm">Actively Hiring</span>
+               <div className={cn("w-10 h-6 rounded-full p-1 transition-colors", filters.activelyHiring ? "bg-primary" : "bg-muted")}>
+                 <div className={cn("w-4 h-4 bg-white rounded-full transition-transform", filters.activelyHiring ? "translate-x-4" : "")} />
+               </div>
+               <input type="checkbox" className="hidden" checked={filters.activelyHiring} onChange={(e) => updateFilters({ activelyHiring: e.target.checked })} />
+             </label>
           </div>
 
-          {/* Location - Tag Input */}
-          <div>
-            <label className="block text-sm font-medium mb-3 text-muted-foreground">
-              Location
-            </label>
-            <div className="flex flex-wrap gap-2 p-2 border rounded-lg min-h-[42px] bg-muted/30 border-border">
-               {filterLocations.map((loc, idx) => (
-                  <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-primary/10 text-primary">
+          <FilterSection title="Experience Level">
+            {EXPERIENCE_LEVELS.map((level) => (
+              <label key={level} className="flex items-center gap-3 cursor-pointer group">
+                <div className={cn(
+                  "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
+                  filters.experience === level ? "border-primary" : "border-muted-foreground/50 group-hover:border-primary"
+                )}>
+                  {filters.experience === level && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                </div>
+                <input type="radio" className="hidden" checked={filters.experience === level} onChange={() => updateFilters({ experience: level })} />
+                <span className="text-sm text-foreground group-hover:text-primary transition-colors">{level}</span>
+              </label>
+            ))}
+          </FilterSection>
+
+          <FilterSection title="Salary Range">
+            {SALARY_RANGES.map((range) => (
+              <label key={range} className="flex items-center gap-3 cursor-pointer group">
+                <div className={cn(
+                  "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
+                  filters.salaryRange === range ? "border-primary" : "border-muted-foreground/50 group-hover:border-primary"
+                )}>
+                  {filters.salaryRange === range && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                </div>
+                <input type="radio" className="hidden" checked={filters.salaryRange === range} onChange={() => updateFilters({ salaryRange: range })} />
+                <span className="text-sm text-foreground group-hover:text-primary transition-colors">{range}</span>
+              </label>
+            ))}
+          </FilterSection>
+
+          <FilterSection title="Date Posted">
+            {DATE_POSTED_OPTIONS.map((option) => (
+              <label key={option} className="flex items-center gap-3 cursor-pointer group">
+                <div className={cn(
+                  "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
+                  filters.datePosted === option ? "border-primary" : "border-muted-foreground/50 group-hover:border-primary"
+                )}>
+                  {filters.datePosted === option && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                </div>
+                <input type="radio" className="hidden" checked={filters.datePosted === option} onChange={() => updateFilters({ datePosted: option })} />
+                <span className="text-sm text-foreground group-hover:text-primary transition-colors">{option}</span>
+              </label>
+            ))}
+          </FilterSection>
+
+          <FilterSection title="Job Type">
+            {JOB_TYPES.map((type) => (
+              <label key={type} className="flex items-center gap-3 cursor-pointer group">
+                <div className={cn(
+                  "w-5 h-5 rounded border flex items-center justify-center transition-all",
+                  filters.jobType.includes(type) ? "bg-primary border-primary" : "border-muted-foreground/50 group-hover:border-primary"
+                )}>
+                  {filters.jobType.includes(type) && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
+                </div>
+                <input type="checkbox" className="hidden" checked={filters.jobType.includes(type)} onChange={() => toggleArrayFilter('jobType', type)} />
+                <span className="text-sm text-foreground group-hover:text-primary transition-colors">{type}</span>
+              </label>
+            ))}
+          </FilterSection>
+
+          <FilterSection title="Work Mode">
+            {WORK_MODES.map((mode) => (
+              <label key={mode} className="flex items-center gap-3 cursor-pointer group">
+                <div className={cn(
+                  "w-5 h-5 rounded border flex items-center justify-center transition-all",
+                  filters.workMode.includes(mode) ? "bg-primary border-primary" : "border-muted-foreground/50 group-hover:border-primary"
+                )}>
+                  {filters.workMode.includes(mode) && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
+                </div>
+                <input type="checkbox" className="hidden" checked={filters.workMode.includes(mode)} onChange={() => toggleArrayFilter('workMode', mode)} />
+                <span className="text-sm text-foreground group-hover:text-primary transition-colors">{mode}</span>
+              </label>
+            ))}
+          </FilterSection>
+
+          <FilterSection title="Location">
+             <div className="flex flex-wrap gap-2 p-2 border rounded-lg min-h-[42px] bg-muted/30 border-border mb-2">
+               {filters.locations.map((loc) => (
+                  <span key={loc} className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-primary/10 text-primary">
                     {loc}
-                    <button onClick={() => handleRemoveFilterLocation(loc)} className="hover:opacity-70">
-                      <X className="w-3 h-3" />
-                    </button>
+                    <button onClick={() => removeLocation(loc)} className="hover:opacity-70"><Check className="w-3 h-3 rotate-45" /></button>
                   </span>
                ))}
                <input
                   type="text"
-                  value={filterLocationInput}
-                  onChange={(e) => setFilterLocationInput(e.target.value)}
-                  onKeyDown={handleAddFilterLocation}
-                  placeholder={filterLocations.length === 0 ? "Type city..." : "Add..."}
+                  value={locationInput}
+                  onChange={(e) => setLocationInput(e.target.value)}
+                  onKeyDown={handleAddLocation}
+                  placeholder="Add city..."
                   className="flex-1 bg-transparent text-sm focus:outline-none min-w-[60px] text-foreground placeholder-muted-foreground"
                />
             </div>
-            <p className="text-[10px] mt-1 text-muted-foreground">Press Enter to add location</p>
-          </div>
+          </FilterSection>
 
-          {/* Experience Level */}
-          <div>
-            <label className="block text-sm font-medium mb-2 text-muted-foreground">
-              Experience Level
-            </label>
-            <select
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-primary transition-colors bg-muted/30 border-border text-foreground"
-            >
-              <option>All Levels</option>
-              {EXPERIENCE_LEVELS.map(level => (
-                <option key={level}>{level}</option>
-              ))}
-            </select>
-          </div>
+          <FilterSection title="Company Type">
+            {COMPANY_TYPES.map((type) => (
+              <label key={type} className="flex items-center gap-3 cursor-pointer group">
+                <div className={cn(
+                  "w-5 h-5 rounded border flex items-center justify-center transition-all",
+                  filters.companyType.includes(type) ? "bg-primary border-primary" : "border-muted-foreground/50 group-hover:border-primary"
+                )}>
+                  {filters.companyType.includes(type) && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
+                </div>
+                <input type="checkbox" className="hidden" checked={filters.companyType.includes(type)} onChange={() => toggleArrayFilter('companyType', type)} />
+                <span className="text-sm text-foreground group-hover:text-primary transition-colors">{type}</span>
+              </label>
+            ))}
+          </FilterSection>
 
-          <div>
-            <label className="block text-sm font-medium mb-2 text-muted-foreground">Salary Range</label>
-            <select
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-primary transition-colors bg-muted/30 border-border text-foreground"
-            >
-              <option>Any</option>
-              <option>$80k - $100k</option>
-              <option>$100k - $130k</option>
-              <option>$130k - $160k</option>
-              <option>$160k+</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-muted-foreground">Date Posted</label>
-            <select
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-primary transition-colors bg-muted/30 border-border text-foreground"
-            >
-              <option>Any Time</option>
-              <option>Past 24 hours</option>
-              <option>Past week</option>
-              <option>Past month</option>
-            </select>
-          </div>
-
-          <button className="w-full px-4 py-2 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white rounded-lg hover:opacity-90 transition-all">
-            Apply Filters
-          </button>
+          <FilterSection title="Industry">
+            {INDUSTRIES.map((ind) => (
+              <label key={ind} className="flex items-center gap-3 cursor-pointer group">
+                <div className={cn(
+                  "w-5 h-5 rounded border flex items-center justify-center transition-all",
+                  filters.industry.includes(ind) ? "bg-primary border-primary" : "border-muted-foreground/50 group-hover:border-primary"
+                )}>
+                  {filters.industry.includes(ind) && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
+                </div>
+                <input type="checkbox" className="hidden" checked={filters.industry.includes(ind)} onChange={() => toggleArrayFilter('industry', ind)} />
+                <span className="text-sm text-foreground group-hover:text-primary transition-colors">{ind}</span>
+              </label>
+            ))}
+          </FilterSection>
         </div>
       </div>
     </div>
