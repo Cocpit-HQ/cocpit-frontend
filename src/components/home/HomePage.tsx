@@ -121,7 +121,7 @@ export default function HomePage() {
             </div>
 
             {/* --- Mobile Header (Hidden from md screens up) --- */}
-            <div className="md:hidden relative flex items-center">
+            <div className="md:hidden flex items-center gap-2">
               {/* Mobile Search Bar */}
               <div className="flex-1 flex items-center gap-3">
                 <Search className="w-5 h-5 text-muted-foreground" />
@@ -132,20 +132,22 @@ export default function HomePage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => setIsSearchFocused(false)}
-                  className="w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:border-primary pr-20 bg-card text-foreground placeholder-muted-foreground border-border"
+                  className="w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:border-primary bg-card text-foreground placeholder-muted-foreground border-border"
                 />
               </div>
 
-              {/* Mobile Icons (Absolutely Positioned) */}
-              <div className="absolute top-1/2 right-0 -translate-y-1/2 flex items-center gap-1">
-                <NotificationPopover />
-                <Link
-                  href="/messaging"
-                  className="p-2 rounded-full transition-colors text-muted-foreground"
-                >
-                  <MessageCircle className="w-6 h-6" />
-                </Link>
-              </div>
+              {/* Mobile Icons */}
+              {!isSearchFocused && (
+                <div className="flex items-center gap-1">
+                  <NotificationPopover />
+                  <Link
+                    href="/messaging"
+                    className="p-2 rounded-full transition-colors text-muted-foreground"
+                  >
+                    <MessageCircle className="w-6 h-6" />
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </header>
