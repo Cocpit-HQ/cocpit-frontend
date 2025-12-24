@@ -13,9 +13,10 @@ import { ProfileIdentity } from "@/types/profile";
 
 interface ProfileIdentityChipsProps {
   initialIdentity: ProfileIdentity;
+  readOnly?: boolean;
 }
 
-export function ProfileIdentityChips({ initialIdentity }: ProfileIdentityChipsProps) {
+export function ProfileIdentityChips({ initialIdentity, readOnly = false }: ProfileIdentityChipsProps) {
   const [identity, setIdentity] = useState<ProfileIdentity>(initialIdentity);
   const [isEditing, setIsEditing] = useState(false);
   const [tempIdentity, setTempIdentity] = useState<ProfileIdentity>(initialIdentity);
@@ -47,13 +48,15 @@ export function ProfileIdentityChips({ initialIdentity }: ProfileIdentityChipsPr
         </div>
       </div>
 
-      <button
-        onClick={() => setIsEditing(true)}
-        className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
-        aria-label="Edit professional identity"
-      >
-        <Edit2 className="w-4 h-4" />
-      </button>
+      {!readOnly && (
+        <button
+          onClick={() => setIsEditing(true)}
+          className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
+          aria-label="Edit professional identity"
+        >
+          <Edit2 className="w-4 h-4" />
+        </button>
+      )}
 
       <Dialog open={isEditing} onOpenChange={(open) => !open && handleCancel()}>
         <DialogContent className="sm:max-w-md bg-card border-border">
