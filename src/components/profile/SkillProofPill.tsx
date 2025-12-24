@@ -16,9 +16,10 @@ interface SkillProofPillProps {
   experiences: ExtendedExperience[];
   posts: Post[];
   onDelete?: (skill: string) => void;
+  readOnly?: boolean;
 }
 
-export function SkillProofPill({ skill, experiences, posts, onDelete }: SkillProofPillProps) {
+export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly = false }: SkillProofPillProps) {
   // Logic: Check if skill is used in experience (mocked via skills array in experience)
   const usedInExperience = experiences.filter((exp) =>
     exp.skills && exp.skills.includes(skill)
