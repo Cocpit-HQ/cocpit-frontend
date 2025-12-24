@@ -36,6 +36,32 @@ const initialMockPosts: Post[] = [
       { id: 1, author: { name: 'David Lee', avatar: '/assets/pngegg.png' }, text: 'Congratulations to the whole team!', timeAgo: '4h', likes: 22 },
     ]
   },
+  {
+    id: 3,
+    author: 'Sally Liang',
+    title: 'Senior Financial Analyst at Johnson & Johnson',
+    timeAgo: '1d',
+    content:
+      'Just finished a deep dive into data analysis trends for 2024. The shift towards AI-driven forecasting is fascinating! #DataAnalysis #FinTech',
+    imageSrc: undefined,
+    likes: '1.2k',
+    comments: '15',
+    shares: '8',
+    commentData: []
+  },
+  {
+    id: 4,
+    author: 'Sally Liang',
+    title: 'Senior Financial Analyst at Johnson & Johnson',
+    timeAgo: '3d',
+    content:
+      'Great session on Product Strategy today. Always learning! 📚',
+    imageSrc: undefined,
+    likes: '850',
+    comments: '12',
+    shares: '3',
+    commentData: []
+  },
 ];
 
 interface FeedContextType {

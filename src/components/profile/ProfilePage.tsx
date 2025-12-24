@@ -18,6 +18,14 @@ import AddExperienceForm from "@/components/profile/AddExperienceForm";
 import AddEducationForm from "@/components/profile/AddEducationForm";
 import { SkillModal } from "@/components/profile/SkillModal";
 import type { Experience, Education } from "@/types/entities"
+import { ProfileIdentityChips } from "@/components/profile/ProfileIdentityChips";
+import { ProfileInsights } from "@/components/profile/ProfileInsights";
+import { LivingResume } from "@/components/profile/LivingResume";
+import { SkillProofPill } from "@/components/profile/SkillProofPill";
+import { initialIdentity, initialInsights, initialExperiences, initialSkills } from "@/lib/data/profile";
+import { useFeed } from "@/context/FeedContext";
+import { ProfilePosts } from "@/components/profile/ProfilePosts";
+import { initialEducations } from "@/lib/data/profile";
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -90,61 +98,6 @@ function EducationItem({
   )
 }
 
-function SkillTag({ skill, onDelete }: { skill: string, onDelete: (skill: string) => void }) {
-  return (
-    <div className="group relative bg-primary/20 text-primary px-3 py-1.5 rounded-lg text-sm hover:bg-primary/30 transition-all">
-      {skill}
-      <button onClick={() => onDelete(skill)} className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-        <X className="w-3 h-3" />
-      </button>
-    </div>
-  )
-}
-
-const initialSkills = [
-  "Product Strategy",
-  "User Research",
-  "Data Analysis",
-  "Agile Development",
-  "A/B Testing",
-  "Product Roadmapping",
-  "Stakeholder Management",
-  "UX Design",
-  "SQL",
-  "Python",
-  "Figma",
-  "Jira",
-];
-
-const initialExperiences: Experience[] = [
-  {
-    id: 1,
-    title: "Senior Product Manager",
-    company: "TechCorp Inc.",
-    duration: "2021 - Present",
-    location: "San Francisco, CA",
-    description: "Leading product strategy and roadmap for core platform features. Managing cross-functional teams and driving product vision.",
-  },
-  {
-    id: 2,
-    title: "Product Manager",
-    company: "StartupXYZ",
-    duration: "2018 - 2021",
-    location: "San Francisco, CA",
-    description: "Launched 10+ features from concept to market. Collaborated with engineering and design teams to deliver user-centric solutions.",
-  },
-];
-
-const initialEducations: Education[] = [
-  {
-    id: 1,
-    school: "Stanford University",
-    degree: "MBA",
-    fieldOfStudy: "Business Administration",
-    duration: "2016 - 2018",
-    description: "Focus on Product Management and Entrepreneurship",
-  }
-];
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -158,6 +111,7 @@ export default function ProfilePage() {
   const [educations, setEducations] = useState<Education[]>(initialEducations);
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
+  const { posts } = useFeed();
 
   useEffect(() => {
     setMounted(true);
@@ -291,6 +245,8 @@ export default function ProfilePage() {
                     </div>
 
                     <p className="text-sm text-muted-foreground mb-4">500+ connections</p>
+
+                    <ProfileIdentityChips initialIdentity={initialIdentity} />
                   </div>
                 </div>
               </div>
@@ -313,6 +269,10 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
+
+              <ProfileInsights insights={initialInsights} />
+
+              <LivingResume experiences={initialExperiences} skills={initialSkills} />
 
               <div
                 className="rounded-xl border p-6 mb-4 bg-card border-border"
@@ -354,7 +314,13 @@ export default function ProfilePage() {
 
                 <div className="flex flex-wrap gap-2">
                   {skills.map((skill) => (
-                    <SkillTag key={skill} skill={skill} onDelete={handleDeleteSkill} />
+                    <SkillProofPill
+                        key={skill}
+                        skill={skill}
+                        experiences={initialExperiences}
+                        posts={posts.filter(p => p.author === "Sally Liang")}
+                        onDelete={handleDeleteSkill}
+                    />
                   ))}
                 </div>
               </div>
@@ -375,6 +341,8 @@ export default function ProfilePage() {
                   ))}
                 </div>
               </div>
+
+              <ProfilePosts authorName="Sally Liang" />
             </div>
 
             <div className="lg:col-span-4">
