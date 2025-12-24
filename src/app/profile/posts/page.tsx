@@ -75,7 +75,9 @@ export default function ProfilePostsPage() {
           <div className="space-y-4">
             {filteredPosts.length > 0 ? (
                 filteredPosts.map(post => (
-                    <FeedPost key={post.id} {...post} initialComments={post.commentData} />
+                    <div key={post.id} id={`post-${post.id}`}>
+                      <FeedPost {...post} initialComments={post.commentData} />
+                    </div>
                 ))
             ) : (
                 <div className="text-center py-12 bg-card rounded-xl border border-border">

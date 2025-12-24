@@ -26,8 +26,6 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
         return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500">In Progress</span>
       case "in-past":
         return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-500/10 text-gray-500">Closed</span>
-      case "saved":
-        return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-500">Saved</span>
       default:
         return null
     }
@@ -78,6 +76,9 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
                   {job.title}
                 </h3>
                 {job.status && activeTab === "my-jobs" && getStatusBadge(job.status)}
+                {job.isSaved && activeTab === "my-jobs" && (
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-500">Saved</span>
+                )}
                 {job.activelyHiring && (
                   <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/20">
                     Hiring
@@ -125,12 +126,12 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
               }}
               className={cn(
                 "p-2 rounded-full border transition-colors",
-                job.status === "saved"
+                job.isSaved
                   ? "bg-pink-500/10 border-pink-500/20 text-pink-500 hover:bg-pink-500/20"
                   : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
-              <Bookmark className={cn("w-5 h-5", job.status === "saved" && "fill-current")} />
+              <Bookmark className={cn("w-5 h-5", job.isSaved && "fill-current")} />
             </button>
           </div>
         </div>

@@ -1,6 +1,7 @@
 export type JobListMode = "view" | "my-jobs" | "offers";
 
-export type JobStatus = "in-progress" | "applied" | "in-past" | "saved";
+export type JobStatus = "in-progress" | "applied" | "in-past";
+export type MyJobsTab = JobStatus | "saved";
 
 export type WorkMode = "Remote" | "Hybrid" | "Onsite";
 export type CompanyType = "Startup" | "MNC" | "Product-based" | "Service-based";
@@ -23,6 +24,7 @@ export interface Job {
   logo: string;
   isOffer?: boolean;
   status?: JobStatus;
+  isSaved?: boolean;
 
   // New fields
   description?: string;
@@ -83,6 +85,6 @@ export interface JobsContextType {
   myJobs: Job[];
   activeTab: JobListMode;
   setActiveTab: (tab: JobListMode) => void;
-  myJobsTab: JobStatus;
-  setMyJobsTab: (tab: JobStatus) => void;
+  myJobsTab: MyJobsTab;
+  setMyJobsTab: (tab: MyJobsTab) => void;
 }

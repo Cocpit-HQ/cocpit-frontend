@@ -118,7 +118,7 @@ export const jobs: Job[] = [
     applicants: 0,
     salary: "$140k - $170k",
     logo: "gradient-4",
-    status: "saved",
+    isSaved: true,
   },
 ]
 

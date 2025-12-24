@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap, Settings, X, Trash2 } from "lucide-react"
+import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap, Settings, X, Trash2, Menu } from "lucide-react"
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import { AppShell } from "@/components/layout/AppShell"
@@ -14,6 +14,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import AddExperienceForm from "@/components/profile/AddExperienceForm";
 import AddEducationForm from "@/components/profile/AddEducationForm";
 import { SkillModal } from "@/components/profile/SkillModal";
@@ -24,8 +30,10 @@ import { LivingResume } from "@/components/profile/LivingResume";
 import { SkillProofPill } from "@/components/profile/SkillProofPill";
 import { initialIdentity, initialExperiences, initialSkills } from "@/lib/data/profile";
 import { useFeed } from "@/context/FeedContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { initialEducations } from "@/lib/data/profile";
 import FeedPost from "@/components/home/FeedPost";
+import PostCard from "./PostCard";
 import Link from "next/link";
 
 const routes: Record<string, string> = {
@@ -113,6 +121,7 @@ export default function ProfilePage() {
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
   const { posts } = useFeed();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     setMounted(true);
@@ -190,19 +199,30 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-background">
       <AppShell currentPage="profile" navigateTo={navigateTo}>
-        <div className="max-w-7xl mx-auto py-6 md:py-8 pb-20 md:pb-12">
+        <div className="max-w-7xl mx-auto pt-0 md:pt-8 pb-20 md:pb-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
             <div className="lg:col-span-8">
               <div
                 className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border"
               >
                 <div className="h-36 bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899] relative">
-                  <button
-                    onClick={() => router.push("/settings")}
-                    className="absolute top-3 right-3 bg-transparent text-white p-2 rounded-full hover:bg-white/10 transition-all flex items-center gap-2 md:hidden"
-                  >
-                    <Settings className="w-5 h-5" />
-                  </button>
+                  <div className="absolute top-3 right-3 md:hidden">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="bg-transparent text-white p-2 rounded-full hover:bg-white/10 transition-all">
+                          <Menu className="w-5 h-5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-black/50 backdrop-blur-sm border-white/20 text-white">
+                        <DropdownMenuItem onSelect={() => router.push("/settings")}>
+                          Settings
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => router.push("/analytics")}>
+                          Analytics
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                   <div className="hidden md:flex absolute top-3 right-3 gap-2">
                     <button onClick={() => router.push('/analytics')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
                         View Analytics
@@ -353,9 +373,13 @@ export default function ProfilePage() {
                     See all posts
                   </Link>
                 </div>
-                <div className="space-y-4">
-                  {posts.filter(p => p.author === "Sally Liang").slice(0, 2).map(post => (
-                    <FeedPost key={post.id} {...post} initialComments={post.commentData} />
+                <div className="grid grid-cols-2 gap-4">
+                  {posts.filter(p => p.author === "Sally Liang").slice(0, isMobile ? 6 : 4).map(post => (
+                    isMobile ? (
+                      <PostCard key={post.id} post={post} />
+                    ) : (
+                      <FeedPost key={post.id} {...post} initialComments={post.commentData} />
+                    )
                   ))}
                 </div>
               </div>

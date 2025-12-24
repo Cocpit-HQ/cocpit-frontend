@@ -1,12 +1,12 @@
 "use client"
 
-import type { JobListMode, JobStatus } from "@/types/jobs"
+import type { JobListMode, MyJobsTab } from "@/types/jobs"
 
 interface JobTabsProps {
   mode: JobListMode
   setMode: (mode: JobListMode) => void
-  myJobsTab: JobStatus
-  setMyJobsTab: (tab: JobStatus) => void
+  myJobsTab: MyJobsTab
+  setMyJobsTab: (tab: MyJobsTab) => void
   offersCount: number
 }
 

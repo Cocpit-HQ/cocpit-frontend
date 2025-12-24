@@ -14,6 +14,7 @@ interface CreateEventFormProps {
 export function CreateEventForm({ onClose }: CreateEventFormProps) {
   const { createEvent } = useEvents()
   const [activeSection, setActiveSection] = useState('core') // For potential tab navigation if needed, currently single page
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     // Core
@@ -48,6 +49,22 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
     tags: "",
     image: null as File | null // Mock logic
   })
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFormData({ ...formData, image: file });
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData({ ...formData, image: null });
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+  };
 
   const handleSubmit = () => {
     // Validation
@@ -88,7 +105,7 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
           provider: formData.paymentProvider
         } : undefined,
 
-        image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop", // Mock image
+        image: previewUrl || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop", // Mock image
         tags: formData.tags.split(',').map(t => t.trim()).filter(t => t),
 
         type: formData.priceType === 'Paid' ? 'Paid' : 'Free'
@@ -139,6 +156,35 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
               />
+            </div>
+
+            <div>
+              <Label className="mb-2 block">Event Banner</Label>
+              {previewUrl && formData.image ? (
+                <div className="relative mt-2">
+                  <img src={previewUrl} alt="Banner preview" className="w-full h-auto rounded-xl object-cover aspect-[16/9]" />
+                  <button onClick={handleRemoveImage} className="absolute top-2 right-2 bg-black/60 text-white p-1.5 rounded-full hover:bg-black/80 transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-2 flex justify-center rounded-lg border border-dashed border-border px-6 py-10">
+                  <div className="text-center">
+                    <Image className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <div className="mt-4 flex text-sm leading-6 text-muted-foreground">
+                      <label
+                        htmlFor="file-upload"
+                        className="relative cursor-pointer rounded-md bg-card font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 hover:text-primary/80"
+                      >
+                        <span>Upload a file</span>
+                        <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs leading-5 text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

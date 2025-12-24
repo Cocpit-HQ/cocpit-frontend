@@ -6,7 +6,7 @@ import type {
   Job,
   JobsContextType,
   JobFilters,
-  JobStatus,
+  MyJobsTab,
   JobListMode,
   WorkMode,
   CompanyType
@@ -44,38 +44,40 @@ const parseSalaryAvg = (salary: string): number => {
 }
 
 // Enhance initial mock data with new fields
-const enhancedInitialJobs: Job[] = initialJobsData.map(job => ({
-  ...job,
-  matchScore: getRandomInt(60, 98),
-  workMode: ["Remote", "Hybrid", "Onsite"][getRandomInt(0, 2)] as WorkMode,
-  companyType: ["Startup", "MNC", "Product-based", "Service-based"][getRandomInt(0, 3)] as CompanyType,
-  industry: ["Technology", "Finance", "Healthcare", "Education"][getRandomInt(0, 3)],
-  experience: ["Entry Level", "Mid Level", "Senior Level", "Lead / Manager"][getRandomInt(0, 3)],
-  easyApply: Math.random() > 0.5,
-  activelyHiring: Math.random() > 0.3,
-  recruiterInsight: `Recruiter usually responds in ${getRandomInt(1, 5)} days`,
-  description: "We are looking for a talented individual to join our growing team. You will be working on cutting-edge technologies and solving complex problems.",
-  aboutCompany: "We are a leading company in our industry, dedicated to innovation and excellence.",
-  skills: ["React", "TypeScript", "Node.js", "Design Systems"],
-  applicationTimeline: job.status === 'applied' ? [
-    { status: "Applied", date: "2 days ago", completed: true },
-    { status: "Under Review", completed: false },
-    { status: "Interview", completed: false },
-    { status: "Offer", completed: false }
-  ] : job.status === 'in-progress' ? [
-    { status: "Applied", date: "1 week ago", completed: true },
-    { status: "Under Review", date: "3 days ago", completed: true },
-    { status: "Interview", completed: true },
-    { status: "Offer", completed: false }
-  ] : []
-}));
+const enhancedInitialJobs: Job[] = initialJobsData.map(job => {
+  return {
+    ...job,
+    matchScore: getRandomInt(60, 98),
+    workMode: ["Remote", "Hybrid", "Onsite"][getRandomInt(0, 2)] as WorkMode,
+    companyType: ["Startup", "MNC", "Product-based", "Service-based"][getRandomInt(0, 3)] as CompanyType,
+    industry: ["Technology", "Finance", "Healthcare", "Education"][getRandomInt(0, 3)],
+    experience: ["Entry Level", "Mid Level", "Senior Level", "Lead / Manager"][getRandomInt(0, 3)],
+    easyApply: Math.random() > 0.5,
+    activelyHiring: Math.random() > 0.3,
+    recruiterInsight: `Recruiter usually responds in ${getRandomInt(1, 5)} days`,
+    description: "We are looking for a talented individual to join our growing team. You will be working on cutting-edge technologies and solving complex problems.",
+    aboutCompany: "We are a leading company in our industry, dedicated to innovation and excellence.",
+    skills: ["React", "TypeScript", "Node.js", "Design Systems"],
+    applicationTimeline: job.status === 'applied' ? [
+      { status: "Applied", date: "2 days ago", completed: true },
+      { status: "Under Review", completed: false },
+      { status: "Interview", completed: false },
+      { status: "Offer", completed: false }
+    ] : job.status === 'in-progress' ? [
+      { status: "Applied", date: "1 week ago", completed: true },
+      { status: "Under Review", date: "3 days ago", completed: true },
+      { status: "Interview", completed: true },
+      { status: "Offer", completed: false }
+    ] : []
+  };
+});
 
 export function JobsProvider({ children }: { children: React.ReactNode }) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filters, setFilters] = useState<JobFilters>(INITIAL_FILTERS);
   const [searchKeywords, setSearchKeywords] = useState("");
   const [activeTab, setActiveTab] = useState<JobListMode>("view");
-  const [myJobsTab, setMyJobsTab] = useState<JobStatus>("in-progress");
+  const [myJobsTab, setMyJobsTab] = useState<MyJobsTab>("in-progress");
   const [mounted, setMounted] = useState(false);
 
   // Initialize from localStorage or mock data
@@ -137,7 +139,7 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
   const saveJob = (jobId: number) => {
     setJobs(prev => prev.map(job => {
       if (job.id === jobId) {
-        return { ...job, status: job.status === "saved" ? undefined : "saved" };
+        return { ...job, isSaved: !job.isSaved };
       }
       return job;
     }));
@@ -244,7 +246,7 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
   }, [jobs, searchKeywords, filters]);
 
   const myJobs = useMemo(() => {
-    return jobs.filter(job => job.status);
+    return jobs.filter(job => job.status || job.isSaved);
   }, [jobs]);
 
   return (

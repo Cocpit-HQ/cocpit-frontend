@@ -83,9 +83,14 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
   }
 
   // Determine which jobs to render based on tabs
-  const openJobs = filteredJobs.filter((job) => !job.isOffer && (!job.status || job.status === "saved"))
+  const openJobs = filteredJobs.filter((job) => !job.isOffer && !job.status)
   const offers = filteredJobs.filter((job) => job.isOffer)
-  const myFilteredJobs = myJobs.filter((job) => job.status === myJobsTab)
+  const myFilteredJobs = myJobs.filter((job) => {
+    if (myJobsTab === 'saved') {
+      return job.isSaved;
+    }
+    return job.status === myJobsTab;
+  })
 
   const jobsToRender =
     activeTab === "offers" ? offers : activeTab === "my-jobs" ? myFilteredJobs : openJobs

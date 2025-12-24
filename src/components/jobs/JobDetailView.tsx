@@ -137,13 +137,13 @@ export function JobDetailView({ job }: JobDetailViewProps) {
                    onClick={() => saveJob(job.id)}
                    className={cn(
                      "px-6 py-2.5 rounded-lg border font-medium flex items-center justify-center gap-2 transition-colors",
-                     job.status === "saved"
+                     job.isSaved
                        ? "bg-pink-500/10 border-pink-500/20 text-pink-500"
                        : "border-border hover:bg-muted"
                    )}
                  >
-                   <Bookmark className={cn("w-5 h-5", job.status === "saved" && "fill-current")} />
-                   {job.status === "saved" ? "Saved" : "Save Job"}
+                   <Bookmark className={cn("w-5 h-5", job.isSaved && "fill-current")} />
+                   {job.isSaved ? "Saved" : "Save Job"}
                  </button>
               </div>
             </div>
