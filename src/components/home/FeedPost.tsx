@@ -8,8 +8,7 @@ import CommentSection from './CommentSection'
 import MobileCommentDrawer from './MobileCommentDrawer'
 import { SharePostModal } from './SharePostModal'
 
-interface FeedPostProps extends Omit<Post, 'id' | 'commentData'> {
-  id?: string
+interface FeedPostProps extends Omit<Post, 'commentData'> {
   initialComments?: CommentType[]
   isDark?: boolean // Optional for compatibility
   onLike?: () => void
@@ -223,7 +222,7 @@ export default function FeedPost({
       <SharePostModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        postId={id || "mock-post-id"}
+        postId={id.toString()}
       />
     </div>
   )
