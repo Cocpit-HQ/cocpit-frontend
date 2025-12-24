@@ -124,7 +124,7 @@
   }
 
   [data-theme="light"] {
-    --background: #F3F2EF;
+    --background: #f3f4f6; /* Updated for desktop */
     --foreground: #1A1A1A;
 
     --card: #ffffff;
@@ -428,4 +428,10 @@
 
 .animation-delay-600 {
   animation-delay: 0.6s;
+}
+
+@media (max-width: 768px) {
+  [data-theme="light"] {
+    --background: #ffffff;
+  }
 }
