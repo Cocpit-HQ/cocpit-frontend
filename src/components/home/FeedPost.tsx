@@ -6,8 +6,10 @@ import useEmblaCarousel from 'embla-carousel-react'
 import { Post, Comment as CommentType } from '@/types/entities'
 import CommentSection from './CommentSection'
 import MobileCommentDrawer from './MobileCommentDrawer'
+import { SharePostModal } from './SharePostModal'
 
 interface FeedPostProps extends Omit<Post, 'id' | 'commentData'> {
+  id?: string
   initialComments?: CommentType[]
   isDark?: boolean // Optional for compatibility
   onLike?: () => void
@@ -15,6 +17,7 @@ interface FeedPostProps extends Omit<Post, 'id' | 'commentData'> {
 }
 
 export default function FeedPost({ 
+  id,
   author, 
   title, 
   timeAgo = '1h', 
@@ -33,6 +36,7 @@ export default function FeedPost({
   const [isLiked, setIsLiked] = useState(false)
   const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false)
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [postComments, setPostComments] = useState<CommentType[]>(initialComments)
   
   // Carousel State
@@ -191,7 +195,10 @@ export default function FeedPost({
             <span>Comment</span>
           </button>
           <button 
-            onClick={onShare}
+            onClick={() => {
+              if (onShare) onShare()
+              setIsShareModalOpen(true)
+            }}
             className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center text-xs md:text-sm">
             <Share2 className="w-4 h-4 md:w-5 md:h-5" />
             <span>Share</span>
@@ -211,6 +218,12 @@ export default function FeedPost({
         onOpenChange={setIsMobileDrawerOpen}
         comments={postComments}
         onAddComment={handleAddComment}
+      />
+
+      <SharePostModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        postId={id || "mock-post-id"}
       />
     </div>
   )

@@ -2,50 +2,13 @@
 
 import React, { useState } from "react"
 import { Bell } from "lucide-react"
+import Link from "next/link"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-
-type Notification = {
-  id: number
-  text: string
-  time: string
-  read: boolean
-  avatarColor: string
-}
-
-const mockNotifications: Notification[] = [
-  {
-    id: 1,
-    text: "Sarah Chen liked your story",
-    time: "2m ago",
-    read: false,
-    avatarColor: "bg-blue-400",
-  },
-  {
-    id: 2,
-    text: "Michael Torres commented on your post",
-    time: "1h ago",
-    read: false,
-    avatarColor: "bg-purple-400",
-  },
-  {
-    id: 3,
-    text: "New job alert: Product Designer",
-    time: "3h ago",
-    read: true,
-    avatarColor: "bg-green-400",
-  },
-  {
-    id: 4,
-    text: "Jessica Williams viewed your profile",
-    time: "5h ago",
-    read: true,
-    avatarColor: "bg-yellow-400",
-  },
-]
+import { mockNotifications, Notification } from "@/constants/notifications"
 
 export function NotificationPopover() {
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications)
@@ -109,6 +72,15 @@ export function NotificationPopover() {
               No notifications
             </div>
           )}
+        </div>
+        <div className="p-3 border-t border-border bg-muted/20">
+          <Link
+            href="/notifications"
+            className="block w-full text-center text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            View all notifications
+          </Link>
         </div>
       </PopoverContent>
     </Popover>
