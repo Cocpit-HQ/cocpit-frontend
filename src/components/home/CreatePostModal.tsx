@@ -42,6 +42,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
     { id: '1', text: '' },
     { id: '2', text: '' },
   ])
+  const [postCategory, setPostCategory] = useState<'Personal' | 'Professional' | 'Achievement'>('Professional')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
 
@@ -120,8 +121,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
 
     const newPost = {
       id: Date.now(),
-      author: 'You', // In a real app, this would come from auth context
-      title: 'Software Engineer',
+      author: 'Sally Liang', // Mock logged-in user
+      title: 'Senior Financial Analyst',
       timeAgo: 'Just now',
       content: description,
       // Add other fields based on postType (images, video, poll)
@@ -132,7 +133,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
       likes: '0',
       comments: '0',
       shares: '0',
-      commentData: []
+      commentData: [],
+      category: postCategory
     }
 
     addPost(newPost)
@@ -149,6 +151,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
     setSelectedAspectRatio('auto')
     setPollQuestion('')
     setPollOptions([{ id: '1', text: '' }, { id: '2', text: '' }])
+    setPostCategory('Professional')
   }
 
   const selectedImage = uploadedImages.find((img) => img.id === selectedImageForCrop)
@@ -173,17 +176,36 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
 
         {/* Profile Section */}
         <div className="px-6 pt-6 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
-              <img
-                src="/assets/pngegg.png"
-                alt="Your profile"
-                className="w-full h-full object-cover"
-              />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
+                <img
+                    src="/assets/pngegg.png"
+                    alt="Your profile"
+                    className="w-full h-full object-cover"
+                />
+                </div>
+                <div>
+                <h3 className="text-foreground">Sally Liang</h3>
+                <p className="text-sm text-muted-foreground">Post to Anyone</p>
+                </div>
             </div>
-            <div>
-              <h3 className="text-foreground">John Doe</h3>
-              <p className="text-sm text-muted-foreground">Post to Anyone</p>
+
+            {/* Post Category Selection */}
+            <div className="flex gap-2">
+                {(['Personal', 'Professional', 'Achievement'] as const).map((cat) => (
+                    <button
+                        key={cat}
+                        onClick={() => setPostCategory(cat)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                            postCategory === cat
+                                ? 'bg-primary text-primary-foreground border-primary'
+                                : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                        }`}
+                    >
+                        {cat}
+                    </button>
+                ))}
             </div>
           </div>
         </div>

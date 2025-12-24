@@ -19,7 +19,8 @@ const initialMockPosts: Post[] = [
     commentData: [
       { id: 1, author: { name: 'Alex Johnson', avatar: '/assets/pngegg.png' }, text: 'This looks amazing! Can\'t wait to see it in action.', timeAgo: '2h', likes: 15 },
       { id: 2, author: { name: 'Maria Garcia', avatar: '/assets/pngegg.png' }, text: 'Great work, Sarah! The component library is so clean.', timeAgo: '1h', likes: 8 },
-    ]
+    ],
+    category: 'Professional'
   },
   {
     id: 2,
@@ -34,7 +35,8 @@ const initialMockPosts: Post[] = [
     shares: '5',
     commentData: [
       { id: 1, author: { name: 'David Lee', avatar: '/assets/pngegg.png' }, text: 'Congratulations to the whole team!', timeAgo: '4h', likes: 22 },
-    ]
+    ],
+    category: 'Achievement'
   },
   {
     id: 3,
@@ -47,7 +49,8 @@ const initialMockPosts: Post[] = [
     likes: '1.2k',
     comments: '15',
     shares: '8',
-    commentData: []
+    commentData: [],
+    category: 'Professional'
   },
   {
     id: 4,
@@ -60,7 +63,22 @@ const initialMockPosts: Post[] = [
     likes: '850',
     comments: '12',
     shares: '3',
-    commentData: []
+    commentData: [],
+    category: 'Personal'
+  },
+  {
+    id: 5,
+    author: 'Sally Liang',
+    title: 'Senior Financial Analyst at Johnson & Johnson',
+    timeAgo: '1w',
+    content:
+      'Honored to be recognized as Top Contributor of the Month! 🏆 Thanks to my amazing team.',
+    imageSrc: undefined,
+    likes: '2.1k',
+    comments: '45',
+    shares: '12',
+    commentData: [],
+    category: 'Achievement'
   },
 ];
 

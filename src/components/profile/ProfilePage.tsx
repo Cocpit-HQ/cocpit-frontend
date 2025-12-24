@@ -18,14 +18,15 @@ import AddExperienceForm from "@/components/profile/AddExperienceForm";
 import AddEducationForm from "@/components/profile/AddEducationForm";
 import { SkillModal } from "@/components/profile/SkillModal";
 import type { Experience, Education } from "@/types/entities"
+import { ExtendedExperience } from "@/types/profile";
 import { ProfileIdentityChips } from "@/components/profile/ProfileIdentityChips";
-import { ProfileInsights } from "@/components/profile/ProfileInsights";
 import { LivingResume } from "@/components/profile/LivingResume";
 import { SkillProofPill } from "@/components/profile/SkillProofPill";
-import { initialIdentity, initialInsights, initialExperiences, initialSkills } from "@/lib/data/profile";
+import { initialIdentity, initialExperiences, initialSkills } from "@/lib/data/profile";
 import { useFeed } from "@/context/FeedContext";
-import { ProfilePosts } from "@/components/profile/ProfilePosts";
 import { initialEducations } from "@/lib/data/profile";
+import FeedPost from "@/components/home/FeedPost";
+import Link from "next/link";
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -107,7 +108,7 @@ export default function ProfilePage() {
   const [isAddExperienceModalOpen, setIsAddExperienceModalOpen] = useState(false);
   const [isAddEducationModalOpen, setIsAddEducationModalOpen] = useState(false);
   const [skills, setSkills] = useState<string[]>(initialSkills);
-  const [experiences, setExperiences] = useState<Experience[]>(initialExperiences);
+  const [experiences, setExperiences] = useState<ExtendedExperience[]>(initialExperiences);
   const [educations, setEducations] = useState<Education[]>(initialEducations);
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
@@ -136,9 +137,9 @@ export default function ProfilePage() {
 
   const handleSaveExperience = (data: Partial<Experience>) => {
     if (editingExperience) {
-      setExperiences(experiences.map(exp => exp.id === editingExperience.id ? { ...exp, ...data } : exp));
+      setExperiences(experiences.map(exp => exp.id === editingExperience.id ? { ...exp, ...data, skills: (exp as ExtendedExperience).skills || [] } : exp));
     } else {
-      setExperiences([...experiences, { ...data, id: Date.now() } as Experience]);
+      setExperiences([...experiences, { ...data, id: Date.now(), skills: [] } as ExtendedExperience]);
     }
     setIsAddExperienceModalOpen(false);
     setEditingExperience(null);
@@ -202,10 +203,15 @@ export default function ProfilePage() {
                   >
                     <Settings className="w-5 h-5" />
                   </button>
-                  <button onClick={() => router.push('/profile/edit')} className="hidden md:flex absolute top-3 right-3 bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all items-center gap-2 text-sm border border-white/20">
-                    <Edit2 className="w-4 h-4" />
-                    Edit Profile
-                  </button>
+                  <div className="hidden md:flex absolute top-3 right-3 gap-2">
+                    <button onClick={() => router.push('/analytics')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
+                        View Analytics
+                    </button>
+                    <button onClick={() => router.push('/profile/edit')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
+                        <Edit2 className="w-4 h-4" />
+                        Edit Profile
+                    </button>
+                  </div>
                 </div>
 
                 <div className="px-6 pb-6">
@@ -270,9 +276,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <ProfileInsights insights={initialInsights} />
-
-              <LivingResume experiences={initialExperiences} skills={initialSkills} />
+              <LivingResume experiences={experiences} skills={skills} />
 
               <div
                 className="rounded-xl border p-6 mb-4 bg-card border-border"
@@ -317,7 +321,7 @@ export default function ProfilePage() {
                     <SkillProofPill
                         key={skill}
                         skill={skill}
-                        experiences={initialExperiences}
+                        experiences={experiences}
                         posts={posts.filter(p => p.author === "Sally Liang")}
                         onDelete={handleDeleteSkill}
                     />
@@ -342,7 +346,19 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <ProfilePosts authorName="Sally Liang" />
+              <div className="mt-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl text-foreground font-semibold">Latest Posts</h2>
+                  <Link href="/profile/posts" className="text-sm text-primary hover:underline">
+                    See all posts
+                  </Link>
+                </div>
+                <div className="space-y-4">
+                  {posts.filter(p => p.author === "Sally Liang").slice(0, 2).map(post => (
+                    <FeedPost key={post.id} {...post} initialComments={post.commentData} />
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="lg:col-span-4">
