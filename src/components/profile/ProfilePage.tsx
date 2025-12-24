@@ -235,11 +235,11 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-background">
       <AppShell currentPage="profile" navigateTo={navigateTo}>
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
+        <div className="max-w-7xl mx-auto py-6 md:py-8 pb-20 md:pb-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
             <div className="lg:col-span-8">
               <div
-                className="rounded-xl overflow-hidden border mb-6 relative bg-card border-border"
+                className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border"
               >
                 <div className="h-36 bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899] relative">
                   <button
@@ -315,7 +315,7 @@ export default function ProfilePage() {
               </div>
 
               <div
-                className="rounded-xl border p-6 mb-6 bg-card border-border"
+                className="rounded-xl border p-6 mb-4 bg-card border-border"
               >
                 <h2 className="text-xl text-foreground mb-4">About</h2>
                 <p className="text-sm leading-relaxed text-muted-foreground">
@@ -326,7 +326,7 @@ export default function ProfilePage() {
               </div>
 
               <div
-                className="rounded-xl border p-6 mb-6 bg-card border-border"
+                className="rounded-xl border p-6 mb-4 bg-card border-border"
               >
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl text-foreground">Experience</h2>
@@ -345,7 +345,7 @@ export default function ProfilePage() {
               </div>
 
               <div
-                className="rounded-xl border p-6 mb-6 bg-card border-border"
+                className="rounded-xl border p-6 mb-4 bg-card border-border"
               >
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl text-foreground">Skills</h2>
