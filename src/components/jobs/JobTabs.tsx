@@ -12,7 +12,7 @@ interface JobTabsProps {
 
 export function JobTabs({ mode, setMode, myJobsTab, setMyJobsTab, offersCount }: JobTabsProps) {
   return (
-    <>
+    <div>
       {/* Top-level tabs */}
       <div className="mb-4 md:mb-6 flex gap-2 overflow-x-auto rounded-full bg-transparent">
         {[
@@ -72,6 +72,6 @@ export function JobTabs({ mode, setMode, myJobsTab, setMyJobsTab, offersCount }:
           })}
         </div>
       )}
-    </>
+    </div>
   )
 }
