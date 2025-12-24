@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { ThumbsUp, MessageCircle, Share2, MoreHorizontal } from 'lucide-react'
+import { ThumbsUp, MessageCircle, Share2, MoreHorizontal, EyeOff, Trash2 } from 'lucide-react'
 import useEmblaCarousel from 'embla-carousel-react'
 import { Post, Comment as CommentType } from '@/types/entities'
 import CommentSection from './CommentSection'
@@ -13,31 +13,39 @@ interface FeedPostProps extends Omit<Post, 'commentData'> {
   isDark?: boolean // Optional for compatibility
   onLike?: () => void
   onShare?: () => void
+  isOwnPost?: boolean
+  onDelete?: (id: number) => void
+  onToggleVisibility?: (id: number) => void
 }
 
-export default function FeedPost({ 
+export default function FeedPost({
   id,
-  author, 
-  title, 
-  timeAgo = '1h', 
-  content, 
+  author,
+  title,
+  timeAgo = '1h',
+  content,
   imageSrc,
   images,
   videoSrc,
   aspectRatio,
-  likes = '0', 
-  comments: initialCommentsCount = '0', 
+  likes = '0',
+  comments: initialCommentsCount = '0',
   shares = '0',
   initialComments = [],
   onLike,
-  onShare
+  onShare,
+  isOwnPost,
+  onDelete,
+  onToggleVisibility,
+  visibility = 'public'
 }: FeedPostProps) {
   const [isLiked, setIsLiked] = useState(false)
   const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false)
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [postComments, setPostComments] = useState<CommentType[]>(initialComments)
-  
+  const [showOptions, setShowOptions] = useState(false)
+
   // Carousel State
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false })
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -86,7 +94,7 @@ export default function FeedPost({
       setIsCommentSectionOpen(!isCommentSectionOpen)
     }
   }
-  
+
   const handleAddComment = (commentText: string) => {
     const newComment: CommentType = {
       id: Date.now(),
@@ -114,12 +122,47 @@ export default function FeedPost({
             <div>
               <h3 className="text-foreground mb-0.5 text-sm md:text-base font-semibold">{author}</h3>
               {title && <p className="text-xs md:text-sm mb-1 text-muted-foreground">{title}</p>}
-              <p className="text-xs text-muted-foreground">{timeAgo} ago</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted-foreground">{timeAgo} ago</p>
+                {visibility === 'private' && <EyeOff className="w-3 h-3 text-muted-foreground" />}
+              </div>
             </div>
           </div>
-          <button className="text-muted-foreground hover:text-foreground transition-colors">
-            <MoreHorizontal className="w-5 h-5" />
-          </button>
+          {isOwnPost && (
+            <div className="relative">
+              <button
+                onClick={() => setShowOptions(!showOptions)}
+                onBlur={() => setTimeout(() => setShowOptions(false), 200)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <MoreHorizontal className="w-5 h-5" />
+              </button>
+              {showOptions && (
+                <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-10">
+                  <button
+                    onClick={() => {
+                      onToggleVisibility?.(id)
+                      setShowOptions(false)
+                    }}
+                    className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted"
+                  >
+                    <EyeOff className="w-4 h-4" />
+                    <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onDelete?.(id)
+                      setShowOptions(false)
+                    }}
+                    className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-muted"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <p className="leading-relaxed mb-4 text-sm md:text-base text-foreground">{content}</p>
@@ -181,19 +224,19 @@ export default function FeedPost({
         </div>
 
         <div className="flex items-center justify-between pt-3 border-t border-border">
-          <button 
+          <button
             onClick={handleLike}
             className={`flex items-center gap-2 ${isLiked ? 'text-primary' : 'text-muted-foreground hover:text-primary'} transition-colors flex-1 justify-center text-xs md:text-sm`}>
             <ThumbsUp className={`w-4 h-4 md:w-5 md:h-5 ${isLiked ? 'fill-current' : ''}`} />
             <span>Like</span>
           </button>
-          <button 
+          <button
             onClick={handleToggleCommentSection}
             className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center text-xs md:text-sm">
             <MessageCircle className="w-4 h-4 md:w-5 md:h-5" />
             <span>Comment</span>
           </button>
-          <button 
+          <button
             onClick={() => {
               if (onShare) onShare()
               setIsShareModalOpen(true)
@@ -204,11 +247,11 @@ export default function FeedPost({
           </button>
         </div>
       </div>
-      
+
       {isCommentSectionOpen && (
-        <CommentSection 
+        <CommentSection
           comments={postComments}
-          onAddComment={handleAddComment} 
+          onAddComment={handleAddComment}
         />
       )}
 

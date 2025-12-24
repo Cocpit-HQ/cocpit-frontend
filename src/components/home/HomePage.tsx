@@ -29,7 +29,7 @@ export default function HomePage() {
   // Removed useTheme logic - relying on CSS variables
   const [mounted, setMounted] = useState(false)
   const { openModal } = useActionModal()
-  const { posts } = useFeed()
+  const { posts, currentUser, deletePost, togglePostVisibility } = useFeed()
 
   useEffect(() => {
     setMounted(true)
@@ -41,6 +41,7 @@ export default function HomePage() {
   const [showCreateStory, setShowCreateStory] = useState(false)
   const [selectedStory, setSelectedStory] = useState<StoryDetail | null>(null)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [activeTab, setActiveTab] = useState('recent');
 
   const handleCreateStory = (newStory: StoryDetail) => {
     setStories((prev) => [newStory, ...prev])
@@ -60,12 +61,24 @@ export default function HomePage() {
 
   const filteredPosts = useMemo(() => {
     const q = searchQuery.toLowerCase()
-    return posts.filter(
+    let filtered = posts.filter(
       (p) =>
         p.author.toLowerCase().includes(q) ||
         p.content.toLowerCase().includes(q)
-    )
-  }, [posts, searchQuery])
+    );
+
+    if (activeTab === 'top') {
+      // Sort by likes, converting '10k' to 10000
+      filtered.sort((a, b) => {
+        const likesA = parseFloat(a.likes.replace('k', '')) * (a.likes.includes('k') ? 1000 : 1);
+        const likesB = parseFloat(b.likes.replace('k', '')) * (b.likes.includes('k') ? 1000 : 1);
+        return likesB - likesA;
+      });
+    }
+    // For 'recent', no extra sorting is needed as new posts are prepended.
+
+    return filtered;
+  }, [posts, searchQuery, activeTab])
 
   /* -------------------- Navigation -------------------- */
 
@@ -233,7 +246,7 @@ export default function HomePage() {
 
                 {/* Feed Tabs */}
                 <div className="md:hidden mt-4">
-                  <FeedTabs />
+                  <FeedTabs activeTab={activeTab} setActiveTab={setActiveTab} />
                 </div>
 
                 {/* Create Post */}
@@ -254,6 +267,9 @@ export default function HomePage() {
                         key={post.id}
                         {...post}
                         initialComments={post.commentData}
+                        isOwnPost={post.author === currentUser.name}
+                        onDelete={deletePost}
+                        onToggleVisibility={togglePostVisibility}
                       />
                     ))}
 

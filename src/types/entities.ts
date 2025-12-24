@@ -58,4 +58,5 @@ export interface Post {
   shares: string;
   commentData?: Comment[];
   category?: 'Personal' | 'Professional' | 'Achievement';
+  visibility?: 'public' | 'private';
 }

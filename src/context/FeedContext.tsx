@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Post } from '@/types/entities';
+import { Post, User } from '@/types/entities';
 
 // Mock data from HomePage.tsx
 const initialMockPosts: Post[] = [
@@ -20,7 +20,8 @@ const initialMockPosts: Post[] = [
       { id: 1, author: { name: 'Alex Johnson', avatar: '/assets/pngegg.png' }, text: 'This looks amazing! Can\'t wait to see it in action.', timeAgo: '2h', likes: 15 },
       { id: 2, author: { name: 'Maria Garcia', avatar: '/assets/pngegg.png' }, text: 'Great work, Sarah! The component library is so clean.', timeAgo: '1h', likes: 8 },
     ],
-    category: 'Professional'
+    category: 'Professional',
+    visibility: 'public',
   },
   {
     id: 2,
@@ -36,7 +37,8 @@ const initialMockPosts: Post[] = [
     commentData: [
       { id: 1, author: { name: 'David Lee', avatar: '/assets/pngegg.png' }, text: 'Congratulations to the whole team!', timeAgo: '4h', likes: 22 },
     ],
-    category: 'Achievement'
+    category: 'Achievement',
+    visibility: 'public',
   },
   {
     id: 3,
@@ -50,7 +52,8 @@ const initialMockPosts: Post[] = [
     comments: '15',
     shares: '8',
     commentData: [],
-    category: 'Professional'
+    category: 'Professional',
+    visibility: 'public',
   },
   {
     id: 4,
@@ -64,7 +67,8 @@ const initialMockPosts: Post[] = [
     comments: '12',
     shares: '3',
     commentData: [],
-    category: 'Personal'
+    category: 'Personal',
+    visibility: 'public',
   },
   {
     id: 5,
@@ -78,13 +82,21 @@ const initialMockPosts: Post[] = [
     comments: '45',
     shares: '12',
     commentData: [],
-    category: 'Achievement'
+    category: 'Achievement',
+    visibility: 'private',
   },
 ];
 
+const currentUser = {
+  name: 'Sally Liang',
+};
+
 interface FeedContextType {
   posts: Post[];
+  currentUser: { name: string };
   addPost: (post: Post) => void;
+  deletePost: (id: number) => void;
+  togglePostVisibility: (id: number) => void;
 }
 
 const FeedContext = createContext<FeedContextType | undefined>(undefined);
@@ -108,8 +120,22 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
     setPosts((prevPosts) => [post, ...prevPosts]);
   };
 
+  const deletePost = (id: number) => {
+    setPosts((prevPosts) => prevPosts.filter((post) => post.id !== id));
+  };
+
+  const togglePostVisibility = (id: number) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === id
+          ? { ...post, visibility: post.visibility === 'private' ? 'public' : 'private' }
+          : post
+      )
+    );
+  };
+
   return (
-    <FeedContext.Provider value={{ posts, addPost }}>
+    <FeedContext.Provider value={{ posts, addPost, currentUser, deletePost, togglePostVisibility }}>
       {children}
     </FeedContext.Provider>
   );

@@ -120,7 +120,7 @@ export default function ProfilePage() {
   const [educations, setEducations] = useState<Education[]>(initialEducations);
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
-  const { posts } = useFeed();
+  const { posts, deletePost, togglePostVisibility } = useFeed();
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -378,7 +378,7 @@ export default function ProfilePage() {
                     isMobile ? (
                       <PostCard key={post.id} post={post} />
                     ) : (
-                      <FeedPost key={post.id} {...post} initialComments={post.commentData} />
+                      <FeedPost key={post.id} {...post} initialComments={post.commentData} isOwnPost={true} onDelete={deletePost} onToggleVisibility={togglePostVisibility} />
                     )
                   ))}
                 </div>
