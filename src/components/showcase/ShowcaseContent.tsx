@@ -22,7 +22,6 @@ const routes: Record<string, string> = {
   settings: "/settings",
   jobs: "/jobs",
   analytics: "/analytics",
-  achievements: "/achievements",
 }
 
 function ShowcaseSkeletonCard() {

@@ -28,7 +28,6 @@ const routes: Record<string, string> = {
   settings: "/settings",
   jobs: "/jobs",
   analytics: "/analytics",
-  achievements: "/achievements",
 }
 
 function ReadOnlyExperienceItem({ experience }: { experience: any }) {
@@ -101,7 +100,7 @@ export default function PublicProfile({ user }: PublicProfileProps) {
   const userPosts = useMemo(() => {
     return posts.filter(p =>
       p.author === user.name &&
-      (p.category === 'Professional' || p.category === 'Achievement')
+      (p.category === 'Professional')
     );
   }, [posts, user.name]);
 

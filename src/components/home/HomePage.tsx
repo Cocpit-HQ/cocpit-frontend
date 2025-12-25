@@ -91,7 +91,6 @@ export default function HomePage() {
       settings: '/settings',
       jobs: '/jobs',
       analytics: '/analytics',
-      achievements: '/achievements',
     }
 
     router.push(routes[page] ?? '/feed')
