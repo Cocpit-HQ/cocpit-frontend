@@ -414,7 +414,7 @@ export default function SettingsPage() {
             <Button variant="ghost" onClick={() => setShowLogoutModal(false)}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={handleLogout}>
+            <Button onClick={handleLogout}>
               Log out
             </Button>
           </DialogFooter>

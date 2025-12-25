@@ -171,6 +171,14 @@ export default function HomePage() {
 
             {/* --- Mobile Header (Hidden from md screens up) --- */}
             <div className="md:hidden flex items-center gap-2 relative">
+              {/* App Logo */}
+              <Link href="/feed" className="flex-shrink-0">
+                <img
+                  src="/assets/logo.PNG"
+                  alt="Cockpit Logo"
+                  className="h-8 w-auto"
+                />
+              </Link>
               {/* Mobile Search Bar */}
               <div className="flex-1 flex items-center gap-3 relative">
                 <Search className="w-5 h-5 text-muted-foreground absolute left-3" />
