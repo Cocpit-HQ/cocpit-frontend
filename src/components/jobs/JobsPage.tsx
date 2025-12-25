@@ -23,7 +23,6 @@ const routes: Record<string, string> = {
   settings: "/settings",
   jobs: "/jobs",
   analytics: "/analytics",
-  achievements: "/achievements",
 }
 
 export default function JobsPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {

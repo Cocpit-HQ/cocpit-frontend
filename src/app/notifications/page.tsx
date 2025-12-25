@@ -18,7 +18,6 @@ export default function NotificationsPage() {
       settings: '/settings',
       jobs: '/jobs',
       analytics: '/analytics',
-      achievements: '/achievements',
     }
     router.push(routes[page] ?? '/feed')
   }

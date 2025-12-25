@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { Home, Users, Calendar, User, Settings, Briefcase, BarChart3, Award, Crown } from 'lucide-react'
+import { Home, Users, Calendar, User, Settings, Briefcase, BarChart3, Crown } from 'lucide-react'
 
 type Page = string
 
@@ -22,7 +22,7 @@ export function DarkSidebar({ navigateTo = () => {}, currentPage = 'home' }: Dar
   const quickActions = [
     { icon: Briefcase, label: 'Jobs', badge: '12 new', page: 'jobs' as Page },
     { icon: BarChart3, label: 'Analytics', badge: 'Insights', page: 'analytics' as Page },
-    { icon: Award, label: 'Achievements', badge: 'Verified', page: 'achievements' as Page },
+    
   ];
 
   return (

@@ -16,10 +16,9 @@ const routes: Record<string, string> = {
   settings: "/settings",
   jobs: "/jobs",
   analytics: "/analytics",
-  achievements: "/achievements",
 };
 
-type TabType = 'All' | 'Professional' | 'Achievement' | 'Personal';
+type TabType = 'All' | 'Professional' | 'Personal';
 
 export default function ProfilePostsPage() {
   const router = useRouter();
@@ -37,7 +36,7 @@ export default function ProfilePostsPage() {
     return post.category === activeTab;
   });
 
-  const tabs: TabType[] = ['All', 'Professional', 'Achievement', 'Personal'];
+  const tabs: TabType[] = ['All', 'Professional', 'Personal'];
 
   return (
     <div className="min-h-screen bg-background">
@@ -66,7 +65,7 @@ export default function ProfilePostsPage() {
                             : 'bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground'
                     }`}
                 >
-                    {tab === 'Achievement' ? 'Achievements' : tab}
+                    {tab}
                 </button>
             ))}
           </div>

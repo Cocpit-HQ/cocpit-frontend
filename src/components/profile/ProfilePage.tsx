@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap, Settings, X, Trash2, Menu } from "lucide-react"
+import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap, Settings, X, Trash2, Menu, LogOut } from "lucide-react"
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import { AppShell } from "@/components/layout/AppShell"
@@ -31,6 +31,7 @@ import { SkillProofPill } from "@/components/profile/SkillProofPill";
 import { initialIdentity, initialExperiences, initialSkills } from "@/lib/data/profile";
 import { useFeed } from "@/context/FeedContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/use-auth";
 import { initialEducations } from "@/lib/data/profile";
 import FeedPost from "@/components/home/FeedPost";
 import PostCard from "./PostCard";
@@ -44,7 +45,6 @@ const routes: Record<string, string> = {
   settings: "/settings",
   jobs: "/jobs",
   analytics: "/analytics",
-  achievements: "/achievements",
 }
 
 function ExperienceItem({
@@ -122,6 +122,7 @@ export default function ProfilePage() {
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
   const { posts, deletePost, togglePostVisibility } = useFeed();
   const isMobile = useIsMobile();
+  const { logout } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -134,6 +135,11 @@ export default function ProfilePage() {
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
   }
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/"); // Redirect to sign-in page
+  };
 
   const handleSaveSkills = (newSkills: string[]) => {
     setSkills(newSkills);
@@ -219,6 +225,10 @@ export default function ProfilePage() {
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => router.push("/analytics")}>
                           Analytics
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={handleLogout}>
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Log out
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

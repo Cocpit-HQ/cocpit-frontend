@@ -14,10 +14,22 @@ import {
   ArrowLeft,
   Settings as SettingsIcon,
   Zap,
+  LogOut,
 } from "lucide-react"
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import { AppShell } from "@/components/layout/AppShell"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { useAuth } from "@/hooks/use-auth"
+import { useIsMobile } from "@/hooks/use-mobile"
 import type { Page, Theme } from "@/types/common"
 
 type SettingsSection = "appearance" | "notifications" | "privacy" | "account"
@@ -30,7 +42,6 @@ const routes: Record<string, string> = {
   settings: "/settings",
   jobs: "/jobs",
   analytics: "/analytics",
-  achievements: "/achievements",
 }
 
 function useSystemTheme() {
@@ -179,6 +190,9 @@ export default function SettingsPage() {
   const router = useRouter()
   const { theme, resolvedTheme, setTheme } = useTheme()
   const systemTheme = useSystemTheme()
+  const { logout } = useAuth()
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const isMobile = useIsMobile()
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
@@ -190,6 +204,11 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     setTheme(pendingTheme)
+  }
+
+  const handleLogout = async () => {
+    await logout()
+    router.push("/") // Redirect to sign-in page
   }
 
   return (
@@ -352,6 +371,23 @@ export default function SettingsPage() {
                     <AccountSetting label="Phone" value="+1 (555) 123-4567" />
                     <AccountSetting label="Password" value="••••••••" />
                     <AccountSetting label="Two-factor authentication" value="Disabled" />
+
+                    {!isMobile && (
+                      <div className="pt-4 border-t border-border">
+                        <p className="text-sm mb-1 text-muted-foreground">Session</p>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          End your current session on this device.
+                        </p>
+                        <Button
+                          variant="outline"
+                          className="text-primary border-primary/50 hover:bg-primary/10 hover:text-primary"
+                          onClick={() => setShowLogoutModal(true)}
+                        >
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Log out
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -365,6 +401,25 @@ export default function SettingsPage() {
           </div>
         </div>
       </AppShell>
+
+      <Dialog open={showLogoutModal} onOpenChange={setShowLogoutModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Log out?</DialogTitle>
+            <DialogDescription>
+              You will be redirected to the sign-in page.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowLogoutModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleLogout}>
+              Log out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
