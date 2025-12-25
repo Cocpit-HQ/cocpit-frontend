@@ -53,7 +53,7 @@ export function JobSearchBar({
   }
 
   return (
-    <div className="mb-6 md:mb-8">
+    <div className="hidden md:block mb-6 md:mb-8">
       {/* Desktop Search Bar */}
       <div className="hidden md:flex flex-col gap-4">
          <div className="bg-card border border-border rounded-2xl p-2 shadow-sm flex items-center gap-2">
