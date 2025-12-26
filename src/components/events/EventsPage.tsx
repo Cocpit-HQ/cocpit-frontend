@@ -241,7 +241,7 @@ export function EventsPage() {
                     title="Tech"
                     events={techEvents}
                     onEventClick={(id) => router.push(`/events/${id}`)}
-                    onViewAll={() => console.log("View all tech")}
+                    onViewAll={() => {}}
                 />
 
                 <EventSection

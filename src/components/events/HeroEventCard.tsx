@@ -6,9 +6,10 @@ interface HeroEventCardProps {
   event: EventCard
   onClick: () => void
   className?: string
+  isActive?: boolean
 }
 
-export function HeroEventCard({ event, onClick, className = "" }: HeroEventCardProps) {
+export function HeroEventCard({ event, onClick, className = "", isActive = true }: HeroEventCardProps) {
   // Format date nicely (e.g., "Dec 25")
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
@@ -18,7 +19,15 @@ export function HeroEventCard({ event, onClick, className = "" }: HeroEventCardP
   return (
     <div
       onClick={onClick}
-      className={`relative flex-shrink-0 w-[280px] md:w-[340px] h-[420px] md:h-[480px] rounded-2xl overflow-hidden cursor-pointer group hover:shadow-xl transition-all duration-300 ${className}`}
+      className={`
+        relative flex-shrink-0
+        w-full md:w-[340px]
+        h-[360px] md:h-[480px]
+        rounded-2xl overflow-hidden cursor-pointer group
+        transition-all duration-500 ease-out
+        ${isActive ? 'scale-100 md:scale-100 opacity-100 shadow-xl z-10' : 'scale-95 md:scale-100 opacity-70 z-0'}
+        ${className}
+      `}
     >
       {/* Background Image */}
       <img
