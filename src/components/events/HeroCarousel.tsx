@@ -9,62 +9,81 @@ interface HeroCarouselProps {
 }
 
 export function HeroCarousel({ events, onEventClick }: HeroCarouselProps) {
-  // Mobile: 1 slide, Desktop: auto width (will look like a strip if needed, but here we want hero feel)
-  // For "Suggested for You", we might want a single large card or a peekaboo effect.
-  // Let's stick to 'align: start' with some gap.
+  // --- Mobile Carousel Logic ---
   const [emblaRef, emblaApi] = useEmblaCarousel({
-    align: "start",
-    loop: true,
-    dragFree: false, // Snap to slide
+    align: "center",
+    loop: false,
+    containScroll: "trimSnaps",
+    skipSnaps: false,
   })
 
-  const [isPlaying, setIsPlaying] = useState(true)
+  const [selectedIndex, setSelectedIndex] = useState(0)
 
-  // Auto-scroll logic (Mobile mostly, but works everywhere)
-  const autoplay = useCallback(() => {
+  // Update selected index on scroll
+  const onSelect = useCallback(() => {
     if (!emblaApi) return
-    if (isPlaying) {
-      emblaApi.scrollNext()
-    }
-  }, [emblaApi, isPlaying])
+    setSelectedIndex(emblaApi.selectedScrollSnap())
+  }, [emblaApi])
 
   useEffect(() => {
     if (!emblaApi) return
-
-    // Check if mobile (simplistic check, can be improved with media query hook if needed)
-    // The requirement says "mobile view... automatically scrolled".
-    // We'll apply it generally for now, or we can check window width.
-    const interval = setInterval(autoplay, 3000) // 3 seconds per slide
-
-    // Pause on interaction
-    const onPointerDown = () => setIsPlaying(false)
-    const onPointerUp = () => setIsPlaying(true)
-
-    emblaApi.on("pointerDown", onPointerDown)
-    emblaApi.on("pointerUp", onPointerUp)
-
+    onSelect()
+    emblaApi.on("select", onSelect)
+    emblaApi.on("reInit", onSelect)
     return () => {
-      clearInterval(interval)
-      if (emblaApi) {
-        emblaApi.off("pointerDown", onPointerDown)
-        emblaApi.off("pointerUp", onPointerUp)
-      }
+      emblaApi.off("select", onSelect)
+      emblaApi.off("reInit", onSelect)
     }
-  }, [emblaApi, autoplay])
+  }, [emblaApi, onSelect])
+
+  // Handle click: Center if side card, Navigate if center card
+  const handleCardClick = useCallback((index: number, eventId: number) => {
+    if (!emblaApi) return
+
+    if (index === selectedIndex) {
+      // It's the center card -> Navigate
+      onEventClick(eventId)
+    } else {
+      // It's a side card -> Scroll to it
+      emblaApi.scrollTo(index)
+    }
+  }, [emblaApi, selectedIndex, onEventClick])
 
   return (
-    <div className="relative">
-      <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex touch-pan-y gap-4 md:gap-6 pl-4 md:pl-0 py-4">
-          {events.map((event) => (
-            <HeroEventCard
-              key={event.id}
-              event={event}
-              onClick={() => onEventClick(event.id)}
-            />
-          ))}
+    <>
+      {/* Mobile View: Centered Carousel with Peek & Two-Step Click */}
+      <div className="relative md:hidden -mx-4">
+        <div className="overflow-hidden px-4 py-8" ref={emblaRef}>
+          <div className="flex touch-pan-y gap-4">
+            {events.map((event, index) => (
+              <div
+                key={event.id}
+                className="flex-[0_0_75%] min-w-0 pl-2 first:pl-4 last:pr-4"
+              >
+                <HeroEventCard
+                  event={event}
+                  isActive={index === selectedIndex}
+                  onClick={() => handleCardClick(index, event.id)}
+                  className={index === selectedIndex ? 'shadow-2xl' : ''}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Desktop View: Standard Horizontal Row/Grid */}
+      <div className="hidden md:flex gap-6 overflow-x-auto pb-6 scrollbar-hide">
+        {events.map((event) => (
+          <HeroEventCard
+            key={event.id}
+            event={event}
+            onClick={() => onEventClick(event.id)}
+            isActive={true} // Always active on desktop
+            className="w-[340px]"
+          />
+        ))}
+      </div>
+    </>
   )
 }
