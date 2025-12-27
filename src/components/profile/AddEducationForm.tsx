@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { Education } from "@/types/entities"
+import { YearCombobox } from "@/components/ui/year-combobox"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface AddEducationFormProps {
   onCancel?: () => void
@@ -20,30 +22,34 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     school: "",
     degree: "",
     fieldOfStudy: "",
-    startDate: "",
-    endDate: "",
+    startYear: "",
+    endYear: "",
     description: "",
   })
+  const [stillStudying, setStillStudying] = useState(false)
 
   useEffect(() => {
     if (initialData) {
+      const [start, end] = initialData.duration.split(" - ")
       setFormData({
         school: initialData.school,
         degree: initialData.degree,
         fieldOfStudy: initialData.fieldOfStudy,
-        startDate: initialData.duration.split(" - ")[0],
-        endDate: initialData.duration.split(" - ")[1],
+        startYear: start,
+        endYear: end === "Present" ? "" : end,
         description: initialData.description,
       })
+      setStillStudying(end === "Present")
     } else {
       setFormData({
         school: "",
         degree: "",
         fieldOfStudy: "",
-        startDate: "",
-        endDate: "",
+        startYear: "",
+        endYear: "",
         description: "",
       })
+      setStillStudying(false)
     }
   }, [initialData])
 
@@ -51,10 +57,15 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     const { id, value } = e.target
     setFormData((prev) => ({ ...prev, [id]: value }))
   }
+  
+  const handleYearChange = (id: 'startYear' | 'endYear', value: string) => {
+    setFormData((prev) => ({ ...prev, [id]: value }))
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSave?.({ ...initialData, ...formData, duration: `${formData.startDate} - ${formData.endDate}` })
+    const duration = `${formData.startYear} - ${stillStudying ? "Present" : formData.endYear}`
+    onSave?.({ ...initialData, ...formData, duration })
   }
 
   const handleDelete = () => {
@@ -104,28 +115,41 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
 
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="startDate" className={labelStyles}>Start Date</Label>
-          <Input 
-            id="startDate" 
-            type="text"
-            value={formData.startDate} 
-            onChange={handleChange} 
-            className={inputStyles} 
-            placeholder="Ex: 2016"
+          <Label htmlFor="startYear" className={labelStyles}>Start Year</Label>
+          <YearCombobox 
+            value={formData.startYear}
+            onChange={(value) => handleYearChange('startYear', value)}
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="endDate" className={labelStyles}>End Date</Label>
-          <Input 
-            id="endDate" 
-            type="text"
-            value={formData.endDate} 
-            onChange={handleChange} 
-            className={inputStyles} 
-            placeholder="Ex: 2018"
+          <Label htmlFor="endYear" className={labelStyles}>End Year</Label>
+          <YearCombobox 
+            value={stillStudying ? 'Present' : formData.endYear}
+            onChange={(value) => handleYearChange('endYear', value)}
+            disabled={stillStudying}
           />
         </div>
       </div>
+
+      <div className="flex items-center space-x-2">
+        <Checkbox 
+          id="stillStudying"
+          checked={stillStudying}
+          onCheckedChange={(checked) => {
+            setStillStudying(checked as boolean);
+            if(checked) {
+              setFormData(prev => ({...prev, endYear: ''}));
+            }
+          }}
+        />
+        <label
+          htmlFor="stillStudying"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          I'm still studying
+        </label>
+      </div>
+
 
       <div className="grid gap-2">
         <Label htmlFor="description" className={labelStyles}>Description</Label>
