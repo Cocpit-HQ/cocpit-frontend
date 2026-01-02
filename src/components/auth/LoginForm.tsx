@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import styles from "./LoginForm.module.css";
+import { signIn } from "next-auth/react";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -15,14 +16,35 @@ const LoginForm = () => {
   const { toast } = useToast();
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Sign in attempted",
-      description: "Redirecting to your feed...",
-    });
-    // Redirect to feed page after sign in
-    router.push("/feed");
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        toast({
+          title: "Login failed",
+          description: result.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Sign in successful",
+          description: "Redirecting to your feed...",
+        });
+        router.push("/feed");
+      }
+    } catch (error) {
+      toast({
+        title: "Login error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
