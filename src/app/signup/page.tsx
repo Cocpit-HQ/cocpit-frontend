@@ -10,12 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
+import { registerUser } from "@/lib/api/auth";
+import { registrationSchema } from "@/lib/validators";
 
 export default function SignUp() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("");
+  const [accountType, setAccountType] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
@@ -56,7 +58,7 @@ export default function SignUp() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailVerified) {
       toast({
@@ -66,10 +68,49 @@ export default function SignUp() {
       });
       return;
     }
-    toast({
-      title: "Account Created!",
-      description: "Welcome to Cocpit! (Frontend demo)",
+
+    const result = registrationSchema.safeParse({
+      fullName,
+      email,
+      password,
+      accountType,
     });
+
+    if (!result.success) {
+      const error = result.error.flatten();
+      let errorMessage = "Please check your input.";
+      if (error.fieldErrors.fullName) {
+        errorMessage = error.fieldErrors.fullName[0];
+      } else if (error.fieldErrors.email) {
+        errorMessage = error.fieldErrors.email[0];
+      } else if (error.fieldErrors.password) {
+        errorMessage = error.fieldErrors.password[0];
+      } else if (error.fieldErrors.accountType) {
+        errorMessage = error.fieldErrors.accountType[0];
+      }
+      toast({
+        title: "Invalid Input",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await registerUser(result.data);
+      console.log("Registration successful", response);
+      toast({
+        title: "Account Created!",
+        description: "Welcome to Cocpit!",
+      });
+    } catch (error: any) {
+      console.error("Registration failed", error);
+      toast({
+        title: "Registration Failed",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -200,17 +241,18 @@ export default function SignUp() {
 
               {/* Role Selection */}
               <div className="space-y-2">
-                <Label htmlFor="role">I am a</Label>
-                <Select value={role} onValueChange={setRole} required>
+                <Label htmlFor="accountType">I am a</Label>
+                <Select value={accountType} onValueChange={setAccountType} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Select your role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="fresher">Fresher</SelectItem>
-                    <SelectItem value="employee">Employee</SelectItem>
-                    <SelectItem value="employer">Employer</SelectItem>
-                    <SelectItem value="freelancer">Freelancer</SelectItem>
-                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="Fresher">Fresher</SelectItem>
+                    <SelectItem value="Employee">Employee</SelectItem>
+                    <SelectItem value="Employer">Employer</SelectItem>
+                    <SelectItem value="Freelancer">Freelancer</SelectItem>
+                    <SelectItem value="Student">Student</SelectItem>
+                    <SelectItem value="Admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -219,7 +261,7 @@ export default function SignUp() {
               <Button
                 type="submit"
                 className="w-full mt-6"
-                disabled={!emailVerified || !fullName || !password || !role}
+                disabled={!emailVerified || !fullName || !password || !accountType}
               >
                 Create Account
               </Button>
