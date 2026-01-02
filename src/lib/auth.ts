@@ -1,5 +1,37 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { jwtDecode } from "jwt-decode";
+import { JWT } from "next-auth/jwt";
+
+async function refreshAccessToken(token: JWT): Promise<JWT> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token.refreshToken}`,
+      },
+    });
+
+    const refreshedTokens = await response.json();
+
+    if (!response.ok) {
+      throw refreshedTokens;
+    }
+
+    return {
+      ...token,
+      accessToken: refreshedTokens.accessToken,
+      refreshToken: refreshedTokens.refreshToken ?? token.refreshToken, // Fallback if API doesn't return new refresh token
+    };
+  } catch (error) {
+    console.error("RefreshAccessTokenError", error);
+
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    };
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -15,7 +47,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`, {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
             method: "POST",
             body: JSON.stringify({
               email: credentials.email,
@@ -33,7 +65,7 @@ export const authOptions: NextAuthOptions = {
           if (data?.accessToken && data?.user) {
             return {
               id: data.user.id,
-              name: data.user.email, // using email as name since name is not in the example response explicitly, but we can map it if available. Wait, example response has `user.email`. I'll just use email for name for now or leave it partial.
+              name: data.user.email,
               email: data.user.email,
               roles: data.user.roles,
               accessToken: data.accessToken,
@@ -51,20 +83,38 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
+      // Initial sign in
       if (user) {
-        token.id = user.id;
-        token.roles = user.roles;
-        token.accessToken = user.accessToken;
-        token.refreshToken = user.refreshToken;
+        return {
+          ...token,
+          id: user.id,
+          roles: user.roles,
+          accessToken: user.accessToken,
+          refreshToken: user.refreshToken,
+        };
       }
-      return token;
+
+      // Return previous token if the access token has not expired yet
+      try {
+        const decoded = jwtDecode<{ exp: number }>(token.accessToken);
+        if (decoded.exp && Date.now() < decoded.exp * 1000) {
+          return token;
+        }
+      } catch (error) {
+        console.error("Error decoding token:", error);
+        // If decoding fails, we assume it's invalid/expired and try to refresh
+      }
+
+      // Access token has expired, try to update it
+      return refreshAccessToken(token);
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (token) {
         session.user.id = token.id;
         session.user.roles = token.roles;
         session.user.accessToken = token.accessToken;
-        session.user.refreshToken = token.refreshToken;
+        session.user.error = token.error;
+        // refreshToken is deliberately excluded from the session
       }
       return session;
     },
