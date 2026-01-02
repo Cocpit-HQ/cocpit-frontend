@@ -5,6 +5,7 @@
 
 import { apiClient, type ApiResponse } from "../client";
 import { API_ENDPOINTS } from "../endpoints";
+import { logout as nextAuthLogout } from "../../logout";
 
 export interface LoginRequest {
   email: string;
@@ -33,8 +34,8 @@ export const authService = {
     return apiClient.post(API_ENDPOINTS.AUTH.SIGNUP, data);
   },
 
-  logout: async (): Promise<ApiResponse<void>> => {
-    return apiClient.post(API_ENDPOINTS.AUTH.LOGOUT);
+  logout: async (): Promise<void> => {
+    await nextAuthLogout();
   },
 
   refreshToken: async (refreshToken: string): Promise<ApiResponse<AuthResponse>> => {

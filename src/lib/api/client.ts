@@ -6,6 +6,7 @@
 import axios, { AxiosInstance, AxiosError } from "axios";
 import { API_CONFIG } from "@/config/site.config";
 import type { ApiResponse, ApiError } from "./api.types";
+import { getSession } from "next-auth/react"; // Import getSession
 
 export type { ApiResponse, ApiError };
 
@@ -20,6 +21,20 @@ class ApiClient {
         "Content-Type": "application/json",
       },
     });
+
+    // Add request interceptor to attach access token
+    this.client.interceptors.request.use(
+      async (config) => {
+        const session = await getSession();
+        if (session?.user?.accessToken) {
+          config.headers.Authorization = `Bearer ${session.user.accessToken}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
 
     // Add response interceptor for error handling
     this.client.interceptors.response.use(

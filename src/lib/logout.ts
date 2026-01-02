@@ -4,7 +4,7 @@ export const logout = async () => {
   try {
     const session = await getSession();
     if (session?.user?.accessToken) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${session.user.accessToken}`
@@ -14,6 +14,6 @@ export const logout = async () => {
   } catch (error) {
     console.error("Logout error", error);
   } finally {
-    await signOut({ callbackUrl: "/login" });
+    await signOut({ callbackUrl: "/" });
   }
 };

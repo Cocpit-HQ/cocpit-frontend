@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { registrationSchema } from '@/lib/validators';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const registerUser = async (userData: z.infer<typeof registrationSchema>) => {
   const response = await fetch(`${API_BASE_URL}/auth/register`, {
