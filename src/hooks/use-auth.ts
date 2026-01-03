@@ -6,121 +6,70 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { authService, type LoginRequest, type SignupRequest } from "@/lib/api/services/auth.service";
+import { login, logout, register } from "@/services/api/auth";
 import { useToast } from "@/hooks/use-toast";
-import type { User } from "@/types/entities";
-
-interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-}
-
-const initialState: AuthState = {
-  user: null,
-  isAuthenticated: false,
-  isLoading: false,
-  error: null,
-};
+import { useSession } from "next-auth/react";
 
 export function useAuth() {
-  const [state, setState] = useState<AuthState>(initialState);
+  const { data: session, status } = useSession();
   const { toast } = useToast();
 
-  const login = useCallback(async (data: LoginRequest) => {
-    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+  const handleLogin = useCallback(async (data: Record<string, string>) => {
     try {
-      const response = await authService.login(data);
-      const payload = response.data;
-      if (response.success && payload) {
-        setState((prev) => ({
-          ...prev,
-          user: payload.user,
-          isAuthenticated: true,
-          isLoading: false,
-        }));
-        // Store token
-        if (payload.token) localStorage.setItem("authToken", payload.token);
-        toast({
-          title: "Success",
-          description: "Logged in successfully",
-        });
-      }
+      await login(data);
+      toast({
+        title: "Success",
+        description: "Logged in successfully",
+      });
     } catch (error: any) {
-      const errorMessage = error?.error?.message || "Login failed";
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: errorMessage,
-      }));
       toast({
         title: "Error",
-        description: errorMessage,
+        description: error.message || "Login failed",
         variant: "destructive",
       });
+      throw error;
     }
   }, [toast]);
 
-  const signup = useCallback(async (data: SignupRequest) => {
-    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+  const handleSignup = useCallback(async (data: any) => {
     try {
-      const response = await authService.signup(data);
-      const payload = response.data;
-      if (response.success && payload) {
-        setState((prev) => ({
-          ...prev,
-          user: payload.user,
-          isAuthenticated: true,
-          isLoading: false,
-        }));
-        if (payload.token) localStorage.setItem("authToken", payload.token);
-        toast({
-          title: "Success",
-          description: "Account created successfully",
-        });
-      }
+      await register(data);
+      toast({
+        title: "Success",
+        description: "Account created successfully",
+      });
     } catch (error: any) {
-      const errorMessage = error?.error?.message || "Signup failed";
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: errorMessage,
-      }));
       toast({
         title: "Error",
-        description: errorMessage,
+        description: error.message || "Signup failed",
         variant: "destructive",
       });
+      throw error;
     }
   }, [toast]);
 
-  const logout = useCallback(async () => {
-    setState((prev) => ({ ...prev, isLoading: true }));
+  const handleLogout = useCallback(async () => {
     try {
-      await authService.logout();
-      setState(initialState);
-      localStorage.removeItem("authToken");
+      await logout();
       toast({
         title: "Success",
         description: "Logged out successfully",
       });
     } catch (error: any) {
-      const errorMessage = error?.error?.message || "Logout failed";
       toast({
         title: "Error",
-        description: errorMessage,
+        description: "Logout failed",
         variant: "destructive",
       });
-    } finally {
-      setState((prev) => ({ ...prev, isLoading: false }));
     }
   }, [toast]);
 
   return {
-    ...state,
-    login,
-    signup,
-    logout,
+    user: session?.user ?? null,
+    isAuthenticated: status === "authenticated",
+    isLoading: status === "loading",
+    login: handleLogin,
+    signup: handleSignup,
+    logout: handleLogout,
   };
 }
