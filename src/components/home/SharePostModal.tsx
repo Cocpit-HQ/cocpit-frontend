@@ -20,8 +20,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { mockChats, avatarGradients } from "@/data/mockMessaging"
-import { sharePost } from "@/lib/api/mockShare"
+import { mockChats, avatarGradients } from "@/services/mock/messaging.mock"
+import { sharePost } from "@/services/api/share"
 
 interface SharePostModalProps {
   isOpen: boolean

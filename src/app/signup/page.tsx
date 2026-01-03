@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { registerUser } from "@/lib/api/auth";
+import { register } from "@/services/api/auth";
 import { registrationSchema } from "@/lib/validators";
 
 export default function SignUp() {
@@ -97,7 +97,7 @@ export default function SignUp() {
     }
 
     try {
-      const response = await registerUser(result.data);
+      const response = await register(result.data);
       console.log("Registration successful", response);
       toast({
         title: "Account Created!",

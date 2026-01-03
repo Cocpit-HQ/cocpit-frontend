@@ -2,6 +2,15 @@ import axios from "axios";
 import { getSession } from "next-auth/react";
 import { logout } from "@/lib/logout";
 
+// Public API client (No Auth)
+export const publicApi = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Authenticated API client
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: {

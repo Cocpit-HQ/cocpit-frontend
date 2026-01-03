@@ -6,7 +6,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { ApiResponse } from "@/lib/api/client";
+
+// Mocking ApiResponse for now, or you can import from a central types file
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: { message: string };
+}
 
 interface UseFetchState<T> {
   data: T | null;
