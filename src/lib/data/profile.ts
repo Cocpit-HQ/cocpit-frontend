@@ -1,5 +1,5 @@
-import { ExtendedExperience, ProfileIdentity, ProfileInsights } from "@/types/profile";
-import { Education } from "@/types/entities";
+import { ProfileIdentity, ProfileInsights } from "@/types/profile";
+import { Education, Experience } from "@/types/entities";
 
 export const initialIdentity: ProfileIdentity = {
   openTo: "Full-time",
@@ -29,34 +29,40 @@ export const initialSkills = [
   "Jira",
 ];
 
-export const initialExperiences: ExtendedExperience[] = [
+export const initialExperiences: Experience[] = [
   {
-    id: 1,
+    experience_id: "1",
+    profile_id: "1",
     title: "Senior Product Manager",
-    company: "TechCorp Inc.",
-    duration: "2021 - Present",
+    company_name: "TechCorp Inc.",
+    start_date: "2021-01-01",
+    end_date: null,
+    employment_type: "Full-time",
     location: "San Francisco, CA",
     description: "Leading product strategy and roadmap for core platform features. Managing cross-functional teams and driving product vision.",
-    skills: ["Product Strategy", "Product Roadmapping", "Stakeholder Management", "Agile Development"],
   },
   {
-    id: 2,
+    experience_id: "2",
+    profile_id: "1",
     title: "Product Manager",
-    company: "StartupXYZ",
-    duration: "2018 - 2021",
+    company_name: "StartupXYZ",
+    start_date: "2018-01-01",
+    end_date: "2021-01-01",
+    employment_type: "Full-time",
     location: "San Francisco, CA",
     description: "Launched 10+ features from concept to market. Collaborated with engineering and design teams to deliver user-centric solutions.",
-    skills: ["User Research", "UX Design", "A/B Testing", "Figma"],
   },
 ];
 
 export const initialEducations: Education[] = [
   {
-    id: 1,
-    school: "Stanford University",
+    education_id: "1",
+    profile_id: "1",
+    school_name: "Stanford University",
     degree: "MBA",
-    fieldOfStudy: "Business Administration",
-    duration: "2016 - 2018",
+    field_of_study: "Business Administration",
+    start_date: "2016-01-01",
+    end_date: "2018-01-01",
     description: "Focus on Product Management and Entrepreneurship",
   }
 ];

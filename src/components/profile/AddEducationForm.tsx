@@ -6,47 +6,46 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { Education } from "@/types/entities"
-import { YearCombobox } from "@/components/ui/year-combobox"
 import { Checkbox } from "@/components/ui/checkbox"
+import dayjs from "dayjs"
 
 interface AddEducationFormProps {
   onCancel?: () => void
   onSave?: (data: Partial<Education>) => void
-  onDelete?: (id: number) => void
+  onDelete?: (id: string) => void
   isDark?: boolean // Optional
   initialData?: Education | null
 }
 
 export default function AddEducationForm({ onCancel, onSave, onDelete, initialData }: AddEducationFormProps) {
   const [formData, setFormData] = useState({
-    school: "",
+    school_name: "",
     degree: "",
-    fieldOfStudy: "",
-    startYear: "",
-    endYear: "",
+    field_of_study: "",
+    start_date: "",
+    end_date: "",
     description: "",
   })
   const [stillStudying, setStillStudying] = useState(false)
 
   useEffect(() => {
     if (initialData) {
-      const [start, end] = initialData.duration.split(" - ")
       setFormData({
-        school: initialData.school,
+        school_name: initialData.school_name,
         degree: initialData.degree,
-        fieldOfStudy: initialData.fieldOfStudy,
-        startYear: start,
-        endYear: end === "Present" ? "" : end,
-        description: initialData.description,
+        field_of_study: initialData.field_of_study,
+        start_date: dayjs(initialData.start_date).format("YYYY-MM-DD"),
+        end_date: initialData.end_date ? dayjs(initialData.end_date).format("YYYY-MM-DD") : "",
+        description: initialData.description ?? "",
       })
-      setStillStudying(end === "Present")
+      setStillStudying(!initialData.end_date)
     } else {
       setFormData({
-        school: "",
+        school_name: "",
         degree: "",
-        fieldOfStudy: "",
-        startYear: "",
-        endYear: "",
+        field_of_study: "",
+        start_date: "",
+        end_date: "",
         description: "",
       })
       setStillStudying(false)
@@ -57,20 +56,15 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     const { id, value } = e.target
     setFormData((prev) => ({ ...prev, [id]: value }))
   }
-  
-  const handleYearChange = (id: 'startYear' | 'endYear', value: string) => {
-    setFormData((prev) => ({ ...prev, [id]: value }))
-  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const duration = `${formData.startYear} - ${stillStudying ? "Present" : formData.endYear}`
-    onSave?.({ ...initialData, ...formData, duration })
+    onSave?.({ ...initialData, ...formData, end_date: stillStudying ? null : formData.end_date })
   }
 
   const handleDelete = () => {
-    if (initialData?.id) {
-      onDelete?.(initialData.id)
+    if (initialData?.education_id) {
+      onDelete?.(initialData.education_id)
     }
   }
 
@@ -81,10 +75,10 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-2">
-        <Label htmlFor="school" className={labelStyles}>School</Label>
+        <Label htmlFor="school_name" className={labelStyles}>School</Label>
         <Input 
-          id="school" 
-          value={formData.school} 
+          id="school_name" 
+          value={formData.school_name} 
           onChange={handleChange} 
           className={inputStyles} 
           placeholder="Ex: Stanford University"
@@ -103,10 +97,10 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="fieldOfStudy" className={labelStyles}>Field of Study</Label>
+        <Label htmlFor="field_of_study" className={labelStyles}>Field of Study</Label>
         <Input 
-          id="fieldOfStudy" 
-          value={formData.fieldOfStudy} 
+          id="field_of_study" 
+          value={formData.field_of_study} 
           onChange={handleChange} 
           className={inputStyles} 
           placeholder="Ex: Business Administration"
@@ -115,17 +109,23 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
 
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="startYear" className={labelStyles}>Start Year</Label>
-          <YearCombobox 
-            value={formData.startYear}
-            onChange={(value) => handleYearChange('startYear', value)}
+          <Label htmlFor="start_date" className={labelStyles}>Start Date</Label>
+          <Input 
+            id="start_date"
+            type="date"
+            value={formData.start_date}
+            onChange={handleChange}
+            className={inputStyles}
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="endYear" className={labelStyles}>End Year</Label>
-          <YearCombobox 
-            value={stillStudying ? 'Present' : formData.endYear}
-            onChange={(value) => handleYearChange('endYear', value)}
+          <Label htmlFor="end_date" className={labelStyles}>End Date</Label>
+          <Input 
+            id="end_date"
+            type="date"
+            value={formData.end_date ?? ""}
+            onChange={handleChange}
+            className={inputStyles}
             disabled={stillStudying}
           />
         </div>
@@ -138,7 +138,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
           onCheckedChange={(checked) => {
             setStillStudying(checked as boolean);
             if(checked) {
-              setFormData(prev => ({...prev, endYear: ''}));
+              setFormData(prev => ({...prev, end_date: ''}));
             }
           }}
         />

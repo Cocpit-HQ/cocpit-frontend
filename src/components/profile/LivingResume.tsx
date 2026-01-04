@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Download, FileText, BarChart2, Upload, File, X, RefreshCw } from "lucide-react";
-import { ExtendedExperience } from "@/types/profile";
+import { Experience } from "@/types/entities";
 import { getResumeOverview } from "./ResumeOverview";
 import { ResumeMetrics } from "./ResumeMetrics";
 import {
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 
 interface LivingResumeProps {
-  experiences: ExtendedExperience[];
+  experiences: Experience[];
   skills: string[];
 }
 

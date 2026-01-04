@@ -2,8 +2,7 @@
 
 import React from "react";
 import { Briefcase, MessageSquare, CheckCircle2, X } from "lucide-react";
-import { ExtendedExperience } from "@/types/profile";
-import { Post } from "@/types/entities";
+import { Experience, Post } from "@/types/entities";
 import {
   Tooltip,
   TooltipContent,
@@ -13,25 +12,20 @@ import {
 
 interface SkillProofPillProps {
   skill: string;
-  experiences: ExtendedExperience[];
+  experiences: Experience[];
   posts: Post[];
   onDelete?: (skill: string) => void;
   readOnly?: boolean;
 }
 
 export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly = false }: SkillProofPillProps) {
-  // Logic: Check if skill is used in experience (mocked via skills array in experience)
-  const usedInExperience = experiences.filter((exp) =>
-    exp.skills && exp.skills.includes(skill)
-  );
-
   // Logic: Check if skill is mentioned in posts (case insensitive search in content or title)
   const mentionedInPosts = posts.filter((post) =>
     (post.content && post.content.toLowerCase().includes(skill.toLowerCase())) ||
     (post.title && post.title.toLowerCase().includes(skill.toLowerCase()))
   );
 
-  const hasProof = usedInExperience.length > 0 || mentionedInPosts.length > 0;
+  const hasProof = mentionedInPosts.length > 0;
 
   return (
     <TooltipProvider>
@@ -46,9 +40,6 @@ export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly =
 
             {hasProof && (
               <div className="flex items-center gap-1 pl-1 border-l border-primary/20">
-                 {usedInExperience.length > 0 && (
-                    <Briefcase className="w-3 h-3 text-primary opacity-80" />
-                 )}
                  {mentionedInPosts.length > 0 && (
                     <MessageSquare className="w-3 h-3 text-primary opacity-80" />
                  )}
@@ -71,19 +62,6 @@ export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly =
         <TooltipContent className="max-w-xs p-3 bg-popover border-border text-popover-foreground">
           <div className="space-y-2">
             <p className="font-semibold text-sm">{skill}</p>
-
-            {usedInExperience.length > 0 && (
-                <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                        <Briefcase className="w-3 h-3" /> Used in Experience:
-                    </p>
-                    <ul className="text-xs list-disc list-inside text-foreground">
-                        {usedInExperience.map(exp => (
-                            <li key={exp.id} className="truncate">{exp.title} at {exp.company}</li>
-                        ))}
-                    </ul>
-                </div>
-            )}
 
             {mentionedInPosts.length > 0 && (
                 <div>

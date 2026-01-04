@@ -1,26 +1,23 @@
 import React from "react";
 import { Briefcase, Wrench, Layers } from "lucide-react";
-import { ExtendedExperience } from "@/types/profile";
+import { Experience } from "@/types/entities";
 
 interface ResumeMetricsProps {
-  experiences: ExtendedExperience[];
+  experiences: Experience[];
   skills: string[];
 }
 
 export function ResumeMetrics({ experiences, skills }: ResumeMetricsProps) {
   // Calculate unique domains based on company names or description keywords (Mock logic)
-  const domains = new Set(experiences.map(e => e.company)).size + 2; // +2 for implied domains
+  const domains = new Set(experiences.map(e => e.company_name)).size + 2; // +2 for implied domains
   const toolsCount = skills.length;
 
   // Calculate total years roughly
   let totalYears = 0;
   experiences.forEach((exp) => {
-    const years = exp.duration.match(/\d{4}/g);
-    if (years) {
-      const start = parseInt(years[0]);
-      const end = years[1] ? parseInt(years[1]) : new Date().getFullYear();
-      totalYears += end - start;
-    }
+    const start = new Date(exp.start_date).getFullYear();
+    const end = exp.end_date ? new Date(exp.end_date).getFullYear() : new Date().getFullYear();
+    totalYears += end - start;
   });
   if (totalYears === 0) totalYears = 7; // Fallback to match persona
 

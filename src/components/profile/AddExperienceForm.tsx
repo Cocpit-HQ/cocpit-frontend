@@ -12,7 +12,7 @@ import dayjs from "dayjs"
 interface AddExperienceFormProps {
   onCancel?: () => void
   onSave?: (data: Partial<Experience>) => void
-  onDelete?: (id: number) => void
+  onDelete?: (id: string) => void
   isDark?: boolean // Optional
   initialData?: Experience | null
 }
@@ -20,10 +20,10 @@ interface AddExperienceFormProps {
 export default function AddExperienceForm({ onCancel, onSave, onDelete, initialData }: AddExperienceFormProps) {
   const [formData, setFormData] = useState({
     title: "",
-    company: "",
+    company_name: "",
     location: "",
-    startDate: "",
-    endDate: "",
+    start_date: "",
+    end_date: "",
     description: "",
   })
   const [currentlyWorking, setCurrentlyWorking] = useState(false)
@@ -31,16 +31,15 @@ export default function AddExperienceForm({ onCancel, onSave, onDelete, initialD
 
   useEffect(() => {
     if (initialData) {
-			const [start, end] = initialData.duration.split(' - ');
       setFormData({
         title: initialData.title,
-        company: initialData.company,
+        company_name: initialData.company_name,
         location: initialData.location,
-        startDate: dayjs(start, "MMM YYYY").format("YYYY-MM-DD"),
-        endDate: end === "Present" ? "" : dayjs(end, "MMM YYYY").format("YYYY-MM-DD"),
-        description: initialData.description,
+        start_date: dayjs(initialData.start_date).format("YYYY-MM-DD"),
+        end_date: initialData.end_date ? dayjs(initialData.end_date).format("YYYY-MM-DD") : "",
+        description: initialData.description ?? "",
       })
-      if (end === "Present") {
+      if (!initialData.end_date) {
         setCurrentlyWorking(true)
       } else {
         setCurrentlyWorking(false)
@@ -48,10 +47,10 @@ export default function AddExperienceForm({ onCancel, onSave, onDelete, initialD
     } else {
       setFormData({
         title: "",
-        company: "",
+        company_name: "",
         location: "",
-        startDate: "",
-        endDate: "",
+        start_date: "",
+        end_date: "",
         description: "",
       })
       setCurrentlyWorking(false)
@@ -65,13 +64,12 @@ export default function AddExperienceForm({ onCancel, onSave, onDelete, initialD
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-		const duration = `${dayjs(formData.startDate).format("MMM YYYY")} - ${currentlyWorking ? "Present" : dayjs(formData.endDate).format("MMM YYYY")}`;
-    onSave?.({ ...initialData, ...formData, duration })
+    onSave?.({ ...initialData, ...formData, end_date: currentlyWorking ? null : formData.end_date })
   }
 
   const handleDelete = () => {
-    if (initialData?.id) {
-      onDelete?.(initialData.id)
+    if (initialData?.experience_id) {
+      onDelete?.(initialData.experience_id)
     }
   }
 
@@ -93,10 +91,10 @@ export default function AddExperienceForm({ onCancel, onSave, onDelete, initialD
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="company" className={labelStyles}>Company</Label>
+        <Label htmlFor="company_name" className={labelStyles}>Company</Label>
         <Input 
-          id="company" 
-          value={formData.company} 
+          id="company_name" 
+          value={formData.company_name} 
           onChange={handleChange} 
           className={inputStyles} 
           placeholder="Ex: Microsoft"
@@ -105,21 +103,21 @@ export default function AddExperienceForm({ onCancel, onSave, onDelete, initialD
 
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="startDate" className={labelStyles}>Start Date</Label>
+          <Label htmlFor="start_date" className={labelStyles}>Start Date</Label>
           <Input 
-            id="startDate"
+            id="start_date"
             type="date"
-            value={formData.startDate}
+            value={formData.start_date}
             onChange={handleChange}
             className={inputStyles}
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="endDate" className={labelStyles}>End Date</Label>
+          <Label htmlFor="end_date" className={labelStyles}>End Date</Label>
           <Input 
-            id="endDate"
+            id="end_date"
             type="date"
-            value={formData.endDate}
+            value={formData.end_date}
             onChange={handleChange}
             className={inputStyles}
             disabled={currentlyWorking}
@@ -133,7 +131,7 @@ export default function AddExperienceForm({ onCancel, onSave, onDelete, initialD
           onCheckedChange={(checked) => {
             setCurrentlyWorking(checked as boolean);
             if(checked) {
-              setFormData(prev => ({...prev, endDate: ''}));
+              setFormData(prev => ({...prev, end_date: ''}));
             }
           }}
         />

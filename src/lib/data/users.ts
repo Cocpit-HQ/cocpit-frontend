@@ -26,31 +26,37 @@ export const users: User[] = [
     skills: ["React", "TypeScript", "Tailwind CSS", "Next.js", "Node.js", "Product Strategy"],
     experiences: [
       {
-        id: 101,
+        experience_id: "101",
+        profile_id: "michael-chen",
         title: "Senior Frontend Engineer",
-        company: "TechCorp",
+        company_name: "TechCorp",
         location: "San Francisco, CA",
-        duration: "2021 - Present",
+        start_date: "2021-01-01",
+        end_date: null,
+        employment_type: "Full-time",
         description: "Leading the frontend team in rebuilding the core product dashboard using Next.js and Tailwind.",
-        skills: ["React", "TypeScript"]
       },
       {
-        id: 102,
+        experience_id: "102",
+        profile_id: "michael-chen",
         title: "Frontend Developer",
-        company: "StartUp Inc",
+        company_name: "StartUp Inc",
         location: "Remote",
-        duration: "2018 - 2021",
+        start_date: "2018-01-01",
+        end_date: "2021-01-01",
+        employment_type: "Full-time",
         description: "Built and maintained multiple client-facing applications.",
-        skills: ["React", "JavaScript"]
       }
     ],
     educations: [
       {
-        id: 201,
-        school: "University of California, Berkeley",
+        education_id: "201",
+        profile_id: "michael-chen",
+        school_name: "University of California, Berkeley",
         degree: "Bachelor of Science",
-        fieldOfStudy: "Computer Science",
-        duration: "2014 - 2018",
+        field_of_study: "Computer Science",
+        start_date: "2014-01-01",
+        end_date: "2018-01-01",
         description: "Graduated with Honors."
       }
     ],
@@ -67,13 +73,15 @@ export const users: User[] = [
     skills: ["Figma", "User Research", "Prototyping", "UI Design", "Adobe Creative Suite"],
     experiences: [
       {
-        id: 301,
+        experience_id: "301",
+        profile_id: "sarah-chen",
         title: "UX Designer",
-        company: "Design Studio",
+        company_name: "Design Studio",
         location: "New York, NY",
-        duration: "2020 - Present",
+        start_date: "2020-01-01",
+        end_date: null,
+        employment_type: "Full-time",
         description: "Designing intuitive interfaces for enterprise clients.",
-        skills: ["Figma", "UI Design"]
       }
     ],
     educations: [],

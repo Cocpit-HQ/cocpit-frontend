@@ -14,22 +14,26 @@ export interface User {
 }
 
 export interface Experience {
-  id: number;
-  title: string;
-  company: string;
-  duration: string;
-  location:string;
-  description: string;
-  skills?: string[];
+    experience_id: string;
+    profile_id: string;
+    title: string;
+    company_name: string;
+    start_date: string;
+    end_date: string | null;
+    employment_type: string;
+    location: string;
+    description: string | null;
 }
 
 export interface Education {
-  id: number;
-  school: string;
-  degree: string;
-  fieldOfStudy: string;
-  duration: string;
-  description: string;
+    education_id: string;
+    profile_id: string;
+    school_name: string;
+    degree: string;
+    field_of_study: string;
+    start_date: string;
+    end_date: string | null;
+    description: string | null;
 }
 
 export interface Comment {

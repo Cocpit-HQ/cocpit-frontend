@@ -13,6 +13,4 @@ export interface ProfileInsights {
   profileStrength: number;
 }
 
-export interface ExtendedExperience extends Experience {
-  skills: string[];
-}
+
