@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Image, Video, FileText, BarChart3 } from 'lucide-react'
 import { useActionModal } from '@/context/ActionModalContext'
-
-type PostType = 'text' | 'photo' | 'video' | 'poll';
+import { PostType } from './CreatePostModal'
 
 interface CreatePostProps {
   onOpenModal: (type?: PostType) => void
@@ -57,7 +56,7 @@ export function CreatePost({ onOpenModal }: CreatePostProps) {
         <PostButton
           icon={<FileText className="w-5 h-5 text-orange-600" />}
           label="Article"
-          onClick={() => onOpenModal('text')}
+          onClick={() => onOpenModal('article')}
         />
         <PostButton
           icon={<BarChart3 className="w-5 h-5 text-purple-600" />}
