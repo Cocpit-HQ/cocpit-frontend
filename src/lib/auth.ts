@@ -13,8 +13,6 @@ function getCookieValue(cookieHeader: string | string[] | undefined | null, key:
   const cookies = Array.isArray(cookieHeader) ? cookieHeader : [cookieHeader];
 
   for (const cookie of cookies) {
-    // Each cookie string looks like "key=value; Path=/; ..."
-    // We split by ';' to get parts, then look for the part starting with key=
     const parts = cookie.split(';');
     for (const part of parts) {
       const trimmed = part.trim();
@@ -27,15 +25,19 @@ function getCookieValue(cookieHeader: string | string[] | undefined | null, key:
 }
 
 async function refreshAccessToken(token: JWT): Promise<JWT> {
+  console.log("Attempting to refresh access token with token:", token);
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
       method: "POST",
       headers: {
-        "Cookie": `refreshToken=${token.refreshToken}`,
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({ refreshToken: token.refreshToken }),
     });
+    console.log("Refresh API response status:", response.status);
 
     const text = await response.text();
+    console.log("Refresh API response text:", text);
     let refreshedTokens;
     try {
       refreshedTokens = JSON.parse(text);
@@ -56,17 +58,24 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     const setCookieHeader = typeof response.headers.getSetCookie === 'function'
       ? response.headers.getSetCookie()
       : response.headers.get("set-cookie");
+    console.log("Refresh API response 'set-cookie' header:", setCookieHeader);
+
 
     const rotatedRefreshToken = getCookieValue(setCookieHeader, "refreshToken");
     if (rotatedRefreshToken) {
+      console.log("Extracted new rotated refresh token.");
       newRefreshToken = rotatedRefreshToken;
+    } else {
+      console.log("No new rotated refresh token found in 'set-cookie' header.");
     }
 
-    return {
+    const newTokens = {
       ...token,
       accessToken: refreshedTokens.accessToken,
       refreshToken: newRefreshToken,
     };
+    console.log("Successfully refreshed tokens:", newTokens);
+    return newTokens;
   } catch (error) {
     console.error("RefreshAccessTokenError", error);
 
@@ -86,7 +95,9 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        console.log("Authorize function called with credentials:", credentials?.email);
         if (!credentials?.email || !credentials?.password) {
+          console.error("Credentials missing email or password.");
           throw new Error("Email and password are required");
         }
 
@@ -99,10 +110,13 @@ export const authOptions: NextAuthOptions = {
             }),
             headers: { "Content-Type": "application/json" },
           });
+          console.log("Login API response status:", res.status);
 
           const data = await res.json();
+          console.log("Login API response data:", data);
 
           if (!res.ok) {
+            console.error("Login API request failed with status:", res.status, "and data:", data);
             throw new Error(data?.message || "Authentication failed");
           }
 
@@ -111,10 +125,12 @@ export const authOptions: NextAuthOptions = {
              const setCookieHeader = typeof res.headers.getSetCookie === 'function'
               ? res.headers.getSetCookie()
               : res.headers.get("set-cookie");
+            console.log("Login API 'set-cookie' header:", setCookieHeader);
 
             const refreshToken = getCookieValue(setCookieHeader, "refreshToken");
+            console.log("Extracted refreshToken from login response:", refreshToken ? "found" : "not found");
 
-            return {
+            const userPayload = {
               id: data.user.id,
               name: data.user.email,
               email: data.user.email,
@@ -122,11 +138,14 @@ export const authOptions: NextAuthOptions = {
               accessToken: data.accessToken,
               refreshToken: refreshToken || "", // Fallback to empty string if missing (should fail later)
             };
+            console.log("Authorize function returning user payload:", userPayload);
+            return userPayload;
           }
 
+          console.log("Authorize function returning null as no accessToken or user in response.");
           return null;
         } catch (error: any) {
-          console.error("Login error:", error);
+          console.error("Login error in authorize function:", error);
           throw new Error(error.message || "Authentication failed");
         }
       },
