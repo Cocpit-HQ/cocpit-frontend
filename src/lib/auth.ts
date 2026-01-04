@@ -3,25 +3,69 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { jwtDecode } from "jwt-decode";
 import { JWT } from "next-auth/jwt";
 
+/**
+ * Helper to extract a specific cookie value from a Set-Cookie header.
+ * Handles both string (single cookie) and array (multiple cookies) formats.
+ */
+function getCookieValue(cookieHeader: string | string[] | undefined | null, key: string): string | null {
+  if (!cookieHeader) return null;
+
+  const cookies = Array.isArray(cookieHeader) ? cookieHeader : [cookieHeader];
+
+  for (const cookie of cookies) {
+    // Each cookie string looks like "key=value; Path=/; ..."
+    // We split by ';' to get parts, then look for the part starting with key=
+    const parts = cookie.split(';');
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (trimmed.startsWith(`${key}=`)) {
+        return trimmed.substring(key.length + 1);
+      }
+    }
+  }
+  return null;
+}
+
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${token.refreshToken}`,
+        "Cookie": `refreshToken=${token.refreshToken}`,
       },
     });
 
-    const refreshedTokens = await response.json();
+    const text = await response.text();
+    let refreshedTokens;
+    try {
+      refreshedTokens = JSON.parse(text);
+    } catch (e) {
+      console.error("Failed to parse refresh response", text);
+      throw new Error(`Invalid JSON response: ${text}`);
+    }
 
     if (!response.ok) {
+      console.error(`Refresh failed with status ${response.status}:`, refreshedTokens);
       throw refreshedTokens;
+    }
+
+    // Handle Token Rotation: Check if backend sent a new refresh token cookie
+    // Note: fetch in Node (via Next.js) might put headers in a Headers object.
+    // We try getSetCookie() if available (Node 18+ / Next 13+), else get("set-cookie")
+    let newRefreshToken = token.refreshToken;
+    const setCookieHeader = typeof response.headers.getSetCookie === 'function'
+      ? response.headers.getSetCookie()
+      : response.headers.get("set-cookie");
+
+    const rotatedRefreshToken = getCookieValue(setCookieHeader, "refreshToken");
+    if (rotatedRefreshToken) {
+      newRefreshToken = rotatedRefreshToken;
     }
 
     return {
       ...token,
       accessToken: refreshedTokens.accessToken,
-      refreshToken: refreshedTokens.refreshToken ?? token.refreshToken, // Fallback if API doesn't return new refresh token
+      refreshToken: newRefreshToken,
     };
   } catch (error) {
     console.error("RefreshAccessTokenError", error);
@@ -63,13 +107,20 @@ export const authOptions: NextAuthOptions = {
           }
 
           if (data?.accessToken && data?.user) {
+            // Extract refreshToken from Set-Cookie header
+             const setCookieHeader = typeof res.headers.getSetCookie === 'function'
+              ? res.headers.getSetCookie()
+              : res.headers.get("set-cookie");
+
+            const refreshToken = getCookieValue(setCookieHeader, "refreshToken");
+
             return {
               id: data.user.id,
               name: data.user.email,
               email: data.user.email,
               roles: data.user.roles,
               accessToken: data.accessToken,
-              refreshToken: data.refreshToken,
+              refreshToken: refreshToken || "", // Fallback to empty string if missing (should fail later)
             };
           }
 
