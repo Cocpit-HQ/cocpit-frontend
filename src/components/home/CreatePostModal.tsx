@@ -1,16 +1,24 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Image, Video, Plus, Trash2, Camera, Smile } from 'lucide-react';
+import { X, Image, Video, Plus, Trash2, Camera, Smile, FileText, Link } from 'lucide-react';
 import { useFeed } from '@/context/FeedContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-type PostType = 'text' | 'photo' | 'poll' | 'video' | 'article';
 
-interface CreatePostModalProps {
+export type PostType = 'text' | 'photo' | 'poll' | 'video' | 'article';
+
+export interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialPostType?: PostType;
+}
+
+interface MediaItem {
+  id: string;
+  url: string;
+  file: File;
+  type: 'image' | 'video';
 }
 
 interface PollOption {
@@ -18,17 +26,6 @@ interface PollOption {
   text: string;
 }
 
-interface UploadedImage {
-  id: string;
-  url: string;
-  file: File;
-}
-
-interface UploadedVideo {
-  id: string;
-  url: string;
-  file: File;
-}
 export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: CreatePostModalProps) {
   const isMobile = useIsMobile();
   const { addPost } = useFeed();
@@ -36,38 +33,47 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
   const [description, setDescription] = useState('');
   const [photoCaption, setPhotoCaption] = useState('');
   const [videoCaption, setVideoCaption] = useState('');
-  const [articleContent, setArticleContent] = useState('');
-  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<MediaItem[]>([]);
   const [pollQuestion, setPollQuestion] = useState('');
   const [pollOptions, setPollOptions] = useState<PollOption[]>([
     { id: '1', text: '' },
     { id: '2', text: '' },
   ]);
   const [postCategory, setPostCategory] = useState<'Personal' | 'Professional' | 'Achievement'>('Professional');
-  const [uploadedVideos, setUploadedVideos] = useState<UploadedVideo[]>([]);
+  const [uploadedVideos, setUploadedVideos] = useState<MediaItem[]>([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [emojiList, setEmojiList] = useState<string[]>(["😀", "😂", "😍", "🥺", "🔥", "👍", "👎", "🎉", "❤️", "💼", "🚀", "💯", "👏", "🤔", "👀", "✨", "✅", "❌", "🙌", "😎"]);
   const [customEmoji, setCustomEmoji] = useState('');
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const desktopGalleryInputRef = useRef<HTMLInputElement>(null);
-  const articleCoverInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const articleTextAreaRef = useRef<HTMLTextAreaElement>(null);
   const photoCaptionRef = useRef<HTMLTextAreaElement>(null);
   const videoCaptionRef = useRef<HTMLTextAreaElement>(null);
   const [articleTitle, setArticleTitle] = useState('');
+  const [articleContent, setArticleContent] = useState('');
   const [pollDuration, setPollDuration] = useState('1 week');
-  const [articleCoverImage, setArticleCoverImage] = useState<{ file: File; url: string } | null>(null);
+  const [articleCoverImage, setArticleCoverImage] = useState<MediaItem | null>(null);
+  const articleCoverInputRef = useRef<HTMLInputElement>(null);
+  const articleTextAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [articleLink, setArticleLink] = useState('');
 
   // Refs to track media for cleanup without triggering effects
-  const uploadedImagesRef = useRef<UploadedImage[]>([]);
-  const uploadedVideosRef = useRef<UploadedVideo[]>([]);
-  const articleCoverImageRef = useRef<{ file: File; url: string } | null>(null);
+  const uploadedImagesRef = useRef<MediaItem[]>([]);
+  const uploadedVideosRef = useRef<MediaItem[]>([]);
+  const articleCoverImageRef = useRef<MediaItem | null>(null);
 
   useEffect(() => { uploadedImagesRef.current = uploadedImages; }, [uploadedImages]);
   useEffect(() => { uploadedVideosRef.current = uploadedVideos; }, [uploadedVideos]);
   useEffect(() => { articleCoverImageRef.current = articleCoverImage; }, [articleCoverImage]);
+
+  // Helper to revoke all object URLs
+  const revokeAllMediaUrls = () => {
+    uploadedImagesRef.current.forEach(img => URL.revokeObjectURL(img.url));
+    uploadedVideosRef.current.forEach(video => URL.revokeObjectURL(video.url));
+    if (articleCoverImageRef.current) URL.revokeObjectURL(articleCoverImageRef.current.url);
+  };
 
   const isMobilePhotoPost = isMobile && postType === 'photo';
   const isMobileVideoPost = isMobile && postType === 'video';
@@ -78,16 +84,13 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
     if (isOpen) {
       setPostType(initialPostType);
     } else {
-      // Cleanup URLs using refs
-      uploadedImagesRef.current.forEach(img => URL.revokeObjectURL(img.url));
-      uploadedVideosRef.current.forEach(video => URL.revokeObjectURL(video.url));
-      if (articleCoverImageRef.current) URL.revokeObjectURL(articleCoverImageRef.current.url);
+      // Centralized cleanup of URLs
+      revokeAllMediaUrls();
 
       // Reset state
       setDescription('');
       setPhotoCaption('');
       setVideoCaption('');
-      setArticleContent('');
       setUploadedImages([]);
       setUploadedVideos([]);
       setPollQuestion('');
@@ -95,17 +98,27 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
       setPostCategory('Professional');
       setShowEmojiPicker(false);
       setArticleTitle('');
+      setArticleContent('');
       setPollDuration('1 week');
       setArticleCoverImage(null);
+      setShowLinkInput(false);
+      setArticleLink('');
     }
   }, [isOpen, initialPostType]);
-
   // Reset emoji picker when post type changes to avoid state conflicts
   useEffect(() => {
     setShowEmojiPicker(false);
   }, [postType]);
 
   if (!isOpen) return null;
+
+  // Helper function to create a MediaItem
+  const createMediaItem = (file: File): MediaItem => ({
+    id: `${Date.now()}-${Math.random()}`,
+    url: URL.createObjectURL(file),
+    file,
+    type: file.type.startsWith('image/') ? 'image' : 'video',
+  });
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement> | File) => {
     let file: File | undefined;
@@ -117,11 +130,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
     }
 
     if (file) {
-      const newImage: UploadedImage = {
-        id: `${Date.now()}`,
-        url: URL.createObjectURL(file),
-        file,
-      };
+      const newImage = createMediaItem(file);
       setUploadedImages([newImage]);
     }
 
@@ -130,61 +139,45 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
       e.target.value = '';
     }
   };
-  const removeImage = () => {
-    uploadedImages.forEach(img => URL.revokeObjectURL(img.url));
-    setUploadedImages([]);
-  };
 
   const handleDesktopPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const newImages: UploadedImage[] = Array.from(e.target.files).map(file => ({
-        id: `${Date.now()}-${Math.random()}`,
-        url: URL.createObjectURL(file),
-        file,
-      }));
+      const newImages = Array.from(e.target.files).map(file => createMediaItem(file));
       setUploadedImages(prev => [...prev, ...newImages]);
     }
     e.target.value = '';
   };
 
-  const removeSingleImage = (id: string) => {
-    setUploadedImages(prev => {
-      const imageToRemove = prev.find(img => img.id === id);
-      if (imageToRemove) URL.revokeObjectURL(imageToRemove.url);
-      return prev.filter(img => img.id !== id);
+  const removeMediaItem = (
+    mediaId: string,
+    currentMedia: MediaItem[],
+    setMedia: React.Dispatch<React.SetStateAction<MediaItem[]>>
+  ) => {
+    setMedia(prev => {
+      const itemToRemove = prev.find(item => item.id === mediaId);
+      if (itemToRemove) URL.revokeObjectURL(itemToRemove.url);
+      return prev.filter(item => item.id !== mediaId);
     });
+  };
+
+  const removeImage = () => {
+    uploadedImages.forEach(img => URL.revokeObjectURL(img.url));
+    setUploadedImages([]);
+  };
+
+  const removeSingleImage = (id: string) => {
+    removeMediaItem(id, uploadedImages, setUploadedImages);
   };
 
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const newVideos: UploadedVideo[] = Array.from(e.target.files).map(file => ({
-        id: `${Date.now()}-${Math.random()}`,
-        url: URL.createObjectURL(file),
-        file,
-      }));
+      const newVideos: MediaItem[] = Array.from(e.target.files).map(file => createMediaItem(file));
       setUploadedVideos(prev => [...prev, ...newVideos]);
     }
     e.target.value = '';
   };
   const removeVideo = (id: string) => {
-    setUploadedVideos(prev => {
-      const videoToRemove = prev.find(v => v.id === id);
-      if (videoToRemove) URL.revokeObjectURL(videoToRemove.url);
-      return prev.filter(v => v.id !== id);
-    });
-  };
-
-  const handleArticleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (articleCoverImage) URL.revokeObjectURL(articleCoverImage.url);
-      setArticleCoverImage({ file, url: URL.createObjectURL(file) });
-    }
-    e.target.value = '';
-  };
-  const removeArticleCover = () => {
-    if (articleCoverImage) URL.revokeObjectURL(articleCoverImage.url);
-    setArticleCoverImage(null);
+    removeMediaItem(id, uploadedVideos, setUploadedVideos);
   };
 
   const addPollOption = () => {
@@ -215,7 +208,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
 
   const handleEmojiClick = (emoji: string) => {
     const { text, setText, ref } = getActiveState();
-    const textarea = ref.current;
+    const textarea = ref?.current;
 
     if (!textarea) {
       setText((prev) => prev + emoji);
@@ -239,6 +232,32 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
       setEmojiList([...emojiList, customEmoji.trim()]);
       setCustomEmoji('');
     }
+  };
+
+  const handleArticleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const file = files[0]; // Only one file for cover or single media upload
+        if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+          // Revoke old URL if exists before setting new one
+          if (articleCoverImage) URL.revokeObjectURL(articleCoverImage.url);
+          setArticleCoverImage(createMediaItem(file));
+        } else {
+          console.warn("Only images and videos are allowed for article cover.");
+        }
+    }
+    e.target.value = '';
+  };
+
+  const removeArticleMedia = (url: string, isCover: boolean) => {
+    if (isCover && articleCoverImage) {
+      URL.revokeObjectURL(articleCoverImage.url);
+      setArticleCoverImage(null);
+    }
+  };
+
+  const handleSetPostCategory = (category: 'Personal' | 'Professional' | 'Achievement') => {
+    setPostCategory(category);
   };
 
   const renderEmojiPicker = (isDesktop: boolean) => (
@@ -299,8 +318,10 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
       commentData: [],
       category: postCategory,
       articleTitle: postType === 'article' ? articleTitle : undefined,
+      articleContent: postType === 'article' ? articleContent : undefined,
       pollDuration: postType === 'poll' ? pollDuration : undefined,
-      coverImage: articleCoverImage?.url,
+      coverImage: postType === 'article' ? articleCoverImage : undefined,
+      articleLink: postType === 'article' ? articleLink : undefined,
     };
 
     addPost(newPost);
@@ -551,20 +572,33 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
             <>
               {/* Profile Section */}
               <div className="px-6 pt-6 pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
-                      <img
-                        src="/assets/pngegg.png"
-                        alt="Your profile"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div>
-                      <h3 className="text-foreground">Sally Liang</h3>
-                      <p className="text-sm text-muted-foreground">Post to Anyone</p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
+                    <img
+                      src="/assets/pngegg.png"
+                      alt="Your profile"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
+                  <div>
+                    <h3 className="text-foreground">Sally Liang</h3>
+                    <p className="text-sm text-muted-foreground">Post to Anyone</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 mt-3">
+                  {(['Personal', 'Professional', 'Achievement'] as const).map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setPostCategory(category)}
+                      className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                        postCategory === category
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -723,53 +757,76 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
 
                 {/* ARTICLE POST */}
                 {postType === 'article' && (
-                  <div className="space-y-4">
-                    <div className="relative group">
+                  <div className="flex flex-col h-full space-y-6">
+                    {/* Cover Media Section */}
+                    <div className="flex flex-col items-center justify-center p-4">
                       {articleCoverImage ? (
-                        <div className="relative w-full h-48 rounded-lg overflow-hidden">
-                          <img src={articleCoverImage.url} alt="Cover" className="w-full h-full object-cover" />
-                          <button onClick={removeArticleCover} className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-black/80">
+                        <div className="relative w-full max-h-96 rounded-lg overflow-hidden border bg-muted flex items-center justify-center">
+                          {articleCoverImage.file.type.startsWith('image/') ? (
+                            <img src={articleCoverImage.url} alt="Cover" className="max-h-96 object-contain" />
+                          ) : (
+                            <video src={articleCoverImage.url} controls className="max-h-96 object-contain" />
+                          )}
+                          <button
+                            onClick={() => removeArticleMedia(articleCoverImage.url, true)}
+                            className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors"
+                          >
                             <X className="w-4 h-4" />
                           </button>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => articleCoverInputRef.current?.click()}
-                          className="w-full h-32 border-2 border-dashed border-border rounded-lg flex items-center justify-center gap-2 text-muted-foreground hover:bg-muted/50 transition-colors"
-                        >
-                          <Image className="w-5 h-5" />
-                          <span>Add Cover Image</span>
-                        </button>
+                        <div className="w-full border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center text-center bg-muted/20">
+                          <Image className="w-12 h-12 text-muted-foreground mb-3" />
+                          <p className="text-muted-foreground mb-4">Add a cover image or video to your article.</p>
+                          <input
+                            ref={articleCoverInputRef}
+                            type="file"
+                            accept="image/*,video/*"
+                            onChange={handleArticleMediaUpload}
+                            className="hidden"
+                          />
+                          <button
+                            onClick={() => articleCoverInputRef.current?.click()}
+                            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
+                          >
+                            Upload from computer
+                          </button>
+                        </div>
                       )}
                     </div>
+
+                    {/* Title Field */}
                     <input
                       type="text"
                       value={articleTitle}
                       onChange={(e) => setArticleTitle(e.target.value)}
-                      placeholder="Article Title"
-                      className="w-full text-2xl font-bold border-none focus:ring-0 p-0 bg-transparent placeholder:text-muted-foreground/50"
+                      placeholder="Start article title here"
+                      className="w-full text-xl md:text-2xl px-6 bg-transparent border-none outline-none focus:ring-0 placeholder:text-muted-foreground/70 text-foreground"
+                      style={{ border: 'none', background: 'transparent', outline: 'none' }}
                     />
-                    <div className="relative border rounded-lg" style={{ border: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
+
+                    {/* Article Content Editor */}
+                    <div className="relative px-6 flex-grow">
                       <textarea
                         ref={articleTextAreaRef}
                         value={articleContent}
                         onChange={(e) => setArticleContent(e.target.value)}
-                        placeholder={!isMobile ? "Write your article here..." : "Start your article…"}
-                        className={`w-full min-h-[200px] text-lg resize-none border-none focus:ring-0 p-4 pr-20 focus:outline-none placeholder:text-gray-500 ${!isMobile ? 'bg-white' : 'bg-transparent'}`}
-                        style={{ color: '#000000' }}
+                        placeholder="Start writing your article..."
+                        className="w-full min-h-[300px] text-lg resize-none bg-transparent border-none outline-none focus:ring-0 p-0 pr-12 placeholder:text-muted-foreground/70"
+                        style={{ border: 'none', background: 'transparent', outline: 'none' }}
                       />
                       {!isMobile && (
-                      <div className="absolute top-2 right-2 z-20">
-                        <button
-                          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                          type="button"
-                          className={`p-2 rounded-md transition-colors flex items-center gap-1 ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
-                          title="Add emoji"
-                        >
-                          <Plus className="w-4 h-4" /> <Smile className="w-5 h-5" />
-                        </button>
-                        {showEmojiPicker && renderEmojiPicker(true)}
-                      </div>
+                        <div className="absolute top-0 right-6 z-10">
+                          <button
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            type="button"
+                            className={`p-2 rounded-md transition-colors flex items-center gap-1 ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+                            title="Add emoji"
+                          >
+                            <Smile className="w-5 h-5" />
+                          </button>
+                          {showEmojiPicker && renderEmojiPicker(true)}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -871,13 +928,6 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
       accept="image/*"
       multiple
       onChange={handleDesktopPhotoUpload}
-      className="hidden"
-    />
-    <input
-      ref={articleCoverInputRef}
-      type="file"
-      accept="image/*"
-      onChange={handleArticleCoverUpload}
       className="hidden"
     />
     <input

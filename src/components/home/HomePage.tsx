@@ -23,6 +23,7 @@ import { StoryDetail } from '@/types/showcase'
 import { useDebounce } from '@/hooks/use-debounce';
 import { searchUsers } from '@/services/api/user';
 import { SearchedUser } from '@/types/user';
+import { PostType } from './CreatePostModal';
 
 /* -------------------- Component -------------------- */
 
@@ -276,7 +277,7 @@ export default function HomePage() {
 
                 {/* Create Post */}
                 <div className="hidden md:block">
-                  <CreatePost onOpenModal={openModal} />
+                  <CreatePost onOpenModal={openModal as (type?: PostType) => void} />
                 </div>
 
                 {/* Posts */}
