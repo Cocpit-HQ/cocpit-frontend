@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useMemo } from "react"
+import React, { useMemo, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Briefcase, GraduationCap, MapPin, CheckCircle, MessageCircle, UserPlus, UserCheck } from "lucide-react"
+import { Briefcase, GraduationCap, CheckCircle, MessageCircle, UserPlus, UserCheck } from "lucide-react"
 
 import { AppShell } from "@/components/layout/AppShell"
 import SuggestionsPanel from "@/components/SuggestionsPanel"
@@ -15,10 +15,83 @@ import { useSocial } from "@/context/SocialContext"
 import { User } from "@/types/user"
 import { initialIdentity, initialSkills as currentUserSkills } from "@/lib/data/profile"
 import type { Page } from "@/types/common"
+import { getUserById } from '@/services/api/user'
+import { PublicUserProfileResponse } from "@/types/api"
 
 interface PublicProfileProps {
-  user: User;
+  userId: string;
 }
+
+// Helper to transform API data to component props
+const transformUserData = (data: PublicUserProfileResponse): User => {
+  const experiences = data.experiences.map(apiExp => {
+    const startDate = new Date(apiExp.start_date);
+    const endDate = apiExp.end_date ? new Date(apiExp.end_date) : null;
+
+    const startMonth = startDate.toLocaleString('default', { month: 'short' });
+    const startYear = startDate.getFullYear();
+    const endMonth = endDate ? endDate.toLocaleString('default', { month: 'short' }) : '';
+    const endYear = endDate ? endDate.getFullYear() : 'Present';
+
+    let duration = `${startMonth} ${startYear} - `;
+    if (endYear === 'Present') {
+      duration += 'Present';
+    } else {
+      duration += `${endMonth} ${endYear}`;
+    }
+
+    return {
+      experience_id: apiExp.experience_id,
+      profile_id: '',
+      title: apiExp.title,
+      company_name: apiExp.company_name,
+      start_date: apiExp.start_date,
+      end_date: apiExp.end_date,
+      employment_type: '',
+      location: apiExp.location,
+      description: apiExp.description,
+      id: apiExp.experience_id,
+      company: apiExp.company_name,
+      duration,
+    };
+  });
+
+  const educations = data.educations.map(apiEdu => {
+    const startDate = new Date(apiEdu.start_date);
+    const endDate = apiEdu.end_date ? new Date(apiEdu.end_date) : null;
+    const startYear = startDate.getFullYear();
+    const endYear = endDate ? endDate.getFullYear() : 'Present';
+
+    return {
+      education_id: apiEdu.education_id,
+      profile_id: '',
+      school_name: apiEdu.school_name,
+      degree: apiEdu.degree,
+      field_of_study: apiEdu.field_of_study,
+      start_date: apiEdu.start_date,
+      end_date: apiEdu.end_date,
+      description: apiEdu.description,
+      id: apiEdu.education_id,
+      school: apiEdu.school_name,
+      fieldOfStudy: apiEdu.field_of_study,
+      duration: `${startYear} - ${endYear}`,
+    }
+  });
+
+  return {
+    id: data.id,
+    name: data.full_name,
+    headline: data.headline || '',
+    avatar: data.avatar_url || '/assets/pngegg.png',
+    location: data.location || '',
+    about: data.about_text || '',
+    skills: data.skills,
+    experiences: experiences as any,
+    educations: educations as any,
+    connectionStatus: 'none',
+    mutualConnections: 0,
+  };
+};
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -72,18 +145,42 @@ function ReadOnlyEducationItem({ education }: { education: any }) {
   )
 }
 
-export default function PublicProfile({ user }: PublicProfileProps) {
+export default function PublicProfile({ userId }: PublicProfileProps) {
   const router = useRouter()
   const { posts } = useFeed()
   const { isFollowing, followUser, unfollowUser, startChat } = useSocial()
+  
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const isUserFollowing = isFollowing(user.id);
+  useEffect(() => {
+    if (typeof userId === 'string') {
+      const fetchUser = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const userData = await getUserById(userId);
+          setUser(transformUserData(userData));
+        } catch (err) {
+          setError('Failed to load user profile.');
+          console.error(err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchUser();
+    }
+  }, [userId]);
+
+  const isUserFollowing = user ? isFollowing(user.id) : false;
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
   }
 
   const handleFollowToggle = () => {
+    if (!user) return;
     if (isUserFollowing) {
       unfollowUser(user.id);
     } else {
@@ -92,17 +189,41 @@ export default function PublicProfile({ user }: PublicProfileProps) {
   }
 
   const handleMessage = () => {
+    if (!user) return;
     startChat(user.id);
   }
 
-  // Filter posts: Only show "Professional" and "Achievement" posts for public profiles, as per requirements
-  // Also filter by author.
   const userPosts = useMemo(() => {
+    if (!user) return [];
     return posts.filter(p =>
       p.author === user.name &&
       (p.category === 'Professional')
     );
-  }, [posts, user.name]);
+  }, [posts, user]);
+
+  if (loading) {
+    return (
+        <div className="flex items-center justify-center h-screen">
+            <div className="text-lg font-medium">Loading profile...</div>
+        </div>
+    );
+  }
+
+  if (error) {
+    return (
+        <div className="flex items-center justify-center h-screen">
+            <div className="text-lg text-red-500">{error}</div>
+        </div>
+    );
+  }
+
+  if (!user) {
+    return (
+        <div className="flex items-center justify-center h-screen">
+            <div className="text-lg">User not found.</div>
+        </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

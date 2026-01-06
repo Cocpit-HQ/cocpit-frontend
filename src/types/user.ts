@@ -1,4 +1,4 @@
-import { Experience, Education, Post } from './entities';
+import { Experience, Education } from './entities';
 
 export interface User {
   id: string;
@@ -15,16 +15,24 @@ export interface User {
   isCurrentUser?: boolean;
 }
 
-export interface PublicProfile extends User {
-  // Add specific fields if needed for public view logic,
-  // currently User interface covers it.
-}
-
 export interface UserProfile {
-    user: UserData;
-    experiences: Experience[];
-    educations: Education[];
-    skills: Skill[];
+  user: UserData;
+  id: string;
+  full_name: string;
+  headline: string | null;
+  avatar_url: string | null;
+  location: string | null;
+  about_text: string | null;
+  created_at: string;
+  account_type: string;
+  open_to: string[] | null;
+  availability: string | null;
+  work_preference: string | null;
+  experiences: Experience[];
+  educations: Education[];
+  skills: Skill[];
+  profile_views_count?: number;
+  search_appearances_count?: number;
 }
 
 export interface UserData {
@@ -77,4 +85,12 @@ export interface AddEducationPayload {
 export interface AddEducationResponse {
     message: string;
     education: Education;
+}
+
+export interface SearchedUser {
+  id: string;
+  full_name: string;
+  headline: string | null;
+  avatar_url: string | null;
+  account_type: string;
 }

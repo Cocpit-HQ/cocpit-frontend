@@ -1,14 +1,13 @@
-import { users } from '@/lib/data/users';
+'use client';
+
+import { useParams } from 'next/navigation';
 import PublicProfile from '@/components/profile/PublicProfile';
-import { notFound } from 'next/navigation';
 
-export default async function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const user = users.find(u => u.id === id);
+export default function UserProfilePage() {
+  const params = useParams();
+  const id = params.id as string;
 
-  if (!user) {
-    notFound();
-  }
-
-  return <PublicProfile user={user} />;
+  // Render the self-contained PublicProfile component, passing the user ID.
+  // The PublicProfile component will handle its own data fetching, loading, and error states.
+  return <PublicProfile userId={id} />;
 }

@@ -20,7 +20,9 @@ import { NotificationPopover } from '@/components/notifications/NotificationPopo
 import { Post, Comment } from '@/types/entities';
 import { storiesSeed } from '@/constants/stories'
 import { StoryDetail } from '@/types/showcase'
-import { users } from '@/lib/data/users';
+import { useDebounce } from '@/hooks/use-debounce';
+import { searchUsers } from '@/services/api/user';
+import { SearchedUser } from '@/types/user';
 
 /* -------------------- Component -------------------- */
 
@@ -38,10 +40,35 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false)
   const [stories, setStories] = useState<StoryDetail[]>(storiesSeed)
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<SearchedUser[]>([])
+  const [searchLoading, setSearchLoading] = useState(false)
   const [showCreateStory, setShowCreateStory] = useState(false)
   const [selectedStory, setSelectedStory] = useState<StoryDetail | null>(null)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [activeTab, setActiveTab] = useState('recent');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  useEffect(() => {
+    if (debouncedSearchQuery.trim() === '') {
+      setSearchResults([]);
+      return;
+    }
+
+    const fetchUsers = async () => {
+      setSearchLoading(true);
+      try {
+        const users = await searchUsers(debouncedSearchQuery);
+        setSearchResults(users);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, [debouncedSearchQuery]);
 
   const handleCreateStory = (newStory: StoryDetail) => {
     setStories((prev) => [newStory, ...prev])
@@ -50,26 +77,11 @@ export default function HomePage() {
 
   /* -------------------- Derived State -------------------- */
 
-  const filteredUsers = useMemo(() => {
-    if (!searchQuery) return [];
-    const q = searchQuery.toLowerCase();
-    return users.filter(u =>
-        u.name.toLowerCase().includes(q) ||
-        u.headline.toLowerCase().includes(q)
-    );
-  }, [searchQuery]);
-
-  const filteredPosts = useMemo(() => {
-    const q = searchQuery.toLowerCase()
-    let filtered = posts.filter(
-      (p) =>
-        p.author.toLowerCase().includes(q) ||
-        p.content.toLowerCase().includes(q)
-    );
-
+  const sortedPosts = useMemo(() => {
+    let sorted = [...posts];
     if (activeTab === 'top') {
       // Sort by likes, converting '10k' to 10000
-      filtered.sort((a, b) => {
+      sorted.sort((a, b) => {
         const likesA = parseFloat(a.likes.replace('k', '')) * (a.likes.includes('k') ? 1000 : 1);
         const likesB = parseFloat(b.likes.replace('k', '')) * (b.likes.includes('k') ? 1000 : 1);
         return likesB - likesA;
@@ -77,8 +89,8 @@ export default function HomePage() {
     }
     // For 'recent', no extra sorting is needed as new posts are prepended.
 
-    return filtered;
-  }, [posts, searchQuery, activeTab])
+    return sorted;
+  }, [posts, activeTab])
 
   /* -------------------- Navigation -------------------- */
 
@@ -132,27 +144,30 @@ export default function HomePage() {
                 />
 
                 {/* Search Dropdown */}
-                {isSearchFocused && searchQuery && filteredUsers.length > 0 && (
+                {isSearchFocused && searchQuery && (
                     <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
                         <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             People
                         </div>
-                        {filteredUsers.map(user => (
-                            <Link
-                                key={user.id}
-                                href={`/profile/${user.id}`}
-                                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
-                            >
-                                <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
-                                    <p className="text-xs text-muted-foreground truncate">{user.headline}</p>
-                                    {user.mutualConnections > 0 && (
-                                      <p className="text-[10px] text-muted-foreground mt-0.5">{user.mutualConnections} mutual connections</p>
-                                    )}
-                                </div>
-                            </Link>
-                        ))}
+                        {searchLoading ? (
+                          <div className="p-4 text-center text-muted-foreground">Loading...</div>
+                        ) : searchResults.length > 0 ? (
+                          searchResults.map(user => (
+                              <Link
+                                  key={user.id}
+                                  href={`/profile/${user.id}`}
+                                  className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+                              >
+                                  <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
+                                  <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-foreground truncate">{user.full_name}</p>
+                                      <p className="text-xs text-muted-foreground truncate">{user.headline || ''}</p>
+                                  </div>
+                              </Link>
+                          ))
+                        ) : (
+                          <div className="p-4 text-center text-muted-foreground">No users found.</div>
+                        )}
                     </div>
                 )}
               </div>
@@ -195,27 +210,30 @@ export default function HomePage() {
                 />
 
                 {/* Mobile Search Dropdown */}
-                {isSearchFocused && searchQuery && filteredUsers.length > 0 && (
+                {isSearchFocused && searchQuery && (
                     <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
                         <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             People
                         </div>
-                        {filteredUsers.map(user => (
-                            <Link
-                                key={user.id}
-                                href={`/profile/${user.id}`}
-                                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
-                            >
-                                <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
-                                    <p className="text-xs text-muted-foreground truncate">{user.headline}</p>
-                                    {user.mutualConnections > 0 && (
-                                      <p className="text-[10px] text-muted-foreground mt-0.5">{user.mutualConnections} mutual connections</p>
-                                    )}
-                                </div>
-                            </Link>
-                        ))}
+                        {searchLoading ? (
+                          <div className="p-4 text-center text-muted-foreground">Loading...</div>
+                        ) : searchResults.length > 0 ? (
+                          searchResults.map(user => (
+                              <Link
+                                  key={user.id}
+                                  href={`/profile/${user.id}`}
+                                  className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+                              >
+                                  <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
+                                  <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-foreground truncate">{user.full_name}</p>
+                                      <p className="text-xs text-muted-foreground truncate">{user.headline || ''}</p>
+                                  </div>
+                              </Link>
+                          ))
+                        ) : (
+                          <div className="p-4 text-center text-muted-foreground">No users found.</div>
+                        )}
                     </div>
                 )}
               </div>
@@ -269,7 +287,7 @@ export default function HomePage() {
                     ))}
 
                   {!loading &&
-                    filteredPosts.map((post) => (
+                    sortedPosts.map((post) => (
                       <FeedPost
                         key={post.id}
                         {...post}
@@ -279,14 +297,6 @@ export default function HomePage() {
                         onToggleVisibility={togglePostVisibility}
                       />
                     ))}
-
-                  {!loading && searchQuery && filteredPosts.length === 0 && (
-                    <p
-                      className="text-center py-12 text-muted-foreground"
-                    >
-                      No posts found matching "{searchQuery}"
-                    </p>
-                  )}
                 </div>
               </section>
 

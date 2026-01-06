@@ -36,3 +36,41 @@ export interface ApiRequestConfig {
   params?: Record<string, unknown>;
   timeout?: number;
 }
+
+export interface ApiExperience {
+  experience_id: string;
+  title: string;
+  company_name: string;
+  location: string;
+  start_date: string;
+  end_date: string | null;
+  is_current: boolean;
+  description: string | null;
+}
+
+export interface ApiEducation {
+  education_id: string;
+  school_name: string;
+  degree: string;
+  field_of_study: string;
+  start_date: string;
+  end_date: string | null;
+  description: string | null;
+}
+
+export interface PublicUserProfileResponse {
+  id: string;
+  full_name: string;
+  headline: string | null;
+  avatar_url: string | null;
+  location: string | null;
+  about_text: string | null;
+  created_at: string;
+  account_type: string;
+  open_to: string[] | null;
+  availability: string | null;
+  work_preference: string | null;
+  experiences: ApiExperience[];
+  educations: ApiEducation[];
+  skills: string[];
+}
