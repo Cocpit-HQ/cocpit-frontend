@@ -1,91 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Post, User } from '@/types/entities';
-
-// Mock data from HomePage.tsx
-const initialMockPosts: Post[] = [
-  {
-    id: 1,
-    author: 'Sarah Chen',
-    title: 'UX Designer at Design Studio',
-    timeAgo: '2h',
-    content:
-      '🎨 Just launched our new design system! Working with an amazing team to create consistent, accessible experiences across all our products.',
-    imageSrc: '/assets/pngegg.png',
-    likes: '10k',
-    comments: '2',
-    shares: '2',
-    commentData: [
-      { id: 1, author: { name: 'Alex Johnson', avatar: '/assets/pngegg.png' }, text: 'This looks amazing! Can\'t wait to see it in action.', timeAgo: '2h', likes: 15 },
-      { id: 2, author: { name: 'Maria Garcia', avatar: '/assets/pngegg.png' }, text: 'Great work, Sarah! The component library is so clean.', timeAgo: '1h', likes: 8 },
-    ],
-    category: 'Professional',
-    visibility: 'public',
-  },
-  {
-    id: 2,
-    author: 'Michael Torres',
-    title: 'Product Manager at TechCorp',
-    timeAgo: '5h',
-    content:
-      'Excited to announce that our team just shipped a major feature update! 🚀',
-    imageSrc: '/assets/pngegg.png',
-    likes: '8.5k',
-    comments: '1',
-    shares: '5',
-    commentData: [
-      { id: 1, author: { name: 'David Lee', avatar: '/assets/pngegg.png' }, text: 'Congratulations to the whole team!', timeAgo: '4h', likes: 22 },
-    ],
-    category: 'Achievement',
-    visibility: 'public',
-  },
-  {
-    id: 3,
-    author: 'Sally Liang',
-    title: 'Senior Financial Analyst at Johnson & Johnson',
-    timeAgo: '1d',
-    content:
-      'Just finished a deep dive into data analysis trends for 2024. The shift towards AI-driven forecasting is fascinating! #DataAnalysis #FinTech',
-    imageSrc: undefined,
-    likes: '1.2k',
-    comments: '15',
-    shares: '8',
-    commentData: [],
-    category: 'Professional',
-    visibility: 'public',
-  },
-  {
-    id: 4,
-    author: 'Sally Liang',
-    title: 'Senior Financial Analyst at Johnson & Johnson',
-    timeAgo: '3d',
-    content:
-      'Great session on Product Strategy today. Always learning! 📚',
-    imageSrc: undefined,
-    likes: '850',
-    comments: '12',
-    shares: '3',
-    commentData: [],
-    category: 'Personal',
-    visibility: 'public',
-  },
-  {
-    id: 5,
-    author: 'Sally Liang',
-    title: 'Senior Financial Analyst at Johnson & Johnson',
-    timeAgo: '1w',
-    content:
-      'Honored to be recognized as Top Contributor of the Month! 🏆 Thanks to my amazing team.',
-    imageSrc: undefined,
-    likes: '2.1k',
-    comments: '45',
-    shares: '12',
-    commentData: [],
-    category: 'Achievement',
-    visibility: 'private',
-  },
-];
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { Post } from '@/types/entities';
+import { getPublicFeed } from '@/services/api/feed';
+import { mapApiPostToPost } from '@/lib/mappers/feed.mapper';
 
 const currentUser = {
   name: 'Sally Liang',
@@ -95,8 +13,11 @@ interface FeedContextType {
   posts: Post[];
   currentUser: { name: string };
   addPost: (post: Post) => void;
-  deletePost: (id: number) => void;
-  togglePostVisibility: (id: number) => void;
+  deletePost: (id: number | string) => void;
+  togglePostVisibility: (id: number | string) => void;
+  loadMore: () => Promise<void>;
+  isLoading: boolean;
+  hasMore: boolean;
 }
 
 const FeedContext = createContext<FeedContextType | undefined>(undefined);
@@ -114,17 +35,62 @@ interface FeedProviderProps {
 }
 
 export const FeedProvider = ({ children }: FeedProviderProps) => {
-  const [posts, setPosts] = useState<Post[]>(initialMockPosts);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+
+  const fetchFeed = useCallback(async (cursor?: string) => {
+    try {
+      setIsLoading(true);
+      const data = await getPublicFeed(cursor);
+
+      const newPosts = data.posts.map(mapApiPostToPost);
+
+      setPosts(prev => {
+        // If it's a new fetch (no cursor or first load), replace, else append
+        // Actually the logic is: append if scrolling.
+        // But react strict mode might double invoke, so we need to be careful with unique keys.
+        // For simplicity here:
+        if (!cursor) {
+           return newPosts;
+        }
+
+        // Filter out duplicates just in case
+        const existingIds = new Set(prev.map(p => p.id));
+        const filteredNewPosts = newPosts.filter(p => !existingIds.has(p.id));
+        return [...prev, ...filteredNewPosts];
+      });
+
+      setNextCursor(data.nextCursor);
+      setHasMore(!!data.nextCursor);
+    } catch (error) {
+      console.error('Error fetching feed:', error);
+      // setHasMore(false); // Stop trying on error? Or let user retry? For now, keep state as is or handle error better.
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    fetchFeed();
+  }, [fetchFeed]);
+
+  const loadMore = async () => {
+    if (isLoading || !hasMore || !nextCursor) return;
+    await fetchFeed(nextCursor);
+  };
 
   const addPost = (post: Post) => {
     setPosts((prevPosts) => [post, ...prevPosts]);
   };
 
-  const deletePost = (id: number) => {
+  const deletePost = (id: number | string) => {
     setPosts((prevPosts) => prevPosts.filter((post) => post.id !== id));
   };
 
-  const togglePostVisibility = (id: number) => {
+  const togglePostVisibility = (id: number | string) => {
     setPosts((prevPosts) =>
       prevPosts.map((post) =>
         post.id === id
@@ -135,7 +101,16 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
   };
 
   return (
-    <FeedContext.Provider value={{ posts, addPost, currentUser, deletePost, togglePostVisibility }}>
+    <FeedContext.Provider value={{
+      posts,
+      addPost,
+      currentUser,
+      deletePost,
+      togglePostVisibility,
+      loadMore,
+      isLoading,
+      hasMore
+    }}>
       {children}
     </FeedContext.Provider>
   );

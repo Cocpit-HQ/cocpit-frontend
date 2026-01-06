@@ -7,6 +7,7 @@ import { Post, Comment as CommentType } from '@/types/entities'
 import CommentSection from './CommentSection'
 import MobileCommentDrawer from './MobileCommentDrawer'
 import { SharePostModal } from './SharePostModal'
+import FeedPoll from './FeedPoll'
 
 interface FeedPostProps extends Omit<Post, 'commentData'> {
   initialComments?: CommentType[]
@@ -14,13 +15,14 @@ interface FeedPostProps extends Omit<Post, 'commentData'> {
   onLike?: () => void
   onShare?: () => void
   isOwnPost?: boolean
-  onDelete?: (id: number) => void
-  onToggleVisibility?: (id: number) => void
+  onDelete?: (id: number | string) => void
+  onToggleVisibility?: (id: number | string) => void
 }
 
 export default function FeedPost({
   id,
   author,
+  authorAvatar,
   title,
   timeAgo = '1h',
   content,
@@ -37,7 +39,8 @@ export default function FeedPost({
   isOwnPost,
   onDelete,
   onToggleVisibility,
-  visibility = 'public'
+  visibility = 'public',
+  poll
 }: FeedPostProps) {
   const [isLiked, setIsLiked] = useState(false)
   const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false)
@@ -52,7 +55,10 @@ export default function FeedPost({
   const [showBadge, setShowBadge] = useState(false)
   const badgeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const imgSrc = imageSrc || (images && images.length > 0 ? images[0] : null) || '/assets/pngegg.png'
+  // Use authorAvatar if provided, otherwise fallback to existing logic or default
+  const avatarSrc = authorAvatar || '/assets/pngegg.png';
+  const displayImageSrc = imageSrc || (images && images.length > 0 ? images[0] : null);
+  const imgSrc = displayImageSrc || '/assets/pngegg.png'
   const hasMultipleImages = images && images.length > 1
 
   const onSelect = useCallback(() => {
@@ -117,7 +123,7 @@ export default function FeedPost({
         <div className="flex items-start justify-between mb-4">
           <div className="flex gap-3">
             <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden flex-shrink-0">
-              <img src={imgSrc} alt={author} className="w-full h-full object-cover" />
+              <img src={avatarSrc} alt={author} className="w-full h-full object-cover" />
             </div>
             <div>
               <h3 className="text-foreground mb-0.5 text-sm md:text-base font-semibold">{author}</h3>
@@ -166,9 +172,10 @@ export default function FeedPost({
         </div>
 
         <p className="leading-relaxed mb-4 text-sm md:text-base text-foreground">{content}</p>
+        {poll && <FeedPoll poll={poll} />}
       </div>
 
-      {(hasMultipleImages || imageSrc || videoSrc) && (
+      {(hasMultipleImages || displayImageSrc || videoSrc) && (
         <div
           className="w-full overflow-hidden bg-black/5 relative group"
           style={aspectRatio && aspectRatio !== 'auto' ? { aspectRatio } : undefined}
