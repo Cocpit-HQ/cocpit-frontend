@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, MessageCircle, X } from 'lucide-react'
 import Link from 'next/link'
-import { useInView } from 'react-intersection-observer'
 import FeedPost from './FeedPost'
 import PostSkeleton from './PostSkeleton'
 import CreatePost from './CreatePost'
@@ -33,19 +32,13 @@ export default function HomePage() {
   // Removed useTheme logic - relying on CSS variables
   const [mounted, setMounted] = useState(false)
   const { openModal } = useActionModal()
-  const { posts, currentUser, deletePost, togglePostVisibility, loadMore, hasMore, isLoading } = useFeed()
-  const { ref, inView } = useInView()
+  const { posts, currentUser, deletePost, togglePostVisibility } = useFeed()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (inView && hasMore && !isLoading) {
-      loadMore()
-    }
-  }, [inView, hasMore, isLoading, loadMore])
-
+  const [loading, setLoading] = useState(false)
   const [stories, setStories] = useState<StoryDetail[]>(storiesSeed)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchedUser[]>([])
@@ -289,27 +282,22 @@ export default function HomePage() {
 
                 {/* Posts */}
                 <div className="space-y-3 md:space-y-4">
-                  {sortedPosts.map((post) => (
-                    <FeedPost
-                      key={post.id}
-                      {...post}
-                      initialComments={post.commentData}
-                      isOwnPost={post.author === currentUser.name}
-                      onDelete={deletePost}
-                      onToggleVisibility={togglePostVisibility}
-                    />
-                  ))}
+                  {loading &&
+                    Array.from({ length: 2 }).map((_, i) => (
+                      <PostSkeleton key={i} />
+                    ))}
 
-                  {/* Loading Sentinel & Skeletons */}
-                  <div ref={ref} className="w-full">
-                    {isLoading && (
-                      <div className="space-y-3 md:space-y-4 mt-4">
-                        {Array.from({ length: 2 }).map((_, i) => (
-                          <PostSkeleton key={i} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  {!loading &&
+                    sortedPosts.map((post) => (
+                      <FeedPost
+                        key={post.id}
+                        {...post}
+                        initialComments={post.commentData}
+                        isOwnPost={post.author === currentUser.name}
+                        onDelete={deletePost}
+                        onToggleVisibility={togglePostVisibility}
+                      />
+                    ))}
                 </div>
               </section>
 

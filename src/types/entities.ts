@@ -48,9 +48,8 @@ export interface Comment {
 }
 
 export interface Post {
-  id: number | string;
+  id: number;
   author: string;
-  authorAvatar?: string;
   title: string;
   timeAgo: string;
   content: string;
@@ -64,19 +63,4 @@ export interface Post {
   commentData?: Comment[];
   category?: 'Personal' | 'Professional' | 'Achievement';
   visibility?: 'public' | 'private';
-  poll?: Poll;
-  type?: 'image' | 'video' | 'article' | 'poll';
-}
-
-export interface PollOption {
-  id: string;
-  text: string;
-  votes: number;
-  percentage: number;
-}
-
-export interface Poll {
-  id: string;
-  totalVotes: number;
-  options: PollOption[];
 }
