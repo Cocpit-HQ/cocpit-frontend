@@ -21,6 +21,7 @@ import { Post, Comment } from '@/types/entities';
 import { storiesSeed } from '@/constants/stories'
 import { StoryDetail } from '@/types/showcase'
 import { users } from '@/lib/data/users';
+import { PostType } from './CreatePostModal';
 
 /* -------------------- Component -------------------- */
 
@@ -258,7 +259,7 @@ export default function HomePage() {
 
                 {/* Create Post */}
                 <div className="hidden md:block">
-                  <CreatePost onOpenModal={openModal} />
+                  <CreatePost onOpenModal={openModal as (type?: PostType) => void} />
                 </div>
 
                 {/* Posts */}
