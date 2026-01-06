@@ -32,12 +32,13 @@ export default function HomePage() {
   // Removed useTheme logic - relying on CSS variables
   const [mounted, setMounted] = useState(false)
   const { openModal } = useActionModal()
-  const { posts, currentUser, deletePost, togglePostVisibility, loading, error } = useFeed()
+  const { posts, currentUser, deletePost, togglePostVisibility } = useFeed()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  const [loading, setLoading] = useState(false)
   const [stories, setStories] = useState<StoryDetail[]>(storiesSeed)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchedUser[]>([])
@@ -282,18 +283,11 @@ export default function HomePage() {
                 {/* Posts */}
                 <div className="space-y-3 md:space-y-4">
                   {loading &&
-                    Array.from({ length: 3 }).map((_, i) => (
-                      <PostSkeleton key={`skel-${i}`} />
+                    Array.from({ length: 2 }).map((_, i) => (
+                      <PostSkeleton key={i} />
                     ))}
-                  
-                  {error && (
-                    <div className="text-red-500 text-center py-8 bg-card rounded-lg">
-                      <p className="font-semibold">Oops! Something went wrong.</p>
-                      <p className="text-sm">{error}</p>
-                    </div>
-                  )}
 
-                  {!loading && !error &&
+                  {!loading &&
                     sortedPosts.map((post) => (
                       <FeedPost
                         key={post.id}
@@ -304,13 +298,6 @@ export default function HomePage() {
                         onToggleVisibility={togglePostVisibility}
                       />
                     ))}
-                  
-                  {!loading && !error && sortedPosts.length === 0 && (
-                    <div className="text-center py-8 bg-card rounded-lg">
-                        <p className="font-semibold">No posts yet.</p>
-                        <p className="text-sm text-muted-foreground">Be the first to share something with your network!</p>
-                    </div>
-                  )}
                 </div>
               </section>
 

@@ -1,25 +1,98 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-} from "react";
-import { Post } from "@/types/entities";
-import { getFeeds } from "@/services/api/feed";
-import { ApiPost } from "@/types/api";
-import { formatTimeAgo } from "@/lib/utils";
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { Post, User } from '@/types/entities';
+
+// Mock data from HomePage.tsx
+const initialMockPosts: Post[] = [
+  {
+    id: 1,
+    author: 'Sarah Chen',
+    title: 'UX Designer at Design Studio',
+    timeAgo: '2h',
+    content:
+      '🎨 Just launched our new design system! Working with an amazing team to create consistent, accessible experiences across all our products.',
+    imageSrc: '/assets/pngegg.png',
+    likes: '10k',
+    comments: '2',
+    shares: '2',
+    commentData: [
+      { id: 1, author: { name: 'Alex Johnson', avatar: '/assets/pngegg.png' }, text: 'This looks amazing! Can\'t wait to see it in action.', timeAgo: '2h', likes: 15 },
+      { id: 2, author: { name: 'Maria Garcia', avatar: '/assets/pngegg.png' }, text: 'Great work, Sarah! The component library is so clean.', timeAgo: '1h', likes: 8 },
+    ],
+    category: 'Professional',
+    visibility: 'public',
+  },
+  {
+    id: 2,
+    author: 'Michael Torres',
+    title: 'Product Manager at TechCorp',
+    timeAgo: '5h',
+    content:
+      'Excited to announce that our team just shipped a major feature update! 🚀',
+    imageSrc: '/assets/pngegg.png',
+    likes: '8.5k',
+    comments: '1',
+    shares: '5',
+    commentData: [
+      { id: 1, author: { name: 'David Lee', avatar: '/assets/pngegg.png' }, text: 'Congratulations to the whole team!', timeAgo: '4h', likes: 22 },
+    ],
+    category: 'Achievement',
+    visibility: 'public',
+  },
+  {
+    id: 3,
+    author: 'Sally Liang',
+    title: 'Senior Financial Analyst at Johnson & Johnson',
+    timeAgo: '1d',
+    content:
+      'Just finished a deep dive into data analysis trends for 2024. The shift towards AI-driven forecasting is fascinating! #DataAnalysis #FinTech',
+    imageSrc: undefined,
+    likes: '1.2k',
+    comments: '15',
+    shares: '8',
+    commentData: [],
+    category: 'Professional',
+    visibility: 'public',
+  },
+  {
+    id: 4,
+    author: 'Sally Liang',
+    title: 'Senior Financial Analyst at Johnson & Johnson',
+    timeAgo: '3d',
+    content:
+      'Great session on Product Strategy today. Always learning! 📚',
+    imageSrc: undefined,
+    likes: '850',
+    comments: '12',
+    shares: '3',
+    commentData: [],
+    category: 'Personal',
+    visibility: 'public',
+  },
+  {
+    id: 5,
+    author: 'Sally Liang',
+    title: 'Senior Financial Analyst at Johnson & Johnson',
+    timeAgo: '1w',
+    content:
+      'Honored to be recognized as Top Contributor of the Month! 🏆 Thanks to my amazing team.',
+    imageSrc: undefined,
+    likes: '2.1k',
+    comments: '45',
+    shares: '12',
+    commentData: [],
+    category: 'Achievement',
+    visibility: 'private',
+  },
+];
 
 const currentUser = {
-  name: "Sally Liang",
+  name: 'Sally Liang',
 };
 
 interface FeedContextType {
   posts: Post[];
-  loading: boolean;
-  error: string | null;
   currentUser: { name: string };
   addPost: (post: Post) => void;
   deletePost: (id: number) => void;
@@ -31,43 +104,9 @@ const FeedContext = createContext<FeedContextType | undefined>(undefined);
 export const useFeed = () => {
   const context = useContext(FeedContext);
   if (!context) {
-    throw new Error("useFeed must be used within a FeedProvider");
+    throw new Error('useFeed must be used within a FeedProvider');
   }
   return context;
-};
-
-// Simple hash function to convert string to a number for the ID
-const stringToHash = (str: string): number => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return Math.abs(hash);
-};
-
-const mapApiPostToPost = (apiPost: ApiPost): Post => {
-  const imageMedia = apiPost.media.find((m) => m.media_type === "image");
-
-  return {
-    id: stringToHash(apiPost.post_id),
-    author: apiPost.author_name,
-    title: "", // The API provides a post title, but the UI expects the author's headline here.
-    timeAgo: formatTimeAgo(apiPost.created_at),
-    content: apiPost.content,
-    imageSrc: imageMedia ? imageMedia.url : undefined,
-    images: apiPost.media.map((m) => m.url),
-    videoSrc: apiPost.media.find((m) => m.media_type === "video")?.url,
-    // The new API doesn't provide these counts directly on the post object.
-    // Defaulting to '0' or calculating them would be required.
-    likes: "0",
-    comments: "0",
-    shares: "0",
-    commentData: [], // No comment data from this endpoint
-    category: apiPost.category_name as any, // Assuming category_name maps to category
-    visibility: apiPost.visibility as any,
-  };
 };
 
 interface FeedProviderProps {
@@ -75,34 +114,7 @@ interface FeedProviderProps {
 }
 
 export const FeedProvider = ({ children }: FeedProviderProps) => {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchFeeds = async () => {
-      try {
-        setLoading(true);
-        const response = await getFeeds();
-        // The API returns the response with posts directly inside it.
-        if (response && Array.isArray(response)) {
-            const mappedPosts = response.map(mapApiPostToPost);
-            setPosts(mappedPosts);
-        } else {
-            // Handle cases where response is not in the expected format
-             console.warn("Unexpected feed API response format:", response);
-             setPosts([]);
-        }
-      } catch (err) {
-        setError("Failed to fetch feed. Please try again later.");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFeeds();
-  }, []);
+  const [posts, setPosts] = useState<Post[]>(initialMockPosts);
 
   const addPost = (post: Post) => {
     setPosts((prevPosts) => [post, ...prevPosts]);
@@ -116,28 +128,14 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
     setPosts((prevPosts) =>
       prevPosts.map((post) =>
         post.id === id
-          ? {
-              ...post,
-              visibility:
-                post.visibility === "private" ? "public" : "private",
-            }
+          ? { ...post, visibility: post.visibility === 'private' ? 'public' : 'private' }
           : post
       )
     );
   };
 
   return (
-    <FeedContext.Provider
-      value={{
-        posts,
-        loading,
-        error,
-        addPost,
-        currentUser,
-        deletePost,
-        togglePostVisibility,
-      }}
-    >
+    <FeedContext.Provider value={{ posts, addPost, currentUser, deletePost, togglePostVisibility }}>
       {children}
     </FeedContext.Provider>
   );
