@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Image, Video, Plus, Trash2, Camera, Smile, FileText, Link } from 'lucide-react';
 import { useFeed } from '@/context/FeedContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { createPost, CreatePostRequest } from '@/services/api/feed';
+import { Post } from '@/types/entities';
 
 
 export type PostType = 'text' | 'photo' | 'poll' | 'video' | 'article';
@@ -28,7 +30,7 @@ interface PollOption {
 
 export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: CreatePostModalProps) {
   const isMobile = useIsMobile();
-  const { addPost } = useFeed();
+  const { addPost, currentUser } = useFeed();
   const [postType, setPostType] = useState<PostType>(initialPostType);
   const [description, setDescription] = useState('');
   const [photoCaption, setPhotoCaption] = useState('');
@@ -299,34 +301,103 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
     </div>
   );
 
-  const handlePost = () => {
+  const handlePost = async () => {
     const { text: finalContent } = getActiveState();
 
-    const newPost = {
-      id: Date.now().toString(),
-      author: 'Sally Liang', // Mock logged-in user
-      title: 'Senior Financial Analyst',
-      timeAgo: 'Just now',
+    // Construct the payload
+    const payload: CreatePostRequest = {
+      title: postType === 'article' ? articleTitle : '',
       content: finalContent,
-      imageSrc: uploadedImages.length > 0 ? uploadedImages[0].url : undefined,
-      images: uploadedImages.map(img => img.url),
-      videoSrc: uploadedVideos.length > 0 ? uploadedVideos[0].url : undefined,
-      videos: uploadedVideos.map(v => v.url),
-      likes: '0',
-      comments: '0',
-      shares: '0',
-      commentData: [],
       category: postCategory,
-      articleTitle: postType === 'article' ? articleTitle : undefined,
-      articleContent: postType === 'article' ? articleContent : undefined,
-      pollDuration: postType === 'poll' ? pollDuration : undefined,
-      coverImage: postType === 'article' ? articleCoverImage : undefined,
-      articleLink: postType === 'article' ? articleLink : undefined,
+      visibility: 'public',
+      post_type: postType === 'photo' ? 'image' :
+                 postType === 'article' ? 'text' :
+                 postType // video, poll, text
     };
 
-    // @ts-ignore - Temporary ignore for extra properties not in Post interface
-    addPost(newPost);
-    onClose();
+    // Handle Media
+    if (postType === 'photo') {
+      payload.media_urls = uploadedImages.map(img => img.url);
+    } else if (postType === 'video') {
+      payload.media_urls = uploadedVideos.map(img => img.url);
+    } else if (postType === 'article' && articleCoverImage) {
+      // Note: Article media handling isn't explicitly defined in spec for backend
+      // But standard 'text' post type doesn't support media_urls in spec:
+      // "If post_type === 'image' or 'video': Send media_urls... If post has no media and no poll... Do NOT send media_urls"
+      // Assuming article images might not be supported by backend yet or should be treated as text-only for now based on spec.
+      // Spec says: "If post_type === 'image' or 'video' ... Send media_urls".
+      // Spec says: "article must send title... article -> text".
+      // Spec says: "If post has no media and no poll... Do NOT send media_urls".
+      // So for Article (mapped to text), we do NOT send media_urls.
+      // If we want media, it should probably be an image post type, but requirements say article -> text.
+      // I will follow instructions: "article" -> "text". Text-only rules apply.
+    }
+
+    // Handle Poll
+    if (postType === 'poll') {
+      const filteredOptions = pollOptions.filter(o => o.text.trim()).map(o => o.text);
+      if (filteredOptions.length < 2) {
+        // Fail silently as per requirement
+        return;
+      }
+      payload.poll_options = filteredOptions;
+      payload.poll_duration = pollDuration;
+      // Payload content is the question for polls usually? Or content is description?
+      // In UI "pollQuestion" is separate.
+      // Spec says "content" is required field.
+      // In Poll UI, we have `pollQuestion`.
+      // Let's assume content = pollQuestion for poll posts if description is empty, or just use description.
+      // The UI for Poll shows "Question" input.
+      // `getActiveState` returns description/text. But Poll UI uses `pollQuestion` state, not description.
+      // Let's use pollQuestion as content or title?
+      // Spec: "content": "Todays Motivation".
+      // Let's use pollQuestion as content for Polls.
+      payload.content = pollQuestion;
+      payload.title = ""; // Poll doesn't have title in spec mapping (only article).
+    }
+
+    try {
+      const response = await createPost(payload);
+
+      // Optimize Update - Normalize Response
+      // Map response to Frontend Post entity
+
+      const newPost: Post = {
+        id: response.postId,
+        author: currentUser?.name || 'Anonymous', // Use currentUser from context
+        authorAvatar: '/assets/pngegg.png', // Fallback as user object doesn't have avatar yet in context
+        title: response.title || (response.category || 'Post'), // Fallback title
+        timeAgo: 'Just now', // Client-side generated
+        content: response.content,
+        // Map media
+        imageSrc: response.media_urls && response.media_type === 'image' && response.media_urls.length > 0 ? response.media_urls[0] : undefined,
+        images: response.media_urls && response.media_type === 'image' ? response.media_urls : undefined,
+        videoSrc: response.media_urls && response.media_type === 'video' && response.media_urls.length > 0 ? response.media_urls[0] : undefined,
+
+        likes: '0',
+        comments: '0',
+        shares: '0',
+        commentData: [],
+        category: response.category as any, // Cast to match strict union type if needed
+        visibility: response.visibility as any,
+        poll: response.poll && 'options' in response.poll ? {
+           poll_id: response.poll.poll_id || 'temp-id',
+           total_votes: response.poll.total_votes || 0,
+           // @ts-ignore
+           options: (response.poll.options || []).map((opt: any, idx) => ({
+             option_id: opt.option_id || `opt-${idx}`,
+             option_text: opt.option_text || opt,
+             vote_count: opt.vote_count || 0
+           }))
+        } : null
+      };
+
+      addPost(newPost);
+      onClose();
+    } catch (error) {
+      console.error("Failed to create post:", error);
+      // Fail silently as per instructions (UI validation should handle most cases)
+    }
   };
 
   const isPostDisabled = () => {
@@ -532,10 +603,10 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                           value={option.text}
                           onChange={(e) => updatePollOption(option.id, e.target.value)}
                           placeholder={`Option ${index + 1}`}
-                          className="flex-grow px-4 py-3 rounded-lg bg-muted/50 border-transparent focus:bg-background focus:border-primary transition-all"
+                          className="flex-grow px-4 py-2.5 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                         />
                         {pollOptions.length > 2 && (
-                          <button onClick={() => removePollOption(option.id)} className="p-3 text-muted-foreground hover:text-destructive">
+                          <button onClick={() => removePollOption(option.id)} className="p-2.5 text-muted-foreground hover:text-destructive hover:bg-muted rounded-lg transition-colors">
                             <X className="w-5 h-5" />
                           </button>
                         )}
@@ -544,7 +615,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                     {pollOptions.length < 4 && (
                       <button
                         onClick={addPollOption}
-                        className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 px-2 py-1"
+                        className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 px-1 py-1"
                       >
                         <Plus className="w-4 h-4" />
                         Add Option
@@ -553,11 +624,11 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">Poll Duration</label>
+                    <label className="text-sm font-medium text-foreground">Poll Duration</label>
                     <select
                       value={pollDuration}
                       onChange={(e) => setPollDuration(e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg bg-muted/50 border-transparent focus:bg-background focus:border-primary transition-all appearance-none"
+                      className="w-full px-4 py-2.5 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none"
                     >
                       <option value="1 day">1 Day</option>
                       <option value="3 days">3 Days</option>
@@ -582,7 +653,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                     />
                   </div>
                   <div>
-                    <h3 className="text-foreground">Sally Liang</h3>
+                    <h3 className="text-foreground">{currentUser?.name || 'Sally Liang'}</h3>
                     <p className="text-sm text-muted-foreground">Post to Anyone</p>
                   </div>
                 </div>
