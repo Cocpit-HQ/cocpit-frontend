@@ -36,7 +36,9 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   const diffDays = now.diff(created, "day");
 
   let shortTimeAgo = "";
-  if (diffMinutes < 60) {
+  if (diffMinutes <= 0) {
+    shortTimeAgo = "Just now";
+  } else if (diffMinutes < 60) {
     shortTimeAgo = `${diffMinutes}m`;
   } else if (diffHours < 24) {
     shortTimeAgo = `${diffHours}h`;
@@ -58,6 +60,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   return {
     id: backendPost.post_id,
     author: backendPost.author_name,
+    authorAvatar: backendPost.author_avatar || undefined,
     // Use category or empty string for title (headline) since backend doesn't provide it
     title: backendPost.category_name || "",
     timeAgo: shortTimeAgo,
