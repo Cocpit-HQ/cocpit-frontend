@@ -47,8 +47,20 @@ export interface Comment {
   likes: number;
 }
 
+export interface PollOption {
+  option_id: string;
+  option_text: string;
+  vote_count: number;
+}
+
+export interface Poll {
+  poll_id: string;
+  options: PollOption[];
+  total_votes: number;
+}
+
 export interface Post {
-  id: number;
+  id: string;
   author: string;
   title: string;
   timeAgo: string;
@@ -63,4 +75,5 @@ export interface Post {
   commentData?: Comment[];
   category?: 'Personal' | 'Professional' | 'Achievement';
   visibility?: 'public' | 'private';
+  poll?: Poll | null;
 }

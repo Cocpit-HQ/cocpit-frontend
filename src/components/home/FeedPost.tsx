@@ -7,6 +7,7 @@ import { Post, Comment as CommentType } from '@/types/entities'
 import CommentSection from './CommentSection'
 import MobileCommentDrawer from './MobileCommentDrawer'
 import { SharePostModal } from './SharePostModal'
+import { PollCard } from './PollCard'
 
 interface FeedPostProps extends Omit<Post, 'commentData'> {
   initialComments?: CommentType[]
@@ -14,8 +15,8 @@ interface FeedPostProps extends Omit<Post, 'commentData'> {
   onLike?: () => void
   onShare?: () => void
   isOwnPost?: boolean
-  onDelete?: (id: number) => void
-  onToggleVisibility?: (id: number) => void
+  onDelete?: (id: string) => void
+  onToggleVisibility?: (id: string) => void
 }
 
 export default function FeedPost({
@@ -37,7 +38,8 @@ export default function FeedPost({
   isOwnPost,
   onDelete,
   onToggleVisibility,
-  visibility = 'public'
+  visibility = 'public',
+  poll
 }: FeedPostProps) {
   const [isLiked, setIsLiked] = useState(false)
   const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false)
@@ -211,6 +213,13 @@ export default function FeedPost({
               {currentSlide + 1}/{images?.length}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Poll Section - Rendered below media */}
+      {poll && (
+        <div className="px-4 md:px-6 pb-2">
+          <PollCard poll={poll} />
         </div>
       )}
 
