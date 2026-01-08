@@ -5,6 +5,7 @@ import { X, Image, Video, Plus, Trash2, Camera, Smile, FileText, Link } from 'lu
 import { useFeed } from '@/context/FeedContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { createPost, CreatePostRequest } from '@/services/api/feed';
+import { uploadMedia } from '@/services/api/media';
 import { Post } from '@/types/entities';
 
 
@@ -60,6 +61,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
   const articleTextAreaRef = useRef<HTMLTextAreaElement>(null);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [articleLink, setArticleLink] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Refs to track media for cleanup without triggering effects
   const uploadedImagesRef = useRef<MediaItem[]>([]);
@@ -302,83 +304,70 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
   );
 
   const handlePost = async () => {
+    setIsSubmitting(true);
     const { text: finalContent } = getActiveState();
 
-    // Construct the payload
-    const payload: CreatePostRequest = {
-      title: postType === 'article' ? articleTitle : '',
-      content: finalContent,
-      category: postCategory,
-      visibility: 'public',
-      post_type: postType === 'photo' ? 'image' :
-                 postType === 'article' ? 'text' :
-                 postType // video, poll, text
-    };
-
-    // Handle Media
-    if (postType === 'photo') {
-      payload.media_urls = uploadedImages.map(img => img.url);
-    } else if (postType === 'video') {
-      payload.media_urls = uploadedVideos.map(img => img.url);
-    } else if (postType === 'article' && articleCoverImage) {
-      // Note: Article media handling isn't explicitly defined in spec for backend
-      // But standard 'text' post type doesn't support media_urls in spec:
-      // "If post_type === 'image' or 'video': Send media_urls... If post has no media and no poll... Do NOT send media_urls"
-      // Assuming article images might not be supported by backend yet or should be treated as text-only for now based on spec.
-      // Spec says: "If post_type === 'image' or 'video' ... Send media_urls".
-      // Spec says: "article must send title... article -> text".
-      // Spec says: "If post has no media and no poll... Do NOT send media_urls".
-      // So for Article (mapped to text), we do NOT send media_urls.
-      // If we want media, it should probably be an image post type, but requirements say article -> text.
-      // I will follow instructions: "article" -> "text". Text-only rules apply.
-    }
-
-    // Handle Poll
-    if (postType === 'poll') {
-      const filteredOptions = pollOptions.filter(o => o.text.trim()).map(o => o.text);
-      if (filteredOptions.length < 2) {
-        // Fail silently as per requirement
-        return;
-      }
-      payload.poll_options = filteredOptions;
-      payload.poll_duration = pollDuration;
-      // Payload content is the question for polls usually? Or content is description?
-      // In UI "pollQuestion" is separate.
-      // Spec says "content" is required field.
-      // In Poll UI, we have `pollQuestion`.
-      // Let's assume content = pollQuestion for poll posts if description is empty, or just use description.
-      // The UI for Poll shows "Question" input.
-      // `getActiveState` returns description/text. But Poll UI uses `pollQuestion` state, not description.
-      // Let's use pollQuestion as content or title?
-      // Spec: "content": "Todays Motivation".
-      // Let's use pollQuestion as content for Polls.
-      payload.content = pollQuestion;
-      payload.title = ""; // Poll doesn't have title in spec mapping (only article).
-    }
-
+    let media_urls: string[] = [];
     try {
-      const response = await createPost(payload);
+      const selectedFiles: File[] = [];
+      if (postType === 'photo') {
+        selectedFiles.push(...uploadedImages.map(img => img.file));
+      } else if (postType === 'video') {
+        selectedFiles.push(...uploadedVideos.map(vid => vid.file));
+      } else if (postType === 'article' && articleCoverImage) {
+        selectedFiles.push(articleCoverImage.file);
+      }
 
-      // Optimize Update - Normalize Response
-      // Map response to Frontend Post entity
+      if (selectedFiles.length > 0) {
+        console.log("Starting media upload...", selectedFiles);
+        const uploaded = await uploadMedia(selectedFiles);
+        media_urls = uploaded.map(m => m.url);
+        console.log("Media uploaded successfully:", media_urls);
+      }
+
+      // Construct the payload
+      const payload: CreatePostRequest = {
+        title: postType === 'article' ? articleTitle : '',
+        content: finalContent,
+        category: postCategory,
+        visibility: 'public',
+        post_type: postType === 'photo' ? 'image' :
+                   postType === 'article' ? 'text' :
+                   postType, // video, poll, text
+        media_urls,
+      };
+
+      // Handle Poll
+      if (postType === 'poll') {
+        const filteredOptions = pollOptions.filter(o => o.text.trim()).map(o => o.text);
+        if (filteredOptions.length < 2) {
+          setIsSubmitting(false);
+          return;
+        }
+        payload.poll_options = filteredOptions;
+        payload.poll_duration = pollDuration;
+        payload.content = pollQuestion;
+        payload.title = "";
+      }
+
+      console.log("Creating post with category:", payload.category);
+      const response = await createPost(payload);
 
       const newPost: Post = {
         id: response.postId,
-        author: currentUser?.name || 'Anonymous', // Use currentUser from context
-        authorAvatar: '/assets/pngegg.png', // Fallback as user object doesn't have avatar yet in context
-        title: response.title || (response.category || 'Post'), // Fallback title
-        timeAgo: 'Just now', // Client-side generated
+        author: currentUser?.name || 'Anonymous',
+        authorAvatar: '/assets/pngegg.png',
+        title: response.title || (response.category || 'Post'),
+        timeAgo: 'Just now',
         content: response.content,
-        // Map media
         imageSrc: response.media_urls && response.media_type === 'image' && response.media_urls.length > 0 ? response.media_urls[0] : undefined,
         images: response.media_urls && response.media_type === 'image' ? response.media_urls : undefined,
         videoSrc: response.media_urls && response.media_type === 'video' && response.media_urls.length > 0 ? response.media_urls[0] : undefined,
-
         likes: '0',
         comments: '0',
         shares: '0',
         commentData: [],
-        category: response.category as any, // Cast to match strict union type if needed
+        category: response.category as any,
         visibility: response.visibility as any,
         poll: response.poll && 'options' in response.poll ? {
            poll_id: response.poll.poll_id || 'temp-id',
@@ -396,11 +385,13 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
       onClose();
     } catch (error) {
       console.error("Failed to create post:", error);
-      // Fail silently as per instructions (UI validation should handle most cases)
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const isPostDisabled = () => {
+    if (isSubmitting) return true;
     if (postType === 'poll') {
       return !pollQuestion.trim() || pollOptions.filter(o => o.text.trim()).length < 2;
     }
@@ -989,7 +980,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                 : 'bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white hover:opacity-90'
             }`}
           >
-            Post
+            {isSubmitting ? 'Posting...' : 'Post'}
           </button>
         </div>
       </div>
