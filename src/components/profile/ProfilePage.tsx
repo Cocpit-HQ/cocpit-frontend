@@ -34,8 +34,10 @@ import { useAuth } from "@/hooks/use-auth";
 import FeedPost from "@/components/home/FeedPost";
 import PostCard from "./PostCard";
 import Link from "next/link";
-import { getProfile, addExperience, deleteExperience, addEducation, deleteEducation } from "@/services/api/profile"
+import { getProfile, addExperience, deleteExperience, addEducation, deleteEducation, getUserPosts } from "@/services/api/profile"
 import { UserProfile, UserData, Skill, AddExperiencePayload, AddEducationPayload } from "@/types/user"
+import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
+import type { Post } from "@/types/entities"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -121,7 +123,8 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserData | null>(null);
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
-  const { posts, deletePost, togglePostVisibility } = useFeed();
+  const { deletePost, togglePostVisibility } = useFeed();
+  const [previewPosts, setPreviewPosts] = useState<Post[]>([]);
   const isMobile = useIsMobile();
   const { logout } = useAuth();
 
@@ -139,7 +142,18 @@ export default function ProfilePage() {
       }
     };
 
+    const fetchPosts = async () => {
+      try {
+        const response = await getUserPosts({ limit: 4 });
+        const mappedPosts = response.posts.map(mapProfilePostToPost);
+        setPreviewPosts(mappedPosts);
+      } catch (error) {
+        console.error("Failed to fetch profile posts", error);
+      }
+    };
+
     fetchProfile();
+    fetchPosts();
   }, []);
 
   if (!mounted) {
@@ -410,7 +424,7 @@ export default function ProfilePage() {
                         key={skill.skill_id}
                         skill={skill.skill_name}
                         experiences={experiences}
-                        posts={posts.filter(p => p.author === user?.full_name)}
+                        posts={previewPosts}
                         onDelete={handleDeleteSkill}
                     />
                   ))}
@@ -442,7 +456,7 @@ export default function ProfilePage() {
                   </Link>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  {posts.filter(p => p.author === user?.full_name).slice(0, isMobile ? 6 : 4).map(post => (
+                  {previewPosts.map(post => (
                     isMobile ? (
                       <PostCard key={post.id} post={post} />
                     ) : (

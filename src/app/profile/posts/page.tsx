@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { useFeed } from "@/context/FeedContext";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import FeedPost from "@/components/home/FeedPost";
 import { AppShell } from "@/components/layout/AppShell";
 import type { Page } from "@/types/common";
+import { getUserPosts } from "@/services/api/profile";
+import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
+import { Post } from "@/types/entities";
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -22,19 +24,105 @@ type TabType = 'All' | 'Professional' | 'Personal';
 
 export default function ProfilePostsPage() {
   const router = useRouter();
-  const { posts } = useFeed();
   const [activeTab, setActiveTab] = useState<TabType>('All');
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [nextCursor, setNextCursor] = useState<{ cursorCreatedAt: string; cursorPostId: string } | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const observerTarget = useRef<HTMLDivElement>(null);
+  const loadingRef = useRef(false);
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed");
   };
 
-  const userPosts = posts.filter(p => p.author === "Sally Liang");
+  const fetchPosts = useCallback(async (reset = false) => {
+    if (loadingRef.current) return; // Prevent duplicate fetches using ref
 
-  const filteredPosts = userPosts.filter(post => {
-    if (activeTab === 'All') return true;
-    return post.category === activeTab;
-  });
+    setLoading(true);
+    loadingRef.current = true;
+    try {
+      // If resetting, we start fresh. Otherwise use current cursor.
+      const currentCursor = reset ? undefined : nextCursor;
+
+      const response = await getUserPosts({
+        category: activeTab,
+        limit: 10,
+        cursorCreatedAt: currentCursor?.cursorCreatedAt,
+        cursorPostId: currentCursor?.cursorPostId
+      });
+
+      const mappedPosts = response.posts.map(mapProfilePostToPost);
+
+      if (reset) {
+        setPosts(mappedPosts);
+      } else {
+        setPosts(prev => [...prev, ...mappedPosts]);
+      }
+
+      setNextCursor(response.nextCursor);
+      setHasMore(!!response.nextCursor);
+    } catch (error) {
+      console.error("Failed to fetch profile posts", error);
+    } finally {
+      setLoading(false);
+      loadingRef.current = false;
+    }
+  }, [activeTab, nextCursor]);
+
+  // Handle Category Change
+  useEffect(() => {
+    // Reset state immediately
+    setPosts([]);
+    setNextCursor(null);
+    setHasMore(true);
+
+    // We need to fetch immediately when tab changes
+    const loadFirstPage = async () => {
+        if (loadingRef.current) return;
+
+        setLoading(true);
+        loadingRef.current = true;
+        try {
+            const response = await getUserPosts({
+                category: activeTab,
+                limit: 10
+            });
+            setPosts(response.posts.map(mapProfilePostToPost));
+            setNextCursor(response.nextCursor);
+            setHasMore(!!response.nextCursor);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+            loadingRef.current = false;
+        }
+    };
+    loadFirstPage();
+
+  }, [activeTab]);
+
+  // Intersection Observer for Infinite Scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loadingRef.current) {
+            fetchPosts(false);
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [hasMore, loading, fetchPosts]);
 
   const tabs: TabType[] = ['All', 'Professional', 'Personal'];
 
@@ -72,15 +160,24 @@ export default function ProfilePostsPage() {
 
           {/* Posts List */}
           <div className="space-y-4">
-            {filteredPosts.length > 0 ? (
-                filteredPosts.map(post => (
+            {posts.length > 0 ? (
+                posts.map(post => (
                     <div key={post.id} id={`post-${post.id}`}>
                       <FeedPost {...post} initialComments={post.commentData} />
                     </div>
                 ))
             ) : (
-                <div className="text-center py-12 bg-card rounded-xl border border-border">
-                    <p className="text-muted-foreground">No posts found in this category.</p>
+                !loading && (
+                    <div className="text-center py-12 bg-card rounded-xl border border-border">
+                        <p className="text-muted-foreground">No posts found in this category.</p>
+                    </div>
+                )
+            )}
+
+            {/* Loading Sentinel */}
+            {hasMore && (
+                <div ref={observerTarget} className="flex justify-center py-4">
+                    {loading && <Loader2 className="w-6 h-6 animate-spin text-primary" />}
                 </div>
             )}
           </div>
