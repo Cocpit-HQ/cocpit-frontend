@@ -24,6 +24,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { searchUsers } from '@/services/api/user';
 import { SearchedUser } from '@/types/user';
 import { PostType } from './CreatePostModal';
+import { useInView } from 'react-intersection-observer';
 
 /* -------------------- Component -------------------- */
 
@@ -32,7 +33,18 @@ export default function HomePage() {
   // Removed useTheme logic - relying on CSS variables
   const [mounted, setMounted] = useState(false)
   const { openModal } = useActionModal()
-  const { posts, currentUser, deletePost, togglePostVisibility } = useFeed()
+  const { posts, currentUser, deletePost, togglePostVisibility, loadMorePosts, hasMore, loading: feedLoading } = useFeed()
+
+  const { ref: loadMoreRef, inView } = useInView({
+    threshold: 0,
+    rootMargin: '100px',
+  });
+
+  useEffect(() => {
+    if (inView && hasMore && !feedLoading) {
+      loadMorePosts();
+    }
+  }, [inView, hasMore, feedLoading, loadMorePosts]);
 
   useEffect(() => {
     setMounted(true)
@@ -298,6 +310,13 @@ export default function HomePage() {
                         onToggleVisibility={togglePostVisibility}
                       />
                     ))}
+
+                  {/* Infinite Scroll Sentinel */}
+                  {!loading && hasMore && (
+                     <div ref={loadMoreRef} className="py-4 flex justify-center">
+                        {feedLoading && <div className="text-muted-foreground text-sm">Loading more...</div>}
+                     </div>
+                  )}
                 </div>
               </section>
 

@@ -62,6 +62,7 @@ export interface Poll {
 export interface Post {
   id: string;
   author: string;
+  authorAvatar?: string;
   title: string;
   timeAgo: string;
   content: string;
