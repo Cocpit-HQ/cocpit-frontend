@@ -1,0 +1,45 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted 
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Sync, Build, and Restart PM2
+        shell: powershell
+        run: |
+          # 1. Define destination path
+          $destPath = "C:\Users\Administrator\cocpit-frontend"
+          
+          # 2. Stop the current process to release file locks on the .next folder
+          # We use '|| true' to ensure the script continues even if the process isn't running
+          pm2 stop cocpit-frontend 2>$null
+          
+          # 3. Sync files (Protects .env, excludes git/node_modules/build artifacts)
+          # Note: We exclude .next here so robocopy doesn't try to mirror a locked directory
+          robocopy . "$destPath" /MIR /XF .env /XD .git node_modules _work .next
+          
+          # 4. Navigate to destination
+          cd "$destPath"
+          
+          # 5. Update dependencies
+          npm install
+          
+          # 6. Build Next.js app (Generates the production .next folder)
+          # Stopping PM2 in step 2 prevents the 'EPERM' error here
+          npm run build
+          
+          # 7. Restart PM2 using the direct path to the next binary
+          # Bypassing 'npm start' prevents the SyntaxError ':' on Windows
+          pm2 reload cocpit-frontend --update-env
+          if (-not $?) {
+              pm2 start node_modules/next/dist/bin/next --name "cocpit-frontend" -- start
+          }
