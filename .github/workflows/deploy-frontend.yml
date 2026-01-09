@@ -19,9 +19,11 @@ jobs:
           # 1. Define destination path
           $destPath = "C:\Users\Administrator\cocpit-frontend"
           
-          # 2. Stop the current process to release file locks on the .next folder
-          # We use '|| true' to ensure the script continues even if the process isn't running
-          pm2 stop cocpit-frontend 2>$null
+          # 1. Stop PM2 to release folder locks
+          pm2 stop cocpit-frontend 2>$null || true
+          
+          # 2. Short pause to ensure Windows file system unlocks
+          Start-Sleep -s 5
           
           # 3. Sync files (Protects .env, excludes git/node_modules/build artifacts)
           # Note: We exclude .next here so robocopy doesn't try to mirror a locked directory
