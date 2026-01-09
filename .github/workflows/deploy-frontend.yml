@@ -20,7 +20,7 @@ jobs:
           $destPath = "C:\Users\Administrator\cocpit-frontend"
           
           # 1. Stop PM2 to release folder locks
-          pm2 stop cocpit-frontend 2>$null || true
+          pm2 stop cocpit-frontend 2>$null 
           
           # 2. Short pause to ensure Windows file system unlocks
           Start-Sleep -s 5
