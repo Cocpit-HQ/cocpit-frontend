@@ -1,0 +1,30 @@
+
+> cocpit-frontend@0.1.0 dev
+> next dev
+
+   ▲ Next.js 16.0.10 (Turbopack)
+   - Local:         http://localhost:3000
+   - Network:       http://192.168.0.2:3000
+
+ ✓ Starting...
+ ✓ Ready in 1648ms
+ ○ Compiling /profile/[id] ...
+ GET /profile/1b451203-798e-485f-a916-ce00b2d48c16 200 in 7.8s (compile: 7.4s, render: 411ms)
+[next-auth][warn][NEXTAUTH_URL]
+https://next-auth.js.org/warnings#nextauth_url
+[next-auth][warn][NO_SECRET]
+https://next-auth.js.org/warnings#no_secret
+ GET /api/auth/session 200 in 2.2s (compile: 2.1s, render: 51ms)
+ GET /api/auth/session 200 in 39ms (compile: 28ms, render: 11ms)
+ GET /api/auth/session 200 in 15ms (compile: 5ms, render: 10ms)
+ GET /api/auth/session 200 in 15ms (compile: 4ms, render: 11ms)
+ GET /users/1b451203-798e-485f-a916-ce00b2d48c16 404 in 1394ms (compile: 1128ms, render: 265ms)
+ GET /All/feeds? 404 in 1355ms (compile: 1124ms, render: 231ms)
+ POST /users/1b451203-798e-485f-a916-ce00b2d48c16/posts 404 in 1380ms (compile: 1167ms, render: 213ms)
+ GET /profile/1b451203-798e-485f-a916-ce00b2d48c16/posts 200 in 1688ms (compile: 1589ms, render: 99ms)
+ GET /api/auth/session 200 in 39ms (compile: 27ms, render: 12ms)
+ GET /api/auth/session 200 in 13ms (compile: 4ms, render: 9ms)
+ GET /api/auth/session 200 in 15ms (compile: 3ms, render: 12ms)
+ POST /users/1b451203-798e-485f-a916-ce00b2d48c16/posts 404 in 89ms (compile: 19ms, render: 70ms)
+ GET /All/feeds? 404 in 71ms (compile: 15ms, render: 56ms)
+[?25h
