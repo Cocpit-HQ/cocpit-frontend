@@ -208,7 +208,7 @@ export default function SettingsPage() {
 
   const handleLogout = async () => {
     await logout()
-    router.push("/") // Redirect to sign-in page
+    router.push("/")
   }
 
   return (
