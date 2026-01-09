@@ -16,38 +16,39 @@ jobs:
       - name: Sync, Build, and Restart PM2
         shell: powershell
         run: |
-          # 1. Define destination path
           $destPath = "C:\Users\Administrator\cocpit-frontend"
           
-          # 2. Stop PM2 to release folder locks (PowerShell safe way)
-          # We use ErrorAction SilentlyContinue to ignore if the process isn't running
+          # 1. Stop PM2 AND Force Kill any lingering Node processes on port 3000
+          # This is the most reliable way to release EPERM locks on Windows
           pm2 stop cocpit-frontend 2>$null
+          $ghost = netstat -ano | findstr :3000
+          if ($ghost) {
+              Write-Host "Found ghost process on port 3000. Killing it..."
+              $pidToKill = ($ghost -split '\s+')[-1]
+              taskkill /F /PID $pidToKill /T 2>$null
+          }
           
-          # 3. Short pause to ensure Windows file system releases locks
+          # 2. Hard pause to let the Windows File System catch up
           Start-Sleep -s 5
           
-          # 4. Sync files (Protects .env, excludes node_modules and .next)
-          # robocopy exit codes 1-3 are actually "Success", so we use || to handle it if needed
-          robocopy . "$destPath" /MIR /XF .env /XD .git node_modules _work .next
-          if ($LASTEXITCODE -ge 8) { throw "Robocopy failed with exit code $LASTEXITCODE" }
-          
-          # 5. Navigate to destination
+          # 3. Navigate to destination
           cd "$destPath"
+
+          # 4. MANUALLY delete the .next folder to prevent EPERM during build
+          if (Test-Path ".next") {
+              Remove-Item -Recurse -Force ".next" -ErrorAction SilentlyContinue
+          }
           
-          # 6. Update dependencies
+          # 5. Sync new source files
+          robocopy "$($env:GITHUB_WORKSPACE)" "$destPath" /MIR /XF .env /XD .git node_modules _work .next
+          if ($LASTEXITCODE -ge 8) { throw "Robocopy failed" }
+          
+          # 6. Install and Build
           npm install
-          
-          # 7. Build Next.js app
-          # This must happen while PM2 is STOPPED to avoid EPERM errors
           npm run build
           
-          # 8. Restart PM2 using the direct path to the next binary
-          # This avoids the SyntaxError ':' on Windows
+          # 7. Start PM2 using the direct binary path
           pm2 reload cocpit-frontend --update-env
           if ($LASTEXITCODE -ne 0) {
               pm2 start node_modules/next/dist/bin/next --name "cocpit-frontend" -- start
           }
-          
-          # 9. Final check: if it fails to be online, throw error
-          Start-Sleep -s 2
-          pm2 list
