@@ -11,5 +11,5 @@ export async function uploadMedia(files: File[]) {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-  return data.urls; // [{ url, media_type }]
+  return data.urls;
 }
