@@ -16,7 +16,7 @@ export const login = async (credentials: Record<string, string>) => {
     redirect: false,
     ...credentials,
   });
-
+// new comment added in auth.ts
   if (result?.error) {
     throw new Error(result.error);
   }
