@@ -24,7 +24,6 @@ interface PublicProfileProps {
   userId: string;
 }
 
-// Helper to transform API data to component props
 const transformUserData = (data: PublicUserProfileResponse): User => {
   const experiences = data.experiences.map(apiExp => {
     const startDate = new Date(apiExp.start_date);
