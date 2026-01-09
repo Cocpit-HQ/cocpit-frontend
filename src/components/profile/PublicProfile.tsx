@@ -10,12 +10,14 @@ import FeedPost from "@/components/home/FeedPost"
 import { SkillOverlap } from "@/components/profile/SkillOverlap"
 import { ProfileIdentityChips } from "@/components/profile/ProfileIdentityChips"
 import { SkillProofPill } from "@/components/profile/SkillProofPill"
-import { useFeed } from "@/context/FeedContext"
 import { useSocial } from "@/context/SocialContext"
 import { User } from "@/types/user"
+import { Post } from "@/types/entities"
 import { initialIdentity, initialSkills as currentUserSkills } from "@/lib/data/profile"
 import type { Page } from "@/types/common"
 import { getUserById } from '@/services/api/user'
+import { getPublicProfilePosts } from '@/services/api/public-profile'
+import { mapPublicPostToPost } from '@/lib/mappers/public-profile.mapper'
 import { PublicUserProfileResponse } from "@/types/api"
 
 interface PublicProfileProps {
@@ -147,12 +149,13 @@ function ReadOnlyEducationItem({ education }: { education: any }) {
 
 export default function PublicProfile({ userId }: PublicProfileProps) {
   const router = useRouter()
-  const { posts } = useFeed()
   const { isFollowing, followUser, unfollowUser, startChat } = useSocial()
   
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [publicPosts, setPublicPosts] = useState<Post[]>([])
+  const [loadingPosts, setLoadingPosts] = useState(false)
 
   useEffect(() => {
     if (typeof userId === 'string') {
@@ -173,6 +176,25 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
     }
   }, [userId]);
 
+  useEffect(() => {
+    if (typeof userId === 'string') {
+      const fetchPosts = async () => {
+        setLoadingPosts(true)
+        try {
+          // Fetch 'All' category for initial view
+          const data = await getPublicProfilePosts(userId, 'All')
+          const mappedPosts = data.posts.map(mapPublicPostToPost)
+          setPublicPosts(mappedPosts)
+        } catch (err) {
+          console.error("Failed to fetch public posts:", err)
+        } finally {
+          setLoadingPosts(false)
+        }
+      }
+      fetchPosts()
+    }
+  }, [userId])
+
   const isUserFollowing = user ? isFollowing(user.id) : false;
 
   const navigateTo = (page: Page) => {
@@ -192,14 +214,6 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
     if (!user) return;
     startChat(user.id);
   }
-
-  const userPosts = useMemo(() => {
-    if (!user) return [];
-    return posts.filter(p =>
-      p.author === user.name &&
-      (p.category === 'Professional')
-    );
-  }, [posts, user]);
 
   if (loading) {
     return (
@@ -312,7 +326,7 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
                     <p className="text-xs text-muted-foreground">Profile Views</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xl mb-1 text-foreground">{userPosts.length}</p>
+                    <p className="text-xl mb-1 text-foreground">{publicPosts.length}</p>
                     <p className="text-xs text-muted-foreground">Posts</p>
                   </div>
                 </div>
@@ -360,7 +374,7 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
                             key={skill}
                             skill={skill}
                             experiences={user.experiences as any[]}
-                            posts={userPosts}
+                            posts={publicPosts}
                             readOnly
                         />
                     ))}
@@ -389,11 +403,19 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
               {/* Public Posts */}
               <div className="mt-8">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl text-foreground font-semibold">Activity</h2>
+                  <h2 className="text-xl text-foreground font-semibold">Posts</h2>
+                  <button
+                    onClick={() => router.push(`/profile/${userId}/posts`)}
+                    className="text-sm text-primary hover:underline font-medium"
+                  >
+                    See all posts
+                  </button>
                 </div>
                 <div className="space-y-4">
-                  {userPosts.length > 0 ? (
-                      userPosts.map(post => (
+                  {loadingPosts ? (
+                    <div className="text-center py-4 text-muted-foreground">Loading posts...</div>
+                  ) : publicPosts.length > 0 ? (
+                      publicPosts.slice(0, 4).map(post => (
                         <FeedPost key={post.id} {...post} initialComments={post.commentData} />
                       ))
                   ) : (
