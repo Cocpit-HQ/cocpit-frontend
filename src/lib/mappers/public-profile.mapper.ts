@@ -24,23 +24,55 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
     timeAgo = `${diffDays}d`;
   }
 
+  // Media mapping
+  const images: string[] = [];
+  let videoSrc: string | undefined = undefined;
+
+  if (Array.isArray(publicPost.media)) {
+    publicPost.media.forEach((item) => {
+      if (item.media_type === "image") {
+        images.push(item.url);
+      } else if (item.media_type === "video") {
+        videoSrc = item.url;
+      }
+    });
+  }
+
+  // Poll mapping
+  const poll = publicPost.poll ? {
+    poll_id: publicPost.poll.poll_id,
+    total_votes: publicPost.poll.total_votes,
+    options: publicPost.poll.options.map(opt => ({
+      option_id: opt.option_id,
+      option_text: opt.option_text,
+      vote_count: opt.vote_count
+    }))
+  } : null;
+
+  // Category mapping
+  // Post entity expects specific string literals. We map what we can.
+  let category: 'Personal' | 'Professional' | 'Achievement' | undefined = undefined;
+  if (publicPost.category_name === 'Personal') category = 'Personal';
+  else if (publicPost.category_name === 'Professional') category = 'Professional';
+  else if (publicPost.category_name === 'Achievement') category = 'Achievement';
+
   return {
     id: publicPost.post_id,
-    author: publicPost.full_name,
-    authorAvatar: publicPost.avatar_url || undefined,
-    title: publicPost.title || "", // headline is title or vice versa? Prompt says "title: title", "headline: headline". Map title to title.
+    author: publicPost.author_name,
+    authorAvatar: publicPost.author_avatar || undefined,
+    // Backend doesn't return title/headline anymore in the new query structure provided
+    title: "",
     timeAgo: timeAgo,
     content: publicPost.content,
-    // Explicitly empty/default fields as per instructions
-    imageSrc: undefined,
-    images: undefined,
-    videoSrc: undefined,
-    likes: "0",
-    comments: "0",
-    shares: "0",
+    imageSrc: images.length > 0 ? images[0] : undefined,
+    images: images.length > 0 ? images : undefined,
+    videoSrc: videoSrc,
+    likes: publicPost.like_count.toString(),
+    comments: publicPost.comment_count.toString(),
+    shares: "0", // Backend doesn't return share count
     commentData: [],
-    visibility: 'public', // It's a public post
-    poll: null,
-    category: publicPost.category_id ? 'Professional' : undefined // We don't have category name map, but request body sends "Personal" or "Professional". The response has category_id. We can't easily map ID back to string without a map. But `FeedPost` doesn't strictly require it for display unless used for badges. I'll leave it undefined or try to derive if possible. The prompt says "Category is passed in request body... Response body { category: 'All' ... }". The Post entity expects 'Personal' | 'Professional'. I'll leave it undefined for now as it's not critical for "See All" view which filters by tab anyway.
+    visibility: publicPost.visibility as 'public' | 'private', // Assuming backend visibility matches
+    poll: poll,
+    category: category,
   };
 };

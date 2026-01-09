@@ -1,25 +1,52 @@
 import api from '@/lib/axios';
 
+export interface PublicPostMedia {
+  media_id: string;
+  url: string;
+  media_type: 'image' | 'video';
+  aspect_ratio?: string;
+}
+
+export interface PublicPostPollOption {
+  option_id: string;
+  option_text: string;
+  vote_count: number;
+}
+
+export interface PublicPostPoll {
+  poll_id: string;
+  duration: number;
+  total_votes: number;
+  options: PublicPostPollOption[];
+}
+
 export interface PublicPost {
   post_id: string;
-  full_name: string;
-  headline: string | null;
-  avatar_url: string | null;
-  title: string | null;
-  category_id: string;
   content: string;
   created_at: string;
+  visibility: 'public' | 'private' | 'connections';
+  author_id: string;
+  author_name: string;
+  author_avatar: string | null;
+  category_name: string | null;
+  media: PublicPostMedia[];
+  like_count: number;
+  comment_count: number;
+  poll: PublicPostPoll | null;
 }
 
 export interface PublicPostsResponse {
-  category: string;
   posts: PublicPost[];
+  nextCursor: {
+    cursorCreatedAt: string;
+    cursorPostId: string;
+  } | null;
 }
 
 export const getPublicProfilePosts = async (userId: string, category: string): Promise<PublicPostsResponse> => {
-  // Using GET with a body (data property) as per user instruction and backend requirement.
+  // Using query params as per updated backend requirement
   const response = await api.get<PublicPostsResponse>(`/users/${userId}/posts`, {
-    data: { category }
+    params: { category }
   });
   return response.data;
 };
