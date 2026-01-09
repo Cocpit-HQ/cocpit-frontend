@@ -19,29 +19,35 @@ jobs:
           # 1. Define destination path
           $destPath = "C:\Users\Administrator\cocpit-frontend"
           
-          # 1. Stop PM2 to release folder locks
-          pm2 stop cocpit-frontend 2>$null 
+          # 2. Stop PM2 to release folder locks (PowerShell safe way)
+          # We use ErrorAction SilentlyContinue to ignore if the process isn't running
+          pm2 stop cocpit-frontend 2>$null
           
-          # 2. Short pause to ensure Windows file system unlocks
+          # 3. Short pause to ensure Windows file system releases locks
           Start-Sleep -s 5
           
-          # 3. Sync files (Protects .env, excludes git/node_modules/build artifacts)
-          # Note: We exclude .next here so robocopy doesn't try to mirror a locked directory
+          # 4. Sync files (Protects .env, excludes node_modules and .next)
+          # robocopy exit codes 1-3 are actually "Success", so we use || to handle it if needed
           robocopy . "$destPath" /MIR /XF .env /XD .git node_modules _work .next
+          if ($LASTEXITCODE -ge 8) { throw "Robocopy failed with exit code $LASTEXITCODE" }
           
-          # 4. Navigate to destination
+          # 5. Navigate to destination
           cd "$destPath"
           
-          # 5. Update dependencies
+          # 6. Update dependencies
           npm install
           
-          # 6. Build Next.js app (Generates the production .next folder)
-          # Stopping PM2 in step 2 prevents the 'EPERM' error here
+          # 7. Build Next.js app
+          # This must happen while PM2 is STOPPED to avoid EPERM errors
           npm run build
           
-          # 7. Restart PM2 using the direct path to the next binary
-          # Bypassing 'npm start' prevents the SyntaxError ':' on Windows
+          # 8. Restart PM2 using the direct path to the next binary
+          # This avoids the SyntaxError ':' on Windows
           pm2 reload cocpit-frontend --update-env
-          if (-not $?) {
+          if ($LASTEXITCODE -ne 0) {
               pm2 start node_modules/next/dist/bin/next --name "cocpit-frontend" -- start
           }
+          
+          # 9. Final check: if it fails to be online, throw error
+          Start-Sleep -s 2
+          pm2 list
