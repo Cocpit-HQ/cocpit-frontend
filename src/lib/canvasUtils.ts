@@ -26,20 +26,20 @@ export function rotateSize(width: number, height: number, rotation: number) {
 }
 
 /**
- * This function was adapted from the one in the ReadMe of https://github.com/DominicTobias/react-image-crop
+ * Returns the cropped image as a Blob.
  */
 export default async function getCroppedImg(
   imageSrc: string,
   pixelCrop: { x: number; y: number; width: number; height: number },
   rotation = 0,
   flip = { horizontal: false, vertical: false }
-): Promise<string> {
+): Promise<Blob | null> {
   const image = await createImage(imageSrc)
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
 
   if (!ctx) {
-    return ''
+    return null
   }
 
   const rotRad = getRadianAngle(rotation)
@@ -80,17 +80,10 @@ export default async function getCroppedImg(
   // paste generated rotate image at the top left corner
   ctx.putImageData(data, 0, 0)
 
-  // As Base64 string
-  // return canvas.toDataURL('image/jpeg');
-
   // As a blob
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     canvas.toBlob((file) => {
-      if (file) {
-        resolve(URL.createObjectURL(file))
-      } else {
-        reject(new Error('Canvas is empty'))
-      }
+      resolve(file)
     }, 'image/jpeg')
   })
 }

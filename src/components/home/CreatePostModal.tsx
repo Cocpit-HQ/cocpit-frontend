@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Image, Video, Plus, Trash2, Camera, Smile, FileText, Link, Eye } from 'lucide-react';
+import { X, Image, Video, Plus, Trash2, Camera, Smile, Eye } from 'lucide-react';
 import { useFeed } from '@/context/FeedContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { createPost, CreatePostRequest } from '@/services/api/feed';
@@ -10,6 +10,8 @@ import { Post } from '@/types/entities';
 import { MediaCropper } from './MediaCropper';
 import getCroppedImg from '@/lib/canvasUtils';
 import { PostPreview } from './PostPreview';
+// Import Area type for onCropComplete
+import { Area } from 'react-easy-crop';
 
 export type PostType = 'text' | 'photo' | 'poll' | 'video' | 'article';
 
@@ -66,8 +68,6 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
   const [articleCoverImage, setArticleCoverImage] = useState<MediaItem | null>(null);
   const articleCoverInputRef = useRef<HTMLInputElement>(null);
   const articleTextAreaRef = useRef<HTMLTextAreaElement>(null);
-  const [showLinkInput, setShowLinkInput] = useState(false);
-  const [articleLink, setArticleLink] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // New State for Cropping/Preview
@@ -124,7 +124,6 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
       setArticleContent('');
       setPollDuration('1 week');
       setArticleCoverImage(null);
-      setShowLinkInput(false);
 
       // Reset Cropper/Preview State
       setActiveImageIndex(0);
@@ -329,7 +328,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
     }
   };
 
-  const handleCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
+  const handleCropComplete = (croppedArea: Area, croppedAreaPixels: Area) => {
     const updatedImages = [...uploadedImages];
     if(updatedImages[activeImageIndex]) {
         updatedImages[activeImageIndex].pixelCrop = croppedAreaPixels;
@@ -354,8 +353,13 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
         for (const img of uploadedImages) {
             if (img.pixelCrop) {
                 try {
-                    const blobUrl = await getCroppedImg(img.url, img.pixelCrop);
-                    newUrls.push(blobUrl);
+                    const blob = await getCroppedImg(img.url, img.pixelCrop);
+                    if (blob) {
+                        const blobUrl = URL.createObjectURL(blob);
+                        newUrls.push(blobUrl);
+                    } else {
+                        newUrls.push(img.url);
+                    }
                 } catch (e) {
                     console.error("Failed to crop image", e);
                     // Fallback to original if crop fails
@@ -433,44 +437,39 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
 
     let media_urls: string[] = [];
     try {
-      const finalFiles: File[] = []; // Not used for uploadMedia directly if using blobs, but we need to mock it.
+      // Collect all files to be uploaded
+      const finalFiles: File[] = [];
 
-      // In a real scenario, we would upload the BLOBs generated from cropping.
-      // Since uploadMedia takes File[], we might need to convert blobs to Files or just mock it.
-      // For this task, "Only the final processed media URL is sent to backend".
-      // The current uploadMedia mock returns the same URL we pass it usually?
-      // No, `uploadMedia` generates new URLs or uses what we give.
-
-      // Let's generate the final blobs first
       if (postType === 'photo') {
-         const croppedBlobUrls = [];
          for(const img of uploadedImages) {
              if(img.pixelCrop) {
-                 const blobUrl = await getCroppedImg(img.url, img.pixelCrop);
-                 croppedBlobUrls.push(blobUrl);
+                 const blob = await getCroppedImg(img.url, img.pixelCrop);
+                 if (blob) {
+                    // Create a File from the Blob
+                    const file = new File([blob], img.file.name, { type: 'image/jpeg' });
+                    finalFiles.push(file);
+                 } else {
+                    finalFiles.push(img.file);
+                 }
              } else {
-                 croppedBlobUrls.push(img.url);
+                 finalFiles.push(img.file);
              }
          }
-         // For the mock, we just use these blob URLs as the "uploaded" URLs
-         media_urls = croppedBlobUrls;
       } else if (postType === 'video') {
-         // Videos use original URLs (mock upload logic)
-         // We still call uploadMedia to simulate the process if needed, but here we just use the local URLs for the mock
-         // Wait, the existing code calls `uploadMedia`.
-         // `uploadMedia` in `src/services/api/media.ts` usually handles File -> URL.
-         // Since we have local Blobs, we can just treat them as the "result".
-
-         // However, to keep it clean:
-         media_urls = uploadedVideos.map(v => v.url);
+         // Videos use original files
+         finalFiles.push(...uploadedVideos.map(v => v.file));
       } else if (postType === 'article' && articleCoverImage) {
           // Article cover...
-          media_urls = [articleCoverImage.url];
+          finalFiles.push(articleCoverImage.file);
       }
 
-      // We skip the actual `uploadMedia` call for Photos because we already have the processed blobs (and `uploadMedia` expects `File` objects to generate URLs).
-      // If we wanted to use `uploadMedia`, we'd have to convert Blob -> File.
-      // Given the requirement "Cropped result must produce: A preview blob, A final upload blob", using the blob URL directly in the payload is fine for this frontend task.
+      // Upload media if there are any files
+      if (finalFiles.length > 0) {
+        console.log("Uploading media...", finalFiles.length);
+        const uploadedMedia = await uploadMedia(finalFiles);
+        media_urls = uploadedMedia.map(m => m.url);
+        console.log("Uploaded URLs:", media_urls);
+      }
 
       // Construct the payload
       const payload: CreatePostRequest = {
@@ -482,8 +481,6 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                    postType === 'article' ? 'text' :
                    postType, // video, poll, text
         media_urls,
-        // We might want to pass aspect ratio if backend supported it, but it's not in the type.
-        // Frontend rendering handles it via the image itself being cropped.
       };
 
       // Handle Poll
@@ -521,7 +518,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
         poll: response.poll && 'options' in response.poll ? {
            poll_id: response.poll.poll_id || 'temp-id',
            total_votes: response.poll.total_votes || 0,
-           // @ts-ignore
+           // @ts-ignore - legacy mock data structure
            options: (response.poll.options || []).map((opt: any, idx) => ({
              option_id: opt.option_id || `opt-${idx}`,
              option_text: opt.option_text || opt,
@@ -529,10 +526,6 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
            }))
         } : null
       };
-
-      // If photo, assign the aspect ratio for proper display in feed immediately if we want to enforce it?
-      // But since we cropped the image, the image ITSELF has the aspect ratio.
-      // So `aspectRatio: 'auto'` (default) in FeedPost will work perfectly because the image is physically cropped.
 
       addPost(newPost);
       onClose();
@@ -653,13 +646,15 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                                 className={`relative w-16 h-16 rounded-md overflow-hidden border-2 flex-shrink-0 ${
                                     idx === activeImageIndex ? 'border-primary' : 'border-transparent opacity-70'
                                 }`}
+                                type="button"
                               >
-                                  <img src={img.url} className="w-full h-full object-cover" alt="" />
+                                  <img src={img.url} className="w-full h-full object-cover" alt="Thumbnail" />
                               </button>
                           ))}
                            <button
                               onClick={() => galleryInputRef.current?.click()}
                               className="w-16 h-16 flex items-center justify-center bg-muted rounded-md border border-dashed border-border flex-shrink-0"
+                              type="button"
                             >
                               <Plus className="w-5 h-5 text-muted-foreground" />
                             </button>

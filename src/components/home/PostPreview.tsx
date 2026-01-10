@@ -36,7 +36,7 @@ export function PostPreview({
     commentData: [],
     category: 'Professional', // Default display
     visibility: 'public',
-    aspectRatio: postType === 'image' ? aspectRatio : undefined // Videos adapt naturally
+    aspectRatio: postType === 'image' ? aspectRatio.toString() : undefined // Videos adapt naturally
   };
 
   return (
