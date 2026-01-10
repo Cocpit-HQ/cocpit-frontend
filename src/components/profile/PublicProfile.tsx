@@ -19,6 +19,8 @@ import { getUserById } from '@/services/api/user'
 import { getPublicProfilePosts } from '@/services/api/public-profile'
 import { mapPublicPostToPost } from '@/lib/mappers/public-profile.mapper'
 import { PublicUserProfileResponse } from "@/types/api"
+import { useIsMobile } from "@/hooks/use-mobile"
+import PostCard from "./PostCard"
 
 interface PublicProfileProps {
   userId: string;
@@ -155,6 +157,7 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
   const [error, setError] = useState<string | null>(null);
   const [publicPosts, setPublicPosts] = useState<Post[]>([])
   const [loadingPosts, setLoadingPosts] = useState(false)
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (typeof userId === 'string') {
@@ -410,13 +413,27 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
                     See all posts
                   </button>
                 </div>
-                <div className="space-y-4">
+                <div>
                   {loadingPosts ? (
                     <div className="text-center py-4 text-muted-foreground">Loading posts...</div>
                   ) : publicPosts.length > 0 ? (
-                      publicPosts.slice(0, 4).map(post => (
-                        <FeedPost key={post.id} {...post} initialComments={post.commentData} />
-                      ))
+                      isMobile ? (
+                        <div className="grid grid-cols-2 gap-4">
+                          {publicPosts.slice(0, 4).map(post => (
+                            <PostCard
+                              key={post.id}
+                              post={post}
+                              href={`/profile/${userId}/posts?focusPostId=${post.id}`}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {publicPosts.slice(0, 4).map(post => (
+                            <FeedPost key={post.id} {...post} initialComments={post.commentData} />
+                          ))}
+                        </div>
+                      )
                   ) : (
                       <p className="text-muted-foreground text-sm">No recent public activity to show.</p>
                   )}

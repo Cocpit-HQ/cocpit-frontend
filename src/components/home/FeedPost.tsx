@@ -116,7 +116,7 @@ export default function FeedPost({
   const commentsCount = postComments.length > 0 ? postComments.length : initialCommentsCount;
 
   return (
-    <div className="bg-card border-border md:rounded-xl border overflow-hidden">
+    <div id={`post-${id}`} className="bg-card border-border md:rounded-xl border overflow-hidden">
       <div className="p-4 md:p-6 pb-4">
         <div className="flex items-start justify-between mb-4">
           <div className="flex gap-3">

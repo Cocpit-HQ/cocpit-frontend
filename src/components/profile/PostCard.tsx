@@ -3,13 +3,14 @@ import { Post } from '@/types/entities';
 
 interface PostCardProps {
   post: Post;
+  href?: string;
 }
 
-export default function PostCard({ post }: PostCardProps) {
+export default function PostCard({ post, href }: PostCardProps) {
   const imageSrc = post.imageSrc || (post.images && post.images.length > 0 ? post.images[0] : null);
 
   return (
-    <Link href={`/profile/posts#post-${post.id}`} className="block group">
+    <Link href={href || `/profile/posts#post-${post.id}`} className="block group">
       <div className="aspect-square bg-card border border-border rounded-xl overflow-hidden relative">
         {imageSrc ? (
           <img src={imageSrc} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
