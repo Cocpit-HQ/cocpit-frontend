@@ -91,7 +91,7 @@ export default function HomePage() {
   /* -------------------- Derived State -------------------- */
 
   const sortedPosts = useMemo(() => {
-    let sorted = [...posts];
+    const sorted = [...posts];
     if (activeTab === 'top') {
       // Sort by likes, converting '10k' to 10000
       sorted.sort((a, b) => {
