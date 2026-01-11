@@ -24,7 +24,6 @@ export const login = async (credentials: Record<string, string>) => {
   return result;
 };
 
-// 3. Logout (Cleanup + NextAuth)
 export const logout = async () => {
   await libLogout();
 };
