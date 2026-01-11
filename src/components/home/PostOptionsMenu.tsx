@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState } from 'react';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Trash2, Edit2, Eye, EyeOff } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   Dialog,
@@ -16,13 +17,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { CreatePostModal } from './CreatePostModal';
+import { useFeed } from '@/context/FeedContext';
+import { updatePost } from '@/services/api/posts';
 
 interface PostOptionsMenuProps {
   postId: string;
   onDelete?: (id: string) => void;
   isOwnPost?: boolean;
   className?: string;
-  onToggleVisibility?: (id: string) => void; // Keep for compatibility if needed, though mainly used for delete now
+  onToggleVisibility?: (id: string) => void; // Keep for compatibility if needed
+  postType?: string; // Need post type to check for poll
+  visibility?: 'public' | 'private';
 }
 
 export function PostOptionsMenu({
@@ -30,11 +36,34 @@ export function PostOptionsMenu({
   onDelete,
   isOwnPost,
   className = "",
-  onToggleVisibility
+  onToggleVisibility,
+  postType,
+  visibility = 'public'
 }: PostOptionsMenuProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const { updatePostInFeed } = useFeed();
 
   if (!isOwnPost) return null;
+
+  const isPoll = postType === 'poll';
+
+  const handleToggleVisibility = async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      const newVisibility = visibility === 'public' ? 'private' : 'public';
+
+      // Optimistic update
+      updatePostInFeed(postId, { visibility: newVisibility });
+      if (onToggleVisibility) onToggleVisibility(postId);
+
+      try {
+          await updatePost(postId, { visibility: newVisibility });
+      } catch (err) {
+          console.error("Failed to toggle visibility", err);
+          // Revert
+          updatePostInFeed(postId, { visibility: visibility });
+      }
+  };
 
   return (
     <>
@@ -42,18 +71,40 @@ export function PostOptionsMenu({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-full hover:bg-muted"
+              className="text-white/80 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/20"
             >
               <MoreHorizontal className="w-5 h-5" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-48 bg-card border-border">
+            {!isPoll && (
+                <>
+                    <DropdownMenuItem
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsEditModalOpen(true);
+                        }}
+                        className="cursor-pointer"
+                    >
+                        <Edit2 className="w-4 h-4 mr-2" />
+                        <span>Edit Post</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        onClick={handleToggleVisibility}
+                        className="cursor-pointer"
+                    >
+                        {visibility === 'private' ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+                        <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                </>
+            )}
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();
                 setIsDeleteDialogOpen(true);
               }}
-              className="text-red-500 focus:text-red-500 cursor-pointer"
+              className="text-red-500 focus:text-red-500 cursor-pointer focus:bg-red-50 dark:focus:bg-red-950/20"
             >
               <Trash2 className="w-4 h-4 mr-2" />
               <span>Delete Post</span>
@@ -93,6 +144,13 @@ export function PostOptionsMenu({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CreatePostModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        editPostId={postId}
+        onUpdate={(updatedPost) => updatePostInFeed(postId, updatedPost)}
+      />
     </>
   );
 }

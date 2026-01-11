@@ -37,6 +37,8 @@ export default function PostCard({ post, href, onDelete, isOwnPost }: PostCardPr
             isOwnPost={isOwnPost}
             onDelete={onDelete}
             className="bg-black/20 backdrop-blur-sm rounded-full"
+            postType={post.poll ? 'poll' : 'image'} // Approximation, but if poll exists it's a poll
+            visibility={post.visibility}
           />
         </div>
       )}

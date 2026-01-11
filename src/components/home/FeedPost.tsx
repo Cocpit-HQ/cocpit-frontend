@@ -1,13 +1,16 @@
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { ThumbsUp, MessageCircle, Share2, MoreHorizontal, EyeOff, Trash2 } from 'lucide-react'
+import { ThumbsUp, MessageCircle, Share2, MoreHorizontal, EyeOff, Trash2, Edit2, Eye } from 'lucide-react'
 import useEmblaCarousel from 'embla-carousel-react'
 import { Post, Comment as CommentType } from '@/types/entities'
 import CommentSection from './CommentSection'
 import MobileCommentDrawer from './MobileCommentDrawer'
 import { SharePostModal } from './SharePostModal'
 import { PollCard } from './PollCard'
+import { CreatePostModal } from './CreatePostModal'
+import { updatePost } from '@/services/api/posts'
+import { useFeed } from '@/context/FeedContext'
 
 interface FeedPostProps extends Omit<Post, 'commentData'> {
   initialComments?: CommentType[]
@@ -48,6 +51,8 @@ export default function FeedPost({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [postComments, setPostComments] = useState<CommentType[]>(initialComments)
   const [showOptions, setShowOptions] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const { updatePostInFeed } = useFeed();
 
   // Carousel State
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false })
@@ -113,6 +118,23 @@ export default function FeedPost({
     setPostComments([newComment, ...postComments]);
   };
 
+  const handleToggleVisibility = async () => {
+      const newVisibility = visibility === 'public' ? 'private' : 'public';
+
+      // Optimistic update
+      updatePostInFeed(id, { visibility: newVisibility });
+      if (onToggleVisibility) onToggleVisibility(id); // For local state in ProfilePage if used
+
+      try {
+          await updatePost(id, { visibility: newVisibility });
+      } catch (e) {
+          console.error("Failed to toggle visibility", e);
+          // Revert
+          updatePostInFeed(id, { visibility: visibility });
+      }
+      setShowOptions(false);
+  }
+
   const commentsCount = postComments.length > 0 ? postComments.length : initialCommentsCount;
 
   return (
@@ -136,34 +158,50 @@ export default function FeedPost({
             <div className="relative">
               <button
                 onClick={() => setShowOptions(!showOptions)}
-                onBlur={() => setTimeout(() => setShowOptions(false), 200)}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors p-2"
               >
                 <MoreHorizontal className="w-5 h-5" />
               </button>
               {showOptions && (
-                <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-10">
-                  <button
-                    onClick={() => {
-                      onToggleVisibility?.(id)
-                      setShowOptions(false)
-                    }}
-                    className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted"
-                  >
-                    <EyeOff className="w-4 h-4" />
-                    <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
-                  </button>
+                <>
+                <div
+                    className="fixed inset-0 z-0"
+                    onClick={() => setShowOptions(false)}
+                />
+                <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-10 overflow-hidden">
+                  {!poll && (
+                    <>
+                        <button
+                            onClick={() => {
+                                setIsEditModalOpen(true);
+                                setShowOptions(false);
+                            }}
+                            className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                        >
+                            <Edit2 className="w-4 h-4" />
+                            <span>Edit Post</span>
+                        </button>
+                        <button
+                            onClick={handleToggleVisibility}
+                            className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                        >
+                            {visibility === 'private' ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                            <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
+                        </button>
+                    </>
+                  )}
                   <button
                     onClick={() => {
                       onDelete?.(id)
                       setShowOptions(false)
                     }}
-                    className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-500 hover:bg-muted"
+                    className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                     <span>Delete</span>
                   </button>
                 </div>
+                </>
               )}
             </div>
           )}
@@ -277,6 +315,13 @@ export default function FeedPost({
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         postId={id.toString()}
+      />
+
+      <CreatePostModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        editPostId={id}
+        onUpdate={(updatedPost) => updatePostInFeed(id, updatedPost)}
       />
     </div>
   )
