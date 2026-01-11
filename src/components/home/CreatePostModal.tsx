@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Image, Video, Plus, Trash2, Camera, Smile, Eye, Loader2 } from 'lucide-react';
+import { X, Image, Video, Plus, Trash2, Camera, Smile, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useFeed } from '@/context/FeedContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { createPost, CreatePostRequest } from '@/services/api/feed';
@@ -21,7 +21,7 @@ export interface CreatePostModalProps {
   onClose: () => void;
   initialPostType?: PostType;
   editPostId?: string;
-  onUpdate?: (post: Post) => void;
+  onUpdate?: (post: Partial<Post>) => void;
 }
 
 interface MediaItem {
@@ -232,6 +232,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
   });
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement> | File) => {
+    if (editPostId) return; // Disable upload in edit mode
+
     let file: File | undefined;
 
     if (e instanceof File) {
@@ -253,6 +255,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
   };
 
   const handleDesktopPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (editPostId) return; // Disable upload in edit mode
+
     if (e.target.files && e.target.files.length > 0) {
       const newImages = Array.from(e.target.files).map(file => createMediaItem(file));
       setUploadedImages(prev => {
@@ -270,6 +274,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
     currentMedia: MediaItem[],
     setMedia: React.Dispatch<React.SetStateAction<MediaItem[]>>
   ) => {
+    if (editPostId) return; // Disable remove in edit mode
+
     setMedia(prev => {
       const itemToRemove = prev.find(item => item.id === mediaId);
       if (itemToRemove && !itemToRemove.isExisting) {
@@ -289,6 +295,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
   };
 
   const removeImage = () => {
+    if (editPostId) return; // Disable remove in edit mode
+
     uploadedImages.forEach(img => {
         if (!img.isExisting) {
             URL.revokeObjectURL(img.url);
@@ -304,6 +312,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
   };
 
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (editPostId) return; // Disable upload in edit mode
+
     if (e.target.files && e.target.files.length > 0) {
       const newVideos: MediaItem[] = Array.from(e.target.files).map(file => createMediaItem(file));
       setUploadedVideos(prev => [...prev, ...newVideos]);
@@ -369,6 +379,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
   };
 
   const handleArticleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (editPostId) return; // Disable upload in edit mode
+
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0]; // Only one file for cover or single media upload
@@ -384,6 +396,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
   };
 
   const removeArticleMedia = (url: string, isCover: boolean) => {
+    if (editPostId) return; // Disable remove in edit mode
+
     if (isCover && articleCoverImage) {
       if (!articleCoverImage.isExisting) URL.revokeObjectURL(articleCoverImage.url);
       setArticleCoverImage(null);
@@ -583,24 +597,14 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
               if (originalPost.visibility !== visibility) updatePayload.visibility = visibility;
               if (postType === 'article' && originalPost.title !== articleTitle) updatePayload.title = articleTitle;
 
-              // For media, simple equality check or just always send if changed
-              const originalMedia = [...(originalPost.images || []), originalPost.videoSrc].filter(Boolean) as string[];
-
-              // Sort to compare ignorant of order if order doesn't matter (but usually it does in carousel)
-              const hasMediaChanged =
-                  media_urls.length !== originalMedia.length ||
-                  media_urls.some((url, i) => url !== originalMedia[i]);
-
-              if (hasMediaChanged) {
-                  updatePayload.media_urls = media_urls;
-              }
+              // Do NOT send media updates in edit mode as per new requirement
+              // "post media should not be editable since that is not ideal"
           } else {
-              // Fallback if original not captured, send all
+              // Fallback
               updatePayload.content = finalContent;
               updatePayload.category = postCategory;
               updatePayload.visibility = visibility;
               if (postType === 'article') updatePayload.title = articleTitle;
-              updatePayload.media_urls = media_urls;
           }
 
           // Check if payload is empty
@@ -613,23 +617,29 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
           const updatedPost = await updatePost(editPostId, updatePayload);
 
           // Map backend post to frontend post for consistent update
-          const mappedPost: Post = {
-            id: updatedPost.post_id,
-            author: updatedPost.author_name || currentUser?.name || 'Anonymous',
-            authorAvatar: updatedPost.author_avatar || '/assets/pngegg.png',
-            title: updatedPost.category_name || 'Post', // Simplified mapping
-            timeAgo: 'Just now', // Won't change timeAgo usually
+          const mappedPost: Partial<Post> = {
+            // Only include fields that changed or were returned updated.
+            // DO NOT include likes/comments/shares to avoid overwriting with '0'
             content: updatedPost.content,
-            imageSrc: updatedPost.media && updatedPost.media.length > 0 && updatedPost.media[0].media_type === 'image' ? updatedPost.media[0].url : undefined,
-            images: updatedPost.media && updatedPost.media.length > 0 && updatedPost.media[0].media_type === 'image' ? updatedPost.media.map(m => m.url) : undefined,
-            videoSrc: updatedPost.media && updatedPost.media.length > 0 && updatedPost.media[0].media_type === 'video' ? updatedPost.media[0].url : undefined,
-            likes: '0', // Preserve existing if possible, but backend response might not have it aggregated the same way.
-            // The UpdatePost endpoint returns basic post data. Ideally we merge with existing local state in parent.
-            comments: '0',
-            shares: '0',
             visibility: updatedPost.visibility as any,
             category: updatedPost.category_name as any,
           };
+
+          if (updatedPost.media && updatedPost.media.length > 0) {
+             const images = updatedPost.media.filter(m => m.media_type === 'image').map(m => m.url);
+             const video = updatedPost.media.find(m => m.media_type === 'video');
+             if (images.length > 0) {
+                 mappedPost.images = images;
+                 mappedPost.imageSrc = images[0];
+             }
+             if (video) {
+                 mappedPost.videoSrc = video.url;
+             }
+          }
+
+          if (postType === 'article') {
+              mappedPost.title = updatedPost.title || articleTitle;
+          }
 
           if (onUpdate) onUpdate(mappedPost);
 
@@ -715,6 +725,24 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
     return !description.trim();
   };
 
+  // Common Header Content for Mobile (Visibility + Category)
+  const mobileHeaderContent = (
+      <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+          {/* Visibility Toggle for Mobile */}
+          {editPostId && (
+              <button
+                  onClick={() => setVisibility(visibility === 'public' ? 'private' : 'public')}
+                  className="text-xs px-3 py-1.5 rounded-full bg-muted hover:bg-muted/80 flex items-center gap-1.5 transition-colors font-medium border border-border"
+              >
+                  {visibility === 'public' ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  {visibility === 'public' ? 'Public' : 'Private'}
+              </button>
+          )}
+
+          {/* Post Category for Mobile if needed, usually managed via tabs or not shown prominently in mobile create flow */}
+      </div>
+  );
+
   return (
     <>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -763,31 +791,37 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
              <>
              {(isMobilePhotoPost || isMobileVideoPost || isMobileTextPost || isMobilePollPost) ? (
             // MOBILE MEDIA POST UI
-            <div className="p-4 flex flex-col h-full">
+            <div className="flex flex-col h-full">
+              {isMobile && mobileHeaderContent}
+              <div className="p-4 flex flex-col flex-grow">
               {isMobilePhotoPost && (
                 uploadedImages.length === 0 ? (
                 <div className="flex-grow flex flex-col justify-center items-center gap-4">
-                  <button
-                    onClick={() => console.log('Take Photo clicked')}
-                    className="w-full flex items-center justify-center gap-3 py-4 text-lg font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                  >
-                    <Camera className="w-6 h-6" />
-                    Take Photo
-                  </button>
-                  <button
-                    onClick={() => galleryInputRef.current?.click()}
-                    className="w-full flex items-center justify-center gap-3 py-4 text-lg font-semibold rounded-lg bg-muted hover:bg-muted/90 text-foreground transition-colors"
-                  >
-                    <Image className="w-6 h-6" />
-                    Upload from Gallery
-                  </button>
-                  <input
-                    ref={galleryInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    className="hidden"
-                  />
+                  {!editPostId && (
+                    <>
+                      <button
+                        onClick={() => console.log('Take Photo clicked')}
+                        className="w-full flex items-center justify-center gap-3 py-4 text-lg font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                      >
+                        <Camera className="w-6 h-6" />
+                        Take Photo
+                      </button>
+                      <button
+                        onClick={() => galleryInputRef.current?.click()}
+                        className="w-full flex items-center justify-center gap-3 py-4 text-lg font-semibold rounded-lg bg-muted hover:bg-muted/90 text-foreground transition-colors"
+                      >
+                        <Image className="w-6 h-6" />
+                        Upload from Gallery
+                      </button>
+                      <input
+                        ref={galleryInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -803,6 +837,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                           onCropComplete={handleCropComplete}
                           onAspectChange={handleAspectChange}
                           isMobile={true}
+                          readOnly={!!editPostId}
                       />
                   </div>
 
@@ -821,13 +856,15 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                                   <img src={img.url} className="w-full h-full object-cover" alt="Thumbnail" />
                               </button>
                           ))}
-                           <button
-                              onClick={() => galleryInputRef.current?.click()}
-                              className="w-16 h-16 flex items-center justify-center bg-muted rounded-md border border-dashed border-border flex-shrink-0"
-                              type="button"
-                            >
-                              <Plus className="w-5 h-5 text-muted-foreground" />
-                            </button>
+                           {!editPostId && (
+                             <button
+                                onClick={() => galleryInputRef.current?.click()}
+                                className="w-16 h-16 flex items-center justify-center bg-muted rounded-md border border-dashed border-border flex-shrink-0"
+                                type="button"
+                              >
+                                <Plus className="w-5 h-5 text-muted-foreground" />
+                              </button>
+                           )}
                       </div>
                   )}
 
@@ -855,20 +892,24 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
               {isMobileVideoPost && (
                 uploadedVideos.length === 0 ? (
                   <div className="flex-grow flex flex-col justify-center items-center gap-4">
-                    <button
-                      onClick={() => console.log('Record Video clicked')}
-                      className="w-full flex items-center justify-center gap-3 py-4 text-lg font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                    >
-                      <Camera className="w-6 h-6" />
-                      Record Video
-                    </button>
-                    <button
-                      onClick={() => videoInputRef.current?.click()}
-                      className="w-full flex items-center justify-center gap-3 py-4 text-lg font-semibold rounded-lg bg-muted hover:bg-muted/90 text-foreground transition-colors"
-                    >
-                      <Video className="w-6 h-6" />
-                      Browse from Gallery
-                    </button>
+                    {!editPostId && (
+                      <>
+                        <button
+                          onClick={() => console.log('Record Video clicked')}
+                          className="w-full flex items-center justify-center gap-3 py-4 text-lg font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                        >
+                          <Camera className="w-6 h-6" />
+                          Record Video
+                        </button>
+                        <button
+                          onClick={() => videoInputRef.current?.click()}
+                          className="w-full flex items-center justify-center gap-3 py-4 text-lg font-semibold rounded-lg bg-muted hover:bg-muted/90 text-foreground transition-colors"
+                        >
+                          <Video className="w-6 h-6" />
+                          Browse from Gallery
+                        </button>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -878,12 +919,14 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                         controls
                         className="w-full rounded-lg bg-black/5"
                       />
-                      <button
-                        onClick={() => removeVideo(uploadedVideos[0].id)}
-                        className="absolute top-2 right-2 p-2 rounded-full transition-colors bg-black/50 text-white hover:bg-black/70"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {!editPostId && (
+                        <button
+                          onClick={() => removeVideo(uploadedVideos[0].id)}
+                          className="absolute top-2 right-2 p-2 rounded-full transition-colors bg-black/50 text-white hover:bg-black/70"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                     <textarea
                       ref={videoCaptionRef}
@@ -954,14 +997,14 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                           placeholder={`Option ${index + 1}`}
                           className="flex-grow px-4 py-2.5 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                         />
-                        {pollOptions.length > 2 && (
+                        {!editPostId && pollOptions.length > 2 && (
                           <button onClick={() => removePollOption(option.id)} className="p-2.5 text-muted-foreground hover:text-destructive hover:bg-muted rounded-lg transition-colors">
                             <X className="w-5 h-5" />
                           </button>
                         )}
                       </div>
                     ))}
-                    {pollOptions.length < 4 && (
+                    {!editPostId && pollOptions.length < 4 && (
                       <button
                         onClick={addPollOption}
                         className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 px-1 py-1"
@@ -987,9 +1030,10 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                   </div>
                 </div>
               )}
+              </div>
             </div>
           ) : (
-            // ORIGINAL POST UI
+            // ORIGINAL POST UI (Desktop)
             <>
               {/* Profile Section - Only show in Editor Mode */}
               <div className="px-6 pt-6 pb-4">
@@ -1011,7 +1055,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                                 onClick={() => setVisibility(visibility === 'public' ? 'private' : 'public')}
                                 className="text-xs px-2 py-0.5 rounded bg-muted hover:bg-muted/80 flex items-center gap-1"
                             >
-                                {visibility === 'public' ? <Eye className="w-3 h-3" /> : <Eye className="w-3 h-3 text-red-500" />}
+                                {visibility === 'public' ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                                 {visibility === 'public' ? 'Public' : 'Private'}
                             </button>
                         )}
@@ -1068,15 +1112,17 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                 {postType === 'photo' && (
                   uploadedImages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-52 border-2 border-dashed border-border rounded-xl bg-muted/20">
-                      <button
-                        onClick={() => desktopGalleryInputRef.current?.click()}
-                        className="flex flex-col items-center gap-3 text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        <div className="p-4 rounded-full bg-muted">
-                          <Image className="w-8 h-8" />
-                        </div>
-                        <span className="font-semibold text-lg">Upload photos</span>
-                      </button>
+                      {!editPostId && (
+                        <button
+                          onClick={() => desktopGalleryInputRef.current?.click()}
+                          className="flex flex-col items-center gap-3 text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          <div className="p-4 rounded-full bg-muted">
+                            <Image className="w-8 h-8" />
+                          </div>
+                          <span className="font-semibold text-lg">Upload photos</span>
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <div className="border rounded-lg p-4 space-y-4" style={{ border: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
@@ -1092,6 +1138,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                                 onCropComplete={handleCropComplete}
                                 onAspectChange={handleAspectChange}
                                 isMobile={false}
+                                readOnly={!!editPostId}
                             />
                         </div>
 
@@ -1104,20 +1151,24 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                             onClick={() => setActiveImageIndex(idx)}
                           >
                             <img src={img.url} alt="Thumbnail" className="w-full h-full object-cover" />
-                            <button
-                              onClick={(e) => { e.stopPropagation(); removeSingleImage(img.id); }}
-                              className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full opacity-0 hover:opacity-100 transition-opacity"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
+                            {!editPostId && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); removeSingleImage(img.id); }}
+                                className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full opacity-0 hover:opacity-100 transition-opacity"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
                           </div>
                         ))}
-                        <button
-                          onClick={() => desktopGalleryInputRef.current?.click()}
-                          className="flex-shrink-0 w-24 h-24 flex items-center justify-center bg-muted/50 rounded-md border border-dashed border-border hover:bg-muted transition-colors"
-                        >
-                          <Plus className="w-6 h-6 text-muted-foreground" />
-                        </button>
+                        {!editPostId && (
+                          <button
+                            onClick={() => desktopGalleryInputRef.current?.click()}
+                            className="flex-shrink-0 w-24 h-24 flex items-center justify-center bg-muted/50 rounded-md border border-dashed border-border hover:bg-muted transition-colors"
+                          >
+                            <Plus className="w-6 h-6 text-muted-foreground" />
+                          </button>
+                        )}
                       </div>
 
                       <div className="relative">
@@ -1151,15 +1202,17 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                 {postType === 'video' && (
                   uploadedVideos.length === 0 ? (
                     <div className="h-52 border-2 border-dashed border-border rounded-xl bg-muted/20">
-                      <button
-                        onClick={() => videoInputRef.current?.click()}
-                        className="w-full h-full flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        <div className="p-4 rounded-full bg-muted">
-                          <Video className="w-8 h-8" />
-                        </div>
-                        <span className="font-semibold text-lg">Upload video</span>
-                      </button>
+                      {!editPostId && (
+                        <button
+                          onClick={() => videoInputRef.current?.click()}
+                          className="w-full h-full flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          <div className="p-4 rounded-full bg-muted">
+                            <Video className="w-8 h-8" />
+                          </div>
+                          <span className="font-semibold text-lg">Upload video</span>
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <div className="border rounded-lg p-4 space-y-4" style={{ border: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
@@ -1167,20 +1220,24 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                         {uploadedVideos.map((video) => (
                           <div key={video.id} className="relative flex-shrink-0 w-48 h-32 bg-black rounded-md overflow-hidden border border-border group">
                             <video src={video.url} className="w-full h-full object-cover" />
-                            <button
-                              onClick={() => removeVideo(video.id)}
-                              className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
+                            {!editPostId && (
+                              <button
+                                onClick={() => removeVideo(video.id)}
+                                className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
                           </div>
                         ))}
-                        <button
-                          onClick={() => videoInputRef.current?.click()}
-                          className="flex-shrink-0 w-32 h-32 flex items-center justify-center bg-muted/50 rounded-md border border-dashed border-border hover:bg-muted transition-colors"
-                        >
-                          <Plus className="w-6 h-6 text-muted-foreground" />
-                        </button>
+                        {!editPostId && (
+                          <button
+                            onClick={() => videoInputRef.current?.click()}
+                            className="flex-shrink-0 w-32 h-32 flex items-center justify-center bg-muted/50 rounded-md border border-dashed border-border hover:bg-muted transition-colors"
+                          >
+                            <Plus className="w-6 h-6 text-muted-foreground" />
+                          </button>
+                        )}
                       </div>
                       <div className="relative">
                         <textarea
@@ -1221,30 +1278,36 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                           ) : (
                             <video src={articleCoverImage.url} controls className="max-h-96 object-contain" />
                           )}
-                          <button
-                            onClick={() => removeArticleMedia(articleCoverImage.url, true)}
-                            className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
+                          {!editPostId && (
+                            <button
+                              onClick={() => removeArticleMedia(articleCoverImage.url, true)}
+                              className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       ) : (
                         <div className="w-full border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center text-center bg-muted/20">
-                          <Image className="w-12 h-12 text-muted-foreground mb-3" />
-                          <p className="text-muted-foreground mb-4">Add a cover image or video to your article.</p>
-                          <input
-                            ref={articleCoverInputRef}
-                            type="file"
-                            accept="image/*,video/*"
-                            onChange={handleArticleMediaUpload}
-                            className="hidden"
-                          />
-                          <button
-                            onClick={() => articleCoverInputRef.current?.click()}
-                            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
-                          >
-                            Upload from computer
-                          </button>
+                          {!editPostId && (
+                            <>
+                              <Image className="w-12 h-12 text-muted-foreground mb-3" />
+                              <p className="text-muted-foreground mb-4">Add a cover image or video to your article.</p>
+                              <input
+                                ref={articleCoverInputRef}
+                                type="file"
+                                accept="image/*,video/*"
+                                onChange={handleArticleMediaUpload}
+                                className="hidden"
+                              />
+                              <button
+                                onClick={() => articleCoverInputRef.current?.click()}
+                                className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
+                              >
+                                Upload from computer
+                              </button>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1311,14 +1374,14 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                             placeholder={`Option ${index + 1}`}
                             className="flex-grow px-4 py-2.5 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                           />
-                          {pollOptions.length > 2 && (
+                          {!editPostId && pollOptions.length > 2 && (
                             <button onClick={() => removePollOption(option.id)} className="p-2.5 text-muted-foreground hover:text-destructive hover:bg-muted rounded-lg transition-colors">
                               <X className="w-5 h-5" />
                             </button>
                           )}
                         </div>
                       ))}
-                      {pollOptions.length < 4 && (
+                      {!editPostId && pollOptions.length < 4 && (
                         <button
                           onClick={addPollOption}
                           className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 px-1 py-1"

@@ -19,6 +19,8 @@ export interface BackendPost {
   category_name: string | null;
   media: BackendMedia[];
   poll: BackendPoll | null;
+  title?: string;
+  post_type?: string;
 }
 
 export interface BackendMedia {
