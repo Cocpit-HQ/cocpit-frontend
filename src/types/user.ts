@@ -17,38 +17,28 @@ export interface User {
 
 export interface UserProfile {
   user: UserData;
-  id: string;
-  full_name: string;
-  headline: string | null;
-  avatar_url: string | null;
-  location: string | null;
-  about_text: string | null;
-  created_at: string;
-  account_type: string;
-  open_to: string[] | null;
-  availability: string | null;
-  work_preference: string | null;
   experiences: Experience[];
   educations: Education[];
   skills: Skill[];
-  profile_views_count?: number;
-  search_appearances_count?: number;
 }
 
 export interface UserData {
-    user_id: string;
-    full_name: string;
+    id: string;
+    name: string;
     headline: string | null;
-    avatar_url: string | null;
+    avatar: string | null;
     location: string | null;
-    about_text: string | null;
+    about: string | null;
     email: string;
-    profile_id: string;
     open_to: string[] | null;
     availability: string | null;
     work_preference: string | null;
-    profile_views_count: number;
-    search_appearances_count: number;
+    profile_views: number;
+    search_appearances: number;
+    latest_education: {
+        school: string;
+        degree: string;
+    } | null;
 }
 
 export interface Skill {

@@ -387,7 +387,7 @@ export default function ProfilePage() {
                       className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 relative"
                     >
                       <img
-                        src={user?.avatar_url ?? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop"}
+                        src={user?.avatar ?? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop"}
                         alt="Profile"
                         className="w-full h-full object-cover"
                       />
@@ -400,7 +400,7 @@ export default function ProfilePage() {
 
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <h1 className="text-2xl text-foreground">{user?.full_name}</h1>
+                      <h1 className="text-2xl text-foreground">{user?.name}</h1>
                       <CheckCircle className="w-5 h-5 text-primary fill-primary/10" />
                       <span className="text-sm text-muted-foreground">· 2nd</span>
                     </div>
@@ -432,11 +432,11 @@ export default function ProfilePage() {
                     <p className="text-xs text-muted-foreground">Connections</p>
                   </div>
                   <div className="text-center border-l border-r border-border">
-                    <p className="text-xl mb-1 text-foreground">{user?.profile_views_count}</p>
+                    <p className="text-xl mb-1 text-foreground">{user?.profile_views}</p>
                     <p className="text-xs text-muted-foreground">Profile Views</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xl mb-1 text-foreground">{user?.search_appearances_count}</p>
+                    <p className="text-xl mb-1 text-foreground">{user?.search_appearances}</p>
                     <p className="text-xs text-muted-foreground">Search Appearances</p>
                   </div>
                 </div>
@@ -449,7 +449,7 @@ export default function ProfilePage() {
               >
                 <h2 className="text-xl text-foreground mb-4">About</h2>
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  {user?.about_text}
+                  {user?.about}
                 </p>
               </div>
 
