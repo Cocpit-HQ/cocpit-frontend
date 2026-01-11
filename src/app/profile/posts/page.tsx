@@ -10,6 +10,7 @@ import { getUserPosts } from "@/services/api/profile";
 import { deletePost as apiDeletePost } from "@/services/api/posts";
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import { Post } from "@/types/entities";
+import { useFeed } from "@/context/FeedContext";
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -32,6 +33,7 @@ export default function ProfilePostsPage() {
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
+  const { togglePostVisibility } = useFeed();
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed");
@@ -117,6 +119,18 @@ export default function ProfilePostsPage() {
     }
   };
 
+  const handleToggleVisibility = (id: string) => {
+    // Update local state
+    setPosts(prev => prev.map(post =>
+      post.id === id
+        ? { ...post, visibility: post.visibility === 'private' ? 'public' : 'private' }
+        : post
+    ));
+
+    // Also update global feed context just in case
+    togglePostVisibility(id);
+  };
+
   // Intersection Observer for Infinite Scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -183,6 +197,7 @@ export default function ProfilePostsPage() {
                         initialComments={post.commentData}
                         isOwnPost={true}
                         onDelete={handleDeletePost}
+                        onToggleVisibility={handleToggleVisibility}
                       />
                     </div>
                 ))
