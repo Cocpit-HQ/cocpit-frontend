@@ -35,6 +35,7 @@ import FeedPost from "@/components/home/FeedPost";
 import PostCard from "./PostCard";
 import Link from "next/link";
 import { getProfile, addExperience, deleteExperience, addEducation, deleteEducation, getUserPosts } from "@/services/api/profile"
+import { deletePost as apiDeletePost } from "@/services/api/posts"
 import { UserProfile, UserData, Skill, AddExperiencePayload, AddEducationPayload } from "@/types/user"
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
 import type { Post } from "@/types/entities"
@@ -123,7 +124,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserData | null>(null);
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
-  const { deletePost, togglePostVisibility } = useFeed();
+  const { togglePostVisibility } = useFeed();
   const [previewPosts, setPreviewPosts] = useState<Post[]>([]);
   const isMobile = useIsMobile();
   const { logout } = useAuth();
@@ -155,6 +156,20 @@ export default function ProfilePage() {
     fetchProfile();
     fetchPosts();
   }, []);
+
+  const handleDeletePost = async (id: string) => {
+    // Optimistic update
+    const previousPosts = [...previewPosts];
+    setPreviewPosts((prev) => prev.filter((post) => post.id !== id));
+
+    try {
+      await apiDeletePost(id);
+    } catch (error) {
+      console.error("Failed to delete post", error);
+      // Revert if failed
+      setPreviewPosts(previousPosts);
+    }
+  };
 
   if (!mounted) {
     return null;
@@ -458,9 +473,21 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-2 gap-4">
                   {previewPosts.map(post => (
                     isMobile ? (
-                      <PostCard key={post.id} post={post} />
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        isOwnPost={true}
+                        onDelete={handleDeletePost}
+                      />
                     ) : (
-                      <FeedPost key={post.id} {...post} initialComments={post.commentData} isOwnPost={true} onDelete={deletePost} onToggleVisibility={togglePostVisibility} />
+                      <FeedPost
+                        key={post.id}
+                        {...post}
+                        initialComments={post.commentData}
+                        isOwnPost={true}
+                        onDelete={handleDeletePost}
+                        onToggleVisibility={togglePostVisibility}
+                      />
                     )
                   ))}
                 </div>

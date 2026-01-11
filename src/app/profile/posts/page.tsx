@@ -7,6 +7,7 @@ import FeedPost from "@/components/home/FeedPost";
 import { AppShell } from "@/components/layout/AppShell";
 import type { Page } from "@/types/common";
 import { getUserPosts } from "@/services/api/profile";
+import { deletePost as apiDeletePost } from "@/services/api/posts";
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import { Post } from "@/types/entities";
 
@@ -102,6 +103,20 @@ export default function ProfilePostsPage() {
 
   }, [activeTab]);
 
+  const handleDeletePost = async (id: string) => {
+    // Optimistic update
+    const previousPosts = [...posts];
+    setPosts((prev) => prev.filter((post) => post.id !== id));
+
+    try {
+      await apiDeletePost(id);
+    } catch (error) {
+      console.error("Failed to delete post", error);
+      // Revert if failed
+      setPosts(previousPosts);
+    }
+  };
+
   // Intersection Observer for Infinite Scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -163,7 +178,12 @@ export default function ProfilePostsPage() {
             {posts.length > 0 ? (
                 posts.map(post => (
                     <div key={post.id} id={`post-${post.id}`}>
-                      <FeedPost {...post} initialComments={post.commentData} />
+                      <FeedPost
+                        {...post}
+                        initialComments={post.commentData}
+                        isOwnPost={true}
+                        onDelete={handleDeletePost}
+                      />
                     </div>
                 ))
             ) : (

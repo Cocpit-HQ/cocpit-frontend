@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Post } from '@/types/entities';
 import { getFeed } from '@/services/api/feed';
+import { deletePost as apiDeletePost } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 
 const currentUser = {
@@ -13,7 +14,7 @@ interface FeedContextType {
   posts: Post[];
   currentUser: { name: string };
   addPost: (post: Post) => void;
-  deletePost: (id: string) => void;
+  deletePost: (id: string) => Promise<void>;
   togglePostVisibility: (id: string) => void;
   loadMorePosts: () => Promise<void>;
   hasMore: boolean;
@@ -82,8 +83,18 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
     setPosts((prevPosts) => [post, ...prevPosts]);
   };
 
-  const deletePost = (id: string) => {
+  const deletePost = async (id: string) => {
+    // Optimistic update
+    const previousPosts = [...posts];
     setPosts((prevPosts) => prevPosts.filter((post) => post.id !== id));
+
+    try {
+      await apiDeletePost(id);
+    } catch (error) {
+      console.error('Failed to delete post:', error);
+      // Revert if failed
+      setPosts(previousPosts);
+    }
   };
 
   const togglePostVisibility = (id: string) => {
