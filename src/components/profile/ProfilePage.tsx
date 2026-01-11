@@ -34,7 +34,7 @@ import { useAuth } from "@/hooks/use-auth";
 import FeedPost from "@/components/home/FeedPost";
 import PostCard from "./PostCard";
 import Link from "next/link";
-import { getProfile, addExperience, deleteExperience, addEducation, deleteEducation, getUserPosts } from "@/services/api/profile"
+import { getProfile, addExperience, deleteExperience, addEducation, deleteEducation, getUserPosts, addSkill, deleteSkill } from "@/services/api/profile"
 import { deletePost as apiDeletePost } from "@/services/api/posts"
 import { UserProfile, UserData, Skill, AddExperiencePayload, AddEducationPayload } from "@/types/user"
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
@@ -171,6 +171,18 @@ export default function ProfilePage() {
     }
   };
 
+  const handleToggleVisibility = (id: string) => {
+    // Update local state
+    setPreviewPosts(prev => prev.map(post =>
+      post.id === id
+        ? { ...post, visibility: post.visibility === 'private' ? 'public' : 'private' }
+        : post
+    ));
+
+    // Also update global feed context just in case
+    togglePostVisibility(id);
+  };
+
   if (!mounted) {
     return null;
   }
@@ -184,18 +196,53 @@ export default function ProfilePage() {
     router.push("/"); // Redirect to sign-in page
   };
 
-  const handleSaveSkills = (newSkills: string[]) => {
-    // setSkills(newSkills);
+  const handleSaveSkills = async (newSkills: string[]) => {
+    try {
+        // Assume API accepts one skill at a time or we loop.
+        // Typically UI sends all, but backend here is addSkill (singular) as per profile.ts update.
+        // We'll iterate for now or assume UI sends only new ones.
+        // The SkillModal returns a list of strings (all selected skills).
+        // We need to figure out which are new.
+
+        // This logic depends on SkillModal behavior. Assuming it passes all selected.
+        // For simplicity/robustness with current API:
+        // We'll just add the last one if it's single add, but SkillModal implies multi-select.
+        // Let's iterate and add ones that don't exist in current state?
+        // Or if API supports bulk, we should change API.
+        // I added `addSkill` (singular).
+
+        const existingNames = skills.map(s => s.skill_name);
+        const skillsToAdd = newSkills.filter(s => !existingNames.includes(s));
+
+        const addedSkills: Skill[] = [];
+        for (const skillName of skillsToAdd) {
+            const res = await addSkill({ skill_name: skillName });
+            addedSkills.push(res.skill);
+        }
+
+        setSkills([...skills, ...addedSkills]);
+    } catch (error) {
+        console.error("Failed to add skills", error);
+    }
     setIsAddSkillModalOpen(false);
   };
 
-  const handleDeleteSkill = (skillToDelete: string) => {
-    // setSkills(skills.filter(skill => skill !== skillToDelete));
+  const handleDeleteSkill = async (skillName: string) => {
+    // Find skill ID by name (since UI often deals with names in chips)
+    const skill = skills.find(s => s.skill_name === skillName);
+    if (!skill) return;
+
+    try {
+        await deleteSkill(skill.skill_id);
+        setSkills(skills.filter(s => s.skill_id !== skill.skill_id));
+    } catch (error) {
+        console.error("Failed to delete skill", error);
+    }
   }
 
   const handleSaveExperience = async (data: Partial<Experience>) => {
     if (editingExperience) {
-      // TODO: Implement edit experience
+      // TODO: Implement edit experience API if available, else just local for now or add endpoint
       setExperiences(experiences.map(exp => exp.experience_id === editingExperience.experience_id ? { ...exp, ...data } : exp));
     } else {
       try {
@@ -486,7 +533,7 @@ export default function ProfilePage() {
                         initialComments={post.commentData}
                         isOwnPost={true}
                         onDelete={handleDeletePost}
-                        onToggleVisibility={togglePostVisibility}
+                        onToggleVisibility={handleToggleVisibility}
                       />
                     )
                   ))}
