@@ -150,7 +150,7 @@ function ReadOnlyEducationItem({ education }: { education: any }) {
 
 export default function PublicProfile({ userId }: PublicProfileProps) {
   const router = useRouter()
-  const { isFollowing, followUser, unfollowUser, startChat } = useSocial()
+  const { isFollowing, followUser, unfollowUser, startChat, isFollowLoading } = useSocial()
   
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -270,11 +270,12 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
                         </button>
                         <button
                             onClick={handleFollowToggle}
+                            disabled={isFollowLoading(user.id)}
                             className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${
                                 isUserFollowing
                                 ? "bg-muted text-foreground hover:bg-muted/80"
                                 : "bg-primary text-primary-foreground hover:opacity-90"
-                            }`}
+                            } ${isFollowLoading(user.id) ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             {isUserFollowing ? (
                                 <>
