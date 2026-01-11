@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Image, Video, Plus, Trash2, Camera, Smile, Eye } from 'lucide-react';
+import { X, Image, Video, Plus, Trash2, Camera, Smile, Eye, Loader2 } from 'lucide-react';
 import { useFeed } from '@/context/FeedContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { createPost, CreatePostRequest } from '@/services/api/feed';
+import { getPostById, updatePost, UpdatePostRequest } from '@/services/api/posts';
 import { uploadMedia } from '@/services/api/media';
 import { Post } from '@/types/entities';
 import { MediaCropper } from './MediaCropper';
@@ -19,18 +20,21 @@ export interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialPostType?: PostType;
+  editPostId?: string;
+  onUpdate?: (post: Post) => void;
 }
 
 interface MediaItem {
   id: string;
   url: string;
-  file: File;
+  file?: File; // Optional now, since existing media won't have a File object
   type: 'image' | 'video';
   // New fields for cropping
   crop: { x: number; y: number };
   zoom: number;
   croppedBlobUrl?: string;
   pixelCrop?: { x: number; y: number; width: number; height: number }; // Needed for canvas generation
+  isExisting?: boolean; // Flag to identify existing media
 }
 
 interface PollOption {
@@ -38,7 +42,7 @@ interface PollOption {
   text: string;
 }
 
-export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: CreatePostModalProps) {
+export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', editPostId, onUpdate }: CreatePostModalProps) {
   const isMobile = useIsMobile();
   const { addPost, currentUser } = useFeed();
   const [postType, setPostType] = useState<PostType>(initialPostType);
@@ -69,6 +73,9 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
   const articleCoverInputRef = useRef<HTMLInputElement>(null);
   const articleTextAreaRef = useRef<HTMLTextAreaElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingPost, setIsLoadingPost] = useState(false);
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public');
+  const [originalPost, setOriginalPost] = useState<Post | null>(null);
 
   // New State for Cropping/Preview
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -90,11 +97,17 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
   // Helper to revoke all object URLs
   const revokeAllMediaUrls = () => {
     uploadedImagesRef.current.forEach(img => {
-        URL.revokeObjectURL(img.url);
-        if(img.croppedBlobUrl) URL.revokeObjectURL(img.croppedBlobUrl);
+        if (!img.isExisting) {
+            URL.revokeObjectURL(img.url);
+            if(img.croppedBlobUrl) URL.revokeObjectURL(img.croppedBlobUrl);
+        }
     });
-    uploadedVideosRef.current.forEach(video => URL.revokeObjectURL(video.url));
-    if (articleCoverImageRef.current) URL.revokeObjectURL(articleCoverImageRef.current.url);
+    uploadedVideosRef.current.forEach(video => {
+        if (!video.isExisting) URL.revokeObjectURL(video.url);
+    });
+    if (articleCoverImageRef.current && !articleCoverImageRef.current.isExisting) {
+        URL.revokeObjectURL(articleCoverImageRef.current.url);
+    }
     previewMediaUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
   };
 
@@ -105,7 +118,73 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
 
   useEffect(() => {
     if (isOpen) {
-      setPostType(initialPostType);
+      if (editPostId) {
+          setIsLoadingPost(true);
+          getPostById(editPostId)
+            .then((post) => {
+                // Save original post for diffing
+                const mappedOriginal: Post = {
+                    id: post.post_id,
+                    author: post.author_name || '',
+                    title: post.title || '',
+                    content: post.content,
+                    category: post.category_name as any,
+                    visibility: post.visibility as any,
+                    likes: '', comments: '', shares: '', timeAgo: '',
+                    images: post.media?.filter(m => m.media_type === 'image').map(m => m.url),
+                    videoSrc: post.media?.find(m => m.media_type === 'video')?.url
+                };
+                setOriginalPost(mappedOriginal);
+
+                // Determine post type
+                let type: PostType = 'text';
+                if (post.media && post.media.length > 0) {
+                    type = post.media[0].media_type === 'video' ? 'video' : 'image' as any;
+                    // Fix mismatch: 'image' from backend -> 'photo' in frontend state
+                    if ((type as any) === 'image') type = 'photo';
+                }
+                // Handle article/poll if backend supports it explicitly, but mapping logic might be needed
+                // BackendPost has 'poll' field
+                if (post.poll) type = 'poll';
+                if (post.title && !post.media.length && !post.poll) type = 'article'; // Heuristic
+
+                setPostType(type);
+                setPostCategory(post.category_name as any || 'Professional');
+                setVisibility(post.visibility);
+
+                // Populate Content
+                if (type === 'text') setDescription(post.content);
+                else if (type === 'photo') setPhotoCaption(post.content);
+                else if (type === 'video') setVideoCaption(post.content);
+                else if (type === 'article') {
+                    setArticleTitle(post.title || '');
+                    setArticleContent(post.content);
+                }
+
+                // Populate Media
+                if (post.media) {
+                    const mediaItems: MediaItem[] = post.media.map(m => ({
+                        id: m.media_id,
+                        url: m.url,
+                        type: m.media_type,
+                        crop: { x: 0, y: 0 },
+                        zoom: 1,
+                        isExisting: true
+                    }));
+                    if (type === 'photo') setUploadedImages(mediaItems);
+                    if (type === 'video') setUploadedVideos(mediaItems);
+                }
+            })
+            .catch(err => {
+                console.error("Failed to fetch post for editing:", err);
+                onClose(); // Close on error?
+            })
+            .finally(() => setIsLoadingPost(false));
+      } else {
+          setPostType(initialPostType);
+          setVisibility('public');
+          setOriginalPost(null);
+      }
     } else {
       // Centralized cleanup of URLs
       revokeAllMediaUrls();
@@ -124,6 +203,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
       setArticleContent('');
       setPollDuration('1 week');
       setArticleCoverImage(null);
+      setIsLoadingPost(false);
+      setOriginalPost(null);
 
       // Reset Cropper/Preview State
       setActiveImageIndex(0);
@@ -131,7 +212,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
       setIsPreviewMode(false);
       setPreviewMediaUrls([]);
     }
-  }, [isOpen, initialPostType]);
+  }, [isOpen, initialPostType, editPostId]);
+
   // Reset emoji picker when post type changes to avoid state conflicts
   useEffect(() => {
     setShowEmojiPicker(false);
@@ -190,7 +272,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
   ) => {
     setMedia(prev => {
       const itemToRemove = prev.find(item => item.id === mediaId);
-      if (itemToRemove) {
+      if (itemToRemove && !itemToRemove.isExisting) {
           URL.revokeObjectURL(itemToRemove.url);
           if(itemToRemove.croppedBlobUrl) URL.revokeObjectURL(itemToRemove.croppedBlobUrl);
       }
@@ -208,8 +290,10 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
 
   const removeImage = () => {
     uploadedImages.forEach(img => {
-        URL.revokeObjectURL(img.url);
-        if(img.croppedBlobUrl) URL.revokeObjectURL(img.croppedBlobUrl);
+        if (!img.isExisting) {
+            URL.revokeObjectURL(img.url);
+            if(img.croppedBlobUrl) URL.revokeObjectURL(img.croppedBlobUrl);
+        }
     });
     setUploadedImages([]);
     setActiveImageIndex(0);
@@ -290,7 +374,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
       const file = files[0]; // Only one file for cover or single media upload
         if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
           // Revoke old URL if exists before setting new one
-          if (articleCoverImage) URL.revokeObjectURL(articleCoverImage.url);
+          if (articleCoverImage && !articleCoverImage.isExisting) URL.revokeObjectURL(articleCoverImage.url);
           setArticleCoverImage(createMediaItem(file));
         } else {
           console.warn("Only images and videos are allowed for article cover.");
@@ -301,7 +385,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
 
   const removeArticleMedia = (url: string, isCover: boolean) => {
     if (isCover && articleCoverImage) {
-      URL.revokeObjectURL(articleCoverImage.url);
+      if (!articleCoverImage.isExisting) URL.revokeObjectURL(articleCoverImage.url);
       setArticleCoverImage(null);
     }
   };
@@ -351,7 +435,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
 
       if (postType === 'photo') {
         for (const img of uploadedImages) {
-            if (img.pixelCrop) {
+            // Only crop if it's a new file and has crop data
+            if (img.pixelCrop && !img.isExisting) {
                 try {
                     const blob = await getCroppedImg(img.url, img.pixelCrop);
                     if (blob) {
@@ -439,10 +524,18 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
     try {
       // Collect all files to be uploaded
       const finalFiles: File[] = [];
+      const existingUrls: string[] = [];
 
-      if (postType === 'photo') {
-         for(const img of uploadedImages) {
-             if(img.pixelCrop) {
+      const processMedia = async (items: MediaItem[]) => {
+          for(const img of items) {
+              if (img.isExisting) {
+                  existingUrls.push(img.url);
+                  continue;
+              }
+
+              if (!img.file) continue;
+
+             if(img.pixelCrop && img.type === 'image') {
                  const blob = await getCroppedImg(img.url, img.pixelCrop);
                  if (blob) {
                     // Create a File from the Blob
@@ -455,88 +548,161 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                  finalFiles.push(img.file);
              }
          }
+      };
+
+      if (postType === 'photo') {
+         await processMedia(uploadedImages);
       } else if (postType === 'video') {
-         // Videos use original files
-         finalFiles.push(...uploadedVideos.map(v => v.file));
+         // Videos use original files, no crop
+         for(const vid of uploadedVideos) {
+             if (vid.isExisting) existingUrls.push(vid.url);
+             else if (vid.file) finalFiles.push(vid.file);
+         }
       } else if (postType === 'article' && articleCoverImage) {
-          // Article cover...
-          finalFiles.push(articleCoverImage.file);
+          if (articleCoverImage.isExisting) existingUrls.push(articleCoverImage.url);
+          else if (articleCoverImage.file) finalFiles.push(articleCoverImage.file);
       }
 
-      // Upload media if there are any files
+      // Upload media if there are any new files
       if (finalFiles.length > 0) {
         console.log("Uploading media...", finalFiles.length);
         const uploadedMedia = await uploadMedia(finalFiles);
-        media_urls = uploadedMedia.map(m => m.url);
-        console.log("Uploaded URLs:", media_urls);
+        const newUrls = uploadedMedia.map(m => m.url);
+        media_urls = [...existingUrls, ...newUrls];
+      } else {
+        media_urls = existingUrls;
       }
 
-      // Construct the payload
-      const payload: CreatePostRequest = {
-        title: postType === 'article' ? articleTitle : '',
-        content: finalContent,
-        category: postCategory,
-        visibility: 'public',
-        post_type: postType === 'photo' ? 'image' :
-                   postType === 'article' ? 'text' :
-                   postType, // video, poll, text
-        media_urls,
-      };
+      if (editPostId) {
+          // UPDATE MODE
+          const updatePayload: UpdatePostRequest = {};
 
-      // Handle Poll
-      if (postType === 'poll') {
-        const filteredOptions = pollOptions.filter(o => o.text.trim()).map(o => o.text);
-        if (filteredOptions.length < 2) {
-          setIsSubmitting(false);
-          return;
+          if (originalPost) {
+              if (originalPost.content !== finalContent) updatePayload.content = finalContent;
+              if (originalPost.category !== postCategory) updatePayload.category = postCategory;
+              if (originalPost.visibility !== visibility) updatePayload.visibility = visibility;
+              if (postType === 'article' && originalPost.title !== articleTitle) updatePayload.title = articleTitle;
+
+              // For media, simple equality check or just always send if changed
+              const originalMedia = [...(originalPost.images || []), originalPost.videoSrc].filter(Boolean) as string[];
+
+              // Sort to compare ignorant of order if order doesn't matter (but usually it does in carousel)
+              const hasMediaChanged =
+                  media_urls.length !== originalMedia.length ||
+                  media_urls.some((url, i) => url !== originalMedia[i]);
+
+              if (hasMediaChanged) {
+                  updatePayload.media_urls = media_urls;
+              }
+          } else {
+              // Fallback if original not captured, send all
+              updatePayload.content = finalContent;
+              updatePayload.category = postCategory;
+              updatePayload.visibility = visibility;
+              if (postType === 'article') updatePayload.title = articleTitle;
+              updatePayload.media_urls = media_urls;
+          }
+
+          // Check if payload is empty
+          if (Object.keys(updatePayload).length === 0) {
+              onClose();
+              setIsSubmitting(false);
+              return;
+          }
+
+          const updatedPost = await updatePost(editPostId, updatePayload);
+
+          // Map backend post to frontend post for consistent update
+          const mappedPost: Post = {
+            id: updatedPost.post_id,
+            author: updatedPost.author_name || currentUser?.name || 'Anonymous',
+            authorAvatar: updatedPost.author_avatar || '/assets/pngegg.png',
+            title: updatedPost.category_name || 'Post', // Simplified mapping
+            timeAgo: 'Just now', // Won't change timeAgo usually
+            content: updatedPost.content,
+            imageSrc: updatedPost.media && updatedPost.media.length > 0 && updatedPost.media[0].media_type === 'image' ? updatedPost.media[0].url : undefined,
+            images: updatedPost.media && updatedPost.media.length > 0 && updatedPost.media[0].media_type === 'image' ? updatedPost.media.map(m => m.url) : undefined,
+            videoSrc: updatedPost.media && updatedPost.media.length > 0 && updatedPost.media[0].media_type === 'video' ? updatedPost.media[0].url : undefined,
+            likes: '0', // Preserve existing if possible, but backend response might not have it aggregated the same way.
+            // The UpdatePost endpoint returns basic post data. Ideally we merge with existing local state in parent.
+            comments: '0',
+            shares: '0',
+            visibility: updatedPost.visibility as any,
+            category: updatedPost.category_name as any,
+          };
+
+          if (onUpdate) onUpdate(mappedPost);
+
+      } else {
+        // CREATE MODE
+        // Construct the payload
+        const payload: CreatePostRequest = {
+            title: postType === 'article' ? articleTitle : '',
+            content: finalContent,
+            category: postCategory,
+            visibility: visibility,
+            post_type: postType === 'photo' ? 'image' :
+                    postType === 'article' ? 'text' :
+                    postType, // video, poll, text
+            media_urls,
+        };
+
+        // Handle Poll
+        if (postType === 'poll') {
+            const filteredOptions = pollOptions.filter(o => o.text.trim()).map(o => o.text);
+            if (filteredOptions.length < 2) {
+            setIsSubmitting(false);
+            return;
+            }
+            payload.poll_options = filteredOptions;
+            payload.poll_duration = pollDuration;
+            payload.content = pollQuestion;
+            payload.title = "";
         }
-        payload.poll_options = filteredOptions;
-        payload.poll_duration = pollDuration;
-        payload.content = pollQuestion;
-        payload.title = "";
+
+        console.log("Creating post with category:", payload.category);
+        const response = await createPost(payload);
+
+        const newPost: Post = {
+            id: response.postId,
+            author: currentUser?.name || 'Anonymous',
+            authorAvatar: '/assets/pngegg.png',
+            title: response.title || (response.category || 'Post'),
+            timeAgo: 'Just now',
+            content: response.content,
+            imageSrc: response.media_urls && response.media_type === 'image' && response.media_urls.length > 0 ? response.media_urls[0] : undefined,
+            images: response.media_urls && response.media_type === 'image' ? response.media_urls : undefined,
+            videoSrc: response.media_urls && response.media_type === 'video' && response.media_urls.length > 0 ? response.media_urls[0] : undefined,
+            likes: '0',
+            comments: '0',
+            shares: '0',
+            commentData: [],
+            category: response.category as any,
+            visibility: response.visibility as any,
+            poll: response.poll && 'options' in response.poll ? {
+            poll_id: response.poll.poll_id || 'temp-id',
+            total_votes: response.poll.total_votes || 0,
+            // @ts-ignore - legacy mock data structure
+            options: (response.poll.options || []).map((opt: any, idx) => ({
+                option_id: opt.option_id || `opt-${idx}`,
+                option_text: opt.option_text || opt,
+                vote_count: opt.vote_count || 0
+            }))
+            } : null
+        };
+
+        addPost(newPost);
       }
-
-      console.log("Creating post with category:", payload.category);
-      const response = await createPost(payload);
-
-      const newPost: Post = {
-        id: response.postId,
-        author: currentUser?.name || 'Anonymous',
-        authorAvatar: '/assets/pngegg.png',
-        title: response.title || (response.category || 'Post'),
-        timeAgo: 'Just now',
-        content: response.content,
-        imageSrc: response.media_urls && response.media_type === 'image' && response.media_urls.length > 0 ? response.media_urls[0] : undefined,
-        images: response.media_urls && response.media_type === 'image' ? response.media_urls : undefined,
-        videoSrc: response.media_urls && response.media_type === 'video' && response.media_urls.length > 0 ? response.media_urls[0] : undefined,
-        likes: '0',
-        comments: '0',
-        shares: '0',
-        commentData: [],
-        category: response.category as any,
-        visibility: response.visibility as any,
-        poll: response.poll && 'options' in response.poll ? {
-           poll_id: response.poll.poll_id || 'temp-id',
-           total_votes: response.poll.total_votes || 0,
-           // @ts-ignore - legacy mock data structure
-           options: (response.poll.options || []).map((opt: any, idx) => ({
-             option_id: opt.option_id || `opt-${idx}`,
-             option_text: opt.option_text || opt,
-             vote_count: opt.vote_count || 0
-           }))
-        } : null
-      };
-
-      addPost(newPost);
       onClose();
     } catch (error) {
-      console.error("Failed to create post:", error);
+      console.error("Failed to save post:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const isPostDisabled = () => {
+    if (isLoadingPost) return true;
     if (isSubmitting) return true;
     if (postType === 'poll') {
       return !pollQuestion.trim() || pollOptions.filter(o => o.text.trim()).length < 2;
@@ -566,7 +732,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
           }`}
         >
           <h2 className="text-xl font-semibold text-foreground">
-              {isPreviewMode ? 'Preview Post' : 'Create a post'}
+              {editPostId ? 'Edit Post' : (isPreviewMode ? 'Preview Post' : 'Create a post')}
           </h2>
           <button
             onClick={onClose}
@@ -577,7 +743,11 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
         </div>
 
         <div className="flex-grow overflow-y-auto">
-            {isPreviewMode ? (
+            {isLoadingPost ? (
+                <div className="flex items-center justify-center h-64">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+            ) : isPreviewMode ? (
                 // --- PREVIEW MODE ---
                 <div className="p-4 md:p-6 bg-background/50 h-full overflow-y-auto">
                     <PostPreview
@@ -833,7 +1003,19 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                   </div>
                   <div>
                     <h3 className="text-foreground">{currentUser?.name || 'Sally Liang'}</h3>
-                    <p className="text-sm text-muted-foreground">Post to Anyone</p>
+                    <div className="flex items-center gap-2">
+                        <p className="text-sm text-muted-foreground">Post to Anyone</p>
+                        {/* Visibility Toggle (only if editing, or could be new feature too) */}
+                        {editPostId && (
+                            <button
+                                onClick={() => setVisibility(visibility === 'public' ? 'private' : 'public')}
+                                className="text-xs px-2 py-0.5 rounded bg-muted hover:bg-muted/80 flex items-center gap-1"
+                            >
+                                {visibility === 'public' ? <Eye className="w-3 h-3" /> : <Eye className="w-3 h-3 text-red-500" />}
+                                {visibility === 'public' ? 'Public' : 'Private'}
+                            </button>
+                        )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 mt-3">
@@ -1034,7 +1216,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                     <div className="flex flex-col items-center justify-center p-4">
                       {articleCoverImage ? (
                         <div className="relative w-full max-h-96 rounded-lg overflow-hidden border bg-muted flex items-center justify-center">
-                          {articleCoverImage.file.type.startsWith('image/') ? (
+                          {articleCoverImage.file?.type.startsWith('image/') || articleCoverImage.type === 'image' ? (
                             <img src={articleCoverImage.url} alt="Cover" className="max-h-96 object-contain" />
                           ) : (
                             <video src={articleCoverImage.url} controls className="max-h-96 object-contain" />
@@ -1215,7 +1397,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                 : 'bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white hover:opacity-90'
             }`}
           >
-            {isSubmitting ? 'Posting...' : 'Post'}
+            {isSubmitting ? 'Saving...' : (editPostId ? 'Save' : 'Post')}
           </button>
         </div>
       </div>

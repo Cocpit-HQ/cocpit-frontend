@@ -16,6 +16,7 @@ interface FeedContextType {
   addPost: (post: Post) => void;
   deletePost: (id: string) => Promise<void>;
   togglePostVisibility: (id: string) => void;
+  updatePostInFeed: (id: string, updates: Partial<Post>) => void;
   loadMorePosts: () => Promise<void>;
   hasMore: boolean;
   loading: boolean;
@@ -107,6 +108,12 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
     );
   };
 
+  const updatePostInFeed = (id: string, updates: Partial<Post>) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) => (post.id === id ? { ...post, ...updates } : post))
+    );
+  };
+
   return (
     <FeedContext.Provider value={{
       posts,
@@ -114,6 +121,7 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
       currentUser,
       deletePost,
       togglePostVisibility,
+      updatePostInFeed,
       loadMorePosts,
       hasMore,
       loading
