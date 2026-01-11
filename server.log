@@ -1,0 +1,265 @@
+
+> cocpit-frontend@0.1.0 dev
+> next dev
+
+   ▲ Next.js 16.0.10 (Turbopack)
+   - Local:         http://localhost:3000
+   - Network:       http://192.168.0.2:3000
+
+ ✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+ ✓ Ready in 2.1s
+ ○ Compiling / ...
+ GET / 200 in 9.5s (compile: 8.5s, render: 1038ms)
+[next-auth][warn][NEXTAUTH_URL]
+https://next-auth.js.org/warnings#nextauth_url
+[next-auth][warn][NO_SECRET]
+https://next-auth.js.org/warnings#no_secret
+ GET /api/auth/session 200 in 2.7s (compile: 2.6s, render: 56ms)
+ GET /api/auth/providers 200 in 2.3s (compile: 2.3s, render: 60ms)
+ GET /api/auth/session 200 in 44ms (compile: 32ms, render: 12ms)
+ GET /api/auth/csrf 200 in 15ms (compile: 6ms, render: 10ms)
+Authorize function called with credentials: sally.liang@example.com
+Login error in authorize function: TypeError: Failed to parse URL from undefined/auth/login
+    at Object.authorize (src/lib/auth.ts:105:29)
+  103 |
+  104 |         try {
+> 105 |           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      |                             ^
+  106 |             method: "POST",
+  107 |             body: JSON.stringify({
+  108 |               email: credentials.email, {
+  [cause]: TypeError: Invalid URL
+      at Object.authorize (src/lib/auth.ts:105:29)
+    103 |
+    104 |         try {
+  > 105 |           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+        |                             ^
+    106 |             method: "POST",
+    107 |             body: JSON.stringify({
+    108 |               email: credentials.email, {
+    code: 'ERR_INVALID_URL',
+    input: 'undefined/auth/login'
+  }
+}
+ POST /api/auth/callback/credentials 401 in 650ms (compile: 6ms, render: 644ms)
+ GET /All/feeds? 404 in 1620ms (compile: 1402ms, render: 218ms)
+ GET / 200 in 130ms (compile: 6ms, render: 124ms)
+ GET /api/auth/session 200 in 47ms (compile: 32ms, render: 14ms)
+ GET /api/auth/session 200 in 19ms (compile: 9ms, render: 10ms)
+ GET /All/feeds? 404 in 95ms (compile: 18ms, render: 77ms)
+ GET /api/auth/providers 200 in 13ms (compile: 3ms, render: 10ms)
+ GET /api/auth/csrf 200 in 17ms (compile: 6ms, render: 11ms)
+Authorize function called with credentials: sally.liang@example.com
+Login error in authorize function: TypeError: Failed to parse URL from undefined/auth/login
+    at Object.authorize (src/lib/auth.ts:105:29)
+  103 |
+  104 |         try {
+> 105 |           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      |                             ^
+  106 |             method: "POST",
+  107 |             body: JSON.stringify({
+  108 |               email: credentials.email, {
+  [cause]: TypeError: Invalid URL
+      at Object.authorize (src/lib/auth.ts:105:29)
+    103 |
+    104 |         try {
+  > 105 |           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+        |                             ^
+    106 |             method: "POST",
+    107 |             body: JSON.stringify({
+    108 |               email: credentials.email, {
+    code: 'ERR_INVALID_URL',
+    input: 'undefined/auth/login'
+  }
+}
+ POST /api/auth/callback/credentials 401 in 364ms (compile: 3ms, render: 361ms)
+ HEAD / 200 in 72ms (compile: 5ms, render: 67ms)
+ GET / 200 in 118ms (compile: 4ms, render: 114ms)
+ GET /api/auth/session 200 in 47ms (compile: 34ms, render: 12ms)
+ GET /api/auth/session 200 in 13ms (compile: 3ms, render: 9ms)
+ GET /All/feeds? 404 in 79ms (compile: 18ms, render: 62ms)
+ GET /api/auth/providers 200 in 11ms (compile: 3ms, render: 8ms)
+ GET /api/auth/csrf 200 in 12ms (compile: 3ms, render: 9ms)
+Authorize function called with credentials: sally.liang@example.com
+Login error in authorize function: TypeError: Failed to parse URL from undefined/auth/login
+    at Object.authorize (src/lib/auth.ts:105:29)
+  103 |
+  104 |         try {
+> 105 |           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      |                             ^
+  106 |             method: "POST",
+  107 |             body: JSON.stringify({
+  108 |               email: credentials.email, {
+  [cause]: TypeError: Invalid URL
+      at Object.authorize (src/lib/auth.ts:105:29)
+    103 |
+    104 |         try {
+  > 105 |           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+        |                             ^
+    106 |             method: "POST",
+    107 |             body: JSON.stringify({
+    108 |               email: credentials.email, {
+    code: 'ERR_INVALID_URL',
+    input: 'undefined/auth/login'
+  }
+}
+ POST /api/auth/callback/credentials 401 in 349ms (compile: 3ms, render: 346ms)
+ GET /auth/login 404 in 73ms (compile: 9ms, render: 64ms)
+ GET / 200 in 129ms (compile: 5ms, render: 124ms)
+ GET /api/auth/session 200 in 53ms (compile: 35ms, render: 18ms)
+ GET /api/auth/session 200 in 15ms (compile: 3ms, render: 11ms)
+ GET /All/feeds? 404 in 98ms (compile: 15ms, render: 83ms)
+ GET /api/auth/providers 200 in 15ms (compile: 4ms, render: 11ms)
+ GET /api/auth/csrf 200 in 13ms (compile: 3ms, render: 10ms)
+Authorize function called with credentials: sally.liang@example.com
+Login error in authorize function: TypeError: Failed to parse URL from undefined/auth/login
+    at Object.authorize (src/lib/auth.ts:105:29)
+  103 |
+  104 |         try {
+> 105 |           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      |                             ^
+  106 |             method: "POST",
+  107 |             body: JSON.stringify({
+  108 |               email: credentials.email, {
+  [cause]: TypeError: Invalid URL
+      at Object.authorize (src/lib/auth.ts:105:29)
+    103 |
+    104 |         try {
+  > 105 |           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+        |                             ^
+    106 |             method: "POST",
+    107 |             body: JSON.stringify({
+    108 |               email: credentials.email, {
+    code: 'ERR_INVALID_URL',
+    input: 'undefined/auth/login'
+  }
+}
+ POST /api/auth/callback/credentials 401 in 360ms (compile: 3ms, render: 357ms)
+ GET /profile 200 in 3.1s (compile: 3.0s, render: 116ms)
+ GET /api/auth/session 200 in 43ms (compile: 35ms, render: 9ms)
+ GET /api/auth/session 200 in 11ms (compile: 4ms, render: 7ms)
+ GET /api/auth/session 200 in 9ms (compile: 3ms, render: 6ms)
+ GET /api/auth/session 200 in 15ms (compile: 4ms, render: 12ms)
+ GET /users/me/posts?limit=4 404 in 136ms (compile: 25ms, render: 112ms)
+ GET /All/feeds? 404 in 73ms (compile: 18ms, render: 55ms)
+ GET /profile/me 200 in 2.1s (compile: 2.0s, render: 105ms)
+ GET / 200 in 605ms (compile: 154ms, render: 451ms)
+ GET /api/auth/session 200 in 53ms (compile: 40ms, render: 13ms)
+ GET /api/auth/session 200 in 12ms (compile: 4ms, render: 8ms)
+ GET /api/auth/providers 200 in 12ms (compile: 6ms, render: 7ms)
+ GET /All/feeds? 404 in 510ms (compile: 141ms, render: 369ms)
+ GET /api/auth/csrf 200 in 14ms (compile: 3ms, render: 10ms)
+Authorize function called with credentials: sally.liang@example.com
+Login error in authorize function: TypeError: Failed to parse URL from undefined/auth/login
+    at Object.authorize (src/lib/auth.ts:105:29)
+  103 |
+  104 |         try {
+> 105 |           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      |                             ^
+  106 |             method: "POST",
+  107 |             body: JSON.stringify({
+  108 |               email: credentials.email, {
+  [cause]: TypeError: Invalid URL
+      at Object.authorize (src/lib/auth.ts:105:29)
+    103 |
+    104 |         try {
+  > 105 |           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+        |                             ^
+    106 |             method: "POST",
+    107 |             body: JSON.stringify({
+    108 |               email: credentials.email, {
+    code: 'ERR_INVALID_URL',
+    input: 'undefined/auth/login'
+  }
+}
+ POST /api/auth/callback/credentials 401 in 490ms (compile: 4ms, render: 486ms)
+ GET /profile 200 in 586ms (compile: 137ms, render: 449ms)
+ GET /api/auth/session 200 in 53ms (compile: 44ms, render: 9ms)
+ GET /api/auth/session 200 in 10ms (compile: 3ms, render: 7ms)
+ GET /api/auth/session 200 in 13ms (compile: 4ms, render: 8ms)
+ GET /api/auth/session 200 in 16ms (compile: 3ms, render: 13ms)
+ GET /profile/me 200 in 696ms (compile: 158ms, render: 537ms)
+ GET /users/me/posts?limit=4 404 in 123ms (compile: 20ms, render: 103ms)
+ GET /All/feeds? 404 in 103ms (compile: 25ms, render: 78ms)
+ ✓ Compiled in 244ms
+ GET / 200 in 138ms (compile: 19ms, render: 120ms)
+ GET /api/auth/session 200 in 49ms (compile: 35ms, render: 14ms)
+ GET /api/auth/session 200 in 15ms (compile: 3ms, render: 12ms)
+ GET /All/feeds? 404 in 104ms (compile: 32ms, render: 72ms)
+ GET /api/auth/providers 200 in 12ms (compile: 3ms, render: 9ms)
+ GET /api/auth/csrf 200 in 10ms (compile: 2ms, render: 7ms)
+Authorize function called with credentials: sally.liang@example.com
+Login error in authorize function: TypeError: Failed to parse URL from undefined/auth/login
+    at Object.authorize (src/lib/auth.ts:105:29)
+  103 |
+  104 |         try {
+> 105 |           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      |                             ^
+  106 |             method: "POST",
+  107 |             body: JSON.stringify({
+  108 |               email: credentials.email, {
+  [cause]: TypeError: Invalid URL
+      at Object.authorize (src/lib/auth.ts:105:29)
+    103 |
+    104 |         try {
+  > 105 |           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+        |                             ^
+    106 |             method: "POST",
+    107 |             body: JSON.stringify({
+    108 |               email: credentials.email, {
+    code: 'ERR_INVALID_URL',
+    input: 'undefined/auth/login'
+  }
+}
+ POST /api/auth/callback/credentials 401 in 461ms (compile: 2ms, render: 459ms)
+ GET /profile 200 in 99ms (compile: 8ms, render: 92ms)
+ GET /api/auth/session 200 in 46ms (compile: 34ms, render: 12ms)
+ GET /api/auth/session 200 in 10ms (compile: 3ms, render: 8ms)
+ GET /api/auth/session 200 in 9ms (compile: 3ms, render: 6ms)
+ GET /api/auth/session 200 in 128ms (compile: 3ms, render: 125ms)
+ GET /profile/me 200 in 155ms (compile: 45ms, render: 110ms)
+ GET /users/me/posts?limit=4 404 in 160ms (compile: 19ms, render: 141ms)
+ GET /All/feeds? 404 in 156ms (compile: 66ms, render: 89ms)
+ GET / 200 in 699ms (compile: 253ms, render: 446ms)
+ GET /api/auth/session 200 in 59ms (compile: 40ms, render: 19ms)
+ GET /api/auth/session 200 in 14ms (compile: 3ms, render: 10ms)
+ GET /api/auth/providers 200 in 30ms (compile: 6ms, render: 24ms)
+ GET /api/auth/csrf 200 in 11ms (compile: 3ms, render: 8ms)
+ GET /All/feeds? 404 in 646ms (compile: 284ms, render: 362ms)
+Authorize function called with credentials: sally.liang@example.com
+Login error in authorize function: TypeError: Failed to parse URL from undefined/auth/login
+    at Object.authorize (src/lib/auth.ts:105:29)
+  103 |
+  104 |         try {
+> 105 |           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      |                             ^
+  106 |             method: "POST",
+  107 |             body: JSON.stringify({
+  108 |               email: credentials.email, {
+  [cause]: TypeError: Invalid URL
+      at Object.authorize (src/lib/auth.ts:105:29)
+    103 |
+    104 |         try {
+  > 105 |           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+        |                             ^
+    106 |             method: "POST",
+    107 |             body: JSON.stringify({
+    108 |               email: credentials.email, {
+    code: 'ERR_INVALID_URL',
+    input: 'undefined/auth/login'
+  }
+}
+ POST /api/auth/callback/credentials 401 in 421ms (compile: 15ms, render: 406ms)
+ GET /profile 200 in 550ms (compile: 241ms, render: 308ms)
+ GET /api/auth/session 200 in 61ms (compile: 49ms, render: 12ms)
+ GET /api/auth/session 200 in 11ms (compile: 3ms, render: 8ms)
+ GET /api/auth/session 200 in 12ms (compile: 4ms, render: 8ms)
+ GET /api/auth/session 200 in 14ms (compile: 5ms, render: 9ms)
+ GET /users/me/posts?limit=4 404 in 603ms (compile: 38ms, render: 565ms)
+ GET /profile/me 200 in 630ms (compile: 296ms, render: 334ms)
+ GET /All/feeds? 404 in 588ms (compile: 73ms, render: 516ms)
