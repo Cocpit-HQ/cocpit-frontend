@@ -13,6 +13,7 @@ interface MediaCropperProps {
   onCropComplete: (croppedArea: any, croppedAreaPixels: any) => void;
   onAspectChange: (aspect: number) => void;
   isMobile: boolean;
+  readOnly?: boolean;
 }
 
 const ASPECT_RATIOS = [
@@ -31,29 +32,35 @@ export function MediaCropper({
   onCropComplete,
   onAspectChange,
   isMobile,
+  readOnly,
 }: MediaCropperProps) {
   return (
     <div className="flex flex-col h-full w-full gap-4">
       {/* Cropper Area */}
       <div className="relative w-full h-[300px] md:h-[400px] bg-black rounded-lg overflow-hidden">
-        <Cropper
-          image={imageSrc}
-          crop={crop}
-          zoom={zoom}
-          aspect={aspect}
-          onCropChange={onCropChange}
-          onZoomChange={onZoomChange}
-          onCropComplete={onCropComplete}
-          showGrid={true}
-          objectFit="contain" // Ensures image is contained within the cropper area initially
-          style={{
-            containerStyle: { background: '#000' },
-            cropAreaStyle: { border: '2px solid rgba(255, 255, 255, 0.5)' },
-          }}
-        />
+        {readOnly ? (
+            <img src={imageSrc} className="w-full h-full object-contain" alt="Post media" />
+        ) : (
+            <Cropper
+            image={imageSrc}
+            crop={crop}
+            zoom={zoom}
+            aspect={aspect}
+            onCropChange={onCropChange}
+            onZoomChange={onZoomChange}
+            onCropComplete={onCropComplete}
+            showGrid={true}
+            objectFit="contain" // Ensures image is contained within the cropper area initially
+            style={{
+                containerStyle: { background: '#000' },
+                cropAreaStyle: { border: '2px solid rgba(255, 255, 255, 0.5)' },
+            }}
+            />
+        )}
       </div>
 
-      {/* Controls */}
+      {/* Controls - Hide if readOnly */}
+      {!readOnly && (
       <div className="flex flex-col gap-4 px-2">
         {/* Zoom Control */}
         <div className="flex items-center gap-4">
@@ -100,6 +107,7 @@ export function MediaCropper({
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
