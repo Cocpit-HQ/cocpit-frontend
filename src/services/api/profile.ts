@@ -118,7 +118,6 @@ export const deleteSkill = async (id: string): Promise<void> => {
 }
 
 export const uploadAvatar = async (formData: FormData): Promise<UploadAvatarResponse> => {
-  // Do NOT manually set Content-Type for FormData; the browser/axios must set it with the boundary.
   const response = await api.post("/profile/avatar", formData);
   return response.data;
 };
