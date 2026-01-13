@@ -1,5 +1,5 @@
 import api from "@/lib/axios";
-import type { UserProfile, AddExperiencePayload, AddExperienceResponse, AddEducationPayload, AddEducationResponse, Skill } from "@/types/user";
+import type { UserProfile, AddExperiencePayload, AddExperienceResponse, AddEducationPayload, AddEducationResponse, Skill, UpdateProfilePayload } from "@/types/user";
 
 export interface GetUserPostsParams {
   category?: 'All' | 'Personal' | 'Professional';
@@ -71,6 +71,11 @@ export interface DeleteAvatarResponse {
 
 export const getProfile = async (): Promise<UserProfile> => {
     const response = await api.get("/profile/me");
+    return response.data;
+};
+
+export const updateProfile = async (payload: UpdateProfilePayload): Promise<{ message: string }> => {
+    const response = await api.put("/profile/me", payload);
     return response.data;
 };
 

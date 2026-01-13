@@ -39,6 +39,22 @@ export interface UserData {
         school: string;
         degree: string;
     } | null;
+    job_title?: string;
+    company_name?: string;
+    school?: string;
+    degree?: string;
+    about_text?: string;
+}
+
+export interface UpdateProfilePayload {
+    full_name: string;
+    headline: string;
+    job_title: string;
+    company_name: string;
+    school: string;
+    degree: string;
+    location: string;
+    about_text: string;
 }
 
 export interface Skill {
