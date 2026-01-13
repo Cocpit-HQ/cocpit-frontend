@@ -13,9 +13,6 @@ export const publicApi = axios.create({
 // Authenticated API client
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 api.interceptors.request.use(
@@ -24,6 +21,12 @@ api.interceptors.request.use(
 
     if (session?.user?.accessToken) {
       config.headers.Authorization = `Bearer ${session.user.accessToken}`;
+    }
+
+    // Set Content-Type to JSON for all requests except for FormData.
+    // For FormData, the browser will automatically set the correct Content-Type with the boundary.
+    if (!(config.data instanceof FormData)) {
+      config.headers["Content-Type"] = "application/json";
     }
 
     return config;
