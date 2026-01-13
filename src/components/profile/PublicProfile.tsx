@@ -21,6 +21,8 @@ import { mapPublicPostToPost } from '@/lib/mappers/public-profile.mapper'
 import { PublicUserProfileResponse } from "@/types/api"
 import { useIsMobile } from "@/hooks/use-mobile"
 import PostCard from "./PostCard"
+import { ViewAvatarModal } from "@/components/profile/ViewAvatarModal";
+
 
 interface PublicProfileProps {
   userId: string;
@@ -158,6 +160,8 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
   const [publicPosts, setPublicPosts] = useState<Post[]>([])
   const [loadingPosts, setLoadingPosts] = useState(false)
   const isMobile = useIsMobile();
+  const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
+  
 
   useEffect(() => {
     if (typeof userId === 'string') {
@@ -253,7 +257,10 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
 
                 <div className="px-6 pb-6">
                   <div className="flex items-start justify-between -mt-14 mb-4">
-                    <div className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 relative">
+                    <div 
+                      className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 relative cursor-pointer"
+                      onClick={() => setIsViewAvatarOpen(true)}
+                    >
                       <img
                         src={user.avatar}
                         alt={user.name}
@@ -450,6 +457,11 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
           </div>
         </div>
       </AppShell>
+         <ViewAvatarModal
+              isOpen={isViewAvatarOpen}
+              onClose={() => setIsViewAvatarOpen(false)}
+              avatarUrl={user?.avatar || null}
+            />
     </div>
   )
 }
