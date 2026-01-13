@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap, Settings, X, Trash2, Menu, LogOut } from "lucide-react"
+import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap, Settings, X, Trash2, Menu, LogOut, Pencil } from "lucide-react"
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import { AppShell } from "@/components/layout/AppShell"
@@ -34,11 +34,13 @@ import { useAuth } from "@/hooks/use-auth";
 import FeedPost from "@/components/home/FeedPost";
 import PostCard from "./PostCard";
 import Link from "next/link";
-import { getProfile, addExperience, deleteExperience, addEducation, deleteEducation, getUserPosts, addSkill, deleteSkill } from "@/services/api/profile"
+import { getProfile, addExperience, deleteExperience, addEducation, deleteEducation, getUserPosts, addSkill, deleteSkill, uploadAvatar, deleteAvatar } from "@/services/api/profile"
 import { deletePost as apiDeletePost } from "@/services/api/posts"
 import { UserProfile, UserData, Skill, AddExperiencePayload, AddEducationPayload } from "@/types/user"
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
 import type { Post } from "@/types/entities"
+import { ViewAvatarModal } from "@/components/profile/ViewAvatarModal";
+import { EditAvatarModal } from "@/components/profile/EditAvatarModal";
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -118,6 +120,8 @@ export default function ProfilePage() {
   const [isAddSkillModalOpen, setIsAddSkillModalOpen] = useState(false);
   const [isAddExperienceModalOpen, setIsAddExperienceModalOpen] = useState(false);
   const [isAddEducationModalOpen, setIsAddEducationModalOpen] = useState(false);
+  const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
+  const [isEditAvatarOpen, setIsEditAvatarOpen] = useState(false);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [educations, setEducations] = useState<Education[]>([]);
@@ -183,6 +187,30 @@ export default function ProfilePage() {
     togglePostVisibility(id);
   };
 
+  const handleAvatarUpload = async (file: File) => {
+    if (!user) return;
+    try {
+      const formData = new FormData();
+      formData.append("avatar", file);
+      const response = await uploadAvatar(formData);
+      setUser({ ...user, avatar: response.avatarUrl });
+    } catch (error) {
+      console.error("Failed to upload avatar", error);
+      throw error; // Let the modal handle error UI if needed
+    }
+  };
+
+  const handleAvatarDelete = async () => {
+    if (!user) return;
+    try {
+      await deleteAvatar();
+      setUser({ ...user, avatar: null });
+    } catch (error) {
+      console.error("Failed to delete avatar", error);
+      throw error;
+    }
+  };
+
   if (!mounted) {
     return null;
   }
@@ -198,19 +226,6 @@ export default function ProfilePage() {
 
   const handleSaveSkills = async (newSkills: string[]) => {
     try {
-        // Assume API accepts one skill at a time or we loop.
-        // Typically UI sends all, but backend here is addSkill (singular) as per profile.ts update.
-        // We'll iterate for now or assume UI sends only new ones.
-        // The SkillModal returns a list of strings (all selected skills).
-        // We need to figure out which are new.
-
-        // This logic depends on SkillModal behavior. Assuming it passes all selected.
-        // For simplicity/robustness with current API:
-        // We'll just add the last one if it's single add, but SkillModal implies multi-select.
-        // Let's iterate and add ones that don't exist in current state?
-        // Or if API supports bulk, we should change API.
-        // I added `addSkill` (singular).
-
         const existingNames = skills.map(s => s.skill_name);
         const skillsToAdd = newSkills.filter(s => !existingNames.includes(s));
 
@@ -383,15 +398,31 @@ export default function ProfilePage() {
 
                 <div className="px-6 pb-6">
                   <div className="flex items-start justify-between -mt-14 mb-4">
-                    <div
-                      className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 relative"
-                    >
-                      <img
-                        src={user?.avatar ?? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop"}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="relative group">
+                      <div
+                        className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 cursor-pointer"
+                        onClick={() => setIsViewAvatarOpen(true)}
+                      >
+                        <img
+                          src={user?.avatar ?? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop"}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      {/* Pencil Icon for Edit Avatar */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsEditAvatarOpen(true);
+                        }}
+                        className="absolute bottom-1 right-1 p-2 bg-background border border-border rounded-full text-muted-foreground hover:text-foreground shadow-sm md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                        aria-label="Edit Profile Picture"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
                     </div>
+
                     <button onClick={() => router.push('/profile/edit')} className="md:hidden mt-16 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center gap-2 text-sm">
                       <Edit2 className="w-4 h-4" />
                       Edit Profile
@@ -594,6 +625,20 @@ export default function ProfilePage() {
           />
         </DialogContent>
       </Dialog>
+
+      <ViewAvatarModal
+        isOpen={isViewAvatarOpen}
+        onClose={() => setIsViewAvatarOpen(false)}
+        avatarUrl={user?.avatar || null}
+      />
+
+      <EditAvatarModal
+        isOpen={isEditAvatarOpen}
+        onClose={() => setIsEditAvatarOpen(false)}
+        currentAvatarUrl={user?.avatar || null}
+        onUpload={handleAvatarUpload}
+        onDelete={handleAvatarDelete}
+      />
     </div>
   )
 }

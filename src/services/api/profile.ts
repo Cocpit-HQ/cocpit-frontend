@@ -60,6 +60,15 @@ export interface AddSkillResponse {
     skill: Skill;
 }
 
+export interface UploadAvatarResponse {
+  message: string;
+  avatarUrl: string;
+}
+
+export interface DeleteAvatarResponse {
+  message: string;
+}
+
 export const getProfile = async (): Promise<UserProfile> => {
     const response = await api.get("/profile/me");
     return response.data;
@@ -102,3 +111,14 @@ export const addSkill = async (payload: AddSkillPayload): Promise<AddSkillRespon
 export const deleteSkill = async (id: string): Promise<void> => {
     await api.delete(`/profile/skills/${id}`);
 }
+
+export const uploadAvatar = async (formData: FormData): Promise<UploadAvatarResponse> => {
+  // Do NOT manually set Content-Type for FormData; the browser/axios must set it with the boundary.
+  const response = await api.post("/profile/avatar", formData);
+  return response.data;
+};
+
+export const deleteAvatar = async (): Promise<DeleteAvatarResponse> => {
+  const response = await api.delete("/profile/avatar");
+  return response.data;
+};
