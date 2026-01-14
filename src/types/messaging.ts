@@ -11,7 +11,7 @@ export interface ChatThread {
 }
 
 export interface Message {
-  id: number;
+  id: number | string;
   sender: "me" | "other";
   text: string;
   time: string;

@@ -5,9 +5,10 @@ import { Paperclip, Send, Smile } from "lucide-react"
 
 interface ChatInputProps {
   onSendMessage: (text: string) => void
+  onTyping?: () => void
 }
 
-export default function ChatInput({ onSendMessage }: ChatInputProps) {
+export default function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
   const [text, setText] = useState("")
 
   const handleSend = () => {
@@ -38,7 +39,10 @@ export default function ChatInput({ onSendMessage }: ChatInputProps) {
         <div className="flex-1 relative rounded-2xl bg-muted">
             <textarea
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value)
+              onTyping?.()
+            }}
             onKeyDown={handleKeyDown}
             placeholder="Write a message..."
             rows={1}
