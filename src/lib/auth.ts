@@ -137,6 +137,7 @@ export const authOptions: NextAuthOptions = {
               roles: data.user.roles,
               accessToken: data.accessToken,
               refreshToken: refreshToken || "", // Fallback to empty string if missing (should fail later)
+              onboarding_complete: data.user.onboarding_complete,
             };
             console.log("Authorize function returning user payload:", userPayload);
             return userPayload;
@@ -152,7 +153,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       // Initial sign in
       if (user) {
         return {
@@ -161,7 +162,13 @@ export const authOptions: NextAuthOptions = {
           roles: user.roles,
           accessToken: user.accessToken,
           refreshToken: user.refreshToken,
+          onboarding_complete: user.onboarding_complete,
         };
+      }
+
+      // Handle session update
+      if (trigger === "update" && session?.onboarding_complete) {
+        token.onboarding_complete = session.onboarding_complete;
       }
 
       // Return previous token if the access token has not expired yet
@@ -184,6 +191,7 @@ export const authOptions: NextAuthOptions = {
         session.user.roles = token.roles;
         session.user.accessToken = token.accessToken;
         session.user.error = token.error;
+        session.user.onboarding_complete = token.onboarding_complete;
         // refreshToken is deliberately excluded from the session
       }
       return session;
