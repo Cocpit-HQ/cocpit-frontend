@@ -6,7 +6,9 @@ import { AppShell } from '@/components/layout/AppShell'
 import { useIsMobile } from "@/hooks/use-mobile"
 import ChatWindow from '@/components/messaging/ui/ChatWindow';
 import ChatList from '@/components/messaging/ui/ChatList';
-import { mockChats } from '@/data/mockMessaging';
+import { useQuery } from '@tanstack/react-query';
+import { getConversations } from '@/services/api/messaging';
+import { mapBackendChatToChatThread } from '@/lib/mappers/messaging.mapper';
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -24,11 +26,28 @@ export default function ConversationPage() {
     const router = useRouter()
     const isMobile = useIsMobile();
 
-    const chatId = params.id;
-    const chat = mockChats.find(c => c.id.toString() === chatId);
+    const chatId = params.id as string;
+
+    const { data: chats = [], isLoading } = useQuery({
+        queryKey: ['conversations'],
+        queryFn: async () => {
+          const backendChats = await getConversations();
+          return backendChats.map(mapBackendChatToChatThread);
+        }
+    });
+
+    const chat = chats.find(c => c.id.toString() === chatId);
 
     const navigateTo = (page: Page) => {
         router.push(routes[page] ?? "/feed")
+    }
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <p className="text-muted-foreground">Loading chat...</p>
+            </div>
+        )
     }
 
     // If chat not found, redirect or show error
@@ -63,7 +82,6 @@ export default function ConversationPage() {
                 >
                     <div className="grid grid-cols-1 md:grid-cols-3 h-full">
                         <ChatList
-                            chats={mockChats}
                             selectedChatId={chat.id}
                             onSelectChat={(c) => router.push(`/messaging/${c.id}`)}
                             isMobile={false}

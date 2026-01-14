@@ -9,9 +9,16 @@ import { NotificationPayload, UserStatusPayload } from '@/types/socket';
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
+  onlineUsers: Set<string>;
+  isUserOnline: (userId: string) => boolean;
 }
 
-const SocketContext = createContext<SocketContextType>({ socket: null, isConnected: false });
+const SocketContext = createContext<SocketContextType>({
+    socket: null,
+    isConnected: false,
+    onlineUsers: new Set(),
+    isUserOnline: () => false
+});
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -20,6 +27,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+
+  const isUserOnline = (userId: string) => onlineUsers.has(userId);
 
   useEffect(() => {
     if (!socket) return;
@@ -32,7 +42,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const handleUserStatus = (payload: UserStatusPayload) => {
-      console.log("User status changed:", payload);
+      setOnlineUsers(prev => {
+          const next = new Set(prev);
+          if (payload.status === 'online') {
+              next.add(payload.userId);
+          } else {
+              next.delete(payload.userId);
+          }
+          return next;
+      });
     };
 
     socket.on('notification', handleNotification);
@@ -92,7 +110,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }, [session?.user?.accessToken]);
 
   return (
-    <SocketContext.Provider value={{ socket, isConnected }}>
+    <SocketContext.Provider value={{ socket, isConnected, onlineUsers, isUserOnline }}>
       {children}
     </SocketContext.Provider>
   );

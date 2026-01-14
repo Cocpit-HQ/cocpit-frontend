@@ -1,20 +1,45 @@
+
+// Helper types representing backend responses
+export interface BackendChat {
+  conversation_id: string;
+  is_group: boolean;
+  updated_at: string;
+  other_user_name: string;
+  other_user_avatar: string;
+  other_user_id?: string; // Added optional other_user_id
+  last_message_text: string;
+  unread_count: number;
+  timeAgo?: string;
+}
+
+export interface BackendMessage {
+  message_id: string;
+  conversation_id: string;
+  sender_id: string;
+  text_content: string;
+  created_at: string;
+  read_at: string | null;
+}
+
+// Frontend entity types
 export interface ChatThread {
-  id: number;
+  id: string; // was number
   name: string;
-  role?: string; // e.g., "Recruiter", "Hiring Manager", "Connection"
+  role?: string;
   lastMessage: string;
   time: string;
   unread: number;
   avatar: string;
-  online: boolean;
-  pinnedContext?: string; // e.g., "Software Engineer Role Application"
+  online: boolean; // Note: Backend response doesn't seem to have online status, might need socket
+  pinnedContext?: string;
+  otherUserId?: string; // Added to support sending messages to user
 }
 
 export interface Message {
-  id: number | string;
+  id: string; // was number | string
   sender: "me" | "other";
   text: string;
   time: string;
-  isFirstInGroup?: boolean; // For visual grouping
-  isLastInGroup?: boolean;  // For visual grouping
+  isFirstInGroup?: boolean;
+  isLastInGroup?: boolean;
 }

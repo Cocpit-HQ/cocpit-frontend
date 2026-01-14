@@ -3,7 +3,11 @@
 import React from "react"
 import Link from "next/link"
 import { ChatThread } from "@/types/messaging"
-import { avatarGradients } from "@/data/mockMessaging"
+import { avatarGradients } from "@/constants/messaging"
+
+const getAvatarGradient = (avatar: string) => {
+  return avatarGradients[avatar] || "from-gray-400 to-gray-500";
+}
 
 interface ChatListItemProps {
   chat: ChatThread
@@ -22,7 +26,7 @@ export default function ChatListItem({ chat, isSelected, isMobile }: ChatListIte
         <div className="relative">
           <div
             className={`w-12 h-12 bg-gradient-to-br ${
-              avatarGradients[chat.avatar]
+              getAvatarGradient(chat.avatar)
             } rounded-full flex-shrink-0`}
           />
           {chat.online && (

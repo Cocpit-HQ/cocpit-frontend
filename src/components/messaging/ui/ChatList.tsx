@@ -4,16 +4,45 @@ import React, { useState } from "react"
 import { Search } from "lucide-react"
 import { ChatThread } from "@/types/messaging"
 import ChatListItem from "./ChatListItem"
+import { useQuery } from "@tanstack/react-query"
+import { getConversations } from "@/services/api/messaging"
+import { mapBackendChatToChatThread } from "@/lib/mappers/messaging.mapper"
+import { useSocket } from "@/context/SocketContext"
 
 interface ChatListProps {
-  chats: ChatThread[]
-  selectedChatId?: number
+  selectedChatId?: string // Updated to string
   onSelectChat?: (chat: ChatThread) => void
   isMobile: boolean
 }
 
-export default function ChatList({ chats, selectedChatId, onSelectChat, isMobile }: ChatListProps) {
+export default function ChatList({ selectedChatId, onSelectChat, isMobile }: ChatListProps) {
   const [searchTerm, setSearchTerm] = useState("")
+  const { socket, isUserOnline } = useSocket();
+
+  const { data: chats = [], isLoading, error } = useQuery({
+    queryKey: ['conversations'],
+    queryFn: async () => {
+      const backendChats = await getConversations();
+      return backendChats.map(mapBackendChatToChatThread);
+    }
+  });
+
+  // Merge online status into chats
+  const chatsWithStatus = chats.map(chat => ({
+      ...chat,
+      online: chat.otherUserId ? isUserOnline(chat.otherUserId) : false
+  }));
+
+  // Listen for new messages to refetch conversations or update list (basic implementation)
+  // In a real app, we'd update the query cache optimistically or refetch
+  // useEffect(() => {
+  //   if (!socket) return;
+  //   socket.on('newMessage', () => {
+  //      queryClient.invalidateQueries(['conversations']);
+  //   });
+  //   return () => { socket.off('newMessage'); }
+  // }, [socket]);
+
 
   const filteredChats = chats.filter((chat) =>
     chat.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -38,7 +67,12 @@ export default function ChatList({ chats, selectedChatId, onSelectChat, isMobile
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {filteredChats.map((chat) => (
+        {isLoading && <div className="p-8 text-center text-muted-foreground">Loading conversations...</div>}
+        {error && <div className="p-8 text-center text-red-500">Failed to load conversations</div>}
+
+        {!isLoading && !error && chatsWithStatus.filter((chat) =>
+            chat.name.toLowerCase().includes(searchTerm.toLowerCase())
+        ).map((chat) => (
           <div key={chat.id} onClick={() => !isMobile && onSelectChat?.(chat)}>
             <ChatListItem
               chat={chat}
@@ -47,7 +81,7 @@ export default function ChatList({ chats, selectedChatId, onSelectChat, isMobile
             />
           </div>
         ))}
-        {filteredChats.length === 0 && (
+        {!isLoading && !error && filteredChats.length === 0 && (
             <div className="p-8 text-center text-muted-foreground">
                 No conversations found
             </div>
