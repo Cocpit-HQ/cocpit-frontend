@@ -6,14 +6,18 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
+    console.log(`[Middleware] Path: ${path}, Token exists: ${!!token}, Onboarding Complete: ${token?.onboarding_complete}`);
+
     // Check onboarding status
     // If authenticated (token exists) and onboarding is not complete
     if (token && !token.onboarding_complete && path !== "/onboarding") {
+       console.log("[Middleware] Redirecting to /onboarding");
        return NextResponse.redirect(new URL("/onboarding", req.url));
     }
 
     // If user is already onboarded and tries to access /onboarding, redirect them away
     if (token && token.onboarding_complete && path === "/onboarding") {
+        console.log("[Middleware] Redirecting to /profile");
         return NextResponse.redirect(new URL("/profile", req.url));
     }
   },

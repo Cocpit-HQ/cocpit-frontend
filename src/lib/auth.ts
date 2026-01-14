@@ -139,7 +139,7 @@ export const authOptions: NextAuthOptions = {
               refreshToken: refreshToken || "", // Fallback to empty string if missing (should fail later)
               onboarding_complete: data.user.onboarding_complete === true,
             };
-            console.log("Authorize function returning user payload:", userPayload);
+            console.log("Authorize function returning user payload. Onboarding complete:", userPayload.onboarding_complete);
             return userPayload;
           }
 
@@ -156,6 +156,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, trigger, session }) {
       // Initial sign in
       if (user) {
+        console.log("JWT Callback: Initial sign in. Onboarding status:", user.onboarding_complete);
         return {
           ...token,
           id: user.id,

@@ -32,10 +32,12 @@ const LoginForm = () => {
           variant: "destructive",
         });
       } else {
+        console.log("Login successful. Result:", result);
         toast({
           title: "Sign in successful",
-          description: "Redirecting to your feed...",
+          description: "Redirecting...",
         });
+        // We push to /feed, but if the user is not onboarded, middleware should intercept and redirect to /onboarding
         router.push("/feed");
       }
     } catch (error) {
