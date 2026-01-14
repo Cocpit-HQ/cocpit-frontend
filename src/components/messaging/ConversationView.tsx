@@ -7,12 +7,12 @@ import { Phone, Video, MoreHorizontal, Send, Smile, Paperclip, Image as ImageIco
 import type { ChatThread, Message } from "@/types/messaging"
 
 const messagesSeed: Message[] = [
-  { id: 1, sender: "other", text: "Hi! Thanks for accepting my connection request!", time: "10:30 AM" },
-  { id: 2, sender: "me", text: "Of course! I saw your profile and we have a lot in common.", time: "10:32 AM" },
-  { id: 3, sender: "other", text: "Yes! I noticed you work in product design. I've been following your work.", time: "10:33 AM" },
-  { id: 4, sender: "me", text: "That's so nice of you to say! What are you working on currently?", time: "10:35 AM" },
-  { id: 5, sender: "other", text: "I'm leading a new initiative at Google focused on AI-powered design tools.", time: "10:36 AM" },
-  { id: 6, sender: "other", text: "Would love to get your thoughts on it sometime!", time: "10:36 AM" },
+  { id: "1", sender: "other", text: "Hi! Thanks for accepting my connection request!", time: "10:30 AM" },
+  { id: "2", sender: "me", text: "Of course! I saw your profile and we have a lot in common.", time: "10:32 AM" },
+  { id: "3", sender: "other", text: "Yes! I noticed you work in product design. I've been following your work.", time: "10:33 AM" },
+  { id: "4", sender: "me", text: "That's so nice of you to say! What are you working on currently?", time: "10:35 AM" },
+  { id: "5", sender: "other", text: "I'm leading a new initiative at Google focused on AI-powered design tools.", time: "10:36 AM" },
+  { id: "6", sender: "other", text: "Would love to get your thoughts on it sometime!", time: "10:36 AM" },
 ]
 
 const avatarGradients: Record<string, string> = {
@@ -38,7 +38,7 @@ export default function ConversationView({ chat, isMobileOnly }: ConversationVie
     const handleSendMessage = () => {
         if (messageText.trim()) {
         const next: Message = {
-            id: messages.length + 1,
+            id: (messages.length + 1).toString(),
             sender: "me",
             text: messageText.trim(),
             time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),

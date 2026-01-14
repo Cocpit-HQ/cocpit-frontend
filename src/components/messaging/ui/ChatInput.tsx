@@ -6,12 +6,14 @@ import { Paperclip, Send, Smile } from "lucide-react"
 interface ChatInputProps {
   onSendMessage: (text: string) => void
   onTyping?: () => void
+  disabled?: boolean
 }
 
-export default function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
+export default function ChatInput({ onSendMessage, onTyping, disabled }: ChatInputProps) {
   const [text, setText] = useState("")
 
   const handleSend = () => {
+    if (disabled) return; // Prevent sending if disabled
     if (text.trim()) {
       onSendMessage(text)
       setText("")
@@ -19,6 +21,7 @@ export default function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (disabled) return; // Prevent sending if disabled
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       handleSend()
@@ -32,6 +35,7 @@ export default function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
       <div className="flex items-end gap-2 max-w-4xl mx-auto">
         <button
           className="p-2 rounded-full transition-colors mb-1 hover:bg-muted text-muted-foreground"
+          disabled={disabled}
         >
           <Paperclip className="w-5 h-5" />
         </button>
@@ -44,14 +48,15 @@ export default function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
               onTyping?.()
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Write a message..."
+            placeholder={disabled ? "Cannot send messages to this conversation" : "Write a message..."}
             rows={1}
             className="w-full px-4 py-3 bg-transparent border-0 resize-none focus:outline-none max-h-32 text-sm md:text-base text-foreground placeholder-muted-foreground"
             style={{ minHeight: "44px" }}
+            disabled={disabled}
             />
         </div>
 
-        {text.trim() ? (
+        {text.trim() && !disabled ? (
             <button
             onClick={handleSend}
             className="p-3 bg-primary text-primary-foreground rounded-full hover:opacity-90 transition-colors mb-0.5 shadow-md"
@@ -61,6 +66,7 @@ export default function ChatInput({ onSendMessage, onTyping }: ChatInputProps) {
         ) : (
             <button
             className="p-2 rounded-full transition-colors mb-1 hover:bg-muted text-muted-foreground"
+            disabled={disabled}
             >
             <Smile className="w-6 h-6" />
             </button>

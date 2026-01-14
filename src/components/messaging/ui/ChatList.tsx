@@ -13,19 +13,14 @@ interface ChatListProps {
   selectedChatId?: string // Updated to string
   onSelectChat?: (chat: ChatThread) => void
   isMobile: boolean
+  chats: ChatThread[];
+  isLoading: boolean;
+  error: Error | null;
 }
 
-export default function ChatList({ selectedChatId, onSelectChat, isMobile }: ChatListProps) {
+export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], isLoading, error }: ChatListProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const { socket, isUserOnline } = useSocket();
-
-  const { data: chats = [], isLoading, error } = useQuery({
-    queryKey: ['conversations'],
-    queryFn: async () => {
-      const backendChats = await getConversations();
-      return backendChats.map(mapBackendChatToChatThread);
-    }
-  });
 
   // Merge online status into chats
   const chatsWithStatus = chats.map(chat => ({
@@ -33,18 +28,7 @@ export default function ChatList({ selectedChatId, onSelectChat, isMobile }: Cha
       online: chat.otherUserId ? isUserOnline(chat.otherUserId) : false
   }));
 
-  // Listen for new messages to refetch conversations or update list (basic implementation)
-  // In a real app, we'd update the query cache optimistically or refetch
-  // useEffect(() => {
-  //   if (!socket) return;
-  //   socket.on('newMessage', () => {
-  //      queryClient.invalidateQueries(['conversations']);
-  //   });
-  //   return () => { socket.off('newMessage'); }
-  // }, [socket]);
-
-
-  const filteredChats = chats.filter((chat) =>
+  const filteredChats = chatsWithStatus.filter((chat) =>
     chat.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 

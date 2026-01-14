@@ -28,7 +28,7 @@ export default function ConversationPage() {
 
     const chatId = params.id as string;
 
-    const { data: chats = [], isLoading } = useQuery({
+    const { data: chats = [], isLoading, error } = useQuery({
         queryKey: ['conversations'],
         queryFn: async () => {
           const backendChats = await getConversations();
@@ -50,13 +50,17 @@ export default function ConversationPage() {
         )
     }
 
-    // If chat not found, redirect or show error
-    if (!chat) {
+    // If chat not found, redirect or show error, or if there's a global error
+    if (!chat || error) {
          return (
             <div className="min-h-screen bg-background">
                 <AppShell currentPage="messaging" navigateTo={navigateTo}>
                     <div className="flex items-center justify-center h-full">
-                        <p>Chat not found.</p>
+                        {error ? (
+                            <p className="text-red-500">Error loading conversations.</p>
+                        ) : (
+                            <p>Chat not found.</p>
+                        )}
                     </div>
                 </AppShell>
             </div>
@@ -85,6 +89,9 @@ export default function ConversationPage() {
                             selectedChatId={chat.id}
                             onSelectChat={(c) => router.push(`/messaging/${c.id}`)}
                             isMobile={false}
+                            chats={chats}
+                            isLoading={isLoading}
+                            error={error}
                         />
                         <div className="md:col-span-2 flex flex-col h-full overflow-hidden">
                             <ChatWindow chat={chat} isMobile={false} />

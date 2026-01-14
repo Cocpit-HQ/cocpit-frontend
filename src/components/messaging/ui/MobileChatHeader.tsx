@@ -4,7 +4,7 @@ import React from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, MoreHorizontal, Phone, Video } from "lucide-react"
 import { ChatThread } from "@/types/messaging"
-import { avatarGradients } from "@/data/mockMessaging"
+import { avatarGradients } from "@/constants/messaging"
 
 interface MobileChatHeaderProps {
   chat: ChatThread

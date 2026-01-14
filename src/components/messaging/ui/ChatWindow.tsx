@@ -180,6 +180,11 @@ export default function ChatWindow({ chat: initialChat, isMobile }: ChatWindowPr
   });
 
   const handleSendMessage = (text: string) => {
+    if (!chat.otherUserId) {
+        console.error("Cannot send message: targetUserId is missing. Conversation ID used as fallback, which might be incorrect.");
+        // Optionally, display an error to the user or disable the input field
+        return;
+    }
     sendMessageMutation.mutate(text);
   }
 
@@ -253,7 +258,7 @@ export default function ChatWindow({ chat: initialChat, isMobile }: ChatWindowPr
           </div>
       )}
 
-      <ChatInput onSendMessage={handleSendMessage} onTyping={handleTypingInput} />
+      <ChatInput onSendMessage={handleSendMessage} onTyping={handleTypingInput} disabled={!chat.otherUserId} />
     </div>
   )
 }

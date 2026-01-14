@@ -21,6 +21,7 @@ const SocketContext = createContext<SocketContextType>({
 });
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const SOCKET_NAMESPACE = process.env.NEXT_PUBLIC_SOCKET_NAMESPACE || ""; // Default to root namespace
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session } = useSession();
@@ -75,7 +76,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     // Note: session.user.accessToken comes from NextAuth.
     // If it rotates, this effect runs again, creating a new socket.
 
-    const newSocket = io(SOCKET_URL, {
+    const newSocket = io(SOCKET_URL + SOCKET_NAMESPACE, {
       auth: { token },
       transports: ["websocket", "polling"],
       reconnection: true,

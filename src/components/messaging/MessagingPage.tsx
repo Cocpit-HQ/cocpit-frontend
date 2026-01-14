@@ -29,7 +29,7 @@ export default function MessagingPage() {
   const isMobile = useIsMobile()
   const [selectedChat, setSelectedChat] = useState<ChatThread | null>(null)
 
-  const { data: chats = [], isLoading } = useQuery({
+  const { data: chats = [], isLoading, error } = useQuery({
       queryKey: ['conversations'],
       queryFn: async () => {
         const backendChats = await getConversations();
@@ -73,6 +73,9 @@ export default function MessagingPage() {
                     selectedChatId={selectedChat?.id}
                     onSelectChat={setSelectedChat}
                     isMobile={isMobile}
+                    chats={chats}
+                    isLoading={isLoading}
+                    error={error}
                  />
               </div>
 

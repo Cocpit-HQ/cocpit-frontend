@@ -12,6 +12,7 @@ export const getMessages = async (conversationId: string): Promise<BackendMessag
 };
 
 export const sendMessage = async (targetUserId: string, text_content: string) => {
+  console.log("Sending message with:", { targetUserId, text_content });
   const response = await api.post("/messages", {
     targetUserId,
     text_content,

@@ -20,6 +20,9 @@ const formatTimeAgo = (isoString: string): string => {
 };
 
 export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread => {
+  if (!backendChat.other_user_id) {
+    console.warn(`Conversation ${backendChat.conversation_id} is missing 'other_user_id'. This conversation might not support direct messaging.`);
+  }
   return {
     id: backendChat.conversation_id,
     name: backendChat.other_user_name,
