@@ -24,7 +24,7 @@ export function PostPreview({
     id: 'preview-id',
     author: currentUser?.name || 'Anonymous',
     authorAvatar: currentUser?.avatar || '/assets/pngegg.png',
-    title: '', // CreatePostModal doesn't seem to set title for photo/video posts usually, or it uses category
+    title: null, // CreatePostModal doesn't seem to set title for photo/video posts usually, or it uses category
     timeAgo: 'Just now',
     content: content,
     imageSrc: postType === 'image' && mediaUrls.length > 0 ? mediaUrls[0] : undefined,

@@ -63,7 +63,7 @@ export interface Post {
   id: string;
   author: string;
   authorAvatar?: string;
-  title: string;
+  title?: string | null;
   timeAgo: string;
   content: string;
   imageSrc?: string;

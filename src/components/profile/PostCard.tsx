@@ -17,7 +17,7 @@ export default function PostCard({ post, href, onDelete, isOwnPost }: PostCardPr
       <Link href={href || `/profile/posts#post-${post.id}`} className="block w-full h-full">
         <div className="aspect-square bg-card border border-border rounded-xl overflow-hidden relative">
           {imageSrc ? (
-            <img src={imageSrc} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            <img src={imageSrc} alt={post.title || ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
           ) : (
             <div className="w-full h-full bg-muted flex items-center justify-center">
               <p className="text-xs text-muted-foreground p-4 text-center">{post.content}</p>
