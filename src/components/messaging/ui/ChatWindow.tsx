@@ -44,7 +44,7 @@ export default function ChatWindow({ chat: initialChat, isMobile }: ChatWindowPr
       const backendMessages = await getMessages(chat.id);
       return backendMessages.map(m => mapBackendMessageToMessage(m, session?.user?.id));
     },
-    enabled: !!chat.id && !!session?.user?.id,
+    enabled: !!chat.id && chat.id !== 'new' && !!session?.user?.id,
   });
 
   // Mark as read on mount or when chat.id changes
@@ -135,8 +135,8 @@ export default function ChatWindow({ chat: initialChat, isMobile }: ChatWindowPr
 
   const sendMessageMutation = useMutation({
     mutationFn: async (text: string) => {
-        // Fallback to chat.id if otherUserId is missing, though API expects user ID
-        return sendMessage(chat.otherUserId || chat.id, text);
+        if (!chat.otherUserId) throw new Error("Target user ID missing");
+        return sendMessage(chat.otherUserId, text);
     },
     onMutate: async (text) => {
         await queryClient.cancelQueries({ queryKey: ['messages', chat.id] });

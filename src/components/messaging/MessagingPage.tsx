@@ -10,6 +10,7 @@ import ChatWindow from "./ui/ChatWindow"
 import { ChatThread } from "@/types/messaging"
 import { useQuery } from "@tanstack/react-query"
 import { getConversations } from "@/services/api/messaging"
+import { getUserById } from "@/services/api/user"
 import { mapBackendChatToChatThread } from "@/lib/mappers/messaging.mapper"
 
 const routes: Record<string, string> = {
@@ -40,15 +41,46 @@ export default function MessagingPage() {
   // Handle userId param to start a new chat or select existing
   useEffect(() => {
     const userId = searchParams.get('userId');
-    if (userId && chats.length > 0) {
-        // Simple finding logic - in real app might need to create conversation if not exists via API
-        // For now, if we find a chat with that user (assuming mapping name/id logic), select it
-        // Since we don't have user IDs in mock chat explicitly matching potential query params easily without backend
-        // we will just select the first one for demonstration if not found, or handle 'create' logic
+
+    if (isLoading) return;
+
+    if (userId) {
+        // Check if we already have a conversation with this user
+        const existingChat = chats.find(c => c.otherUserId === userId);
+
+        if (existingChat) {
+            if (selectedChat?.id !== existingChat.id) {
+                setSelectedChat(existingChat);
+            }
+        } else {
+            // No existing chat, fetch user details to create a draft
+            // Avoid re-fetching if we already created a draft for this user
+            if (selectedChat?.id === 'new' && selectedChat.otherUserId === userId) return;
+
+            const fetchUserAndCreateDraft = async () => {
+                try {
+                    const user = await getUserById(userId);
+                    const newChat: ChatThread = {
+                        id: 'new',
+                        otherUserId: user.id,
+                        name: user.full_name,
+                        avatar: user.avatar_url || "gradient-1", // Fallback to a gradient if no avatar
+                        lastMessage: "",
+                        time: new Date().toISOString(),
+                        unread: 0,
+                        online: false
+                    };
+                    setSelectedChat(newChat);
+                } catch (err) {
+                    console.error("Failed to fetch user details for new chat", err);
+                }
+            };
+            fetchUserAndCreateDraft();
+        }
     } else if (chats.length > 0 && !isMobile && !selectedChat) {
          setSelectedChat(chats[0]);
     }
-  }, [searchParams, chats, isMobile, selectedChat]);
+  }, [searchParams, chats, isMobile, selectedChat, isLoading]);
 
 
   const navigateTo = (page: Page) => {
