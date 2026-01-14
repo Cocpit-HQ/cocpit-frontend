@@ -26,6 +26,7 @@ export default withAuth(
 
 export const config = {
   matcher: [
+    "/feed",
     "/feed/:path*",
     "/profile/:path*",
     "/jobs/:path*",

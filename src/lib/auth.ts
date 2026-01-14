@@ -137,7 +137,7 @@ export const authOptions: NextAuthOptions = {
               roles: data.user.roles,
               accessToken: data.accessToken,
               refreshToken: refreshToken || "", // Fallback to empty string if missing (should fail later)
-              onboarding_complete: data.user.onboarding_complete,
+              onboarding_complete: data.user.onboarding_complete === true,
             };
             console.log("Authorize function returning user payload:", userPayload);
             return userPayload;
