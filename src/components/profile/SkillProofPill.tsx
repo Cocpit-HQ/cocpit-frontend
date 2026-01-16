@@ -19,6 +19,8 @@ interface SkillProofPillProps {
 }
 
 export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly = false }: SkillProofPillProps) {
+  if (!skill) return null;
+
   // Logic: Check if skill is mentioned in posts (case insensitive search in content or title)
   const mentionedInPosts = posts.filter((post) =>
     post &&

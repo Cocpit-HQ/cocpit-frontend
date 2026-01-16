@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
+<<<<<<< Updated upstream
 import { X, Image, Video, Plus, Trash2, Camera, Smile, Eye, EyeOff, Loader2 } from 'lucide-react';
+=======
+import { X, Image, Video, Plus, Trash2, Camera, Smile, FileText, Sparkles, Bold, Italic, Heading2, Heading3, List, ListOrdered, Link as LinkIcon, Unlink } from 'lucide-react';
+>>>>>>> Stashed changes
 import { useFeed } from '@/context/FeedContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { createPost, CreatePostRequest } from '@/services/api/feed';
@@ -42,7 +46,122 @@ interface PollOption {
   text: string;
 }
 
+<<<<<<< Updated upstream
 export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', editPostId, onUpdate }: CreatePostModalProps) {
+=======
+// --- TipTap Editor Components ---
+
+const EditorToolbar = ({ onFormat }: { onFormat: (command: string, value?: string) => void }) => {
+  const handleLink = () => {
+    const url = window.prompt('Enter URL:');
+    if (url) onFormat('createLink', url);
+  };
+
+  return (
+    <div className="flex items-center gap-1 px-2 py-2 border-b border-border bg-muted/20 sticky top-0 z-10">
+      <button
+        onClick={() => onFormat('bold')}
+        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
+        title="Bold"
+      >
+        <Bold className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => onFormat('italic')}
+        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
+        title="Italic"
+      >
+        <Italic className="w-4 h-4" />
+      </button>
+      <div className="w-px h-4 bg-border mx-1" />
+      <button
+        onClick={() => onFormat('formatBlock', 'H2')}
+        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
+        title="Heading 2"
+      >
+        <Heading2 className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => onFormat('formatBlock', 'H3')}
+        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
+        title="Heading 3"
+      >
+        <Heading3 className="w-4 h-4" />
+      </button>
+      <div className="w-px h-4 bg-border mx-1" />
+      <button
+        onClick={() => onFormat('insertUnorderedList')}
+        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
+        title="Bullet List"
+      >
+        <List className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => onFormat('insertOrderedList')}
+        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
+        title="Numbered List"
+      >
+        <ListOrdered className="w-4 h-4" />
+      </button>
+      <div className="w-px h-4 bg-border mx-1" />
+      <button
+        onClick={handleLink}
+        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
+        title="Link"
+      >
+        <LinkIcon className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => onFormat('unlink')}
+        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
+        title="Unlink"
+      >
+        <Unlink className="w-4 h-4" />
+      </button>
+    </div>
+  );
+};
+
+const RichTextEditor = ({ content, onChange }: { content: string, onChange: (html: string) => void }) => {
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  // Sync content updates (e.g. from AI)
+  useEffect(() => {
+    if (editorRef.current && content !== editorRef.current.innerHTML) {
+      editorRef.current.innerHTML = content;
+    }
+  }, [content]);
+
+  const handleFormat = (command: string, value?: string) => {
+    document.execCommand(command, false, value);
+    editorRef.current?.focus();
+    if (editorRef.current) onChange(editorRef.current.innerHTML);
+  };
+
+  return (
+    <div className="flex flex-col border rounded-lg overflow-hidden bg-card/50 border-border mx-6 mb-6">
+      <EditorToolbar onFormat={handleFormat} />
+      <div
+        ref={editorRef}
+        contentEditable
+        onInput={(e) => onChange(e.currentTarget.innerHTML)}
+        className="prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[300px] px-6 py-4"
+        style={{ outline: 'none' }}
+      />
+      <style jsx global>{`
+        .prose ul { list-style-type: disc; padding-left: 1.5em; }
+        .prose ol { list-style-type: decimal; padding-left: 1.5em; }
+        .prose h2 { font-size: 1.5em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
+        .prose h3 { font-size: 1.25em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
+        .prose p { margin-bottom: 0.75em; line-height: 1.6; }
+        .prose a { color: #3b82f6; text-decoration: underline; cursor: pointer; }
+      `}</style>
+    </div>
+  );
+};
+
+export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: CreatePostModalProps) {
+>>>>>>> Stashed changes
   const isMobile = useIsMobile();
   const { addPost, currentUser } = useFeed();
   const [postType, setPostType] = useState<PostType>(initialPostType);
@@ -71,7 +190,13 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
   const [pollDuration, setPollDuration] = useState('1 week');
   const [articleCoverImage, setArticleCoverImage] = useState<MediaItem | null>(null);
   const articleCoverInputRef = useRef<HTMLInputElement>(null);
+<<<<<<< Updated upstream
   const articleTextAreaRef = useRef<HTMLTextAreaElement>(null);
+=======
+  // articleTextAreaRef removed in favor of TipTap
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [articleLink, setArticleLink] = useState('');
+>>>>>>> Stashed changes
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingPost, setIsLoadingPost] = useState(false);
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
@@ -346,7 +471,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
     switch (postType) {
       case 'photo': return { text: photoCaption, setText: setPhotoCaption, ref: photoCaptionRef };
       case 'video': return { text: videoCaption, setText: setVideoCaption, ref: videoCaptionRef };
-      case 'article': return { text: articleContent, setText: setArticleContent, ref: articleTextAreaRef };
+      case 'article': return { text: articleContent, setText: setArticleContent, ref: null }; // No ref for TipTap
       case 'text':
       default: return { text: description, setText: setDescription, ref: textAreaRef };
     }
@@ -354,13 +479,14 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
 
   const handleEmojiClick = (emoji: string) => {
     const { text, setText, ref } = getActiveState();
-    const textarea = ref?.current;
-
-    if (!textarea) {
+    
+    // If no ref (e.g. Article mode with TipTap), just append
+    if (!ref || !ref.current) {
       setText((prev) => prev + emoji);
       return;
     }
 
+    const textarea = ref.current;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const newText = text.substring(0, start) + emoji + text.substring(end);
@@ -721,8 +847,13 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
     }
     if (postType === 'photo') return uploadedImages.length === 0;
     if (postType === 'video') return uploadedVideos.length === 0;
+<<<<<<< Updated upstream
     if (postType === 'article') return !articleTitle.trim() || !articleContent.trim();
 
+=======
+    if (postType === 'article') return !articleTitle.trim() || !articleContent.trim() || articleContent === '<p></p>';
+    
+>>>>>>> Stashed changes
     // Text post
     return !description.trim();
   };
@@ -1140,6 +1271,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                               />
                             </div>
 
+<<<<<<< Updated upstream
                             {/* Image Strip */}
                             <div className="flex gap-2 overflow-x-auto pb-2">
                               {uploadedImages.map((img, idx) => (
@@ -1195,6 +1327,12 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                           </div>
                         )
                       )}
+=======
+                    {/* Article Content Editor */}
+                    <RichTextEditor content={articleContent} onChange={setArticleContent} />
+                  </div>
+                )}
+>>>>>>> Stashed changes
 
                       {/* VIDEO POST */}
                       {postType === 'video' && (

@@ -1,5 +1,9 @@
 import api from "@/lib/axios";
+<<<<<<< Updated upstream
 import type { UserProfile, AddExperiencePayload, AddExperienceResponse, AddEducationPayload, AddEducationResponse, Skill, UpdateProfilePayload } from "@/types/user";
+=======
+import type { UserProfile, AddExperiencePayload, AddExperienceResponse, AddEducationPayload, AddEducationResponse,AddSkillsPayload, AddSkillsResponse } from "@/types/user";
+>>>>>>> Stashed changes
 
 export interface GetUserPostsParams {
   category?: 'All' | 'Personal' | 'Professional';
@@ -107,6 +111,7 @@ export const addEducation = async (payload: AddEducationPayload): Promise<AddEdu
 export const deleteEducation = async (id: string): Promise<void> => {
     await api.delete(`/profile/educations/${id}`);
 }
+<<<<<<< Updated upstream
 
 export const addSkill = async (payload: AddSkillPayload): Promise<AddSkillResponse> => {
     const response = await api.post("/profile/skills", payload);
@@ -125,4 +130,13 @@ export const uploadAvatar = async (formData: FormData): Promise<UploadAvatarResp
 export const deleteAvatar = async (): Promise<DeleteAvatarResponse> => {
   const response = await api.delete("/profile/avatar");
   return response.data;
+=======
+export const addSkills = async (payload: AddSkillsPayload): Promise<AddSkillsResponse> => {
+  const response = await api.post<AddSkillsResponse>("/profile/skills", payload);
+  return response.data;
+};
+
+export const deleteSkill = async (id: string): Promise<void> => {
+  await api.delete(`/profile/skills/${id}`);
+>>>>>>> Stashed changes
 };

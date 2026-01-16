@@ -19,7 +19,13 @@ export interface UserProfile {
   user: UserData;
   experiences: Experience[];
   educations: Education[];
+<<<<<<< Updated upstream
   skills: Skill[];
+=======
+  skills: SkillResponse[];
+  profile_views_count?: number;
+  search_appearances_count?: number;
+>>>>>>> Stashed changes
 }
 
 export interface UserData {
@@ -58,10 +64,22 @@ export interface UpdateProfilePayload {
 }
 
 export interface Skill {
-    skill_id: string;
-    profile_id: string;
-    skill_name: string;
-    created_at: string;
+  skill_id: string;
+  name: string;
+}
+// --- Skill Interfaces ---
+export interface AddSkillsPayload {
+  name: string[]; // array of skill names
+}
+
+export interface SkillResponse {
+  skill_id: string;
+  name: string; // Skill name
+}
+
+export interface AddSkillsResponse {
+  message: string;       // Success message from backend
+  skills: SkillResponse[]; // Array of added skills
 }
 
 export interface AddExperiencePayload {
