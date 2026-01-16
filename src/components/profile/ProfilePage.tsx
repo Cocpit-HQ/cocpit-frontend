@@ -2,7 +2,11 @@
 
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+<<<<<<< Updated upstream
 import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap, Settings, X, Trash2, Menu, LogOut, Pencil } from "lucide-react"
+=======
+import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap, Settings, X, Trash2, Menu, LogOut, Loader2 } from "lucide-react"
+>>>>>>> Stashed changes
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import { AppShell } from "@/components/layout/AppShell"
@@ -34,9 +38,14 @@ import { useAuth } from "@/hooks/use-auth";
 import FeedPost from "@/components/home/FeedPost";
 import PostCard from "./PostCard";
 import Link from "next/link";
+<<<<<<< Updated upstream
 import { getProfile, addExperience, deleteExperience, addEducation, deleteEducation, getUserPosts, addSkill, deleteSkill, uploadAvatar, deleteAvatar } from "@/services/api/profile"
 import { deletePost as apiDeletePost } from "@/services/api/posts"
 import { UserProfile, UserData, Skill, AddExperiencePayload, AddEducationPayload } from "@/types/user"
+=======
+import { getProfile, addExperience, deleteExperience, addEducation, deleteEducation, getUserPosts, addSkills, deleteSkill } from "@/services/api/profile"
+import { UserProfile, UserData, AddExperiencePayload, AddEducationPayload, AddSkillsPayload, SkillResponse, Skill } from "@/types/user"
+>>>>>>> Stashed changes
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
 import type { Post } from "@/types/entities"
 import { ViewAvatarModal } from "@/components/profile/ViewAvatarModal";
@@ -123,6 +132,8 @@ export default function ProfilePage() {
   const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
   const [isEditAvatarOpen, setIsEditAvatarOpen] = useState(false);
   const [skills, setSkills] = useState<Skill[]>([]);
+  const [skillToDelete, setSkillToDelete] = useState<Skill | null>(null);
+  const [isDeletingSkill, setIsDeletingSkill] = useState(false);
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [educations, setEducations] = useState<Education[]>([]);
   const [user, setUser] = useState<UserData | null>(null);
@@ -226,6 +237,7 @@ export default function ProfilePage() {
 
   const handleSaveSkills = async (newSkills: string[]) => {
     try {
+<<<<<<< Updated upstream
         const existingNames = skills.map(s => s.skill_name);
         const skillsToAdd = newSkills.filter(s => !existingNames.includes(s));
 
@@ -252,8 +264,50 @@ export default function ProfilePage() {
         setSkills(skills.filter(s => s.skill_id !== skill.skill_id));
     } catch (error) {
         console.error("Failed to delete skill", error);
+=======
+      // Ensure unique and non-empty
+      const uniqueSkills = Array.from(new Set(newSkills.filter(s => s && s.trim() !== "")));
+
+      // Debugging: Check exactly what is being sent
+      console.log("Sending skills payload:", { name: uniqueSkills });
+
+      // Payload should match AddSkillsPayload interface: { name: string[] }
+      const payload: AddSkillsPayload = { name: uniqueSkills } as any;
+      const response = await addSkills(payload);
+      setSkills(response.skills);
+      setIsAddSkillModalOpen(false);
+    } catch (error: any) {
+      console.error("Failed to save skills", error);
+      if (error.response) {
+        // Log the actual error message from backend to understand the 400 cause
+        console.error("Server Error Details:", error.response.data);
+      }
+    }
+  };
+
+  const handleDeleteSkill = (skillName: string) => {
+    const skill = skills.find(s => s.name === skillName);
+    if (skill) {
+      setSkillToDelete(skill);
+>>>>>>> Stashed changes
     }
   }
+
+  const confirmDeleteSkill = async () => {
+    if (!skillToDelete) return;
+    
+    setIsDeletingSkill(true);
+    try {
+      await deleteSkill(skillToDelete.skill_id);
+      setSkills(prev => prev.filter(s => s.skill_id !== skillToDelete.skill_id));
+    } catch (error) {
+      console.error("Failed to delete skill", error);
+      alert("Failed to delete skill. Please try again.");
+    } finally {
+      setIsDeletingSkill(false);
+      setSkillToDelete(null);
+    }
+  };
 
   const handleSaveExperience = async (data: Partial<Experience>) => {
     if (editingExperience) {
@@ -473,7 +527,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <LivingResume experiences={experiences} skills={skills.map(s => s.skill_name)} />
+              <LivingResume experiences={experiences} skills={skills.map(s => s.name)} />
 
               <div
                 className="rounded-xl border p-6 mb-4 bg-card border-border"
@@ -512,15 +566,19 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {skills.map((skill) => (
-                    <SkillProofPill
-                        key={skill.skill_id}
-                        skill={skill.skill_name}
-                        experiences={experiences}
-                        posts={previewPosts}
-                        onDelete={handleDeleteSkill}
-                    />
-                  ))}
+                  {skills.map((skill: any, index) => {
+                    const skillName = skill.name || (typeof skill === 'string' ? skill : '');
+                    if (!skillName) return null;
+                    return (
+                      <SkillProofPill
+                          key={skill.skill_id || `skill-${index}`}
+                          skill={skillName}
+                          experiences={experiences}
+                          posts={previewPosts}
+                          onDelete={handleDeleteSkill}
+                      />
+                    );
+                  })}
                 </div>
               </div>
 
@@ -584,7 +642,7 @@ export default function ProfilePage() {
       <SkillModal 
         isOpen={isAddSkillModalOpen} 
         onClose={() => setIsAddSkillModalOpen(false)}
-        initialSkills={skills.map(s => s.skill_name)}
+        initialSkills={skills.map(s => s.name)}
         onSave={handleSaveSkills}
       />
 
@@ -626,6 +684,7 @@ export default function ProfilePage() {
         </DialogContent>
       </Dialog>
 
+<<<<<<< Updated upstream
       <ViewAvatarModal
         isOpen={isViewAvatarOpen}
         onClose={() => setIsViewAvatarOpen(false)}
@@ -639,6 +698,41 @@ export default function ProfilePage() {
         onUpload={handleAvatarUpload}
         onDelete={handleAvatarDelete}
       />
+=======
+      <Dialog open={!!skillToDelete} onOpenChange={(open) => !open && setSkillToDelete(null)}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Delete Skill</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong>{skillToDelete?.name}</strong>? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <button
+              onClick={() => setSkillToDelete(null)}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+              disabled={isDeletingSkill}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDeleteSkill}
+              disabled={isDeletingSkill}
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-destructive-foreground hover:opacity-90 transition-opacity flex items-center gap-2"
+            >
+              {isDeletingSkill ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+>>>>>>> Stashed changes
     </div>
   )
 }

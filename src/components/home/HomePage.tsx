@@ -24,7 +24,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { searchUsers } from '@/services/api/user';
 import { SearchedUser } from '@/types/user';
 import { PostType } from './CreatePostModal';
-import { useInView } from 'react-intersection-observer';
+import { useInView } from '@/hooks/use-in-view';
 
 /* -------------------- Component -------------------- */
 
