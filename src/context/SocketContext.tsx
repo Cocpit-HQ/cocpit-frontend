@@ -3,8 +3,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { NotificationPayload, UserStatusPayload } from '@/types/socket';
+import Avatar from '@/components/shared/Avatar';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -14,17 +16,18 @@ interface SocketContextType {
 }
 
 const SocketContext = createContext<SocketContextType>({
-    socket: null,
-    isConnected: false,
-    onlineUsers: new Set(),
-    isUserOnline: () => false
+  socket: null,
+  isConnected: false,
+  onlineUsers: new Set(),
+  isUserOnline: () => false
 });
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const SOCKET_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/api\/?$/, "");
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session } = useSession();
   const { toast } = useToast();
+  const router = useRouter();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
@@ -35,21 +38,49 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     if (!socket) return;
 
     const handleNotification = (payload: NotificationPayload) => {
-      toast({
-        title: "New Notification",
-        description: payload.type === 'message' ? "You have a new message" : "System Notification",
-      });
+      if (payload.type === 'message') {
+        toast({
+          title: "New Message",
+          description: (
+            <div
+              className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => {
+                if (payload.from) {
+                  router.push(`/messaging?userId=${payload.from}`);
+                }
+              }}
+            >
+              {payload.senderName && (
+                <Avatar
+                  name={payload.senderName}
+                  url={payload.senderAvatar}
+                  size="sm"
+                />
+              )}
+              <span>
+                You have a message from <span className="font-semibold">{payload.senderName || "someone"}</span>
+              </span>
+            </div>
+          ),
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "New Notification",
+          description: "System Notification",
+        });
+      }
     };
 
     const handleUserStatus = (payload: UserStatusPayload) => {
       setOnlineUsers(prev => {
-          const next = new Set(prev);
-          if (payload.status === 'online') {
-              next.add(payload.userId);
-          } else {
-              next.delete(payload.userId);
-          }
-          return next;
+        const next = new Set(prev);
+        if (payload.status === 'online') {
+          next.add(payload.userId);
+        } else {
+          next.delete(payload.userId);
+        }
+        return next;
       });
     };
 
@@ -60,7 +91,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       socket.off('notification', handleNotification);
       socket.off('userStatusChanged', handleUserStatus);
     };
-  }, [socket, toast]);
+  }, [socket, toast, router]);
 
   useEffect(() => {
     const token = session?.user?.accessToken;
@@ -84,18 +115,18 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     newSocket.on('connect', () => {
-        console.log("Socket connected");
-        setIsConnected(true);
+      console.log("Socket connected");
+      setIsConnected(true);
     });
 
     newSocket.on('disconnect', () => {
-        console.log("Socket disconnected");
-        setIsConnected(false);
+      console.log("Socket disconnected");
+      setIsConnected(false);
     });
 
     newSocket.on("connect_error", (err) => {
-        console.error("Socket connection error:", err.message);
-        // Handle token expiration or auth error if needed
+      console.error("Socket connection error:", err.message);
+      // Handle token expiration or auth error if needed
     });
 
     setTimeout(() => {

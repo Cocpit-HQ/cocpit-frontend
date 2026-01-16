@@ -26,11 +26,11 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
   return {
     id: backendChat.conversation_id,
     name: backendChat.other_user_name,
-    role: "", // Not provided by backend yet
+    role: backendChat.other_user_headline || "",
     lastMessage: backendChat.last_message_text,
     time: backendChat.timeAgo || formatTimeAgo(backendChat.updated_at),
     unread: backendChat.unread_count,
-    avatar: backendChat.other_user_avatar || "default-avatar", // Handle missing avatar
+    avatar: backendChat.other_user_avatar || "gradient-1", // Use the URL if present, or fallback to a gradient default
     online: false, // Default to false, updated via socket
     pinnedContext: undefined,
     otherUserId: backendChat.other_user_id, // Map other_user_id

@@ -6,6 +6,8 @@ export interface UserStatusPayload {
 export interface NotificationPayload {
   type: 'message' | 'system';
   from?: string; // Sender User ID
+  senderName?: string;
+  senderAvatar?: string;
   conversationId?: string;
 }
 

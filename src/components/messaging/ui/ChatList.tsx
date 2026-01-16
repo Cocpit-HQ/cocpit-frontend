@@ -24,8 +24,8 @@ export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats
 
   // Merge online status into chats
   const chatsWithStatus = chats.map(chat => ({
-      ...chat,
-      online: chat.otherUserId ? isUserOnline(chat.otherUserId) : false
+    ...chat,
+    online: chat.otherUserId ? isUserOnline(chat.otherUserId) : false
   }));
 
   const filteredChats = chatsWithStatus.filter((chat) =>
@@ -50,14 +50,14 @@ export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pb-24 md:pb-0">
         {isLoading && <div className="p-8 text-center text-muted-foreground">Loading conversations...</div>}
         {error && <div className="p-8 text-center text-red-500">Failed to load conversations</div>}
 
         {!isLoading && !error && chatsWithStatus.filter((chat) =>
-            chat.name.toLowerCase().includes(searchTerm.toLowerCase())
+          chat.name.toLowerCase().includes(searchTerm.toLowerCase())
         ).map((chat) => (
-          <div key={chat.id} onClick={() => !isMobile && onSelectChat?.(chat)}>
+          <div key={chat.id} onClick={() => onSelectChat?.(chat)}>
             <ChatListItem
               chat={chat}
               isSelected={selectedChatId === chat.id}
@@ -66,9 +66,9 @@ export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats
           </div>
         ))}
         {!isLoading && !error && filteredChats.length === 0 && (
-            <div className="p-8 text-center text-muted-foreground">
-                No conversations found
-            </div>
+          <div className="p-8 text-center text-muted-foreground">
+            No conversations found
+          </div>
         )}
       </div>
     </div>

@@ -30,7 +30,7 @@ export default function ChatInput({ onSendMessage, onTyping, disabled }: ChatInp
 
   return (
     <div
-      className="p-3 md:p-4 border-t sticky bottom-0 z-10 w-full bg-background border-border"
+      className="p-3 md:p-4 border-t w-full bg-background border-border shrink-0"
     >
       <div className="flex items-end gap-2 max-w-4xl mx-auto">
         <button
@@ -41,7 +41,7 @@ export default function ChatInput({ onSendMessage, onTyping, disabled }: ChatInp
         </button>
 
         <div className="flex-1 relative rounded-2xl bg-muted">
-            <textarea
+          <textarea
             value={text}
             onChange={(e) => {
               setText(e.target.value)
@@ -53,23 +53,23 @@ export default function ChatInput({ onSendMessage, onTyping, disabled }: ChatInp
             className="w-full px-4 py-3 bg-transparent border-0 resize-none focus:outline-none max-h-32 text-sm md:text-base text-foreground placeholder-muted-foreground"
             style={{ minHeight: "44px" }}
             disabled={disabled}
-            />
+          />
         </div>
 
         {text.trim() && !disabled ? (
-            <button
+          <button
             onClick={handleSend}
             className="p-3 bg-primary text-primary-foreground rounded-full hover:opacity-90 transition-colors mb-0.5 shadow-md"
-            >
+          >
             <Send className="w-4 h-4 md:w-5 md:h-5" />
-            </button>
+          </button>
         ) : (
-            <button
+          <button
             className="p-2 rounded-full transition-colors mb-1 hover:bg-muted text-muted-foreground"
             disabled={disabled}
-            >
+          >
             <Smile className="w-6 h-6" />
-            </button>
+          </button>
         )}
       </div>
     </div>

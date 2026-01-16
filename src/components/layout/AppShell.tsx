@@ -10,12 +10,14 @@ interface AppShellProps {
   currentPage: Page;
   children: React.ReactNode;
   navigateTo?: (page: Page) => void;
+  hideBottomNav?: boolean;
 }
 
 export function AppShell({
   currentPage,
   children,
   navigateTo,
+  hideBottomNav = false,
 }: AppShellProps) {
   const { toggleOptions } = useActionModal();
 
@@ -27,10 +29,12 @@ export function AppShell({
       </div>
 
       {/* Main content */}
-      <main className="flex-1 w-full md:ml-64 pb-16 md:pb-0 overflow-y-auto">{children}</main>
+      <main className={`flex-1 w-full md:ml-64 ${hideBottomNav ? "" : "pb-16"} md:pb-0 overflow-y-auto`}>{children}</main>
 
       {/* Mobile bottom navigation */}
-      <MobileBottomNav currentPage={currentPage} onAdd={toggleOptions} />
+      {!hideBottomNav && (
+        <MobileBottomNav currentPage={currentPage} onAdd={toggleOptions} />
+      )}
     </div>
   );
 }

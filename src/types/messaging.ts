@@ -7,6 +7,7 @@ export interface BackendChat {
   other_user_name: string;
   other_user_avatar: string;
   other_user_id?: string; // Added optional other_user_id
+  other_user_headline?: string;
   last_message_text: string;
   unread_count: number;
   timeAgo?: string;

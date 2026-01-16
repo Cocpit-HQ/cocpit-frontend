@@ -12,6 +12,7 @@ interface SocialContextType {
   isFollowing: (id: string) => boolean;
   startChat: (userId: string) => void;
   isFollowLoading: (id: string) => boolean;
+  syncFollowStatus: (userId: string, isFollowing: boolean) => void;
 }
 
 const SocialContext = createContext<SocialContextType | undefined>(undefined);
@@ -134,8 +135,20 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     router.push(`/messaging?userId=${userId}`);
   };
 
+  const syncFollowStatus = (userId: string, isFollowing: boolean) => {
+    setFollowingIds(prev => {
+      const exists = prev.includes(userId);
+      if (isFollowing && !exists) {
+        return [...prev, userId];
+      } else if (!isFollowing && exists) {
+        return prev.filter(id => id !== userId);
+      }
+      return prev;
+    });
+  };
+
   return (
-    <SocialContext.Provider value={{ followingIds, followUser, unfollowUser, isFollowing, startChat, isFollowLoading }}>
+    <SocialContext.Provider value={{ followingIds, followUser, unfollowUser, isFollowing, startChat, isFollowLoading, syncFollowStatus }}>
       {children}
     </SocialContext.Provider>
   );

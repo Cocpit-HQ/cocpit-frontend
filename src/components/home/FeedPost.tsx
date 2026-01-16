@@ -60,9 +60,21 @@ export default function FeedPost({
   const [showBadge, setShowBadge] = useState(false)
   const badgeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const contentImgSrc = imageSrc || (images && images.length > 0 ? images[0] : null) || '/assets/pngegg.png'
+
+
+  // Helper to filter out invalid blob URLs from persisted posts
+  const isValidUrl = (url: string | undefined | null) => {
+    if (!url) return false;
+    if (id === 'preview-id') return true; // Allow blob URLs in preview mode
+    return !url.startsWith('blob:');
+  };
+
+  const validImages = images?.filter(isValidUrl) || [];
+  const validImageSrc = isValidUrl(imageSrc) ? imageSrc : undefined;
+
+  const contentImgSrc = validImageSrc || (validImages.length > 0 ? validImages[0] : null) || '/assets/pngegg.png'
   const avatarSrc = authorAvatar || '/assets/pngegg.png'
-  const hasMultipleImages = images && images.length > 1
+  const hasMultipleImages = validImages.length > 1
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return
@@ -119,20 +131,20 @@ export default function FeedPost({
   };
 
   const handleToggleVisibility = async () => {
-      const newVisibility = visibility === 'public' ? 'private' : 'public';
+    const newVisibility = visibility === 'public' ? 'private' : 'public';
 
-      // Optimistic update
-      updatePostInFeed(id, { visibility: newVisibility });
-      if (onToggleVisibility) onToggleVisibility(id); // For local state in ProfilePage if used
+    // Optimistic update
+    updatePostInFeed(id, { visibility: newVisibility });
+    if (onToggleVisibility) onToggleVisibility(id); // For local state in ProfilePage if used
 
-      try {
-          await updatePost(id, { visibility: newVisibility });
-      } catch (e) {
-          console.error("Failed to toggle visibility", e);
-          // Revert
-          updatePostInFeed(id, { visibility: visibility });
-      }
-      setShowOptions(false);
+    try {
+      await updatePost(id, { visibility: newVisibility });
+    } catch (e) {
+      console.error("Failed to toggle visibility", e);
+      // Revert
+      updatePostInFeed(id, { visibility: visibility });
+    }
+    setShowOptions(false);
   }
 
   const commentsCount = postComments.length > 0 ? postComments.length : initialCommentsCount;
@@ -164,43 +176,43 @@ export default function FeedPost({
               </button>
               {showOptions && (
                 <>
-                <div
+                  <div
                     className="fixed inset-0 z-0"
                     onClick={() => setShowOptions(false)}
-                />
-                <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-10 overflow-hidden">
-                  {!poll && (
-                    <>
+                  />
+                  <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-10 overflow-hidden">
+                    {!poll && (
+                      <>
                         <button
-                            onClick={() => {
-                                setIsEditModalOpen(true);
-                                setShowOptions(false);
-                            }}
-                            className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                          onClick={() => {
+                            setIsEditModalOpen(true);
+                            setShowOptions(false);
+                          }}
+                          className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
                         >
-                            <Edit2 className="w-4 h-4" />
-                            <span>Edit Post</span>
+                          <Edit2 className="w-4 h-4" />
+                          <span>Edit Post</span>
                         </button>
                         <button
-                            onClick={handleToggleVisibility}
-                            className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                          onClick={handleToggleVisibility}
+                          className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
                         >
-                            {visibility === 'private' ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                            <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
+                          {visibility === 'private' ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                          <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
                         </button>
-                    </>
-                  )}
-                  <button
-                    onClick={() => {
-                      onDelete?.(id)
-                      setShowOptions(false)
-                    }}
-                    className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>Delete</span>
-                  </button>
-                </div>
+                      </>
+                    )}
+                    <button
+                      onClick={() => {
+                        onDelete?.(id)
+                        setShowOptions(false)
+                      }}
+                      className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
                 </>
               )}
             </div>
@@ -226,7 +238,7 @@ export default function FeedPost({
           ) : hasMultipleImages ? (
             <div className="overflow-hidden h-full" ref={emblaRef}>
               <div className="flex h-full">
-                {images?.map((src, index) => (
+                {validImages.map((src, index) => (
                   <div className="flex-[0_0_100%] min-w-0 relative h-full bg-black" key={index}>
                     <img
                       src={src}
@@ -250,7 +262,7 @@ export default function FeedPost({
             <div
               className={`absolute top-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded-full transition-opacity duration-300 ${showBadge ? 'opacity-100' : 'opacity-0'}`}
             >
-              {currentSlide + 1}/{images?.length}
+              {currentSlide + 1}/{validImages.length}
             </div>
           )}
         </div>

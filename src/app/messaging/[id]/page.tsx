@@ -11,14 +11,14 @@ import { getConversations } from '@/services/api/messaging';
 import { mapBackendChatToChatThread } from '@/lib/mappers/messaging.mapper';
 
 const routes: Record<string, string> = {
-  home: "/feed",
-  network: "/showcase",
-  events: "/events",
-  profile: "/profile",
-  settings: "/settings",
-  jobs: "/jobs",
-  analytics: "/analytics",
-  messaging: "/messaging",
+    home: "/feed",
+    network: "/showcase",
+    events: "/events",
+    profile: "/profile",
+    settings: "/settings",
+    jobs: "/jobs",
+    analytics: "/analytics",
+    messaging: "/messaging",
 }
 
 export default function ConversationPage() {
@@ -31,8 +31,8 @@ export default function ConversationPage() {
     const { data: chats = [], isLoading, error } = useQuery({
         queryKey: ['conversations'],
         queryFn: async () => {
-          const backendChats = await getConversations();
-          return backendChats.map(mapBackendChatToChatThread);
+            const backendChats = await getConversations();
+            return backendChats.map(mapBackendChatToChatThread);
         }
     });
 
@@ -52,7 +52,7 @@ export default function ConversationPage() {
 
     // If chat not found, redirect or show error, or if there's a global error
     if (!chat || error) {
-         return (
+        return (
             <div className="min-h-screen bg-background">
                 <AppShell currentPage="messaging" navigateTo={navigateTo}>
                     <div className="flex items-center justify-center h-full">
@@ -70,8 +70,12 @@ export default function ConversationPage() {
     // On mobile, show full screen chat window
     if (isMobile) {
         return (
-             <div className="h-dvh flex flex-col bg-background">
-                <ChatWindow chat={chat} isMobile={true} />
+            <div className="h-dvh flex flex-col bg-background">
+                <ChatWindow
+                    chat={chat}
+                    isMobile={true}
+                    onBack={() => router.push('/messaging')}
+                />
             </div>
         )
     }
@@ -81,23 +85,23 @@ export default function ConversationPage() {
         <div className="min-h-screen bg-background">
             <AppShell currentPage="messaging" navigateTo={navigateTo}>
                 <div className="max-w-7xl mx-auto px-0 md:px-4 md:py-6 pb-20 md:pb-10 h-full">
-                <div
-                    className="bg-card border border-border md:rounded-lg overflow-hidden h-full"
-                >
-                    <div className="grid grid-cols-1 md:grid-cols-3 h-full">
-                        <ChatList
-                            selectedChatId={chat.id}
-                            onSelectChat={(c) => router.push(`/messaging/${c.id}`)}
-                            isMobile={false}
-                            chats={chats}
-                            isLoading={isLoading}
-                            error={error}
-                        />
-                        <div className="md:col-span-2 flex flex-col h-full overflow-hidden">
-                            <ChatWindow chat={chat} isMobile={false} />
+                    <div
+                        className="bg-card border border-border md:rounded-lg overflow-hidden h-full"
+                    >
+                        <div className="grid grid-cols-1 md:grid-cols-3 h-full">
+                            <ChatList
+                                selectedChatId={chat.id}
+                                onSelectChat={(c) => router.push(`/messaging/${c.id}`)}
+                                isMobile={false}
+                                chats={chats}
+                                isLoading={isLoading}
+                                error={error}
+                            />
+                            <div className="md:col-span-2 flex flex-col h-full overflow-hidden">
+                                <ChatWindow chat={chat} isMobile={false} />
+                            </div>
                         </div>
                     </div>
-                </div>
                 </div>
             </AppShell>
         </div>
