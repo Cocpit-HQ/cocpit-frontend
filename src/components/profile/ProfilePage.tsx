@@ -2,11 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-<<<<<<< Updated upstream
-import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap, Settings, X, Trash2, Menu, LogOut, Pencil } from "lucide-react"
-=======
-import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap, Settings, X, Trash2, Menu, LogOut, Loader2 } from "lucide-react"
->>>>>>> Stashed changes
+import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap, Settings, X, Trash2, Menu, LogOut, Pencil, Loader2 } from "lucide-react"
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import { AppShell } from "@/components/layout/AppShell"
@@ -38,14 +34,9 @@ import { useAuth } from "@/hooks/use-auth";
 import FeedPost from "@/components/home/FeedPost";
 import PostCard from "./PostCard";
 import Link from "next/link";
-<<<<<<< Updated upstream
-import { getProfile, addExperience, deleteExperience, addEducation, deleteEducation, getUserPosts, addSkill, deleteSkill, uploadAvatar, deleteAvatar } from "@/services/api/profile"
+import { getProfile, addExperience, deleteExperience, addEducation, deleteEducation, getUserPosts, addSkills, deleteSkill, uploadAvatar, deleteAvatar } from "@/services/api/profile"
 import { deletePost as apiDeletePost } from "@/services/api/posts"
-import { UserProfile, UserData, Skill, AddExperiencePayload, AddEducationPayload } from "@/types/user"
-=======
-import { getProfile, addExperience, deleteExperience, addEducation, deleteEducation, getUserPosts, addSkills, deleteSkill } from "@/services/api/profile"
 import { UserProfile, UserData, AddExperiencePayload, AddEducationPayload, AddSkillsPayload, SkillResponse, Skill } from "@/types/user"
->>>>>>> Stashed changes
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
 import type { Post } from "@/types/entities"
 import { ViewAvatarModal } from "@/components/profile/ViewAvatarModal";
@@ -225,7 +216,7 @@ export default function ProfilePage() {
   if (!mounted) {
     return null;
   }
-  
+
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
   }
@@ -237,50 +228,73 @@ export default function ProfilePage() {
 
   const handleSaveSkills = async (newSkills: string[]) => {
     try {
-<<<<<<< Updated upstream
-        const existingNames = skills.map(s => s.skill_name);
-        const skillsToAdd = newSkills.filter(s => !existingNames.includes(s));
+      // Normalize input: trim and filter empty
+      const normalizedNewSkills = newSkills
+        .map(s => s.trim())
+        .filter(s => s !== "");
 
-        const addedSkills: Skill[] = [];
-        for (const skillName of skillsToAdd) {
-            const res = await addSkill({ skill_name: skillName });
-            addedSkills.push(res.skill);
-        }
+      // Get current skills to compare
+      const currentSkillNames = skills.map(s => s.name);
 
-        setSkills([...skills, ...addedSkills]);
-    } catch (error) {
-        console.error("Failed to add skills", error);
-    }
-    setIsAddSkillModalOpen(false);
-  };
+      // Determine skills to add (case-insensitive check for robustness)
+      const skillsToAdd = normalizedNewSkills.filter(newSkill =>
+        !currentSkillNames.some(curr => curr.toLowerCase() === newSkill.toLowerCase())
+      );
 
-  const handleDeleteSkill = async (skillName: string) => {
-    // Find skill ID by name (since UI often deals with names in chips)
-    const skill = skills.find(s => s.skill_name === skillName);
-    if (!skill) return;
+      // Determine skills to remove (if user removed them in modal)
+      // Note: This assumes newSkills represents the COMPLETE desired state.
+      const skillsToRemove = skills.filter(curr =>
+        !normalizedNewSkills.some(newSkill => newSkill.toLowerCase() === curr.name.toLowerCase())
+      );
 
-    try {
-        await deleteSkill(skill.skill_id);
-        setSkills(skills.filter(s => s.skill_id !== skill.skill_id));
-    } catch (error) {
-        console.error("Failed to delete skill", error);
-=======
-      // Ensure unique and non-empty
-      const uniqueSkills = Array.from(new Set(newSkills.filter(s => s && s.trim() !== "")));
+      console.log("Skills diff:", { toAdd: skillsToAdd, toRemove: skillsToRemove });
 
-      // Debugging: Check exactly what is being sent
-      console.log("Sending skills payload:", { name: uniqueSkills });
+      let updatedSkills = [...skills];
 
-      // Payload should match AddSkillsPayload interface: { name: string[] }
-      const payload: AddSkillsPayload = { name: uniqueSkills } as any;
-      const response = await addSkills(payload);
-      setSkills(response.skills);
+      // 1. Add new skills
+      if (skillsToAdd.length > 0) {
+        // Remove 'Payload' suffix usage if I renamed it back or keep it simple
+        const skillsPayload: AddSkillsPayload = { name: skillsToAdd };
+        const response = await addSkills(skillsPayload);
+        // Backend returns the FULL list of added skills (or just the ones added?)
+        // Response type is { skills: SkillResponse[] }
+        // We accumulate them
+        const addedSkillsList = response.skills || [];
+        // Avoid duplicates in state if backend returns partial
+        updatedSkills = [...updatedSkills, ...addedSkillsList];
+      }
+
+      // 2. Delete removed skills
+      if (skillsToRemove.length > 0) {
+        const deletePromises = skillsToRemove.map(skill => deleteSkill(skill.skill_id));
+        await Promise.all(deletePromises);
+        // Remove from local state
+        const removedIds = new Set(skillsToRemove.map(s => s.skill_id));
+        updatedSkills = updatedSkills.filter(s => !removedIds.has(s.skill_id));
+      }
+
+      // If no changes, just close
+      if (skillsToAdd.length === 0 && skillsToRemove.length === 0) {
+        setIsAddSkillModalOpen(false);
+        return;
+      }
+
+      // Update state with final list
+      // We might need to refresh from server to be 100% sure, but optimistic/accumulated is faster
+      // Let's re-fetch profile or just setSkills
+      // If addSkills returns new skills only, we merged them.
+      // If delete works, we removed them.
+
+      // However, addSkills response might effectively be "the skills added".
+      // Let's rely on updatedSkills construction.
+      setSkills(updatedSkills);
       setIsAddSkillModalOpen(false);
+
     } catch (error: any) {
       console.error("Failed to save skills", error);
       if (error.response) {
-        // Log the actual error message from backend to understand the 400 cause
         console.error("Server Error Details:", error.response.data);
+        alert(`Failed to save skills: ${error.response.data.message || "Unknown error"}`);
       }
     }
   };
@@ -289,13 +303,12 @@ export default function ProfilePage() {
     const skill = skills.find(s => s.name === skillName);
     if (skill) {
       setSkillToDelete(skill);
->>>>>>> Stashed changes
     }
   }
 
   const confirmDeleteSkill = async () => {
     if (!skillToDelete) return;
-    
+
     setIsDeletingSkill(true);
     try {
       await deleteSkill(skillToDelete.skill_id);
@@ -369,7 +382,7 @@ export default function ProfilePage() {
           description: data.description!,
         };
         if (data.end_date) {
-            payload.end_date = data.end_date;
+          payload.end_date = data.end_date;
         }
         const response = await addEducation(payload);
         setEducations([...educations, response.education]);
@@ -406,7 +419,7 @@ export default function ProfilePage() {
     openTo: user?.open_to?.[0] as "Full-time" | "Freelance" | "Consulting" | "Mentorship" || "Full-time",
     availability: user?.availability as "Immediate" | "30 Days" | "Casual Networking" || "Immediate",
     workPreference: user?.work_preference as "Remote" | "Hybrid" | "Onsite" || "Hybrid",
-};
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -441,11 +454,11 @@ export default function ProfilePage() {
                   </div>
                   <div className="hidden md:flex absolute top-3 right-3 gap-2">
                     <button onClick={() => router.push('/analytics')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
-                        View Analytics
+                      View Analytics
                     </button>
                     <button onClick={() => router.push('/profile/edit')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
-                        <Edit2 className="w-4 h-4" />
-                        Edit Profile
+                      <Edit2 className="w-4 h-4" />
+                      Edit Profile
                     </button>
                   </div>
                 </div>
@@ -571,11 +584,11 @@ export default function ProfilePage() {
                     if (!skillName) return null;
                     return (
                       <SkillProofPill
-                          key={skill.skill_id || `skill-${index}`}
-                          skill={skillName}
-                          experiences={experiences}
-                          posts={previewPosts}
-                          onDelete={handleDeleteSkill}
+                        key={skill.skill_id || `skill-${index}`}
+                        skill={skillName}
+                        experiences={experiences}
+                        posts={previewPosts}
+                        onDelete={handleDeleteSkill}
                       />
                     );
                   })}
@@ -639,8 +652,8 @@ export default function ProfilePage() {
         </div>
       </AppShell>
 
-      <SkillModal 
-        isOpen={isAddSkillModalOpen} 
+      <SkillModal
+        isOpen={isAddSkillModalOpen}
         onClose={() => setIsAddSkillModalOpen(false)}
         initialSkills={skills.map(s => s.name)}
         onSave={handleSaveSkills}
@@ -684,7 +697,6 @@ export default function ProfilePage() {
         </DialogContent>
       </Dialog>
 
-<<<<<<< Updated upstream
       <ViewAvatarModal
         isOpen={isViewAvatarOpen}
         onClose={() => setIsViewAvatarOpen(false)}
@@ -698,7 +710,7 @@ export default function ProfilePage() {
         onUpload={handleAvatarUpload}
         onDelete={handleAvatarDelete}
       />
-=======
+
       <Dialog open={!!skillToDelete} onOpenChange={(open) => !open && setSkillToDelete(null)}>
         <DialogContent className="bg-card border-border">
           <DialogHeader>
@@ -732,7 +744,6 @@ export default function ProfilePage() {
           </div>
         </DialogContent>
       </Dialog>
->>>>>>> Stashed changes
-    </div>
+    </div >
   )
 }

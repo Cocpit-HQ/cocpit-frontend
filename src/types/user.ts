@@ -2,7 +2,7 @@ import { Experience, Education } from './entities';
 
 export interface User {
   id: string;
-  name:string;
+  name: string;
   headline: string;
   avatar: string; // URL or path
   location: string;
@@ -19,48 +19,44 @@ export interface UserProfile {
   user: UserData;
   experiences: Experience[];
   educations: Education[];
-<<<<<<< Updated upstream
-  skills: Skill[];
-=======
   skills: SkillResponse[];
   profile_views_count?: number;
   search_appearances_count?: number;
->>>>>>> Stashed changes
 }
 
 export interface UserData {
-    id: string;
-    name: string;
-    headline: string | null;
-    avatar: string | null;
-    location: string | null;
-    about: string | null;
-    email: string;
-    open_to: string[] | null;
-    availability: string | null;
-    work_preference: string | null;
-    profile_views: number;
-    search_appearances: number;
-    latest_education: {
-        school: string;
-        degree: string;
-    } | null;
-    job_title?: string;
-    company_name?: string;
-    school?: string;
-    degree?: string;
-    about_text?: string;
+  id: string;
+  name: string;
+  headline: string | null;
+  avatar: string | null;
+  location: string | null;
+  about: string | null;
+  email: string;
+  open_to: string[] | null;
+  availability: string | null;
+  work_preference: string | null;
+  profile_views: number;
+  search_appearances: number;
+  latest_education: {
+    school: string;
+    degree: string;
+  } | null;
+  job_title?: string;
+  company_name?: string;
+  school?: string;
+  degree?: string;
+  about_text?: string;
 }
 
 export interface UpdateProfilePayload {
-    full_name: string;
-    headline: string;
-    job_title: string;
-    company_name: string;
-    school: string;
-    degree: string;
-    location: string;
-    about_text: string;
+  full_name: string;
+  headline: string;
+  job_title: string;
+  company_name: string;
+  school: string;
+  degree: string;
+  location: string;
+  about_text: string;
 }
 
 export interface Skill {
@@ -83,32 +79,32 @@ export interface AddSkillsResponse {
 }
 
 export interface AddExperiencePayload {
-    title: string;
-    company_name: string;
-    location: string;
-    start_date: string;
-    end_date: string | null;
-    is_current: boolean;
-    description: string | null;
+  title: string;
+  company_name: string;
+  location: string;
+  start_date: string;
+  end_date: string | null;
+  is_current: boolean;
+  description: string | null;
 }
 
 export interface AddExperienceResponse {
-    message: string;
-    experience: Experience;
+  message: string;
+  experience: Experience;
 }
 
 export interface AddEducationPayload {
-    school_name: string;
-    degree: string;
-    field_of_study: string;
-    start_date: string;
-    end_date?: string;
-    description: string | null;
+  school_name: string;
+  degree: string;
+  field_of_study: string;
+  start_date: string;
+  end_date?: string;
+  description: string | null;
 }
 
 export interface AddEducationResponse {
-    message: string;
-    education: Education;
+  message: string;
+  education: Education;
 }
 
 export interface SearchedUser {

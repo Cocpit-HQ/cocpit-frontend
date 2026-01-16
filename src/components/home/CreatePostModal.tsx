@@ -1,11 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-<<<<<<< Updated upstream
-import { X, Image, Video, Plus, Trash2, Camera, Smile, Eye, EyeOff, Loader2 } from 'lucide-react';
-=======
-import { X, Image, Video, Plus, Trash2, Camera, Smile, FileText, Sparkles, Bold, Italic, Heading2, Heading3, List, ListOrdered, Link as LinkIcon, Unlink } from 'lucide-react';
->>>>>>> Stashed changes
+import { X, Image, Video, Plus, Trash2, Camera, Smile, FileText, Sparkles, Bold, Italic, Heading2, Heading3, List, ListOrdered, Link as LinkIcon, Unlink, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useFeed } from '@/context/FeedContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { createPost, CreatePostRequest } from '@/services/api/feed';
@@ -46,9 +42,6 @@ interface PollOption {
   text: string;
 }
 
-<<<<<<< Updated upstream
-export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', editPostId, onUpdate }: CreatePostModalProps) {
-=======
 // --- TipTap Editor Components ---
 
 const EditorToolbar = ({ onFormat }: { onFormat: (command: string, value?: string) => void }) => {
@@ -160,8 +153,7 @@ const RichTextEditor = ({ content, onChange }: { content: string, onChange: (htm
   );
 };
 
-export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: CreatePostModalProps) {
->>>>>>> Stashed changes
+export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', editPostId, onUpdate }: CreatePostModalProps) {
   const isMobile = useIsMobile();
   const { addPost, currentUser } = useFeed();
   const [postType, setPostType] = useState<PostType>(initialPostType);
@@ -190,13 +182,9 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
   const [pollDuration, setPollDuration] = useState('1 week');
   const [articleCoverImage, setArticleCoverImage] = useState<MediaItem | null>(null);
   const articleCoverInputRef = useRef<HTMLInputElement>(null);
-<<<<<<< Updated upstream
-  const articleTextAreaRef = useRef<HTMLTextAreaElement>(null);
-=======
   // articleTextAreaRef removed in favor of TipTap
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [articleLink, setArticleLink] = useState('');
->>>>>>> Stashed changes
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingPost, setIsLoadingPost] = useState(false);
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
@@ -479,7 +467,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
 
   const handleEmojiClick = (emoji: string) => {
     const { text, setText, ref } = getActiveState();
-    
+
     // If no ref (e.g. Article mode with TipTap), just append
     if (!ref || !ref.current) {
       setText((prev) => prev + emoji);
@@ -826,7 +814,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
               option_text: opt.option_text || opt,
               vote_count: opt.vote_count || 0
             }))
-          } : null
+          } : undefined
         };
 
         addPost(newPost);
@@ -847,13 +835,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
     }
     if (postType === 'photo') return uploadedImages.length === 0;
     if (postType === 'video') return uploadedVideos.length === 0;
-<<<<<<< Updated upstream
-    if (postType === 'article') return !articleTitle.trim() || !articleContent.trim();
-
-=======
     if (postType === 'article') return !articleTitle.trim() || !articleContent.trim() || articleContent === '<p></p>';
-    
->>>>>>> Stashed changes
     // Text post
     return !description.trim();
   };
@@ -881,8 +863,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div
           className={`relative w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col ${isMobile
-              ? 'rounded-2xl bg-white/80 backdrop-blur-lg border border-white/30 shadow-2xl overflow-hidden'
-              : 'rounded-lg bg-card shadow-2xl overflow-visible'
+            ? 'rounded-2xl bg-white/80 backdrop-blur-lg border border-white/30 shadow-2xl overflow-hidden'
+            : 'rounded-lg bg-card shadow-2xl overflow-visible'
             }`}
         >
           {/* Header */}
@@ -1198,8 +1180,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                             key={category}
                             onClick={() => setPostCategory(category)}
                             className={`px-3 py-1 text-sm rounded-full transition-colors ${postCategory === category
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted text-muted-foreground hover:bg-muted/80'
                               }`}
                           >
                             {category}
@@ -1271,8 +1253,6 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                               />
                             </div>
 
-<<<<<<< Updated upstream
-                            {/* Image Strip */}
                             <div className="flex gap-2 overflow-x-auto pb-2">
                               {uploadedImages.map((img, idx) => (
                                 <div
@@ -1327,222 +1307,202 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
                           </div>
                         )
                       )}
-=======
-                    {/* Article Content Editor */}
-                    <RichTextEditor content={articleContent} onChange={setArticleContent} />
-                  </div>
-                )}
->>>>>>> Stashed changes
 
                       {/* VIDEO POST */}
-                      {postType === 'video' && (
-                        uploadedVideos.length === 0 ? (
-                          <div className="h-52 border-2 border-dashed border-border rounded-xl bg-muted/20">
-                            {!editPostId && (
-                              <button
-                                onClick={() => videoInputRef.current?.click()}
-                                className="w-full h-full flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary transition-colors"
-                              >
-                                <div className="p-4 rounded-full bg-muted">
-                                  <Video className="w-8 h-8" />
-                                </div>
-                                <span className="font-semibold text-lg">Upload video</span>
-                              </button>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="border rounded-lg p-4 space-y-4" style={{ border: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
-                            <div className="flex gap-2 overflow-x-auto pb-2">
-                              {uploadedVideos.map((video) => (
-                                <div key={video.id} className="relative flex-shrink-0 w-48 h-32 bg-black rounded-md overflow-hidden border border-border group">
-                                  <video src={video.url} className="w-full h-full object-cover" />
+                      {
+                        postType === 'video' && (
+                          uploadedVideos.length === 0 ? (
+                            <div className="h-52 border-2 border-dashed border-border rounded-xl bg-muted/20">
+                              {!editPostId && (
+                                <button
+                                  onClick={() => videoInputRef.current?.click()}
+                                  className="w-full h-full flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary transition-colors"
+                                >
+                                  <div className="p-4 rounded-full bg-muted">
+                                    <Video className="w-8 h-8" />
+                                  </div>
+                                  <span className="font-semibold text-lg">Upload video</span>
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="border rounded-lg p-4 space-y-4" style={{ border: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
+                              <div className="flex gap-2 overflow-x-auto pb-2">
+                                {uploadedVideos.map((video) => (
+                                  <div key={video.id} className="relative flex-shrink-0 w-48 h-32 bg-black rounded-md overflow-hidden border border-border group">
+                                    <video src={video.url} className="w-full h-full object-cover" />
+                                    {!editPostId && (
+                                      <button
+                                        onClick={() => removeVideo(video.id)}
+                                        className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                                {!editPostId && (
+                                  <button
+                                    onClick={() => videoInputRef.current?.click()}
+                                    className="flex-shrink-0 w-32 h-32 flex items-center justify-center bg-muted/50 rounded-md border border-dashed border-border hover:bg-muted transition-colors"
+                                  >
+                                    <Plus className="w-6 h-6 text-muted-foreground" />
+                                  </button>
+                                )}
+                              </div>
+                              <div className="relative">
+                                <textarea
+                                  ref={videoCaptionRef}
+                                  value={videoCaption}
+                                  onChange={(e) => setVideoCaption(e.target.value)}
+                                  placeholder="Add a caption..."
+                                  className="w-full min-h-[80px] text-lg resize-none border-none focus:ring-0 p-0 pr-10 bg-transparent focus:outline-none"
+                                  style={{ color: '#000000' }}
+                                />
+                                {!isMobile && (
+                                  <div className="absolute top-0 right-0 z-20">
+                                    <button
+                                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                      type="button"
+                                      className={`p-2 rounded-md transition-colors flex items-center gap-1 ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+                                      title="Add emoji"
+                                    >
+                                      <Smile className="w-5 h-5" />
+                                    </button>
+                                    {showEmojiPicker && renderEmojiPicker(true)}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        )
+                      }
+
+                      {/* ARTICLE POST */}
+                      {
+                        postType === 'article' && (
+                          <div className="flex flex-col h-full space-y-6">
+                            {/* Cover Media Section */}
+                            <div className="flex flex-col items-center justify-center p-4">
+                              {articleCoverImage ? (
+                                <div className="relative w-full max-h-96 rounded-lg overflow-hidden border bg-muted flex items-center justify-center">
+                                  {articleCoverImage.file?.type.startsWith('image/') || articleCoverImage.type === 'image' ? (
+                                    <img src={articleCoverImage.url} alt="Cover" className="max-h-96 object-contain" />
+                                  ) : (
+                                    <video src={articleCoverImage.url} controls className="max-h-96 object-contain" />
+                                  )}
                                   {!editPostId && (
                                     <button
-                                      onClick={() => removeVideo(video.id)}
-                                      className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                      onClick={() => removeArticleMedia(articleCoverImage.url, true)}
+                                      className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors"
                                     >
-                                      <X className="w-3 h-3" />
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="w-full border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center text-center bg-muted/20">
+                                  {!editPostId && (
+                                    <>
+                                      <Image className="w-12 h-12 text-muted-foreground mb-3" />
+                                      <p className="text-muted-foreground mb-4">Add a cover image or video to your article.</p>
+                                      <input
+                                        ref={articleCoverInputRef}
+                                        type="file"
+                                        accept="image/*,video/*"
+                                        onChange={handleArticleMediaUpload}
+                                        className="hidden"
+                                      />
+                                      <button
+                                        onClick={() => articleCoverInputRef.current?.click()}
+                                        className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
+                                      >
+                                        Upload from computer
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Title Field */}
+                            <input
+                              type="text"
+                              value={articleTitle}
+                              onChange={(e) => setArticleTitle(e.target.value)}
+                              placeholder="Start article title here"
+                              className="w-full text-xl md:text-2xl px-6 bg-transparent border-none outline-none focus:ring-0 placeholder:text-muted-foreground/70 text-foreground"
+                              style={{ border: 'none', background: 'transparent', outline: 'none' }}
+                            />
+
+                            {/* Article Content Editor */}
+                            <div className="relative px-6 flex-grow">
+                              <RichTextEditor content={articleContent} onChange={setArticleContent} />
+                            </div>
+                          </div>
+                        )
+                      }
+
+                      {/* POLL POST */}
+                      {
+                        postType === 'poll' && (
+                          <div className="space-y-6">
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-foreground">Your Question</label>
+                              <input
+                                type="text"
+                                value={pollQuestion}
+                                onChange={(e) => setPollQuestion(e.target.value)}
+                                placeholder="e.g., What is your biggest challenge?"
+                                className="w-full px-4 py-2.5 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                              />
+                            </div>
+
+                            <div className="space-y-3">
+                              <label className="text-sm font-medium text-foreground">Options</label>
+                              {pollOptions.map((option, index) => (
+                                <div key={option.id} className="flex gap-2">
+                                  <input
+                                    type="text"
+                                    value={option.text}
+                                    onChange={(e) => updatePollOption(option.id, e.target.value)}
+                                    placeholder={`Option ${index + 1}`}
+                                    className="flex-grow px-4 py-2.5 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                  />
+                                  {!editPostId && pollOptions.length > 2 && (
+                                    <button onClick={() => removePollOption(option.id)} className="p-2.5 text-muted-foreground hover:text-destructive hover:bg-muted rounded-lg transition-colors">
+                                      <X className="w-5 h-5" />
                                     </button>
                                   )}
                                 </div>
                               ))}
-                              {!editPostId && (
+                              {!editPostId && pollOptions.length < 4 && (
                                 <button
-                                  onClick={() => videoInputRef.current?.click()}
-                                  className="flex-shrink-0 w-32 h-32 flex items-center justify-center bg-muted/50 rounded-md border border-dashed border-border hover:bg-muted transition-colors"
+                                  onClick={addPollOption}
+                                  className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 px-1 py-1"
                                 >
-                                  <Plus className="w-6 h-6 text-muted-foreground" />
+                                  <Plus className="w-4 h-4" />
+                                  Add Option
                                 </button>
                               )}
                             </div>
-                            <div className="relative">
-                              <textarea
-                                ref={videoCaptionRef}
-                                value={videoCaption}
-                                onChange={(e) => setVideoCaption(e.target.value)}
-                                placeholder="Add a caption..."
-                                className="w-full min-h-[80px] text-lg resize-none border-none focus:ring-0 p-0 pr-10 bg-transparent focus:outline-none"
-                                style={{ color: '#000000' }}
-                              />
-                              {!isMobile && (
-                                <div className="absolute top-0 right-0 z-20">
-                                  <button
-                                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                    type="button"
-                                    className={`p-2 rounded-md transition-colors flex items-center gap-1 ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
-                                    title="Add emoji"
-                                  >
-                                    <Smile className="w-5 h-5" />
-                                  </button>
-                                  {showEmojiPicker && renderEmojiPicker(true)}
-                                </div>
-                              )}
+
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-foreground">Poll Duration</label>
+                              <select
+                                value={pollDuration}
+                                onChange={(e) => setPollDuration(e.target.value)}
+                                className="w-full px-4 py-2.5 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none"
+                              >
+                                <option value="1 day">1 Day</option>
+                                <option value="3 days">3 Days</option>
+                                <option value="1 week">1 Week</option>
+                                <option value="2 weeks">2 Weeks</option>
+                              </select>
                             </div>
                           </div>
                         )
-                      )}
-
-                      {/* ARTICLE POST */}
-                      {postType === 'article' && (
-                        <div className="flex flex-col h-full space-y-6">
-                          {/* Cover Media Section */}
-                          <div className="flex flex-col items-center justify-center p-4">
-                            {articleCoverImage ? (
-                              <div className="relative w-full max-h-96 rounded-lg overflow-hidden border bg-muted flex items-center justify-center">
-                                {articleCoverImage.file?.type.startsWith('image/') || articleCoverImage.type === 'image' ? (
-                                  <img src={articleCoverImage.url} alt="Cover" className="max-h-96 object-contain" />
-                                ) : (
-                                  <video src={articleCoverImage.url} controls className="max-h-96 object-contain" />
-                                )}
-                                {!editPostId && (
-                                  <button
-                                    onClick={() => removeArticleMedia(articleCoverImage.url, true)}
-                                    className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="w-full border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center text-center bg-muted/20">
-                                {!editPostId && (
-                                  <>
-                                    <Image className="w-12 h-12 text-muted-foreground mb-3" />
-                                    <p className="text-muted-foreground mb-4">Add a cover image or video to your article.</p>
-                                    <input
-                                      ref={articleCoverInputRef}
-                                      type="file"
-                                      accept="image/*,video/*"
-                                      onChange={handleArticleMediaUpload}
-                                      className="hidden"
-                                    />
-                                    <button
-                                      onClick={() => articleCoverInputRef.current?.click()}
-                                      className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
-                                    >
-                                      Upload from computer
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Title Field */}
-                          <input
-                            type="text"
-                            value={articleTitle}
-                            onChange={(e) => setArticleTitle(e.target.value)}
-                            placeholder="Start article title here"
-                            className="w-full text-xl md:text-2xl px-6 bg-transparent border-none outline-none focus:ring-0 placeholder:text-muted-foreground/70 text-foreground"
-                            style={{ border: 'none', background: 'transparent', outline: 'none' }}
-                          />
-
-                          {/* Article Content Editor */}
-                          <div className="relative px-6 flex-grow">
-                            <textarea
-                              ref={articleTextAreaRef}
-                              value={articleContent}
-                              onChange={(e) => setArticleContent(e.target.value)}
-                              placeholder="Start writing your article..."
-                              className="w-full min-h-[300px] text-lg resize-none bg-transparent border-none outline-none focus:ring-0 p-0 pr-12 placeholder:text-muted-foreground/70"
-                              style={{ border: 'none', background: 'transparent', outline: 'none' }}
-                            />
-                            {!isMobile && (
-                              <div className="absolute top-0 right-6 z-10">
-                                <button
-                                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                  type="button"
-                                  className={`p-2 rounded-md transition-colors flex items-center gap-1 ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
-                                  title="Add emoji"
-                                >
-                                  <Smile className="w-5 h-5" />
-                                </button>
-                                {showEmojiPicker && renderEmojiPicker(true)}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* POLL POST */}
-                      {postType === 'poll' && (
-                        <div className="space-y-6">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium text-foreground">Your Question</label>
-                            <input
-                              type="text"
-                              value={pollQuestion}
-                              onChange={(e) => setPollQuestion(e.target.value)}
-                              placeholder="e.g., What is your biggest challenge?"
-                              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                            />
-                          </div>
-
-                          <div className="space-y-3">
-                            <label className="text-sm font-medium text-foreground">Options</label>
-                            {pollOptions.map((option, index) => (
-                              <div key={option.id} className="flex gap-2">
-                                <input
-                                  type="text"
-                                  value={option.text}
-                                  onChange={(e) => updatePollOption(option.id, e.target.value)}
-                                  placeholder={`Option ${index + 1}`}
-                                  className="flex-grow px-4 py-2.5 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                                />
-                                {!editPostId && pollOptions.length > 2 && (
-                                  <button onClick={() => removePollOption(option.id)} className="p-2.5 text-muted-foreground hover:text-destructive hover:bg-muted rounded-lg transition-colors">
-                                    <X className="w-5 h-5" />
-                                  </button>
-                                )}
-                              </div>
-                            ))}
-                            {!editPostId && pollOptions.length < 4 && (
-                              <button
-                                onClick={addPollOption}
-                                className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 px-1 py-1"
-                              >
-                                <Plus className="w-4 h-4" />
-                                Add Option
-                              </button>
-                            )}
-                          </div>
-
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium text-foreground">Poll Duration</label>
-                            <select
-                              value={pollDuration}
-                              onChange={(e) => setPollDuration(e.target.value)}
-                              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none"
-                            >
-                              <option value="1 day">1 Day</option>
-                              <option value="3 days">3 Days</option>
-                              <option value="1 week">1 Week</option>
-                              <option value="2 weeks">2 Weeks</option>
-                            </select>
-                          </div>
-                        </div>
-                      )}
+                      }
                     </div>
                   </>
                 )}
@@ -1552,10 +1512,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
 
 
           {/* Footer Actions */}
-          <div
-            className={`flex items-center justify-end gap-3 px-6 py-4 border-t border-border ${isMobile ? '' : 'bg-card'
-              }`}
-          >
+          <div className={`flex items-center justify-end gap-3 px-6 py-4 border-t border-border ${isMobile ? '' : 'bg-card'}`}>
             {isPreviewMode ? (
               // Preview Mode Buttons
               <button
@@ -1590,8 +1547,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text' }: C
               onClick={handlePost}
               disabled={isPostDisabled()}
               className={`px-8 py-2.5 font-semibold ${isMobile ? 'rounded-md' : 'rounded-lg'} transition-all ${isPostDisabled()
-                  ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                  : 'bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white hover:opacity-90'
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                : 'bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white hover:opacity-90'
                 }`}
             >
               {isSubmitting ? 'Saving...' : (editPostId ? 'Save' : 'Post')}

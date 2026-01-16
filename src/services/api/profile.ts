@@ -1,9 +1,5 @@
 import api from "@/lib/axios";
-<<<<<<< Updated upstream
-import type { UserProfile, AddExperiencePayload, AddExperienceResponse, AddEducationPayload, AddEducationResponse, Skill, UpdateProfilePayload } from "@/types/user";
-=======
-import type { UserProfile, AddExperiencePayload, AddExperienceResponse, AddEducationPayload, AddEducationResponse,AddSkillsPayload, AddSkillsResponse } from "@/types/user";
->>>>>>> Stashed changes
+import type { UserProfile, AddExperiencePayload, AddExperienceResponse, AddEducationPayload, AddEducationResponse, AddSkillsPayload, AddSkillsResponse, SkillResponse, Skill, UpdateProfilePayload } from "@/types/user";
 
 export interface GetUserPostsParams {
   category?: 'All' | 'Personal' | 'Professional';
@@ -56,12 +52,12 @@ export interface GetUserPostsResponse {
 }
 
 export interface AddSkillPayload {
-    skill_name: string;
+  skill_name: string;
 }
 
 export interface AddSkillResponse {
-    message: string;
-    skill: Skill;
+  message: string;
+  skill: Skill;
 }
 
 export interface UploadAvatarResponse {
@@ -74,13 +70,13 @@ export interface DeleteAvatarResponse {
 }
 
 export const getProfile = async (): Promise<UserProfile> => {
-    const response = await api.get("/profile/me");
-    return response.data;
+  const response = await api.get("/profile/me");
+  return response.data;
 };
 
 export const updateProfile = async (payload: UpdateProfilePayload): Promise<{ message: string }> => {
-    const response = await api.put("/profile/me", payload);
-    return response.data;
+  const response = await api.put("/profile/me", payload);
+  return response.data;
 };
 
 export const getUserPosts = async (params: GetUserPostsParams): Promise<GetUserPostsResponse> => {
@@ -95,32 +91,30 @@ export const getUserPosts = async (params: GetUserPostsParams): Promise<GetUserP
 };
 
 export const addExperience = async (payload: AddExperiencePayload): Promise<AddExperienceResponse> => {
-    const response = await api.post("/profile/experiences", payload);
-    return response.data;
+  const response = await api.post("/profile/experiences", payload);
+  return response.data;
 }
 
 export const deleteExperience = async (id: string): Promise<void> => {
-    await api.delete(`/profile/experiences/${id}`);
+  await api.delete(`/profile/experiences/${id}`);
 }
 
 export const addEducation = async (payload: AddEducationPayload): Promise<AddEducationResponse> => {
-    const response = await api.post("/profile/educations", payload);
-    return response.data;
+  const response = await api.post("/profile/educations", payload);
+  return response.data;
 }
 
 export const deleteEducation = async (id: string): Promise<void> => {
-    await api.delete(`/profile/educations/${id}`);
+  await api.delete(`/profile/educations/${id}`);
 }
-<<<<<<< Updated upstream
-
-export const addSkill = async (payload: AddSkillPayload): Promise<AddSkillResponse> => {
-    const response = await api.post("/profile/skills", payload);
-    return response.data;
-}
+export const addSkills = async (payload: AddSkillsPayload): Promise<AddSkillsResponse> => {
+  const response = await api.post<AddSkillsResponse>("/profile/skills", payload);
+  return response.data;
+};
 
 export const deleteSkill = async (id: string): Promise<void> => {
-    await api.delete(`/profile/skills/${id}`);
-}
+  await api.delete(`/profile/skills/${id}`);
+};
 
 export const uploadAvatar = async (formData: FormData): Promise<UploadAvatarResponse> => {
   const response = await api.post("/profile/avatar", formData);
@@ -130,13 +124,4 @@ export const uploadAvatar = async (formData: FormData): Promise<UploadAvatarResp
 export const deleteAvatar = async (): Promise<DeleteAvatarResponse> => {
   const response = await api.delete("/profile/avatar");
   return response.data;
-=======
-export const addSkills = async (payload: AddSkillsPayload): Promise<AddSkillsResponse> => {
-  const response = await api.post<AddSkillsResponse>("/profile/skills", payload);
-  return response.data;
-};
-
-export const deleteSkill = async (id: string): Promise<void> => {
-  await api.delete(`/profile/skills/${id}`);
->>>>>>> Stashed changes
 };
