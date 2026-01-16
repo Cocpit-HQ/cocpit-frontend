@@ -10,6 +10,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ProfileIdentity } from "@/types/profile";
+import { updateIdentity } from "@/services/api/profile";
+import { toast } from "sonner"; // Assuming sonner is used, or alert
 
 interface ProfileIdentityChipsProps {
   initialIdentity: ProfileIdentity;
@@ -20,10 +22,29 @@ export function ProfileIdentityChips({ initialIdentity, readOnly = false }: Prof
   const [identity, setIdentity] = useState<ProfileIdentity>(initialIdentity);
   const [isEditing, setIsEditing] = useState(false);
   const [tempIdentity, setTempIdentity] = useState<ProfileIdentity>(initialIdentity);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
-    setIdentity(tempIdentity);
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      // Map frontend camelCase to backend snake_case
+      const payload = {
+        open_to: tempIdentity.openTo,
+        availability: tempIdentity.availability,
+        work_preference: tempIdentity.workPreference
+      };
+
+      await updateIdentity(payload);
+
+      setIdentity(tempIdentity);
+      setIsEditing(false);
+      // toast.success("Identity updated successfully"); 
+    } catch (error) {
+      console.error("Failed to update identity:", error);
+      // toast.error("Failed to update identity");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -39,11 +60,11 @@ export function ProfileIdentityChips({ initialIdentity, readOnly = false }: Prof
           {identity.openTo}
         </div>
         <div className="bg-green-500/10 text-green-600 dark:text-green-400 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 border border-green-500/20">
-            <span className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Availability:</span>
+          <span className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Availability:</span>
           {identity.availability}
         </div>
         <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 border border-blue-500/20">
-            <span className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Preference:</span>
+          <span className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Preference:</span>
           {identity.workPreference}
         </div>
       </div>
@@ -72,11 +93,10 @@ export function ProfileIdentityChips({ initialIdentity, readOnly = false }: Prof
                   <button
                     key={option}
                     onClick={() => setTempIdentity({ ...tempIdentity, openTo: option })}
-                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                      tempIdentity.openTo === option
+                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${tempIdentity.openTo === option
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-background text-foreground border-input hover:bg-muted"
-                    }`}
+                      }`}
                   >
                     {option}
                   </button>
@@ -91,11 +111,10 @@ export function ProfileIdentityChips({ initialIdentity, readOnly = false }: Prof
                   <button
                     key={option}
                     onClick={() => setTempIdentity({ ...tempIdentity, availability: option })}
-                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                      tempIdentity.availability === option
+                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${tempIdentity.availability === option
                         ? "bg-green-600 text-white border-green-600"
                         : "bg-background text-foreground border-input hover:bg-muted"
-                    }`}
+                      }`}
                   >
                     {option}
                   </button>
@@ -110,11 +129,10 @@ export function ProfileIdentityChips({ initialIdentity, readOnly = false }: Prof
                   <button
                     key={option}
                     onClick={() => setTempIdentity({ ...tempIdentity, workPreference: option })}
-                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
-                      tempIdentity.workPreference === option
+                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${tempIdentity.workPreference === option
                         ? "bg-blue-600 text-white border-blue-600"
                         : "bg-background text-foreground border-input hover:bg-muted"
-                    }`}
+                      }`}
                   >
                     {option}
                   </button>

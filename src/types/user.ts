@@ -1,4 +1,5 @@
 import { Experience, Education } from './entities';
+import { ProfileIdentity } from './profile';
 
 export interface User {
   id: string;
@@ -13,6 +14,7 @@ export interface User {
   connectionStatus: 'connected' | 'pending' | 'none';
   mutualConnections: number; // Mock count
   isCurrentUser?: boolean;
+  identity?: ProfileIdentity;
 }
 
 export interface UserProfile {

@@ -95,6 +95,11 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
     educations: educations as any,
     connectionStatus: 'none',
     mutualConnections: 0,
+    identity: {
+      openTo: (Array.isArray(data.open_to) ? data.open_to[0] : data.open_to) as any || 'Full-time', // Check assumption
+      availability: data.availability as any || 'Casual Networking',
+      workPreference: data.work_preference as any || 'Onsite',
+    }
   };
 };
 
@@ -321,7 +326,10 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
                     <p className="text-sm text-muted-foreground mb-4">{user.mutualConnections} mutual connections</p>
 
                     {/* Identity Chips - Read Only */}
-                    <ProfileIdentityChips initialIdentity={initialIdentity} readOnly />
+                    {/* Identity Chips - Read Only */}
+                    {user.identity && (
+                      <ProfileIdentityChips initialIdentity={user.identity} readOnly />
+                    )}
                   </div>
                 </div>
               </div>

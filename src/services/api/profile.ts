@@ -125,3 +125,17 @@ export const deleteAvatar = async (): Promise<DeleteAvatarResponse> => {
   const response = await api.delete("/profile/avatar");
   return response.data;
 };
+
+export const getIdentity = async (): Promise<any> => {
+  const response = await api.get("/profile/identity");
+  return response.data;
+};
+
+export const updateIdentity = async (identity: {
+  open_to: string;
+  availability: string;
+  work_preference: string;
+}): Promise<any> => {
+  const response = await api.put("/profile/identity", identity);
+  return response.data;
+};
