@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { Paperclip, Send, Smile } from "lucide-react"
 
 interface ChatInputProps {
@@ -9,14 +9,23 @@ interface ChatInputProps {
   disabled?: boolean
 }
 
+const EMOJI_LIST = ["😀", "😂", "😍", "🥺", "🔥", "👍", "👎", "🎉", "❤️", "💼", "🚀", "💯", "👏", "🤔", "👀", "✨", "✅", "❌", "🙌", "😎"];
+
 export default function ChatInput({ onSendMessage, onTyping, disabled }: ChatInputProps) {
   const [text, setText] = useState("")
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const pickerRef = useRef<HTMLDivElement>(null)
+  const emojiButtonRef = useRef<HTMLButtonElement>(null)
 
   const handleSend = () => {
     if (disabled) return; // Prevent sending if disabled
     if (text.trim()) {
       onSendMessage(text)
       setText("")
+      if (textareaRef.current) {
+        textareaRef.current.style.height = '44px'; // Reset height
+      }
     }
   }
 
@@ -27,6 +36,51 @@ export default function ChatInput({ onSendMessage, onTyping, disabled }: ChatInp
       handleSend()
     }
   }
+
+  const insertEmoji = (emoji: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      setText(prev => prev + emoji);
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const newText = text.substring(0, start) + emoji + text.substring(end);
+
+    setText(newText);
+
+    // Restore cursor position and trigger resize
+    setTimeout(() => {
+      textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
+      textarea.focus();
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 128)}px`;
+    }, 0);
+    
+    setShowEmojiPicker(false);
+  };
+
+  // Close picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        pickerRef.current && 
+        !pickerRef.current.contains(event.target as Node) &&
+        emojiButtonRef.current &&
+        !emojiButtonRef.current.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showEmojiPicker]);
 
   return (
     <div
@@ -42,35 +96,59 @@ export default function ChatInput({ onSendMessage, onTyping, disabled }: ChatInp
 
         <div className="flex-1 relative rounded-2xl bg-muted">
           <textarea
+            ref={textareaRef}
             value={text}
             onChange={(e) => {
               setText(e.target.value)
               onTyping?.()
+              e.target.style.height = 'auto'
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`
             }}
             onKeyDown={handleKeyDown}
             placeholder={disabled ? "Cannot send messages to this conversation" : "Write a message..."}
             rows={1}
-            className="w-full px-4 py-3 bg-transparent border-0 resize-none focus:outline-none max-h-32 text-sm md:text-base text-foreground placeholder-muted-foreground"
+            className="w-full pl-4 pr-10 py-3 bg-transparent border-0 resize-none focus:outline-none max-h-32 text-sm md:text-base text-foreground placeholder-muted-foreground"
             style={{ minHeight: "44px" }}
             disabled={disabled}
           />
-        </div>
-
-        {text.trim() && !disabled ? (
+          
           <button
-            onClick={handleSend}
-            className="p-3 bg-primary text-primary-foreground rounded-full hover:opacity-90 transition-colors mb-0.5 shadow-md"
-          >
-            <Send className="w-4 h-4 md:w-5 md:h-5" />
-          </button>
-        ) : (
-          <button
-            className="p-2 rounded-full transition-colors mb-1 hover:bg-muted text-muted-foreground"
+            ref={emojiButtonRef}
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className={`absolute bottom-2 right-2 p-1.5 rounded-full transition-colors ${showEmojiPicker ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-background/50'}`}
             disabled={disabled}
           >
-            <Smile className="w-6 h-6" />
+            <Smile className="w-5 h-5" />
           </button>
-        )}
+
+          {showEmojiPicker && (
+            <div ref={pickerRef} className="absolute bottom-full right-0 mb-2 p-2 bg-card border border-border rounded-lg shadow-xl z-50 w-64">
+              <div className="grid grid-cols-6 gap-1 max-h-48 overflow-y-auto">
+                {EMOJI_LIST.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => insertEmoji(emoji)}
+                    className="p-1.5 hover:bg-muted rounded text-xl transition-colors flex items-center justify-center"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={handleSend}
+          disabled={!text.trim() || disabled}
+          className={`p-3 rounded-full transition-colors mb-0.5 shadow-md ${
+            text.trim() && !disabled 
+              ? "bg-primary text-primary-foreground hover:opacity-90" 
+              : "bg-muted text-muted-foreground cursor-not-allowed"
+          }`}
+        >
+          <Send className="w-4 h-4 md:w-5 md:h-5" />
+        </button>
       </div>
     </div>
   )
