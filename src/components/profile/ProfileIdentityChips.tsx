@@ -24,6 +24,11 @@ export function ProfileIdentityChips({ initialIdentity, readOnly = false }: Prof
   const [tempIdentity, setTempIdentity] = useState<ProfileIdentity>(initialIdentity);
   const [isSaving, setIsSaving] = useState(false);
 
+  React.useEffect(() => {
+    setIdentity(initialIdentity);
+    setTempIdentity(initialIdentity);
+  }, [initialIdentity]);
+
   const handleSave = async () => {
     try {
       setIsSaving(true);
@@ -94,8 +99,8 @@ export function ProfileIdentityChips({ initialIdentity, readOnly = false }: Prof
                     key={option}
                     onClick={() => setTempIdentity({ ...tempIdentity, openTo: option })}
                     className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${tempIdentity.openTo === option
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background text-foreground border-input hover:bg-muted"
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background text-foreground border-input hover:bg-muted"
                       }`}
                   >
                     {option}
@@ -112,8 +117,8 @@ export function ProfileIdentityChips({ initialIdentity, readOnly = false }: Prof
                     key={option}
                     onClick={() => setTempIdentity({ ...tempIdentity, availability: option })}
                     className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${tempIdentity.availability === option
-                        ? "bg-green-600 text-white border-green-600"
-                        : "bg-background text-foreground border-input hover:bg-muted"
+                      ? "bg-green-600 text-white border-green-600"
+                      : "bg-background text-foreground border-input hover:bg-muted"
                       }`}
                   >
                     {option}
@@ -130,8 +135,8 @@ export function ProfileIdentityChips({ initialIdentity, readOnly = false }: Prof
                     key={option}
                     onClick={() => setTempIdentity({ ...tempIdentity, workPreference: option })}
                     className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${tempIdentity.workPreference === option
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-background text-foreground border-input hover:bg-muted"
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-background text-foreground border-input hover:bg-muted"
                       }`}
                   >
                     {option}

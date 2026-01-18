@@ -416,7 +416,7 @@ export default function ProfilePage() {
   }
 
   const profileIdentity: ProfileIdentity = {
-    openTo: user?.open_to?.[0] as "Full-time" | "Freelance" | "Consulting" | "Mentorship" || "Full-time",
+    openTo: (user?.open_to as "Full-time" | "Freelance" | "Consulting" | "Mentorship") || "Full-time",
     availability: user?.availability as "Immediate" | "30 Days" | "Casual Networking" || "Immediate",
     workPreference: user?.work_preference as "Remote" | "Hybrid" | "Onsite" || "Hybrid",
   };

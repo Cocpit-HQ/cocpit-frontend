@@ -34,7 +34,7 @@ export interface UserData {
   location: string | null;
   about: string | null;
   email: string;
-  open_to: string[] | null;
+  open_to: string | null;
   availability: string | null;
   work_preference: string | null;
   profile_views: number;
