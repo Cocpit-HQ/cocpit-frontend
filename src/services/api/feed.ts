@@ -21,6 +21,8 @@ export interface BackendPost {
   poll: BackendPoll | null;
   title?: string;
   post_type?: string;
+  like_count: number;
+  is_liked: boolean;
 }
 
 export interface BackendMedia {

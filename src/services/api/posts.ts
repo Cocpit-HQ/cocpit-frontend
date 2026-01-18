@@ -24,7 +24,15 @@ export const getPostById = async (postId: string): Promise<BackendPost> => {
   return response.data;
 };
 
+
 export const updatePost = async (postId: string, data: UpdatePostRequest): Promise<BackendPost> => {
   const response = await api.put<BackendPost>(`/post/${postId}`, data);
+  return response.data;
+};
+
+export const toggleLike = async (postId: string): Promise<{ postId: string; liked: boolean; likeCount: number }> => {
+  const response = await api.post<{ postId: string; liked: boolean; likeCount: number }>(
+    `/post/${postId}/like`
+  );
   return response.data;
 };

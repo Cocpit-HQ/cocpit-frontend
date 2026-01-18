@@ -30,7 +30,7 @@ export function PostPreview({
     imageSrc: postType === 'image' && mediaUrls.length > 0 ? mediaUrls[0] : undefined,
     images: postType === 'image' ? mediaUrls : undefined,
     videoSrc: postType === 'video' && mediaUrls.length > 0 ? mediaUrls[0] : undefined,
-    likes: '0',
+    likes: 0,
     comments: '0',
     shares: '0',
     commentData: [],
@@ -41,12 +41,12 @@ export function PostPreview({
 
   return (
     <div className="w-full max-w-xl mx-auto pointer-events-none select-none opacity-90 hover:opacity-100 transition-opacity">
-        {/* We wrap in a div that disables interaction to enforce read-only nature */}
-        <FeedPost
-            {...previewPost}
-            initialComments={[]}
-            isOwnPost={false} // Hide edit options
-        />
+      {/* We wrap in a div that disables interaction to enforce read-only nature */}
+      <FeedPost
+        {...previewPost}
+        initialComments={[]}
+        isOwnPost={false} // Hide edit options
+      />
     </div>
   );
 }

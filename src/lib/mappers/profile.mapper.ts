@@ -44,9 +44,9 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     poll_id: backendPost.poll.poll_id,
     total_votes: backendPost.poll.total_votes,
     options: backendPost.poll.options.map(opt => ({
-        option_id: opt.option_id,
-        option_text: opt.option_text,
-        vote_count: opt.vote_count
+      option_id: opt.option_id,
+      option_text: opt.option_text,
+      vote_count: opt.vote_count
     }))
   } : null;
 
@@ -60,7 +60,7 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     imageSrc: images.length > 0 ? images[0] : undefined,
     images: images.length > 0 ? images : undefined,
     videoSrc: videoSrc,
-    likes: backendPost.like_count || "0",
+    likes: parseInt(backendPost.like_count) || 0,
     comments: backendPost.comment_count || "0",
     shares: "0", // Backend does not provide shares yet
     commentData: [],

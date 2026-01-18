@@ -94,11 +94,8 @@ export default function HomePage() {
     const sorted = [...posts];
     if (activeTab === 'top') {
       // Sort by likes, converting '10k' to 10000
-      sorted.sort((a, b) => {
-        const likesA = parseFloat(a.likes.replace('k', '')) * (a.likes.includes('k') ? 1000 : 1);
-        const likesB = parseFloat(b.likes.replace('k', '')) * (b.likes.includes('k') ? 1000 : 1);
-        return likesB - likesA;
-      });
+      // Sort by likes (number)
+      sorted.sort((a, b) => b.likes - a.likes);
     }
     // For 'recent', no extra sorting is needed as new posts are prepended.
 
@@ -139,9 +136,8 @@ export default function HomePage() {
             <div className="hidden md:flex items-center gap-4">
               {/* Desktop Search Bar */}
               <div
-                className={`relative flex-1 flex items-center gap-3 max-w-2xl transition-all duration-300 ${
-                  isSearchFocused ? 'md:max-w-2xl' : ''
-                }`}
+                className={`relative flex-1 flex items-center gap-3 max-w-2xl transition-all duration-300 ${isSearchFocused ? 'md:max-w-2xl' : ''
+                  }`}
               >
                 <Search className="w-5 h-5 text-muted-foreground absolute left-3" />
                 <input
@@ -151,37 +147,37 @@ export default function HomePage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => {
-                     setTimeout(() => setIsSearchFocused(false), 200);
+                    setTimeout(() => setIsSearchFocused(false), 200);
                   }}
                   className="w-full pl-10 pr-4 py-2.5 rounded-lg border focus:outline-none focus:border-primary bg-card text-foreground placeholder-muted-foreground border-border"
                 />
 
                 {/* Search Dropdown */}
                 {isSearchFocused && searchQuery && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
-                        <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            People
-                        </div>
-                        {searchLoading ? (
-                          <div className="p-4 text-center text-muted-foreground">Loading...</div>
-                        ) : searchResults.length > 0 ? (
-                          searchResults.map(user => (
-                              <Link
-                                  key={user.id}
-                                  href={`/profile/${user.id}`}
-                                  className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
-                              >
-                                  <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
-                                  <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium text-foreground truncate">{user.full_name}</p>
-                                      <p className="text-xs text-muted-foreground truncate">{user.headline || ''}</p>
-                                  </div>
-                              </Link>
-                          ))
-                        ) : (
-                          <div className="p-4 text-center text-muted-foreground">No users found.</div>
-                        )}
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
+                    <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      People
                     </div>
+                    {searchLoading ? (
+                      <div className="p-4 text-center text-muted-foreground">Loading...</div>
+                    ) : searchResults.length > 0 ? (
+                      searchResults.map(user => (
+                        <Link
+                          key={user.id}
+                          href={`/profile/${user.id}`}
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+                        >
+                          <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{user.full_name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{user.headline || ''}</p>
+                          </div>
+                        </Link>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-muted-foreground">No users found.</div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -217,37 +213,37 @@ export default function HomePage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => {
-                     setTimeout(() => setIsSearchFocused(false), 200);
+                    setTimeout(() => setIsSearchFocused(false), 200);
                   }}
                   className="w-full pl-10 pr-4 py-2.5 rounded-lg border focus:outline-none focus:border-primary bg-card text-foreground placeholder-muted-foreground border-border"
                 />
 
                 {/* Mobile Search Dropdown */}
                 {isSearchFocused && searchQuery && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
-                        <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            People
-                        </div>
-                        {searchLoading ? (
-                          <div className="p-4 text-center text-muted-foreground">Loading...</div>
-                        ) : searchResults.length > 0 ? (
-                          searchResults.map(user => (
-                              <Link
-                                  key={user.id}
-                                  href={`/profile/${user.id}`}
-                                  className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
-                              >
-                                  <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
-                                  <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium text-foreground truncate">{user.full_name}</p>
-                                      <p className="text-xs text-muted-foreground truncate">{user.headline || ''}</p>
-                                  </div>
-                              </Link>
-                          ))
-                        ) : (
-                          <div className="p-4 text-center text-muted-foreground">No users found.</div>
-                        )}
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
+                    <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      People
                     </div>
+                    {searchLoading ? (
+                      <div className="p-4 text-center text-muted-foreground">Loading...</div>
+                    ) : searchResults.length > 0 ? (
+                      searchResults.map(user => (
+                        <Link
+                          key={user.id}
+                          href={`/profile/${user.id}`}
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+                        >
+                          <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{user.full_name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{user.headline || ''}</p>
+                          </div>
+                        </Link>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-muted-foreground">No users found.</div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -313,9 +309,9 @@ export default function HomePage() {
 
                   {/* Infinite Scroll Sentinel */}
                   {!loading && hasMore && (
-                     <div ref={loadMoreRef} className="py-4 flex justify-center">
-                        {feedLoading && <div className="text-muted-foreground text-sm">Loading more...</div>}
-                     </div>
+                    <div ref={loadMoreRef} className="py-4 flex justify-center">
+                      {feedLoading && <div className="text-muted-foreground text-sm">Loading more...</div>}
+                    </div>
                   )}
                 </div>
               </section>

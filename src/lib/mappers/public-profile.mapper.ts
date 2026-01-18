@@ -67,7 +67,7 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
     imageSrc: images.length > 0 ? images[0] : undefined,
     images: images.length > 0 ? images : undefined,
     videoSrc: videoSrc,
-    likes: publicPost.like_count.toString(),
+    likes: publicPost.like_count,
     comments: publicPost.comment_count.toString(),
     shares: "0", // Backend doesn't return share count
     commentData: [],

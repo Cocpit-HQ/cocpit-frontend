@@ -243,7 +243,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
               content: post.content,
               category: post.category_name as any,
               visibility: post.visibility as any,
-              likes: '', comments: '', shares: '', timeAgo: '',
+              likes: 0, comments: '', shares: '', timeAgo: '',
               images: post.media?.filter(m => m.media_type === 'image').map(m => m.url),
               videoSrc: post.media?.find(m => m.media_type === 'video')?.url
             };
@@ -799,7 +799,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
           imageSrc: response.media_urls && response.media_type === 'image' && response.media_urls.length > 0 ? response.media_urls[0] : undefined,
           images: response.media_urls && response.media_type === 'image' ? response.media_urls : undefined,
           videoSrc: response.media_urls && response.media_type === 'video' && response.media_urls.length > 0 ? response.media_urls[0] : undefined,
-          likes: '0',
+          likes: 0,
           comments: '0',
           shares: '0',
           commentData: [],

@@ -9,7 +9,7 @@ import MobileCommentDrawer from './MobileCommentDrawer'
 import { SharePostModal } from './SharePostModal'
 import { PollCard } from './PollCard'
 import { CreatePostModal } from './CreatePostModal'
-import { updatePost } from '@/services/api/posts'
+import { updatePost, toggleLike } from '@/services/api/posts' // Import toggleLike
 import { useFeed } from '@/context/FeedContext'
 
 interface FeedPostProps extends Omit<Post, 'commentData'> {
@@ -20,6 +20,7 @@ interface FeedPostProps extends Omit<Post, 'commentData'> {
   isOwnPost?: boolean
   onDelete?: (id: string) => void
   onToggleVisibility?: (id: string) => void
+  isLiked?: boolean; // Add isLiked to props
 }
 
 export default function FeedPost({
@@ -33,7 +34,7 @@ export default function FeedPost({
   images,
   videoSrc,
   aspectRatio,
-  likes = '0',
+  likes = 0, // Default to 0 number
   comments: initialCommentsCount = '0',
   shares = '0',
   initialComments = [],
@@ -43,9 +44,11 @@ export default function FeedPost({
   onDelete,
   onToggleVisibility,
   visibility = 'public',
-  poll
+  poll,
+  isLiked: initialIsLiked = false // Default
 }: FeedPostProps) {
-  const [isLiked, setIsLiked] = useState(false)
+  const [isLiked, setIsLiked] = useState(initialIsLiked)
+  const [likeCount, setLikeCount] = useState(typeof likes === 'string' ? parseInt(likes) : likes)
   const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false)
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
@@ -100,9 +103,27 @@ export default function FeedPost({
     }
   }, [emblaApi, onSelect, triggerBadgeVisibility])
 
-  const handleLike = () => {
-    setIsLiked(!isLiked)
-    if (onLike) onLike()
+  const handleLike = async () => {
+    // Optimistic Update
+    const prevLiked = isLiked;
+    const prevCount = likeCount;
+
+    setIsLiked(!isLiked);
+    setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+
+    if (onLike) onLike();
+
+    try {
+      const result = await toggleLike(id);
+      // Sync with server response to be sure
+      setIsLiked(result.liked);
+      setLikeCount(result.likeCount);
+    } catch (error) {
+      console.error("Failed to toggle like:", error);
+      // Revert
+      setIsLiked(prevLiked);
+      setLikeCount(prevCount);
+    }
   }
 
   const handleToggleCommentSection = () => {
@@ -277,7 +298,7 @@ export default function FeedPost({
 
       <div className="px-4 md:px-6 py-3 border-t border-border">
         <div className="flex items-center justify-between text-xs md:text-sm mb-3 text-muted-foreground">
-          <span>{likes} likes</span>
+          <span>{likeCount} likes</span>
           <div className="flex gap-3">
             <span className="cursor-pointer" onClick={handleToggleCommentSection}>{commentsCount} comments</span>
             <span>{shares} shares</span>
