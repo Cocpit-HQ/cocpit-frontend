@@ -59,6 +59,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
 
   return {
     id: backendPost.post_id,
+    authorId: backendPost.author_id,
     author: backendPost.author_name,
     authorAvatar: backendPost.author_avatar || undefined,
     // Use category or empty string for title (headline) since backend doesn't provide it

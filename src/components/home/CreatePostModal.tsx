@@ -238,6 +238,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
             // Save original post for diffing
             const mappedOriginal: Post = {
               id: post.post_id,
+              authorId: post.author_id, // Add mapping
               author: post.author_name || '',
               title: post.title || '',
               content: post.content,
@@ -791,6 +792,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
 
         const newPost: Post = {
           id: response.postId,
+          authorId: currentUser?.id || 'current-user', // Add mapping
           author: currentUser?.name || 'Anonymous',
           authorAvatar: '/assets/pngegg.png',
           title: response.title || (response.category || 'Post'),

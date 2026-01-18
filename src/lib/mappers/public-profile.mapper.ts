@@ -58,6 +58,7 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
 
   return {
     id: publicPost.post_id,
+    authorId: publicPost.author_id,
     author: publicPost.author_name,
     authorAvatar: publicPost.author_avatar || undefined,
     // Backend doesn't return title/headline anymore in the new query structure provided

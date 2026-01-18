@@ -22,6 +22,7 @@ export function PostPreview({
   // Note: We don't have a real ID or timestamp, so we mock them for display
   const previewPost: Post = {
     id: 'preview-id',
+    authorId: 'preview-author-id',
     author: currentUser?.name || 'Anonymous',
     authorAvatar: currentUser?.avatar || '/assets/pngegg.png',
     title: null, // CreatePostModal doesn't seem to set title for photo/video posts usually, or it uses category

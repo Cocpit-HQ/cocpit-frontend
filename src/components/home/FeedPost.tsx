@@ -11,6 +11,8 @@ import { PollCard } from './PollCard'
 import { CreatePostModal } from './CreatePostModal'
 import { updatePost, toggleLike } from '@/services/api/posts' // Import toggleLike
 import { useFeed } from '@/context/FeedContext'
+import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 
 interface FeedPostProps extends Omit<Post, 'commentData'> {
   initialComments?: CommentType[]
@@ -26,6 +28,7 @@ interface FeedPostProps extends Omit<Post, 'commentData'> {
 export default function FeedPost({
   id,
   author,
+  authorId, // Now available via Post interface
   authorAvatar,
   title,
   timeAgo = '1h',
@@ -56,6 +59,8 @@ export default function FeedPost({
   const [showOptions, setShowOptions] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const { updatePostInFeed } = useFeed();
+  const { data: session } = useSession();
+  const isMe = session?.user?.id === authorId || isOwnPost; // Fallback to isOwnPost if needed
 
   // Carousel State
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false })
@@ -175,11 +180,27 @@ export default function FeedPost({
       <div className="p-4 md:p-6 pb-4">
         <div className="flex items-start justify-between mb-4">
           <div className="flex gap-3">
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden flex-shrink-0">
-              <img src={avatarSrc} alt={author} className="w-full h-full object-cover" />
-            </div>
+            {isMe ? (
+              <div className="block flex-shrink-0">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden cursor-default">
+                  <img src={avatarSrc} alt={author} className="w-full h-full object-cover" />
+                </div>
+              </div>
+            ) : (
+              <Link href={`/profile/${authorId}`} className="block flex-shrink-0">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
+                  <img src={avatarSrc} alt={author} className="w-full h-full object-cover" />
+                </div>
+              </Link>
+            )}
             <div>
-              <h3 className="text-foreground mb-0.5 text-sm md:text-base font-semibold">{author}</h3>
+              {isMe ? (
+                <h3 className="text-foreground mb-0.5 text-sm md:text-base font-semibold cursor-default">{author}</h3>
+              ) : (
+                <Link href={`/profile/${authorId}`} className="hover:underline block">
+                  <h3 className="text-foreground mb-0.5 text-sm md:text-base font-semibold">{author}</h3>
+                </Link>
+              )}
               {title && <p className="text-xs md:text-sm mb-1 text-muted-foreground">{title}</p>}
               <div className="flex items-center gap-2">
                 <p className="text-xs text-muted-foreground">{timeAgo} ago</p>

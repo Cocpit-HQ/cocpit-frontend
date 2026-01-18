@@ -52,6 +52,7 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
 
   return {
     id: backendPost.post_id,
+    authorId: backendPost.author_id,
     author: backendPost.author_name,
     authorAvatar: backendPost.author_avatar || undefined,
     title: backendPost.category_name || "",

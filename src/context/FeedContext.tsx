@@ -7,12 +7,13 @@ import { deletePost as apiDeletePost } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 
 const currentUser = {
+  id: 'current-user-id',
   name: 'Sally Liang',
 };
 
 interface FeedContextType {
   posts: Post[];
-  currentUser: { name: string };
+  currentUser: { id: string; name: string };
   addPost: (post: Post) => void;
   deletePost: (id: string) => Promise<void>;
   togglePostVisibility: (id: string) => void;

@@ -2,6 +2,7 @@
 
 import React, { useMemo, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Briefcase, GraduationCap, CheckCircle, MessageCircle, UserPlus, UserCheck } from "lucide-react"
 
 import { AppShell } from "@/components/layout/AppShell"
@@ -90,7 +91,9 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
     avatar: data.avatar_url || '/assets/pngegg.png',
     location: data.location || '',
     about: data.about_text || '',
-    skills: data.skills,
+    skills: Array.isArray(data.skills)
+      ? data.skills.map((s: any) => typeof s === 'string' ? s : s.name)
+      : [],
     experiences: experiences as any,
     educations: educations as any,
     connectionStatus: 'none',
@@ -157,7 +160,9 @@ function ReadOnlyEducationItem({ education }: { education: any }) {
 
 export default function PublicProfile({ userId }: PublicProfileProps) {
   const router = useRouter()
+  const { data: session } = useSession()
   const { isFollowing, followUser, unfollowUser, startChat, isFollowLoading, syncFollowStatus } = useSocial()
+  const isOwnProfile = session?.user?.id === userId;
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -275,35 +280,37 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="mt-16 flex gap-2">
-                      <button
-                        onClick={handleMessage}
-                        className="bg-background hover:bg-muted text-foreground border border-input px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                        Message
-                      </button>
-                      <button
-                        onClick={handleFollowToggle}
-                        disabled={isFollowLoading(user.id)}
-                        className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${isUserFollowing
-                          ? "bg-muted text-foreground hover:bg-muted/80"
-                          : "bg-primary text-primary-foreground hover:opacity-90"
-                          } ${isFollowLoading(user.id) ? "opacity-50 cursor-not-allowed" : ""}`}
-                      >
-                        {isUserFollowing ? (
-                          <>
-                            <UserCheck className="w-4 h-4" />
-                            Following
-                          </>
-                        ) : (
-                          <>
-                            <UserPlus className="w-4 h-4" />
-                            Follow
-                          </>
-                        )}
-                      </button>
-                    </div>
+                    {!isOwnProfile && (
+                      <div className="mt-16 flex gap-2">
+                        <button
+                          onClick={handleMessage}
+                          className="bg-background hover:bg-muted text-foreground border border-input px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          Message
+                        </button>
+                        <button
+                          onClick={handleFollowToggle}
+                          disabled={isFollowLoading(user.id)}
+                          className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${isUserFollowing
+                            ? "bg-muted text-foreground hover:bg-muted/80"
+                            : "bg-primary text-primary-foreground hover:opacity-90"
+                            } ${isFollowLoading(user.id) ? "opacity-50 cursor-not-allowed" : ""}`}
+                        >
+                          {isUserFollowing ? (
+                            <>
+                              <UserCheck className="w-4 h-4" />
+                              Following
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="w-4 h-4" />
+                              Follow
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>
