@@ -73,7 +73,15 @@ export default function NotificationsPage() {
     <div className="min-h-screen bg-background">
       <AppShell currentPage="notifications" navigateTo={navigateTo}>
         <div className="max-w-3xl mx-auto py-6 px-4">
-          <h1 className="text-2xl font-bold mb-6 text-foreground">Notifications</h1>
+          <div className="mb-6 flex items-center gap-4">
+            <button
+              onClick={() => router.back()}
+              className="text-sm text-primary hover:underline"
+            >
+              &larr; Back
+            </button>
+            <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
+          </div>
 
           <div className="bg-card rounded-xl border border-border overflow-hidden">
             {loading ? (

@@ -33,7 +33,7 @@ export function NotificationPopover() {
       }
     }
 
-    if (isOpen && user) {
+    if (user) {
       fetchNotifications()
     }
   }, [isOpen, user])
