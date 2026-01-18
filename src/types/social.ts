@@ -24,16 +24,14 @@ export interface Connection {
 }
 
 export interface Notification {
-    data: any;
-    id: string;
-    recipient_id: string;
+    notification_id: string;
+    user_id: string; // recipient
+    sender_id: string; // actor
     type: 'connection_request' | 'connection_accepted' | 'like' | 'comment' | 'follow' | 'job_alert';
-    actor_id: string;
     actor_name: string;
     actor_avatar: string | null;
-    entity_id: string | null;
-    entity_type: string | null;
-    message: string;
+    reference_id: string | null;
+    text: string;
     is_read: boolean;
     created_at: string;
 }

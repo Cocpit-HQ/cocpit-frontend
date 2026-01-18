@@ -245,7 +245,7 @@ export default function FeedPost({
 
       {(hasMultipleImages || imageSrc || videoSrc) && (
         <div
-          className="w-full overflow-hidden bg-black/5 relative group"
+          className="w-full overflow-hidden bg-black/5 relative group flex justify-center items-center bg-black"
           style={aspectRatio && aspectRatio !== 'auto' ? { aspectRatio } : undefined}
           onMouseEnter={triggerBadgeVisibility}
           onTouchStart={triggerBadgeVisibility}
@@ -254,17 +254,17 @@ export default function FeedPost({
             <video
               src={videoSrc}
               controls
-              className={`w-full ${aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'h-auto'} object-contain bg-black`}
+              className={`w-full ${aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'max-h-[650px]'} object-contain`}
             />
           ) : hasMultipleImages ? (
-            <div className="overflow-hidden h-full" ref={emblaRef}>
+            <div className="overflow-hidden h-full w-full" ref={emblaRef}>
               <div className="flex h-full">
                 {validImages.map((src, index) => (
-                  <div className="flex-[0_0_100%] min-w-0 relative h-full bg-black" key={index}>
+                  <div className="flex-[0_0_100%] min-w-0 relative h-full bg-black flex justify-center items-center" key={index}>
                     <img
                       src={src}
                       alt={`Slide ${index + 1}`}
-                      className={`w-full h-full object-contain`}
+                      className={`max-w-full max-h-[650px] object-contain`}
                     />
                   </div>
                 ))}
@@ -274,7 +274,7 @@ export default function FeedPost({
             <img
               src={contentImgSrc}
               alt="Post content"
-              className={`w-full ${aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'h-auto'} object-contain bg-black`}
+              className={`max-w-full ${aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'h-auto max-h-[650px]'} object-contain`}
             />
           )}
 
