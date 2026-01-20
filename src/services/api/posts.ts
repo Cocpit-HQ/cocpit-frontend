@@ -47,3 +47,8 @@ export const removeVote = async (postId: string): Promise<{ message: string }> =
   const response = await api.delete<{ message: string }>(`/post/${postId}/poll/vote`);
   return response.data;
 };
+
+export const getPollAnalytics = async (postId: string): Promise<any> => {
+  const response = await api.get<any>(`/post/${postId}/poll/analytics`);
+  return response.data;
+};

@@ -1,7 +1,9 @@
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { ThumbsUp, MessageCircle, Share2, MoreHorizontal, EyeOff, Trash2, Edit2, Eye } from 'lucide-react'
+import { PollAnalyticsModal } from './PollAnalyticsModal';
+import { ThumbsUp, MessageCircle, Share2, MoreHorizontal, EyeOff, Trash2, Edit2, Eye, BarChart2 } from 'lucide-react'
+
 import useEmblaCarousel from 'embla-carousel-react'
 import { Post, Comment as CommentType } from '@/types/entities'
 import CommentSection from './CommentSection'
@@ -23,6 +25,7 @@ interface FeedPostProps extends Omit<Post, 'commentData'> {
   onDelete?: (id: string) => void
   onToggleVisibility?: (id: string) => void
   isLiked?: boolean; // Add isLiked to props
+  isProfileView?: boolean;
 }
 
 export default function FeedPost({
@@ -48,7 +51,8 @@ export default function FeedPost({
   onToggleVisibility,
   visibility = 'public',
   poll,
-  isLiked: initialIsLiked = false // Default
+  isLiked: initialIsLiked = false, // Default
+  isProfileView = false,
 }: FeedPostProps) {
   const [isLiked, setIsLiked] = useState(initialIsLiked)
   const [likeCount, setLikeCount] = useState(typeof likes === 'string' ? parseInt(likes) : likes)
@@ -58,6 +62,7 @@ export default function FeedPost({
   const [postComments, setPostComments] = useState<CommentType[]>(initialComments)
   const [showOptions, setShowOptions] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
 
   // Poll State
   const [pollData, setPollData] = useState(poll);
@@ -230,8 +235,8 @@ export default function FeedPost({
   const commentsCount = postComments.length > 0 ? postComments.length : initialCommentsCount;
 
   return (
-    <div id={`post-${id}`} className="bg-card border-border md:rounded-xl border overflow-hidden">
-      <div className="p-4 md:p-6 pb-4">
+    <div id={`post-${id}`} className="bg-card border-border md:rounded-xl border overflow-hidden flex flex-col h-full">
+      <div className="px-4 md:px-6 pt-4 md:pt-6 pb-2">
         <div className="flex items-start justify-between mb-4">
           <div className="flex gap-3">
             {isMe ? (
@@ -278,26 +283,38 @@ export default function FeedPost({
                   />
                   <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-10 overflow-hidden">
                     {!poll && (
-                      <>
-                        <button
-                          onClick={() => {
-                            setIsEditModalOpen(true);
-                            setShowOptions(false);
-                          }}
-                          className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          <span>Edit Post</span>
-                        </button>
-                        <button
-                          onClick={handleToggleVisibility}
-                          className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
-                        >
-                          {visibility === 'private' ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                          <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
-                        </button>
-                      </>
+                      <button
+                        onClick={() => {
+                          setIsEditModalOpen(true);
+                          setShowOptions(false);
+                        }}
+                        className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        <span>Edit Post</span>
+                      </button>
                     )}
+
+                    {poll && (
+                      <button
+                        onClick={() => {
+                          setIsAnalyticsModalOpen(true);
+                          setShowOptions(false);
+                        }}
+                        className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                      >
+                        <BarChart2 className="w-4 h-4" />
+                        <span>View Poll Analytics</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={handleToggleVisibility}
+                      className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                    >
+                      {visibility === 'private' ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                      <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
+                    </button>
                     <button
                       onClick={() => {
                         onDelete?.(id)
@@ -315,68 +332,72 @@ export default function FeedPost({
           )}
         </div>
 
-        <p className="leading-relaxed mb-4 text-sm md:text-base text-foreground">{content}</p>
       </div>
 
-      {(hasMultipleImages || imageSrc || videoSrc) && (
-        <div
-          className="w-full overflow-hidden bg-black/5 relative group flex justify-center items-center bg-black"
-          style={aspectRatio && aspectRatio !== 'auto' ? { aspectRatio } : undefined}
-          onMouseEnter={triggerBadgeVisibility}
-          onTouchStart={triggerBadgeVisibility}
-        >
-          {videoSrc ? (
-            <video
-              src={videoSrc}
-              controls
-              className={`w-full ${aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'max-h-[650px]'} object-contain`}
-            />
-          ) : hasMultipleImages ? (
-            <div className="overflow-hidden h-full w-full" ref={emblaRef}>
-              <div className="flex h-full">
-                {validImages.map((src, index) => (
-                  <div className="flex-[0_0_100%] min-w-0 relative h-full bg-black flex justify-center items-center" key={index}>
-                    <img
-                      src={src}
-                      alt={`Slide ${index + 1}`}
-                      className={`max-w-full max-h-[650px] object-contain`}
-                    />
-                  </div>
-                ))}
+      <div className="flex-1 flex flex-col justify-center w-full">
+        {content && <p className="px-4 md:px-6 leading-relaxed mb-4 text-sm md:text-base text-foreground">{content}</p>}
+
+        {(hasMultipleImages || imageSrc || videoSrc) && (
+          <div
+            className={`w-full overflow-hidden bg-black/5 relative group flex justify-center items-center bg-black ${isProfileView ? 'aspect-square' : ''}`}
+            style={!isProfileView && aspectRatio && aspectRatio !== 'auto' ? { aspectRatio } : undefined}
+            onMouseEnter={triggerBadgeVisibility}
+            onTouchStart={triggerBadgeVisibility}
+          >
+            {videoSrc ? (
+              <video
+                src={videoSrc}
+                controls
+                className={`w-full ${isProfileView ? 'h-full object-cover' : (aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'max-h-[650px]')} ${!isProfileView ? 'object-contain' : ''}`}
+              />
+            ) : hasMultipleImages ? (
+              <div className="overflow-hidden h-full w-full" ref={emblaRef}>
+                <div className="flex h-full">
+                  {validImages.map((src, index) => (
+                    <div className="flex-[0_0_100%] min-w-0 relative h-full bg-black flex justify-center items-center" key={index}>
+                      <img
+                        src={src}
+                        alt={`Slide ${index + 1}`}
+                        className={`${isProfileView ? 'w-full h-full object-cover' : 'max-w-full max-h-[650px] object-contain'}`}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : (
-            <img
-              src={contentImgSrc}
-              alt="Post content"
-              className={`max-w-full ${aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'h-auto max-h-[650px]'} object-contain`}
+            ) : (
+              <img
+                src={contentImgSrc}
+                alt="Post content"
+                className={`w-full ${isProfileView ? 'h-full object-cover' : (aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'h-auto max-h-[650px]')} ${!isProfileView ? 'object-contain' : ''}`}
+              />
+            )}
+
+            {/* Slide Counter Badge */}
+            {hasMultipleImages && (
+              <div
+                className={`absolute top-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded-full transition-opacity duration-300 ${showBadge ? 'opacity-100' : 'opacity-0'}`}
+              >
+                {currentSlide + 1}/{validImages.length}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Poll Section - Rendered below media */}
+        {pollData && (
+          <div className="px-4 md:px-6 pb-2">
+            <PollCard
+              poll={pollData}
+              onVote={handleVote}
+              isLoading={isVoting}
+              votedOptionId={pollData.user_vote}
             />
-          )}
+          </div>
+        )}
 
-          {/* Slide Counter Badge */}
-          {hasMultipleImages && (
-            <div
-              className={`absolute top-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded-full transition-opacity duration-300 ${showBadge ? 'opacity-100' : 'opacity-0'}`}
-            >
-              {currentSlide + 1}/{validImages.length}
-            </div>
-          )}
-        </div>
-      )}
+      </div>
 
-      {/* Poll Section - Rendered below media */}
-      {pollData && (
-        <div className="px-4 md:px-6 pb-2">
-          <PollCard
-            poll={pollData}
-            onVote={handleVote}
-            isLoading={isVoting}
-            votedOptionId={pollData.user_vote}
-          />
-        </div>
-      )}
-
-      <div className="px-4 md:px-6 py-3 border-t border-border">
+      <div className="px-4 md:px-6 py-3 border-t border-border mt-auto">
         <div className="flex items-center justify-between text-xs md:text-sm mb-3 text-muted-foreground">
           <span>{likeCount} likes</span>
           <div className="flex gap-3">
@@ -435,6 +456,12 @@ export default function FeedPost({
         onClose={() => setIsEditModalOpen(false)}
         editPostId={id}
         onUpdate={(updatedPost) => updatePostInFeed(id, updatedPost)}
+      />
+
+      <PollAnalyticsModal
+        isOpen={isAnalyticsModalOpen}
+        onClose={() => setIsAnalyticsModalOpen(false)}
+        postId={id}
       />
     </div>
   )

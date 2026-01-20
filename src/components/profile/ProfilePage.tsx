@@ -636,6 +636,7 @@ export default function ProfilePage() {
                         isOwnPost={true}
                         onDelete={handleDeletePost}
                         onToggleVisibility={handleToggleVisibility}
+                        isProfileView={true}
                       />
                     )
                   ))}

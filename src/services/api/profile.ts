@@ -41,6 +41,7 @@ export interface ProfilePost {
   category_name: string;
   media: ProfilePostMedia[];
   like_count: string;
+  is_liked: boolean;
   comment_count: string;
   poll: ProfilePostPoll | null;
 }
