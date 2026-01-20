@@ -71,7 +71,11 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
       const response = await getFeed(nextCursor.cursorCreatedAt, nextCursor.cursorPostId);
       const mappedPosts = response.posts.map(mapBackendPostToFrontend);
 
-      setPosts((prevPosts) => [...prevPosts, ...mappedPosts]);
+      setPosts((prevPosts) => {
+        const existingIds = new Set(prevPosts.map((p) => p.id));
+        const newUniquePosts = mappedPosts.filter((p) => !existingIds.has(p.id));
+        return [...prevPosts, ...newUniquePosts];
+      });
       setNextCursor(response.nextCursor);
       setHasMore(!!response.nextCursor);
     } catch (error) {

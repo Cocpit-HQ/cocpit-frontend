@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import styles from "./LoginForm.module.css";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -33,12 +33,22 @@ const LoginForm = () => {
         });
       } else {
         console.log("Login successful. Result:", result);
+
+        // Fetch fresh session to check onboarding status
+        const session = await getSession();
+
         toast({
           title: "Sign in successful",
           description: "Redirecting...",
         });
-        // We push to /feed, but if the user is not onboarded, middleware should intercept and redirect to /onboarding
-        router.push("/feed");
+
+        // Explicitly check status and redirect
+        // @ts-ignore - onboarding_complete exists on user but might not be in default types
+        if (session?.user?.onboarding_complete === false) {
+          router.push("/onboarding");
+        } else {
+          router.push("/feed");
+        }
       }
     } catch (error) {
       toast({
@@ -85,7 +95,7 @@ const LoginForm = () => {
             <label htmlFor="password" className={styles.label}>
               Password
             </label>
-            <Link 
+            <Link
               href="/forgot-password"
               className={styles.forgotPasswordLink}
             >
@@ -114,8 +124,8 @@ const LoginForm = () => {
 
         {/* Keep me logged in */}
         <div className={styles.checkboxField}>
-          <input 
-            id="keep-logged-in" 
+          <input
+            id="keep-logged-in"
             type="checkbox"
             checked={keepLoggedIn}
             onChange={(e) => setKeepLoggedIn(e.target.checked)}
@@ -126,8 +136,8 @@ const LoginForm = () => {
               height: '1rem'
             }}
           />
-          <label 
-            htmlFor="keep-logged-in" 
+          <label
+            htmlFor="keep-logged-in"
             className={styles.checkboxLabel}
           >
             Keep me logged in

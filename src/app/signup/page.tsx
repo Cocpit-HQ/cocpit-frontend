@@ -13,7 +13,10 @@ import Image from "next/image";
 import { register } from "@/services/api/auth";
 import { registrationSchema } from "@/lib/validators";
 
+import { useRouter } from "next/navigation";
+
 export default function SignUp() {
+  const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -71,7 +74,7 @@ export default function SignUp() {
 
     const result = registrationSchema.safeParse({
       fullName,
-      email,
+      email: email.toLowerCase(),
       password,
       accountType,
     });
@@ -101,8 +104,11 @@ export default function SignUp() {
       console.log("Registration successful", response);
       toast({
         title: "Account Created!",
-        description: "Welcome to Cocpit!",
+        description: "Welcome to Cocpit! Redirecting to login...",
       });
+      setTimeout(() => {
+        router.push("/");
+      }, 1500);
     } catch (error: any) {
       console.error("Registration failed", error);
       toast({
@@ -126,7 +132,7 @@ export default function SignUp() {
       {/* Centered container */}
       <div className="relative z-10 w-full max-w-5xl bg-card rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up">
         <div className="flex flex-col lg:flex-row-reverse">
-          
+
           {/* Right side - Form */}
           <div className="w-full lg:w-1/2 p-4 sm:p-6 md:p-8 lg:p-12">
             {/* Logo */}
@@ -142,7 +148,7 @@ export default function SignUp() {
             <h2 className="text-xl font-semibold text-foreground mb-6">
               Create your account
             </h2>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Full Name */}
               <div className="space-y-2">
@@ -285,12 +291,12 @@ export default function SignUp() {
                 backgroundSize: '32px 32px'
               }} />
             </div>
-            
+
             {/* Floating orbs */}
             <div className="absolute top-10 right-10 w-20 h-20 rounded-full bg-accent/30 blur-sm animate-float" />
             <div className="absolute bottom-16 left-8 w-16 h-16 rounded-full bg-primary/20 blur-sm animate-float-slow" style={{ animationDelay: '2s' }} />
             <div className="absolute top-1/3 left-16 w-8 h-8 rounded-full bg-accent/40 animate-pulse-glow" />
-            
+
             {/* Content */}
             <div className="relative z-10 text-center space-y-6 w-full flex flex-col items-center">
               <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground leading-tight animate-fade-in-up">
@@ -299,7 +305,7 @@ export default function SignUp() {
               <p className="text-white text-base md:text-lg animate-fade-in-up animation-delay-200">
                 Where professionals meet opportunities. Build meaningful connections that accelerate your career.
               </p>
-              
+
               {/* Handshake image */}
               <div className="py-8 animate-fade-in-up animation-delay-400 flex-1 flex items-center justify-center">
                 <Image
@@ -310,7 +316,7 @@ export default function SignUp() {
                   className="w-full h-auto max-w-none"
                 />
               </div>
-              
+
               {/* Feature highlights */}
               <div className="space-y-3 text-left animate-fade-in-up animation-delay-600">
                 <div className="flex items-center gap-3 text-white">
