@@ -122,7 +122,7 @@ export const authOptions: NextAuthOptions = {
 
           if (data?.accessToken && data?.user) {
             // Extract refreshToken from Set-Cookie header
-             const setCookieHeader = typeof res.headers.getSetCookie === 'function'
+            const setCookieHeader = typeof res.headers.getSetCookie === 'function'
               ? res.headers.getSetCookie()
               : res.headers.get("set-cookie");
             console.log("Login API 'set-cookie' header:", setCookieHeader);
@@ -132,8 +132,9 @@ export const authOptions: NextAuthOptions = {
 
             const userPayload = {
               id: data.user.id,
-              name: data.user.email,
+              name: data.user.full_name || data.user.email,
               email: data.user.email,
+              image: data.user.avatar_url,
               roles: data.user.roles,
               accessToken: data.accessToken,
               refreshToken: refreshToken || "", // Fallback to empty string if missing (should fail later)
@@ -160,7 +161,10 @@ export const authOptions: NextAuthOptions = {
         return {
           ...token,
           id: user.id,
+          name: user.name, // Explicitly map name
+          email: user.email, // Explicitly map email
           roles: user.roles,
+          picture: user.image, // Helper for standard NextAuth logic
           accessToken: user.accessToken,
           refreshToken: user.refreshToken,
           onboarding_complete: user.onboarding_complete,
@@ -189,10 +193,12 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id;
+        session.user.name = token.name; // Explicitly map name
         session.user.roles = token.roles;
         session.user.accessToken = token.accessToken;
         session.user.error = token.error;
         session.user.onboarding_complete = token.onboarding_complete;
+        session.user.image = token.picture;
         // refreshToken is deliberately excluded from the session
       }
       return session;

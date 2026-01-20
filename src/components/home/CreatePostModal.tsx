@@ -794,7 +794,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
           id: response.postId,
           authorId: currentUser?.id || 'current-user', // Add mapping
           author: currentUser?.name || 'Anonymous',
-          authorAvatar: '/assets/pngegg.png',
+          authorAvatar: currentUser?.image || '/assets/pngegg.png',
           title: response.title || (response.category || 'Post'),
           timeAgo: 'Just now',
           content: response.content,

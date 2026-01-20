@@ -6,14 +6,11 @@ import { getFeed } from '@/services/api/feed';
 import { deletePost as apiDeletePost } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 
-const currentUser = {
-  id: 'current-user-id',
-  name: 'Sally Liang',
-};
+import { useSession } from "next-auth/react";
 
 interface FeedContextType {
   posts: Post[];
-  currentUser: { id: string; name: string };
+  currentUser: { id: string; name: string; image?: string | null };
   addPost: (post: Post) => void;
   deletePost: (id: string) => Promise<void>;
   togglePostVisibility: (id: string) => void;
@@ -38,10 +35,17 @@ interface FeedProviderProps {
 }
 
 export const FeedProvider = ({ children }: FeedProviderProps) => {
+  const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [nextCursor, setNextCursor] = useState<{ cursorCreatedAt: string; cursorPostId: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+
+  const currentUser = {
+    id: session?.user?.id || '',
+    name: session?.user?.name || '',
+    image: session?.user?.image,
+  };
 
   // Initial fetch
   useEffect(() => {
