@@ -25,6 +25,8 @@ export interface ProfilePostPoll {
   poll_id: string;
   duration: string;
   total_votes: number;
+  is_active: boolean;
+  user_vote?: string | null;
   options: ProfilePostPollOption[];
 }
 

@@ -53,10 +53,15 @@ export interface PollOption {
   vote_count: number;
 }
 
+
 export interface Poll {
   poll_id: string;
   options: PollOption[];
   total_votes: number;
+
+  duration: string; // e.g. "1 week"
+  user_vote?: string | null; // option_id of the voted option
+  is_active?: boolean; // backend calculated status
 }
 
 export interface Post {

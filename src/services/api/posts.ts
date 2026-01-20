@@ -30,9 +30,20 @@ export const updatePost = async (postId: string, data: UpdatePostRequest): Promi
   return response.data;
 };
 
+
 export const toggleLike = async (postId: string): Promise<{ postId: string; liked: boolean; likeCount: number }> => {
   const response = await api.post<{ postId: string; liked: boolean; likeCount: number }>(
     `/post/${postId}/like`
   );
+  return response.data;
+};
+
+export const voteInPoll = async (postId: string, optionId: string): Promise<{ message: string }> => {
+  const response = await api.post<{ message: string }>(`/post/${postId}/poll/vote`, { option_id: optionId });
+  return response.data;
+};
+
+export const removeVote = async (postId: string): Promise<{ message: string }> => {
+  const response = await api.delete<{ message: string }>(`/post/${postId}/poll/vote`);
   return response.data;
 };

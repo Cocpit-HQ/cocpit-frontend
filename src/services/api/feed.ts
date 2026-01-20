@@ -37,6 +37,9 @@ export interface BackendPoll {
   poll_id: string;
   options: BackendPollOption[];
   total_votes: number;
+  duration: string;
+  is_active: boolean;
+  user_vote?: string | null;
 }
 
 export interface BackendPollOption {

@@ -807,9 +807,13 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
           commentData: [],
           category: response.category as any,
           visibility: response.visibility as any,
+
           poll: response.poll && 'options' in response.poll ? {
             poll_id: response.poll.poll_id || 'temp-id',
             total_votes: response.poll.total_votes || 0,
+            duration: response.poll.duration || '1 week', // Added missing duration
+            user_vote: null, // Added missing user_vote
+            is_active: true, // Optimistically active
             // @ts-ignore - legacy mock data structure
             options: (response.poll.options || []).map((opt: any, idx) => ({
               option_id: opt.option_id || `opt-${idx}`,

@@ -9,7 +9,7 @@ import MobileCommentDrawer from './MobileCommentDrawer'
 import { SharePostModal } from './SharePostModal'
 import { PollCard } from './PollCard'
 import { CreatePostModal } from './CreatePostModal'
-import { updatePost, toggleLike } from '@/services/api/posts' // Import toggleLike
+import { updatePost, toggleLike, voteInPoll, removeVote } from '@/services/api/posts' // Import toggleLike and voteInPoll
 import { useFeed } from '@/context/FeedContext'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
@@ -58,6 +58,11 @@ export default function FeedPost({
   const [postComments, setPostComments] = useState<CommentType[]>(initialComments)
   const [showOptions, setShowOptions] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
+  // Poll State
+  const [pollData, setPollData] = useState(poll);
+  const [isVoting, setIsVoting] = useState(false);
+
   const { updatePostInFeed } = useFeed();
   const { data: session } = useSession();
   const isMe = session?.user?.id === authorId || isOwnPost; // Fallback to isOwnPost if needed
@@ -172,6 +177,55 @@ export default function FeedPost({
     }
     setShowOptions(false);
   }
+
+  const handleVote = async (optionId: string) => {
+    if (!pollData || isVoting) return;
+
+    setIsVoting(true);
+    const previousPollData = { ...pollData };
+
+    // Optimistic update
+    setPollData(prev => {
+      if (!prev) return null;
+
+      const previousVoteId = prev.user_vote;
+
+      // Toggle Logic: If clicking same option, remove vote
+      const isRemoving = previousVoteId === optionId;
+      const isSwitching = !!previousVoteId && !isRemoving;
+
+      return {
+        ...prev,
+        // If removing, decrement. If switching, same. If new, increment.
+        total_votes: isRemoving ? prev.total_votes - 1 : (isSwitching ? prev.total_votes : prev.total_votes + 1),
+        options: prev.options.map(opt => {
+          // Increment new option (only if not removing)
+          if (opt.option_id === optionId && !isRemoving) {
+            return { ...opt, vote_count: opt.vote_count + 1 };
+          }
+          // Decrement old option (if switching OR removing)
+          if (opt.option_id === previousVoteId) {
+            return { ...opt, vote_count: Math.max(0, opt.vote_count - 1) };
+          }
+          return opt;
+        }),
+        user_vote: isRemoving ? null : optionId
+      };
+    });
+
+    try {
+      if (pollData.user_vote === optionId) {
+        await removeVote(id);
+      } else {
+        await voteInPoll(id, optionId);
+      }
+    } catch (error) {
+      console.error("Vote failed", error);
+      setPollData(previousPollData); // Revert
+    } finally {
+      setIsVoting(false);
+    }
+  };
 
   const commentsCount = postComments.length > 0 ? postComments.length : initialCommentsCount;
 
@@ -311,9 +365,14 @@ export default function FeedPost({
       )}
 
       {/* Poll Section - Rendered below media */}
-      {poll && (
+      {pollData && (
         <div className="px-4 md:px-6 pb-2">
-          <PollCard poll={poll} />
+          <PollCard
+            poll={pollData}
+            onVote={handleVote}
+            isLoading={isVoting}
+            votedOptionId={pollData.user_vote}
+          />
         </div>
       )}
 

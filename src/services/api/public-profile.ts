@@ -15,8 +15,10 @@ export interface PublicPostPollOption {
 
 export interface PublicPostPoll {
   poll_id: string;
-  duration: number;
+  duration: string;
   total_votes: number;
+  is_active: boolean;
+  user_vote?: string | null;
   options: PublicPostPollOption[];
 }
 
@@ -31,6 +33,7 @@ export interface PublicPost {
   category_name: string | null;
   media: PublicPostMedia[];
   like_count: number;
+  is_liked: boolean;
   comment_count: number;
   poll: PublicPostPoll | null;
 }

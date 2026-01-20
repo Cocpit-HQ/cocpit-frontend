@@ -50,6 +50,9 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   const poll = backendPost.poll ? {
     poll_id: backendPost.poll.poll_id,
     total_votes: backendPost.poll.total_votes,
+    duration: backendPost.poll.duration,
+    is_active: backendPost.poll.is_active,
+    user_vote: backendPost.poll.user_vote,
     options: backendPost.poll.options.map(opt => ({
       option_id: opt.option_id,
       option_text: opt.option_text,
