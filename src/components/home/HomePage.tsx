@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, MessageCircle, X } from 'lucide-react'
 import Link from 'next/link'
@@ -60,6 +60,47 @@ export default function HomePage() {
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [activeTab, setActiveTab] = useState('recent');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  
+  // Scroll behavior for mobile header
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true)
+  const lastScrollY = useRef(0)
+
+  useEffect(() => {
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement | Document;
+      let currentScrollY = window.scrollY;
+
+      // If scrolling happens in a container (not window), use its scrollTop
+      if (target instanceof HTMLElement) {
+        // Ignore small scrollable elements (like dropdowns) to prevent jitter
+        if (target.scrollHeight < window.innerHeight) return;
+        currentScrollY = target.scrollTop;
+      }
+
+      // Always show at the top
+      if (currentScrollY <= 60) {
+        setIsHeaderVisible(true);
+        lastScrollY.current = currentScrollY;
+        return;
+      }
+
+      // Ignore small scrolls
+      if (Math.abs(lastScrollY.current - currentScrollY) <= 5) return;
+
+      // Scrolling down
+      if (currentScrollY > lastScrollY.current) {
+        setIsHeaderVisible(false);
+      } else { // Scrolling up
+        setIsHeaderVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    // Use capture: true to detect scroll events on containers (like AppShell)
+    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    return () => window.removeEventListener('scroll', handleScroll, { capture: true });
+  }, []);
 
   useEffect(() => {
     if (debouncedSearchQuery.trim() === '') {
@@ -129,7 +170,9 @@ export default function HomePage() {
       <AppShell currentPage="home" navigateTo={navigateTo}>
         {/* Top Search Bar */}
         <header
-          className="sticky top-0 z-20 border-b px-4 py-3 md:py-4 bg-background border-border"
+          className={`sticky top-0 z-20 border-b px-4 py-3 md:py-4 bg-background border-border transition-transform duration-300 ease-in-out ${
+            !isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
+          } md:translate-y-0`}
         >
           <div className="max-w-5xl mx-auto">
             {/* --- Desktop Header (Visible from md screens up) --- */}
@@ -205,7 +248,7 @@ export default function HomePage() {
               </Link>
               {/* Mobile Search Bar */}
               <div className="flex-1 flex items-center gap-3 relative">
-                <Search className="w-5 h-5 text-muted-foreground absolute left-3" />
+                <Search className="w-4 h-4 text-muted-foreground absolute left-3" />
                 <input
                   type="text"
                   placeholder="Search..."
@@ -215,7 +258,7 @@ export default function HomePage() {
                   onBlur={() => {
                     setTimeout(() => setIsSearchFocused(false), 200);
                   }}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border focus:outline-none focus:border-primary bg-card text-foreground placeholder-muted-foreground border-border"
+                  className="w-full pl-9 pr-4 py-1.5 text-sm rounded-full border focus:outline-none focus:border-primary bg-card text-foreground placeholder-muted-foreground border-border"
                 />
 
                 {/* Mobile Search Dropdown */}
@@ -255,7 +298,7 @@ export default function HomePage() {
                     href="/messaging"
                     className="p-2 rounded-full transition-colors text-muted-foreground"
                   >
-                    <MessageCircle className="w-6 h-6" />
+                    <MessageCircle className="w-5 h-5" />
                   </Link>
                 </div>
               )}
