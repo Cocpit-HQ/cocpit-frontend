@@ -1,29 +1,33 @@
-import React from 'react'
+import React from "react"
 
 interface FeedTabsProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  activeTab: string
+  setActiveTab: (tab: string) => void
 }
 
 export function FeedTabs({ activeTab, setActiveTab }: FeedTabsProps) {
-  const commonButtonStyles = "text-sm font-medium px-4 py-1.5 rounded-lg transition-colors";
-  const activeButtonStyles = "bg-primary text-primary-foreground";
-  const inactiveButtonStyles = "text-muted-foreground hover:text-foreground";
-
   return (
-    <div className="flex gap-4 mb-4 px-4 md:px-0">
-      <button
-        className={`${commonButtonStyles} ${activeTab === 'top' ? activeButtonStyles : inactiveButtonStyles}`}
-        onClick={() => setActiveTab('top')}
-      >
-        Top
-      </button>
-      <button
-        className={`${commonButtonStyles} ${activeTab === 'recent' ? activeButtonStyles : inactiveButtonStyles}`}
-        onClick={() => setActiveTab('recent')}
-      >
-        Recent
-      </button>
+    <div className="flex gap-2 mb-4 px-4 md:hidden overflow-x-auto">
+      {[
+        { id: "top", label: "Top" },
+        { id: "recent", label: "Recent" },
+      ].map((tab) => {
+        const isActive = activeTab === tab.id
+
+        return (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`rounded-full px-7 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+              isActive
+                ? "bg-gradient-to-r from-[#5B7CFF] to-[#F472B6] text-white shadow-md"
+                : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+            }`}
+          >
+            {tab.label}
+          </button>
+        )
+      })}
     </div>
   )
 }

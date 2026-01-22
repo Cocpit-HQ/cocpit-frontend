@@ -260,10 +260,20 @@ export default function FeedPost({
                   <h3 className="text-foreground mb-0.5 text-sm md:text-base font-semibold">{author}</h3>
                 </Link>
               )}
-              {title && <p className="text-xs md:text-sm mb-1 text-muted-foreground">{title}</p>}
-              <div className="flex items-center gap-2">
-                <p className="text-xs text-muted-foreground">{timeAgo} ago</p>
-                {visibility === 'private' && <EyeOff className="w-3 h-3 text-muted-foreground" />}
+              <div className="flex flex-col gap-0.5">
+                {title && (
+                  <p className="text-xs md:text-sm leading-tight text-muted-foreground">
+                    {title}
+                  </p>
+                )}
+                <div className="flex items-center gap-2">
+                  <p className="text-xs leading-tight text-muted-foreground">
+                    {timeAgo} ago
+                  </p>
+                  {visibility === 'private' && (
+                    <EyeOff className="w-3 h-3 text-muted-foreground" />
+                )}
+                </div>
               </div>
             </div>
           </div>
@@ -411,13 +421,13 @@ export default function FeedPost({
             onClick={handleLike}
             className={`flex items-center gap-2 ${isLiked ? 'text-primary' : 'text-muted-foreground hover:text-primary'} transition-colors flex-1 justify-center text-xs md:text-sm`}>
             <ThumbsUp className={`w-4 h-4 md:w-5 md:h-5 ${isLiked ? 'fill-current' : ''}`} />
-            <span>Like</span>
+            
           </button>
           <button
             onClick={handleToggleCommentSection}
             className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center text-xs md:text-sm">
             <MessageCircle className="w-4 h-4 md:w-5 md:h-5" />
-            <span>Comment</span>
+            
           </button>
           <button
             onClick={() => {
@@ -426,7 +436,7 @@ export default function FeedPost({
             }}
             className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center text-xs md:text-sm">
             <Share2 className="w-4 h-4 md:w-5 md:h-5" />
-            <span>Share</span>
+            
           </button>
         </div>
       </div>
