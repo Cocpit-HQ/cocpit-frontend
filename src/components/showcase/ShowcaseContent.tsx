@@ -7,12 +7,13 @@ import { ArrowLeft, Eye, MessageCircle, Play, Share2, ThumbsUp, X, Plus, Search 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import { AppShell } from "@/components/layout/AppShell"
 import type { Page } from "@/types/common"
-import type { StoryDetail } from "@/types/showcase"
+import type { StoryDetail, StoryGroup } from "@/types/showcase"
 import { CreateStoryForm } from "@/components/showcase/CreateStoryForm"
 import { storiesSeed } from "@/constants/stories"
 import { AuthorBadge } from "@/components/showcase/AuthorBadge"
 import { StoryModal } from "@/components/showcase/StoryModal"
 import { MobileStoryViewer } from "@/components/showcase/MobileStoryViewer"
+import { showcaseService } from "@/services/showcase.service"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -54,29 +55,40 @@ export default function ShowcaseContent() {
   }
 
   const [loading, setLoading] = useState(true)
-  const [stories, setStories] = useState<StoryDetail[]>([])
+  const [groups, setGroups] = useState<StoryGroup[]>([])
   const [selectedStory, setSelectedStory] = useState<StoryDetail | null>(null)
-  const [mobileSelectedStoryId, setMobileSelectedStoryId] = useState<number | null>(null)
+  const [mobileSelectedGroupId, setMobileSelectedGroupId] = useState<number | null>(null)
   const [showCreateStory, setShowCreateStory] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setStories(storiesSeed)
-      setLoading(false)
-    }, 800)
-    return () => clearTimeout(timer)
+    const fetchStories = async () => {
+      try {
+        const data = await showcaseService.getGroupedStories()
+        setGroups(data)
+      } catch (error) {
+        console.error("Failed to fetch stories", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchStories()
   }, [])
 
-  const filteredStories = useMemo(() => {
+  const filteredGroups = useMemo(() => {
     const q = searchQuery.toLowerCase()
     if (!q) {
-      return stories
+      return groups
     }
-    return stories.filter((story) =>
-      story.author.name.toLowerCase().includes(q)
-    )
-  }, [stories, searchQuery])
+    return groups.filter((group) => {
+      return group.author.name.toLowerCase().includes(q)
+    })
+  }, [groups, searchQuery])
+
+  const allStories = useMemo(() => {
+    return filteredGroups.flatMap(group => group.stories.map(story => ({ ...story, author: group.author, is_current_user: group.is_current_user })))
+  }, [filteredGroups])
+
 
   const formatCompactNumber = (number: number) => {
     if (number >= 1000000) {
@@ -87,6 +99,46 @@ export default function ShowcaseContent() {
     }
     return number.toString();
   };
+
+  const handleCreateStory = (newStory: StoryDetail) => {
+    setGroups(prevGroups => {
+      const myGroupIndex = prevGroups.findIndex(g => g.is_current_user);
+      if (myGroupIndex !== -1) {
+        const newGroups = [...prevGroups];
+        // Check if story already exists to prevent duplicate keys
+        const exists = newGroups[myGroupIndex].stories.some(s => s.id === newStory.id);
+        if (!exists) {
+          newGroups[myGroupIndex].stories.push(newStory);
+        }
+        return newGroups;
+      } else {
+        const newGroup: StoryGroup = {
+          author: newStory.author,
+          is_current_user: true,
+          latest_story_at: newStory.created_at || new Date().toISOString(),
+          stories: [newStory]
+        };
+        return [newGroup, ...prevGroups];
+      }
+    });
+    setShowCreateStory(false);
+    setSelectedStory(newStory);
+  }
+
+  const handleStoryUpdate = (updatedStory: StoryDetail) => {
+    setGroups(prevGroups => prevGroups.map(group => {
+      const storyIndex = group.stories.findIndex(s => s.id === updatedStory.id)
+      if (storyIndex !== -1) {
+        const newStories = [...group.stories]
+        newStories[storyIndex] = updatedStory
+        return { ...group, stories: newStories }
+      }
+      return group
+    }))
+    if (selectedStory?.id === updatedStory.id) {
+      setSelectedStory(updatedStory)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -115,7 +167,7 @@ export default function ShowcaseContent() {
         </header>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8">
           <div className="mb-6 md:mb-8 flex items-center justify-between">
-            
+
             <button
               onClick={() => setShowCreateStory(true)}
               className="bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg hover:opacity-90 transition-all flex items-center gap-2 text-sm md:text-base"
@@ -135,73 +187,75 @@ export default function ShowcaseContent() {
                   ))}
 
                 {!loading &&
-                  filteredStories.map((story) => (
-                    <div
-                      key={story.id}
-                      className="rounded-xl overflow-hidden border transition-all group cursor-pointer bg-card border-border hover:border-primary/50"
-                      onClick={() => {
-                        const isMobile = window.matchMedia("(max-width: 768px)").matches
-                        if (isMobile) {
-                          setMobileSelectedStoryId(story.id)
-                        } else {
-                          setSelectedStory(story)
-                        }
-                      }}
-                    >
-                      <div className="relative h-32 overflow-hidden">
-                        <img
-                          src={story.image}
-                          alt={story.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        {story.isVideo && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                              <Play className="w-8 h-8 text-white ml-1" />
-                            </div>
-                          </div>
-                        )}
-                        <AuthorBadge story={story} />
-                      </div>
+                  allStories.map((story) => {
+                    const hasUnviewed = !story.has_viewed && !story.isAuthor;
 
-                      <div className="p-3">
-                        <h3
-                          className="mb-1 group-hover:text-primary transition-colors text-foreground"
-                        >
-                          {story.title}
-                        </h3>
-                        <div className="flex flex-wrap items-center justify-between text-xs gap-y-1 text-muted-foreground">
-                          <span>{story.timeAgo}</span>
-                          <div className="flex items-center gap-1.5">
-                            <div className="flex items-center gap-1">
-                              <Eye className="w-4 h-4" />
-                              <span>{formatCompactNumber(story.views)}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <ThumbsUp className="w-4 h-4" />
-                              <span>{formatCompactNumber(story.likes)}</span>
-                            </div>
-                            {story.comments ? (
-                              <div className="flex items-center gap-1">
-                                <MessageCircle className="w-4 h-4" />
-                                <span>{formatCompactNumber(story.comments)}</span>
+                    return (
+                      <div
+                        key={story.id}
+                        className={`rounded-xl overflow-hidden border transition-all group cursor-pointer bg-card ${story.is_current_user
+                            ? 'border-blue-500'
+                            : hasUnviewed
+                              ? 'border-primary ring-1 ring-primary/20'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                        onClick={() => {
+                          const isMobile = window.matchMedia("(max-width: 768px)").matches
+                          if (isMobile) {
+                            // Find the group this story belongs to for mobile view
+                            const groupId = groups.find(g => g.stories.some(s => s.id === story.id))?.author.id
+                            setMobileSelectedGroupId(groupId || 0)
+                          } else {
+                            setSelectedStory(story)
+                          }
+                        }}
+                      >
+                        <div className="relative h-32 overflow-hidden">
+                          <img
+                            src={story.image}
+                            alt={story.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          {story.isVideo && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                                <Play className="w-8 h-8 text-white ml-1" />
                               </div>
-                            ) : null}
-                            <button className="transition-colors hover:text-foreground">
-                              <Share2 className="w-4 h-4" />
-                            </button>
+                            </div>
+                          )}
+                          <AuthorBadge story={story} />
+                        </div>
+
+                        <div className="p-3">
+                          <h3
+                            className="mb-1 group-hover:text-primary transition-colors text-foreground"
+                          >
+                            {story.is_current_user ? "Your Story" : story.author.name}
+                          </h3>
+                          <div className="flex flex-wrap items-center justify-between text-xs gap-y-1 text-muted-foreground">
+                            <span>{story.timeAgo}</span>
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1">
+                                <Eye className="w-4 h-4" />
+                                <span>{formatCompactNumber(story.views)}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <ThumbsUp className="w-4 h-4" />
+                                <span>{formatCompactNumber(story.likes)}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                {!loading && searchQuery && filteredStories.length === 0 && (
-                    <p
-                      className="text-center py-12 text-muted-foreground col-span-2"
-                    >
-                      No stories found matching "{searchQuery}"
-                    </p>
-                  )}
+                    )
+                  })}
+                {!loading && searchQuery && allStories.length === 0 && (
+                  <p
+                    className="text-center py-12 text-muted-foreground col-span-2"
+                  >
+                    No stories found matching "{searchQuery}"
+                  </p>
+                )}
               </div>
             </section>
 
@@ -215,18 +269,23 @@ export default function ShowcaseContent() {
         </div>
       </AppShell>
       {selectedStory && (
-        <StoryModal story={selectedStory} onClose={() => setSelectedStory(null)} />
-      )}
-
-      {mobileSelectedStoryId !== null && (
-        <MobileStoryViewer
-          stories={filteredStories}
-          initialStoryId={mobileSelectedStoryId}
-          onClose={() => setMobileSelectedStoryId(null)}
+        <StoryModal
+          story={selectedStory}
+          onClose={() => setSelectedStory(null)}
+          onStoryUpdate={handleStoryUpdate}
         />
       )}
 
-       {showCreateStory && (
+      {mobileSelectedGroupId !== null && (
+        <MobileStoryViewer
+          groups={filteredGroups}
+          initialGroupId={mobileSelectedGroupId}
+          onClose={() => setMobileSelectedGroupId(null)}
+          onStoryUpdate={handleStoryUpdate}
+        />
+      )}
+
+      {showCreateStory && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-card rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div

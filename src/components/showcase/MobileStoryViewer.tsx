@@ -1,20 +1,17 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
-import { X, MoreVertical, Heart } from "lucide-react"
+import { X, MoreVertical, Heart, Trash2 } from "lucide-react"
 import useEmblaCarousel from "embla-carousel-react"
 import { EmblaCarouselType } from "embla-carousel"
-import { StoryDetail } from "@/types/showcase"
+import { StoryDetail, StoryGroup } from "@/types/showcase"
 import { StoryInteractionPanel } from "./StoryInteractionPanel"
+import { showcaseService } from "@/services/showcase.service"
 
 type MobileStoryViewerProps = {
-  stories: StoryDetail[]
-  initialStoryId: number
-  onClose: () => void
-  isDark?: boolean
-}
-
-type UserGroup = {
-    authorName: string
-    stories: StoryDetail[]
+    groups: StoryGroup[]
+    initialGroupId: number
+    onClose: () => void
+    isDark?: boolean
+    onStoryUpdate?: (story: StoryDetail) => void
 }
 
 /* -------------------------------------------------------------------------- */
@@ -28,84 +25,124 @@ const UserStorySlide = ({
     onNextUser,
     onPrevUser,
     onClose,
-    isDark
+    isDark,
+    onStoryUpdate
 }: {
-    group: UserGroup
+    group: StoryGroup
     isActiveUser: boolean
     onNextUser: () => void
     onPrevUser: () => void
     onClose: () => void
     isDark?: boolean
+    onStoryUpdate?: (story: StoryDetail) => void
 }) => {
     const [storyIndex, setStoryIndex] = useState(0)
     const [progress, setProgress] = useState(0)
     const [showInteraction, setShowInteraction] = useState(false)
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
     const [isPaused, setIsPaused] = useState(false)
-    const [isLiked, setIsLiked] = useState(false)
     const [likeKey, setLikeKey] = useState(0)
+    const [showMenu, setShowMenu] = useState(false)
 
-    // Sort stories chronologically (Oldest -> Newest)
-    // We assume ID correlates with time.
+    // Use ref to track progress for interval logic (avoids Strict Mode double-invocation bug)
+    const progressRef = useRef(0)
+
+    // Stories are already sorted by backend (Oldest -> Newest)
+    // Deduplicate stories to prevent "same key" errors
     const sortedStories = useMemo(() => {
-        return [...group.stories].sort((a, b) => a.id - b.id)
-    }, [group.stories])
+        const stories = group.stories || [];
+        const unique = new Map();
+        stories.forEach(s => unique.set(s.id, s));
+        return Array.from(unique.values());
+    }, [group.stories]);
 
-    const currentStory = sortedStories[storyIndex]
-    const isMyStory = currentStory?.author.name === "You"
+    // Ensure storyIndex is within bounds
+    const safeStoryIndex = Math.min(storyIndex, sortedStories.length - 1);
+    const currentStory = sortedStories[safeStoryIndex >= 0 ? safeStoryIndex : 0]
+    const isMyStory = group.is_current_user
 
-    // Reset when this slide becomes active
+    // Initialize isLiked state - must be after all other useState hooks
+    const [isLiked, setIsLiked] = useState(!!currentStory?.isLiked)
+
+    // Track if this is the first time becoming active
+    const wasActiveRef = useRef(false)
+
+    // Reset when this slide becomes active (only on transition to active, not on story updates)
     useEffect(() => {
-        if (isActiveUser) {
-            setStoryIndex(0)
-            setProgress(0)
-            setIsLiked(false)
-            setLikeKey(0)
-            setIsDescriptionExpanded(false)
+        if (isActiveUser && !wasActiveRef.current) {
+            // Just became active
+            wasActiveRef.current = true
+            if (sortedStories.length > 0) {
+                setStoryIndex(0)
+                setProgress(0)
+                const firstStory = sortedStories[0];
+                setIsLiked(!!firstStory?.isLiked)
+                setLikeKey(0)
+                setIsDescriptionExpanded(false)
+            }
+        } else if (!isActiveUser) {
+            // Became inactive
+            wasActiveRef.current = false
         }
     }, [isActiveUser])
 
     // Reset like/description when story changes
     useEffect(() => {
-        setIsLiked(false)
+        setIsLiked(!!currentStory?.isLiked) // Update with current story state
         setLikeKey(0)
         setIsDescriptionExpanded(false)
-    }, [storyIndex])
+    }, [storyIndex]) // Only reset when story index changes, not when like state changes
+
+    // Sync progressRef with progress state
+    useEffect(() => {
+        progressRef.current = progress
+    }, [progress])
 
     // Auto-advance
     useEffect(() => {
         if (!isActiveUser || showInteraction || isPaused || isDescriptionExpanded) return
+        if (!currentStory) return // Don't auto-advance if no current story
 
         const interval = setInterval(() => {
-            setProgress((prev) => {
-                if (prev >= 100) {
-                    handleNext()
-                    return 0
-                }
-                return prev + 1
-            })
+            // Check ref to avoid calling handleNext from updater (Strict Mode safe)
+            if (progressRef.current >= 100) {
+                handleNext()
+            } else {
+                setProgress(prev => prev + 1)
+            }
         }, 50) // 5s per story
 
         return () => clearInterval(interval)
-    }, [isActiveUser, showInteraction, storyIndex, isPaused, isDescriptionExpanded])
+    }, [isActiveUser, showInteraction, storyIndex, isPaused, isDescriptionExpanded, currentStory])
 
     const handleNext = () => {
+        // Safety check: ensure we have stories
+        if (!sortedStories || sortedStories.length === 0) {
+            onNextUser();
+            return;
+        }
+
         if (storyIndex < sortedStories.length - 1) {
             setStoryIndex(prev => prev + 1)
             setProgress(0)
         } else {
             // Defer to next tick to avoid state update during render
-            setTimeout(onNextUser, 0)
+            setTimeout(() => onNextUser(), 0)
         }
     }
 
     const handlePrev = () => {
+        // Safety check: ensure we have stories
+        if (!sortedStories || sortedStories.length === 0) {
+            onPrevUser();
+            return;
+        }
+
         if (storyIndex > 0) {
             setStoryIndex(prev => prev - 1)
             setProgress(0)
         } else {
-            // Defer to next tick to avoid state update during render
-            setTimeout(onPrevUser, 0)
+            setTimeout(() => onPrevUser(), 0)
         }
     }
 
@@ -113,45 +150,66 @@ const UserStorySlide = ({
     const touchStartY = useRef<number | null>(null)
     const touchStartX = useRef<number | null>(null)
 
-    const handleTouchStart = (e: React.TouchEvent) => {
+    const handleLongPress = () => {
         setIsPaused(true)
-        touchStartY.current = e.touches[0].clientY
-        touchStartX.current = e.touches[0].clientX
+    }
+
+    const handleRelease = () => {
+        setIsPaused(false)
+    }
+
+    const [touchStart, setTouchStart] = useState<{ x: number; y: number; time: number } | null>(null)
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        setTouchStart({
+            x: e.touches[0].clientX,
+            y: e.touches[0].clientY,
+            time: Date.now()
+        })
     }
 
     const handleTouchEnd = (e: React.TouchEvent) => {
-        setIsPaused(false)
-        if (touchStartY.current === null || touchStartX.current === null) return
+        if (!touchStart) return
 
-        const deltaY = e.changedTouches[0].clientY - touchStartY.current
-        const deltaX = e.changedTouches[0].clientX - touchStartX.current
-
-        touchStartY.current = null
-        touchStartX.current = null
-
-        // Vertical Swipe (Up/Down)
-        if (Math.abs(deltaY) > 50 && Math.abs(deltaY) > Math.abs(deltaX)) {
-             if (deltaY > 0) {
-                 onClose()
-             } else {
-                 setShowInteraction(true)
-             }
-             return
+        const touchEnd = {
+            x: e.changedTouches[0].clientX,
+            y: e.changedTouches[0].clientY,
+            time: Date.now()
         }
 
-        // Horizontal Swipe is handled by Embla naturally!
-        // But Taps need to be handled.
-        // If swipe distance is very small, treat as tap.
-        if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10) {
-            // TAP
-            // If description is expanded and we tap outside of it (this container), close it
-            if (isDescriptionExpanded) {
+        const deltaY = touchStart.y - touchEnd.y
+        const deltaTime = touchEnd.time - touchStart.time
+
+        // Swipe down to close
+        if (deltaY < -50 && deltaTime < 300) {
+            onClose();
+            setTouchStart(null);
+            return;
+        }
+
+        // Swipe up to show interaction panel
+        if (deltaY > 50 && deltaTime < 300) {
+            setShowInteraction(true)
+            setTouchStart(null)
+            return
+        }
+
+        // Tap to navigate
+        if (Math.abs(deltaY) < 10 && deltaTime < 300) {
+            if (showInteraction) {
+                setShowInteraction(false)
                 setIsDescriptionExpanded(false)
                 return
             }
 
             const screenWidth = window.innerWidth
             const tapX = e.changedTouches[0].clientX
+
+            // If description is expanded and we tap outside of it (this container), close it
+            if (isDescriptionExpanded) {
+                setIsDescriptionExpanded(false)
+                return
+            }
 
             if (tapX < screenWidth * 0.3) {
                 handlePrev()
@@ -161,17 +219,37 @@ const UserStorySlide = ({
         }
     }
 
+    // Guard clause AFTER all hooks - check if we have no stories at all
+    // Don't check currentStory directly as it might be temporarily undefined during transitions
+    if (sortedStories.length === 0) {
+        return null;
+    }
+
+    // If currentStory is still undefined after bounds checking, something is wrong
+    if (!currentStory) {
+        console.error('UserStorySlide: currentStory is undefined despite having stories', {
+            storyIndex,
+            safeStoryIndex,
+            storiesLength: sortedStories.length
+        });
+        return null;
+    }
+
     return (
         <div
             className="w-full h-full relative flex-shrink-0"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
         >
-             {/* Interaction Panel */}
-             <StoryInteractionPanel
+            {/* Interaction Panel */}
+            <StoryInteractionPanel
                 isOpen={showInteraction}
                 onClose={() => setShowInteraction(false)}
-                story={currentStory}
+                story={{
+                    ...currentStory,
+                    likes: (currentStory.likes || 0) - (currentStory.isLiked ? 1 : 0) + (isLiked ? 1 : 0),
+                    isLiked: isLiked
+                }}
                 isMyStory={isMyStory}
                 isDark={!!isDark}
             />
@@ -194,34 +272,58 @@ const UserStorySlide = ({
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full border border-white/50 overflow-hidden">
-                            <img src={currentStory.author.avatar} alt={currentStory.author.name} className="w-full h-full object-cover" />
+                            <img src={group.author.avatar} alt={group.author.name} className="w-full h-full object-cover" />
                         </div>
                         <div>
                             <p className="text-white font-semibold text-sm flex items-center gap-2">
-                                {currentStory.author.name}
+                                {group.author.name}
                                 <span className="text-white/60 font-normal text-xs">{currentStory.timeAgo}</span>
                             </p>
                         </div>
                     </div>
-                     <div className="flex items-center gap-4 pointer-events-auto">
-                        <button onClick={(e) => { e.stopPropagation(); }} className="text-white">
-                           <MoreVertical className="w-5 h-5" />
-                        </button>
+
+                    <div className="flex items-center gap-4 pointer-events-auto">
+                        {isMyStory && (
+                            <div className="relative">
+                                <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu) }} onTouchEnd={(e) => e.stopPropagation()} className="text-white">
+                                    <MoreVertical className="w-5 h-5" />
+                                </button>
+                                {showMenu && (
+                                    <div className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden">
+                                        <button
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
+                                                if (confirm("Delete this story?")) {
+                                                    await showcaseService.deleteStory(currentStory.id);
+                                                    onClose();
+                                                    window.location.reload();
+                                                }
+                                            }}
+                                            onTouchEnd={(e) => e.stopPropagation()}
+                                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors text-left"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            Delete Story
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="text-white">
-                           <X className="w-6 h-6" />
+                            <X className="w-6 h-6" />
                         </button>
                     </div>
                 </div>
             </div>
 
-             {/* Content */}
-             <div className="w-full h-full flex items-center justify-center bg-black">
+            {/* Content */}
+            <div className="w-full h-full flex items-center justify-center bg-black">
                 <img
                     src={currentStory.image}
                     alt={currentStory.title}
                     className="w-full h-full object-cover"
                 />
-                 {!showInteraction && (
+                {!showInteraction && (
                     <>
                         {/* Description Overlay */}
                         {currentStory.description && (
@@ -273,30 +375,50 @@ const UserStorySlide = ({
                             </div>
                         )}
 
-                        {/* Like Button */}
-                        <div
-                            className="absolute bottom-6 right-4 pointer-events-auto"
-                            onTouchStart={(e) => e.stopPropagation()}
-                            onTouchEnd={(e) => e.stopPropagation()}
-                        >
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    setLikeKey(prev => prev + 1)
-                                    setIsLiked(!isLiked)
-                                }}
-                                className="p-3 rounded-full active:scale-95 transition-transform"
+                        {/* Like Button (Only for others) */}
+                        {!isMyStory && (
+                            <div
+                                className="absolute bottom-6 right-4 pointer-events-auto"
+                                onTouchStart={(e) => e.stopPropagation()}
+                                onTouchEnd={(e) => e.stopPropagation()}
                             >
-                                <Heart
-                                    key={likeKey}
-                                    className={`w-8 h-8 ${isLiked ? "fill-red-500 text-red-500" : "text-white"} ${likeKey > 0 ? 'animate-wiggle' : ''}`}
-                                />
-                            </button>
-                        </div>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        const newLikedState = !isLiked
+                                        setIsLiked(newLikedState)
+                                        setLikeKey(prev => prev + 1)
+
+                                        // Update parent
+                                        const baseCount = (currentStory.likes || 0) - (currentStory.isLiked ? 1 : 0);
+                                        const newCount = baseCount + (newLikedState ? 1 : 0);
+
+                                        if (onStoryUpdate) {
+                                            onStoryUpdate({
+                                                ...currentStory,
+                                                isLiked: newLikedState,
+                                                likes: newCount
+                                            })
+                                        }
+
+                                        showcaseService.reactToStory(currentStory.id, newLikedState).catch(err => {
+                                            console.error("Failed to react to story", err)
+                                            setIsLiked(!newLikedState) // Revert on error
+                                        })
+                                    }}
+                                    className="p-3 rounded-full active:scale-95 transition-transform"
+                                >
+                                    <Heart
+                                        key={likeKey}
+                                        className={`w-8 h-8 ${isLiked ? "fill-red-500 text-red-500" : "text-white"} ${likeKey > 0 ? 'animate-wiggle' : ''}`}
+                                    />
+                                </button>
+                            </div>
+                        )}
                     </>
                 )}
-             </div>
-        </div>
+            </div>
+        </div >
     )
 }
 
@@ -304,92 +426,75 @@ const UserStorySlide = ({
 /*                               Main Component                               */
 /* -------------------------------------------------------------------------- */
 
-export function MobileStoryViewer({ stories, initialStoryId, onClose, isDark }: MobileStoryViewerProps) {
+export function MobileStoryViewer({ groups, initialGroupId, onClose, isDark, onStoryUpdate }: MobileStoryViewerProps) {
 
-  // Group and Sort
-  const userGroups = useMemo(() => {
-    const groups: UserGroup[] = []
-    stories.forEach((story) => {
-        const existing = groups.find(g => g.authorName === story.author.name)
-        if (existing) {
-            existing.stories.push(story)
-        } else {
-            groups.push({
-                authorName: story.author.name,
-                stories: [story]
-            })
+    // Filter out groups with no stories (e.g. empty "Your Story" placeholder)
+    const validGroups = useMemo(() => {
+        return groups.filter(g => g.stories.length > 0);
+    }, [groups]);
+
+    // Initial Index
+    const initialIndex = useMemo(() => {
+        const idx = validGroups.findIndex(g => g.author.id === initialGroupId)
+        return idx === -1 ? 0 : idx
+    }, [validGroups, initialGroupId])
+
+    const [emblaRef, emblaApi] = useEmblaCarousel({
+        loop: false,
+        duration: 30, // Adjust for slide feel
+    })
+
+    const [currentIndex, setCurrentIndex] = useState(initialIndex)
+
+    // Sync index on select
+    const onSelect = useCallback((emblaApi: EmblaCarouselType) => {
+        // Avoid synchronous state update during render/effect cycle
+        requestAnimationFrame(() => {
+            setCurrentIndex(emblaApi.selectedScrollSnap())
+        })
+    }, [])
+
+    useEffect(() => {
+        if (emblaApi) {
+            emblaApi.scrollTo(initialIndex, true) // Instant jump
+            emblaApi.on('select', onSelect)
         }
-    })
-    // Sort groups by latest story ID (Newest first)
-    groups.sort((a, b) => {
-        const latestA = Math.max(...a.stories.map(s => s.id))
-        const latestB = Math.max(...b.stories.map(s => s.id))
-        return latestB - latestA
-    })
-    return groups
-  }, [stories])
+    }, [emblaApi, initialIndex, onSelect])
 
-  // Initial Index
-  const initialIndex = useMemo(() => {
-      const idx = userGroups.findIndex(g => g.stories.some(s => s.id === initialStoryId))
-      return idx === -1 ? 0 : idx
-  }, [userGroups, initialStoryId])
-
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-      loop: false,
-      duration: 30, // Adjust for slide feel
-  })
-
-  const [currentIndex, setCurrentIndex] = useState(initialIndex)
-
-  // Sync index on select
-  const onSelect = useCallback((emblaApi: EmblaCarouselType) => {
-    // Avoid synchronous state update during render/effect cycle
-    requestAnimationFrame(() => {
-        setCurrentIndex(emblaApi.selectedScrollSnap())
-    })
-  }, [])
-
-  useEffect(() => {
-    if (emblaApi) {
-        emblaApi.scrollTo(initialIndex, true) // Instant jump
-        emblaApi.on('select', onSelect)
+    const handleNextUser = () => {
+        if (emblaApi && emblaApi.canScrollNext()) {
+            emblaApi.scrollNext()
+        } else {
+            onClose()
+        }
     }
-  }, [emblaApi, initialIndex, onSelect])
 
-  const handleNextUser = () => {
-      if (emblaApi && emblaApi.canScrollNext()) {
-          emblaApi.scrollNext()
-      } else {
-          onClose()
-      }
-  }
+    const handlePrevUser = () => {
+        if (emblaApi && emblaApi.canScrollPrev()) {
+            emblaApi.scrollPrev()
+        }
+    }
 
-  const handlePrevUser = () => {
-      if (emblaApi && emblaApi.canScrollPrev()) {
-          emblaApi.scrollPrev()
-      }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 bg-black">
-      <div className="h-full overflow-hidden" ref={emblaRef}>
-        <div className="flex h-full touch-pan-y">
-            {userGroups.map((group, idx) => (
-                <div key={group.authorName} className="flex-[0_0_100%] min-w-0 relative">
-                     {/* We use perspective here for potential 3D children */}
-                     <UserStorySlide
-                        group={group}
-                        isActiveUser={idx === currentIndex}
-                        onNextUser={handleNextUser}
-                        onPrevUser={handlePrevUser}
-                        onClose={onClose}
-                        isDark={isDark}
-                     />
+    return (
+        <div className="fixed inset-0 z-50 bg-black">
+            <div className="h-full overflow-hidden" ref={emblaRef}>
+                <div className="flex h-full touch-pan-y">
+                    {validGroups.map((group, idx) => (
+                        <div key={group.author.id} className="flex-[0_0_100%] min-w-0 relative">
+                            {/* We use perspective here for potential 3D children */}
+                            <UserStorySlide
+                                group={group}
+                                isActiveUser={idx === currentIndex}
+                                onNextUser={handleNextUser}
+                                onPrevUser={handlePrevUser}
+                                onClose={onClose}
+                                isDark={isDark}
+                                onStoryUpdate={onStoryUpdate}
+                            />
+                        </div>
+                    ))}
                 </div>
-            ))}
+            </div>
         </div>
-      </div>
-    </div>
-  )
+    )
 }

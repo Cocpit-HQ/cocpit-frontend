@@ -19,7 +19,7 @@ import { MobileStoryViewer } from '@/components/showcase/MobileStoryViewer'
 import { NotificationPopover } from '@/components/notifications/NotificationPopover'
 import { Post, Comment } from '@/types/entities';
 import { storiesSeed } from '@/constants/stories'
-import { StoryDetail } from '@/types/showcase'
+import { StoryDetail, StoryGroup } from '@/types/showcase'
 import { useDebounce } from '@/hooks/use-debounce';
 import { searchUsers } from '@/services/api/user';
 import { SearchedUser } from '@/types/user';
@@ -51,7 +51,23 @@ export default function HomePage() {
   }, [])
 
   const [loading, setLoading] = useState(false)
-  const [stories, setStories] = useState<StoryDetail[]>(storiesSeed)
+  const [groups, setGroups] = useState<StoryGroup[]>([])
+
+  useEffect(() => {
+    const fetchStories = async () => {
+      try {
+        // Dynamic import to avoid SSR issues if necessary, but showcaseService is client side
+        const { showcaseService } = await import('@/services/showcase.service');
+        const data = await showcaseService.getGroupedStories()
+        setGroups(data)
+      } catch (error) {
+        console.error("Failed to fetch stories", error)
+        // Fallback to seed if fetch fails? Or just empty.
+        // setStories(storiesSeed) 
+      }
+    }
+    fetchStories()
+  }, [])
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchedUser[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
@@ -125,8 +141,31 @@ export default function HomePage() {
   }, [debouncedSearchQuery]);
 
   const handleCreateStory = (newStory: StoryDetail) => {
-    setStories((prev) => [newStory, ...prev])
+    // Optimistic update for "Me" group (Index 0)
+    setGroups(prev => {
+      const newGroups = [...prev];
+      if (newGroups.length > 0 && newGroups[0].is_current_user) {
+        newGroups[0].stories.push(newStory);
+      }
+      return newGroups;
+    })
     setShowCreateStory(false)
+
+    // Also update Mobile/Modal?
+    setSelectedStory(newStory); // View it?
+  }
+  const [mobileSelectedGroupId, setMobileSelectedGroupId] = useState<number | null>(null)
+
+  const handleStoryUpdate = (updatedStory: StoryDetail) => {
+    setGroups(prevGroups => prevGroups.map(group => {
+      const storyIndex = group.stories.findIndex(s => s.id === updatedStory.id)
+      if (storyIndex !== -1) {
+        const newStories = [...group.stories]
+        newStories[storyIndex] = updatedStory
+        return { ...group, stories: newStories }
+      }
+      return group
+    }))
   }
 
   /* -------------------- Derived State -------------------- */
@@ -315,9 +354,15 @@ export default function HomePage() {
                 {/* Mobile Story Rail */}
                 <div className="md:hidden border-b border-border">
                   <StoryRail
-                    stories={stories}
+                    groups={groups}
                     onCreateClick={() => setShowCreateStory(true)}
-                    onStoryClick={(story) => setSelectedStory(story)}
+                    onStoryClick={(story) => {
+                      // Find group of this story
+                      const group = groups.find(g => g.stories.some(s => s.id === story.id));
+                      if (group) {
+                        setMobileSelectedGroupId(group.author.id || 0);
+                      }
+                    }}
                   />
                 </div>
 
@@ -371,22 +416,23 @@ export default function HomePage() {
       </AppShell>
 
       {/* Modals */}
+      {mobileSelectedGroupId !== null && (
+        <div className="md:hidden">
+          <MobileStoryViewer
+            groups={groups}
+            initialGroupId={mobileSelectedGroupId || 0}
+            onClose={() => setMobileSelectedGroupId(null)}
+            onStoryUpdate={handleStoryUpdate}
+          />
+        </div>
+      )}
       {selectedStory && (
-        <>
-          <div className="md:hidden">
-            <MobileStoryViewer
-              stories={stories}
-              initialStoryId={selectedStory.id}
-              onClose={() => setSelectedStory(null)}
-            />
-          </div>
-          <div className="hidden md:block">
-            <StoryModal
-              story={selectedStory}
-              onClose={() => setSelectedStory(null)}
-            />
-          </div>
-        </>
+        <div className="hidden md:block">
+          <StoryModal
+            story={selectedStory}
+            onClose={() => setSelectedStory(null)}
+          />
+        </div>
       )}
 
       {showCreateStory && (
