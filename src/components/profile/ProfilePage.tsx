@@ -41,6 +41,7 @@ import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
 import type { Post } from "@/types/entities"
 import { ViewAvatarModal } from "@/components/profile/ViewAvatarModal";
 import { EditAvatarModal } from "@/components/profile/EditAvatarModal";
+import EditCoverPhoto from "@/components/profile/EditCoverPhoto";
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -132,6 +133,7 @@ export default function ProfilePage() {
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
   const { togglePostVisibility } = useFeed();
   const [previewPosts, setPreviewPosts] = useState<Post[]>([]);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { logout } = useAuth();
 
@@ -401,7 +403,7 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Failed to delete education", error);
     }
-    setIsAddEducationModalOpen(false);
+    setIsAddExperienceModalOpen(false);
     setEditingEducation(null);
   }
 
@@ -430,8 +432,8 @@ export default function ProfilePage() {
               <div
                 className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border"
               >
-                <div className="h-36 bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899] relative">
-                  <div className="absolute top-3 right-3 md:hidden">
+                <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage}>
+                  <div className="absolute top-3 right-3 md:hidden z-10">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="bg-transparent text-white p-2 rounded-full hover:bg-white/10 transition-all">
@@ -452,7 +454,7 @@ export default function ProfilePage() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <div className="hidden md:flex absolute top-3 right-3 gap-2">
+                  <div className="hidden md:flex absolute top-3 right-3 gap-2 z-10">
                     <button onClick={() => router.push('/analytics')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
                       View Analytics
                     </button>
@@ -461,7 +463,8 @@ export default function ProfilePage() {
                       Edit Profile
                     </button>
                   </div>
-                </div>
+                </EditCoverPhoto>
+
 
                 <div className="px-6 pb-6">
                   <div className="flex items-start justify-between -mt-14 mb-4">

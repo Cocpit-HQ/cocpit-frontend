@@ -435,3 +435,8 @@
     --background: #ffffff;
   }
 }
+@media (max-width: 768px) {
+  [data-theme="dark"] {
+    --background: #101112;
+  }
+}
