@@ -14,11 +14,12 @@ export function JobTabs({ mode, setMode, myJobsTab, setMyJobsTab, offersCount }:
   return (
     <div>
       {/* Top-level tabs */}
-      <div className="mb-4 md:mb-6 flex gap-2 overflow-x-auto rounded-full bg-transparent">
+      <div className="mb-4 md:mb-6 flex gap-2 overflow-x-auto rounded-xl bg-transparent max-w-full pb-1 scrollbar-hide">
         {[
           { id: "view" as JobListMode, label: "View Jobs" },
           { id: "my-jobs" as JobListMode, label: "My Jobs" },
           { id: "offers" as JobListMode, label: "Offers", badge: offersCount },
+          { id: "dashboard" as JobListMode, label: "Job Posts Dashboard" },
         ].map((tab) => {
           const isActive = mode === tab.id
           return (
@@ -26,11 +27,10 @@ export function JobTabs({ mode, setMode, myJobsTab, setMyJobsTab, offersCount }:
               key={tab.id}
               type="button"
               onClick={() => setMode(tab.id)}
-              className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                isActive
-                  ? "bg-gradient-to-r from-[#5B7CFF] to-[#F472B6] text-white shadow-md"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-              }`}
+              className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${isActive
+                ? "bg-gradient-to-r from-[#5B7CFF] to-[#F472B6] text-white shadow-md"
+                : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                }`}
             >
               <span>{tab.label}</span>
               {tab.badge !== undefined && tab.badge > 0 && (
@@ -60,11 +60,10 @@ export function JobTabs({ mode, setMode, myJobsTab, setMyJobsTab, offersCount }:
                 key={tab.id}
                 type="button"
                 onClick={() => setMyJobsTab(tab.id)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
-                  isActive
-                    ? "bg-gradient-to-r from-[#5B7CFF] to-[#F472B6] text-white"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                }`}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${isActive
+                  ? "bg-gradient-to-r from-[#5B7CFF] to-[#F472B6] text-white"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                  }`}
               >
                 {tab.label}
               </button>

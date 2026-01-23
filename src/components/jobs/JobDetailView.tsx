@@ -12,7 +12,10 @@ interface JobDetailViewProps {
   job: Job
 }
 
+import { useRouter } from "next/navigation"
+
 export function JobDetailView({ job }: JobDetailViewProps) {
+  const router = useRouter()
   const { saveJob } = useJobs()
   const [showQuickApply, setShowQuickApply] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
@@ -60,9 +63,12 @@ export function JobDetailView({ job }: JobDetailViewProps) {
       {/* Header / Nav */}
       <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center gap-4">
-          <Link href="/jobs" className="p-2 hover:bg-muted rounded-full transition-colors">
+          <button
+            onClick={() => router.back()}
+            className="p-2 hover:bg-muted rounded-full transition-colors"
+          >
             <ArrowLeft className="w-5 h-5 text-muted-foreground" />
-          </Link>
+          </button>
           <span className="font-medium text-lg truncate flex-1">{job.title}</span>
           <button
             onClick={handleShare}

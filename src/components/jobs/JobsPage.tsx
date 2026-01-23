@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Filter, Plus, Search } from "lucide-react"
 
 import { AppShell } from "@/components/layout/AppShell"
@@ -12,6 +12,7 @@ import { MobileJobSearch } from "@/components/jobs/MobileJobSearch"
 import { MobileJobFilters } from "@/components/jobs/MobileJobFilters"
 import { JobTabs } from "@/components/jobs/JobTabs"
 import { CreateJobModal } from "@/components/jobs/CreateJobModal"
+import { JobPostsDashboard } from "@/components/jobs/dashboard/JobPostsDashboard"
 import { useJobs } from "@/context/JobsContext"
 import type { Page } from "@/types/common"
 
@@ -27,6 +28,7 @@ const routes: Record<string, string> = {
 
 export default function JobsPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   const router = useRouter()
+  const searchParamsHook = useSearchParams()
   const [mounted, setMounted] = useState(false)
 
   const {
@@ -44,8 +46,8 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
   // Sync URL params with Context State
   useEffect(() => {
     setMounted(true)
-    const tab = searchParams?.tab
-    const subtab = searchParams?.subtab
+    const tab = searchParamsHook.get('tab')
+    const subtab = searchParamsHook.get('subtab')
 
     if (tab === 'my-jobs') {
       setActiveTab('my-jobs')
@@ -54,10 +56,12 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
       }
     } else if (tab === 'offers') {
       setActiveTab('offers')
+    } else if (tab === 'dashboard') {
+      setActiveTab('dashboard')
     } else {
       setActiveTab('view')
     }
-  }, [searchParams, setActiveTab, setMyJobsTab])
+  }, [searchParamsHook, setActiveTab, setMyJobsTab])
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
@@ -98,6 +102,8 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
   if (!mounted) {
     return null
   }
+
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,16 +149,40 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
             </div>
 
             <div className="flex items-center justify-between gap-4">
-              <JobTabs
-                mode={activeTab}
-                setMode={(m) => {
-                  setActiveTab(m)
-                  // Update URL shallowly if possible, or just let client state handle it for now
-                }}
-                myJobsTab={myJobsTab}
-                setMyJobsTab={setMyJobsTab}
-                offersCount={offers.length}
-              />
+              <div className="min-w-0 flex-1">
+                <JobTabs
+                  mode={activeTab}
+                  setMode={(m) => {
+                    setActiveTab(m)
+                    const params = new URLSearchParams(searchParamsHook.toString())
+
+                    if (m === 'view') {
+                      params.delete('tab')
+                      params.delete('subtab')
+                    } else {
+                      params.set('tab', m)
+                      // If switching to my-jobs, keep existing subtab or default?
+                      // Ideally we keep current context's subtab if we have one
+                      if (m === 'my-jobs' && myJobsTab) {
+                        params.set('subtab', myJobsTab)
+                      } else {
+                        params.delete('subtab')
+                      }
+                    }
+
+                    router.push(`/jobs?${params.toString()}`)
+                  }}
+                  myJobsTab={myJobsTab}
+                  setMyJobsTab={(t) => {
+                    setMyJobsTab(t)
+                    const params = new URLSearchParams(searchParamsHook.toString())
+                    params.set('tab', 'my-jobs')
+                    params.set('subtab', t)
+                    router.push(`/jobs?${params.toString()}`)
+                  }}
+                  offersCount={offers.length}
+                />
+              </div>
 
               {/* Desktop Post Job Button */}
               <div className="hidden md:block">
@@ -166,44 +196,48 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              <JobFiltersSidebar />
+            {activeTab === "dashboard" ? (
+              <JobPostsDashboard />
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <JobFiltersSidebar />
 
-              <div className="lg:col-span-3">
-                <div className="mb-4 flex items-center justify-between">
-                  <p className="text-muted-foreground">{jobsToRender.length} jobs found</p>
-                  <button
-                    type="button"
-                    className="flex items-center gap-2 rounded-full border px-3 py-2 text-sm lg:hidden border-border text-muted-foreground hover:bg-muted"
-                    onClick={() => setShowMobileFilters(true)}
-                  >
-                    <Filter className="h-4 w-4" />
-                    <span>Filters</span>
-                  </button>
-                </div>
+                <div className="lg:col-span-3">
+                  <div className="mb-4 flex items-center justify-between">
+                    <p className="text-muted-foreground">{jobsToRender.length} jobs found</p>
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 rounded-full border px-3 py-2 text-sm lg:hidden border-border text-muted-foreground hover:bg-muted"
+                      onClick={() => setShowMobileFilters(true)}
+                    >
+                      <Filter className="h-4 w-4" />
+                      <span>Filters</span>
+                    </button>
+                  </div>
 
-                <div className="space-y-4">
-                  {jobsToRender.length > 0 ? (
-                    jobsToRender.map((job) => (
-                      <JobCard key={job.id} job={job} mode={activeTab} />
-                    ))
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground bg-card rounded-xl border border-border border-dashed">
-                      <p>No jobs found matching your criteria.</p>
-                      <button
-                        onClick={() => {
-                          setSearchKeywords("")
-                          // clear filters via context if exposed or manual
-                        }}
-                        className="mt-2 text-primary hover:underline"
-                      >
-                        Clear filters
-                      </button>
-                    </div>
-                  )}
+                  <div className="space-y-4">
+                    {jobsToRender.length > 0 ? (
+                      jobsToRender.map((job) => (
+                        <JobCard key={job.id} job={job} mode={activeTab} />
+                      ))
+                    ) : (
+                      <div className="text-center py-12 text-muted-foreground bg-card rounded-xl border border-border border-dashed">
+                        <p>No jobs found matching your criteria.</p>
+                        <button
+                          onClick={() => {
+                            setSearchKeywords("")
+                            // clear filters via context if exposed or manual
+                          }}
+                          className="mt-2 text-primary hover:underline"
+                        >
+                          Clear filters
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </AppShell>

@@ -1,4 +1,4 @@
-export type JobListMode = "view" | "my-jobs" | "offers";
+export type JobListMode = "view" | "my-jobs" | "offers" | "dashboard";
 
 export type JobStatus = "in-progress" | "applied" | "in-past";
 export type MyJobsTab = JobStatus | "saved";
