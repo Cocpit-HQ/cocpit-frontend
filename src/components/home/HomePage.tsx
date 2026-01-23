@@ -76,7 +76,7 @@ export default function HomePage() {
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [activeTab, setActiveTab] = useState('recent');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  
+
   // Scroll behavior for mobile header
   const [isHeaderVisible, setIsHeaderVisible] = useState(true)
   const lastScrollY = useRef(0)
@@ -209,9 +209,8 @@ export default function HomePage() {
       <AppShell currentPage="home" navigateTo={navigateTo}>
         {/* Top Search Bar */}
         <header
-          className={`sticky top-0 z-20 border-b px-4 py-3 md:py-4 bg-background border-border transition-transform duration-300 ease-in-out ${
-            !isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
-          } md:translate-y-0`}
+          className={`sticky top-0 z-20 border-b px-4 py-3 md:py-4 bg-background border-border transition-transform duration-300 ease-in-out ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
+            } md:translate-y-0`}
         >
           <div className="max-w-5xl mx-auto">
             {/* --- Desktop Header (Visible from md screens up) --- */}
@@ -247,7 +246,7 @@ export default function HomePage() {
                         <Link
                           key={user.id}
                           href={`/profile/${user.id}`}
-                          className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+                          className="flex items-center gap-3 px-4 py-2 hover:bg-muted/50 transition-colors"
                         >
                           <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
                           <div className="flex-1 min-w-0">
@@ -377,7 +376,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Posts */}
-                <div className="space-y-3 md:space-y-4">
+                <div className="space-y-2 md:space-y-3">
                   {loading &&
                     Array.from({ length: 2 }).map((_, i) => (
                       <PostSkeleton key={i} />

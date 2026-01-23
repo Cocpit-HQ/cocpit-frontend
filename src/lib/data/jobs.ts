@@ -3,7 +3,7 @@ import type { Job } from "@/types/jobs"
 export const jobs: Job[] = [
   // Open jobs (for "View Jobs" tab)
   {
-    id: 1,
+    id: "1",
     title: "Senior Financial Analyst",
     company: "JPMorgan Chase",
     location: "New York, NY",
@@ -14,7 +14,7 @@ export const jobs: Job[] = [
     logo: "gradient-1",
   },
   {
-    id: 2,
+    id: "2",
     title: "Business Analyst",
     company: "McKinsey & Company",
     location: "Boston, MA",
@@ -25,7 +25,7 @@ export const jobs: Job[] = [
     logo: "gradient-2",
   },
   {
-    id: 3,
+    id: "3",
     title: "Product Manager",
     company: "Google",
     location: "San Francisco, CA",
@@ -36,7 +36,7 @@ export const jobs: Job[] = [
     logo: "gradient-3",
   },
   {
-    id: 4,
+    id: "4",
     title: "Data Analyst",
     company: "Meta",
     location: "Remote",
@@ -48,7 +48,7 @@ export const jobs: Job[] = [
   },
   // Offer cards (for "Offers" tab)
   {
-    id: 5,
+    id: "5",
     title: "Senior Financial Analyst",
     company: "JPMorgan Chase",
     location: "New York, NY",
@@ -60,7 +60,7 @@ export const jobs: Job[] = [
     isOffer: true,
   },
   {
-    id: 6,
+    id: "6",
     title: "Business Analyst",
     company: "McKinsey & Company",
     location: "Boston, MA",
@@ -73,7 +73,7 @@ export const jobs: Job[] = [
   },
   // My jobs (various statuses)
   {
-    id: 7,
+    id: "7",
     title: "Senior Product Analyst",
     company: "Netflix",
     location: "New York, NY",
@@ -85,7 +85,7 @@ export const jobs: Job[] = [
     status: "applied",
   },
   {
-    id: 8,
+    id: "8",
     title: "Product Designer",
     company: "Adobe",
     location: "Remote",
@@ -97,7 +97,7 @@ export const jobs: Job[] = [
     status: "in-progress",
   },
   {
-    id: 9,
+    id: "9",
     title: "UX Researcher",
     company: "Spotify",
     location: "Remote",
@@ -109,7 +109,7 @@ export const jobs: Job[] = [
     status: "in-past",
   },
   {
-    id: 10,
+    id: "10",
     title: "Product Owner",
     company: "Stripe",
     location: "San Francisco, CA",

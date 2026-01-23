@@ -74,15 +74,16 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
   const [showCreateJob, setShowCreateJob] = useState(false)
 
   // Dummy handlers for legacy prop compatibility (since we use context now)
-  const handleAddSearchLocation = () => {}
-  const handleRemoveSearchLocation = () => {}
+  const handleAddSearchLocation = () => { }
+  const handleRemoveSearchLocation = () => { }
   const handleSearch = () => {
     setIsSearchExpanded(false)
     setShowMobileSearch(false)
   }
 
   // Determine which jobs to render based on tabs
-  const openJobs = filteredJobs.filter((job) => !job.isOffer && !job.status)
+  // Correction: We WANT to show applied jobs in the main feed, so remove !job.status check
+  const openJobs = filteredJobs.filter((job) => !job.isOffer)
   const offers = filteredJobs.filter((job) => job.isOffer)
   const myFilteredJobs = myJobs.filter((job) => {
     if (myJobsTab === 'saved') {
@@ -102,9 +103,9 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
     <div className="min-h-screen bg-background">
       <AppShell currentPage="jobs" navigateTo={navigateTo}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
-            <div className="mb-2 md:mb-4">
-              <h1 className="text-3xl font-bold text-foreground">Jobs</h1>
-            </div>
+          <div className="mb-2 md:mb-4">
+            <h1 className="text-3xl font-bold text-foreground">Jobs</h1>
+          </div>
           <div className="flex flex-col gap-4">
             <JobSearchBar
               isSearchExpanded={isSearchExpanded}
@@ -134,10 +135,10 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
               </button>
 
               <button
-                 onClick={() => setShowCreateJob(true)}
-                 className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-sm"
+                onClick={() => setShowCreateJob(true)}
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-sm"
               >
-                 <Plus className="w-5 h-5" />
+                <Plus className="w-5 h-5" />
               </button>
             </div>
 
@@ -190,11 +191,11 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
                     <div className="text-center py-12 text-muted-foreground bg-card rounded-xl border border-border border-dashed">
                       <p>No jobs found matching your criteria.</p>
                       <button
-                         onClick={() => {
-                           setSearchKeywords("")
-                           // clear filters via context if exposed or manual
-                         }}
-                         className="mt-2 text-primary hover:underline"
+                        onClick={() => {
+                          setSearchKeywords("")
+                          // clear filters via context if exposed or manual
+                        }}
+                        className="mt-2 text-primary hover:underline"
                       >
                         Clear filters
                       </button>
