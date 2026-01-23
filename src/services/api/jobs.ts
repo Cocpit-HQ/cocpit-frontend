@@ -175,3 +175,18 @@ export const saveJob = async (jobId: string): Promise<void> => {
 export const unsaveJob = async (jobId: string): Promise<void> => {
     await api.delete(`/jobs/${jobId}/save`);
 };
+
+export const getDashboardStats = async () => {
+    const response = await api.get('/jobs/stats');
+    return response.data;
+};
+
+export const getJobApplicants = async (jobId: string) => {
+    const response = await api.get(`/jobs/${jobId}/applicants`);
+    return response.data;
+};
+
+export const getMyCreatedJobs = async (): Promise<Job[]> => {
+    const response = await api.get('/jobs/my');
+    return response.data.map(transformJob);
+};

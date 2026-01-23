@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useJobs } from "@/context/JobsContext"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Check, Upload, AlertCircle } from "lucide-react"
+import { Check, Upload, AlertCircle, FileText } from "lucide-react"
 import * as api from "@/services/api/jobs"
+import { getProfile } from "@/services/api/profile"
+import { UserProfile } from "@/types/user"
 
 interface QuickApplyModalProps {
   open?: boolean
@@ -29,12 +31,40 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
   const isOpen = isControlled ? open : internalOpen
 
   const [formData, setFormData] = useState({
-    name: "Alex Doe", // Mock user default
-    email: "alex@example.com",
+    name: "",
+    email: "",
     phone: "",
     resume: null as File | null,
     coverNote: ""
   })
+
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [resumeSource, setResumeSource] = useState<'profile' | 'upload'>('upload');
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+
+  // Fetch profile on mount or when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setIsLoadingProfile(true);
+      getProfile()
+        .then(data => {
+          setProfile(data);
+          setFormData(prev => ({
+            ...prev,
+            name: data.user.name,
+            email: data.user.email,
+            phone: data.user.phone || "",
+            coverNote: "" // Reset cover note on new open? optional
+          }));
+
+          if (data.resume && data.resume.url) {
+            setResumeSource('profile');
+          }
+        })
+        .catch(err => console.error("Failed to fetch profile", err))
+        .finally(() => setIsLoadingProfile(false));
+    }
+  }, [isOpen]);
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -52,8 +82,15 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
     setIsSubmitting(true)
     setError(null)
 
-    if (!formData.resume) {
+    // Validation
+    if (resumeSource === 'upload' && !formData.resume) {
       setError("Please upload your resume.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (resumeSource === 'profile' && !profile?.resume?.url) {
+      setError("No profile resume found. Please upload one.");
       setIsSubmitting(false);
       return;
     }
@@ -64,7 +101,17 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
       data.append("email", formData.email);
       data.append("phone", formData.phone);
       data.append("cover_note", formData.coverNote);
-      data.append("resume", formData.resume);
+
+      if (resumeSource === 'upload') {
+        if (formData.resume) {
+          data.append("resume", formData.resume);
+        }
+      } else {
+        // Pass the resume URL from profile
+        if (profile?.resume?.url) {
+          data.append("resume_url", profile.resume.url);
+        }
+      }
 
       await api.applyToJob(jobId, data);
 
@@ -77,8 +124,20 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
       setTimeout(() => {
         setIsSuccess(false)
         handleOpenChange(false)
-        // Reset form but keep name/email for convenience? Or full reset.
-        setFormData({ name: "Alex Doe", email: "alex@example.com", phone: "", resume: null, coverNote: "" })
+        // Reset form but keep name/email
+        if (profile) {
+          setFormData({
+            name: profile.user.name,
+            email: profile.user.email,
+            phone: profile.user.phone || "",
+            resume: null,
+            coverNote: ""
+          })
+          if (profile.resume?.url) setResumeSource('profile'); else setResumeSource('upload');
+        } else {
+          setFormData({ name: "", email: "", phone: "", resume: null, coverNote: "" })
+        }
+
       }, 2000)
 
     } catch (err: any) {
@@ -117,14 +176,18 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
                 </div>
               )}
 
+              {isLoadingProfile && (
+                <div className="text-xs text-muted-foreground text-center">Loading your profile...</div>
+              )}
+
               <div className="space-y-2">
                 <label className="text-sm font-medium">Full Name</label>
                 <input
                   required
+                  readOnly
                   type="text"
-                  className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none"
+                  className="w-full p-2 rounded-lg border border-border bg-muted text-muted-foreground focus:outline-none cursor-not-allowed"
                   value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
                 />
               </div>
 
@@ -133,10 +196,10 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
                   <label className="text-sm font-medium">Email</label>
                   <input
                     required
+                    readOnly
                     type="email"
-                    className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none"
+                    className="w-full p-2 rounded-lg border border-border bg-muted text-muted-foreground focus:outline-none cursor-not-allowed"
                     value={formData.email}
-                    onChange={e => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
@@ -151,27 +214,68 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Resume</label>
-                <div className="relative border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-muted/30 transition-colors group">
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={handleFileChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                  <Upload className="w-8 h-8 text-muted-foreground mb-2 group-hover:text-primary transition-colors" />
-                  {formData.resume ? (
-                    <div className="text-sm font-medium text-primary flex items-center gap-1">
-                      <Check className="w-4 h-4" />
-                      {formData.resume.name}
-                    </div>
-                  ) : (
-                    <>
-                      <span className="text-sm text-primary font-medium">Upload Resume</span>
-                      <span className="text-xs text-muted-foreground mt-1">PDF, DOCX up to 5MB</span>
-                    </>
-                  )}
-                </div>
+                <label className="text-sm font-medium block">Resume</label>
+
+                {profile?.resume?.url && (
+                  <div className="flex flex-col gap-2 mb-2">
+                    <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-muted/30 transition-colors">
+                      <input
+                        type="radio"
+                        name="resumeSource"
+                        value="profile"
+                        checked={resumeSource === 'profile'}
+                        onChange={() => setResumeSource('profile')}
+                        className="w-4 h-4 text-primary"
+                      />
+                      <div className="flex-1 flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <FileText className="w-4 h-4 text-primary" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">Use Profile Resume</span>
+                          <span className="text-xs text-muted-foreground max-w-[200px] truncate" title={profile.resume.originalName}>
+                            {profile.resume.originalName}
+                          </span>
+                        </div>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-muted/30 transition-colors">
+                      <input
+                        type="radio"
+                        name="resumeSource"
+                        value="upload"
+                        checked={resumeSource === 'upload'}
+                        onChange={() => setResumeSource('upload')}
+                        className="w-4 h-4 text-primary"
+                      />
+                      <span className="text-sm font-medium">Upload New Resume</span>
+                    </label>
+                  </div>
+                )}
+
+                {(resumeSource === 'upload' || !profile?.resume?.url) && (
+                  <div className={`relative border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-muted/30 transition-colors group ${profile?.resume?.url ? 'mt-0' : 'mt-2'}`}>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleFileChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <Upload className="w-8 h-8 text-muted-foreground mb-2 group-hover:text-primary transition-colors" />
+                    {formData.resume ? (
+                      <div className="text-sm font-medium text-primary flex items-center gap-1">
+                        <Check className="w-4 h-4" />
+                        {formData.resume.name}
+                      </div>
+                    ) : (
+                      <>
+                        <span className="text-sm text-primary font-medium">Upload Resume</span>
+                        <span className="text-xs text-muted-foreground mt-1">PDF, DOCX up to 5MB</span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -187,7 +291,7 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isLoadingProfile}
                   className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (

@@ -24,6 +24,10 @@ export interface UserProfile {
   skills: SkillResponse[];
   profile_views_count?: number;
   search_appearances_count?: number;
+  resume?: {
+    url: string;
+    originalName: string;
+  } | null;
 }
 
 export interface UserData {
@@ -34,6 +38,7 @@ export interface UserData {
   location: string | null;
   about: string | null;
   email: string;
+  phone?: string;
   open_to: string | null;
   availability: string | null;
   work_preference: string | null;

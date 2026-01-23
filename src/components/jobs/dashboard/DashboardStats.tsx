@@ -21,26 +21,60 @@ function StatCard({ title, value, icon: Icon, colorClass }: StatCardProps) {
     )
 }
 
+import { useEffect, useState } from "react"
+import * as api from "@/services/api/jobs"
+
 export function DashboardStats() {
+    const [stats, setStats] = useState({
+        totalJobs: 0,
+        activeJobs: 0,
+        totalApplicants: 0
+    })
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const data = await api.getDashboardStats()
+                setStats(data)
+            } catch (error) {
+                console.error("Failed to fetch dashboard stats:", error)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchStats()
+    }, [])
+
+    if (loading) {
+        return (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8 animate-pulse">
+                {[1, 2, 3].map((i) => (
+                    <div key={i} className={`h-24 rounded-xl bg-muted ${i === 1 ? 'col-span-2 md:col-span-1' : ''}`} />
+                ))}
+            </div>
+        )
+    }
+
     return (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
             <div className="col-span-2 md:col-span-1">
                 <StatCard
                     title="Total Jobs Posted"
-                    value="5"
+                    value={stats.totalJobs}
                     icon={Briefcase}
                     colorClass="bg-blue-500"
                 />
             </div>
             <StatCard
                 title="Active Jobs"
-                value="3"
+                value={stats.activeJobs}
                 icon={Briefcase}
                 colorClass="bg-green-500"
             />
             <StatCard
                 title="Total Applicants"
-                value="5"
+                value={stats.totalApplicants}
                 icon={Users}
                 colorClass="bg-pink-500"
             />

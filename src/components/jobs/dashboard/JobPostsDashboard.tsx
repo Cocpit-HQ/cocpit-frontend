@@ -6,7 +6,7 @@ import { JobPostsList } from "./JobPostsList"
 import { JobApplicantsView } from "./JobApplicantsView"
 
 export function JobPostsDashboard() {
-    const [selectedJobId, setSelectedJobId] = useState("1")
+    const [selectedJobId, setSelectedJobId] = useState("")
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -24,7 +24,7 @@ export function JobPostsDashboard() {
                         onSelectJob={setSelectedJobId}
                     />
                 </div>
-                <div className="lg:col-span-8">
+                <div className="lg:col-span-8" id="applicants-view-section">
                     <JobApplicantsView jobId={selectedJobId} />
                 </div>
             </div>

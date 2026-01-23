@@ -2,6 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { MapPin, FileText, Download, X, Check } from "lucide-react"
+import { downloadFile } from "@/utils/download"
 
 export interface Applicant {
     id: string
@@ -23,6 +24,7 @@ export interface Applicant {
         year: string
     }[]
     resumeName?: string
+    resumeUrl?: string
     initials: string
     color: string
 }
@@ -133,7 +135,16 @@ export function ApplicantDetailsModal({ open, onOpenChange, applicant }: Applica
                                         <p className="text-xs text-muted-foreground">2.4 MB • PDF Document</p>
                                     </div>
                                 </div>
-                                <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-muted transition-colors">
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        if (applicant.resumeUrl) {
+                                            const cleanName = applicant.name ? `${applicant.name.replace(/[^a-zA-Z0-9]/g, '_')}_Resume.pdf` : (applicant.resumeName || 'resume.pdf');
+                                            downloadFile(applicant.resumeUrl, cleanName);
+                                        }
+                                    }}
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-muted transition-colors"
+                                >
                                     <Download className="w-3.5 h-3.5" />
                                     Download
                                 </button>
