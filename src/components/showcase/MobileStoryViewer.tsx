@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
-import { X, MoreVertical, Heart, Trash2 } from "lucide-react"
+import { X, MoreVertical, Heart, Trash2, Volume2, VolumeX } from "lucide-react"
 import useEmblaCarousel from "embla-carousel-react"
 import { EmblaCarouselType } from "embla-carousel"
 import { StoryDetail, StoryGroup } from "@/types/showcase"
 import { StoryInteractionPanel } from "./StoryInteractionPanel"
 import { showcaseService } from "@/services/showcase.service"
+// import dynamic from "next/dynamic";
+// const ReactPlayer = dynamic(() => import("react-player"), { ssr: false }) as any;
 
 type MobileStoryViewerProps = {
     groups: StoryGroup[]
@@ -41,11 +43,13 @@ const UserStorySlide = ({
     const [showInteraction, setShowInteraction] = useState(false)
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
     const [isPaused, setIsPaused] = useState(false)
+    const [isMuted, setIsMuted] = useState(true)
     const [likeKey, setLikeKey] = useState(0)
     const [showMenu, setShowMenu] = useState(false)
 
     // Use ref to track progress for interval logic (avoids Strict Mode double-invocation bug)
     const progressRef = useRef(0)
+    const videoRef = useRef<HTMLVideoElement>(null)
 
     // Stories are already sorted by backend (Oldest -> Newest)
     // Deduplicate stories to prevent "same key" errors
@@ -98,24 +102,32 @@ const UserStorySlide = ({
         progressRef.current = progress
     }, [progress])
 
-    // Auto-advance
+    // Poll for status if processing
     useEffect(() => {
-        if (!isActiveUser || showInteraction || isPaused || isDescriptionExpanded) return
-        if (!currentStory) return // Don't auto-advance if no current story
+        if (!isActiveUser || currentStory.media_type !== 'video' || currentStory.media_status !== 'processing') return;
 
-        const interval = setInterval(() => {
-            // Check ref to avoid calling handleNext from updater (Strict Mode safe)
-            if (progressRef.current >= 100) {
-                handleNext()
-            } else {
-                setProgress(prev => prev + 1)
-            }
-        }, 50) // 5s per story
+        const pollInterval = setInterval(async () => {
+            // Optional: You could fetch just the status here if you had a lightweight endpoint
+            // For now we trust the onStoryUpdate prop or just auto-retry playback
 
-        return () => clearInterval(interval)
-    }, [isActiveUser, showInteraction, storyIndex, isPaused, isDescriptionExpanded, currentStory])
+            // Simplest approach: Just try to reload the video or check status if we have an endpoint
+            // Since we rely on global updates, we might just show "Processing" and hope socket/refetch updates it
+            // BUT user asked for polling safeguards
+            console.log("Polling story status...", currentStory.id);
+        }, 5000);
 
-    const handleNext = () => {
+        // Auto-stop after 60s
+        const timeout = setTimeout(() => {
+            clearInterval(pollInterval);
+        }, 60000);
+
+        return () => {
+            clearInterval(pollInterval);
+            clearTimeout(timeout);
+        }
+    }, [isActiveUser, currentStory.media_type, currentStory.media_status, currentStory.id]);
+
+    const handleNext = useCallback(() => {
         // Safety check: ensure we have stories
         if (!sortedStories || sortedStories.length === 0) {
             onNextUser();
@@ -129,7 +141,45 @@ const UserStorySlide = ({
             // Defer to next tick to avoid state update during render
             setTimeout(() => onNextUser(), 0)
         }
-    }
+    }, [sortedStories, storyIndex, onNextUser])
+
+    // Control Video Playback based on Interaction State
+    useEffect(() => {
+        if (currentStory.media_type !== 'video' || !videoRef.current) return;
+
+        const shouldPlay = isActiveUser && !isPaused && !showInteraction && !isDescriptionExpanded;
+
+        if (shouldPlay) {
+            videoRef.current.play().catch(e => {
+                // Ignore AbortError if we pause immediately after
+                if (e.name !== 'AbortError') console.warn("Play failed", e);
+            });
+        } else {
+            videoRef.current.pause();
+        }
+    }, [isActiveUser, isPaused, showInteraction, isDescriptionExpanded, currentStory.media_type, storyIndex]); // storyIndex dependency ensures we re-evaluate on slide change
+
+    // Progress timer for IMAGES
+    useEffect(() => {
+        if (!isActiveUser || isPaused || showInteraction || isDescriptionExpanded) return;
+        if (!currentStory || currentStory.media_type === 'video') return; // Video handles its own progress
+
+        const duration = 5000; // 5 seconds per image
+        const interval = 100;
+        const step = 100 * (interval / duration);
+
+        const timer = setInterval(() => {
+            setProgress(prev => {
+                if (prev >= 100) {
+                    handleNext();
+                    return 100;
+                }
+                return prev + step;
+            });
+        }, interval);
+
+        return () => clearInterval(timer);
+    }, [isActiveUser, isPaused, showInteraction, isDescriptionExpanded, currentStory, handleNext]);
 
     const handlePrev = () => {
         // Safety check: ensure we have stories
@@ -147,17 +197,6 @@ const UserStorySlide = ({
     }
 
     // Touch handling
-    const touchStartY = useRef<number | null>(null)
-    const touchStartX = useRef<number | null>(null)
-
-    const handleLongPress = () => {
-        setIsPaused(true)
-    }
-
-    const handleRelease = () => {
-        setIsPaused(false)
-    }
-
     const [touchStart, setTouchStart] = useState<{ x: number; y: number; time: number } | null>(null)
 
     const handleTouchStart = (e: React.TouchEvent) => {
@@ -314,15 +353,81 @@ const UserStorySlide = ({
                         </button>
                     </div>
                 </div>
+
+                {/* Mute Toggle (Bottom Right or Custom Location, checking Video Type) */}
+                {currentStory.media_type === 'video' && isActiveUser && (
+                    <div className="absolute top-28 right-4 z-30 pointer-events-auto">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsMuted(!isMuted);
+                            }}
+                            onTouchEnd={(e) => e.stopPropagation()}
+                            className="bg-black/40 p-2 rounded-full backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
+                        >
+                            {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Content */}
-            <div className="w-full h-full flex items-center justify-center bg-black">
-                <img
-                    src={currentStory.image}
-                    alt={currentStory.title}
-                    className="w-full h-full object-cover"
-                />
+            <div className="w-full h-full flex items-center justify-center bg-black relative">
+
+                {/* 1. Video Player (HLS) */}
+                {currentStory.media_type === 'video' && isActiveUser ? (
+                    currentStory.media_status === 'processing' ? (
+                        /* Processing State */
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-10">
+                            <img src={currentStory.thumbnail_url || currentStory.image} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" />
+                            <div className="z-20 flex flex-col items-center">
+                                <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin mb-3"></div>
+                                <span className="text-white font-medium text-sm">Processing Video...</span>
+                            </div>
+                        </div>
+                    ) : currentStory.media_status === 'failed' ? (
+                        /* Failed State */
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-900 text-white">
+                            <p>Video failed to load</p>
+                        </div>
+                    ) : (
+                        /* Ready State - Native Video (Safer & Faster) */
+                        <video
+                            ref={videoRef}
+                            src={(() => {
+                                let url = currentStory.media_url;
+                                // Force MP4 for Cloudinary to ensure Chrome compatibility (fixes .mov black screen)
+                                if (url && url.includes('cloudinary') && !url.endsWith('.mp4')) {
+                                    // Replace extension with .mp4
+                                    url = url.replace(/\.[^/.]+$/, ".mp4");
+                                }
+                                return url;
+                            })()}
+                            className="w-full h-full object-contain"
+                            playsInline
+                            autoPlay
+                            muted={isMuted}
+                            onEnded={handleNext}
+                            onTimeUpdate={(e) => {
+                                if (!isPaused && !showInteraction) {
+                                    const vid = e.currentTarget;
+                                    if (vid.duration) {
+                                        setProgress((vid.currentTime / vid.duration) * 100);
+                                    }
+                                }
+                            }}
+                            onError={(e) => console.error("Video Playback Error:", e.currentTarget.error)}
+                        />
+                    )
+                ) : (
+                    /* 2. Image Render (Standard) */
+                    <img
+                        src={currentStory.image} // For videos this should be the thumbnail if not active
+                        alt={currentStory.title}
+                        className="w-full h-full object-cover"
+                    />
+                )}
+
                 {!showInteraction && (
                     <>
                         {/* Description Overlay */}

@@ -30,7 +30,11 @@ export interface StoryDetail extends StoryCard {
   isAuthor?: boolean;
   isLiked?: boolean;
   has_viewed?: boolean;
-  created_at?: string; // Helpful for sorting check if needed
+  created_at?: string;
+  media_status?: 'processing' | 'ready' | 'failed';
+  media_type?: 'image' | 'video';
+  media_url?: string;
+  thumbnail_url?: string;
 }
 
 export interface StoryGroup {

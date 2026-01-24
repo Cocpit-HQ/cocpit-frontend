@@ -19,5 +19,9 @@ export const mapStory = (story: any): StoryDetail => ({
     },
     isAuthor: story.is_author,
     isLiked: story.has_liked,
-    has_viewed: story.has_viewed
+    has_viewed: story.has_viewed,
+    media_status: story.media_status,
+    media_type: story.media_type,
+    media_url: story.media_url,
+    thumbnail_url: story.thumbnail_url
 });

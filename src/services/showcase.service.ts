@@ -9,8 +9,19 @@ export const showcaseService = {
         return data.map(mapStory);
     },
 
-    createStory: async (storyData: { title: string; description: string; media_url: string }) => {
+    createStory: async (storyData: { title: string; description: string; media_url: string; media_type?: string; public_id?: string; media_status?: string }) => {
         const { data } = await api.post("/story", storyData);
+        return data;
+    },
+
+    uploadMedia: async (file: File) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        const { data } = await api.post("/upload/story", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
         return data;
     },
 

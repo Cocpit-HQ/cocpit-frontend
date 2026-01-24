@@ -26,12 +26,41 @@ export function CreateStoryForm({ onCancel, onCreated }: Props) {
   const handleCreate = async () => {
     if ((!selectedImage && !selectedVideo) || isSubmitting) return
 
+    // Duration Check (for video)
+    if (selectedVideo) {
+      const video = document.createElement('video');
+      video.src = selectedVideo;
+      await new Promise((resolve) => {
+        video.onloadedmetadata = () => resolve(true);
+      });
+      if (video.duration > 30) {
+        alert("Video must be 30 seconds or less.");
+        return;
+      }
+    }
+
     setIsSubmitting(true)
     try {
+      let mediaData = { url: "", public_id: "", media_type: "image" };
+
+      // select File object - we need to store it in state or ref, currently we only have base64 in selectedImage/Video
+      // For this refactor, we need to capture the File object in handleUpload
+      if (fileRef.current) {
+        const uploadRes = await showcaseService.uploadMedia(fileRef.current);
+        mediaData = {
+          url: uploadRes.url,
+          public_id: uploadRes.public_id,
+          media_type: uploadRes.media_type
+        };
+      }
+
       const createdStory = await showcaseService.createStory({
-        title: "My New Story", // You might want to add a title input field
+        title: "My New Story",
         description,
-        media_url: selectedImage || selectedVideo || ""
+        media_url: mediaData.url,
+        media_type: mediaData.media_type,
+        public_id: mediaData.public_id,
+        media_status: mediaData.media_type === 'video' ? 'processing' : 'ready'
       });
 
       if (onCreated) {
@@ -39,16 +68,21 @@ export function CreateStoryForm({ onCancel, onCreated }: Props) {
       }
     } catch (error) {
       console.error("Failed to create story", error)
-      setIsSubmitting(false) // Only reset on error, success will close modal
+      setIsSubmitting(false)
     }
   }
+
+  // We need to store the actual file
+  const fileRef = useRef<File | null>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      fileRef.current = file;
       const reader = new FileReader()
       reader.onloadend = () => {
         setSelectedImage(reader.result as string)
+        setSelectedVideo(null)
       }
       reader.readAsDataURL(file)
     }
@@ -57,9 +91,11 @@ export function CreateStoryForm({ onCancel, onCreated }: Props) {
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      fileRef.current = file;
       const reader = new FileReader()
       reader.onloadend = () => {
         setSelectedVideo(reader.result as string)
+        setSelectedImage(null)
       }
       reader.readAsDataURL(file)
     }

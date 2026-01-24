@@ -180,14 +180,24 @@ export function StoryModal({ story, onClose, onStoryUpdate }: StoryModalProps) {
 
         <div className="flex-1 overflow-hidden flex">
           <div className={`flex flex-col transition-all duration-500 ${showComments ? "w-1/2" : "w-full"}`}>
-            <div className="relative overflow-hidden bg-black aspect-video">
-              <img src={story.image} alt={story.title} className="w-full h-full object-contain" />
-              {story.isVideo && (
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                  <div className="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center hover:scale-110 transition-transform cursor-pointer">
-                    <Play className="w-10 h-10 text-black ml-1" />
+            <div className="relative overflow-hidden bg-black aspect-video flex items-center justify-center">
+              {story.media_type === 'video' ? (
+                story.media_status === 'processing' ? (
+                  <div className="flex flex-col items-center justify-center text-white">
+                    <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mb-2" />
+                    <span>Processing...</span>
                   </div>
-                </div>
+                ) : (
+                  <video
+                    src={story.media_url}
+                    className="w-full h-full object-contain"
+                    controls
+                    playsInline
+                    poster={story.thumbnail_url || story.image}
+                  />
+                )
+              ) : (
+                <img src={story.image} alt={story.title} className="w-full h-full object-contain" />
               )}
             </div>
 

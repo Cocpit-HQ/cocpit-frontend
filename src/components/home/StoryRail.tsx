@@ -48,12 +48,31 @@ export function StoryRail({ groups, onCreateClick, onStoryClick }: StoryRailProp
               <div key="my-story" className="flex-shrink-0 w-28 h-40 relative border-2 border-blue-500 rounded-xl overflow-hidden">
                 <button
                   onClick={() => onStoryClick(story)}
-                  className="w-full h-full rounded-xl overflow-hidden group"
+                  className="w-full h-full rounded-xl overflow-hidden group bg-black"
                 >
                   <img
-                    src={story.image}
+                    src={(() => {
+                      // Use explicit thumbnail if available
+                      if (story.thumbnail_url) return story.thumbnail_url;
+
+                      // If image is a video URL (or it's a video type), try to generate a jpg thumbnail from Cloudinary
+                      if (story.media_type === 'video' || (story.image && (story.image.endsWith('.mp4') || story.image.endsWith('.mov')))) {
+                        if (story.image && story.image.includes('cloudinary')) {
+                          // Cloudinary video -> jpg hack
+                          return story.image.replace(/\.[^/.]+$/, ".jpg");
+                        }
+                        // Fallback to story.image but it might be video... render nothing if video so bg-black shows? 
+                        // Or return undefined to show alt text/black bg
+                        return undefined;
+                      }
+                      return story.image;
+                    })() || story.image}
                     alt={story.title}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    onError={(e) => {
+                      // Fallback on error
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   <span className="absolute bottom-2 left-0 w-full text-white text-xs font-medium truncate text-center shadow-black drop-shadow-md">
@@ -84,16 +103,30 @@ export function StoryRail({ groups, onCreateClick, onStoryClick }: StoryRailProp
             <button
               key={group.author.id}
               onClick={() => onStoryClick(story)}
-              className={`flex-shrink-0 w-28 h-40 rounded-xl relative overflow-hidden group`}
+              className={`flex-shrink-0 w-28 h-40 rounded-xl relative overflow-hidden group bg-black`}
             >
               <img
-                src={story.image}
+                src={(() => {
+                  // Use explicit thumbnail if available
+                  if (story.thumbnail_url) return story.thumbnail_url;
+
+                  if (story.media_type === 'video' || (story.image && (story.image.endsWith('.mp4') || story.image.endsWith('.mov')))) {
+                    if (story.image && story.image.includes('cloudinary')) {
+                      return story.image.replace(/\.[^/.]+$/, ".jpg");
+                    }
+                    return undefined;
+                  }
+                  return story.image;
+                })() || story.image}
                 alt={story.title}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
-              {story.isVideo && (
+              {story.media_type === 'video' && (
                 <div className="absolute top-2 right-2">
                   <Play className="w-4 h-4 text-white fill-white" />
                 </div>
