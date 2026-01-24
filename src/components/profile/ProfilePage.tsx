@@ -215,9 +215,8 @@ export default function ProfilePage() {
     }
   };
 
-  if (!mounted) {
-    return null;
-  }
+  // Removed blocking render to allow sidebar to persist
+  // if (!mounted) { return null; }
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
@@ -423,236 +422,244 @@ export default function ProfilePage() {
     workPreference: user?.work_preference as "Remote" | "Hybrid" | "Onsite" || "Hybrid",
   };
 
+  const isLoading = !mounted || !user;
+
   return (
     <div className="min-h-screen bg-background">
       <AppShell currentPage="profile" navigateTo={navigateTo}>
         <div className="max-w-7xl mx-auto pt-0 md:pt-8 pb-20 md:pb-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
-            <div className="lg:col-span-8">
-              <div
-                className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border"
-              >
-                <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage}>
-                  <div className="absolute top-3 right-3 md:hidden z-10">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="bg-transparent text-white p-2 rounded-full hover:bg-white/10 transition-all">
-                          <Menu className="w-5 h-5" />
+          {isLoading ? (
+            <div className="flex items-center justify-center min-h-[50vh]">
+              <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+              <div className="lg:col-span-8">
+                <div
+                  className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border"
+                >
+                  <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage}>
+                    <div className="absolute top-3 right-3 md:hidden z-10">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="bg-transparent text-white p-2 rounded-full hover:bg-white/10 transition-all">
+                            <Menu className="w-5 h-5" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="bg-black/50 backdrop-blur-sm border-white/20 text-white">
+                          <DropdownMenuItem onSelect={() => router.push("/settings")}>
+                            Settings
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => router.push("/analytics")}>
+                            Analytics
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={handleLogout}>
+                            <LogOut className="w-4 h-4 mr-2" />
+                            Log out
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <div className="hidden md:flex absolute top-3 right-3 gap-2 z-10">
+                      <button onClick={() => router.push('/analytics')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
+                        View Analytics
+                      </button>
+                      <button onClick={() => router.push('/profile/edit')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
+                        <Edit2 className="w-4 h-4" />
+                        Edit Profile
+                      </button>
+                    </div>
+                  </EditCoverPhoto>
+
+
+                  <div className="px-6 pb-6">
+                    <div className="flex items-start justify-between -mt-14 mb-4">
+                      <div className="relative group">
+                        <div
+                          className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 cursor-pointer"
+                          onClick={() => setIsViewAvatarOpen(true)}
+                        >
+                          <img
+                            src={user?.avatar ?? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop"}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
+                        {/* Pencil Icon for Edit Avatar */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsEditAvatarOpen(true);
+                          }}
+                          className="absolute bottom-1 right-1 p-2 bg-background border border-border rounded-full text-muted-foreground hover:text-foreground shadow-sm md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                          aria-label="Edit Profile Picture"
+                        >
+                          <Pencil className="w-4 h-4" />
                         </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="bg-black/50 backdrop-blur-sm border-white/20 text-white">
-                        <DropdownMenuItem onSelect={() => router.push("/settings")}>
-                          Settings
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => router.push("/analytics")}>
-                          Analytics
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={handleLogout}>
-                          <LogOut className="w-4 h-4 mr-2" />
-                          Log out
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  <div className="hidden md:flex absolute top-3 right-3 gap-2 z-10">
-                    <button onClick={() => router.push('/analytics')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
-                      View Analytics
-                    </button>
-                    <button onClick={() => router.push('/profile/edit')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
-                      <Edit2 className="w-4 h-4" />
-                      Edit Profile
-                    </button>
-                  </div>
-                </EditCoverPhoto>
-
-
-                <div className="px-6 pb-6">
-                  <div className="flex items-start justify-between -mt-14 mb-4">
-                    <div className="relative group">
-                      <div
-                        className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 cursor-pointer"
-                        onClick={() => setIsViewAvatarOpen(true)}
-                      >
-                        <img
-                          src={user?.avatar ?? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop"}
-                          alt="Profile"
-                          className="w-full h-full object-cover"
-                        />
                       </div>
 
-                      {/* Pencil Icon for Edit Avatar */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsEditAvatarOpen(true);
-                        }}
-                        className="absolute bottom-1 right-1 p-2 bg-background border border-border rounded-full text-muted-foreground hover:text-foreground shadow-sm md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-                        aria-label="Edit Profile Picture"
-                      >
-                        <Pencil className="w-4 h-4" />
+                      <button onClick={() => router.push('/profile/edit')} className="md:hidden mt-16 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center gap-2 text-sm">
+                        <Edit2 className="w-4 h-4" />
+                        Edit Profile
                       </button>
                     </div>
 
-                    <button onClick={() => router.push('/profile/edit')} className="md:hidden mt-16 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center gap-2 text-sm">
-                      <Edit2 className="w-4 h-4" />
-                      Edit Profile
-                    </button>
-                  </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h1 className="text-2xl text-foreground">{user?.name}</h1>
+                        <CheckCircle className="w-5 h-5 text-primary fill-primary/10" />
+                        <span className="text-sm text-muted-foreground">· 2nd</span>
+                      </div>
 
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h1 className="text-2xl text-foreground">{user?.name}</h1>
-                      <CheckCircle className="w-5 h-5 text-primary fill-primary/10" />
-                      <span className="text-sm text-muted-foreground">· 2nd</span>
+                      <p className="text-base mb-2 text-foreground">
+                        {user?.headline}
+                      </p>
+
+                      <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
+                        <span>{user?.location}</span>
+                        <span>·</span>
+                        <a href="#" className="text-primary hover:underline">
+                          Contact info
+                        </a>
+                      </div>
+
+                      <p className="text-sm text-muted-foreground mb-4">500+ connections</p>
+                      <ProfileIdentityChips initialIdentity={profileIdentity} />
                     </div>
+                  </div>
+                </div>
 
-                    <p className="text-base mb-2 text-foreground">
-                      {user?.headline}
-                    </p>
-
-                    <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
-                      <span>{user?.location}</span>
-                      <span>·</span>
-                      <a href="#" className="text-primary hover:underline">
-                        Contact info
-                      </a>
+                <div
+                  className="rounded-xl border p-4 mb-6 bg-card border-border"
+                >
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <p className="text-xl mb-1 text-foreground">500+</p>
+                      <p className="text-xs text-muted-foreground">Connections</p>
                     </div>
-
-                    <p className="text-sm text-muted-foreground mb-4">500+ connections</p>
-                    <ProfileIdentityChips initialIdentity={profileIdentity} />
+                    <div className="text-center border-l border-r border-border">
+                      <p className="text-xl mb-1 text-foreground">{user?.profile_views}</p>
+                      <p className="text-xs text-muted-foreground">Profile Views</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xl mb-1 text-foreground">{user?.search_appearances}</p>
+                      <p className="text-xs text-muted-foreground">Search Appearances</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div
-                className="rounded-xl border p-4 mb-6 bg-card border-border"
-              >
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <p className="text-xl mb-1 text-foreground">500+</p>
-                    <p className="text-xs text-muted-foreground">Connections</p>
+                <LivingResume experiences={experiences} skills={skills.map(s => s.name)} />
+
+                <div
+                  className="rounded-xl border p-6 mb-4 bg-card border-border"
+                >
+                  <h2 className="text-xl text-foreground mb-4">About</h2>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {user?.about}
+                  </p>
+                </div>
+
+                <div
+                  className="rounded-xl border p-6 mb-4 bg-card border-border"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl text-foreground">Experience</h2>
+                    <button onClick={handleAddExperienceClick} className="text-primary hover:underline text-sm">Add</button>
                   </div>
-                  <div className="text-center border-l border-r border-border">
-                    <p className="text-xl mb-1 text-foreground">{user?.profile_views}</p>
-                    <p className="text-xs text-muted-foreground">Profile Views</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xl mb-1 text-foreground">{user?.search_appearances}</p>
-                    <p className="text-xs text-muted-foreground">Search Appearances</p>
-                  </div>
-                </div>
-              </div>
 
-              <LivingResume experiences={experiences} skills={skills.map(s => s.name)} />
-
-              <div
-                className="rounded-xl border p-6 mb-4 bg-card border-border"
-              >
-                <h2 className="text-xl text-foreground mb-4">About</h2>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {user?.about}
-                </p>
-              </div>
-
-              <div
-                className="rounded-xl border p-6 mb-4 bg-card border-border"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl text-foreground">Experience</h2>
-                  <button onClick={handleAddExperienceClick} className="text-primary hover:underline text-sm">Add</button>
-                </div>
-
-                <div className="space-y-6">
-                  {experiences.map(exp => (
-                    <ExperienceItem
-                      key={exp.experience_id}
-                      experience={exp}
-                      onEdit={() => handleEditExperienceClick(exp)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div
-                className="rounded-xl border p-6 mb-4 bg-card border-border"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl text-foreground">Skills</h2>
-                  <button onClick={() => setIsAddSkillModalOpen(true)} className="text-primary hover:underline text-sm">Add</button>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {skills.map((skill: any, index) => {
-                    const skillName = skill.name || (typeof skill === 'string' ? skill : '');
-                    if (!skillName) return null;
-                    return (
-                      <SkillProofPill
-                        key={skill.skill_id || `skill-${index}`}
-                        skill={skillName}
-                        experiences={experiences}
-                        posts={previewPosts}
-                        onDelete={handleDeleteSkill}
+                  <div className="space-y-6">
+                    {experiences.map(exp => (
+                      <ExperienceItem
+                        key={exp.experience_id}
+                        experience={exp}
+                        onEdit={() => handleEditExperienceClick(exp)}
                       />
-                    );
-                  })}
+                    ))}
+                  </div>
+                </div>
+
+                <div
+                  className="rounded-xl border p-6 mb-4 bg-card border-border"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl text-foreground">Skills</h2>
+                    <button onClick={() => setIsAddSkillModalOpen(true)} className="text-primary hover:underline text-sm">Add</button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {skills.map((skill: any, index) => {
+                      const skillName = skill.name || (typeof skill === 'string' ? skill : '');
+                      if (!skillName) return null;
+                      return (
+                        <SkillProofPill
+                          key={skill.skill_id || `skill-${index}`}
+                          skill={skillName}
+                          experiences={experiences}
+                          posts={previewPosts}
+                          onDelete={handleDeleteSkill}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border p-6 bg-card border-border">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl text-foreground">Education</h2>
+                    <button onClick={handleAddEducationClick} className="text-primary hover:underline text-sm">Add</button>
+                  </div>
+
+                  <div className="space-y-6">
+                    {educations.map(edu => (
+                      <EducationItem
+                        key={edu.education_id}
+                        education={edu}
+                        onEdit={() => handleEditEducationClick(edu)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl text-foreground font-semibold">Latest Posts</h2>
+                    <Link href="/profile/posts" className="text-sm text-primary hover:underline">
+                      See all posts
+                    </Link>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {previewPosts.map(post => (
+                      isMobile ? (
+                        <PostCard
+                          key={post.id}
+                          post={post}
+                          isOwnPost={true}
+                          onDelete={handleDeletePost}
+                        />
+                      ) : (
+                        <FeedPost
+                          key={post.id}
+                          {...post}
+                          initialComments={post.commentData}
+                          isOwnPost={true}
+                          onDelete={handleDeletePost}
+                          onToggleVisibility={handleToggleVisibility}
+                          isProfileView={true}
+                        />
+                      )
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div className="rounded-xl border p-6 bg-card border-border">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl text-foreground">Education</h2>
-                  <button onClick={handleAddEducationClick} className="text-primary hover:underline text-sm">Add</button>
-                </div>
-
-                <div className="space-y-6">
-                  {educations.map(edu => (
-                    <EducationItem
-                      key={edu.education_id}
-                      education={edu}
-                      onEdit={() => handleEditEducationClick(edu)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl text-foreground font-semibold">Latest Posts</h2>
-                  <Link href="/profile/posts" className="text-sm text-primary hover:underline">
-                    See all posts
-                  </Link>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  {previewPosts.map(post => (
-                    isMobile ? (
-                      <PostCard
-                        key={post.id}
-                        post={post}
-                        isOwnPost={true}
-                        onDelete={handleDeletePost}
-                      />
-                    ) : (
-                      <FeedPost
-                        key={post.id}
-                        {...post}
-                        initialComments={post.commentData}
-                        isOwnPost={true}
-                        onDelete={handleDeletePost}
-                        onToggleVisibility={handleToggleVisibility}
-                        isProfileView={true}
-                      />
-                    )
-                  ))}
+              <div className="lg:col-span-4">
+                <div className="sticky top-8 space-y-6">
+                  <SuggestionsPanel />
                 </div>
               </div>
             </div>
-
-            <div className="lg:col-span-4">
-              <div className="sticky top-8 space-y-6">
-                <SuggestionsPanel />
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </AppShell>
 
