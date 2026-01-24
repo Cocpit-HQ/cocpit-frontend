@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -34,9 +34,68 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
   const isUserOnline = (userId: string) => onlineUsers.has(userId);
 
-  useEffect(() => {
-    if (!socket) return;
+  // Ref to track the current token to prevent checking equality against a changing dependency causing loops
+  const tokenRef = useRef<string | null>(null);
+  const socketRef = useRef<Socket | null>(null);
 
+  useEffect(() => {
+    const token = session?.user?.accessToken;
+
+    if (!token) {
+      // If we have a socket but lost the token, disconnect
+      if (socketRef.current) {
+        console.log("Token lost, disconnecting socket");
+        socketRef.current.disconnect();
+        socketRef.current = null;
+        setSocket(null);
+        setIsConnected(false);
+      }
+      return;
+    }
+
+    // Check if token changed or socket is missing
+    if (socketRef.current && tokenRef.current === token) {
+      if (!socketRef.current.connected) {
+        console.log("Socket exists but disconnected, reconnecting...");
+        socketRef.current.connect();
+      }
+      return; // Token is the same, do nothing
+    }
+
+    console.log("Initializing Socket with token:", token.substring(0, 10) + "...", "Old Token:", tokenRef.current ? "Present" : "None");
+    tokenRef.current = token;
+
+    // Cleanup old if exists (should be handled by cleanup func, but explicit here for safety before overwrite)
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current.removeAllListeners();
+    }
+
+    const newSocket = io(SOCKET_URL, {
+      auth: { token },
+      transports: ["websocket"], // Force WebSocket to verify stability
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+    });
+
+    newSocket.on('connect', () => {
+      console.log("Socket connected:", newSocket.id);
+      setIsConnected(true);
+    });
+
+    newSocket.on('disconnect', (reason) => {
+      console.log("Socket disconnected. Reason:", reason);
+      setIsConnected(false);
+    });
+
+    newSocket.on("connect_error", (err) => {
+      console.error("Socket connection error:", err.message);
+      // If 401, maybe token expired?
+    });
+
+    // Handle incoming events
     const handleNotification = (payload: NotificationPayload) => {
       if (payload.type === 'message') {
         toast({
@@ -84,61 +143,27 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       });
     };
 
-    socket.on('notification', handleNotification);
-    socket.on('userStatusChanged', handleUserStatus);
+    newSocket.on('notification', handleNotification);
+    newSocket.on('userStatusChanged', handleUserStatus);
+
+    socketRef.current = newSocket;
+    setSocket(newSocket);
 
     return () => {
-      socket.off('notification', handleNotification);
-      socket.off('userStatusChanged', handleUserStatus);
-    };
-  }, [socket, toast, router]);
+      // Cleanup function
+      // If the component unmounts, we disconnect.
+      // If the token changes, this runs, then the effect body runs.
 
-  useEffect(() => {
-    const token = session?.user?.accessToken;
+      // We rely on the effect body to handle the 'token change' replacement.
+      // But we must clean up listeners.
 
-    if (!token) {
-      return;
-    }
-
-    // If socket already exists and token hasn't changed (re-renders), we might not want to reconnect unless token changed.
-    // However, the token dependency handles that.
-
-    // Note: session.user.accessToken comes from NextAuth.
-    // If it rotates, this effect runs again, creating a new socket.
-
-    const newSocket = io(SOCKET_URL, {
-      auth: { token },
-      transports: ["websocket", "polling"],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    });
-
-    newSocket.on('connect', () => {
-      console.log("Socket connected");
-      setIsConnected(true);
-    });
-
-    newSocket.on('disconnect', () => {
-      console.log("Socket disconnected");
-      setIsConnected(false);
-    });
-
-    newSocket.on("connect_error", (err) => {
-      console.error("Socket connection error:", err.message);
-      // Handle token expiration or auth error if needed
-    });
-
-    setTimeout(() => {
-      setSocket(newSocket);
-    }, 0);
-
-    return () => {
+      // Note: In strict mode, verify if this disconnects prematurely.
+      console.log("Socket cleanup triggered for token:", token.substring(0, 10) + "...");
+      newSocket.off('notification', handleNotification);
+      newSocket.off('userStatusChanged', handleUserStatus);
       newSocket.disconnect();
-      setSocket(null);
-      setIsConnected(false);
     };
-  }, [session?.user?.accessToken]);
+  }, [session?.user?.accessToken, toast, router]);
 
   return (
     <SocketContext.Provider value={{ socket, isConnected, onlineUsers, isUserOnline }}>
