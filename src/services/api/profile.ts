@@ -129,6 +129,26 @@ export const deleteAvatar = async (): Promise<DeleteAvatarResponse> => {
   return response.data;
 };
 
+
+export interface UploadCoverResponse {
+  message: string;
+  coverUrl: string;
+}
+
+export interface DeleteCoverResponse {
+  message: string;
+}
+
+export const uploadCoverPhoto = async (formData: FormData): Promise<UploadCoverResponse> => {
+  const response = await api.post("/profile/cover", formData);
+  return response.data;
+};
+
+export const deleteCoverPhoto = async (): Promise<DeleteCoverResponse> => {
+  const response = await api.delete("/profile/cover");
+  return response.data;
+};
+
 export const getIdentity = async (): Promise<any> => {
   const response = await api.get("/profile/identity");
   return response.data;
@@ -142,3 +162,4 @@ export const updateIdentity = async (identity: {
   const response = await api.put("/profile/identity", identity);
   return response.data;
 };
+

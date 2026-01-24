@@ -1,6 +1,6 @@
 import React from "react"
 import { MapPin, Users, Calendar } from "lucide-react"
-import type { EventCard } from "@/types/events"
+import type { EventCard } from "@/types/event"
 
 interface StandardEventCardProps {
   event: EventCard
@@ -8,17 +8,19 @@ interface StandardEventCardProps {
   className?: string
   isRegistered: boolean
   isSaved: boolean
+  isSaving?: boolean
   onToggleSave: (e: React.MouseEvent) => void
 }
 
-export function StandardEventCard({ event, onClick, className = "", isRegistered, isSaved, onToggleSave }: StandardEventCardProps) {
-  
+export function StandardEventCard({ event, onClick, className = "", isRegistered, isSaved, isSaving, onToggleSave }: StandardEventCardProps) {
+
   return (
     <div
       onClick={onClick}
       className={`rounded-2xl overflow-hidden border group cursor-pointer hover:-translate-y-1 transition-all duration-300 bg-card border-border hover:border-primary/50 hover:shadow-lg relative ${className}`}
     >
       <div className="relative h-48 overflow-hidden">
+        {/* ... (existing image code) ... */}
         <img
           src={event.image}
           alt={event.title}
@@ -75,17 +77,22 @@ export function StandardEventCard({ event, onClick, className = "", isRegistered
           </div>
           <div className="flex gap-2 items-center">
             <button
-                onClick={onToggleSave}
-                className="text-muted-foreground hover:text-primary transition-colors"
+              onClick={onToggleSave}
+              disabled={isSaving}
+              className={`text-muted-foreground hover:text-primary transition-colors ${isSaving ? 'opacity-50 cursor-wait' : ''}`}
             >
-                {isSaved ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
-                ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bookmark"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
-                )}
+              {isSaving ? (
+                <div className="w-5 h-5 flex items-center justify-center">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : isSaved ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" /></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bookmark"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" /></svg>
+              )}
             </button>
             <button className="text-sm font-semibold text-primary hover:underline">
-                {isRegistered ? "View Ticket" : "View Details"}
+              {isRegistered ? "View Ticket" : "View Details"}
             </button>
           </div>
         </div>

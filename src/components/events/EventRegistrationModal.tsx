@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { EventCard } from '@/types/events';
+import { EventCard } from '@/types/event';
 import { useEvents } from '@/context/EventsContext';
 
 interface EventRegistrationModalProps {
@@ -32,6 +32,7 @@ export const EventRegistrationModal = ({
   const [jobTitle, setJobTitle] = useState('');
   const [isPaymentDone, setIsPaymentDone] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!event) return null;
 
@@ -44,14 +45,30 @@ export const EventRegistrationModal = ({
     }, 1000);
   };
 
-  const handleRegister = () => {
-    // Mock registration
-    setTimeout(() => {
-      setIsRegistered(true);
-      if (event) {
-        registerForEvent(event.id);
+  const handleRegister = async () => {
+    if (event) {
+      setError(null);
+      const result = await registerForEvent(event.id, {
+        name,
+        email,
+        mobile_number: mobile,
+        company_name: company,
+        job_title: jobTitle,
+      });
+
+      if (result.success) {
+        setIsRegistered(true);
+      } else {
+        const error: any = result.error;
+        if (error?.response?.data?.error) {
+          setError(error.response.data.error);
+        } else if (error?.response?.data?.message) {
+          setError(error.response.data.message);
+        } else {
+          setError("Failed to register. Please try again.");
+        }
       }
-    }, 1000);
+    }
   };
 
   const handleCloseAndRedirect = () => {
@@ -68,6 +85,11 @@ export const EventRegistrationModal = ({
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-md text-sm mb-2">
+              {error}
+            </div>
+          )}
           {isRegistered ? (
             <div className="text-center">
               <p className="text-muted-foreground">
@@ -159,9 +181,8 @@ export const EventRegistrationModal = ({
                       </p>
                       <div className="mt-4">
                         <Button
-                          className={`w-full ${
-                            isPaymentDone ? 'bg-green-500 hover:bg-green-600 text-white' : ''
-                          }`}
+                          className={`w-full ${isPaymentDone ? 'bg-green-500 hover:bg-green-600 text-white' : ''
+                            }`}
                           onClick={handlePayment}
                           disabled={isPaymentDone || isRegistered}
                         >
@@ -184,12 +205,12 @@ export const EventRegistrationModal = ({
         <DialogFooter>
           {isRegistered ? (
             <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={() => alert("Mock Ticket Download")}>
-                    Download Ticket
-                </Button>
-                <Button type="button" onClick={handleCloseAndRedirect}>
-                    Close
-                </Button>
+              <Button type="button" variant="outline" onClick={() => alert("Mock Ticket Download")}>
+                Download Ticket
+              </Button>
+              <Button type="button" onClick={handleCloseAndRedirect}>
+                Close
+              </Button>
             </div>
           ) : (
             <>
@@ -199,7 +220,7 @@ export const EventRegistrationModal = ({
               <Button
                 type="submit"
                 onClick={handleRegister}
-                disabled={(isPremium && !isPaymentDone) || isRegistered}
+                disabled={!name || !email || !mobile || (isPremium && !isPaymentDone) || isRegistered}
               >
                 Register
               </Button>

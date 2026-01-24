@@ -35,6 +35,7 @@ export interface UserData {
   name: string;
   headline: string | null;
   avatar: string | null;
+  cover_image: string | null;
   location: string | null;
   about: string | null;
   email: string;
