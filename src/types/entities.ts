@@ -14,26 +14,26 @@ export interface User {
 }
 
 export interface Experience {
-    experience_id: string;
-    profile_id: string;
-    title: string;
-    company_name: string;
-    start_date: string;
-    end_date: string | null;
-    employment_type: string;
-    location: string;
-    description: string | null;
+  experience_id: string;
+  profile_id: string;
+  title: string;
+  company_name: string;
+  start_date: string;
+  end_date: string | null;
+  employment_type: string;
+  location: string;
+  description: string | null;
 }
 
 export interface Education {
-    education_id: string;
-    profile_id: string;
-    school_name: string;
-    degree: string;
-    field_of_study: string;
-    start_date: string;
-    end_date: string | null;
-    description: string | null;
+  education_id: string;
+  profile_id: string;
+  school_name: string;
+  degree: string;
+  field_of_study: string;
+  start_date: string;
+  end_date: string | null;
+  description: string | null;
 }
 
 export interface Comment {
@@ -53,24 +53,31 @@ export interface PollOption {
   vote_count: number;
 }
 
+
 export interface Poll {
   poll_id: string;
   options: PollOption[];
   total_votes: number;
+
+  duration: string; // e.g. "1 week"
+  user_vote?: string | null; // option_id of the voted option
+  is_active?: boolean; // backend calculated status
 }
 
 export interface Post {
   id: string;
+  authorId: string;
   author: string;
   authorAvatar?: string;
-  title: string;
+  title?: string | null;
   timeAgo: string;
   content: string;
   imageSrc?: string;
   images?: string[];
   videoSrc?: string;
   aspectRatio?: string;
-  likes: string;
+  likes: number;
+  isLiked?: boolean;
   comments: string;
   shares: string;
   commentData?: Comment[];

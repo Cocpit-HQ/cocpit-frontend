@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, MessageCircle, X } from 'lucide-react'
 import Link from 'next/link'
@@ -19,12 +19,12 @@ import { MobileStoryViewer } from '@/components/showcase/MobileStoryViewer'
 import { NotificationPopover } from '@/components/notifications/NotificationPopover'
 import { Post, Comment } from '@/types/entities';
 import { storiesSeed } from '@/constants/stories'
-import { StoryDetail } from '@/types/showcase'
+import { StoryDetail, StoryGroup } from '@/types/showcase'
 import { useDebounce } from '@/hooks/use-debounce';
 import { searchUsers } from '@/services/api/user';
 import { SearchedUser } from '@/types/user';
 import { PostType } from './CreatePostModal';
-import { useInView } from 'react-intersection-observer';
+import { useInView } from '@/hooks/use-in-view';
 
 /* -------------------- Component -------------------- */
 
@@ -51,7 +51,23 @@ export default function HomePage() {
   }, [])
 
   const [loading, setLoading] = useState(false)
-  const [stories, setStories] = useState<StoryDetail[]>(storiesSeed)
+  const [groups, setGroups] = useState<StoryGroup[]>([])
+
+  useEffect(() => {
+    const fetchStories = async () => {
+      try {
+        // Dynamic import to avoid SSR issues if necessary, but showcaseService is client side
+        const { showcaseService } = await import('@/services/showcase.service');
+        const data = await showcaseService.getGroupedStories()
+        setGroups(data)
+      } catch (error) {
+        console.error("Failed to fetch stories", error)
+        // Fallback to seed if fetch fails? Or just empty.
+        // setStories(storiesSeed) 
+      }
+    }
+    fetchStories()
+  }, [])
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchedUser[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
@@ -60,6 +76,47 @@ export default function HomePage() {
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [activeTab, setActiveTab] = useState('recent');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Scroll behavior for mobile header
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true)
+  const lastScrollY = useRef(0)
+
+  useEffect(() => {
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement | Document;
+      let currentScrollY = window.scrollY;
+
+      // If scrolling happens in a container (not window), use its scrollTop
+      if (target instanceof HTMLElement) {
+        // Ignore small scrollable elements (like dropdowns) to prevent jitter
+        if (target.scrollHeight < window.innerHeight) return;
+        currentScrollY = target.scrollTop;
+      }
+
+      // Always show at the top
+      if (currentScrollY <= 60) {
+        setIsHeaderVisible(true);
+        lastScrollY.current = currentScrollY;
+        return;
+      }
+
+      // Ignore small scrolls
+      if (Math.abs(lastScrollY.current - currentScrollY) <= 5) return;
+
+      // Scrolling down
+      if (currentScrollY > lastScrollY.current) {
+        setIsHeaderVisible(false);
+      } else { // Scrolling up
+        setIsHeaderVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    // Use capture: true to detect scroll events on containers (like AppShell)
+    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    return () => window.removeEventListener('scroll', handleScroll, { capture: true });
+  }, []);
 
   useEffect(() => {
     if (debouncedSearchQuery.trim() === '') {
@@ -84,21 +141,41 @@ export default function HomePage() {
   }, [debouncedSearchQuery]);
 
   const handleCreateStory = (newStory: StoryDetail) => {
-    setStories((prev) => [newStory, ...prev])
+    // Optimistic update for "Me" group (Index 0)
+    setGroups(prev => {
+      const newGroups = [...prev];
+      if (newGroups.length > 0 && newGroups[0].is_current_user) {
+        newGroups[0].stories.push(newStory);
+      }
+      return newGroups;
+    })
     setShowCreateStory(false)
+
+    // Also update Mobile/Modal?
+    setSelectedStory(newStory); // View it?
+  }
+  const [mobileSelectedGroupId, setMobileSelectedGroupId] = useState<number | null>(null)
+
+  const handleStoryUpdate = (updatedStory: StoryDetail) => {
+    setGroups(prevGroups => prevGroups.map(group => {
+      const storyIndex = group.stories.findIndex(s => s.id === updatedStory.id)
+      if (storyIndex !== -1) {
+        const newStories = [...group.stories]
+        newStories[storyIndex] = updatedStory
+        return { ...group, stories: newStories }
+      }
+      return group
+    }))
   }
 
   /* -------------------- Derived State -------------------- */
 
   const sortedPosts = useMemo(() => {
-    let sorted = [...posts];
+    const sorted = [...posts];
     if (activeTab === 'top') {
       // Sort by likes, converting '10k' to 10000
-      sorted.sort((a, b) => {
-        const likesA = parseFloat(a.likes.replace('k', '')) * (a.likes.includes('k') ? 1000 : 1);
-        const likesB = parseFloat(b.likes.replace('k', '')) * (b.likes.includes('k') ? 1000 : 1);
-        return likesB - likesA;
-      });
+      // Sort by likes (number)
+      sorted.sort((a, b) => b.likes - a.likes);
     }
     // For 'recent', no extra sorting is needed as new posts are prepended.
 
@@ -132,16 +209,16 @@ export default function HomePage() {
       <AppShell currentPage="home" navigateTo={navigateTo}>
         {/* Top Search Bar */}
         <header
-          className="sticky top-0 z-20 border-b px-4 py-3 md:py-4 bg-background border-border"
+          className={`sticky top-0 z-20 border-b px-4 py-3 md:py-4 bg-background border-border transition-transform duration-300 ease-in-out ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
+            } md:translate-y-0`}
         >
           <div className="max-w-5xl mx-auto">
             {/* --- Desktop Header (Visible from md screens up) --- */}
             <div className="hidden md:flex items-center gap-4">
               {/* Desktop Search Bar */}
               <div
-                className={`relative flex-1 flex items-center gap-3 max-w-2xl transition-all duration-300 ${
-                  isSearchFocused ? 'md:max-w-2xl' : ''
-                }`}
+                className={`relative flex-1 flex items-center gap-3 max-w-2xl transition-all duration-300 ${isSearchFocused ? 'md:max-w-2xl' : ''
+                  }`}
               >
                 <Search className="w-5 h-5 text-muted-foreground absolute left-3" />
                 <input
@@ -151,37 +228,37 @@ export default function HomePage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => {
-                     setTimeout(() => setIsSearchFocused(false), 200);
+                    setTimeout(() => setIsSearchFocused(false), 200);
                   }}
                   className="w-full pl-10 pr-4 py-2.5 rounded-lg border focus:outline-none focus:border-primary bg-card text-foreground placeholder-muted-foreground border-border"
                 />
 
                 {/* Search Dropdown */}
                 {isSearchFocused && searchQuery && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
-                        <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            People
-                        </div>
-                        {searchLoading ? (
-                          <div className="p-4 text-center text-muted-foreground">Loading...</div>
-                        ) : searchResults.length > 0 ? (
-                          searchResults.map(user => (
-                              <Link
-                                  key={user.id}
-                                  href={`/profile/${user.id}`}
-                                  className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
-                              >
-                                  <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
-                                  <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium text-foreground truncate">{user.full_name}</p>
-                                      <p className="text-xs text-muted-foreground truncate">{user.headline || ''}</p>
-                                  </div>
-                              </Link>
-                          ))
-                        ) : (
-                          <div className="p-4 text-center text-muted-foreground">No users found.</div>
-                        )}
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
+                    <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      People
                     </div>
+                    {searchLoading ? (
+                      <div className="p-4 text-center text-muted-foreground">Loading...</div>
+                    ) : searchResults.length > 0 ? (
+                      searchResults.map(user => (
+                        <Link
+                          key={user.id}
+                          href={`/profile/${user.id}`}
+                          className="flex items-center gap-3 px-4 py-2 hover:bg-muted/50 transition-colors"
+                        >
+                          <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{user.full_name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{user.headline || ''}</p>
+                          </div>
+                        </Link>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-muted-foreground">No users found.</div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -209,7 +286,7 @@ export default function HomePage() {
               </Link>
               {/* Mobile Search Bar */}
               <div className="flex-1 flex items-center gap-3 relative">
-                <Search className="w-5 h-5 text-muted-foreground absolute left-3" />
+                <Search className="w-4 h-4 text-muted-foreground absolute left-3" />
                 <input
                   type="text"
                   placeholder="Search..."
@@ -217,37 +294,37 @@ export default function HomePage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => {
-                     setTimeout(() => setIsSearchFocused(false), 200);
+                    setTimeout(() => setIsSearchFocused(false), 200);
                   }}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border focus:outline-none focus:border-primary bg-card text-foreground placeholder-muted-foreground border-border"
+                  className="w-full pl-9 pr-4 py-1.5 text-sm rounded-full border focus:outline-none focus:border-primary bg-card text-foreground placeholder-muted-foreground border-border"
                 />
 
                 {/* Mobile Search Dropdown */}
                 {isSearchFocused && searchQuery && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
-                        <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            People
-                        </div>
-                        {searchLoading ? (
-                          <div className="p-4 text-center text-muted-foreground">Loading...</div>
-                        ) : searchResults.length > 0 ? (
-                          searchResults.map(user => (
-                              <Link
-                                  key={user.id}
-                                  href={`/profile/${user.id}`}
-                                  className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
-                              >
-                                  <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
-                                  <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium text-foreground truncate">{user.full_name}</p>
-                                      <p className="text-xs text-muted-foreground truncate">{user.headline || ''}</p>
-                                  </div>
-                              </Link>
-                          ))
-                        ) : (
-                          <div className="p-4 text-center text-muted-foreground">No users found.</div>
-                        )}
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
+                    <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      People
                     </div>
+                    {searchLoading ? (
+                      <div className="p-4 text-center text-muted-foreground">Loading...</div>
+                    ) : searchResults.length > 0 ? (
+                      searchResults.map(user => (
+                        <Link
+                          key={user.id}
+                          href={`/profile/${user.id}`}
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+                        >
+                          <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{user.full_name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{user.headline || ''}</p>
+                          </div>
+                        </Link>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-muted-foreground">No users found.</div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -259,7 +336,7 @@ export default function HomePage() {
                     href="/messaging"
                     className="p-2 rounded-full transition-colors text-muted-foreground"
                   >
-                    <MessageCircle className="w-6 h-6" />
+                    <MessageCircle className="w-5 h-5" />
                   </Link>
                 </div>
               )}
@@ -276,9 +353,15 @@ export default function HomePage() {
                 {/* Mobile Story Rail */}
                 <div className="md:hidden border-b border-border">
                   <StoryRail
-                    stories={stories}
+                    groups={groups}
                     onCreateClick={() => setShowCreateStory(true)}
-                    onStoryClick={(story) => setSelectedStory(story)}
+                    onStoryClick={(story) => {
+                      // Find group of this story
+                      const group = groups.find(g => g.stories.some(s => s.id === story.id));
+                      if (group) {
+                        setMobileSelectedGroupId(group.author.id || 0);
+                      }
+                    }}
                   />
                 </div>
 
@@ -293,7 +376,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Posts */}
-                <div className="space-y-3 md:space-y-4">
+                <div className="space-y-2 md:space-y-3">
                   {loading &&
                     Array.from({ length: 2 }).map((_, i) => (
                       <PostSkeleton key={i} />
@@ -313,9 +396,9 @@ export default function HomePage() {
 
                   {/* Infinite Scroll Sentinel */}
                   {!loading && hasMore && (
-                     <div ref={loadMoreRef} className="py-4 flex justify-center">
-                        {feedLoading && <div className="text-muted-foreground text-sm">Loading more...</div>}
-                     </div>
+                    <div ref={loadMoreRef} className="py-4 flex justify-center">
+                      {feedLoading && <div className="text-muted-foreground text-sm">Loading more...</div>}
+                    </div>
                   )}
                 </div>
               </section>
@@ -332,22 +415,23 @@ export default function HomePage() {
       </AppShell>
 
       {/* Modals */}
+      {mobileSelectedGroupId !== null && (
+        <div className="md:hidden">
+          <MobileStoryViewer
+            groups={groups}
+            initialGroupId={mobileSelectedGroupId || 0}
+            onClose={() => setMobileSelectedGroupId(null)}
+            onStoryUpdate={handleStoryUpdate}
+          />
+        </div>
+      )}
       {selectedStory && (
-        <>
-          <div className="md:hidden">
-            <MobileStoryViewer
-              stories={stories}
-              initialStoryId={selectedStory.id}
-              onClose={() => setSelectedStory(null)}
-            />
-          </div>
-          <div className="hidden md:block">
-            <StoryModal
-              story={selectedStory}
-              onClose={() => setSelectedStory(null)}
-            />
-          </div>
-        </>
+        <div className="hidden md:block">
+          <StoryModal
+            story={selectedStory}
+            onClose={() => setSelectedStory(null)}
+          />
+        </div>
       )}
 
       {showCreateStory && (

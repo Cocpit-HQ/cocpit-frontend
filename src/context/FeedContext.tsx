@@ -3,18 +3,18 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Post } from '@/types/entities';
 import { getFeed } from '@/services/api/feed';
+import { deletePost as apiDeletePost } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 
-const currentUser = {
-  name: 'Sally Liang',
-};
+import { useSession } from "next-auth/react";
 
 interface FeedContextType {
   posts: Post[];
-  currentUser: { name: string };
+  currentUser: { id: string; name: string; image?: string | null };
   addPost: (post: Post) => void;
-  deletePost: (id: string) => void;
+  deletePost: (id: string) => Promise<void>;
   togglePostVisibility: (id: string) => void;
+  updatePostInFeed: (id: string, updates: Partial<Post>) => void;
   loadMorePosts: () => Promise<void>;
   hasMore: boolean;
   loading: boolean;
@@ -35,10 +35,17 @@ interface FeedProviderProps {
 }
 
 export const FeedProvider = ({ children }: FeedProviderProps) => {
+  const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [nextCursor, setNextCursor] = useState<{ cursorCreatedAt: string; cursorPostId: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+
+  const currentUser = {
+    id: session?.user?.id || '',
+    name: session?.user?.name || '',
+    image: session?.user?.image,
+  };
 
   // Initial fetch
   useEffect(() => {
@@ -68,7 +75,11 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
       const response = await getFeed(nextCursor.cursorCreatedAt, nextCursor.cursorPostId);
       const mappedPosts = response.posts.map(mapBackendPostToFrontend);
 
-      setPosts((prevPosts) => [...prevPosts, ...mappedPosts]);
+      setPosts((prevPosts) => {
+        const existingIds = new Set(prevPosts.map((p) => p.id));
+        const newUniquePosts = mappedPosts.filter((p) => !existingIds.has(p.id));
+        return [...prevPosts, ...newUniquePosts];
+      });
       setNextCursor(response.nextCursor);
       setHasMore(!!response.nextCursor);
     } catch (error) {
@@ -82,8 +93,18 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
     setPosts((prevPosts) => [post, ...prevPosts]);
   };
 
-  const deletePost = (id: string) => {
+  const deletePost = async (id: string) => {
+    // Optimistic update
+    const previousPosts = [...posts];
     setPosts((prevPosts) => prevPosts.filter((post) => post.id !== id));
+
+    try {
+      await apiDeletePost(id);
+    } catch (error) {
+      console.error('Failed to delete post:', error);
+      // Revert if failed
+      setPosts(previousPosts);
+    }
   };
 
   const togglePostVisibility = (id: string) => {
@@ -96,6 +117,12 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
     );
   };
 
+  const updatePostInFeed = (id: string, updates: Partial<Post>) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) => (post.id === id ? { ...post, ...updates } : post))
+    );
+  };
+
   return (
     <FeedContext.Provider value={{
       posts,
@@ -103,6 +130,7 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
       currentUser,
       deletePost,
       togglePostVisibility,
+      updatePostInFeed,
       loadMorePosts,
       hasMore,
       loading

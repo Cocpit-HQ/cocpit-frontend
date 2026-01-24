@@ -50,15 +50,19 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   const poll = backendPost.poll ? {
     poll_id: backendPost.poll.poll_id,
     total_votes: backendPost.poll.total_votes,
+    duration: backendPost.poll.duration,
+    is_active: backendPost.poll.is_active,
+    user_vote: backendPost.poll.user_vote,
     options: backendPost.poll.options.map(opt => ({
-        option_id: opt.option_id,
-        option_text: opt.option_text,
-        vote_count: opt.vote_count
+      option_id: opt.option_id,
+      option_text: opt.option_text,
+      vote_count: opt.vote_count
     }))
   } : null;
 
   return {
     id: backendPost.post_id,
+    authorId: backendPost.author_id,
     author: backendPost.author_name,
     authorAvatar: backendPost.author_avatar || undefined,
     // Use category or empty string for title (headline) since backend doesn't provide it
@@ -69,7 +73,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     images: images.length > 0 ? images : undefined,
     videoSrc: videoSrc,
     // Backend doesn't return likes/comments/shares counts in the list view provided
-    likes: "0",
+    likes: backendPost.like_count,
+    isLiked: backendPost.is_liked,
     comments: "0",
     shares: "0",
     commentData: [], // Backend doesn't provide comments in feed list

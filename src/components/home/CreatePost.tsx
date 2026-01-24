@@ -13,7 +13,7 @@ function PostButton({ icon, label, onClick }: { icon: React.ReactNode; label: st
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-4 py-2 hover:bg-muted rounded-lg transition-colors"
+      className="flex items-center gap-2 px-4 py-1 hover:bg-muted rounded-lg transition-colors"
     >
       {icon}
       <span className="text-muted-foreground hidden sm:block">{label}</span>
@@ -24,7 +24,7 @@ function PostButton({ icon, label, onClick }: { icon: React.ReactNode; label: st
 export function CreatePost({ onOpenModal }: CreatePostProps) {
   return (
     <div
-      className="rounded-xl border p-6 mb-6 bg-card border-border shadow-sm"
+      className="rounded-xl border p-6 mb-3 bg-card border-border shadow-sm"
     >
       <div className="flex gap-3 mb-4">
         <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex-shrink-0 overflow-hidden">

@@ -2,6 +2,7 @@
 
 import React, { useMemo, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Briefcase, GraduationCap, CheckCircle, MessageCircle, UserPlus, UserCheck } from "lucide-react"
 
 import { AppShell } from "@/components/layout/AppShell"
@@ -19,6 +20,10 @@ import { getUserById } from '@/services/api/user'
 import { getPublicProfilePosts } from '@/services/api/public-profile'
 import { mapPublicPostToPost } from '@/lib/mappers/public-profile.mapper'
 import { PublicUserProfileResponse } from "@/types/api"
+import { useIsMobile } from "@/hooks/use-mobile"
+import PostCard from "./PostCard"
+import { ViewAvatarModal } from "@/components/profile/ViewAvatarModal";
+
 
 interface PublicProfileProps {
   userId: string;
@@ -86,11 +91,18 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
     avatar: data.avatar_url || '/assets/pngegg.png',
     location: data.location || '',
     about: data.about_text || '',
-    skills: data.skills,
+    skills: Array.isArray(data.skills)
+      ? data.skills.map((s: any) => typeof s === 'string' ? s : s.name)
+      : [],
     experiences: experiences as any,
     educations: educations as any,
     connectionStatus: 'none',
     mutualConnections: 0,
+    identity: {
+      openTo: (Array.isArray(data.open_to) ? data.open_to[0] : data.open_to) as any || 'Full-time', // Check assumption
+      availability: data.availability as any || 'Casual Networking',
+      workPreference: data.work_preference as any || 'Onsite',
+    }
   };
 };
 
@@ -148,13 +160,18 @@ function ReadOnlyEducationItem({ education }: { education: any }) {
 
 export default function PublicProfile({ userId }: PublicProfileProps) {
   const router = useRouter()
-  const { isFollowing, followUser, unfollowUser, startChat } = useSocial()
-  
+  const { data: session } = useSession()
+  const { isFollowing, followUser, unfollowUser, startChat, isFollowLoading, syncFollowStatus } = useSocial()
+  const isOwnProfile = session?.user?.id === userId;
+
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [publicPosts, setPublicPosts] = useState<Post[]>([])
   const [loadingPosts, setLoadingPosts] = useState(false)
+  const isMobile = useIsMobile();
+  const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
+
 
   useEffect(() => {
     if (typeof userId === 'string') {
@@ -163,6 +180,9 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
         setError(null);
         try {
           const userData = await getUserById(userId);
+          if (userData.is_following !== undefined) {
+            syncFollowStatus(userData.id, userData.is_following);
+          }
           setUser(transformUserData(userData));
         } catch (err) {
           setError('Failed to load user profile.');
@@ -216,25 +236,25 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
 
   if (loading) {
     return (
-        <div className="flex items-center justify-center h-screen">
-            <div className="text-lg font-medium">Loading profile...</div>
-        </div>
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-lg font-medium">Loading profile...</div>
+      </div>
     );
   }
 
   if (error) {
     return (
-        <div className="flex items-center justify-center h-screen">
-            <div className="text-lg text-red-500">{error}</div>
-        </div>
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-lg text-red-500">{error}</div>
+      </div>
     );
   }
 
   if (!user) {
     return (
-        <div className="flex items-center justify-center h-screen">
-            <div className="text-lg">User not found.</div>
-        </div>
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-lg">User not found.</div>
+      </div>
     );
   }
 
@@ -250,42 +270,47 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
 
                 <div className="px-6 pb-6">
                   <div className="flex items-start justify-between -mt-14 mb-4">
-                    <div className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 relative">
+                    <div
+                      className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 relative cursor-pointer"
+                      onClick={() => setIsViewAvatarOpen(true)}
+                    >
                       <img
                         src={user.avatar}
                         alt={user.name}
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="mt-16 flex gap-2">
+                    {!isOwnProfile && (
+                      <div className="mt-16 flex gap-2">
                         <button
-                            onClick={handleMessage}
-                            className="bg-background hover:bg-muted text-foreground border border-input px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                          onClick={handleMessage}
+                          className="bg-background hover:bg-muted text-foreground border border-input px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
                         >
-                            <MessageCircle className="w-4 h-4" />
-                            Message
+                          <MessageCircle className="w-4 h-4" />
+                          Message
                         </button>
                         <button
-                            onClick={handleFollowToggle}
-                            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${
-                                isUserFollowing
-                                ? "bg-muted text-foreground hover:bg-muted/80"
-                                : "bg-primary text-primary-foreground hover:opacity-90"
-                            }`}
+                          onClick={handleFollowToggle}
+                          disabled={isFollowLoading(user.id)}
+                          className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${isUserFollowing
+                            ? "bg-muted text-foreground hover:bg-muted/80"
+                            : "bg-primary text-primary-foreground hover:opacity-90"
+                            } ${isFollowLoading(user.id) ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
-                            {isUserFollowing ? (
-                                <>
-                                    <UserCheck className="w-4 h-4" />
-                                    Following
-                                </>
-                            ) : (
-                                <>
-                                    <UserPlus className="w-4 h-4" />
-                                    Follow
-                                </>
-                            )}
+                          {isUserFollowing ? (
+                            <>
+                              <UserCheck className="w-4 h-4" />
+                              Following
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="w-4 h-4" />
+                              Follow
+                            </>
+                          )}
                         </button>
-                    </div>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -293,7 +318,7 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
                       <h1 className="text-2xl text-foreground">{user.name}</h1>
                       <CheckCircle className="w-5 h-5 text-primary fill-primary/10" />
                       {user.connectionStatus !== 'none' && (
-                         <span className="text-sm text-muted-foreground">· {user.connectionStatus === 'connected' ? '1st' : '2nd'}</span>
+                        <span className="text-sm text-muted-foreground">· {user.connectionStatus === 'connected' ? '1st' : '2nd'}</span>
                       )}
                     </div>
 
@@ -308,7 +333,10 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
                     <p className="text-sm text-muted-foreground mb-4">{user.mutualConnections} mutual connections</p>
 
                     {/* Identity Chips - Read Only */}
-                    <ProfileIdentityChips initialIdentity={initialIdentity} readOnly />
+                    {/* Identity Chips - Read Only */}
+                    {user.identity && (
+                      <ProfileIdentityChips initialIdentity={user.identity} readOnly />
+                    )}
                   </div>
                 </div>
               </div>
@@ -345,57 +373,57 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
               {/* Experience */}
               {user.experiences.length > 0 && (
                 <div className="rounded-xl border p-6 mb-4 bg-card border-border">
-                    <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl text-foreground">Experience</h2>
-                    </div>
+                  </div>
 
-                    <div className="space-y-6">
+                  <div className="space-y-6">
                     {user.experiences.map((exp: any) => (
-                        <ReadOnlyExperienceItem
-                            key={exp.id}
-                            experience={exp}
-                        />
+                      <ReadOnlyExperienceItem
+                        key={exp.id}
+                        experience={exp}
+                      />
                     ))}
-                    </div>
+                  </div>
                 </div>
               )}
 
               {/* Skills */}
               {user.skills.length > 0 && (
-                  <div className="rounded-xl border p-6 mb-4 bg-card border-border">
-                    <div className="flex items-center justify-between mb-4">
+                <div className="rounded-xl border p-6 mb-4 bg-card border-border">
+                  <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl text-foreground">Skills</h2>
-                    </div>
+                  </div>
 
-                    <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {user.skills.map((skill) => (
-                         <SkillProofPill
-                            key={skill}
-                            skill={skill}
-                            experiences={user.experiences as any[]}
-                            posts={publicPosts}
-                            readOnly
-                        />
+                      <SkillProofPill
+                        key={skill}
+                        skill={skill}
+                        experiences={user.experiences as any[]}
+                        posts={publicPosts}
+                        readOnly
+                      />
                     ))}
-                    </div>
+                  </div>
                 </div>
               )}
 
               {/* Education */}
               {user.educations.length > 0 && (
                 <div className="rounded-xl border p-6 bg-card border-border">
-                    <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl text-foreground">Education</h2>
-                    </div>
+                  </div>
 
-                    <div className="space-y-6">
+                  <div className="space-y-6">
                     {user.educations.map((edu: any) => (
-                        <ReadOnlyEducationItem
-                            key={edu.id}
-                            education={edu}
-                        />
+                      <ReadOnlyEducationItem
+                        key={edu.id}
+                        education={edu}
+                      />
                     ))}
-                    </div>
+                  </div>
                 </div>
               )}
 
@@ -410,15 +438,29 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
                     See all posts
                   </button>
                 </div>
-                <div className="space-y-4">
+                <div>
                   {loadingPosts ? (
                     <div className="text-center py-4 text-muted-foreground">Loading posts...</div>
                   ) : publicPosts.length > 0 ? (
-                      publicPosts.slice(0, 4).map(post => (
-                        <FeedPost key={post.id} {...post} initialComments={post.commentData} />
-                      ))
+                    isMobile ? (
+                      <div className="grid grid-cols-2 gap-4">
+                        {publicPosts.slice(0, 4).map(post => (
+                          <PostCard
+                            key={post.id}
+                            post={post}
+                            href={`/profile/${userId}/posts?focusPostId=${post.id}`}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {publicPosts.slice(0, 4).map(post => (
+                          <FeedPost key={post.id} {...post} initialComments={post.commentData} />
+                        ))}
+                      </div>
+                    )
                   ) : (
-                      <p className="text-muted-foreground text-sm">No recent public activity to show.</p>
+                    <p className="text-muted-foreground text-sm">No recent public activity to show.</p>
                   )}
                 </div>
               </div>
@@ -432,6 +474,11 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
           </div>
         </div>
       </AppShell>
+      <ViewAvatarModal
+        isOpen={isViewAvatarOpen}
+        onClose={() => setIsViewAvatarOpen(false)}
+        avatarUrl={user?.avatar || null}
+      />
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import type { EventCard } from "@/types/events";
 
-export let eventsSeed: EventCard[] = [
+export const eventsSeed: EventCard[] = [
   {
     id: 1,
     title: "Product Management Summit 2025",

@@ -73,4 +73,5 @@ export interface PublicUserProfileResponse {
   experiences: ApiExperience[];
   educations: ApiEducation[];
   skills: string[];
+  is_following: boolean;
 }

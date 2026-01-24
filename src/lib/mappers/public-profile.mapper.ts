@@ -42,12 +42,15 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
   const poll = publicPost.poll ? {
     poll_id: publicPost.poll.poll_id,
     total_votes: publicPost.poll.total_votes,
+    duration: publicPost.poll.duration,
+    is_active: publicPost.poll.is_active ?? false,
+    user_vote: publicPost.poll.user_vote,
     options: publicPost.poll.options.map(opt => ({
       option_id: opt.option_id,
       option_text: opt.option_text,
       vote_count: opt.vote_count
     }))
-  } : null;
+  } : undefined;
 
   // Category mapping
   // Post entity expects specific string literals. We map what we can.
@@ -58,6 +61,7 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
 
   return {
     id: publicPost.post_id,
+    authorId: publicPost.author_id,
     author: publicPost.author_name,
     authorAvatar: publicPost.author_avatar || undefined,
     // Backend doesn't return title/headline anymore in the new query structure provided
@@ -67,7 +71,8 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
     imageSrc: images.length > 0 ? images[0] : undefined,
     images: images.length > 0 ? images : undefined,
     videoSrc: videoSrc,
-    likes: publicPost.like_count.toString(),
+    likes: publicPost.like_count,
+    isLiked: publicPost.is_liked,
     comments: publicPost.comment_count.toString(),
     shares: "0", // Backend doesn't return share count
     commentData: [],

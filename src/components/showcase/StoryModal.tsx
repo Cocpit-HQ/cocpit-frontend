@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from "react"
-import { Eye, MessageCircle, Play, Share2, ThumbsUp, X, Send, Smile, Search, Check } from "lucide-react"
+import { Eye, MessageCircle, Play, Share2, ThumbsUp, X, Send, Smile, Search, Check, MoreVertical, Trash2 } from "lucide-react"
 import { StoryDetail } from "@/types/showcase"
+import { showcaseService } from "@/services/showcase.service"
 
 type StoryModalProps = {
   story: StoryDetail
   onClose: () => void
-  isDark?: boolean // Marked optional for backward compatibility during refactor
+  isDark?: boolean
+  onStoryUpdate?: (story: StoryDetail) => void
 }
 
 const PREDEFINED_EMOJIS = [
@@ -22,8 +24,8 @@ const SHARE_USERS = [
   { id: 5, name: "Eva White", role: "Marketing Lead" },
 ]
 
-export function StoryModal({ story, onClose }: StoryModalProps) {
-  const [isLiked, setIsLiked] = useState(false)
+export function StoryModal({ story, onClose, onStoryUpdate }: StoryModalProps) {
+  const [isLiked, setIsLiked] = useState(!!story.isLiked)
   const [comment, setComment] = useState("")
   const [comments, setComments] = useState<string[]>([])
   const [showDescription, setShowDescription] = useState(false)
@@ -33,6 +35,35 @@ export function StoryModal({ story, onClose }: StoryModalProps) {
   const [shareSearch, setShareSearch] = useState("")
   const [selectedUsers, setSelectedUsers] = useState<number[]>([])
   const [shareMessage, setShareMessage] = useState("")
+  const [showMenu, setShowMenu] = useState(false)
+  const [details, setDetails] = useState<any>(null)
+
+  // View Story effect & Fetch Details if Author
+  useEffect(() => {
+    showcaseService.viewStory(story.id).catch(err => console.error("View story failed", err));
+
+    if (story.isAuthor) {
+      showcaseService.getStoryDetails(story.id).then(data => {
+        setDetails(data);
+      }).catch(err => console.error("Failed to fetch details", err));
+    }
+  }, [story.id, story.isAuthor]);
+
+  const currentViewCount = details?.viewerCount ?? story.views;
+  const currentLikeCount = details ? details.likers.length : (story.likes ?? 0);
+
+  const handleDeleteStory = async () => {
+    if (confirm("Are you sure you want to delete this story?")) {
+      try {
+        await showcaseService.deleteStory(story.id);
+        onClose();
+        window.location.reload(); // Simple reload for now, ideally update parent state
+      } catch (error) {
+        console.error("Failed to delete story", error);
+        alert("Failed to delete story");
+      }
+    }
+  }
 
   const inputRef = useRef<HTMLInputElement>(null)
   const pickerRef = useRef<HTMLDivElement>(null)
@@ -115,38 +146,69 @@ export function StoryModal({ story, onClose }: StoryModalProps) {
               {story.authorTitle && <p className="text-sm text-muted-foreground">{story.authorTitle}</p>}
             </div>
           </div>
-          <button
-            className="bg-muted hover:bg-muted/80 rounded-full p-2 text-muted-foreground hover:text-foreground transition-colors"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {story.isAuthor && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="p-2 rounded-full hover:bg-muted text-muted-foreground transition-colors"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </button>
+                {showMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden">
+                    <button
+                      onClick={handleDeleteStory}
+                      className="flex items-center gap-2 w-full px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors text-left"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete Story
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            <button
+              className="bg-muted hover:bg-muted/80 rounded-full p-2 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={onClose}
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-hidden flex">
           <div className={`flex flex-col transition-all duration-500 ${showComments ? "w-1/2" : "w-full"}`}>
-            <div className="relative overflow-hidden bg-black aspect-video">
-              <img src={story.image} alt={story.title} className="w-full h-full object-contain" />
-              {story.isVideo && (
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                  <div className="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center hover:scale-110 transition-transform cursor-pointer">
-                    <Play className="w-10 h-10 text-black ml-1" />
+            <div className="relative overflow-hidden bg-black aspect-video flex items-center justify-center">
+              {story.media_type === 'video' ? (
+                story.media_status === 'processing' ? (
+                  <div className="flex flex-col items-center justify-center text-white">
+                    <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mb-2" />
+                    <span>Processing...</span>
                   </div>
-                </div>
+                ) : (
+                  <video
+                    src={story.media_url}
+                    className="w-full h-full object-contain"
+                    controls
+                    playsInline
+                    poster={story.thumbnail_url || story.image}
+                  />
+                )
+              ) : (
+                <img src={story.image} alt={story.title} className="w-full h-full object-contain" />
               )}
             </div>
 
             <div
-              className={`relative px-6 py-4 transition-all duration-300 cursor-pointer ${
-                showDescription ? "bg-muted/50" : "bg-transparent"
-              }`}
+              className={`relative px-6 py-4 transition-all duration-300 cursor-pointer ${showDescription ? "bg-muted/50" : "bg-transparent"
+                }`}
               onClick={() => setShowDescription((prev) => !prev)}
             >
               <p
-                className={`text-foreground transition-all duration-300 ${
-                  showDescription ? "opacity-100" : "opacity-30"
-                }`}
+                className={`text-foreground transition-all duration-300 ${showDescription ? "opacity-100" : "opacity-30"
+                  }`}
               >
                 {story.description}
               </p>
@@ -159,14 +221,14 @@ export function StoryModal({ story, onClose }: StoryModalProps) {
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Eye className="w-4 h-4" />
-                  <span>{story.views} views</span>
+                  <span>{currentViewCount} views</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <span>{story.timeAgo}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <ThumbsUp className="w-4 h-4" />
-                  <span>{isLiked ? (story.likes ?? 0) + 1 : story.likes ?? 0} likes</span>
+                  <span>{((currentLikeCount ?? 0) - (story.isLiked ? 1 : 0) + (isLiked ? 1 : 0))} likes</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <MessageCircle className="w-4 h-4" />
@@ -177,31 +239,51 @@ export function StoryModal({ story, onClose }: StoryModalProps) {
           </div>
 
           <div
-            className={`border-l border-border flex flex-col transition-all duration-500 ${
-              showComments ? "w-1/2" : "w-auto"
-            }`}
+            className={`border-l border-border flex flex-col transition-all duration-500 ${showComments ? "w-1/2" : "w-auto"
+              }`}
           >
             <div
               className={`flex ${showComments ? "flex-col p-6 gap-3" : "flex-col p-4 gap-3"} border-b border-border`}
             >
               <button
-                onClick={() => setIsLiked((prev) => !prev)}
-                className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg transition-all ${
-                  isLiked
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
-                }`}
+                disabled={story.isAuthor}
+                onClick={() => {
+                  if (story.isAuthor) return;
+                  const newLiked = !isLiked;
+                  setIsLiked(newLiked);
+
+                  // Calculate new count
+                  const baseCount = (story.likes || 0) - (story.isLiked ? 1 : 0);
+                  const newCount = baseCount + (newLiked ? 1 : 0);
+
+                  // Optimistic update to parent
+                  if (onStoryUpdate) {
+                    onStoryUpdate({
+                      ...story,
+                      isLiked: newLiked,
+                      likes: newCount
+                    });
+                  }
+
+                  showcaseService.reactToStory(story.id, newLiked).catch(err => {
+                    console.error("React failed", err);
+                    setIsLiked(!newLiked); // Revert on error
+                  });
+                }}
+                className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg transition-all ${isLiked
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                  } ${story.isAuthor ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <ThumbsUp className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
-                {showComments && <span>{isLiked ? "Liked" : "Like"}</span>}
+                {showComments && <span>{story.isAuthor ? "Likes" : (isLiked ? "Liked" : "Like")}</span>}
               </button>
               <button
                 onClick={() => setShowComments((prev) => !prev)}
-                className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg transition-all ${
-                  showComments
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
-                }`}
+                className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg transition-all ${showComments
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                  }`}
               >
                 <MessageCircle className="w-5 h-5" />
                 {showComments && <span>Comments</span>}
@@ -354,9 +436,8 @@ export function StoryModal({ story, onClose }: StoryModalProps) {
                   <div
                     key={user.id}
                     onClick={() => toggleUserSelection(user.id)}
-                    className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
-                      isSelected ? "bg-blue-50" : "hover:bg-blue-50"
-                    }`}
+                    className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${isSelected ? "bg-blue-50" : "hover:bg-blue-50"
+                      }`}
                   >
                     <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium shrink-0">
                       {user.name.charAt(0)}
@@ -366,11 +447,10 @@ export function StoryModal({ story, onClose }: StoryModalProps) {
                       <p className="text-xs text-slate-500 truncate">{user.role}</p>
                     </div>
                     <div
-                      className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                        isSelected
-                          ? "bg-blue-500 border-blue-500 text-white"
-                          : "border-slate-300"
-                      }`}
+                      className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected
+                        ? "bg-blue-500 border-blue-500 text-white"
+                        : "border-slate-300"
+                        }`}
                     >
                       {isSelected && <Check className="w-3 h-3" />}
                     </div>

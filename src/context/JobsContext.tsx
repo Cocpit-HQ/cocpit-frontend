@@ -1,16 +1,28 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useMemo } from "react";
-import { jobs as initialJobsData } from "@/lib/data/jobs";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import * as api from "@/services/api/jobs";
 import type {
   Job,
   JobsContextType,
   JobFilters,
   MyJobsTab,
-  JobListMode,
-  WorkMode,
-  CompanyType
+  JobListMode
 } from "@/types/jobs";
+import { useDebounce } from "@/hooks/use-debounce"; // Assuming this exists, if not I'll implement a simple one or just direct effect
+
+// Fallback if hook doesn't exist
+function useDebounceValue<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 const JobsContext = createContext<JobsContextType | undefined>(undefined);
 
@@ -27,122 +39,112 @@ const INITIAL_FILTERS: JobFilters = {
   locations: [],
 };
 
-const getRandomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-
-// Helper to parse salary string and return avg
-const parseSalaryAvg = (salary: string): number => {
-  if (!salary) return 0;
-  // matches $120k or $100,000
-  const matches = salary.match(/(\d+)/g);
-  if (!matches) return 0;
-
-  const values = matches.map(m => parseInt(m));
-  const avg = values.reduce((a, b) => a + b, 0) / values.length;
-  // If value is small (e.g. 120), assume k
-  if (avg < 1000) return avg * 1000;
-  return avg;
-}
-
-// Enhance initial mock data with new fields
-const enhancedInitialJobs: Job[] = initialJobsData.map(job => {
-  return {
-    ...job,
-    matchScore: getRandomInt(60, 98),
-    workMode: ["Remote", "Hybrid", "Onsite"][getRandomInt(0, 2)] as WorkMode,
-    companyType: ["Startup", "MNC", "Product-based", "Service-based"][getRandomInt(0, 3)] as CompanyType,
-    industry: ["Technology", "Finance", "Healthcare", "Education"][getRandomInt(0, 3)],
-    experience: ["Entry Level", "Mid Level", "Senior Level", "Lead / Manager"][getRandomInt(0, 3)],
-    easyApply: Math.random() > 0.5,
-    activelyHiring: Math.random() > 0.3,
-    recruiterInsight: `Recruiter usually responds in ${getRandomInt(1, 5)} days`,
-    description: "We are looking for a talented individual to join our growing team. You will be working on cutting-edge technologies and solving complex problems.",
-    aboutCompany: "We are a leading company in our industry, dedicated to innovation and excellence.",
-    skills: ["React", "TypeScript", "Node.js", "Design Systems"],
-    applicationTimeline: job.status === 'applied' ? [
-      { status: "Applied", date: "2 days ago", completed: true },
-      { status: "Under Review", completed: false },
-      { status: "Interview", completed: false },
-      { status: "Offer", completed: false }
-    ] : job.status === 'in-progress' ? [
-      { status: "Applied", date: "1 week ago", completed: true },
-      { status: "Under Review", date: "3 days ago", completed: true },
-      { status: "Interview", completed: true },
-      { status: "Offer", completed: false }
-    ] : []
-  };
-});
-
 export function JobsProvider({ children }: { children: React.ReactNode }) {
+  const { status } = useSession(); // Get auth status
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [myJobs, setMyJobs] = useState<Job[]>([]); // Separated myJobs for the "my-jobs" tab
+
   const [filters, setFilters] = useState<JobFilters>(INITIAL_FILTERS);
   const [searchKeywords, setSearchKeywords] = useState("");
   const [activeTab, setActiveTab] = useState<JobListMode>("view");
   const [myJobsTab, setMyJobsTab] = useState<MyJobsTab>("in-progress");
-  const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize from localStorage or mock data
-  useEffect(() => {
-    const savedJobs = localStorage.getItem("jobs_data");
-    if (savedJobs) {
-      try {
-        setJobs(JSON.parse(savedJobs));
-      } catch (e) {
-        console.error("Failed to parse jobs from localStorage", e);
-        setJobs(enhancedInitialJobs);
+  // Debounce search and filters to prevent rapid API calls
+  const debouncedSearch = useDebounceValue(searchKeywords, 500);
+  const debouncedFilters = useDebounceValue(filters, 500);
+
+  // Fetch Jobs based on active tab and filters
+  const fetchJobs = useCallback(async () => {
+    if (status === "loading") return; // Wait for session to initialize
+
+    setIsLoading(true);
+    try {
+      let data: Job[] = [];
+      const filterParams = { ...debouncedFilters, search: debouncedSearch };
+
+      if (activeTab === "view") {
+        data = await api.getAllJobs(filterParams);
+        setJobs(data);
+      } else if (activeTab === "offers") {
+        data = await api.getJobOffers(filterParams);
+        setJobs(data);
+      } else if (activeTab === "my-jobs") {
+        // For my-jobs, we fetch based on subtab
+        if (myJobsTab === "saved") {
+          data = await api.getMySavedJobs();
+        } else {
+          // 'applied', 'in-progress', 'in-past'
+          data = await api.getMyApplications(myJobsTab);
+        }
+        setMyJobs(data);
+        // We don't overwrite main 'jobs' here to preserve the feed? 
+        // Actually, JobsPage renders 'filteredJobs' or 'myJobs' based on tab.
+        // Let's keep them separate as per original context interface which had 'myJobs' and 'jobs'.
       }
-    } else {
-      setJobs(enhancedInitialJobs);
+    } catch (error) {
+      console.error("Failed to fetch jobs:", error);
+      // Optional: Add toast error here
+    } finally {
+      setIsLoading(false);
     }
-    setMounted(true);
-  }, []);
+  }, [activeTab, myJobsTab, debouncedFilters, debouncedSearch, status]);
 
-  // Persist changes
   useEffect(() => {
-    if (mounted) {
-      localStorage.setItem("jobs_data", JSON.stringify(jobs));
-    }
-  }, [jobs, mounted]);
+    fetchJobs();
+  }, [fetchJobs]);
 
-  const addJob = (newJob: Job) => {
-    // Add realistic random data for the new job
-    const jobWithMockData: Job = {
-        ...newJob,
-        id: Date.now(),
-        postedTime: "Just now",
-        applicants: 0,
-        logo: `gradient-${getRandomInt(1, 6)}`,
-        matchScore: getRandomInt(60, 99),
-        recruiterInsight: "Recruiter actively reviewing",
-        applicationTimeline: []
-    };
-    setJobs(prev => [jobWithMockData, ...prev]);
+  // Helper to update a job in all state lists
+  const updateJobInState = (jobId: string, updater: (job: Job) => Job) => {
+    setJobs(prevJobs => prevJobs.map(j => j.id === jobId ? updater(j) : j));
+    setMyJobs(prevMyJobs => prevMyJobs.map(j => j.id === jobId ? updater(j) : j));
   };
 
-  const applyToJob = (jobId: number) => {
-    setJobs(prev => prev.map(job => {
-      if (job.id === jobId) {
-        return {
-          ...job,
-          status: "applied",
-          applicationTimeline: [
-            { status: "Applied", date: "Just now", completed: true },
-            { status: "Under Review", completed: false },
-            { status: "Interview", completed: false },
-            { status: "Offer", completed: false }
-          ]
-        };
-      }
-      return job;
-    }));
+  const addJob = async (newJob: Job) => {
+    // Just trigger a refetch for now to be safe
+    fetchJobs();
   };
 
-  const saveJob = (jobId: number) => {
-    setJobs(prev => prev.map(job => {
-      if (job.id === jobId) {
-        return { ...job, isSaved: !job.isSaved };
+  const applyToJob = async (jobId: string) => {
+    // Optimistically update status to 'applied' in all lists
+    updateJobInState(jobId, (j) => ({ ...j, status: 'applied', applicants: (j.applicants || 0) + 1, hasApplied: true }));
+
+    // Refetch to ensure all tabs are in sync with server state
+    // This is important because the backend join returns the actual application status
+    setTimeout(() => {
+      fetchJobs();
+    }, 500); // Small delay to allow backend to process the application
+  };
+
+  const saveJob = async (jobId: string) => {
+    // Find the current job to know its current state
+    // We must read it BEFORE the optimistic update to know the 'old' state
+    const currentJob = jobs.find(j => j.id === jobId) || myJobs.find(j => j.id === jobId);
+    if (!currentJob) return;
+
+    // The desired new state is the opposite of the current state
+    const newIsSaved = !currentJob.isSaved;
+
+    // Optimistic Update
+    updateJobInState(jobId, (j) => ({ ...j, isSaved: newIsSaved }));
+
+    try {
+      // Use the local variable 'newIsSaved' which is guaranteed to be correct
+      if (newIsSaved) {
+        await api.saveJob(jobId);
+      } else {
+        await api.unsaveJob(jobId);
       }
-      return job;
-    }));
+
+      // Refetch to ensure "Saved" tab and main feed are in sync
+      setTimeout(() => {
+        fetchJobs();
+      }, 300);
+    } catch (error) {
+      console.error("Failed to save/unsave job", error);
+      // Rollback
+      updateJobInState(jobId, (j) => ({ ...j, isSaved: !newIsSaved }));
+    }
   };
 
   const updateFilters = (newFilters: Partial<JobFilters>) => {
@@ -154,104 +156,14 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
     setSearchKeywords("");
   };
 
-  const filteredJobs = useMemo(() => {
-    let result = jobs;
-
-    // 1. Filter by Search Keywords
-    if (searchKeywords.trim()) {
-      const lowerQuery = searchKeywords.toLowerCase();
-      result = result.filter(job =>
-        job.title.toLowerCase().includes(lowerQuery) ||
-        job.company.toLowerCase().includes(lowerQuery) ||
-        job.description?.toLowerCase().includes(lowerQuery)
-      );
-    }
-
-    // 2. Sidebar Filters
-    if (filters.jobType.length > 0) {
-      result = result.filter(job => filters.jobType.some(t => job.type.includes(t)));
-    }
-
-    if (filters.locations.length > 0) {
-       result = result.filter(job => filters.locations.some(l => job.location.toLowerCase().includes(l.toLowerCase())));
-    }
-
-    if (filters.workMode.length > 0) {
-      result = result.filter(job => job.workMode && filters.workMode.includes(job.workMode));
-    }
-
-    if (filters.companyType.length > 0) {
-      result = result.filter(job => job.companyType && filters.companyType.includes(job.companyType));
-    }
-
-    if (filters.industry.length > 0) {
-      result = result.filter(job => job.industry && filters.industry.includes(job.industry));
-    }
-
-    if (filters.easyApply) {
-      result = result.filter(job => job.easyApply);
-    }
-
-    if (filters.activelyHiring) {
-      result = result.filter(job => job.activelyHiring);
-    }
-
-    // 3. Experience Filter
-    if (filters.experience && filters.experience !== "All Levels") {
-      result = result.filter(job => job.experience === filters.experience);
-    }
-
-    // 4. Date Posted Filter
-    if (filters.datePosted && filters.datePosted !== "Any Time") {
-      result = result.filter(job => {
-        const time = job.postedTime.toLowerCase();
-        if (filters.datePosted === "Past 24 hours") {
-          return time.includes("hour") || time === "just now" || (time.includes("1 day") && !time.includes("days"));
-        }
-        if (filters.datePosted === "Past week") {
-           // Includes hours, days up to 7
-           if (time.includes("hour") || time === "just now") return true;
-           if (time.includes("day")) {
-             const days = parseInt(time.match(/\d+/)?.[0] || "0");
-             return days <= 7;
-           }
-           return false;
-        }
-        if (filters.datePosted === "Past month") {
-           if (time.includes("hour") || time === "just now" || time.includes("day") || time.includes("week")) return true;
-           // If it says "1 month", maybe? But stick to weeks.
-           return false;
-        }
-        return true;
-      });
-    }
-
-    // 5. Salary Filter
-    if (filters.salaryRange && filters.salaryRange !== "Any") {
-      result = result.filter(job => {
-        const avg = parseSalaryAvg(job.salary);
-        if (avg === 0) return true; // Keep if unknown? Or filter out? Let's keep.
-
-        switch (filters.salaryRange) {
-          case "$0 - $50k": return avg < 50000;
-          case "$50k - $100k": return avg >= 50000 && avg < 100000;
-          case "$100k - $150k": return avg >= 100000 && avg < 150000;
-          case "$150k+": return avg >= 150000;
-          default: return true;
-        }
-      });
-    }
-
-    return result;
-  }, [jobs, searchKeywords, filters]);
-
-  const myJobs = useMemo(() => {
-    return jobs.filter(job => job.status || job.isSaved);
-  }, [jobs]);
+  // 'filteredJobs' was previously result of client-side filtering.
+  // Now 'jobs' IS the filtered result from server (when tab is view/offers).
+  // So we just return jobs.
+  const filteredJobs = jobs;
 
   return (
     <JobsContext.Provider value={{
-      jobs,
+      jobs, // Main feed jobs
       addJob,
       applyToJob,
       saveJob,
@@ -261,7 +173,7 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
       searchKeywords,
       setSearchKeywords,
       resetFilters,
-      myJobs,
+      myJobs, // My jobs list
       activeTab,
       setActiveTab,
       myJobsTab,

@@ -20,8 +20,11 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { mockChats, avatarGradients } from "@/services/mock/messaging.mock"
 import { sharePost } from "@/services/api/share"
+import { useQuery } from "@tanstack/react-query"
+import { getConversations } from "@/services/api/messaging"
+import { mapBackendChatToChatThread } from "@/lib/mappers/messaging.mapper"
+import { avatarGradients } from "@/constants/messaging"
 
 interface SharePostModalProps {
   isOpen: boolean
@@ -29,13 +32,28 @@ interface SharePostModalProps {
   postId: string
 }
 
+const getAvatarGradient = (avatar: string) => {
+    return (avatarGradients as any)[avatar] || "from-gray-400 to-gray-500";
+}
+
 export function SharePostModal({ isOpen, onClose, postId }: SharePostModalProps) {
-  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([])
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   const [message, setMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [isMobile, setIsMobile] = useState(false)
+
+  // Fetch users from conversations for sharing
+  // In a real app, this might be a dedicated 'connections' endpoint
+  const { data: users = [] } = useQuery({
+      queryKey: ['conversations'],
+      queryFn: async () => {
+        const backendChats = await getConversations();
+        return backendChats.map(mapBackendChatToChatThread);
+      }
+  });
+
 
   // Detect mobile
   useEffect(() => {
@@ -46,11 +64,11 @@ export function SharePostModal({ isOpen, onClose, postId }: SharePostModalProps)
   }, [])
 
   // Filter users based on search
-  const filteredUsers = mockChats.filter(user =>
+  const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const toggleUser = (userId: number) => {
+  const toggleUser = (userId: string) => {
     setSelectedUserIds(prev =>
       prev.includes(userId)
         ? prev.filter(id => id !== userId)
@@ -65,7 +83,7 @@ export function SharePostModal({ isOpen, onClose, postId }: SharePostModalProps)
     try {
       await sharePost({
         postId,
-        targetUserIds: selectedUserIds.map(String),
+        targetUserIds: selectedUserIds,
         message: message.trim() || undefined
       })
 
@@ -120,7 +138,7 @@ export function SharePostModal({ isOpen, onClose, postId }: SharePostModalProps)
         {filteredUsers.length > 0 ? (
           filteredUsers.map(user => {
             const isSelected = selectedUserIds.includes(user.id)
-            const gradient = avatarGradients[user.avatar as keyof typeof avatarGradients] || "bg-gray-400"
+            const gradient = getAvatarGradient(user.avatar)
 
             return (
               <div

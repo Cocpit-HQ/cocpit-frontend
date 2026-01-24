@@ -1,4 +1,4 @@
-export type JobListMode = "view" | "my-jobs" | "offers";
+export type JobListMode = "view" | "my-jobs" | "offers" | "dashboard";
 
 export type JobStatus = "in-progress" | "applied" | "in-past";
 export type MyJobsTab = JobStatus | "saved";
@@ -13,7 +13,7 @@ export interface TimelineEvent {
 }
 
 export interface Job {
-  id: number;
+  id: string; // UUID from backend
   title: string;
   company: string;
   location: string;
@@ -25,6 +25,8 @@ export interface Job {
   isOffer?: boolean;
   status?: JobStatus;
   isSaved?: boolean;
+  hasApplied?: boolean;
+  applicationStatus?: string;
 
   // New fields
   description?: string;
@@ -61,7 +63,9 @@ export interface JobFormData {
   location: string;
   experience: string;
   jobType: string;
-  salaryRange: string;
+  salaryRange?: string; // Optional if using min/max
+  minSalary?: string | number;
+  maxSalary?: string | number;
   skills: string; // comma separated for form
   workMode: WorkMode;
   companyType: CompanyType;
@@ -74,8 +78,8 @@ export interface JobFormData {
 export interface JobsContextType {
   jobs: Job[];
   addJob: (job: Job) => void;
-  applyToJob: (jobId: number) => void;
-  saveJob: (jobId: number) => void;
+  applyToJob: (jobId: string) => void;
+  saveJob: (jobId: string) => void;
   filters: JobFilters;
   updateFilters: (filters: Partial<JobFilters>) => void;
   filteredJobs: Job[];

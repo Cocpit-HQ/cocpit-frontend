@@ -1,75 +1,266 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { MoreHorizontal, Phone, Video } from "lucide-react"
 import { ChatThread, Message } from "@/types/messaging"
-import { avatarGradients, mockMessages } from "@/data/mockMessaging"
+import { avatarGradients } from "@/constants/messaging"
 import MessageList from "./MessageList"
 import ChatInput from "./ChatInput"
 import MobileChatHeader from "./MobileChatHeader"
+import { useSocket } from "@/context/SocketContext"
+import { useSession } from "next-auth/react"
+import { SocketMessage, TypingPayload } from "@/types/socket"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { getMessages, sendMessage, markAsRead } from "@/services/api/messaging"
+import { mapBackendMessageToMessage } from "@/lib/mappers/messaging.mapper"
+import Avatar from "@/components/shared/Avatar"
 
 interface ChatWindowProps {
   chat: ChatThread
   isMobile: boolean
+  onBack?: () => void
 }
 
-export default function ChatWindow({ chat, isMobile }: ChatWindowProps) {
-  // Local state for messages to allow adding new ones
-  const [messages, setMessages] = useState<Message[]>(mockMessages[chat.id] || [])
+const getAvatarGradient = (avatar: string) => {
+  return avatarGradients[avatar] || "from-gray-400 to-gray-500";
+}
+
+export default function ChatWindow({ chat: initialChat, isMobile, onBack }: ChatWindowProps) {
+  const { socket, isUserOnline } = useSocket();
+  const { data: session } = useSession();
+  const [typingUser, setTypingUser] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const chat = {
+    ...initialChat,
+    online: initialChat.otherUserId ? isUserOnline(initialChat.otherUserId) : false
+  };
+
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTypingRef = useRef<number>(0);
+
+  // Fetch messages from API
+  const { data: messages = [], isLoading } = useQuery({
+    queryKey: ['messages', chat.id],
+    queryFn: async () => {
+      const backendMessages = await getMessages(chat.id);
+      return backendMessages.map(m => mapBackendMessageToMessage(m, session?.user?.id));
+    },
+    enabled: !!chat.id && chat.id !== 'new' && !!session?.user?.id,
+  });
+
+  // Mark as read on mount or when chat.id changes
+  useEffect(() => {
+    if (chat.id && chat.unread > 0) {
+      markAsRead(chat.id).then(() => {
+        // Optimistically update conversation unread count
+        queryClient.setQueryData(['conversations'], (oldChats: ChatThread[] | undefined) => {
+          if (!oldChats) return [];
+          return oldChats.map(c => c.id === chat.id ? { ...c, unread: 0 } : c);
+        });
+      }).catch(console.error);
+    }
+  }, [chat.id, chat.unread, queryClient]);
+
+
+  useEffect(() => {
+    if (!socket || !chat) return;
+
+    // Join the conversation room
+    socket.emit('joinConversation', { conversationId: chat.id.toString() });
+
+    const handleNewMessage = (msg: SocketMessage) => {
+      // Only handle messages for this conversation
+      if (msg.conversation_id !== chat.id) return;
+
+      const isMe = msg.sender_id === session?.user?.id;
+
+      const uiMessage: Message = {
+        id: msg.message_id,
+        sender: isMe ? "me" : "other",
+        text: msg.text_content,
+        time: new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      queryClient.setQueryData(['messages', chat.id], (old: Message[] | undefined) => {
+        const current = old || [];
+
+        // Check if real ID already exists
+        if (current.some(m => m.id === uiMessage.id)) return current;
+
+        // If it's my message, check if an optimistic message with same text/time exists
+        if (isMe) {
+          const optimisticMatch = current.find(m =>
+            m.id.startsWith('temp-') &&
+            m.text === uiMessage.text
+          );
+          if (optimisticMatch) {
+            // Replace optimistic message with real one
+            return current.map(m => m.id === optimisticMatch.id ? uiMessage : m);
+          }
+        }
+
+        return [...current, uiMessage];
+      });
+
+      // Also update the conversation list last message
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+
+      // Mark as read if we are focused
+      if (!isMe) {
+        markAsRead(chat.id).catch(console.error);
+      }
+    };
+
+    const handleTyping = (payload: TypingPayload) => {
+      if (payload.conversationId === chat.id.toString() && payload.senderId !== session?.user?.id) {
+        setTypingUser("Someone"); // In a real app, resolve user name from ID
+      }
+    };
+
+    const handleStopTyping = (payload: TypingPayload) => {
+      if (payload.conversationId === chat.id.toString()) {
+        setTypingUser(null);
+      }
+    };
+
+    socket.on('newMessage', handleNewMessage);
+    socket.on('isTyping', handleTyping);
+    socket.on('stoppedTyping', handleStopTyping);
+
+    return () => {
+      socket.off('newMessage', handleNewMessage);
+      socket.off('isTyping', handleTyping);
+      socket.off('stoppedTyping', handleStopTyping);
+    };
+  }, [socket, chat, session?.user?.id, queryClient]);
+
+  const sendMessageMutation = useMutation({
+    mutationFn: async (text: string) => {
+      if (!chat.otherUserId) throw new Error("Target user ID missing");
+      return sendMessage(chat.otherUserId, text);
+    },
+    onMutate: async (text) => {
+      await queryClient.cancelQueries({ queryKey: ['messages', chat.id] });
+      const previousMessages = queryClient.getQueryData(['messages', chat.id]);
+
+      // Optimistic update
+      const newMessage: Message = {
+        id: 'temp-' + Date.now(),
+        sender: "me",
+        text: text,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      queryClient.setQueryData(['messages', chat.id], (old: Message[] | undefined) => {
+        return [...(old || []), newMessage];
+      });
+
+      return { previousMessages, tempId: newMessage.id };
+    },
+    onError: (err, newTodo, context) => {
+      queryClient.setQueryData(['messages', chat.id], context?.previousMessages);
+      console.error("Failed to send message", err);
+    },
+    onSuccess: (data, variables, context) => {
+      // Replace optimistic message with real one from API response
+      // We need to be careful not to duplicate if socket event already handled it
+      queryClient.setQueryData(['messages', chat.id], (old: Message[] | undefined) => {
+        const realMessage = mapBackendMessageToMessage(data.data, session?.user?.id);
+        const current = old || [];
+
+        // If the socket already inserted the real message (by ID), remove the temp one
+        if (current.some(m => m.id === realMessage.id)) {
+          return current.filter(m => m.id !== context.tempId);
+        }
+
+        // Otherwise replace temp with real
+        return current.map(m => m.id === context.tempId ? realMessage : m);
+      });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
 
   const handleSendMessage = (text: string) => {
-    const newMessage: Message = {
-      id: Date.now(),
-      sender: "me",
-      text: text.trim(),
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    if (!chat.otherUserId) {
+      console.error("Cannot send message: targetUserId is missing. Conversation ID used as fallback, which might be incorrect.");
+      // Optionally, display an error to the user or disable the input field
+      return;
     }
-    setMessages((prev) => [...prev, newMessage])
+    sendMessageMutation.mutate(text);
   }
 
-  // Desktop Header
-  const DesktopHeader = () => (
-    <div className="p-4 border-b border-border flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <div className={`w-10 h-10 bg-gradient-to-br ${avatarGradients[chat.avatar]} rounded-full`} />
-          {chat.online && (
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-card" />
-          )}
-        </div>
-        <div>
-          <h3 className="font-semibold text-foreground">{chat.name}</h3>
-          <p className="text-xs text-muted-foreground">
-            {chat.role ? chat.role : (chat.online ? "Active now" : "Offline")}
-          </p>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground">
-            <Phone className="w-5 h-5" />
-        </button>
-        <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground">
-            <Video className="w-5 h-5" />
-        </button>
-        <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground">
-            <MoreHorizontal className="w-5 h-5" />
-        </button>
-      </div>
-    </div>
-  )
+  const handleTypingInput = () => {
+    if (!socket || !chat) return;
+
+    const now = Date.now();
+    // Throttle typing event to every 2 seconds
+    if (now - lastTypingRef.current > 2000) {
+      socket.emit('typing', { conversationId: chat.id.toString() });
+      lastTypingRef.current = now;
+    }
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+    // Stop typing after 3 seconds of inactivity
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit('stopTyping', { conversationId: chat.id.toString() });
+    }, 3000);
+  }
 
   return (
     <div className={`flex flex-col h-full ${isMobile ? "h-dvh bg-background" : ""}`}>
-      {isMobile ? <MobileChatHeader chat={chat} /> : <DesktopHeader />}
-
-      {chat.pinnedContext && (
-        <div className="px-4 py-2 text-xs text-center font-medium bg-primary/20 text-primary">
-            Context: {chat.pinnedContext}
+      {isMobile ? (
+        <MobileChatHeader chat={chat} onBack={onBack!} />
+      ) : (
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <Avatar
+              url={chat.avatar}
+              name={chat.name}
+              size="md"
+              online={chat.online}
+            />
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-foreground truncate">{chat.name}</h3>
+              <p className="text-xs text-muted-foreground truncate">
+                {chat.role ? chat.role : chat.online ? "Active now" : "Offline"}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground">
+              <Phone className="w-5 h-5" />
+            </button>
+            <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground">
+              <Video className="w-5 h-5" />
+            </button>
+            <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground">
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       )}
 
-      <MessageList messages={messages} />
-      <ChatInput onSendMessage={handleSendMessage} />
+      {chat.pinnedContext && (
+        <div className="px-4 py-2 text-xs text-center font-medium bg-primary/20 text-primary">
+          Context: {chat.pinnedContext}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center text-muted-foreground">Loading messages...</div>
+      ) : (
+        <MessageList messages={messages} />
+      )}
+
+      {typingUser && (
+        <div className="px-4 py-2 text-xs text-muted-foreground italic">
+          {typingUser} is typing...
+        </div>
+      )}
+
+      <ChatInput onSendMessage={handleSendMessage} onTyping={handleTypingInput} disabled={!chat.otherUserId} />
     </div>
   )
 }

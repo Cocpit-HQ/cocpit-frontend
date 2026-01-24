@@ -1,11 +1,16 @@
+
 import React from 'react';
 import { Poll } from '@/types/entities';
+import { Loader2 } from 'lucide-react';
 
 interface PollCardProps {
   poll: Poll;
+  onVote?: (optionId: string) => void;
+  votedOptionId?: string | null;
+  isLoading?: boolean;
 }
 
-export const PollCard: React.FC<PollCardProps> = ({ poll }) => {
+export const PollCard: React.FC<PollCardProps> = ({ poll, onVote, votedOptionId, isLoading }) => {
   if (!poll) return null;
 
   return (
@@ -17,28 +22,62 @@ export const PollCard: React.FC<PollCardProps> = ({ poll }) => {
             ? Math.round((option.vote_count / poll.total_votes) * 100)
             : 0;
 
+          const isSelected = votedOptionId === option.option_id;
+          const isVoted = !!votedOptionId;
+          const isEnded = !poll.is_active;
+          // Allow switching votes AND unvoting: Only disable if loading or ended
+          const isDisabled = isLoading || isEnded;
+
           return (
-            <div key={option.option_id} className="relative">
+            <button
+              key={option.option_id}
+              onClick={() => !isDisabled && onVote?.(option.option_id)}
+              disabled={isDisabled}
+              className={`relative w-full text-left group transition-all ${!isDisabled
+                ? 'hover:brightness-95 active:scale-[0.99] cursor-pointer'
+                : 'cursor-default opacity-80'
+                }`}
+            >
               {/* Progress bar background */}
-              <div className="absolute inset-0 bg-muted/30 rounded-md overflow-hidden">
-                 <div
-                   className="h-full bg-primary/10 transition-all duration-500 ease-out"
-                   style={{ width: `${percentage}%` }}
-                 />
+              <div className={`absolute inset-0 rounded-md overflow-hidden ${isSelected ? 'bg-primary/20 border border-primary/30' : 'bg-muted/30'}`}>
+                <div
+                  className={`h-full transition-all duration-500 ease-out ${isSelected ? 'bg-primary/20' : 'bg-primary/10'}`}
+                  style={{ width: `${percentage}%` }}
+                />
               </div>
 
               {/* Content */}
               <div className="relative flex justify-between items-center p-3 z-10">
-                <span className="font-medium text-sm text-foreground">{option.option_text}</span>
-                <span className="text-sm text-muted-foreground">{percentage}% ({option.vote_count})</span>
+                <div className="flex items-center gap-2">
+                  {isSelected && <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />}
+                  <span className={`font-medium text-sm ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                    {option.option_text}
+                  </span>
+                </div>
+
+                {(isVoted || isEnded) && (
+                  <span className="text-sm text-muted-foreground transition-opacity duration-300">
+                    {percentage}% ({option.vote_count})
+                  </span>
+                )}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
 
-      <div className="mt-3 text-xs text-muted-foreground text-right border-t border-border pt-2">
-        {poll.total_votes} votes
+      <div className="mt-3 flex justify-between items-center text-xs text-muted-foreground border-t border-border pt-2">
+        <span>
+          {poll.is_active === false ? (
+            <span className="text-red-500 font-medium">Poll Ended</span>
+          ) : (
+            <span>{poll.duration} days left</span>
+          )}
+        </span>
+        <div className="flex items-center gap-2">
+          {isLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+          {poll.total_votes} votes
+        </div>
       </div>
     </div>
   );

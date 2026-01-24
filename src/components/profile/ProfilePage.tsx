@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap, Settings, X, Trash2, Menu, LogOut } from "lucide-react"
+import { MapPin, Briefcase, Calendar, Mail, Phone, Edit2, Plus, CheckCircle, GraduationCap, Settings, X, Trash2, Menu, LogOut, Pencil, Loader2 } from "lucide-react"
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import { AppShell } from "@/components/layout/AppShell"
@@ -34,10 +34,14 @@ import { useAuth } from "@/hooks/use-auth";
 import FeedPost from "@/components/home/FeedPost";
 import PostCard from "./PostCard";
 import Link from "next/link";
-import { getProfile, addExperience, deleteExperience, addEducation, deleteEducation, getUserPosts } from "@/services/api/profile"
-import { UserProfile, UserData, Skill, AddExperiencePayload, AddEducationPayload } from "@/types/user"
+import { getProfile, addExperience, deleteExperience, addEducation, deleteEducation, getUserPosts, addSkills, deleteSkill, uploadAvatar, deleteAvatar } from "@/services/api/profile"
+import { deletePost as apiDeletePost } from "@/services/api/posts"
+import { UserProfile, UserData, AddExperiencePayload, AddEducationPayload, AddSkillsPayload, SkillResponse, Skill } from "@/types/user"
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
 import type { Post } from "@/types/entities"
+import { ViewAvatarModal } from "@/components/profile/ViewAvatarModal";
+import { EditAvatarModal } from "@/components/profile/EditAvatarModal";
+import EditCoverPhoto from "@/components/profile/EditCoverPhoto";
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -117,14 +121,19 @@ export default function ProfilePage() {
   const [isAddSkillModalOpen, setIsAddSkillModalOpen] = useState(false);
   const [isAddExperienceModalOpen, setIsAddExperienceModalOpen] = useState(false);
   const [isAddEducationModalOpen, setIsAddEducationModalOpen] = useState(false);
+  const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
+  const [isEditAvatarOpen, setIsEditAvatarOpen] = useState(false);
   const [skills, setSkills] = useState<Skill[]>([]);
+  const [skillToDelete, setSkillToDelete] = useState<Skill | null>(null);
+  const [isDeletingSkill, setIsDeletingSkill] = useState(false);
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [educations, setEducations] = useState<Education[]>([]);
   const [user, setUser] = useState<UserData | null>(null);
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
-  const { deletePost, togglePostVisibility } = useFeed();
+  const { togglePostVisibility } = useFeed();
   const [previewPosts, setPreviewPosts] = useState<Post[]>([]);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { logout } = useAuth();
 
@@ -156,10 +165,60 @@ export default function ProfilePage() {
     fetchPosts();
   }, []);
 
+  const handleDeletePost = async (id: string) => {
+    // Optimistic update
+    const previousPosts = [...previewPosts];
+    setPreviewPosts((prev) => prev.filter((post) => post.id !== id));
+
+    try {
+      await apiDeletePost(id);
+    } catch (error) {
+      console.error("Failed to delete post", error);
+      // Revert if failed
+      setPreviewPosts(previousPosts);
+    }
+  };
+
+  const handleToggleVisibility = (id: string) => {
+    // Update local state
+    setPreviewPosts(prev => prev.map(post =>
+      post.id === id
+        ? { ...post, visibility: post.visibility === 'private' ? 'public' : 'private' }
+        : post
+    ));
+
+    // Also update global feed context just in case
+    togglePostVisibility(id);
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    if (!user) return;
+    try {
+      const formData = new FormData();
+      formData.append("avatar", file);
+      const response = await uploadAvatar(formData);
+      setUser({ ...user, avatar: response.avatarUrl });
+    } catch (error) {
+      console.error("Failed to upload avatar", error);
+      throw error; // Let the modal handle error UI if needed
+    }
+  };
+
+  const handleAvatarDelete = async () => {
+    if (!user) return;
+    try {
+      await deleteAvatar();
+      setUser({ ...user, avatar: null });
+    } catch (error) {
+      console.error("Failed to delete avatar", error);
+      throw error;
+    }
+  };
+
   if (!mounted) {
     return null;
   }
-  
+
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
   }
@@ -169,18 +228,105 @@ export default function ProfilePage() {
     router.push("/"); // Redirect to sign-in page
   };
 
-  const handleSaveSkills = (newSkills: string[]) => {
-    // setSkills(newSkills);
-    setIsAddSkillModalOpen(false);
+  const handleSaveSkills = async (newSkills: string[]) => {
+    try {
+      // Normalize input: trim and filter empty
+      const normalizedNewSkills = newSkills
+        .map(s => s.trim())
+        .filter(s => s !== "");
+
+      // Get current skills to compare
+      const currentSkillNames = skills.map(s => s.name);
+
+      // Determine skills to add (case-insensitive check for robustness)
+      const skillsToAdd = normalizedNewSkills.filter(newSkill =>
+        !currentSkillNames.some(curr => curr.toLowerCase() === newSkill.toLowerCase())
+      );
+
+      // Determine skills to remove (if user removed them in modal)
+      // Note: This assumes newSkills represents the COMPLETE desired state.
+      const skillsToRemove = skills.filter(curr =>
+        !normalizedNewSkills.some(newSkill => newSkill.toLowerCase() === curr.name.toLowerCase())
+      );
+
+      console.log("Skills diff:", { toAdd: skillsToAdd, toRemove: skillsToRemove });
+
+      let updatedSkills = [...skills];
+
+      // 1. Add new skills
+      if (skillsToAdd.length > 0) {
+        // Remove 'Payload' suffix usage if I renamed it back or keep it simple
+        const skillsPayload: AddSkillsPayload = { name: skillsToAdd };
+        const response = await addSkills(skillsPayload);
+        // Backend returns the FULL list of added skills (or just the ones added?)
+        // Response type is { skills: SkillResponse[] }
+        // We accumulate them
+        const addedSkillsList = response.skills || [];
+        // Avoid duplicates in state if backend returns partial
+        updatedSkills = [...updatedSkills, ...addedSkillsList];
+      }
+
+      // 2. Delete removed skills
+      if (skillsToRemove.length > 0) {
+        const deletePromises = skillsToRemove.map(skill => deleteSkill(skill.skill_id));
+        await Promise.all(deletePromises);
+        // Remove from local state
+        const removedIds = new Set(skillsToRemove.map(s => s.skill_id));
+        updatedSkills = updatedSkills.filter(s => !removedIds.has(s.skill_id));
+      }
+
+      // If no changes, just close
+      if (skillsToAdd.length === 0 && skillsToRemove.length === 0) {
+        setIsAddSkillModalOpen(false);
+        return;
+      }
+
+      // Update state with final list
+      // We might need to refresh from server to be 100% sure, but optimistic/accumulated is faster
+      // Let's re-fetch profile or just setSkills
+      // If addSkills returns new skills only, we merged them.
+      // If delete works, we removed them.
+
+      // However, addSkills response might effectively be "the skills added".
+      // Let's rely on updatedSkills construction.
+      setSkills(updatedSkills);
+      setIsAddSkillModalOpen(false);
+
+    } catch (error: any) {
+      console.error("Failed to save skills", error);
+      if (error.response) {
+        console.error("Server Error Details:", error.response.data);
+        alert(`Failed to save skills: ${error.response.data.message || "Unknown error"}`);
+      }
+    }
   };
 
-  const handleDeleteSkill = (skillToDelete: string) => {
-    // setSkills(skills.filter(skill => skill !== skillToDelete));
+  const handleDeleteSkill = (skillName: string) => {
+    const skill = skills.find(s => s.name === skillName);
+    if (skill) {
+      setSkillToDelete(skill);
+    }
   }
+
+  const confirmDeleteSkill = async () => {
+    if (!skillToDelete) return;
+
+    setIsDeletingSkill(true);
+    try {
+      await deleteSkill(skillToDelete.skill_id);
+      setSkills(prev => prev.filter(s => s.skill_id !== skillToDelete.skill_id));
+    } catch (error) {
+      console.error("Failed to delete skill", error);
+      alert("Failed to delete skill. Please try again.");
+    } finally {
+      setIsDeletingSkill(false);
+      setSkillToDelete(null);
+    }
+  };
 
   const handleSaveExperience = async (data: Partial<Experience>) => {
     if (editingExperience) {
-      // TODO: Implement edit experience
+      // TODO: Implement edit experience API if available, else just local for now or add endpoint
       setExperiences(experiences.map(exp => exp.experience_id === editingExperience.experience_id ? { ...exp, ...data } : exp));
     } else {
       try {
@@ -238,7 +384,7 @@ export default function ProfilePage() {
           description: data.description!,
         };
         if (data.end_date) {
-            payload.end_date = data.end_date;
+          payload.end_date = data.end_date;
         }
         const response = await addEducation(payload);
         setEducations([...educations, response.education]);
@@ -257,7 +403,7 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Failed to delete education", error);
     }
-    setIsAddEducationModalOpen(false);
+    setIsAddExperienceModalOpen(false);
     setEditingEducation(null);
   }
 
@@ -272,10 +418,10 @@ export default function ProfilePage() {
   }
 
   const profileIdentity: ProfileIdentity = {
-    openTo: user?.open_to?.[0] as "Full-time" | "Freelance" | "Consulting" | "Mentorship" || "Full-time",
+    openTo: (user?.open_to as "Full-time" | "Freelance" | "Consulting" | "Mentorship") || "Full-time",
     availability: user?.availability as "Immediate" | "30 Days" | "Casual Networking" || "Immediate",
     workPreference: user?.work_preference as "Remote" | "Hybrid" | "Onsite" || "Hybrid",
-};
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -286,8 +432,8 @@ export default function ProfilePage() {
               <div
                 className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border"
               >
-                <div className="h-36 bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899] relative">
-                  <div className="absolute top-3 right-3 md:hidden">
+                <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage}>
+                  <div className="absolute top-3 right-3 md:hidden z-10">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="bg-transparent text-white p-2 rounded-full hover:bg-white/10 transition-all">
@@ -308,28 +454,45 @@ export default function ProfilePage() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <div className="hidden md:flex absolute top-3 right-3 gap-2">
+                  <div className="hidden md:flex absolute top-3 right-3 gap-2 z-10">
                     <button onClick={() => router.push('/analytics')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
-                        View Analytics
+                      View Analytics
                     </button>
                     <button onClick={() => router.push('/profile/edit')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
-                        <Edit2 className="w-4 h-4" />
-                        Edit Profile
+                      <Edit2 className="w-4 h-4" />
+                      Edit Profile
                     </button>
                   </div>
-                </div>
+                </EditCoverPhoto>
+
 
                 <div className="px-6 pb-6">
                   <div className="flex items-start justify-between -mt-14 mb-4">
-                    <div
-                      className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 relative"
-                    >
-                      <img
-                        src={user?.avatar_url ?? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop"}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="relative group">
+                      <div
+                        className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 cursor-pointer"
+                        onClick={() => setIsViewAvatarOpen(true)}
+                      >
+                        <img
+                          src={user?.avatar ?? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop"}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      {/* Pencil Icon for Edit Avatar */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsEditAvatarOpen(true);
+                        }}
+                        className="absolute bottom-1 right-1 p-2 bg-background border border-border rounded-full text-muted-foreground hover:text-foreground shadow-sm md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                        aria-label="Edit Profile Picture"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
                     </div>
+
                     <button onClick={() => router.push('/profile/edit')} className="md:hidden mt-16 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center gap-2 text-sm">
                       <Edit2 className="w-4 h-4" />
                       Edit Profile
@@ -338,7 +501,7 @@ export default function ProfilePage() {
 
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <h1 className="text-2xl text-foreground">{user?.full_name}</h1>
+                      <h1 className="text-2xl text-foreground">{user?.name}</h1>
                       <CheckCircle className="w-5 h-5 text-primary fill-primary/10" />
                       <span className="text-sm text-muted-foreground">· 2nd</span>
                     </div>
@@ -370,24 +533,24 @@ export default function ProfilePage() {
                     <p className="text-xs text-muted-foreground">Connections</p>
                   </div>
                   <div className="text-center border-l border-r border-border">
-                    <p className="text-xl mb-1 text-foreground">{user?.profile_views_count}</p>
+                    <p className="text-xl mb-1 text-foreground">{user?.profile_views}</p>
                     <p className="text-xs text-muted-foreground">Profile Views</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xl mb-1 text-foreground">{user?.search_appearances_count}</p>
+                    <p className="text-xl mb-1 text-foreground">{user?.search_appearances}</p>
                     <p className="text-xs text-muted-foreground">Search Appearances</p>
                   </div>
                 </div>
               </div>
 
-              <LivingResume experiences={experiences} skills={skills.map(s => s.skill_name)} />
+              <LivingResume experiences={experiences} skills={skills.map(s => s.name)} />
 
               <div
                 className="rounded-xl border p-6 mb-4 bg-card border-border"
               >
                 <h2 className="text-xl text-foreground mb-4">About</h2>
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  {user?.about_text}
+                  {user?.about}
                 </p>
               </div>
 
@@ -419,15 +582,19 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {skills.map((skill) => (
-                    <SkillProofPill
-                        key={skill.skill_id}
-                        skill={skill.skill_name}
+                  {skills.map((skill: any, index) => {
+                    const skillName = skill.name || (typeof skill === 'string' ? skill : '');
+                    if (!skillName) return null;
+                    return (
+                      <SkillProofPill
+                        key={skill.skill_id || `skill-${index}`}
+                        skill={skillName}
                         experiences={experiences}
                         posts={previewPosts}
                         onDelete={handleDeleteSkill}
-                    />
-                  ))}
+                      />
+                    );
+                  })}
                 </div>
               </div>
 
@@ -458,9 +625,22 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-2 gap-4">
                   {previewPosts.map(post => (
                     isMobile ? (
-                      <PostCard key={post.id} post={post} />
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        isOwnPost={true}
+                        onDelete={handleDeletePost}
+                      />
                     ) : (
-                      <FeedPost key={post.id} {...post} initialComments={post.commentData} isOwnPost={true} onDelete={deletePost} onToggleVisibility={togglePostVisibility} />
+                      <FeedPost
+                        key={post.id}
+                        {...post}
+                        initialComments={post.commentData}
+                        isOwnPost={true}
+                        onDelete={handleDeletePost}
+                        onToggleVisibility={handleToggleVisibility}
+                        isProfileView={true}
+                      />
                     )
                   ))}
                 </div>
@@ -476,10 +656,10 @@ export default function ProfilePage() {
         </div>
       </AppShell>
 
-      <SkillModal 
-        isOpen={isAddSkillModalOpen} 
+      <SkillModal
+        isOpen={isAddSkillModalOpen}
         onClose={() => setIsAddSkillModalOpen(false)}
-        initialSkills={skills.map(s => s.skill_name)}
+        initialSkills={skills.map(s => s.name)}
         onSave={handleSaveSkills}
       />
 
@@ -520,6 +700,54 @@ export default function ProfilePage() {
           />
         </DialogContent>
       </Dialog>
-    </div>
+
+      <ViewAvatarModal
+        isOpen={isViewAvatarOpen}
+        onClose={() => setIsViewAvatarOpen(false)}
+        avatarUrl={user?.avatar || null}
+      />
+
+      <EditAvatarModal
+        isOpen={isEditAvatarOpen}
+        onClose={() => setIsEditAvatarOpen(false)}
+        currentAvatarUrl={user?.avatar || null}
+        onUpload={handleAvatarUpload}
+        onDelete={handleAvatarDelete}
+      />
+
+      <Dialog open={!!skillToDelete} onOpenChange={(open) => !open && setSkillToDelete(null)}>
+        <DialogContent className="bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Delete Skill</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong>{skillToDelete?.name}</strong>? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <button
+              onClick={() => setSkillToDelete(null)}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+              disabled={isDeletingSkill}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDeleteSkill}
+              disabled={isDeletingSkill}
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-destructive-foreground hover:opacity-90 transition-opacity flex items-center gap-2"
+            >
+              {isDeletingSkill ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div >
   )
 }

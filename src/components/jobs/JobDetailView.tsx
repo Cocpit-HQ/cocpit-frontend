@@ -12,7 +12,10 @@ interface JobDetailViewProps {
   job: Job
 }
 
+import { useRouter } from "next/navigation"
+
 export function JobDetailView({ job }: JobDetailViewProps) {
+  const router = useRouter()
   const { saveJob } = useJobs()
   const [showQuickApply, setShowQuickApply] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
@@ -60,9 +63,12 @@ export function JobDetailView({ job }: JobDetailViewProps) {
       {/* Header / Nav */}
       <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center gap-4">
-          <Link href="/jobs" className="p-2 hover:bg-muted rounded-full transition-colors">
+          <button
+            onClick={() => router.back()}
+            className="p-2 hover:bg-muted rounded-full transition-colors"
+          >
             <ArrowLeft className="w-5 h-5 text-muted-foreground" />
-          </Link>
+          </button>
           <span className="font-medium text-lg truncate flex-1">{job.title}</span>
           <button
             onClick={handleShare}
@@ -85,16 +91,16 @@ export function JobDetailView({ job }: JobDetailViewProps) {
               <h1 className="text-2xl font-bold mb-2">{job.title}</h1>
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
                 <span className="font-medium text-foreground flex items-center gap-1.5">
-                   <Building className="w-4 h-4" />
-                   {job.company}
+                  <Building className="w-4 h-4" />
+                  {job.company}
                 </span>
                 <span className="flex items-center gap-1.5">
-                   <MapPin className="w-4 h-4" />
-                   {job.location}
+                  <MapPin className="w-4 h-4" />
+                  {job.location}
                 </span>
                 <span className="flex items-center gap-1.5">
-                   <Clock className="w-4 h-4" />
-                   {job.postedTime}
+                  <Clock className="w-4 h-4" />
+                  {job.postedTime}
                 </span>
               </div>
 
@@ -105,7 +111,7 @@ export function JobDetailView({ job }: JobDetailViewProps) {
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                   {job.workMode || "Onsite"}
                 </span>
-                 {job.salary && (
+                {job.salary && (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
                     {job.salary}
                   </span>
@@ -118,107 +124,107 @@ export function JobDetailView({ job }: JobDetailViewProps) {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                 {job.status === 'applied' ? (
-                   <div className="flex-1 flex items-center justify-center gap-2 bg-muted text-muted-foreground rounded-lg py-2.5 font-medium cursor-not-allowed">
-                     <CheckCircle className="w-5 h-5" />
-                     Application Submitted
-                   </div>
-                 ) : (
-                   <button
-                     onClick={() => setShowQuickApply(true)}
-                     className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg py-2.5 font-medium transition-colors"
-                   >
-                     <Zap className="w-5 h-5" />
-                     Quick Apply
-                   </button>
-                 )}
+                {(job.status === 'applied' || job.hasApplied) ? (
+                  <div className="flex-1 flex items-center justify-center gap-2 bg-muted text-muted-foreground rounded-lg py-2.5 font-medium cursor-not-allowed">
+                    <CheckCircle className="w-5 h-5" />
+                    Application Submitted
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowQuickApply(true)}
+                    className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg py-2.5 font-medium transition-colors"
+                  >
+                    <Zap className="w-5 h-5" />
+                    Quick Apply
+                  </button>
+                )}
 
-                 <button
-                   onClick={() => saveJob(job.id)}
-                   className={cn(
-                     "px-6 py-2.5 rounded-lg border font-medium flex items-center justify-center gap-2 transition-colors",
-                     job.isSaved
-                       ? "bg-pink-500/10 border-pink-500/20 text-pink-500"
-                       : "border-border hover:bg-muted"
-                   )}
-                 >
-                   <Bookmark className={cn("w-5 h-5", job.isSaved && "fill-current")} />
-                   {job.isSaved ? "Saved" : "Save Job"}
-                 </button>
+                <button
+                  onClick={() => saveJob(job.id)}
+                  className={cn(
+                    "px-6 py-2.5 rounded-lg border font-medium flex items-center justify-center gap-2 transition-colors",
+                    job.isSaved
+                      ? "bg-pink-500/10 border-pink-500/20 text-pink-500"
+                      : "border-border hover:bg-muted"
+                  )}
+                >
+                  <Bookmark className={cn("w-5 h-5", job.isSaved && "fill-current")} />
+                  {job.isSaved ? "Saved" : "Save Job"}
+                </button>
               </div>
             </div>
           </div>
         </div>
 
         {/* Status / Timeline (if applicable) */}
-        {(job.status === 'applied' || job.status === 'in-progress') && renderTimeline()}
+        {(job.status === 'applied' || job.status === 'in-progress' || job.hasApplied) && renderTimeline()}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-             {/* About Job */}
-             <div className="bg-card border border-border rounded-xl p-6">
-                <h2 className="text-lg font-semibold mb-4">About the Job</h2>
-                <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground whitespace-pre-line">
-                  {job.description || "No description available."}
-                </div>
-             </div>
+            {/* About Job */}
+            <div className="bg-card border border-border rounded-xl p-6">
+              <h2 className="text-lg font-semibold mb-4">About the Job</h2>
+              <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground whitespace-pre-line">
+                {job.description || "No description available."}
+              </div>
+            </div>
 
-             {/* Skills */}
-             <div className="bg-card border border-border rounded-xl p-6">
-                <h2 className="text-lg font-semibold mb-4">Skills Required</h2>
-                <div className="flex flex-wrap gap-2">
-                  {job.skills?.map((skill, i) => (
-                    <span key={i} className="px-3 py-1 bg-muted rounded-full text-sm text-foreground">
-                      {skill}
-                    </span>
-                  )) || <span className="text-muted-foreground">Not specified</span>}
-                </div>
-             </div>
+            {/* Skills */}
+            <div className="bg-card border border-border rounded-xl p-6">
+              <h2 className="text-lg font-semibold mb-4">Skills Required</h2>
+              <div className="flex flex-wrap gap-2">
+                {job.skills?.map((skill, i) => (
+                  <span key={i} className="px-3 py-1 bg-muted rounded-full text-sm text-foreground">
+                    {skill}
+                  </span>
+                )) || <span className="text-muted-foreground">Not specified</span>}
+              </div>
+            </div>
           </div>
 
           <div className="space-y-6">
             {/* Recruiter Insight */}
             <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/10 rounded-xl p-6">
-               <h3 className="font-medium text-foreground mb-2 flex items-center gap-2">
-                 <Zap className="w-4 h-4 text-primary" />
-                 Recruiter Insights
-               </h3>
-               <p className="text-sm text-muted-foreground mb-3">
-                 {job.recruiterInsight || "Recruiters are actively reviewing applications for this role."}
-               </p>
-               {job.matchScore && (
-                 <div className="bg-background/50 rounded-lg p-3 border border-primary/10">
-                   <div className="flex justify-between text-sm mb-1">
-                     <span className="text-muted-foreground">Your Match</span>
-                     <span className="font-bold text-primary">{job.matchScore}%</span>
-                   </div>
-                   <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                     <div className="h-full bg-primary rounded-full" style={{ width: `${job.matchScore}%` }} />
-                   </div>
-                 </div>
-               )}
+              <h3 className="font-medium text-foreground mb-2 flex items-center gap-2">
+                <Zap className="w-4 h-4 text-primary" />
+                Recruiter Insights
+              </h3>
+              <p className="text-sm text-muted-foreground mb-3">
+                {job.recruiterInsight || "Recruiters are actively reviewing applications for this role."}
+              </p>
+              {job.matchScore && (
+                <div className="bg-background/50 rounded-lg p-3 border border-primary/10">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-muted-foreground">Your Match</span>
+                    <span className="font-bold text-primary">{job.matchScore}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full" style={{ width: `${job.matchScore}%` }} />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* About Company */}
             <div className="bg-card border border-border rounded-xl p-6">
-               <h3 className="font-medium text-foreground mb-4">About {job.company}</h3>
-               <p className="text-sm text-muted-foreground mb-4">
-                 {job.aboutCompany || "Company description not available."}
-               </p>
-               <div className="space-y-3 text-sm">
-                 <div className="flex justify-between py-2 border-b border-border/50">
-                    <span className="text-muted-foreground">Industry</span>
-                    <span className="font-medium">{job.industry || "Technology"}</span>
-                 </div>
-                 <div className="flex justify-between py-2 border-b border-border/50">
-                    <span className="text-muted-foreground">Type</span>
-                    <span className="font-medium">{job.companyType || "Private"}</span>
-                 </div>
-                 <div className="flex justify-between py-2">
-                    <span className="text-muted-foreground">Headquarters</span>
-                    <span className="font-medium">{job.location}</span>
-                 </div>
-               </div>
+              <h3 className="font-medium text-foreground mb-4">About {job.company}</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {job.aboutCompany || "Company description not available."}
+              </p>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between py-2 border-b border-border/50">
+                  <span className="text-muted-foreground">Industry</span>
+                  <span className="font-medium">{job.industry || "Technology"}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-border/50">
+                  <span className="text-muted-foreground">Type</span>
+                  <span className="font-medium">{job.companyType || "Private"}</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-muted-foreground">Headquarters</span>
+                  <span className="font-medium">{job.location}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

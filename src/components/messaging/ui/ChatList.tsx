@@ -4,18 +4,31 @@ import React, { useState } from "react"
 import { Search } from "lucide-react"
 import { ChatThread } from "@/types/messaging"
 import ChatListItem from "./ChatListItem"
+import { useQuery } from "@tanstack/react-query"
+import { getConversations } from "@/services/api/messaging"
+import { mapBackendChatToChatThread } from "@/lib/mappers/messaging.mapper"
+import { useSocket } from "@/context/SocketContext"
 
 interface ChatListProps {
-  chats: ChatThread[]
-  selectedChatId?: number
+  selectedChatId?: string // Updated to string
   onSelectChat?: (chat: ChatThread) => void
   isMobile: boolean
+  chats: ChatThread[];
+  isLoading: boolean;
+  error: Error | null;
 }
 
-export default function ChatList({ chats, selectedChatId, onSelectChat, isMobile }: ChatListProps) {
+export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], isLoading, error }: ChatListProps) {
   const [searchTerm, setSearchTerm] = useState("")
+  const { socket, isUserOnline } = useSocket();
 
-  const filteredChats = chats.filter((chat) =>
+  // Merge online status into chats
+  const chatsWithStatus = chats.map(chat => ({
+    ...chat,
+    online: chat.otherUserId ? isUserOnline(chat.otherUserId) : false
+  }));
+
+  const filteredChats = chatsWithStatus.filter((chat) =>
     chat.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -37,9 +50,14 @@ export default function ChatList({ chats, selectedChatId, onSelectChat, isMobile
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        {filteredChats.map((chat) => (
-          <div key={chat.id} onClick={() => !isMobile && onSelectChat?.(chat)}>
+      <div className="flex-1 overflow-y-auto pb-24 md:pb-0">
+        {isLoading && <div className="p-8 text-center text-muted-foreground">Loading conversations...</div>}
+        {error && <div className="p-8 text-center text-red-500">Failed to load conversations</div>}
+
+        {!isLoading && !error && chatsWithStatus.filter((chat) =>
+          chat.name.toLowerCase().includes(searchTerm.toLowerCase())
+        ).map((chat) => (
+          <div key={chat.id} onClick={() => onSelectChat?.(chat)}>
             <ChatListItem
               chat={chat}
               isSelected={selectedChatId === chat.id}
@@ -47,10 +65,10 @@ export default function ChatList({ chats, selectedChatId, onSelectChat, isMobile
             />
           </div>
         ))}
-        {filteredChats.length === 0 && (
-            <div className="p-8 text-center text-muted-foreground">
-                No conversations found
-            </div>
+        {!isLoading && !error && filteredChats.length === 0 && (
+          <div className="p-8 text-center text-muted-foreground">
+            No conversations found
+          </div>
         )}
       </div>
     </div>

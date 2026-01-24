@@ -1,0 +1,175 @@
+"use client";
+
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { io, Socket } from 'socket.io-client';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+import { NotificationPayload, UserStatusPayload } from '@/types/socket';
+import Avatar from '@/components/shared/Avatar';
+
+interface SocketContextType {
+  socket: Socket | null;
+  isConnected: boolean;
+  onlineUsers: Set<string>;
+  isUserOnline: (userId: string) => boolean;
+}
+
+const SocketContext = createContext<SocketContextType>({
+  socket: null,
+  isConnected: false,
+  onlineUsers: new Set(),
+  isUserOnline: () => false
+});
+
+const SOCKET_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/api\/?$/, "");
+
+export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
+  const { data: session } = useSession();
+  const { toast } = useToast();
+  const router = useRouter();
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+
+  const isUserOnline = (userId: string) => onlineUsers.has(userId);
+
+  // Ref to track the current token to prevent checking equality against a changing dependency causing loops
+  const tokenRef = useRef<string | null>(null);
+  const socketRef = useRef<Socket | null>(null);
+
+  useEffect(() => {
+    const token = session?.user?.accessToken;
+
+    if (!token) {
+      // If we have a socket but lost the token, disconnect
+      if (socketRef.current) {
+        console.log("Token lost, disconnecting socket");
+        socketRef.current.disconnect();
+        socketRef.current = null;
+        setSocket(null);
+        setIsConnected(false);
+      }
+      return;
+    }
+
+    // Check if token changed or socket is missing
+    if (socketRef.current && tokenRef.current === token) {
+      if (!socketRef.current.connected) {
+        console.log("Socket exists but disconnected, reconnecting...");
+        socketRef.current.connect();
+      }
+      return; // Token is the same, do nothing
+    }
+
+    console.log("Initializing Socket with token:", token.substring(0, 10) + "...", "Old Token:", tokenRef.current ? "Present" : "None");
+    tokenRef.current = token;
+
+    // Cleanup old if exists (should be handled by cleanup func, but explicit here for safety before overwrite)
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current.removeAllListeners();
+    }
+
+    const newSocket = io(SOCKET_URL, {
+      auth: { token },
+      transports: ["websocket"], // Force WebSocket to verify stability
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+    });
+
+    newSocket.on('connect', () => {
+      console.log("Socket connected:", newSocket.id);
+      setIsConnected(true);
+    });
+
+    newSocket.on('disconnect', (reason) => {
+      console.log("Socket disconnected. Reason:", reason);
+      setIsConnected(false);
+    });
+
+    newSocket.on("connect_error", (err) => {
+      console.error("Socket connection error:", err.message);
+      // If 401, maybe token expired?
+    });
+
+    // Handle incoming events
+    const handleNotification = (payload: NotificationPayload) => {
+      if (payload.type === 'message') {
+        toast({
+          title: "New Message",
+          description: (
+            <div
+              className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => {
+                if (payload.from) {
+                  router.push(`/messaging?userId=${payload.from}`);
+                }
+              }}
+            >
+              {payload.senderName && (
+                <Avatar
+                  name={payload.senderName}
+                  url={payload.senderAvatar}
+                  size="sm"
+                />
+              )}
+              <span>
+                You have a message from <span className="font-semibold">{payload.senderName || "someone"}</span>
+              </span>
+            </div>
+          ),
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "New Notification",
+          description: "System Notification",
+        });
+      }
+    };
+
+    const handleUserStatus = (payload: UserStatusPayload) => {
+      setOnlineUsers(prev => {
+        const next = new Set(prev);
+        if (payload.status === 'online') {
+          next.add(payload.userId);
+        } else {
+          next.delete(payload.userId);
+        }
+        return next;
+      });
+    };
+
+    newSocket.on('notification', handleNotification);
+    newSocket.on('userStatusChanged', handleUserStatus);
+
+    socketRef.current = newSocket;
+    setSocket(newSocket);
+
+    return () => {
+      // Cleanup function
+      // If the component unmounts, we disconnect.
+      // If the token changes, this runs, then the effect body runs.
+
+      // We rely on the effect body to handle the 'token change' replacement.
+      // But we must clean up listeners.
+
+      // Note: In strict mode, verify if this disconnects prematurely.
+      console.log("Socket cleanup triggered for token:", token.substring(0, 10) + "...");
+      newSocket.off('notification', handleNotification);
+      newSocket.off('userStatusChanged', handleUserStatus);
+      newSocket.disconnect();
+    };
+  }, [session?.user?.accessToken, toast, router]);
+
+  return (
+    <SocketContext.Provider value={{ socket, isConnected, onlineUsers, isUserOnline }}>
+      {children}
+    </SocketContext.Provider>
+  );
+};
+
+export const useSocket = () => useContext(SocketContext);

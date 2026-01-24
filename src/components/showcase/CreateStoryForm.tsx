@@ -2,7 +2,9 @@
 
 import React, { useState, useRef } from "react"
 import { Image, Video, FileText } from "lucide-react"
-import { StoryDetail } from "@/types/showcase"
+import { mapStory } from "@/lib/story-mapper";
+import { StoryDetail } from "@/types/showcase";
+import { showcaseService } from "@/services/showcase.service";
 
 type Props = {
   onCancel?: () => void
@@ -13,6 +15,7 @@ export function CreateStoryForm({ onCancel, onCreated }: Props) {
   const [description, setDescription] = useState("")
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
 
@@ -20,37 +23,66 @@ export function CreateStoryForm({ onCancel, onCreated }: Props) {
     onCancel?.()
   }
 
-  const handleCreate = () => {
-    if (!selectedImage && !selectedVideo) return
+  const handleCreate = async () => {
+    if ((!selectedImage && !selectedVideo) || isSubmitting) return
 
-    const newStory: StoryDetail = {
-      id: Date.now(),
-      image: selectedImage || selectedVideo || "", // Just using the data URL for now
-      isVideo: !!selectedVideo,
-      author: {
-        name: "You",
-        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop",
-      },
-      title: "My New Story",
-      timeAgo: "Just now",
-      views: 0,
-      likes: 0,
-      comments: 0,
-      authorTitle: "Me",
-      description: description,
-      viewers: [],
-      likers: []
+    // Duration Check (for video)
+    if (selectedVideo) {
+      const video = document.createElement('video');
+      video.src = selectedVideo;
+      await new Promise((resolve) => {
+        video.onloadedmetadata = () => resolve(true);
+      });
+      if (video.duration > 30) {
+        alert("Video must be 30 seconds or less.");
+        return;
+      }
     }
 
-    onCreated?.(newStory)
+    setIsSubmitting(true)
+    try {
+      let mediaData = { url: "", public_id: "", media_type: "image" };
+
+      // select File object - we need to store it in state or ref, currently we only have base64 in selectedImage/Video
+      // For this refactor, we need to capture the File object in handleUpload
+      if (fileRef.current) {
+        const uploadRes = await showcaseService.uploadMedia(fileRef.current);
+        mediaData = {
+          url: uploadRes.url,
+          public_id: uploadRes.public_id,
+          media_type: uploadRes.media_type
+        };
+      }
+
+      const createdStory = await showcaseService.createStory({
+        title: "My New Story",
+        description,
+        media_url: mediaData.url,
+        media_type: mediaData.media_type,
+        public_id: mediaData.public_id,
+        media_status: mediaData.media_type === 'video' ? 'processing' : 'ready'
+      });
+
+      if (onCreated) {
+        onCreated(mapStory(createdStory))
+      }
+    } catch (error) {
+      console.error("Failed to create story", error)
+      setIsSubmitting(false)
+    }
   }
+
+  // We need to store the actual file
+  const fileRef = useRef<File | null>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      fileRef.current = file;
       const reader = new FileReader()
       reader.onloadend = () => {
         setSelectedImage(reader.result as string)
+        setSelectedVideo(null)
       }
       reader.readAsDataURL(file)
     }
@@ -59,9 +91,11 @@ export function CreateStoryForm({ onCancel, onCreated }: Props) {
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      fileRef.current = file;
       const reader = new FileReader()
       reader.onloadend = () => {
         setSelectedVideo(reader.result as string)
+        setSelectedImage(null)
       }
       reader.readAsDataURL(file)
     }
@@ -70,7 +104,7 @@ export function CreateStoryForm({ onCancel, onCreated }: Props) {
   return (
     <div className="space-y-6">
       {/* Upload Image */}
-      <div>
+      <div className={isSubmitting ? "opacity-50 pointer-events-none" : ""}>
         <label
           className="block text-sm mb-2 text-muted-foreground"
           htmlFor="story-image"
@@ -110,7 +144,7 @@ export function CreateStoryForm({ onCancel, onCreated }: Props) {
       </div>
 
       {/* Upload Video */}
-      <div>
+      <div className={isSubmitting ? "opacity-50 pointer-events-none" : ""}>
         <label
           className="block text-sm mb-2 text-muted-foreground"
           htmlFor="story-video"
@@ -150,7 +184,7 @@ export function CreateStoryForm({ onCancel, onCreated }: Props) {
       </div>
 
       {/* Description */}
-      <div>
+      <div className={isSubmitting ? "opacity-50 pointer-events-none" : ""}>
         <label
           className="block text-sm mb-2 text-muted-foreground"
           htmlFor="story-description"
@@ -175,15 +209,24 @@ export function CreateStoryForm({ onCancel, onCreated }: Props) {
       <div className="mt-10 flex items-center justify-between gap-4">
         <button
           onClick={handleCancel}
-          className="px-6 py-3 rounded-lg border text-sm border-border text-muted-foreground hover:bg-muted"
+          disabled={isSubmitting}
+          className="px-6 py-3 rounded-lg border text-sm border-border text-muted-foreground hover:bg-muted disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           onClick={handleCreate}
-          className="flex-1 px-6 py-3 rounded-lg text-sm bg-primary text-primary-foreground hover:opacity-90 transition-all"
+          disabled={isSubmitting || (!selectedImage && !selectedVideo)}
+          className="flex-1 px-6 py-3 rounded-lg text-sm bg-primary text-primary-foreground hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          Create Story
+          {isSubmitting ? (
+            <>
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              Creating...
+            </>
+          ) : (
+            "Create Story"
+          )}
         </button>
       </div>
     </div>

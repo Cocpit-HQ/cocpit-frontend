@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 
 import { AppShell } from "@/components/layout/AppShell"
@@ -31,6 +31,9 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
 
+  const searchParams = useSearchParams()
+  const focusPostId = searchParams.get("focusPostId")
+
   useEffect(() => {
     const fetchPosts = async () => {
       setLoading(true)
@@ -50,6 +53,18 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
       fetchPosts()
     }
   }, [userId, activeTab])
+
+  useEffect(() => {
+    if (!loading && focusPostId && posts.length > 0) {
+      const element = document.getElementById(`post-${focusPostId}`)
+      if (element) {
+        // Small timeout to ensure layout is stable
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }, 100)
+      }
+    }
+  }, [loading, focusPostId, posts])
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")

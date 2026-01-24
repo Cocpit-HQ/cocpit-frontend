@@ -8,6 +8,7 @@ declare module "next-auth" {
       roles: string[]
       accessToken: string
       error?: string
+      onboarding_complete: boolean
     } & DefaultSession["user"]
   }
 
@@ -15,6 +16,7 @@ declare module "next-auth" {
     roles: string[]
     accessToken: string
     refreshToken: string
+    onboarding_complete: boolean
   }
 }
 
@@ -25,5 +27,6 @@ declare module "next-auth/jwt" {
     accessToken: string
     refreshToken: string
     error?: string
+    onboarding_complete: boolean
   }
 }

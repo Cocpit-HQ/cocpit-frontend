@@ -43,15 +43,19 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
   const poll = backendPost.poll ? {
     poll_id: backendPost.poll.poll_id,
     total_votes: backendPost.poll.total_votes,
+    duration: backendPost.poll.duration,
+    is_active: backendPost.poll.is_active,
+    user_vote: backendPost.poll.user_vote,
     options: backendPost.poll.options.map(opt => ({
-        option_id: opt.option_id,
-        option_text: opt.option_text,
-        vote_count: opt.vote_count
+      option_id: opt.option_id,
+      option_text: opt.option_text,
+      vote_count: opt.vote_count
     }))
-  } : null;
+  } : undefined; // Post expects undefined or null, but let's be safe with undefined if null causes issues, or keep null if interface allows
 
   return {
     id: backendPost.post_id,
+    authorId: backendPost.author_id,
     author: backendPost.author_name,
     authorAvatar: backendPost.author_avatar || undefined,
     title: backendPost.category_name || "",
@@ -60,7 +64,8 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     imageSrc: images.length > 0 ? images[0] : undefined,
     images: images.length > 0 ? images : undefined,
     videoSrc: videoSrc,
-    likes: backendPost.like_count || "0",
+    likes: parseInt(backendPost.like_count) || 0,
+    isLiked: backendPost.is_liked,
     comments: backendPost.comment_count || "0",
     shares: "0", // Backend does not provide shares yet
     commentData: [],

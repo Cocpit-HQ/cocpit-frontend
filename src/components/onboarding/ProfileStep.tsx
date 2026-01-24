@@ -1,29 +1,66 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Upload, Check, X, ChevronLeft } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Upload, Check, X, Loader2 } from "lucide-react";
 import styles from "./ProfileStep.module.css";
+import { checkAccountNameAvailability, completeOnboarding } from "@/services/api/onboarding";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import { useSession } from "next-auth/react";
 
-interface ProfileStepProps {
-  onComplete: (data: { profileImage: string | null; accountName: string }) => void;
-  onBack: () => void;
-  currentStep: number;
-  initialData: {
-    profileImage: string | null;
-    accountName: string;
-  };
-}
-
-export default function ProfileStep({ onComplete, onBack, currentStep, initialData }: ProfileStepProps) {
-  const [profileImage, setProfileImage] = useState<string | null>(initialData.profileImage);
-  const [accountName, setAccountName] = useState(initialData.accountName);
+export default function ProfileStep() {
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [accountName, setAccountName] = useState("");
   const [nameAvailable, setNameAvailable] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const debouncedAccountName = useDebounce(accountName, 500);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const { toast } = useToast();
+  const { update } = useSession();
+
+  const validateAccountName = (name: string) => {
+    // 3-20 characters, lowercase letters, numbers, underscore only
+    const regex = /^[a-z0-9_]{3,20}$/;
+    return regex.test(name);
+  };
+
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (!debouncedAccountName) {
+        setNameAvailable(null);
+        return;
+      }
+
+      if (!validateAccountName(debouncedAccountName)) {
+        setNameAvailable(false);
+        return;
+      }
+
+      setChecking(true);
+      try {
+        const available = await checkAccountNameAvailability(debouncedAccountName);
+        setNameAvailable(available);
+      } catch (error) {
+        console.error("Failed to check account name availability", error);
+        // On error, maybe reset or show error? For now assuming unavailable/error state
+        setNameAvailable(null);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    checkAvailability();
+  }, [debouncedAccountName]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setProfileImageFile(file);
       const reader = new FileReader();
       reader.onload = (event) => {
         setProfileImage(event.target?.result as string);
@@ -32,53 +69,83 @@ export default function ProfileStep({ onComplete, onBack, currentStep, initialDa
     }
   };
 
-  const checkAccountName = async () => {
-    if (!accountName.trim()) {
-      setNameAvailable(null);
-      return;
-    }
-
-    setChecking(true);
-    // Simulate API call - in future, this will check with backend
-    await new Promise((resolve) => setTimeout(resolve, 600));
-
-    // Since no database yet, always return available
-    setNameAvailable(true);
-    setChecking(false);
-  };
-
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAccountName(e.target.value);
-    setNameAvailable(null);
-  };
+    // Force lowercase and trim, although user might type whatever.
+    // The requirement says "Account Name Rules: lowercase...".
+    // I can auto-lowercase or just validate.
+    // "Auto-normalize: trim, lowercase" was in the user instructions.
+    const value = e.target.value.toLowerCase().trim();
 
-  const handleNext = () => {
-    if (accountName.trim() && nameAvailable) {
-      onComplete({
-        profileImage,
-        accountName,
-      });
+    // Also, if we want to prevent invalid chars from even being typed, we could.
+    // But validation is better for UX to show what's wrong if they paste.
+    // However, spaces are definitely not allowed.
+    // Let's just set the value raw but transformed.
+    setAccountName(value);
+
+    // Reset availability while typing/debouncing
+    if (value !== debouncedAccountName) {
+      setNameAvailable(null);
     }
   };
 
-  const isNextDisabled = !accountName.trim() || nameAvailable === false || nameAvailable === null;
+  const handleSubmit = async () => {
+    if (!profileImageFile || !accountName || nameAvailable !== true) return;
+
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("avatar", profileImageFile); // Key 'avatar' or 'file'? Services usually use 'file' or 'files'. Media uses 'files'. uploadAvatar uses 'file' typically.
+      // Wait, uploadAvatar logic: api.post("/profile/avatar", formData).
+      // Backend usually expects a specific key.
+      // Since I don't see the backend code for /onboarding/complete, I will guess 'avatar' or 'image'.
+      // If I look at `uploadAvatar` implementation in `profile.ts`, it just passes formData.
+      // If I assume "Reuse existing avatar upload patterns", I should check how `uploadAvatar` constructs formData if possible.
+      // `uploadAvatar` takes `FormData` as arg.
+      // Let's assume the key is 'avatar' for this specific endpoint, or 'file'.
+      // Common practice: 'file'.
+      // I'll use 'avatar' as it's semantic.
+      formData.append("avatar", profileImageFile);
+      formData.append("account_name", accountName);
+
+      const response = await completeOnboarding(formData);
+
+      toast({
+        title: "Setup Complete",
+        description: "Your profile has been set up successfully.",
+      });
+
+      await update({ onboarding_complete: true });
+
+      router.push("/profile");
+      router.refresh();
+
+    } catch (error) {
+      console.error("Onboarding failed", error);
+      toast({
+        title: "Error",
+        description: "Failed to complete onboarding. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const isValid =
+    !!profileImageFile &&
+    !!accountName &&
+    nameAvailable === true &&
+    !checking &&
+    validateAccountName(accountName);
 
   return (
     <div className={styles.formContent}>
-      <div className={styles.header}>
-        <button onClick={onBack} className={styles.backBtn}>
-          <ChevronLeft className={styles.backIcon} />
-        </button>
-        <div className={styles.stepIndicator}>
-          <div className={`${styles.stepDot} ${currentStep === 1 ? styles.active : ''}`}></div>
-          <div className={`${styles.stepDot} ${currentStep === 2 ? styles.active : ''}`}></div>
-        </div>
-      </div>
+      {/* Removed Header/Steps */}
 
       <div className={styles.formBody}>
-        <h2 className={styles.title}>Add a profile picture</h2>
+        <h2 className={styles.title}>Welcome! Let's get you set up.</h2>
         <p className={styles.subtitle}>
-          Choose a profile picture to personalize your account. You can change it anytime.
+          Choose a profile picture and a unique account name to get started.
         </p>
 
         {/* Profile Picture Upload */}
@@ -86,6 +153,7 @@ export default function ProfileStep({ onComplete, onBack, currentStep, initialDa
           <button
             onClick={() => fileInputRef.current?.click()}
             className={styles.uploadButton}
+            type="button"
           >
             {profileImage ? (
               <img src={profileImage} alt="Profile" className={styles.uploadImage} />
@@ -111,51 +179,58 @@ export default function ProfileStep({ onComplete, onBack, currentStep, initialDa
           <div className={styles.inputWrapper}>
             <input
               type="text"
-              placeholder="Enter your account name"
+              placeholder="username"
               value={accountName}
               onChange={handleNameChange}
-              className={styles.input}
+              className={`${styles.input} ${
+                accountName && nameAvailable === false ? 'border-red-500' : ''
+              } ${
+                accountName && nameAvailable === true ? 'border-green-500' : ''
+              }`}
               maxLength={20}
             />
-            {nameAvailable !== null && (
-              <div className={`${styles.statusIcon} ${nameAvailable ? styles.success : styles.error}`}>
-                {nameAvailable ? (
-                  <Check className={styles.icon} />
-                ) : (
-                  <X className={styles.icon} />
-                )}
-              </div>
-            )}
+            <div className={styles.statusIcon}>
+              {checking ? (
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              ) : nameAvailable === true ? (
+                <Check className={`${styles.icon} ${styles.success}`} />
+              ) : nameAvailable === false ? (
+                <X className={`${styles.icon} ${styles.error}`} />
+              ) : null}
+            </div>
           </div>
 
-          {/* Availability Check Button */}
-          <button
-            onClick={checkAccountName}
-            disabled={!accountName.trim() || checking}
-            className={styles.checkBtn}
-          >
-            {checking ? "Checking..." : "Check availability"}
-          </button>
+          {/* Helper Text */}
+          <div className="flex justify-between items-start mt-1">
+             <p className="text-xs text-muted-foreground">
+               3-20 characters, lowercase, numbers, underscores only.
+             </p>
+          </div>
 
           {/* Status Messages */}
-          {nameAvailable === true && (
-            <p className={styles.successMsg}>✓ Name available</p>
-          )}
-          {nameAvailable === false && (
-            <p className={styles.errorMsg}>✗ Name not available. Try another.</p>
-          )}
-          {nameAvailable === null && accountName && (
-            <p className={styles.infoMsg}>Checking availability...</p>
+          {nameAvailable === false && !checking && (
+            <p className={styles.errorMsg}>
+              {validateAccountName(accountName)
+                ? "This username is already taken."
+                : "Invalid format. Use only lowercase letters, numbers, and underscores."}
+            </p>
           )}
         </div>
 
-        {/* Next Button */}
+        {/* Submit Button */}
         <button
-          onClick={handleNext}
-          disabled={isNextDisabled}
+          onClick={handleSubmit}
+          disabled={!isValid || submitting}
           className={styles.nextBtn}
         >
-          Next
+          {submitting ? (
+             <div className="flex items-center justify-center gap-2">
+               <Loader2 className="w-4 h-4 animate-spin" />
+               <span>Setting up...</span>
+             </div>
+          ) : (
+            "Complete Setup"
+          )}
         </button>
       </div>
     </div>
