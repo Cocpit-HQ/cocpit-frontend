@@ -178,6 +178,11 @@ export const authOptions: NextAuthOptions = {
 
       // Return previous token if the access token has not expired yet
       try {
+        // If the token already has an error, return it immediately to stop the loop
+        if (token.error === "RefreshAccessTokenError") {
+          return token;
+        }
+
         const decoded = jwtDecode<{ exp: number }>(token.accessToken);
         if (decoded.exp && Date.now() < decoded.exp * 1000) {
           return token;
