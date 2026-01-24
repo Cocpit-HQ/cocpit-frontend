@@ -4,6 +4,7 @@ import React, { useState } from "react"
 import { Calendar, MapPin, DollarSign, Image, X, Clock, User, Mail, Users, AlertCircle } from "lucide-react"
 import { useEvents } from "@/context/EventsContext"
 import { Switch } from "@/components/ui/switch"
+import { createEvent } from "@/services/api/event"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 
@@ -12,7 +13,9 @@ interface CreateEventFormProps {
 }
 
 export function CreateEventForm({ onClose }: CreateEventFormProps) {
-  const { createEvent } = useEvents()
+  const { refreshMyEvents } = useEvents()
+
+  const [isLoading, setIsLoading] = useState(false)
   const [activeSection, setActiveSection] = useState('core') // For potential tab navigation if needed, currently single page
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -20,7 +23,7 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
     // Core
     title: "",
     description: "",
-    category: "Professional",
+    category: "Tech",
     eventType: "InPerson" as "Online" | "InPerson",
     virtualLink: "",
     location: "",
@@ -66,52 +69,75 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validation
     if (!formData.title || !formData.startDate || !formData.startTime) {
-        alert("Please fill in required fields (Title, Start Date, Start Time).");
-        return;
+      alert("Please fill in required fields (Title, Start Date, Start Time).");
+      return;
     }
 
-    createEvent({
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
+    try {
+      setIsLoading(true);
+      const data = new FormData();
 
-        date: formData.startDate,
-        time: formData.startTime,
-        endDate: formData.endDate,
-        endTime: formData.endTime,
+      // Core
+      data.append("title", formData.title);
+      data.append("description", formData.description);
+      data.append("category", formData.category);
+      // Combine date and time to ISO-like string for backend timestamp
+      const combinedStart = `${formData.startDate}T${formData.startTime}`;
+      data.append("startTime", combinedStart);
 
-        location: formData.eventType === 'Online' ? 'Online' : formData.location,
-        virtualLink: formData.virtualLink,
-        eventType: formData.eventType,
+      if (formData.endDate && formData.endTime) {
+        const combinedEnd = `${formData.endDate}T${formData.endTime}`;
+        data.append("endTime", combinedEnd);
+      }
 
-        organizer: {
-          name: formData.organizerName,
-          email: formData.organizerEmail
-        },
+      data.append("location", formData.eventType === 'Online' ? 'Online' : formData.location);
+      if (formData.virtualLink) data.append("virtualLink", formData.virtualLink);
+      data.append("eventType", formData.eventType);
 
-        attendees: "1",
-        maxAttendees: formData.maxAttendees ? parseInt(formData.maxAttendees) : undefined,
-        registrationDeadline: formData.registrationDeadline,
-        waitlist: formData.waitlist,
+      // Organizer
+      data.append("organizerName", formData.organizerName);
+      if (formData.organizerEmail) data.append("organizerEmail", formData.organizerEmail);
 
-        priceType: formData.priceType,
-        price: formData.price ? parseFloat(formData.price) : 0,
-        ticketDetails: formData.priceType === 'Paid' ? {
-          name: formData.ticketName,
-          quantity: formData.quantity ? parseInt(formData.quantity) : 0,
-          provider: formData.paymentProvider
-        } : undefined,
+      // Registration
+      if (formData.maxAttendees) data.append("maxAttendees", formData.maxAttendees);
+      if (formData.registrationDeadline) data.append("registrationDeadline", formData.registrationDeadline);
+      data.append("waitlist", String(formData.waitlist));
 
-        image: previewUrl || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop", // Mock image
-        tags: formData.tags.split(',').map(t => t.trim()).filter(t => t),
+      // Ticketing
+      data.append("priceType", formData.priceType);
+      if (formData.price) data.append("price", formData.price);
+      if (formData.ticketName) data.append("ticketName", formData.ticketName);
+      if (formData.quantity) data.append("quantity", formData.quantity);
+      if (formData.paymentProvider) data.append("paymentProvider", formData.paymentProvider);
 
-        type: formData.priceType === 'Paid' ? 'Paid' : 'Free'
-    });
+      // Tags
+      const tagsList = formData.tags.split(',').map(t => t.trim()).filter(t => t);
+      tagsList.forEach(tag => data.append("tags", tag));
 
-    onClose();
+      // Banner Image
+      if (formData.image) {
+        data.append("banner", formData.image);
+      }
+
+      console.log("Submitting Event FormData...");
+      await createEvent(data);
+
+      // Refresh My Events list to show the new event
+      if (refreshMyEvents) {
+        await refreshMyEvents();
+      }
+
+      alert("Event created successfully!");
+      onClose();
+    } catch (error: any) {
+      console.error("Create event error:", error);
+      alert(error.response?.data?.message || "Failed to create event. See console for details.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -143,7 +169,7 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
                 className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
                 placeholder="e.g. Tech Mixer 2024"
                 value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               />
             </div>
 
@@ -154,7 +180,7 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
                 className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary resize-none"
                 placeholder="What is this event about?"
                 value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>
 
@@ -193,13 +219,15 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
                 <select
                   className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
                   value={formData.category}
-                  onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 >
-                  <option>Professional</option>
+                  <option>Tech</option>
+                  <option>Business</option>
                   <option>Networking</option>
                   <option>Workshop</option>
+                  <option>Summit</option>
                   <option>Conference</option>
-                  <option>Social</option>
+                  <option>Masterclass</option>
                 </select>
               </div>
               <div>
@@ -208,12 +236,11 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
                   {['InPerson', 'Online'].map((type) => (
                     <button
                       key={type}
-                      onClick={() => setFormData({...formData, eventType: type as any})}
-                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                        formData.eventType === type
-                          ? 'bg-card text-primary shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
+                      onClick={() => setFormData({ ...formData, eventType: type as any })}
+                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${formData.eventType === type
+                        ? 'bg-card text-primary shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                        }`}
                     >
                       {type === 'InPerson' ? 'In-person' : 'Online'}
                     </button>
@@ -232,7 +259,7 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
                     className="w-full pl-12 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
                     placeholder="Enter full address"
                     value={formData.location}
-                    onChange={(e) => setFormData({...formData, location: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   />
                 </div>
               </div>
@@ -244,7 +271,7 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
                   className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
                   placeholder="https://zoom.us/..."
                   value={formData.virtualLink}
-                  onChange={(e) => setFormData({...formData, virtualLink: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, virtualLink: e.target.value })}
                 />
               </div>
             )}
@@ -258,19 +285,19 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
                     type="date"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
                     value={formData.startDate}
-                    onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                   />
                 </div>
               </div>
               <div>
                 <Label className="mb-2 block">Start Time *</Label>
                 <div className="relative">
-                   <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="time"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
                     value={formData.startTime}
-                    onChange={(e) => setFormData({...formData, startTime: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
                   />
                 </div>
               </div>
@@ -279,25 +306,25 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="mb-2 block">End Date</Label>
-                 <div className="relative">
+                <div className="relative">
                   <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="date"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
                     value={formData.endDate}
-                    onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                   />
                 </div>
               </div>
               <div>
                 <Label className="mb-2 block">End Time</Label>
-                 <div className="relative">
-                   <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <div className="relative">
+                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="time"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
                     value={formData.endTime}
-                    onChange={(e) => setFormData({...formData, endTime: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
                   />
                 </div>
               </div>
@@ -309,7 +336,7 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
 
         {/* Organizer Info */}
         <section className="space-y-4">
-           <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">2</span>
             Organizer Info
           </h3>
@@ -322,19 +349,19 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
                   type="text"
                   className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
                   value={formData.organizerName}
-                  onChange={(e) => setFormData({...formData, organizerName: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, organizerName: e.target.value })}
                 />
               </div>
             </div>
             <div>
               <Label className="mb-2 block">Contact Email</Label>
-               <div className="relative">
+              <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="email"
                   className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
                   value={formData.organizerEmail}
-                  onChange={(e) => setFormData({...formData, organizerEmail: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, organizerEmail: e.target.value })}
                 />
               </div>
             </div>
@@ -345,7 +372,7 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
 
         {/* Registration & Capacity */}
         <section className="space-y-4">
-           <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">3</span>
             Registration
           </h3>
@@ -359,25 +386,25 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
                   className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
                   placeholder="Unlimited"
                   value={formData.maxAttendees}
-                  onChange={(e) => setFormData({...formData, maxAttendees: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, maxAttendees: e.target.value })}
                 />
               </div>
             </div>
-             <div>
+            <div>
               <Label className="mb-2 block">Registration Deadline</Label>
               <input
                 type="date"
                 className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
                 value={formData.registrationDeadline}
-                onChange={(e) => setFormData({...formData, registrationDeadline: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, registrationDeadline: e.target.value })}
               />
             </div>
           </div>
           <div className="flex items-center space-x-2">
             <Switch
-                id="waitlist"
-                checked={formData.waitlist}
-                onCheckedChange={(c) => setFormData({...formData, waitlist: c})}
+              id="waitlist"
+              checked={formData.waitlist}
+              onCheckedChange={(c) => setFormData({ ...formData, waitlist: c })}
             />
             <Label htmlFor="waitlist">Allow Waitlist when full</Label>
           </div>
@@ -387,90 +414,90 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
 
         {/* Ticketing */}
         <section className="space-y-4">
-           <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">4</span>
             Ticketing
           </h3>
 
           <div className="flex gap-4">
-             <div className="flex items-center space-x-2">
-                <input
-                    type="radio"
-                    id="price-free"
-                    name="priceType"
-                    checked={formData.priceType === 'Free'}
-                    onChange={() => setFormData({...formData, priceType: 'Free'})}
-                    className="w-4 h-4 text-primary"
-                />
-                <Label htmlFor="price-free">Free Event</Label>
-             </div>
-             <div className="flex items-center space-x-2">
-                <input
-                    type="radio"
-                    id="price-paid"
-                    name="priceType"
-                    checked={formData.priceType === 'Paid'}
-                    onChange={() => setFormData({...formData, priceType: 'Paid'})}
-                    className="w-4 h-4 text-primary"
-                />
-                <Label htmlFor="price-paid">Paid Ticket</Label>
-             </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                id="price-free"
+                name="priceType"
+                checked={formData.priceType === 'Free'}
+                onChange={() => setFormData({ ...formData, priceType: 'Free' })}
+                className="w-4 h-4 text-primary"
+              />
+              <Label htmlFor="price-free">Free Event</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                id="price-paid"
+                name="priceType"
+                checked={formData.priceType === 'Paid'}
+                onChange={() => setFormData({ ...formData, priceType: 'Paid' })}
+                className="w-4 h-4 text-primary"
+              />
+              <Label htmlFor="price-paid">Paid Ticket</Label>
+            </div>
           </div>
 
           {formData.priceType === 'Paid' && (
             <div className="p-4 rounded-xl bg-muted/50 border border-border space-y-4">
+              <div>
+                <Label className="mb-2 block">Ticket Name</Label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                  placeholder="e.g. General Admission"
+                  value={formData.ticketName}
+                  onChange={(e) => setFormData({ ...formData, ticketName: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="mb-2 block">Ticket Name</Label>
+                  <Label className="mb-2 block">Price ($)</Label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="number"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                      placeholder="0.00"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="mb-2 block">Quantity</Label>
                   <input
-                    type="text"
+                    type="number"
                     className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                    placeholder="e.g. General Admission"
-                    value={formData.ticketName}
-                    onChange={(e) => setFormData({...formData, ticketName: e.target.value})}
+                    placeholder="100"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <Label className="mb-2 block">Price ($)</Label>
-                        <div className="relative">
-                            <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <input
-                                type="number"
-                                className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                                placeholder="0.00"
-                                value={formData.price}
-                                onChange={(e) => setFormData({...formData, price: e.target.value})}
-                            />
-                        </div>
-                    </div>
-                     <div>
-                        <Label className="mb-2 block">Quantity</Label>
-                        <input
-                            type="number"
-                            className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                            placeholder="100"
-                            value={formData.quantity}
-                            onChange={(e) => setFormData({...formData, quantity: e.target.value})}
-                        />
-                    </div>
-                </div>
-                 <div>
-                  <Label className="mb-2 block">Payment Provider (Mock)</Label>
-                  <select
-                    className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                    value={formData.paymentProvider}
-                    onChange={(e) => setFormData({...formData, paymentProvider: e.target.value})}
-                  >
-                    <option>Stripe</option>
-                    <option>Razorpay</option>
-                    <option>PayPal</option>
-                    <option>Offline Payment</option>
-                  </select>
-                </div>
-                <div className="flex items-start gap-2 text-xs text-muted-foreground">
-                    <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                    <p>This is a mock implementation. No real payments will be processed.</p>
-                </div>
+              </div>
+              <div>
+                <Label className="mb-2 block">Payment Provider (Mock)</Label>
+                <select
+                  className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                  value={formData.paymentProvider}
+                  onChange={(e) => setFormData({ ...formData, paymentProvider: e.target.value })}
+                >
+                  <option>Stripe</option>
+                  <option>Razorpay</option>
+                  <option>PayPal</option>
+                  <option>Offline Payment</option>
+                </select>
+              </div>
+              <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                <p>This is a mock implementation. No real payments will be processed.</p>
+              </div>
             </div>
           )}
         </section>
@@ -486,9 +513,10 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
         </button>
         <button
           onClick={handleSubmit}
-          className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white font-medium hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/20"
+          disabled={isLoading}
+          className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white font-medium hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Create Event
+          {isLoading ? "Creating..." : "Create Event"}
         </button>
       </div>
     </div>

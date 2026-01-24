@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react"
 import useEmblaCarousel from "embla-carousel-react"
 import { HeroEventCard } from "./HeroEventCard"
-import type { EventCard } from "@/types/events"
+import type { EventCard } from "@/types/event"
 
 interface HeroCarouselProps {
   events: EventCard[]
-  onEventClick: (id: number) => void
+  onEventClick: (id: number | string) => void
 }
 
 export function HeroCarousel({ events, onEventClick }: HeroCarouselProps) {
@@ -37,7 +37,7 @@ export function HeroCarousel({ events, onEventClick }: HeroCarouselProps) {
   }, [emblaApi, onSelect])
 
   // Handle click: Center if side card, Navigate if center card
-  const handleCardClick = useCallback((index: number, eventId: number) => {
+  const handleCardClick = useCallback((index: number, eventId: number | string) => {
     if (!emblaApi) return
 
     if (index === selectedIndex) {

@@ -142,6 +142,7 @@ export default function ProfilePage() {
       try {
         const profileData = await getProfile();
         setUser(profileData.user);
+        setCoverImage(profileData.user.cover_image || null);
         setExperiences(profileData.experiences);
         setEducations(profileData.educations);
         setSkills(profileData.skills);
@@ -424,6 +425,15 @@ export default function ProfilePage() {
 
   const isLoading = !mounted || !user;
 
+  const latestEducation = user?.latest_education || educations[0] || null;
+
+  const scrollToEducation = () => {
+    const educationSection = document.getElementById("education-section");
+    if (educationSection) {
+      educationSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <AppShell currentPage="profile" navigateTo={navigateTo}>
@@ -505,6 +515,7 @@ export default function ProfilePage() {
                       </button>
                     </div>
 
+                  <div className="flex justify-between items-start">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <h1 className="text-2xl text-foreground">{user?.name}</h1>
@@ -527,8 +538,21 @@ export default function ProfilePage() {
                       <p className="text-sm text-muted-foreground mb-4">500+ connections</p>
                       <ProfileIdentityChips initialIdentity={profileIdentity} />
                     </div>
+
+                    {latestEducation && (
+                      <div onClick={scrollToEducation} className="hidden md:flex items-center gap-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors max-w-[280px]">
+                        <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                          <GraduationCap className="w-6 h-6 text-yellow-600" />
+                        </div>
+                        <span className="text-sm font-semibold text-foreground hover:underline line-clamp-2">
+                          {/* @ts-ignore */}
+                          {latestEducation.school_name || latestEducation.school || 'University'}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
+              </div>
 
                 <div
                   className="rounded-xl border p-4 mb-6 bg-card border-border"
@@ -604,11 +628,11 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border p-6 bg-card border-border">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl text-foreground">Education</h2>
-                    <button onClick={handleAddEducationClick} className="text-primary hover:underline text-sm">Add</button>
-                  </div>
+              <div id="education-section" className="rounded-xl border p-6 bg-card border-border">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl text-foreground">Education</h2>
+                  <button onClick={handleAddEducationClick} className="text-primary hover:underline text-sm">Add</button>
+                </div>
 
                   <div className="space-y-6">
                     {educations.map(edu => (
@@ -661,7 +685,7 @@ export default function ProfilePage() {
             </div>
           )}
         </div>
-      </AppShell>
+      </AppShell >
 
       <SkillModal
         isOpen={isAddSkillModalOpen}

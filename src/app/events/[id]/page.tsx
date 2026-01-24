@@ -5,6 +5,8 @@ import {
 } from '@/components/events/EventRegistrationModal';
 import { useParams, useRouter } from 'next/navigation';
 import { useEvents } from '@/context/EventsContext';
+import { getEventById, registerForEvent } from "@/services/api/event"
+import { mapBackendEventToEventCard } from "@/lib/mappers/event.mapper"
 import {
   Calendar,
   MapPin,
@@ -15,23 +17,94 @@ import {
   ChevronLeft,
   Bookmark,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import type { EventCard } from '@/types/event';
 
 const EventDetailPage = () => {
   const params = useParams();
   const router = useRouter();
   const { id } = params;
-  const eventId = parseInt(id as string, 10);
 
-  const { events, isRegistered, isSaved, saveEvent, unsaveEvent, cancelRegistration } = useEvents();
-  const event = events.find((e) => e.id === eventId);
+  // Normalize ID to string for comparison, as URL params are strings
+  const eventIdStr = Array.isArray(id) ? id[0] : id;
+
+  const { events, isRegistered, registeredEventIds, refreshRegisteredEvents, isSaved, saveEvent, unsaveEvent, cancelRegistration } = useEvents();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Removed useTheme logic
+  // Local state for the event, potentially fetched independently if not in context
+  const [fetchedEvent, setFetchedEvent] = useState<EventCard | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
-  if (!event) {
-    return <div>Event not found</div>;
+  // 1. Try to find in Context first (fast path)
+  const contextEvent = events.find((e) => String(e.id) === eventIdStr);
+
+  // 2. Effect to handle fetching if not in context or to verify data
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadEvent() {
+      if (!eventIdStr) return;
+
+      // If we already have it from context, we might rely on that, 
+      // but strictly speaking for a detail page we might want fresh data.
+      // For now, if we have contextEvent, use it to stop loading immediately.
+      if (contextEvent) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const { getEventById } = await import('@/services/api/event');
+        const data = await getEventById(eventIdStr);
+        if (isMounted) {
+          setFetchedEvent(mapBackendEventToEventCard(data));
+          setError(null);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error("Failed to fetch event details:", err);
+          setError("Event not found or failed to load.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadEvent();
+
+    return () => { isMounted = false; };
+  }, [eventIdStr, contextEvent]);
+
+  // Derived event: Context takes precedence if available (synchronous), otherwise fetched
+  const event = contextEvent || fetchedEvent;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-foreground animate-pulse">Loading event details...</div>
+      </div>
+    );
+  }
+
+  if (error || !event) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <div className="text-xl text-red-500 font-semibold">{error || "Event not found"}</div>
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-primary hover:underline"
+        >
+          <ChevronLeft className="w-5 h-5" />
+          <span>Go Back</span>
+        </button>
+      </div>
+    );
   }
 
   const registered = isRegistered(event.id);
@@ -40,6 +113,7 @@ const EventDetailPage = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-4xl mx-auto px-4 py-8">
+
         <div className="mb-4 flex items-center justify-between">
           <button
             onClick={() => router.back()}
@@ -51,11 +125,10 @@ const EventDetailPage = () => {
 
           <button
             onClick={() => saved ? unsaveEvent(event.id) : saveEvent(event.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
-              saved
-                ? 'bg-primary/10 border-primary/20 text-primary'
-                : 'bg-card border-border hover:bg-muted text-muted-foreground'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${saved
+              ? 'bg-primary/10 border-primary/20 text-primary'
+              : 'bg-card border-border hover:bg-muted text-muted-foreground'
+              }`}
           >
             <Bookmark className={`w-5 h-5 ${saved ? 'fill-current' : ''}`} />
             {saved ? 'Saved' : 'Save Event'}
@@ -64,7 +137,7 @@ const EventDetailPage = () => {
 
         <div className="relative h-96 rounded-2xl overflow-hidden mb-8">
           <img
-            src={event.image}
+            src={event.image || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2070"}
             alt={event.title}
             className="w-full h-full object-cover"
           />
@@ -85,10 +158,7 @@ const EventDetailPage = () => {
           <div className="md:col-span-2">
             <h2 className="text-2xl font-bold mb-4">About this event</h2>
             <p className="text-muted-foreground mb-8">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
-              vestibulum in eros vel tincidunt. Donec ullamcorper, libero a
-              fermentum facilisis, eros nisl lacinia a, vel aliquam turpis nunc
-              eget nibh.
+              {event.description}
             </p>
 
             <div className="space-y-4">
@@ -115,7 +185,7 @@ const EventDetailPage = () => {
                 <div>
                   <h3 className="font-semibold">Attendees</h3>
                   <p className="text-muted-foreground">
-                    {event.attendees} going
+                    {event.attendees || 0} going
                   </p>
                 </div>
               </div>
@@ -128,26 +198,23 @@ const EventDetailPage = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <User className="w-5 h-5 text-muted-foreground" />
-                  <span>The Company Inc.</span>
+                  <span>{event.organizerName || event.organizer?.name || "Organizer"}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Mail className="w-5 h-5 text-muted-foreground" />
                   <a
-                    href="mailto:contact@thecompany.com"
+                    href={`mailto:${event.organizer?.email}`}
                     className="hover:text-primary transition-colors"
                   >
-                    contact@thecompany.com
+                    {event.organizer?.email || "No email provided"}
                   </a>
                 </div>
+                {/* 
                 <div className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-muted-foreground" />
-                  <a
-                    href="tel:+1234567890"
-                    className="hover:text-primary transition-colors"
-                  >
-                    +1 234 567 890
-                  </a>
+                   ... Phone logic if available ...
                 </div>
+                */}
               </div>
             </div>
             {registered ? (
@@ -159,14 +226,25 @@ const EventDetailPage = () => {
                   Download Ticket
                 </button>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (confirm('Are you sure you want to cancel your registration?')) {
-                      cancelRegistration(event.id);
+                      setIsCancelling(true);
+                      const result = await cancelRegistration(event.id);
+                      setIsCancelling(false);
+
+                      if (result.success) {
+                        router.refresh();
+                        // Optional: Navigate back to registered tab if desired
+                        // router.push('/events?tab=registered'); 
+                      } else {
+                        alert("Failed to cancel registration. Please try again.");
+                      }
                     }
                   }}
-                  className="w-full bg-card border border-red-200 text-red-500 font-bold px-6 py-3 rounded-xl hover:bg-red-50 transition-all"
+                  disabled={isCancelling}
+                  className="w-full bg-card border border-red-200 text-red-500 font-bold px-6 py-3 rounded-xl hover:bg-red-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Cancel Registration
+                  {isCancelling ? 'Processing...' : 'Cancel Registration'}
                 </button>
               </div>
             ) : (

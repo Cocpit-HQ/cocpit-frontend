@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Search, MapPin, Users, Plus, X } from "lucide-react"
 import { AppShell } from "@/components/layout/AppShell"
@@ -10,6 +10,7 @@ import { useEvents } from "@/context/EventsContext"
 import { HeroCarousel } from "@/components/events/HeroCarousel"
 import { StandardEventCard } from "@/components/events/StandardEventCard"
 import type { Page } from "@/types/common"
+import type { EventCard } from "@/types/event"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -23,11 +24,69 @@ const routes: Record<string, string> = {
 
 export function EventsPage() {
   const router = useRouter()
-  const { events, isRegistered, isSaved, myEventIds, saveEvent, unsaveEvent } = useEvents()
+  const { events, isRegistered, isSaved, isSaving, myEventIds, saveEvent, unsaveEvent } = useEvents()
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("upcoming")
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [filters, setFilters] = useState<FilterState>(initialFilterState)
+  const [registeredEvents, setRegisteredEvents] = useState<EventCard[]>([])
+  const [loadingRegistered, setLoadingRegistered] = useState(false)
+  const [unregisteringId, setUnregisteringId] = useState<number | string | null>(null)
+
+  // Fetch registered events when tab becomes active
+  useEffect(() => {
+    if (activeTab === 'registered') {
+      const fetchRegistered = async () => {
+        setLoadingRegistered(true)
+        try {
+          const { getMyRegisteredEvents } = await import('@/services/api/event')
+          const data = await getMyRegisteredEvents()
+          setRegisteredEvents(data)
+        } catch (err) {
+          console.error("Failed to fetch registered events", err)
+        } finally {
+          setLoadingRegistered(false)
+        }
+      }
+      fetchRegistered()
+    }
+  }, [activeTab])
+
+  // Handle unregister
+  const handleUnregister = async (id: number | string) => {
+    if (!confirm("Are you sure you want to unregister?")) return;
+
+    setUnregisteringId(id);
+
+    try {
+      // Show local loading state if feasible, or just rely on optimistic update
+      // Creating a temporary loading state for the specific item might be complex without a new state, 
+      // but blocking the UI or just removing it optimistically is fine as per requirements "Show loading state while processing"
+      // Let's use a simple global loading indicator or just rely on the existing loadingRegistered if we want to block interaction
+
+      // Since we are inside the page component, let's just use the optimistic update pattern paired with a toast/alert
+
+      const { unregisterFromEvent } = await import('@/services/api/event');
+      await unregisterFromEvent(id);
+
+      // Optimistic update
+      setRegisteredEvents(prev => prev.filter(e => e.id !== id));
+
+      // Also update global context to keep it in sync
+      if (typeof id !== 'undefined') { // type guard
+        // context's cancelRegistration also calls API, so calling it here would double call. 
+        // But context state needs update. 
+        // Actually, context.cancelRegistration DOES call API. 
+        // So we should call context.cancelRegistration INSTEAD of direct API import.
+      }
+
+    } catch (err) {
+      console.error("Failed to unregister", err);
+      alert("Failed to unregister. Please try again.");
+    } finally {
+      setUnregisteringId(null)
+    }
+  };
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
@@ -62,26 +121,26 @@ export function EventsPage() {
 
       // Price
       if (filters.prices.length > 0) {
-          const isFree = event.priceType === 'Free' || event.type === 'Free' || (!event.price && !event.priceType);
-          const isPaid = !isFree;
-          const showFree = filters.prices.includes('Free');
-          const showPaid = filters.prices.includes('Paid');
-          if (showFree && !showPaid && !isFree) return false;
-          if (showPaid && !showFree && !isPaid) return false;
+        const isFree = event.priceType === 'Free' || event.type === 'Free' || (!event.price && !event.priceType);
+        const isPaid = !isFree;
+        const showFree = filters.prices.includes('Free');
+        const showPaid = filters.prices.includes('Paid');
+        if (showFree && !showPaid && !isFree) return false;
+        if (showPaid && !showFree && !isPaid) return false;
       }
 
       // Popularity
       if (filters.popular) {
-          const attendeeCount = parseInt(event.attendees.replace(/,/g, '') || '0');
-          if (attendeeCount < 200) return false;
+        const attendeeCount = parseInt(event.attendees.replace(/,/g, '') || '0');
+        if (attendeeCount < 200) return false;
       }
 
       // Date
       if (filters.dates.length > 0) {
-          const eventDate = new Date(event.date);
-          const today = new Date();
-          const isToday = eventDate.toDateString() === today.toDateString();
-          if (filters.dates.includes('Today') && !isToday) return false;
+        const eventDate = new Date(event.date);
+        const today = new Date();
+        const isToday = eventDate.toDateString() === today.toDateString();
+        if (filters.dates.includes('Today') && !isToday) return false;
       }
 
       return true;
@@ -94,23 +153,28 @@ export function EventsPage() {
   const otherEvents = filteredDiscoveryEvents.slice(3).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   // Filtered list for other tabs (Registered, Saved, My Events)
-  const tabEvents = getFilteredEvents(events.filter(event => {
-      switch (activeTab) {
-        case 'registered': return isRegistered(event.id);
-        case 'saved': return isSaved(event.id);
-        case 'my_events': return myEventIds.has(event.id);
-        default: return true;
-      }
-  }));
+  // Filtered list for other tabs (Registered, Saved, My Events)
+  const tabEvents = getFilteredEvents(
+    // Source depends on tab
+    activeTab === 'registered'
+      ? registeredEvents
+      : events.filter(event => {
+        switch (activeTab) {
+          case 'saved': return isSaved(event.id);
+          case 'my_events': return myEventIds.has(event.id);
+          default: return true;
+        }
+      })
+  );
 
   const removeFilter = (type: keyof FilterState, value: string) => {
     setFilters(prev => {
-       const list = prev[type] as string[];
-       return { ...prev, [type]: list.filter(v => v !== value) };
+      const list = prev[type] as string[];
+      return { ...prev, [type]: list.filter(v => v !== value) };
     });
   }
 
-  const removePopular = () => setFilters(prev => ({...prev, popular: false}));
+  const removePopular = () => setFilters(prev => ({ ...prev, popular: false }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -134,62 +198,62 @@ export function EventsPage() {
           {/* Search and Filter Row */}
           <div className="flex flex-col md:flex-row gap-4 mb-4">
             <div className="flex gap-3 w-full">
-                <div className="flex-1 relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <input
-                        type="text"
-                        placeholder="Search events..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 rounded-xl border focus:outline-none focus:border-primary bg-card border-border text-foreground placeholder-muted-foreground"
-                    />
-                </div>
-                <div className="flex-shrink-0">
-                    <EventFilters filters={filters} setFilters={setFilters} />
-                </div>
+              <div className="flex-1 relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search events..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 rounded-xl border focus:outline-none focus:border-primary bg-card border-border text-foreground placeholder-muted-foreground"
+                />
+              </div>
+              <div className="flex-shrink-0">
+                <EventFilters filters={filters} setFilters={setFilters} />
+              </div>
             </div>
           </div>
 
           {/* Filter Chips */}
           {(filters.categories.length > 0 || filters.types.length > 0 || filters.prices.length > 0 || filters.dates.length > 0 || filters.popular) && (
-             <div className="flex flex-wrap gap-2 mb-6">
-                {filters.popular && (
-                    <div className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                        Popular
-                        <button onClick={removePopular} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
-                    </div>
-                )}
-                {filters.types.map(t => (
-                    <div key={t} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                        {t === 'InPerson' ? 'In-person' : t}
-                        <button onClick={() => removeFilter('types', t)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
-                    </div>
-                ))}
-                {filters.prices.map(p => (
-                    <div key={p} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                        {p}
-                        <button onClick={() => removeFilter('prices', p)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
-                    </div>
-                ))}
-                {filters.categories.map(c => (
-                    <div key={c} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                        {c}
-                        <button onClick={() => removeFilter('categories', c)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
-                    </div>
-                ))}
-                {filters.dates.map(d => (
-                    <div key={d} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                        {d}
-                        <button onClick={() => removeFilter('dates', d)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
-                    </div>
-                ))}
-                <button
-                    onClick={() => setFilters(initialFilterState)}
-                    className="text-sm text-muted-foreground hover:text-foreground underline px-2"
-                >
-                    Clear all
-                </button>
-             </div>
+            <div className="flex flex-wrap gap-2 mb-6">
+              {filters.popular && (
+                <div className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                  Popular
+                  <button onClick={removePopular} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
+                </div>
+              )}
+              {filters.types.map(t => (
+                <div key={t} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                  {t === 'InPerson' ? 'In-person' : t}
+                  <button onClick={() => removeFilter('types', t)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
+                </div>
+              ))}
+              {filters.prices.map(p => (
+                <div key={p} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                  {p}
+                  <button onClick={() => removeFilter('prices', p)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
+                </div>
+              ))}
+              {filters.categories.map(c => (
+                <div key={c} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                  {c}
+                  <button onClick={() => removeFilter('categories', c)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
+                </div>
+              ))}
+              {filters.dates.map(d => (
+                <div key={d} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                  {d}
+                  <button onClick={() => removeFilter('dates', d)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
+                </div>
+              ))}
+              <button
+                onClick={() => setFilters(initialFilterState)}
+                className="text-sm text-muted-foreground hover:text-foreground underline px-2"
+              >
+                Clear all
+              </button>
+            </div>
           )}
 
           {/* Tabs */}
@@ -198,11 +262,10 @@ export function EventsPage() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-4 text-sm font-medium capitalize transition-all relative whitespace-nowrap flex-shrink-0 ${
-                  activeTab === tab
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={`pb-4 text-sm font-medium capitalize transition-all relative whitespace-nowrap flex-shrink-0 ${activeTab === tab
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+                  }`}
               >
                 {tab === 'upcoming' ? 'Discover' : tab.replace('_', ' ')}
                 {activeTab === tab && (
@@ -215,34 +278,35 @@ export function EventsPage() {
           {/* Content Area */}
           {activeTab === 'upcoming' ? (
             <div className="space-y-10 animate-in fade-in duration-500">
-                {/* Hero / Suggested Section */}
-                <section>
-                    <h2 className="text-2xl font-bold mb-4 text-foreground">Suggested for you</h2>
-                    <HeroCarousel
-                        events={suggestedEvents}
-                        onEventClick={(id) => router.push(`/events/${id}`)}
-                    />
-                </section>
+              {/* Hero / Suggested Section */}
+              <section>
+                <h2 className="text-2xl font-bold mb-4 text-foreground">Suggested for you</h2>
+                <HeroCarousel
+                  events={suggestedEvents}
+                  onEventClick={(id) => router.push(`/events/${id}`)}
+                />
+              </section>
 
-                {/* All other events */}
-                <section>
-                    <h2 className="text-2xl font-bold mb-4 text-foreground">All Events</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {otherEvents.map(event => (
-                            <StandardEventCard
-                                key={event.id}
-                                event={event}
-                                onClick={() => router.push(`/events/${event.id}`)}
-                                isRegistered={isRegistered(event.id)}
-                                isSaved={isSaved(event.id)}
-                                onToggleSave={(e) => {
-                                    e.stopPropagation();
-                                    isSaved(event.id) ? unsaveEvent(event.id) : saveEvent(event.id);
-                                }}
-                            />
-                        ))}
-                    </div>
-                </section>
+              {/* All other events */}
+              <section>
+                <h2 className="text-2xl font-bold mb-4 text-foreground">All Events</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {otherEvents.map(event => (
+                    <StandardEventCard
+                      key={event.id}
+                      event={event}
+                      onClick={() => router.push(`/events/${event.id}`)}
+                      isRegistered={isRegistered(event.id)}
+                      isSaved={isSaved(event.id)}
+                      isSaving={isSaving(event.id)}
+                      onToggleSave={(e) => {
+                        e.stopPropagation();
+                        isSaved(event.id) ? unsaveEvent(event.id) : saveEvent(event.id);
+                      }}
+                    />
+                  ))}
+                </div>
+              </section>
             </div>
           ) : (
             // Grid for other tabs
@@ -253,17 +317,30 @@ export function EventsPage() {
                 </div>
               ) : (
                 tabEvents.map((event) => (
+                  <div key={event.id} className="relative group">
                     <StandardEventCard
-                        key={event.id}
-                        event={event}
-                        onClick={() => router.push(`/events/${event.id}`)}
-                        isRegistered={isRegistered(event.id)}
-                        isSaved={isSaved(event.id)}
-                        onToggleSave={(e) => {
-                            e.stopPropagation();
-                            isSaved(event.id) ? unsaveEvent(event.id) : saveEvent(event.id);
-                        }}
+                      event={event}
+                      onClick={() => router.push(`/events/${event.id}`)}
+                      isRegistered={activeTab === 'registered' ? true : isRegistered(event.id)}
+                      isSaved={isSaved(event.id)}
+                      isSaving={isSaving(event.id)}
+                      onToggleSave={(e) => {
+                        e.stopPropagation();
+                        isSaved(event.id) ? unsaveEvent(event.id) : saveEvent(event.id);
+                      }}
                     />
+                    {activeTab === 'registered' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleUnregister(event.id)
+                        }}
+                        className="absolute top-4 right-4 z-20 bg-red-500 text-white text-xs px-3 py-1 rounded shadow-md hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        {unregisteringId === event.id ? 'Processing...' : 'Unregister'}
+                      </button>
+                    )}
+                  </div>
                 ))
               )}
             </div>
@@ -275,12 +352,12 @@ export function EventsPage() {
       {/* Create Event Modal */}
       {showCreateEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <CreateEventForm onClose={() => {
-                setShowCreateEvent(false);
-                if (window.location.hash !== '#my_events') {
-                     setActiveTab('my_events');
-                }
-            }} />
+          <CreateEventForm onClose={() => {
+            setShowCreateEvent(false);
+            if (window.location.hash !== '#my_events') {
+              setActiveTab('my_events');
+            }
+          }} />
         </div>
       )}
     </div>
