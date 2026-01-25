@@ -51,12 +51,21 @@ api.interceptors.response.use(
 
         // Check if refresh failed (indicated by error property or invalid session)
         if (newSession?.user?.error === "RefreshAccessTokenError" || !newSession?.user?.accessToken) {
-           await logout();
-           return Promise.reject(error);
+          await logout();
+          return Promise.reject(error);
         }
 
         // Update the header with the new token
-        originalRequest.headers.Authorization = `Bearer ${newSession.user.accessToken}`;
+        const newToken = newSession.user.accessToken;
+        const oldToken = originalRequest.headers.Authorization?.split(" ")[1];
+
+        if (newToken === oldToken) {
+          console.warn("Token refresh returned same token. Aborting retry to prevent loop.");
+          await logout();
+          return Promise.reject(error);
+        }
+
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
         // Retry the original request
         return api(originalRequest);

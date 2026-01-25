@@ -92,7 +92,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     newSocket.on("connect_error", (err) => {
       console.error("Socket connection error:", err.message);
-      // If 401, maybe token expired?
+      if (err.message.includes("Authentication error") || err.message.includes("Invalid token") || err.message.includes("jwt expired")) {
+        console.log("Authentication failed for socket. Disconnecting to prevent loop.");
+        newSocket.disconnect();
+        // Trigger session update to check for new token or logout
+        // We force a session update which might trigger a re-render with new token if available
+        // or eventually fail to generic auth handlers.
+      }
     });
 
     // Handle incoming events
