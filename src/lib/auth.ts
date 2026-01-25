@@ -184,7 +184,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         const decoded = jwtDecode<{ exp: number }>(token.accessToken);
-        if (decoded.exp && Date.now() < decoded.exp * 1000) {
+        // Subtract 60 seconds to refresh early and account for clock skew
+        if (decoded.exp && Date.now() < (decoded.exp * 1000 - 60 * 1000)) {
           return token;
         }
       } catch (error) {

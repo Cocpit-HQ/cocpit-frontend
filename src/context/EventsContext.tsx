@@ -34,44 +34,100 @@ export function EventsProvider({ children }: { children: ReactNode }) {
   const [savedEventIds, setSavedEventIds] = useState<Set<number | string>>(new Set());
   const [savingEventIds, setSavingEventIds] = useState<Set<number | string>>(new Set());
   const [myEventIds, setMyEventIds] = useState<Set<number | string>>(new Set());
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch my events and saved events on load
+  // Consolidated hydration effect
   React.useEffect(() => {
     if (status === 'authenticated') {
-      refreshMyEvents();
-      refreshSavedEvents();
-      refreshRegisteredEvents();
+      hydrateUserEvents();
+    } else if (status === 'unauthenticated') {
+      // Clear sensitive state on logout
+      setRegisteredEventIds(new Set());
+      setSavedEventIds(new Set());
+      setMyEventIds(new Set());
+      setIsLoading(false);
     }
   }, [status]);
 
+  const hydrateUserEvents = async () => {
+    setIsLoading(true);
+    try {
+      const { getMyCreatedEvents, getMySavedEvents, getMyRegisteredEvents, getAllEvents } = await import('@/services/api/event');
+      const { mapBackendEventToEventCard } = await import('@/lib/mappers/event.mapper');
+
+      // Fetch all user-specific AND public event data in parallel
+      const [myEvents, savedEvents, registeredEvents, publicEvents] = await Promise.all([
+        getMyCreatedEvents().catch(err => { console.error("Failed to fetch my events", err); return []; }),
+        getMySavedEvents().catch(err => { console.error("Failed to fetch saved events", err); return []; }),
+        getMyRegisteredEvents().catch(err => { console.error("Failed to fetch registered events", err); return []; }),
+        getAllEvents().catch(err => { console.error("Failed to fetch public events", err); return []; })
+      ]);
+
+      // Process My Events
+      const mappedMyEvents = myEvents.map(mapBackendEventToEventCard);
+      setMyEventIds(new Set(mappedMyEvents.map(e => e.id)));
+
+      // Process Saved Events
+      setSavedEventIds(new Set(savedEvents.map(e => e.id)));
+
+      // Process Registered Events
+      setRegisteredEventIds(new Set(registeredEvents.map(e => e.id)));
+
+      // Process Public Events
+      const mappedPublicEvents = publicEvents.map(mapBackendEventToEventCard);
+
+      // Merge all into main events list to ensure they are visible
+      setEvents(prev => {
+        // Create a Map of all events by ID to ensure uniqueness.
+        // Priority: New fetched events overwrite existing/seed events with same ID.
+        const allFetched = [...mappedMyEvents, ...savedEvents, ...registeredEvents, ...mappedPublicEvents];
+        const eventMap = new Map<string | number, EventCard>();
+
+        // Add previous events first (seeds)
+        prev.forEach(e => eventMap.set(e.id, e));
+
+        // Add/Overwrite with fetched events
+        allFetched.forEach(e => eventMap.set(e.id, e));
+
+        // Convert back to array
+        return Array.from(eventMap.values());
+      });
+
+    } catch (error) {
+      console.error("Critical error hydrating user events:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshMyEvents = async () => {
+    // ... (Legacy individual refresh if needed, but preferably use hydration)
+    // Keeping this for "create event" flow
+    try {
+      const { getMyCreatedEvents } = await import('@/services/api/event');
+      const { mapBackendEventToEventCard } = await import('@/lib/mappers/event.mapper');
+      const myEvents = await getMyCreatedEvents();
+      const mappedEvents = myEvents.map(mapBackendEventToEventCard);
+
+      setEvents(prev => {
+        const newIds = new Set(mappedEvents.map(e => e.id));
+        const keptEvents = prev.filter(p => !newIds.has(p.id));
+        return [...mappedEvents, ...keptEvents];
+      });
+      setMyEventIds(new Set(mappedEvents.map(e => e.id)));
+    } catch (error) {
+      console.error("Failed to refresh my events", error);
+    }
+  };
+
   const refreshRegisteredEvents = async () => {
+    // ... (Legacy individual refresh)
     try {
       const { getMyRegisteredEvents } = await import('@/services/api/event');
       const registeredEvents = await getMyRegisteredEvents();
       setRegisteredEventIds(new Set(registeredEvents.map(e => e.id)));
     } catch (error) {
       console.error("Failed to refresh registered events", error);
-    }
-  };
-
-  const refreshSavedEvents = async () => {
-    try {
-      const { getMySavedEvents } = await import('@/services/api/event');
-      const savedEvents = await getMySavedEvents();
-      setSavedEventIds(new Set(savedEvents.map(e => e.id)));
-
-      // Merge saved events into main list if not present?
-      // For now, adhere to "Saved tab" logic which filters main `events`.
-      // Getting strict consistency might require merging like myEvents.
-      // Let's do it to be safe so they appear in Saved tab even if not in seed.
-      setEvents(prev => {
-        const newIds = new Set(savedEvents.map(e => e.id));
-        const keptEvents = prev.filter(p => !newIds.has(p.id));
-        return [...savedEvents, ...keptEvents];
-      });
-
-    } catch (error) {
-      console.error("Failed to refresh saved events", error);
     }
   };
 
@@ -103,7 +159,6 @@ export function EventsProvider({ children }: { children: ReactNode }) {
   };
 
   const saveEvent = async (id: number | string) => {
-    // Optimistic update
     setSavedEventIds(prev => new Set(prev).add(id));
     setSavingEventIds(prev => new Set(prev).add(id));
 
@@ -112,7 +167,6 @@ export function EventsProvider({ children }: { children: ReactNode }) {
       await apiSave(id);
     } catch (error) {
       console.error("Failed to save event", error);
-      // Revert on error
       setSavedEventIds(prev => {
         const next = new Set(prev);
         next.delete(id);
@@ -129,7 +183,6 @@ export function EventsProvider({ children }: { children: ReactNode }) {
   };
 
   const unsaveEvent = async (id: number | string) => {
-    // Optimistic
     setSavedEventIds(prev => {
       const next = new Set(prev);
       next.delete(id);
@@ -142,7 +195,6 @@ export function EventsProvider({ children }: { children: ReactNode }) {
       await apiUnsave(id);
     } catch (error) {
       console.error("Failed to unsave event", error);
-      // Revert
       setSavedEventIds(prev => new Set(prev).add(id));
       alert('Failed to unsave event');
     } finally {
@@ -155,35 +207,11 @@ export function EventsProvider({ children }: { children: ReactNode }) {
   };
 
   const createEvent = (eventData: Omit<EventCard, 'id'>) => {
-    // Handle mixed string/number IDs when calculating max
     const numericIds = events.map(e => typeof e.id === 'string' ? 0 : e.id);
     const newId = Math.max(...numericIds, 0) + 1;
     const newEvent: EventCard = { ...eventData, id: newId };
     setEvents(prev => [newEvent, ...prev]);
     setMyEventIds(prev => new Set(prev).add(newId));
-  };
-
-  const refreshMyEvents = async () => {
-    try {
-      const { getMyCreatedEvents } = await import('@/services/api/event');
-      const myEvents = await getMyCreatedEvents();
-      console.log("Fetched my events:", myEvents);
-
-      // myEvents is already EventCard[]
-      const mappedEvents: EventCard[] = myEvents.map(mapBackendEventToEventCard);
-
-      setEvents(prev => {
-        // Filter out items in `prev` that have IDs present in `mappedEvents` (to avoid duplicates)
-        // This ensures the new mapped events replace any old versions of them.
-        const newIds = new Set(mappedEvents.map(e => e.id));
-        const keptEvents = prev.filter(p => !newIds.has(p.id));
-        return [...mappedEvents, ...keptEvents];
-      });
-
-      setMyEventIds(new Set(mappedEvents.map(e => e.id)));
-    } catch (error) {
-      console.error("Failed to refresh my events", error);
-    }
   };
 
   const isRegistered = (id: number | string) => registeredEventIds.has(id);

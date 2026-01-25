@@ -25,7 +25,7 @@ const SocketContext = createContext<SocketContextType>({
 const SOCKET_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/api\/?$/, "");
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const { toast } = useToast();
   const router = useRouter();
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -93,11 +93,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on("connect_error", (err) => {
       console.error("Socket connection error:", err.message);
       if (err.message.includes("Authentication error") || err.message.includes("Invalid token") || err.message.includes("jwt expired")) {
-        console.log("Authentication failed for socket. Disconnecting to prevent loop.");
+        console.log("Authentication failed for socket. Disconnecting and refreshing session.");
         newSocket.disconnect();
-        // Trigger session update to check for new token or logout
-        // We force a session update which might trigger a re-render with new token if available
-        // or eventually fail to generic auth handlers.
+        update(); // Trigger re-auth / token refresh
       }
     });
 
