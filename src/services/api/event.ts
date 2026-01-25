@@ -3,10 +3,22 @@ import { CreateEventResponse, BackendEvent, EventCard, RegisterEventResponse, Re
 import { mapBackendEventToEventCard } from "@/lib/mappers/event.mapper";
 
 // Public: Get all events (with filters)
-export const getAllEvents = async (filters?: any): Promise<BackendEvent[]> => {
+export interface PaginatedEvents {
+    items: BackendEvent[];
+    nextCursor?: string;
+    hasMore: boolean;
+}
+
+export const getAllEvents = async (filters?: any): Promise<PaginatedEvents> => {
     const query = filters ? `?${new URLSearchParams(filters).toString()}` : "";
     const response = await api.get(`/events${query}`);
-    return Array.isArray(response.data) ? response.data : [];
+    // Handle both old (array) and new (paginated) responses if unsure, but we know backend changed.
+    // However, TypeScript might complain if we don't return exactly PaginatedEvents.
+    if (Array.isArray(response.data)) {
+        // Fallback for old API if something goes wrong
+        return { items: response.data, hasMore: false };
+    }
+    return response.data;
 };
 
 // Public: Get single event

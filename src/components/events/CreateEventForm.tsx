@@ -7,6 +7,110 @@ import { Switch } from "@/components/ui/switch"
 import { createEvent } from "@/services/api/event"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { useForm, Controller } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Button } from "@/components/ui/button"
+
+const createEventSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  category: z.string().min(1, "Category is required"),
+  eventType: z.enum(["Online", "InPerson"]),
+  virtualLink: z.string().optional(),
+  location: z.string().optional(),
+  startDate: z.string().min(1, "Start date is required"),
+  startTime: z.string().min(1, "Start time is required"),
+  endDate: z.string().optional(),
+  endTime: z.string().optional(),
+  organizerName: z.string().min(2, "Organizer name is required"),
+  organizerEmail: z.string().email("Invalid email address").optional().or(z.literal("")),
+  maxAttendees: z.string().optional(),
+  registrationDeadline: z.string().optional(),
+  waitlist: z.boolean().default(false),
+  priceType: z.enum(["Free", "Paid"]),
+  ticketName: z.string().optional(),
+  price: z.string().optional(),
+  quantity: z.string().optional(),
+  paymentProvider: z.string().optional(),
+  tags: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.eventType === "Online" && !data.virtualLink) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Virtual link is required for online events",
+      path: ["virtualLink"],
+    })
+  } else if (data.eventType === "Online" && data.virtualLink && !data.virtualLink.startsWith('http')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Virtual link must be a valid URL (http/https)",
+      path: ["virtualLink"],
+    })
+  }
+
+  if (data.eventType === "InPerson" && !data.location) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Location is required for in-person events",
+      path: ["location"],
+    })
+  }
+
+  if (data.priceType === "Paid") {
+    if (!data.price || Number(data.price) <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Price must be greater than 0",
+        path: ["price"],
+      })
+    }
+    if (!data.ticketName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Ticket name is required for paid events",
+        path: ["ticketName"],
+      })
+    }
+  }
+
+  // Date Logic
+  const startDateTime = new Date(`${data.startDate}T${data.startTime}`)
+
+  if (startDateTime < new Date()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Event start time must be in the future",
+      path: ["startTime"], // or startDate
+    })
+  }
+
+  if (data.endDate && data.endTime) {
+    const endDateTime = new Date(`${data.endDate}T${data.endTime}`)
+    if (endDateTime <= startDateTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "End time must be after start time",
+        path: ["endTime"],
+      })
+    }
+  }
+
+  if (data.registrationDeadline) {
+    // Deadline is typically end of day, but let's just compare dates
+    const deadlineDate = new Date(data.registrationDeadline)
+    const startDateOnly = new Date(data.startDate)
+    if (deadlineDate >= startDateOnly) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Registration deadline must be before event day",
+        path: ["registrationDeadline"],
+      })
+    }
+  }
+})
+
+type CreateEventFormValues = z.infer<typeof createEventSchema>
 
 interface CreateEventFormProps {
   onClose: () => void
@@ -14,118 +118,108 @@ interface CreateEventFormProps {
 
 export function CreateEventForm({ onClose }: CreateEventFormProps) {
   const { refreshMyEvents } = useEvents()
-
   const [isLoading, setIsLoading] = useState(false)
-  const [activeSection, setActiveSection] = useState('core') // For potential tab navigation if needed, currently single page
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
-  const [formData, setFormData] = useState({
-    // Core
-    title: "",
-    description: "",
-    category: "Tech",
-    eventType: "InPerson" as "Online" | "InPerson",
-    virtualLink: "",
-    location: "",
-    startDate: "",
-    startTime: "",
-    endDate: "",
-    endTime: "",
-
-    // Organizer
-    organizerName: "Me", // Mock default
-    organizerEmail: "",
-
-    // Registration
-    maxAttendees: "",
-    registrationDeadline: "",
-    waitlist: false,
-
-    // Ticketing
-    priceType: "Free" as "Free" | "Paid",
-    ticketName: "",
-    price: "",
-    quantity: "",
-    paymentProvider: "Stripe",
-
-    // Optional
-    tags: "",
-    image: null as File | null // Mock logic
+  const form = useForm<CreateEventFormValues>({
+    resolver: zodResolver(createEventSchema) as any,
+    defaultValues: {
+      title: "",
+      description: "",
+      category: "Tech",
+      eventType: "InPerson",
+      virtualLink: "",
+      location: "",
+      startDate: "",
+      startTime: "",
+      endDate: "",
+      endTime: "",
+      organizerName: "Me",
+      organizerEmail: "",
+      maxAttendees: "",
+      registrationDeadline: "",
+      waitlist: false,
+      priceType: "Free",
+      ticketName: "",
+      price: "",
+      quantity: "",
+      paymentProvider: "Stripe",
+      tags: "",
+    },
   })
+
+  // Watch values for conditional rendering
+  const eventType = form.watch("eventType")
+  const priceType = form.watch("priceType")
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setFormData({ ...formData, image: file });
+      setImageFile(file);
       setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
   const handleRemoveImage = () => {
-    setFormData({ ...formData, image: null });
+    setImageFile(null);
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
     }
   };
 
-  const handleSubmit = async () => {
-    // Validation
-    if (!formData.title || !formData.startDate || !formData.startTime) {
-      alert("Please fill in required fields (Title, Start Date, Start Time).");
-      return;
-    }
-
+  const onSubmit = async (values: CreateEventFormValues) => {
     try {
       setIsLoading(true);
       const data = new FormData();
 
       // Core
-      data.append("title", formData.title);
-      data.append("description", formData.description);
-      data.append("category", formData.category);
-      // Combine date and time to ISO-like string for backend timestamp
-      const combinedStart = `${formData.startDate}T${formData.startTime}`;
+      data.append("title", values.title);
+      data.append("description", values.description);
+      data.append("category", values.category);
+
+      const combinedStart = `${values.startDate}T${values.startTime}`;
       data.append("startTime", combinedStart);
 
-      if (formData.endDate && formData.endTime) {
-        const combinedEnd = `${formData.endDate}T${formData.endTime}`;
+      if (values.endDate && values.endTime) {
+        const combinedEnd = `${values.endDate}T${values.endTime}`;
         data.append("endTime", combinedEnd);
       }
 
-      data.append("location", formData.eventType === 'Online' ? 'Online' : formData.location);
-      if (formData.virtualLink) data.append("virtualLink", formData.virtualLink);
-      data.append("eventType", formData.eventType);
+      data.append("location", values.eventType === 'Online' ? 'Online' : (values.location || ''));
+      if (values.virtualLink) data.append("virtualLink", values.virtualLink);
+      data.append("eventType", values.eventType);
 
       // Organizer
-      data.append("organizerName", formData.organizerName);
-      if (formData.organizerEmail) data.append("organizerEmail", formData.organizerEmail);
+      data.append("organizerName", values.organizerName);
+      if (values.organizerEmail) data.append("organizerEmail", values.organizerEmail);
 
       // Registration
-      if (formData.maxAttendees) data.append("maxAttendees", formData.maxAttendees);
-      if (formData.registrationDeadline) data.append("registrationDeadline", formData.registrationDeadline);
-      data.append("waitlist", String(formData.waitlist));
+      if (values.maxAttendees) data.append("maxAttendees", values.maxAttendees);
+      if (values.registrationDeadline) data.append("registrationDeadline", values.registrationDeadline);
+      data.append("waitlist", String(values.waitlist));
 
       // Ticketing
-      data.append("priceType", formData.priceType);
-      if (formData.price) data.append("price", formData.price);
-      if (formData.ticketName) data.append("ticketName", formData.ticketName);
-      if (formData.quantity) data.append("quantity", formData.quantity);
-      if (formData.paymentProvider) data.append("paymentProvider", formData.paymentProvider);
+      data.append("priceType", values.priceType);
+      if (values.price) data.append("price", values.price);
+      if (values.ticketName) data.append("ticketName", values.ticketName);
+      if (values.quantity) data.append("quantity", values.quantity);
+      if (values.paymentProvider) data.append("paymentProvider", values.paymentProvider || "");
 
       // Tags
-      const tagsList = formData.tags.split(',').map(t => t.trim()).filter(t => t);
-      tagsList.forEach(tag => data.append("tags", tag));
-
-      // Banner Image
-      if (formData.image) {
-        data.append("banner", formData.image);
+      if (values.tags) {
+        const tagsList = values.tags.split(',').map(t => t.trim()).filter(t => t);
+        tagsList.forEach(tag => data.append("tags", tag));
       }
 
-      console.log("Submitting Event FormData...");
+      // Banner Image
+      if (imageFile) {
+        data.append("banner", imageFile);
+      }
+
       await createEvent(data);
 
-      // Refresh My Events list to show the new event
       if (refreshMyEvents) {
         await refreshMyEvents();
       }
@@ -134,7 +228,7 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
       onClose();
     } catch (error: any) {
       console.error("Create event error:", error);
-      alert(error.response?.data?.message || "Failed to create event. See console for details.");
+      alert(error.response?.data?.message || "Failed to create event.");
     } finally {
       setIsLoading(false);
     }
@@ -144,380 +238,391 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
     <div className="bg-card flex flex-col h-full md:h-auto md:max-h-[90vh]">
       <div className="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
         <h2 className="text-xl font-bold text-foreground">Create New Event</h2>
-        <button
-          onClick={onClose}
-          className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-        >
+        <button onClick={onClose} className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
           <X className="w-5 h-5" />
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+        <form id="create-event-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 
-        {/* Core Details */}
-        <section className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">1</span>
-            Core Details
-          </h3>
+          {/* Core Details */}
+          <section className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">1</span>
+              Core Details
+            </h3>
 
-          <div className="grid gap-4">
-            <div>
-              <Label className="mb-2 block">Event Title *</Label>
-              <input
-                type="text"
-                className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                placeholder="e.g. Tech Mixer 2024"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              />
-            </div>
+            <div className="grid gap-4">
+              <div>
+                <Label className="mb-2 block">Event Title *</Label>
+                <input
+                  type="text"
+                  {...form.register("title")}
+                  className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                  placeholder="e.g. Tech Mixer 2024"
+                />
+                {form.formState.errors.title && <p className="text-red-500 text-sm mt-1">{form.formState.errors.title.message}</p>}
+              </div>
 
-            <div>
-              <Label className="mb-2 block">Description *</Label>
-              <textarea
-                rows={3}
-                className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary resize-none"
-                placeholder="What is this event about?"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
+              <div>
+                <Label className="mb-2 block">Description *</Label>
+                <textarea
+                  rows={3}
+                  {...form.register("description")}
+                  className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary resize-none"
+                  placeholder="What is this event about?"
+                />
+                {form.formState.errors.description && <p className="text-red-500 text-sm mt-1">{form.formState.errors.description.message}</p>}
+              </div>
 
-            <div>
-              <Label className="mb-2 block">Event Banner</Label>
-              {previewUrl && formData.image ? (
-                <div className="relative mt-2">
-                  <img src={previewUrl} alt="Banner preview" className="w-full h-auto rounded-xl object-cover aspect-[16/9]" />
-                  <button onClick={handleRemoveImage} className="absolute top-2 right-2 bg-black/60 text-white p-1.5 rounded-full hover:bg-black/80 transition-colors">
-                    <X className="w-4 h-4" />
-                  </button>
+              <div>
+                <Label className="mb-2 block">Event Banner</Label>
+                {previewUrl ? (
+                  <div className="relative mt-2">
+                    <img src={previewUrl} alt="Banner preview" className="w-full h-auto rounded-xl object-cover aspect-[16/9]" />
+                    <button type="button" onClick={handleRemoveImage} className="absolute top-2 right-2 bg-black/60 text-white p-1.5 rounded-full hover:bg-black/80 transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-2 flex justify-center rounded-lg border border-dashed border-border px-6 py-10">
+                    <div className="text-center">
+                      <Image className="mx-auto h-12 w-12 text-muted-foreground" />
+                      <div className="mt-4 flex text-sm leading-6 text-muted-foreground">
+                        <label className="relative cursor-pointer rounded-md bg-card font-semibold text-primary hover:text-primary/80">
+                          <span>Upload a file</span>
+                          <input type="file" className="sr-only" accept="image/*" onChange={handleFileChange} />
+                        </label>
+                        <p className="pl-1">or drag and drop</p>
+                      </div>
+                      <p className="text-xs leading-5 text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="mb-2 block">Category</Label>
+                  <select
+                    {...form.register("category")}
+                    className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                  >
+                    <option>Tech</option>
+                    <option>Business</option>
+                    <option>Networking</option>
+                    <option>Workshop</option>
+                    <option>Summit</option>
+                    <option>Conference</option>
+                    <option>Masterclass</option>
+                  </select>
+                </div>
+                <div>
+                  <Label className="mb-2 block">Event Type</Label>
+                  <Controller
+                    name="eventType"
+                    control={form.control}
+                    render={({ field }) => (
+                      <div className="flex gap-2 p-1 bg-muted rounded-xl">
+                        {['InPerson', 'Online'].map((type) => (
+                          <button
+                            type="button"
+                            key={type}
+                            onClick={() => field.onChange(type)}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${field.value === type
+                              ? 'bg-card text-primary shadow-sm'
+                              : 'text-muted-foreground hover:text-foreground'
+                              }`}
+                          >
+                            {type === 'InPerson' ? 'In-person' : 'Online'}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {eventType === 'InPerson' ? (
+                <div>
+                  <Label className="mb-2 block">Location *</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <input
+                      type="text"
+                      {...form.register("location")}
+                      className="w-full pl-12 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                      placeholder="Enter full address"
+                    />
+                  </div>
+                  {form.formState.errors.location && <p className="text-red-500 text-sm mt-1">{form.formState.errors.location.message}</p>}
                 </div>
               ) : (
-                <div className="mt-2 flex justify-center rounded-lg border border-dashed border-border px-6 py-10">
-                  <div className="text-center">
-                    <Image className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <div className="mt-4 flex text-sm leading-6 text-muted-foreground">
-                      <label
-                        htmlFor="file-upload"
-                        className="relative cursor-pointer rounded-md bg-card font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 hover:text-primary/80"
-                      >
-                        <span>Upload a file</span>
-                        <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} />
-                      </label>
-                      <p className="pl-1">or drag and drop</p>
-                    </div>
-                    <p className="text-xs leading-5 text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
-                  </div>
+                <div>
+                  <Label className="mb-2 block">Virtual Link *</Label>
+                  <input
+                    type="url"
+                    {...form.register("virtualLink")}
+                    className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                    placeholder="https://zoom.us/..."
+                  />
+                  {form.formState.errors.virtualLink && <p className="text-red-500 text-sm mt-1">{form.formState.errors.virtualLink.message}</p>}
                 </div>
               )}
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="mb-2 block">Category</Label>
-                <select
-                  className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                >
-                  <option>Tech</option>
-                  <option>Business</option>
-                  <option>Networking</option>
-                  <option>Workshop</option>
-                  <option>Summit</option>
-                  <option>Conference</option>
-                  <option>Masterclass</option>
-                </select>
-              </div>
-              <div>
-                <Label className="mb-2 block">Event Type</Label>
-                <div className="flex gap-2 p-1 bg-muted rounded-xl">
-                  {['InPerson', 'Online'].map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => setFormData({ ...formData, eventType: type as any })}
-                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${formData.eventType === type
-                        ? 'bg-card text-primary shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                    >
-                      {type === 'InPerson' ? 'In-person' : 'Online'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {formData.eventType === 'InPerson' ? (
-              <div>
-                <Label className="mb-2 block">Location</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <input
-                    type="text"
-                    className="w-full pl-12 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                    placeholder="Enter full address"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div>
-                <Label className="mb-2 block">Virtual Link</Label>
-                <input
-                  type="url"
-                  className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                  placeholder="https://zoom.us/..."
-                  value={formData.virtualLink}
-                  onChange={(e) => setFormData({ ...formData, virtualLink: e.target.value })}
-                />
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="mb-2 block">Start Date *</Label>
-                <div className="relative">
-                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="date"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label className="mb-2 block">Start Time *</Label>
-                <div className="relative">
-                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="time"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                    value={formData.startTime}
-                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="mb-2 block">End Date</Label>
-                <div className="relative">
-                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="date"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label className="mb-2 block">End Time</Label>
-                <div className="relative">
-                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="time"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                    value={formData.endTime}
-                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <Separator />
-
-        {/* Organizer Info */}
-        <section className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">2</span>
-            Organizer Info
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="mb-2 block">Organizer Name</Label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                  value={formData.organizerName}
-                  onChange={(e) => setFormData({ ...formData, organizerName: e.target.value })}
-                />
-              </div>
-            </div>
-            <div>
-              <Label className="mb-2 block">Contact Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="email"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                  value={formData.organizerEmail}
-                  onChange={(e) => setFormData({ ...formData, organizerEmail: e.target.value })}
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <Separator />
-
-        {/* Registration & Capacity */}
-        <section className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">3</span>
-            Registration
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="mb-2 block">Max Attendees</Label>
-              <div className="relative">
-                <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="number"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                  placeholder="Unlimited"
-                  value={formData.maxAttendees}
-                  onChange={(e) => setFormData({ ...formData, maxAttendees: e.target.value })}
-                />
-              </div>
-            </div>
-            <div>
-              <Label className="mb-2 block">Registration Deadline</Label>
-              <input
-                type="date"
-                className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                value={formData.registrationDeadline}
-                onChange={(e) => setFormData({ ...formData, registrationDeadline: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="waitlist"
-              checked={formData.waitlist}
-              onCheckedChange={(c) => setFormData({ ...formData, waitlist: c })}
-            />
-            <Label htmlFor="waitlist">Allow Waitlist when full</Label>
-          </div>
-        </section>
-
-        <Separator />
-
-        {/* Ticketing */}
-        <section className="space-y-4">
-          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">4</span>
-            Ticketing
-          </h3>
-
-          <div className="flex gap-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id="price-free"
-                name="priceType"
-                checked={formData.priceType === 'Free'}
-                onChange={() => setFormData({ ...formData, priceType: 'Free' })}
-                className="w-4 h-4 text-primary"
-              />
-              <Label htmlFor="price-free">Free Event</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id="price-paid"
-                name="priceType"
-                checked={formData.priceType === 'Paid'}
-                onChange={() => setFormData({ ...formData, priceType: 'Paid' })}
-                className="w-4 h-4 text-primary"
-              />
-              <Label htmlFor="price-paid">Paid Ticket</Label>
-            </div>
-          </div>
-
-          {formData.priceType === 'Paid' && (
-            <div className="p-4 rounded-xl bg-muted/50 border border-border space-y-4">
-              <div>
-                <Label className="mb-2 block">Ticket Name</Label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                  placeholder="e.g. General Admission"
-                  value={formData.ticketName}
-                  onChange={(e) => setFormData({ ...formData, ticketName: e.target.value })}
-                />
-              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="mb-2 block">Price ($)</Label>
+                  <Label className="mb-2 block">Start Date *</Label>
                   <div className="relative">
-                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
-                      type="number"
+                      type="date"
+                      {...form.register("startDate")}
                       className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                      placeholder="0.00"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    />
+                  </div>
+                  {form.formState.errors.startDate && <p className="text-red-500 text-sm mt-1">{form.formState.errors.startDate.message}</p>}
+                </div>
+                <div>
+                  <Label className="mb-2 block">Start Time *</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="time"
+                      {...form.register("startTime")}
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                  {form.formState.errors.startTime && <p className="text-red-500 text-sm mt-1">{form.formState.errors.startTime.message}</p>}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="mb-2 block">End Date</Label>
+                  <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="date"
+                      {...form.register("endDate")}
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
                     />
                   </div>
                 </div>
                 <div>
-                  <Label className="mb-2 block">Quantity</Label>
+                  <Label className="mb-2 block">End Time</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="time"
+                      {...form.register("endTime")}
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <Separator />
+
+          {/* Organizer Info */}
+          <section className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">2</span>
+              Organizer Info
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="mb-2 block">Organizer Name *</Label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    {...form.register("organizerName")}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                  />
+                </div>
+                {form.formState.errors.organizerName && <p className="text-red-500 text-sm mt-1">{form.formState.errors.organizerName.message}</p>}
+              </div>
+              <div>
+                <Label className="mb-2 block">Contact Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="email"
+                    {...form.register("organizerEmail")}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                  />
+                </div>
+                {form.formState.errors.organizerEmail && <p className="text-red-500 text-sm mt-1">{form.formState.errors.organizerEmail.message}</p>}
+              </div>
+            </div>
+          </section>
+
+          <Separator />
+
+          {/* Registration & Capacity */}
+          <section className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">3</span>
+              Registration
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="mb-2 block">Max Attendees</Label>
+                <div className="relative">
+                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="number"
-                    className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                    placeholder="100"
-                    value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    {...form.register("maxAttendees")}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                    placeholder="Unlimited"
                   />
                 </div>
               </div>
               <div>
-                <Label className="mb-2 block">Payment Provider (Mock)</Label>
-                <select
+                <Label className="mb-2 block">Registration Deadline</Label>
+                <input
+                  type="date"
+                  {...form.register("registrationDeadline")}
                   className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
-                  value={formData.paymentProvider}
-                  onChange={(e) => setFormData({ ...formData, paymentProvider: e.target.value })}
-                >
-                  <option>Stripe</option>
-                  <option>Razorpay</option>
-                  <option>PayPal</option>
-                  <option>Offline Payment</option>
-                </select>
-              </div>
-              <div className="flex items-start gap-2 text-xs text-muted-foreground">
-                <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                <p>This is a mock implementation. No real payments will be processed.</p>
+                />
               </div>
             </div>
-          )}
-        </section>
+            <div className="flex items-center space-x-2">
+              <Controller
+                name="waitlist"
+                control={form.control}
+                render={({ field }) => (
+                  <Switch
+                    id="waitlist"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                )}
+              />
+              <Label htmlFor="waitlist">Allow Waitlist when full</Label>
+            </div>
+          </section>
 
+          <Separator />
+
+          {/* Ticketing */}
+          <section className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">4</span>
+              Ticketing
+            </h3>
+
+            <div className="flex gap-4">
+              <Controller
+                name="priceType"
+                control={form.control}
+                render={({ field }) => (
+                  <>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="price-free"
+                        value="Free"
+                        checked={field.value === 'Free'}
+                        onChange={() => field.onChange('Free')}
+                        className="w-4 h-4 text-primary"
+                      />
+                      <Label htmlFor="price-free">Free Event</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="price-paid"
+                        value="Paid"
+                        checked={field.value === 'Paid'}
+                        onChange={() => field.onChange('Paid')}
+                        className="w-4 h-4 text-primary"
+                      />
+                      <Label htmlFor="price-paid">Paid Ticket</Label>
+                    </div>
+                  </>
+                )}
+              />
+            </div>
+
+            {priceType === 'Paid' && (
+              <div className="p-4 rounded-xl bg-muted/50 border border-border space-y-4">
+                <div>
+                  <Label className="mb-2 block">Ticket Name *</Label>
+                  <input
+                    type="text"
+                    {...form.register("ticketName")}
+                    className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                    placeholder="e.g. General Admission"
+                  />
+                  {form.formState.errors.ticketName && <p className="text-red-500 text-sm mt-1">{form.formState.errors.ticketName.message}</p>}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="mb-2 block">Price ($) *</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input
+                        type="number"
+                        {...form.register("price")}
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    {form.formState.errors.price && <p className="text-red-500 text-sm mt-1">{form.formState.errors.price.message}</p>}
+                  </div>
+                  <div>
+                    <Label className="mb-2 block">Quantity</Label>
+                    <input
+                      type="number"
+                      {...form.register("quantity")}
+                      className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                      placeholder="100"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="mb-2 block">Payment Provider (Mock)</Label>
+                  <select
+                    {...form.register("paymentProvider")}
+                    className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                  >
+                    <option>Stripe</option>
+                    <option>Razorpay</option>
+                    <option>PayPal</option>
+                    <option>Offline Payment</option>
+                  </select>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                  <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                  <p>This is a mock implementation. No real payments will be processed.</p>
+                </div>
+              </div>
+            )}
+          </section>
+        </form>
       </div>
 
       <div className="p-6 border-t border-border flex gap-4 flex-shrink-0 bg-card z-10">
         <button
           onClick={onClose}
+          type="button"
           className="flex-1 px-6 py-3 rounded-xl border font-medium hover:bg-muted transition-colors border-border text-muted-foreground"
         >
           Cancel
         </button>
-        <button
-          onClick={handleSubmit}
-          disabled={isLoading}
+        <Button
+          type="submit"
+          form="create-event-form"
+          disabled={isLoading || form.formState.isSubmitting}
           className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white font-medium hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? "Creating..." : "Create Event"}
-        </button>
+        </Button>
       </div>
     </div>
   )

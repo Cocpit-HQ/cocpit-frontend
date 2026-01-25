@@ -18,7 +18,7 @@ export function mapBackendEventToEventCard(e: BackendEvent): EventCard {
         location: e.location,
         category: e.category,
         image: e.banner_url || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2070",
-        attendees: "0",
+        attendees: e.registered_count !== undefined ? e.registered_count.toString() : "0",
         maxAttendees: e.max_attendees,
         eventType: e.event_type,
         virtualLink: e.virtual_link,

@@ -25,6 +25,7 @@ export interface BackendEvent {
         email: string;
         avatar?: string;
     };
+    registered_count?: number;
 
     max_attendees?: number;
     registration_deadline?: string;

@@ -56,11 +56,11 @@ export function EventsProvider({ children }: { children: ReactNode }) {
       const { mapBackendEventToEventCard } = await import('@/lib/mappers/event.mapper');
 
       // Fetch all user-specific AND public event data in parallel
-      const [myEvents, savedEvents, registeredEvents, publicEvents] = await Promise.all([
+      const [myEvents, savedEvents, registeredEvents, publicEventsRes] = await Promise.all([
         getMyCreatedEvents().catch(err => { console.error("Failed to fetch my events", err); return []; }),
         getMySavedEvents().catch(err => { console.error("Failed to fetch saved events", err); return []; }),
         getMyRegisteredEvents().catch(err => { console.error("Failed to fetch registered events", err); return []; }),
-        getAllEvents().catch(err => { console.error("Failed to fetch public events", err); return []; })
+        getAllEvents().catch(err => { console.error("Failed to fetch public events", err); return { items: [], hasMore: false }; })
       ]);
 
       // Process My Events
@@ -74,7 +74,9 @@ export function EventsProvider({ children }: { children: ReactNode }) {
       setRegisteredEventIds(new Set(registeredEvents.map(e => e.id)));
 
       // Process Public Events
-      const mappedPublicEvents = publicEvents.map(mapBackendEventToEventCard);
+      // Handle paginated response structure
+      const publicItems = Array.isArray(publicEventsRes) ? publicEventsRes : (publicEventsRes.items || []);
+      const mappedPublicEvents = publicItems.map(mapBackendEventToEventCard);
 
       // Merge all into main events list to ensure they are visible
       setEvents(prev => {
