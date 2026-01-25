@@ -12,12 +12,16 @@ const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
+
+    setIsLoading(true);
     try {
       const result = await signIn("credentials", {
         email,
@@ -31,6 +35,7 @@ const LoginForm = () => {
           description: result.error,
           variant: "destructive",
         });
+        setIsLoading(false);
       } else {
         console.log("Login successful. Result:", result);
 
@@ -49,6 +54,7 @@ const LoginForm = () => {
         } else {
           router.push("/feed");
         }
+        // Don't reset loading here so button stays disabled during redirect
       }
     } catch (error) {
       toast({
@@ -56,6 +62,7 @@ const LoginForm = () => {
         description: "An unexpected error occurred.",
         variant: "destructive",
       });
+      setIsLoading(false);
     }
   };
 
@@ -85,6 +92,7 @@ const LoginForm = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className={styles.input}
+              disabled={isLoading}
             />
           </div>
         </div>
@@ -111,11 +119,13 @@ const LoginForm = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={`${styles.input} ${styles.inputWithToggle}`}
+              disabled={isLoading}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className={styles.passwordToggle}
+              disabled={isLoading}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -135,6 +145,7 @@ const LoginForm = () => {
               width: '1rem',
               height: '1rem'
             }}
+            disabled={isLoading}
           />
           <label
             htmlFor="keep-logged-in"
@@ -145,8 +156,20 @@ const LoginForm = () => {
         </div>
 
         {/* Sign in button */}
-        <button type="submit" className={styles.submitButton}>
-          Sign in
+        <button
+          type="submit"
+          className={`${styles.submitButton} ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Signing in...
+            </span>
+          ) : "Sign in"}
         </button>
       </form>
 
