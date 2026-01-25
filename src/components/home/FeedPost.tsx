@@ -53,6 +53,7 @@ export default function FeedPost({
   poll,
   isLiked: initialIsLiked = false, // Default
   isProfileView = false,
+  shared_post
 }: FeedPostProps) {
   const [isLiked, setIsLiked] = useState(initialIsLiked)
   const [likeCount, setLikeCount] = useState(typeof likes === 'string' ? parseInt(likes) : likes)
@@ -272,7 +273,7 @@ export default function FeedPost({
                   </p>
                   {visibility === 'private' && (
                     <EyeOff className="w-3 h-3 text-muted-foreground" />
-                )}
+                  )}
                 </div>
               </div>
             </div>
@@ -405,6 +406,35 @@ export default function FeedPost({
           </div>
         )}
 
+        {/* Shared Post Section */}
+        {shared_post && (
+          <div className="mx-4 md:mx-6 mb-4 border border-border rounded-lg overflow-hidden bg-muted/30">
+            <div className="p-3 flex items-center gap-2 border-b border-border/50">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
+                <img src={shared_post.authorAvatar || '/assets/pngegg.png'} alt={shared_post.author} className="w-full h-full object-cover" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold">{shared_post.author}</span>
+                <span className="text-xs text-muted-foreground">{shared_post.timeAgo}</span>
+              </div>
+            </div>
+            <div className="p-3">
+              {shared_post.content && <p className="text-sm mb-2">{shared_post.content}</p>}
+              {/* Simplified Media Rendering for Shared Post */}
+              {shared_post.imageSrc && (
+                <div className="rounded-md overflow-hidden bg-black max-h-[300px] flex justify-center">
+                  <img src={shared_post.imageSrc} alt="Shared content" className="max-h-full object-contain" />
+                </div>
+              )}
+              {shared_post.images && shared_post.images.length > 0 && !shared_post.imageSrc && (
+                <div className="rounded-md overflow-hidden bg-black max-h-[300px] flex justify-center">
+                  <img src={shared_post.images[0]} alt="Shared content" className="max-h-full object-contain" />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
       </div>
 
       <div className="px-4 md:px-6 py-3 border-t border-border mt-auto">
@@ -421,13 +451,13 @@ export default function FeedPost({
             onClick={handleLike}
             className={`flex items-center gap-2 ${isLiked ? 'text-primary' : 'text-muted-foreground hover:text-primary'} transition-colors flex-1 justify-center text-xs md:text-sm`}>
             <ThumbsUp className={`w-4 h-4 md:w-5 md:h-5 ${isLiked ? 'fill-current' : ''}`} />
-            
+
           </button>
           <button
             onClick={handleToggleCommentSection}
             className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center text-xs md:text-sm">
             <MessageCircle className="w-4 h-4 md:w-5 md:h-5" />
-            
+
           </button>
           <button
             onClick={() => {
@@ -436,7 +466,7 @@ export default function FeedPost({
             }}
             className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center text-xs md:text-sm">
             <Share2 className="w-4 h-4 md:w-5 md:h-5" />
-            
+
           </button>
         </div>
       </div>

@@ -43,5 +43,12 @@ export const mapBackendMessageToMessage = (backendMessage: BackendMessage, curre
     sender: backendMessage.sender_id === currentUserId ? "me" : "other",
     text: backendMessage.text_content,
     time: formatTime(backendMessage.created_at),
+    sharedPost: backendMessage.shared_post ? {
+      id: backendMessage.shared_post.post_id,
+      content: backendMessage.shared_post.content,
+      author: backendMessage.shared_post.author.full_name,
+      authorAvatar: backendMessage.shared_post.author.avatar_url,
+      media: backendMessage.shared_post.media?.map(m => ({ url: m.url, type: m.media_type as 'image' | 'video' }))
+    } : null
   };
 };

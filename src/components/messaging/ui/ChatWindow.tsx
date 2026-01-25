@@ -26,7 +26,7 @@ const getAvatarGradient = (avatar: string) => {
 }
 
 export default function ChatWindow({ chat: initialChat, isMobile, onBack }: ChatWindowProps) {
-  const { socket, isUserOnline } = useSocket();
+  const { socket, isUserOnline, setActiveConversationId } = useSocket();
   const { data: session } = useSession();
   const [typingUser, setTypingUser] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -50,7 +50,10 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
   });
 
   // Mark as read on mount or when chat.id changes
+  // Mark as read on mount or when chat.id changes
   useEffect(() => {
+    setActiveConversationId(chat.id);
+
     if (chat.id && chat.unread > 0) {
       markAsRead(chat.id).then(() => {
         // Optimistically update conversation unread count
@@ -60,7 +63,9 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
         });
       }).catch(console.error);
     }
-  }, [chat.id, chat.unread, queryClient]);
+
+    return () => setActiveConversationId(null);
+  }, [chat.id, chat.unread, queryClient, setActiveConversationId]);
 
 
   useEffect(() => {
@@ -75,12 +80,8 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
 
       const isMe = msg.sender_id === session?.user?.id;
 
-      const uiMessage: Message = {
-        id: msg.message_id,
-        sender: isMe ? "me" : "other",
-        text: msg.text_content,
-        time: new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
+      // Map socket message to frontend entity using valid mapper
+      const uiMessage = mapBackendMessageToMessage(msg as any, session?.user?.id);
 
       queryClient.setQueryData(['messages', chat.id], (old: Message[] | undefined) => {
         const current = old || [];

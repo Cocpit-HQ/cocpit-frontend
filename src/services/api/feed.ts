@@ -53,10 +53,11 @@ export interface CreatePostRequest {
   content: string;
   category: string;
   visibility: "public" | "private";
-  post_type: "text" | "image" | "video" | "poll";
+  post_type: "text" | "image" | "video" | "poll" | "article";
   media_urls?: string[];
   poll_options?: string[];
   poll_duration?: string;
+  shared_post_id?: string;
 }
 
 export interface CreatePostResponse {

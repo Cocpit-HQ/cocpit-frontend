@@ -22,6 +22,7 @@ export interface CreatePostModalProps {
   initialPostType?: PostType;
   editPostId?: string;
   onUpdate?: (post: Partial<Post>) => void;
+  sharedPostId?: string;
 }
 
 interface MediaItem {
@@ -153,7 +154,7 @@ const RichTextEditor = ({ content, onChange }: { content: string, onChange: (htm
   );
 };
 
-export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', editPostId, onUpdate }: CreatePostModalProps) {
+export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', editPostId, onUpdate, sharedPostId }: CreatePostModalProps) {
   const isMobile = useIsMobile();
   const { addPost, currentUser } = useFeed();
   const [postType, setPostType] = useState<PostType>(initialPostType);
@@ -195,6 +196,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
   const [aspectRatio, setAspectRatio] = useState(4 / 5);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [previewMediaUrls, setPreviewMediaUrls] = useState<string[]>([]);
+  const [sharedPost, setSharedPost] = useState<Post | null>(null);
 
   // Refs to track media for cleanup without triggering effects
   const uploadedImagesRef = useRef<MediaItem[]>([]);
@@ -298,6 +300,26 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
         setPostType(initialPostType);
         setVisibility('public');
         setOriginalPost(null);
+
+        // Fetch shared post if exists
+        if (sharedPostId) {
+          getPostById(sharedPostId).then(post => {
+            const mapped: Post = {
+              id: post.post_id,
+              authorId: post.author_id,
+              author: post.author_name || '',
+              title: post.title || '',
+              content: post.content,
+              category: post.category_name as any,
+              visibility: post.visibility as any,
+              likes: 0, comments: '', shares: '', timeAgo: '',
+              images: post.media?.filter(m => m.media_type === 'image').map(m => m.url),
+              videoSrc: post.media?.find(m => m.media_type === 'video')?.url,
+              authorAvatar: post.author_avatar || undefined
+            };
+            setSharedPost(mapped);
+          })
+        }
       }
     } else {
       // Centralized cleanup of URLs
@@ -321,6 +343,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
       setArticleCoverImage(null);
       setIsLoadingPost(false);
       setOriginalPost(null);
+      setSharedPost(null);
 
       // Reset Cropper/Preview State
       setActiveImageIndex(0);
@@ -769,9 +792,10 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
           category: postCategory,
           visibility: visibility,
           post_type: postType === 'photo' ? 'image' :
-            postType === 'article' ? 'text' :
-              postType, // video, poll, text
+            postType === 'article' ? 'article' :
+              postType, // video, poll, text (now supported)
           media_urls,
+          shared_post_id: sharedPostId // Add shared_post_id
         };
 
         // Handle Poll
@@ -792,7 +816,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
 
         const newPost: Post = {
           id: response.postId,
-          authorId: currentUser?.id || 'current-user', // Add mapping
+          authorId: currentUser?.id.toString() || 'current-user', // Add mapping
           author: currentUser?.name || 'Anonymous',
           authorAvatar: currentUser?.image || '/assets/pngegg.png',
           title: response.title || (response.category || 'Post'),

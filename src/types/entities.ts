@@ -84,4 +84,5 @@ export interface Post {
   category?: 'Personal' | 'Professional' | 'Achievement';
   visibility?: 'public' | 'private';
   poll?: Poll | null;
+  shared_post?: Post | null;
 }

@@ -13,13 +13,17 @@ interface SocketContextType {
   isConnected: boolean;
   onlineUsers: Set<string>;
   isUserOnline: (userId: string) => boolean;
+  activeConversationId: string | null;
+  setActiveConversationId: (id: string | null) => void;
 }
 
 const SocketContext = createContext<SocketContextType>({
   socket: null,
   isConnected: false,
   onlineUsers: new Set(),
-  isUserOnline: () => false
+  isUserOnline: () => false,
+  activeConversationId: null,
+  setActiveConversationId: () => { }
 });
 
 const SOCKET_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/api\/?$/, "");
@@ -32,11 +36,19 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
 
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+
   const isUserOnline = (userId: string) => onlineUsers.has(userId);
 
   // Ref to track the current token to prevent checking equality against a changing dependency causing loops
   const tokenRef = useRef<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
+  // Ref for active conversation to access in event handler without dependency issues
+  const activeConversationRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    activeConversationRef.current = activeConversationId;
+  }, [activeConversationId]);
 
   useEffect(() => {
     // Check for auth error in session
@@ -110,6 +122,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     // Handle incoming events
     const handleNotification = (payload: NotificationPayload) => {
       if (payload.type === 'message') {
+        // Suppress notification if user is currently viewing this conversation
+        if (payload.conversationId && payload.conversationId === activeConversationRef.current) {
+          return;
+        }
+
         toast({
           title: "New Message",
           description: (
@@ -178,7 +195,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }, [session?.user?.accessToken, toast, router]);
 
   return (
-    <SocketContext.Provider value={{ socket, isConnected, onlineUsers, isUserOnline }}>
+    <SocketContext.Provider value={{ socket, isConnected, onlineUsers, isUserOnline, activeConversationId, setActiveConversationId }}>
       {children}
     </SocketContext.Provider>
   );

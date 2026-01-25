@@ -20,6 +20,15 @@ export interface BackendMessage {
   text_content: string;
   created_at: string;
   read_at: string | null;
+  shared_post?: {
+    post_id: string;
+    content: string;
+    author: {
+      full_name: string;
+      avatar_url: string;
+    };
+    media: { url: string; media_type: string }[];
+  } | null;
 }
 
 // Frontend entity types
@@ -43,4 +52,11 @@ export interface Message {
   time: string;
   isFirstInGroup?: boolean;
   isLastInGroup?: boolean;
+  sharedPost?: {
+    id: string;
+    content: string;
+    author: string;
+    authorAvatar: string;
+    media?: { url: string; type: 'image' | 'video' }[];
+  } | null;
 }

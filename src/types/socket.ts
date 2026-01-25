@@ -24,7 +24,16 @@ export interface SocketMessage {
   text_content: string;
   created_at: string; // ISO Date string
   read_at: string | null;
-  // ... other DB fields
+  shared_post?: {
+    post_id: string;
+    content: string;
+    created_at: string;
+    author: {
+      full_name: string;
+      avatar_url: string;
+    };
+    media: { url: string; media_type: string }[];
+  } | null;
 }
 
 export interface TypingPayload {
