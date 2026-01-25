@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { NotificationPayload, UserStatusPayload } from '@/types/socket';
@@ -39,6 +39,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
+    // Check for auth error in session
+    if (session?.user?.error === "RefreshAccessTokenError") {
+      console.log("Session refresh failed, signing out...");
+      signOut();
+      return;
+    }
+
     const token = session?.user?.accessToken;
 
     if (!token) {
@@ -93,9 +100,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on("connect_error", (err) => {
       console.error("Socket connection error:", err.message);
       if (err.message.includes("Authentication error") || err.message.includes("Invalid token") || err.message.includes("jwt expired")) {
-        console.log("Authentication failed for socket. Disconnecting and refreshing session.");
+        console.log("Authentication failed for socket. Forcefully signing out to prevent loop.");
         newSocket.disconnect();
-        update(); // Trigger re-auth / token refresh
+        // Instead of update(), we signOut because the token is clearly invalid and refresh likely failed or will fail
+        signOut();
       }
     });
 
