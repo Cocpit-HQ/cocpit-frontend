@@ -844,7 +844,8 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
               option_text: opt.option_text || opt,
               vote_count: opt.vote_count || 0
             }))
-          } : undefined
+          } : undefined,
+          shared_post: sharedPost
         };
 
         addPost(newPost);
@@ -1249,6 +1250,46 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                         </div>
                       )}
 
+                      {/* SHARED POST PREVIEW */}
+                      {sharedPost && (
+                        <div className="mt-4 border border-border/50 rounded-xl overflow-hidden bg-muted/20 backdrop-blur-sm">
+                          <div className="p-3 flex items-center gap-3 border-b border-border/50 bg-muted/10">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
+                              <img src={sharedPost.authorAvatar || '/assets/pngegg.png'} alt={sharedPost.author} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-sm font-semibold text-foreground">{sharedPost.author}</span>
+                              <span className="text-xs text-muted-foreground">{sharedPost.timeAgo}</span>
+                            </div>
+                          </div>
+                          <div className="p-3">
+                            {sharedPost.content && <p className="text-sm text-foreground/80 line-clamp-3 mb-2">{sharedPost.content}</p>}
+                            {/* Media Preview (Thumbnail) */}
+                            {sharedPost.images && sharedPost.images.length > 0 && (
+                              <div className="rounded-lg overflow-hidden h-40 bg-black/5 relative">
+                                <img src={sharedPost.images[0]} className="w-full h-full object-cover" alt="Shared Media" />
+                                {sharedPost.images.length > 1 && (
+                                  <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
+                                    +{sharedPost.images.length - 1}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {sharedPost.videoSrc && !sharedPost.images?.length && (
+                              <div className="rounded-lg overflow-hidden h-40 bg-black relative flex items-center justify-center">
+                                <video src={sharedPost.videoSrc} className="h-full max-w-full object-contain" />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                  <div className="p-2 bg-white/20 backdrop-blur-md rounded-full">
+                                    <Video className="w-6 h-6 text-white" />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* POST TYPE BLOCKS (Photo, Video, Article, Poll) */}
                       {/* PHOTO POST */}
                       {postType === 'photo' && (
                         uploadedImages.length === 0 ? (

@@ -60,6 +60,85 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     }))
   } : null;
 
+  // Handle shared post mapping
+  let sharedPost: Post | null = null;
+  if (backendPost.shared_post) {
+    const sp = backendPost.shared_post;
+
+    if (sp.is_accessible === false) {
+      sharedPost = {
+        id: "unavailable",
+        authorId: sp.author?.user_id || "",
+        author: sp.author?.full_name || "Unknown",
+        authorAvatar: sp.author?.avatar_url || null,
+        timeAgo: "",
+        content: sp.reason ? `This content is unavailable: ${sp.reason}` : "This content is unavailable.",
+        likes: 0,
+        comments: "0",
+        shares: "0",
+        isAvailable: false,
+        unavailableReason: sp.reason // Map the specific reason
+      } as Post & { isAvailable?: boolean; unavailableReason?: string };
+    } else if (sp.author && sp.post_id) { // Ensure required fields exist
+      const spImages: string[] = [];
+      let spVideoSrc: string | undefined = undefined;
+
+      // Process shared post media
+      if (Array.isArray(sp.media)) {
+        sp.media.forEach((item) => {
+          if (item.media_type === "image") {
+            spImages.push(item.url);
+          } else if (item.media_type === "video") {
+            spVideoSrc = item.url;
+          }
+        });
+      }
+
+      // Process shared post time
+      const spCreated = dayjs(sp.created_at);
+      const spDiffMinutes = now.diff(spCreated, "minute");
+      const spDiffHours = now.diff(spCreated, "hour");
+      const spDiffDays = now.diff(spCreated, "day");
+
+      let spShortTimeAgo = "";
+      if (spDiffMinutes <= 0) spShortTimeAgo = "Just now";
+      else if (spDiffMinutes < 60) spShortTimeAgo = `${spDiffMinutes}m`;
+      else if (spDiffHours < 24) spShortTimeAgo = `${spDiffHours}h`;
+      else spShortTimeAgo = `${spDiffDays}d`;
+
+      // Handle shared post poll
+      const spPoll = sp.poll ? {
+        poll_id: sp.poll.poll_id,
+        total_votes: sp.poll.total_votes,
+        duration: sp.poll.duration,
+        is_active: sp.poll.is_active,
+        user_vote: sp.poll.user_vote,
+        options: sp.poll.options.map(opt => ({
+          option_id: opt.option_id,
+          option_text: opt.option_text,
+          vote_count: opt.vote_count
+        }))
+      } : null;
+
+      sharedPost = {
+        id: sp.post_id,
+        authorId: sp.author.user_id,
+        author: sp.author.full_name,
+        authorAvatar: sp.author.avatar_url || undefined,
+        timeAgo: spShortTimeAgo,
+        content: sp.content || "",
+        imageSrc: spImages.length > 0 ? spImages[0] : undefined,
+        images: spImages.length > 0 ? spImages : undefined,
+        videoSrc: spVideoSrc,
+        likes: sp.like_count || 0,
+        comments: (sp.comment_count || 0).toString(),
+        shares: "0",
+        poll: spPoll,
+        isAvailable: true
+      } as Post & { isAvailable?: boolean };
+    }
+  }
+
   return {
     id: backendPost.post_id,
     authorId: backendPost.author_id,
@@ -81,5 +160,6 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     category: (backendPost.category_name as any) || undefined,
     visibility: backendPost.visibility,
     poll: poll,
+    shared_post: sharedPost,
   };
 };

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { PollAnalyticsModal } from './PollAnalyticsModal';
-import { ThumbsUp, MessageCircle, Share2, MoreHorizontal, EyeOff, Trash2, Edit2, Eye, BarChart2 } from 'lucide-react'
+import { ThumbsUp, MessageCircle, Share2, MoreHorizontal, EyeOff, Trash2, Edit2, Eye, BarChart2, ArrowUpRight } from 'lucide-react'
 
 import useEmblaCarousel from 'embla-carousel-react'
 import { Post, Comment as CommentType } from '@/types/entities'
@@ -233,6 +233,59 @@ export default function FeedPost({
     }
   };
 
+  // Shared Poll State
+  const [sharedPollData, setSharedPollData] = useState(shared_post?.poll);
+  const [isSharedVoting, setIsSharedVoting] = useState(false);
+
+  // Sync shared poll state
+  useEffect(() => {
+    setSharedPollData(shared_post?.poll);
+  }, [shared_post?.poll]);
+
+  const handleSharedVote = async (optionId: string) => {
+    if (!sharedPollData || isSharedVoting || !shared_post) return;
+
+    setIsSharedVoting(true);
+    const previousPollData = { ...sharedPollData };
+
+    // Optimistic update
+    setSharedPollData(prev => {
+      if (!prev) return null;
+
+      const previousVoteId = prev.user_vote;
+      const isRemoving = previousVoteId === optionId;
+      const isSwitching = !!previousVoteId && !isRemoving;
+
+      return {
+        ...prev,
+        total_votes: isRemoving ? prev.total_votes - 1 : (isSwitching ? prev.total_votes : prev.total_votes + 1),
+        options: prev.options.map(opt => {
+          if (opt.option_id === optionId && !isRemoving) {
+            return { ...opt, vote_count: opt.vote_count + 1 };
+          }
+          if (opt.option_id === previousVoteId) {
+            return { ...opt, vote_count: Math.max(0, opt.vote_count - 1) };
+          }
+          return opt;
+        }),
+        user_vote: isRemoving ? null : optionId
+      };
+    });
+
+    try {
+      if (sharedPollData.user_vote === optionId) {
+        await removeVote(shared_post.id);
+      } else {
+        await voteInPoll(shared_post.id, optionId);
+      }
+    } catch (error) {
+      console.error("Shared vote failed", error);
+      setSharedPollData(previousPollData);
+    } finally {
+      setIsSharedVoting(false);
+    }
+  };
+
   const commentsCount = postComments.length > 0 ? postComments.length : initialCommentsCount;
 
   return (
@@ -406,32 +459,107 @@ export default function FeedPost({
           </div>
         )}
 
-        {/* Shared Post Section */}
+        {/* Shared Post Section - Premium Glassmorphism UI */}
         {shared_post && (
-          <div className="mx-4 md:mx-6 mb-4 border border-border rounded-lg overflow-hidden bg-muted/30">
-            <div className="p-3 flex items-center gap-2 border-b border-border/50">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
-                <img src={shared_post.authorAvatar || '/assets/pngegg.png'} alt={shared_post.author} className="w-full h-full object-cover" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold">{shared_post.author}</span>
-                <span className="text-xs text-muted-foreground">{shared_post.timeAgo}</span>
-              </div>
-            </div>
-            <div className="p-3">
-              {shared_post.content && <p className="text-sm mb-2">{shared_post.content}</p>}
-              {/* Simplified Media Rendering for Shared Post */}
-              {shared_post.imageSrc && (
-                <div className="rounded-md overflow-hidden bg-black max-h-[300px] flex justify-center">
-                  <img src={shared_post.imageSrc} alt="Shared content" className="max-h-full object-contain" />
+          <div className="mx-4 md:mx-6 mb-5 relative group/shared">
+            {(shared_post as any).isAvailable === false ? (
+              <div className="p-6 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md flex flex-col items-center justify-center text-center gap-2">
+                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-1">
+                  <span className="text-2xl">🔒</span>
                 </div>
-              )}
-              {shared_post.images && shared_post.images.length > 0 && !shared_post.imageSrc && (
-                <div className="rounded-md overflow-hidden bg-black max-h-[300px] flex justify-center">
-                  <img src={shared_post.images[0]} alt="Shared content" className="max-h-full object-contain" />
+                <p className="text-sm font-medium text-foreground">Content Unavailable</p>
+                {(shared_post as any).author && (shared_post as any).author !== 'Unknown' && (
+                  <Link href={`/profile/${(shared_post as any).authorId}`} className="text-sm text-primary hover:underline mt-1">
+                    Post by {(shared_post as any).author}
+                  </Link>
+                )}
+                {/* Specific Reason Message */}
+                {(shared_post as any).unavailableReason === 'personal_connection' ? (
+                  <div className="flex flex-col items-center mt-2">
+                    <p className="text-xs text-muted-foreground">This is a Personal post.</p>
+                    <p className="text-xs text-muted-foreground">Connect with the user to view it.</p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-2">This post is Private.</p>
+                )}
+              </div>
+            ) : (
+              <Link href={`/post/${shared_post.id}`} className="block">
+                <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:shadow-lg dark:hover:shadow-primary/5">
+
+                  {/* Shared Post Header */}
+                  <div className="p-4 flex items-center gap-3 border-b border-white/5">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden ring-2 ring-white/10">
+                      <img src={shared_post.authorAvatar || '/assets/pngegg.png'} alt={shared_post.author} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        {shared_post.author}
+                        <span className="text-xs font-normal text-muted-foreground">• Reposted</span>
+                      </span>
+                      <span className="text-xs text-muted-foreground">{shared_post.timeAgo || 'Recently'}</span>
+                    </div>
+
+                    {/* Original Post Stats */}
+                    <div className="ml-auto flex items-center gap-3">
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <ThumbsUp className="w-3.5 h-3.5" />
+                        <span className="text-xs font-medium">{shared_post.likes}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span className="text-xs font-medium">{shared_post.comments}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Shared Post Content */}
+                  <div className="p-4">
+                    {shared_post.content && (
+                      <p className="text-sm md:text-base text-foreground/90 leading-relaxed mb-3 line-clamp-4">
+                        {shared_post.content}
+                      </p>
+                    )}
+
+                    {/* Shared Post Poll */}
+                    {sharedPollData && (
+                      <div className="mb-4" onClick={(e) => e.stopPropagation() /* Prevent navigating to post when voting */}>
+                        <PollCard
+                          poll={sharedPollData}
+                          onVote={handleSharedVote}
+                          isLoading={isSharedVoting}
+                          votedOptionId={sharedPollData.user_vote}
+                        />
+                      </div>
+                    )}
+
+                    {/* Shared Media */}
+                    {(shared_post.imageSrc || (shared_post.images && shared_post.images.length > 0)) && (
+                      <div className="relative rounded-lg overflow-hidden mt-2 bg-black/5 aspect-video md:aspect-[2/1] group-hover/shared:scale-[1.01] transition-transform duration-500 ease-out">
+                        <img
+                          src={shared_post.imageSrc || shared_post.images![0]}
+                          alt="Shared visual"
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                        {/* Multiple Images Indicator */}
+                        {shared_post.images && shared_post.images.length > 1 && (
+                          <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs font-medium px-2.5 py-1 rounded-full">
+                            +{shared_post.images.length - 1} photos
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Hover Overlay "View Original" (Desktop) */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/shared:opacity-100 transition-opacity duration-300 pointer-events-none bg-black/5 dark:bg-white/5">
+                    <div className="px-4 py-2 bg-background/80 backdrop-blur-md rounded-full shadow-lg flex items-center gap-2 text-sm font-semibold text-foreground border border-white/10 transform translate-y-2 group-hover/shared:translate-y-0 transition-transform duration-300">
+                      View Original <ArrowUpRight className="w-4 h-4 ml-1" />
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
+              </Link>
+            )}
           </div>
         )}
 
@@ -471,12 +599,14 @@ export default function FeedPost({
         </div>
       </div>
 
-      {isCommentSectionOpen && (
-        <CommentSection
-          comments={postComments}
-          onAddComment={handleAddComment}
-        />
-      )}
+      {
+        isCommentSectionOpen && (
+          <CommentSection
+            comments={postComments}
+            onAddComment={handleAddComment}
+          />
+        )
+      }
 
       <MobileCommentDrawer
         open={isMobileDrawerOpen}
@@ -503,6 +633,6 @@ export default function FeedPost({
         onClose={() => setIsAnalyticsModalOpen(false)}
         postId={id}
       />
-    </div>
+    </div >
   )
 }

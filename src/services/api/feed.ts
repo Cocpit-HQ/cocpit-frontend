@@ -23,6 +23,22 @@ export interface BackendPost {
   post_type?: string;
   like_count: number;
   is_liked: boolean;
+  shared_post?: {
+    is_accessible: boolean;
+    reason?: 'private' | 'personal_connection' | 'unknown';
+    post_id?: string;
+    content?: string;
+    created_at?: string;
+    author?: {
+      user_id: string;
+      full_name: string;
+      avatar_url: string | null;
+    };
+    media?: BackendMedia[];
+    like_count?: number;
+    comment_count?: number;
+    poll?: BackendPoll | null;
+  } | null;
 }
 
 export interface BackendMedia {

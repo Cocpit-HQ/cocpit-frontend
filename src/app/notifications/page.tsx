@@ -66,6 +66,8 @@ export default function NotificationsPage() {
       router.push(`/post/${notification.reference_id}`)
     } else if (notification.type === 'follow' && notification.reference_id) {
       router.push(`/profile/${notification.reference_id}`)
+    } else if (notification.type === 'repost' && notification.reference_id) {
+      router.push(`/post/${notification.reference_id}`)
     }
   }
 

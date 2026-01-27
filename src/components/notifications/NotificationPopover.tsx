@@ -99,6 +99,9 @@ export function NotificationPopover() {
                 } else if (notification.type === 'follow' && notification.reference_id) {
                   router.push(`/profile/${notification.reference_id}`)
                   setIsOpen(false)
+                } else if (notification.type === 'repost' && notification.reference_id) {
+                  router.push(`/post/${notification.reference_id}`)
+                  setIsOpen(false)
                 }
               }}
               className={`p-4 flex gap-3 hover:bg-muted/50 transition-colors cursor-pointer ${!notification.is_read ? "bg-muted/30" : ""}`}

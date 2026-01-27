@@ -27,7 +27,7 @@ export interface Notification {
     notification_id: string;
     user_id: string; // recipient
     sender_id: string; // actor
-    type: 'connection_request' | 'connection_accepted' | 'like' | 'comment' | 'follow' | 'job_alert';
+    type: 'connection_request' | 'connection_accepted' | 'like' | 'comment' | 'follow' | 'job_alert' | 'repost';
     actor_name: string;
     actor_avatar: string | null;
     reference_id: string | null;
