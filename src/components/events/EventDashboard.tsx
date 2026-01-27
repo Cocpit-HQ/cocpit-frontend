@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { EventCardSimple } from './EventCardSimple';
 import { Page, Theme } from '@/types/common';
-import { Plus, Search, Calendar, Users, Clock, DollarSign, Filter, MapPin } from 'lucide-react';
+import { Plus, Search, Calendar, Users, Clock, DollarSign, Filter, MapPin, Menu, BarChart2 } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -44,6 +44,12 @@ const myEvents = [
     },
 ];
 
+const participantsData = [
+    { name: "Alex Morgan", time: "Registered 2 hours ago", initial: "A", color: "bg-blue-500" },
+    { name: "Sarah Chen", time: "Registered 5 hours ago", initial: "S", color: "bg-green-500" },
+    { name: "Michael Ross", time: "Registered 1 day ago", initial: "M", color: "bg-orange-500" }
+];
+
 export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
     // force dark mode logic for this specific dashboard view to match screenshot exactly if that's the intent, 
     // but better to use the theme variables. 
@@ -53,6 +59,8 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
     const [selectedEventId, setSelectedEventId] = useState<number | null>(1);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState('all');
+    const [viewMode, setViewMode] = useState<'analytics' | 'participants'>('analytics');
+    const [participantSearchQuery, setParticipantSearchQuery] = useState('');
 
     // Extended mock data with ticketing info
     const eventsWithAnalytics = myEvents.map(event => {
@@ -255,132 +263,174 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex flex-col items-end gap-2">
-                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${selectedEvent.status === 'Published' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'}`}>
-                                        {selectedEvent.status}
-                                    </span>
-                                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                                        {selectedEvent.ticketType} Event
-                                    </span>
+                                <div className="flex gap-4 items-start">
+                                    <div className="flex flex-col items-end gap-2">
+                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${selectedEvent.status === 'Published' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'}`}>
+                                            {selectedEvent.status}
+                                        </span>
+                                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                                            {selectedEvent.ticketType} Event
+                                        </span>
+                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <button className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-foreground border border-white/10 transition-colors">
+                                                <Menu className="w-4 h-4" />
+                                            </button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-40 bg-[#171c28] border-border text-foreground">
+                                            <DropdownMenuItem
+                                                onClick={() => setViewMode('analytics')}
+                                                className={`flex items-center gap-2 cursor-pointer hover:bg-white/5 focus:bg-white/5 ${viewMode === 'analytics' ? 'bg-primary/10 text-primary' : ''}`}
+                                            >
+                                                <BarChart2 className="w-4 h-4" />
+                                                <span>Analytics</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() => setViewMode('participants')}
+                                                className={`flex items-center gap-2 cursor-pointer hover:bg-white/5 focus:bg-white/5 ${viewMode === 'participants' ? 'bg-primary/10 text-primary' : ''}`}
+                                            >
+                                                <Users className="w-4 h-4" />
+                                                <span>Participants</span>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
                             </div>
 
-                            {/* Quick Stats Grid */}
-                            <h3 className="text-sm font-semibold text-foreground mb-3">Quick Stats</h3>
-                            <div className="grid grid-cols-4 gap-4 mb-8">
-                                <div className="bg-[#171c28] rounded-lg p-4 border border-border">
-                                    <p className="text-xs text-muted-foreground mb-1">Total Attendees</p>
-                                    <p className="text-xl font-bold text-foreground">{selectedEvent.attendees}</p>
-                                </div>
-                                <div className="bg-[#171c28] rounded-lg p-4 border border-border">
-                                    <p className="text-xs text-muted-foreground mb-1">Views</p>
-                                    <p className="text-xl font-bold text-foreground">1,234</p>
-                                </div>
-                                <div className="bg-[#171c28] rounded-lg p-4 border border-border">
-                                    <p className="text-xs text-muted-foreground mb-1">Registration Rate</p>
-                                    <p className="text-xl font-bold text-foreground">18.4%</p>
-                                </div>
-                                <div className="bg-[#171c28] rounded-lg p-4 border border-border">
-                                    <p className="text-xs text-muted-foreground mb-1">Revenue</p>
-                                    <p className="text-xl font-bold text-foreground">${selectedEvent.revenue.toLocaleString()}</p>
-                                </div>
-                            </div>
-
-                            {/* Ticketing Analytics */}
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                    <h3 className="text-sm font-semibold text-foreground">Ticketing Analytics</h3>
-                                    <span className="text-xs border border-border px-2 py-0.5 rounded-full text-muted-foreground">
-                                        ${selectedEvent.ticketPrice} / ticket
-                                    </span>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button className="text-xs px-3 py-1.5 bg-muted hover:bg-muted/80 text-foreground rounded-full border border-border transition-colors">
-                                        Export Sales
-                                    </button>
-                                    <button className="text-xs px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-full border border-primary/20 transition-colors">
-                                        Manage Tickets
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                                {/* Progress */}
-                                <div>
-                                    <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                                        <span>Ticket Sales Progress</span>
-                                        <span>{selectedEvent.soldTickets} / {selectedEvent.totalTickets} sold</span>
-                                    </div>
-                                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden mb-2">
-                                        <div
-                                            className="h-full bg-green-500"
-                                            style={{ width: `${Math.min((selectedEvent.soldTickets / selectedEvent.totalTickets) * 100, 100)}%` }}
-                                        />
-                                    </div>
-                                    <div className="flex justify-between text-xs text-muted-foreground mb-4">
-                                        <span>{selectedEvent.totalTickets - selectedEvent.soldTickets} remaining</span>
-                                        <span>{Math.round((selectedEvent.soldTickets / selectedEvent.totalTickets) * 100)}%</span>
-                                    </div>
-
-                                    <div className="bg-[#171c28] rounded-lg p-3 flex justify-between border border-border">
-                                        <div>
-                                            <p className="text-xs text-muted-foreground">Free (Comps)</p>
-                                            <p className="font-semibold text-foreground">{selectedEvent.freeRegistrations}</p>
+                            {viewMode === 'analytics' ? (
+                                <>
+                                    {/* Quick Stats Grid */}
+                                    <h3 className="text-sm font-semibold text-foreground mb-3">Quick Stats</h3>
+                                    <div className="grid grid-cols-4 gap-4 mb-8">
+                                        <div className="bg-[#171c28] rounded-lg p-4 border border-border">
+                                            <p className="text-xs text-muted-foreground mb-1">Total Attendees</p>
+                                            <p className="text-xl font-bold text-foreground">{selectedEvent.attendees}</p>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-xs text-muted-foreground">Paid Sales</p>
-                                            <p className="font-semibold text-foreground">{selectedEvent.paidRegistrations}</p>
+                                        <div className="bg-[#171c28] rounded-lg p-4 border border-border">
+                                            <p className="text-xs text-muted-foreground mb-1">Views</p>
+                                            <p className="text-xl font-bold text-foreground">1,234</p>
+                                        </div>
+                                        <div className="bg-[#171c28] rounded-lg p-4 border border-border">
+                                            <p className="text-xs text-muted-foreground mb-1">Registration Rate</p>
+                                            <p className="text-xl font-bold text-foreground">18.4%</p>
+                                        </div>
+                                        <div className="bg-[#171c28] rounded-lg p-4 border border-border">
+                                            <p className="text-xs text-muted-foreground mb-1">Revenue</p>
+                                            <p className="text-xl font-bold text-foreground">${selectedEvent.revenue.toLocaleString()}</p>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Revenue Card */}
-                                {/* Revenue & Stats Column */}
-                                <div className="space-y-4">
-                                    {/* Total Revenue Card */}
-                                    <div className="bg-muted/30 rounded-lg p-4 border border-border">
-                                        <p className="text-xs text-muted-foreground">Total Revenue</p>
+                                    {/* Ticketing Analytics */}
+                                    <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2">
-                                            <p className="text-2xl font-bold text-foreground">${selectedEvent.revenue.toLocaleString()}</p>
+                                            <h3 className="text-sm font-semibold text-foreground">Ticketing Analytics</h3>
+                                            <span className="text-xs border border-border px-2 py-0.5 rounded-full text-muted-foreground">
+                                                ${selectedEvent.ticketPrice} / ticket
+                                            </span>
                                         </div>
-                                        <p className="text-[10px] text-green-500 mt-1 flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Live tracking
-                                        </p>
+                                        <div className="flex gap-2">
+                                            <button className="text-xs px-3 py-1.5 bg-muted hover:bg-muted/80 text-foreground rounded-full border border-border transition-colors">
+                                                Export Sales
+                                            </button>
+                                            <button className="text-xs px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-full border border-primary/20 transition-colors">
+                                                Manage Tickets
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    {/* Conversion & Avg Card */}
-                                    <div className="bg-[#171c28] rounded-lg p-4 border border-border grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                        {/* Progress */}
                                         <div>
-                                            <p className="text-[10px] text-muted-foreground">Conversion</p>
-                                            <p className="text-sm font-semibold text-foreground">91.0%</p>
+                                            <div className="flex justify-between text-xs text-muted-foreground mb-2">
+                                                <span>Ticket Sales Progress</span>
+                                                <span>{selectedEvent.soldTickets} / {selectedEvent.totalTickets} sold</span>
+                                            </div>
+                                            <div className="h-2 w-full bg-muted rounded-full overflow-hidden mb-2">
+                                                <div
+                                                    className="h-full bg-green-500"
+                                                    style={{ width: `${Math.min((selectedEvent.soldTickets / selectedEvent.totalTickets) * 100, 100)}%` }}
+                                                />
+                                            </div>
+                                            <div className="flex justify-between text-xs text-muted-foreground mb-4">
+                                                <span>{selectedEvent.totalTickets - selectedEvent.soldTickets} remaining</span>
+                                                <span>{Math.round((selectedEvent.soldTickets / selectedEvent.totalTickets) * 100)}%</span>
+                                            </div>
+
+                                            <div className="bg-[#171c28] rounded-lg p-3 flex justify-between border border-border">
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground">Free (Comps)</p>
+                                                    <p className="font-semibold text-foreground">{selectedEvent.freeRegistrations}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-xs text-muted-foreground">Paid Sales</p>
+                                                    <p className="font-semibold text-foreground">{selectedEvent.paidRegistrations}</p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-[10px] text-muted-foreground">Avg / Attendee</p>
-                                            <p className="text-sm font-semibold text-foreground">$44.60</p>
+
+                                        {/* Revenue & Stats Column */}
+                                        <div className="space-y-4">
+                                            {/* Total Revenue Card */}
+                                            <div className="bg-muted/30 rounded-lg p-4 border border-border">
+                                                <p className="text-xs text-muted-foreground">Total Revenue</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-2xl font-bold text-foreground">${selectedEvent.revenue.toLocaleString()}</p>
+                                                </div>
+                                                <p className="text-[10px] text-green-500 mt-1 flex items-center gap-1">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Live tracking
+                                                </p>
+                                            </div>
+
+                                            {/* Conversion & Avg Card */}
+                                            <div className="bg-[#171c28] rounded-lg p-4 border border-border grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <p className="text-[10px] text-muted-foreground">Conversion</p>
+                                                    <p className="text-sm font-semibold text-foreground">91.0%</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] text-muted-foreground">Avg / Attendee</p>
+                                                    <p className="text-sm font-semibold text-foreground">$44.60</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="mb-3">
+                                        <div className="relative w-full">
+                                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                                            <input
+                                                type="text"
+                                                placeholder="Search participants..."
+                                                value={participantSearchQuery}
+                                                onChange={(e) => setParticipantSearchQuery(e.target.value)}
+                                                className="w-full pl-8 pr-3 py-1.5 bg-muted/50 border border-border rounded-lg text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                                            />
+                                        </div>
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-foreground mb-3">Participants</h3>
+                                    <div className="space-y-4">
+                                        {participantsData
+                                            .filter(p => p.name.toLowerCase().includes(participantSearchQuery.toLowerCase()))
+                                            .map((activity, i) => (
+                                                <div key={i} className="flex items-center gap-3 bg-[#171c28]/50 p-3 rounded-xl border border-border/50">
+                                                    <div className={`w-10 h-10 rounded-full ${activity.color} flex items-center justify-center text-sm text-white font-medium`}>
+                                                        {activity.initial}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-foreground">{activity.name}</p>
+                                                        <p className="text-xs text-muted-foreground">{activity.time}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </>
+                            )}
 
                             {/* Recent Activity */}
-                            <h3 className="text-sm font-semibold text-foreground mb-3">Recent Activity</h3>
-                            <div className="space-y-4">
-                                {[
-                                    { name: "Alex Morgan", time: "Registered 2 hours ago", initial: "A", color: "bg-blue-500" },
-                                    { name: "Sarah Chen", time: "Registered 5 hours ago", initial: "S", color: "bg-green-500" },
-                                    { name: "Michael Ross", time: "Registered 1 day ago", initial: "M", color: "bg-orange-500" }
-                                ].map((activity, i) => (
-                                    <div key={i} className="flex items-center gap-3">
-                                        <div className={`w-8 h-8 rounded-full ${activity.color} flex items-center justify-center text-xs text-white font-medium`}>
-                                            {activity.initial}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-foreground">{activity.name}</p>
-                                            <p className="text-xs text-muted-foreground">{activity.time}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+
 
                         </div>
                     ) : (
