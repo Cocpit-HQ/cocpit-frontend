@@ -34,7 +34,7 @@ import { useAuth } from "@/hooks/use-auth";
 import FeedPost from "@/components/home/FeedPost";
 import PostCard from "./PostCard";
 import Link from "next/link";
-import { getProfile, addExperience, deleteExperience, addEducation, deleteEducation, getUserPosts, addSkills, deleteSkill, uploadAvatar, deleteAvatar } from "@/services/api/profile"
+import { getProfile, addExperience, updateExperience, deleteExperience, addEducation, updateEducation, deleteEducation, getUserPosts, addSkills, deleteSkill, uploadAvatar, deleteAvatar } from "@/services/api/profile"
 import { deletePost as apiDeletePost } from "@/services/api/posts"
 import { UserProfile, UserData, AddExperiencePayload, AddEducationPayload, AddSkillsPayload, SkillResponse, Skill } from "@/types/user"
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
@@ -326,8 +326,23 @@ export default function ProfilePage() {
 
   const handleSaveExperience = async (data: Partial<Experience>) => {
     if (editingExperience) {
-      // TODO: Implement edit experience API if available, else just local for now or add endpoint
-      setExperiences(experiences.map(exp => exp.experience_id === editingExperience.experience_id ? { ...exp, ...data } : exp));
+      try {
+        const payload: Partial<AddExperiencePayload> = {
+          title: data.title,
+          company_name: data.company_name,
+          location: data.location,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          is_current: !data.end_date,
+          description: data.description,
+        };
+        const response = await updateExperience(editingExperience.experience_id, payload);
+        setExperiences(experiences.map(exp =>
+          exp.experience_id === editingExperience.experience_id ? response.experience : exp
+        ));
+      } catch (error) {
+        console.error("Failed to update experience", error);
+      }
     } else {
       try {
         const payload: AddExperiencePayload = {
@@ -372,8 +387,23 @@ export default function ProfilePage() {
 
   const handleSaveEducation = async (data: Partial<Education>) => {
     if (editingEducation) {
-      // TODO: Implement edit education
-      setEducations(educations.map(edu => edu.education_id === editingEducation.education_id ? { ...edu, ...data } : edu));
+      try {
+        const payload: Partial<AddEducationPayload> = {
+          school_name: data.school_name,
+          degree: data.degree,
+          field_of_study: data.field_of_study,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          description: data.description,
+        };
+
+        const response = await updateEducation(editingEducation.education_id, payload);
+        setEducations(educations.map(edu =>
+          edu.education_id === editingEducation.education_id ? response.education : edu
+        ));
+      } catch (error) {
+        console.error("Failed to update education", error);
+      }
     } else {
       try {
         const payload: AddEducationPayload = {
@@ -426,11 +456,19 @@ export default function ProfilePage() {
   const isLoading = !mounted || !user;
 
   const latestEducation = user?.latest_education || educations[0] || null;
+  const latestExperience = experiences[0] || null;
 
   const scrollToEducation = () => {
     const educationSection = document.getElementById("education-section");
     if (educationSection) {
       educationSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const scrollToExperience = () => {
+    const experienceSection = document.getElementById("experience-section");
+    if (experienceSection) {
+      experienceSection.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -515,44 +553,60 @@ export default function ProfilePage() {
                       </button>
                     </div>
 
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h1 className="text-2xl text-foreground">{user?.name}</h1>
-                        <CheckCircle className="w-5 h-5 text-primary fill-primary/10" />
-                        <span className="text-sm text-muted-foreground">· 2nd</span>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1 min-w-0 mr-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h1 className="text-2xl text-foreground">{user?.name}</h1>
+                          <CheckCircle className="w-5 h-5 text-primary fill-primary/10" />
+                          <span className="text-sm text-muted-foreground">· 2nd</span>
+                        </div>
+
+                        <p className="text-base mb-2 text-foreground">
+                          {user?.headline}
+                        </p>
+
+                        <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
+                          <span>{user?.location}</span>
+                          <span>·</span>
+                          <a href="#" className="text-primary hover:underline">
+                            Contact info
+                          </a>
+                        </div>
+
+                        <p className="text-sm text-muted-foreground mb-4">500+ connections</p>
+
                       </div>
 
-                      <p className="text-base mb-2 text-foreground">
-                        {user?.headline}
-                      </p>
+                      <div className="flex flex-col gap-2 pt-2">
+                        {latestEducation && (
+                          <div onClick={scrollToEducation} className="hidden md:flex items-center gap-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors max-w-[280px]">
+                            <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                              <GraduationCap className="w-6 h-6 text-yellow-600" />
+                            </div>
+                            <span className="text-sm font-semibold text-foreground hover:underline line-clamp-2">
+                              {/* @ts-ignore */}
+                              {latestEducation.school_name || latestEducation.school || 'University'}
+                            </span>
+                          </div>
+                        )}
 
-                      <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
-                        <span>{user?.location}</span>
-                        <span>·</span>
-                        <a href="#" className="text-primary hover:underline">
-                          Contact info
-                        </a>
+                        {latestExperience && (
+                          <div onClick={scrollToExperience} className="hidden md:flex items-center gap-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors max-w-[280px]">
+                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                              <Briefcase className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <span className="text-sm font-semibold text-foreground hover:underline line-clamp-2">
+                              {latestExperience.company_name}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
-                      <p className="text-sm text-muted-foreground mb-4">500+ connections</p>
-                      <ProfileIdentityChips initialIdentity={profileIdentity} />
                     </div>
 
-                    {latestEducation && (
-                      <div onClick={scrollToEducation} className="hidden md:flex items-center gap-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors max-w-[280px]">
-                        <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
-                          <GraduationCap className="w-6 h-6 text-yellow-600" />
-                        </div>
-                        <span className="text-sm font-semibold text-foreground hover:underline line-clamp-2">
-                          {/* @ts-ignore */}
-                          {latestEducation.school_name || latestEducation.school || 'University'}
-                        </span>
-                      </div>
-                    )}
+                    <ProfileIdentityChips initialIdentity={profileIdentity} />
                   </div>
                 </div>
-              </div>
 
                 <div
                   className="rounded-xl border p-4 mb-6 bg-card border-border"
@@ -585,6 +639,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div
+                  id="experience-section"
                   className="rounded-xl border p-6 mb-4 bg-card border-border"
                 >
                   <div className="flex items-center justify-between mb-4">
@@ -628,11 +683,11 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-              <div id="education-section" className="rounded-xl border p-6 bg-card border-border">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl text-foreground">Education</h2>
-                  <button onClick={handleAddEducationClick} className="text-primary hover:underline text-sm">Add</button>
-                </div>
+                <div id="education-section" className="rounded-xl border p-6 bg-card border-border">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl text-foreground">Education</h2>
+                    <button onClick={handleAddEducationClick} className="text-primary hover:underline text-sm">Add</button>
+                  </div>
 
                   <div className="space-y-6">
                     {educations.map(edu => (

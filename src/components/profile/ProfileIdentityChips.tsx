@@ -58,30 +58,32 @@ export function ProfileIdentityChips({ initialIdentity, readOnly = false }: Prof
   };
 
   return (
-    <div className="mt-4 flex flex-wrap gap-2 items-center">
-      <div className="flex flex-wrap gap-2 flex-1">
-        <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 border border-primary/20">
+    <div className="mt-4 flex flex-col md:flex-row md:items-center w-full gap-2 md:gap-4">
+      <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
+        <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 border border-primary/20 flex-shrink-0 whitespace-nowrap">
           <span className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Open to:</span>
           {identity.openTo}
         </div>
-        <div className="bg-green-500/10 text-green-600 dark:text-green-400 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 border border-green-500/20">
+        <div className="bg-green-500/10 text-green-600 dark:text-green-400 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 border border-green-500/20 flex-shrink-0 whitespace-nowrap">
           <span className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Availability:</span>
           {identity.availability}
         </div>
-        <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 border border-blue-500/20">
+        <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 border border-blue-500/20 flex-shrink-0 whitespace-nowrap">
           <span className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Preference:</span>
           {identity.workPreference}
         </div>
       </div>
 
       {!readOnly && (
-        <button
-          onClick={() => setIsEditing(true)}
-          className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
-          aria-label="Edit professional identity"
-        >
-          <Edit2 className="w-4 h-4" />
-        </button>
+        <div className="ml-auto">
+          <button
+            onClick={() => setIsEditing(true)}
+            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
+            aria-label="Edit professional identity"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+        </div>
       )}
 
       <Dialog open={isEditing} onOpenChange={(open) => !open && handleCancel()}>

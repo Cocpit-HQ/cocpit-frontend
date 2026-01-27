@@ -106,7 +106,7 @@ export interface AddEducationPayload {
   degree: string;
   field_of_study: string;
   start_date: string;
-  end_date?: string;
+  end_date?: string | null;
   description: string | null;
 }
 
