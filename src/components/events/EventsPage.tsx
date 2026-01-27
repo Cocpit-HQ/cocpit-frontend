@@ -14,6 +14,9 @@ import type { EventCard } from "@/types/event"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getAllEvents } from "@/services/api/event"
 import { mapBackendEventToEventCard } from "@/lib/mappers/event.mapper"
+import { EventDashboard } from "@/components/events/EventDashboard"
+import { useTheme } from "next-themes"
+import { Theme } from "@/types/common"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -45,6 +48,7 @@ export function EventsPage() {
   const router = useRouter()
   // We still use context for actions (save/unsave) and "my" lists, but NOT for the main feed
   const { isRegistered, isSaved, isSaving, myEventIds, saveEvent, unsaveEvent, events: contextEvents } = useEvents()
+  const { theme } = useTheme()
 
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("upcoming")
@@ -326,7 +330,7 @@ export function EventsPage() {
 
           {/* Tabs */}
           <div className="flex gap-8 border-b border-border mb-8 overflow-x-auto no-scrollbar">
-            {["upcoming", "registered", "saved", "my_events"].map((tab) => (
+            {["upcoming", "registered", "saved", "my_events", "dashboard"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -335,7 +339,7 @@ export function EventsPage() {
                   : "text-muted-foreground hover:text-foreground"
                   }`}
               >
-                {tab === 'upcoming' ? 'Discover' : tab.replace('_', ' ')}
+                {tab === 'upcoming' ? 'Discover' : tab === 'dashboard' ? 'Event Dashboard' : tab.replace('_', ' ')}
                 {activeTab === tab && (
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
                 )}
@@ -432,6 +436,8 @@ export function EventsPage() {
                 )}
               </section>
             </div>
+          ) : activeTab === 'dashboard' ? (
+            <EventDashboard navigateTo={navigateTo} theme={(theme || 'dark') as Theme} />
           ) : (
             // Other Tabs (Unchanged layout mostly, but using local state/context logic)
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

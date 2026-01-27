@@ -98,12 +98,22 @@ export const addExperience = async (payload: AddExperiencePayload): Promise<AddE
   return response.data;
 }
 
+export const updateExperience = async (id: string, payload: Partial<AddExperiencePayload>): Promise<AddExperienceResponse> => {
+  const response = await api.put(`/profile/experiences/${id}`, payload);
+  return response.data;
+}
+
 export const deleteExperience = async (id: string): Promise<void> => {
   await api.delete(`/profile/experiences/${id}`);
 }
 
 export const addEducation = async (payload: AddEducationPayload): Promise<AddEducationResponse> => {
   const response = await api.post("/profile/educations", payload);
+  return response.data;
+}
+
+export const updateEducation = async (id: string, payload: Partial<AddEducationPayload>): Promise<AddEducationResponse> => {
+  const response = await api.put(`/profile/educations/${id}`, payload);
   return response.data;
 }
 
