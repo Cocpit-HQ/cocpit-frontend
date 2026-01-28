@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Search, MapPin, Users, Plus, X, Loader2 } from "lucide-react"
 import { AppShell } from "@/components/layout/AppShell"
 import { CreateEventForm } from "@/components/events/CreateEventForm"
@@ -46,12 +46,32 @@ function EventSkeleton() {
 
 export function EventsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   // We still use context for actions (save/unsave) and "my" lists, but NOT for the main feed
   const { isRegistered, isSaved, isSaving, myEventIds, saveEvent, unsaveEvent, events: contextEvents } = useEvents()
   const { theme } = useTheme()
 
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState("upcoming")
+  // Initialize from URL or default to 'upcoming'
+  const [activeTab, setActiveTabState] = useState(searchParams.get('tab') || "upcoming")
+
+  // Update URL when tab changes internally
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    // Shallow update to URL
+    router.replace(`/events?${params.toString()}`, { scroll: false });
+  };
+
+  // Sync state if URL changes externally (e.g. back button)
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      setActiveTabState(tabFromUrl);
+    }
+  }, [searchParams]);
+
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [filters, setFilters] = useState<FilterState>(initialFilterState)
 
@@ -329,20 +349,19 @@ export function EventsPage() {
           )}
 
           {/* Tabs */}
-          <div className="flex gap-8 border-b border-border mb-8 overflow-x-auto no-scrollbar">
+          <div className="flex gap-3 md:gap-4 mb-8 overflow-x-auto scrollbar-hide py-1">
             {["upcoming", "registered", "saved", "my_events", "dashboard"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-4 text-sm font-medium capitalize transition-all relative whitespace-nowrap flex-shrink-0 ${activeTab === tab
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                className={`px-4 py-2 rounded-full text-xs md:text-sm font-medium capitalize transition-all relative whitespace-nowrap flex-shrink-0 ${activeTab === tab
+                  ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md shadow-purple-500/20"
+                  : theme === 'light'
+                    ? "bg-[#f3f4f6] text-muted-foreground hover:bg-[#e5e7eb] hover:text-foreground border border-black/5"
+                    : "bg-[#171c28] text-muted-foreground hover:bg-[#1f2536] hover:text-foreground border border-white/5"
                   }`}
               >
                 {tab === 'upcoming' ? 'Discover' : tab === 'dashboard' ? 'Event Dashboard' : tab.replace('_', ' ')}
-                {activeTab === tab && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
-                )}
               </button>
             ))}
           </div>

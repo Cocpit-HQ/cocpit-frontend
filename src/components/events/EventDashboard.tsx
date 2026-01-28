@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { EventCardSimple } from './EventCardSimple';
+import { CreateEventForm } from './CreateEventForm';
 import { Page, Theme } from '@/types/common';
 import { Plus, Search, Calendar, Users, Clock, DollarSign, Filter, MapPin, Menu, BarChart2 } from 'lucide-react';
 import {
@@ -10,6 +12,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 
 interface EventDashboardProps {
     navigateTo: (page: Page) => void;
@@ -56,53 +59,122 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
     // The screenshot shows a very specific dark theme. 
     // We'll use the card/background classes which map to the theme variables.
 
-    const [selectedEventId, setSelectedEventId] = useState<number | null>(1);
+    const [events, setEvents] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedEventId, setSelectedEventId] = useState<number | string | null>(null);
+    const [selectedStat, setSelectedStat] = useState<string>("revenue"); // Default selected stat
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [viewMode, setViewMode] = useState<'analytics' | 'participants'>('analytics');
     const [participantSearchQuery, setParticipantSearchQuery] = useState('');
 
-    // Extended mock data with ticketing info
-    const eventsWithAnalytics = myEvents.map(event => {
-        const isPaid = event.id % 2 !== 0; // Odd IDs are paid
-        const ticketPrice = isPaid ? (event.id === 1 ? 299 : 49) : 0;
-        const totalTickets = event.id === 1 ? 500 : 200;
-        const soldTickets = event.attendees;
-        const freeRegistrations = isPaid ? Math.floor(soldTickets * 0.1) : soldTickets;
-        const paidRegistrations = isPaid ? soldTickets - freeRegistrations : 0;
+    // Edit/Delete State
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingEvent, setEditingEvent] = useState<any>(null);
 
-        return {
-            ...event,
-            ticketType: isPaid ? 'Paid' : 'Free',
-            ticketPrice,
-            totalTickets: isPaid ? totalTickets : 0,
-            soldTickets,
-            freeRegistrations,
-            paidRegistrations,
-            revenue: paidRegistrations * ticketPrice,
-            isSoldOut: isPaid && soldTickets >= totalTickets,
-            formattedDate: event.date
+    const detailsRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
+
+    // Fetch Real Events on Mount
+    useEffect(() => {
+        const fetchMyEvents = async () => {
+            setIsLoading(true);
+            try {
+                const { getMyCreatedEvents } = await import('@/services/api/event');
+                const data = await getMyCreatedEvents();
+                // backend returns BackendEvent[], we map to what dashboard needs if necessary
+                // or just use it directly. EventCardSimple expects basic fields.
+                // We need to ensure we can calculate analytics from it if possible, or mock analytics for now.
+
+                const eventsWithAnalytics = data.map(event => {
+                    // Mock analytics for now as backend might not return stats yet
+                    const isPaid = event.price_type === 'Paid';
+                    const ticketPrice = Number(event.price) || 0;
+                    const totalTickets = event.max_attendees || 100;
+                    const soldTickets = event.registered_count || 0;
+                    const freeRegistrations = isPaid ? Math.floor(soldTickets * 0.1) : soldTickets;
+                    const paidRegistrations = isPaid ? soldTickets - freeRegistrations : 0;
+                    const revenue = paidRegistrations * ticketPrice;
+
+                    return {
+                        ...event,
+                        id: event.event_id, // Map event_id to id for consistency
+                        date: new Date(event.start_time).toLocaleDateString(), // Format date
+                        ticketType: isPaid ? 'Paid' : 'Free',
+                        ticketPrice,
+                        totalTickets,
+                        soldTickets,
+                        freeRegistrations,
+                        paidRegistrations,
+                        revenue,
+                        isSoldOut: soldTickets >= totalTickets,
+                        formattedDate: new Date(event.start_time).toLocaleDateString(),
+                        status: 'Published' // Assuming published for now
+                    };
+                });
+
+                setEvents(eventsWithAnalytics);
+                if (eventsWithAnalytics.length > 0) {
+                    setSelectedEventId(eventsWithAnalytics[0].id);
+                }
+            } catch (error) {
+                console.error("Failed to fetch my events", error);
+            } finally {
+                setIsLoading(false);
+            }
         };
-    });
+        fetchMyEvents();
+    }, []);
 
-    const selectedEvent = eventsWithAnalytics.find(e => e.id === selectedEventId);
+    const handleEventClick = (id: number | string) => {
+        setSelectedEventId(id);
+        // On mobile, scroll to details
+        if (window.innerWidth < 1024) {
+            setTimeout(() => {
+                detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+    };
 
-    const filteredEvents = eventsWithAnalytics.filter(event => {
+    const handleEdit = (event: any) => {
+        // Map back to BackendEvent structure if needed or pass directly
+        setEditingEvent(event);
+        setShowEditModal(true);
+    };
+
+    const handleDelete = async (id: number | string) => {
+        if (!confirm("Are you sure you want to delete this event? This action cannot be undone.")) return;
+        try {
+            const { deleteEvent } = await import('@/services/api/event');
+            await deleteEvent(id);
+            setEvents(prev => prev.filter(e => e.id !== id));
+            if (selectedEventId === id) {
+                setSelectedEventId(null);
+            }
+        } catch (error) {
+            console.error("Failed to delete event", error);
+            alert("Failed to delete event.");
+        }
+    };
+
+    const selectedEvent = events.find(e => e.id === selectedEventId);
+
+    const filteredEvents = events.filter(event => {
         const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesFilter =
             filterType === 'all' ? true :
-                filterType === 'in-person' ? event.location !== 'Virtual Event' :
-                    filterType === 'virtual' ? event.location === 'Virtual Event' : true;
+                filterType === 'in-person' ? event.location !== 'Online' :
+                    filterType === 'virtual' ? event.location === 'Online' : true;
 
         return matchesSearch && matchesFilter;
     });
 
     // Aggregate Metrics
-    const totalEvents = eventsWithAnalytics.length;
-    const activeEvents = eventsWithAnalytics.filter(e => e.status === 'Published').length;
-    const totalTicketsSold = eventsWithAnalytics.reduce((acc, e) => acc + e.soldTickets, 0);
-    const totalTicketCapacity = eventsWithAnalytics.reduce((acc, e) => acc + (e.totalTickets || 0), 0);
-    const totalRevenue = eventsWithAnalytics.reduce((acc, e) => acc + (e.revenue || 0), 0);
+    const totalEvents = events.length;
+    const activeEvents = events.filter(e => e.status === 'Published').length;
+    const totalTicketsSold = events.reduce((acc, e) => acc + e.soldTickets, 0);
+    const totalTicketCapacity = events.reduce((acc, e) => acc + (e.totalTickets || 0), 0);
+    const totalRevenue = events.reduce((acc, e) => acc + (e.revenue || 0), 0);
     const capacityPercentage = totalTicketCapacity > 0 ? Math.round((totalTicketsSold / totalTicketCapacity) * 100) : 0;
 
     return (
@@ -113,18 +185,17 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                     <h1 className="text-2xl font-bold text-foreground">Event Dashboard</h1>
                     <p className="text-muted-foreground">Manage and track your events</p>
                 </div>
-                <button
-                    onClick={() => navigateTo('create-event' as Page)}
-                    className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all font-medium"
-                >
-                    <Plus className="w-4 h-4" /> Create Event
-                </button>
+                {/* Create Event button removed as requested */}
             </div>
 
             {/* Top Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* All Events */}
-                <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group">
+                {/* All Events */}
+                <div
+                    onClick={() => setSelectedStat("all_events")}
+                    className={`bg-card rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'all_events' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                >
                     <div className="flex justify-between items-start z-10">
                         <div>
                             <p className="text-sm text-muted-foreground mb-1">All Events</p>
@@ -137,7 +208,11 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                 </div>
 
                 {/* Active Events */}
-                <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group">
+                {/* Active Events */}
+                <div
+                    onClick={() => setSelectedStat("active_events")}
+                    className={`bg-card rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'active_events' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                >
                     <div className="flex justify-between items-start z-10">
                         <div>
                             <p className="text-sm text-muted-foreground mb-1">Active Events</p>
@@ -150,7 +225,11 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                 </div>
 
                 {/* Tickets Sold */}
-                <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group">
+                {/* Tickets Sold */}
+                <div
+                    onClick={() => setSelectedStat("tickets_sold")}
+                    className={`bg-card rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'tickets_sold' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                >
                     <div className="flex justify-between items-start z-10 w-full">
                         <div>
                             <p className="text-sm text-muted-foreground mb-1">Tickets Sold</p>
@@ -175,7 +254,10 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                 </div>
 
                 {/* Total Revenue */}
-                <div className="bg-card border border-border rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group">
+                <div
+                    onClick={() => setSelectedStat("total_revenue_top")}
+                    className={`bg-card rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'total_revenue_top' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                >
                     <div className="flex justify-between items-start z-10">
                         <div>
                             <p className="text-sm text-muted-foreground mb-1">Total Revenue</p>
@@ -193,7 +275,7 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
 
                 {/* Left Column: Your Events List */}
                 <div className="lg:col-span-1 flex flex-col gap-4">
-                    <div className="bg-card border border-border rounded-xl p-4 h-[600px] flex flex-col">
+                    <div className="bg-card border border-border rounded-xl p-4 h-[400px] md:h-[600px] flex flex-col">
                         <div className="flex items-center justify-between mb-4 px-1">
                             <h3 className="font-semibold text-foreground">Your Events</h3>
                             <span className="text-xs text-muted-foreground">{filteredEvents.length} events</span>
@@ -207,13 +289,13 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                                 placeholder="Search events..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-9 pr-8 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                                className={`w-full pl-9 pr-8 py-2 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'}`}
                             />
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Filter className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-40 bg-[#171c28] border-border text-foreground">
+                                <DropdownMenuContent align="end" className={`w-40 border-border text-foreground ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'}`}>
                                     <DropdownMenuItem onClick={() => setFilterType('all')} className="cursor-pointer hover:bg-muted focus:bg-muted">
                                         All Events
                                     </DropdownMenuItem>
@@ -229,25 +311,32 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
 
                         {/* List */}
                         <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-hide">
-                            {filteredEvents.map(event => (
-                                <EventCardSimple
-                                    key={event.id}
-                                    event={event}
-                                    isSelected={selectedEventId === event.id}
-                                    onClick={() => setSelectedEventId(event.id)}
-                                    onEdit={() => { }}
-                                    onDelete={() => { }}
-                                    theme={theme}
-                                />
-                            ))}
+                            {isLoading ? (
+                                <div className="text-center py-10 text-muted-foreground">Loading events...</div>
+                            ) : filteredEvents.length === 0 ? (
+                                <div className="text-center py-10 text-muted-foreground">No events found.</div>
+                            ) : (
+                                filteredEvents.map(event => (
+                                    <EventCardSimple
+                                        key={event.id}
+                                        event={event}
+                                        isSelected={selectedEventId === event.id}
+                                        onClick={() => handleEventClick(event.id)}
+                                        onEdit={() => handleEdit(event)}
+                                        onDelete={() => handleDelete(event.id)}
+                                        onViewDetails={() => router.push(`/events/${event.id}`)}
+                                        theme={theme}
+                                    />
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
 
                 {/* Right Column: Event Details */}
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2" ref={detailsRef}>
                     {selectedEvent ? (
-                        <div className="bg-card border border-border rounded-xl p-6 h-[600px] overflow-y-auto scrollbar-hide">
+                        <div className="bg-card border border-border rounded-xl p-6 h-auto md:h-[600px] overflow-y-auto scrollbar-hide">
                             {/* Event Header */}
                             <div className="flex justify-between items-start mb-6">
                                 <div>
@@ -278,7 +367,7 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                                                 <Menu className="w-4 h-4" />
                                             </button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-40 bg-[#171c28] border-border text-foreground">
+                                        <DropdownMenuContent align="end" className={`w-40 border-border text-foreground ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'}`}>
                                             <DropdownMenuItem
                                                 onClick={() => setViewMode('analytics')}
                                                 className={`flex items-center gap-2 cursor-pointer hover:bg-white/5 focus:bg-white/5 ${viewMode === 'analytics' ? 'bg-primary/10 text-primary' : ''}`}
@@ -301,39 +390,54 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                             {viewMode === 'analytics' ? (
                                 <>
                                     {/* Quick Stats Grid */}
+                                    <Separator className="marketing-separator my-8 bg-white/10" />
                                     <h3 className="text-sm font-semibold text-foreground mb-3">Quick Stats</h3>
-                                    <div className="grid grid-cols-4 gap-4 mb-8">
-                                        <div className="bg-[#171c28] rounded-lg p-4 border border-border">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                                        <div
+                                            onClick={() => setSelectedStat("attendees")}
+                                            className={`rounded-lg p-4 border transition-all cursor-pointer ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'attendees' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                                        >
                                             <p className="text-xs text-muted-foreground mb-1">Total Attendees</p>
-                                            <p className="text-xl font-bold text-foreground">{selectedEvent.attendees}</p>
+                                            <p className="text-xl font-bold text-foreground">{selectedEvent.attendees || 0}</p>
                                         </div>
-                                        <div className="bg-[#171c28] rounded-lg p-4 border border-border">
+                                        <div
+                                            onClick={() => setSelectedStat("views")}
+                                            className={`rounded-lg p-4 border transition-all cursor-pointer ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'views' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                                        >
                                             <p className="text-xs text-muted-foreground mb-1">Views</p>
                                             <p className="text-xl font-bold text-foreground">1,234</p>
                                         </div>
-                                        <div className="bg-[#171c28] rounded-lg p-4 border border-border">
+                                        <div
+                                            onClick={() => setSelectedStat("rate")}
+                                            className={`rounded-lg p-4 border transition-all cursor-pointer ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'rate' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                                        >
                                             <p className="text-xs text-muted-foreground mb-1">Registration Rate</p>
                                             <p className="text-xl font-bold text-foreground">18.4%</p>
                                         </div>
-                                        <div className="bg-[#171c28] rounded-lg p-4 border border-border">
+                                        <div
+                                            onClick={() => setSelectedStat("revenue")}
+                                            className={`rounded-lg p-4 border transition-all cursor-pointer ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'revenue' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                                        >
                                             <p className="text-xs text-muted-foreground mb-1">Revenue</p>
-                                            <p className="text-xl font-bold text-foreground">${selectedEvent.revenue.toLocaleString()}</p>
+                                            <p className="text-xl font-bold text-foreground">${selectedEvent.revenue?.toLocaleString() || 0}</p>
                                         </div>
                                     </div>
 
+                                    <Separator className="marketing-separator my-8 bg-white/10" />
+
                                     {/* Ticketing Analytics */}
-                                    <div className="flex items-center justify-between mb-3">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                                         <div className="flex items-center gap-2">
                                             <h3 className="text-sm font-semibold text-foreground">Ticketing Analytics</h3>
-                                            <span className="text-xs border border-border px-2 py-0.5 rounded-full text-muted-foreground">
+                                            <span className="text-xs border border-border px-2 py-0.5 rounded-full text-muted-foreground whitespace-nowrap">
                                                 ${selectedEvent.ticketPrice} / ticket
                                             </span>
                                         </div>
                                         <div className="flex gap-2">
-                                            <button className="text-xs px-3 py-1.5 bg-muted hover:bg-muted/80 text-foreground rounded-full border border-border transition-colors">
+                                            <button className="text-xs px-2.5 py-1 bg-muted hover:bg-muted/80 text-foreground rounded-full border border-border transition-colors">
                                                 Export Sales
                                             </button>
-                                            <button className="text-xs px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-full border border-primary/20 transition-colors">
+                                            <button className="text-xs px-2.5 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-full border border-primary/20 transition-colors">
                                                 Manage Tickets
                                             </button>
                                         </div>
@@ -357,7 +461,10 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                                                 <span>{Math.round((selectedEvent.soldTickets / selectedEvent.totalTickets) * 100)}%</span>
                                             </div>
 
-                                            <div className="bg-[#171c28] rounded-lg p-3 flex justify-between border border-border">
+                                            <div
+                                                onClick={() => setSelectedStat("ticket_breakdown")}
+                                                className={`rounded-lg p-3 flex justify-between border transition-all cursor-pointer ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'ticket_breakdown' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                                            >
                                                 <div>
                                                     <p className="text-xs text-muted-foreground">Free (Comps)</p>
                                                     <p className="font-semibold text-foreground">{selectedEvent.freeRegistrations}</p>
@@ -372,10 +479,13 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                                         {/* Revenue & Stats Column */}
                                         <div className="space-y-4">
                                             {/* Total Revenue Card */}
-                                            <div className="bg-muted/30 rounded-lg p-4 border border-border">
+                                            <div
+                                                onClick={() => setSelectedStat("total_revenue")}
+                                                className={`rounded-lg p-4 border transition-all cursor-pointer ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'total_revenue' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                                            >
                                                 <p className="text-xs text-muted-foreground">Total Revenue</p>
                                                 <div className="flex items-center gap-2">
-                                                    <p className="text-2xl font-bold text-foreground">${selectedEvent.revenue.toLocaleString()}</p>
+                                                    <p className="text-2xl font-bold text-foreground">${selectedEvent.revenue?.toLocaleString() || 0}</p>
                                                 </div>
                                                 <p className="text-[10px] text-green-500 mt-1 flex items-center gap-1">
                                                     <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Live tracking
@@ -383,7 +493,10 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                                             </div>
 
                                             {/* Conversion & Avg Card */}
-                                            <div className="bg-[#171c28] rounded-lg p-4 border border-border grid grid-cols-2 gap-4">
+                                            <div
+                                                onClick={() => setSelectedStat("conversion")}
+                                                className={`rounded-lg p-4 border transition-all cursor-pointer grid grid-cols-2 gap-4 ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'conversion' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                                            >
                                                 <div>
                                                     <p className="text-[10px] text-muted-foreground">Conversion</p>
                                                     <p className="text-sm font-semibold text-foreground">91.0%</p>
@@ -415,7 +528,7 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                                         {participantsData
                                             .filter(p => p.name.toLowerCase().includes(participantSearchQuery.toLowerCase()))
                                             .map((activity, i) => (
-                                                <div key={i} className="flex items-center gap-3 bg-[#171c28]/50 p-3 rounded-xl border border-border/50">
+                                                <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border border-border/50 ${theme === 'light' ? 'bg-[#f3f4f6]/50' : 'bg-[#171c28]/50'}`}>
                                                     <div className={`w-10 h-10 rounded-full ${activity.color} flex items-center justify-center text-sm text-white font-medium`}>
                                                         {activity.initial}
                                                     </div>
@@ -440,6 +553,19 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                     )}
                 </div>
             </div>
+
+            {/* Edit Modal */}
+            {showEditModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <CreateEventForm
+                        onClose={() => {
+                            setShowEditModal(false);
+                            setEditingEvent(null);
+                        }}
+                        initialData={editingEvent}
+                    />
+                </div>
+            )}
         </div>
     );
 }

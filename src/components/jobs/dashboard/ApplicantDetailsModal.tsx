@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { MapPin, FileText, Download, X, Check } from "lucide-react"
 import { downloadFile } from "@/utils/download"
+import { useTheme } from "next-themes"
 
 export interface Applicant {
     id: string
@@ -36,11 +37,13 @@ interface ApplicantDetailsModalProps {
 }
 
 export function ApplicantDetailsModal({ open, onOpenChange, applicant }: ApplicantDetailsModalProps) {
+    const { theme } = useTheme()
+
     if (!applicant) return null
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl bg-[#0B0E14] border border-border p-0 overflow-hidden rounded-xl">
+            <DialogContent className={`max-w-2xl border border-border p-0 overflow-hidden rounded-xl ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#0B0E14]'}`}>
                 <DialogHeader className="px-6 py-4 border-b border-border flex flex-row items-center justify-between">
                     <DialogTitle className="text-base font-semibold">Applicant Details</DialogTitle>
                     {/* Close button is handled by DialogContent's built-in close or we can add custom one if needed, but default X is top right usually */}

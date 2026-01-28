@@ -1,7 +1,13 @@
 
 import React from 'react';
-import { Calendar, MapPin, MoreVertical, Users } from 'lucide-react';
+import { Calendar, MapPin, MoreVertical, Users, Edit, Trash } from 'lucide-react';
 import { Theme } from '@/types/common';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export interface SimpleEvent {
     id: number;
@@ -18,31 +24,58 @@ interface EventCardSimpleProps {
     onClick: () => void;
     onEdit: () => void;
     onDelete: () => void;
+    onViewDetails?: () => void;
     theme: Theme;
 }
 
-export function EventCardSimple({ event, isSelected, onClick, onEdit, onDelete, theme }: EventCardSimpleProps) {
+export function EventCardSimple({ event, isSelected, onClick, onEdit, onDelete, onViewDetails, theme }: EventCardSimpleProps) {
     return (
         <div
             onClick={onClick}
             className={`relative p-4 rounded-xl border transition-all cursor-pointer group mb-3 ${isSelected
-                    ? 'bg-muted/60 border-muted/80 shadow-md' // Selected state darker/highlighted
-                    : 'bg-transparent border-transparent hover:bg-muted/30 border-b-border/50'
+                ? 'bg-transparent border-primary ring-1 ring-primary shadow-md' // Selected state blue border, no bg change
+                : 'bg-transparent border-transparent hover:bg-muted/30 border-b-border/50'
                 }`}
         >
             <div className="flex justify-between items-start mb-2">
                 <h3 className={`font-semibold line-clamp-1 text-sm ${isSelected ? 'text-foreground' : 'text-foreground/90'}`}>
                     {event.title}
                 </h3>
-                <button className="text-muted-foreground hover:text-foreground">
-                    <MoreVertical className="w-4 h-4" />
-                </button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button className="text-muted-foreground hover:text-foreground">
+                            <MoreVertical className="w-4 h-4" />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className={`w-32 border-border text-foreground text-xs ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'}`}>
+                        <DropdownMenuItem
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit();
+                            }}
+                            className="cursor-pointer hover:bg-white/5 focus:bg-white/5 gap-2"
+                        >
+                            <Edit className="w-3.5 h-3.5" />
+                            Edit Event
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete();
+                            }}
+                            className="cursor-pointer hover:bg-white/5 focus:bg-white/5 text-red-500 focus:text-red-500 gap-2"
+                        >
+                            <Trash className="w-3.5 h-3.5" />
+                            Delete Event
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
 
             <div className="flex gap-2 mb-2">
                 <span className={`text-[10px] px-2 py-0.5 rounded-full border ${event.status === 'Published'
-                        ? 'bg-green-500/10 text-green-500 border-green-500/20'
-                        : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                    ? 'bg-green-500/10 text-green-500 border-green-500/20'
+                    : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
                     }`}>
                     <span className="w-1 h-1 rounded-full bg-current inline-block mr-1 mb-0.5"></span>
                     {event.status}
@@ -68,7 +101,13 @@ export function EventCardSimple({ event, isSelected, onClick, onEdit, onDelete, 
             </div>
 
             {isSelected && (
-                <button className="w-full mt-2 text-xs bg-primary text-primary-foreground py-2 rounded-lg font-medium hover:opacity-90 transition-opacity">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onViewDetails?.();
+                    }}
+                    className="w-full mt-2 text-xs bg-primary text-primary-foreground py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                >
                     View Details
                 </button>
             )}

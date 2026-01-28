@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { Calendar, MapPin, DollarSign, Image, X, Clock, User, Mail, Users, AlertCircle } from "lucide-react"
 import { useEvents } from "@/context/EventsContext"
 import { Switch } from "@/components/ui/switch"
-import { createEvent } from "@/services/api/event"
+import { createEvent, updateEvent } from "@/services/api/event"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useForm, Controller } from "react-hook-form"
@@ -112,40 +112,65 @@ const createEventSchema = z.object({
 
 type CreateEventFormValues = z.infer<typeof createEventSchema>
 
+import { BackendEvent } from "@/types/event"
+
 interface CreateEventFormProps {
   onClose: () => void
+  initialData?: BackendEvent
 }
 
-export function CreateEventForm({ onClose }: CreateEventFormProps) {
+export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) {
   const { refreshMyEvents } = useEvents()
   const [isLoading, setIsLoading] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(initialData?.banner_url || null)
+
+  // Helper to parse date/time strings
+  const parseDateTime = (isoString?: string) => {
+    if (!isoString) return { date: '', time: '' }
+    // Assuming backend returns local time string or ISO. 
+    // If ISO (e.g. 2024-03-15T18:00:00), we can split.
+    try {
+      const dateObj = new Date(isoString);
+      // Format to YYYY-MM-DD
+      const date = dateObj.toISOString().split('T')[0];
+      // Format to HH:mm
+      const time = dateObj.toTimeString().slice(0, 5);
+      return { date, time };
+    } catch (e) {
+      // Fallback if string is already formatted simply
+      const parts = isoString.split('T');
+      return { date: parts[0] || '', time: parts[1]?.substring(0, 5) || '' }
+    }
+  }
+
+  const { date: startDate, time: startTime } = parseDateTime(initialData?.start_time);
+  const { date: endDate, time: endTime } = parseDateTime(initialData?.end_time);
 
   const form = useForm<CreateEventFormValues>({
     resolver: zodResolver(createEventSchema) as any,
     defaultValues: {
-      title: "",
-      description: "",
-      category: "Tech",
-      eventType: "InPerson",
-      virtualLink: "",
-      location: "",
-      startDate: "",
-      startTime: "",
-      endDate: "",
-      endTime: "",
-      organizerName: "Me",
-      organizerEmail: "",
-      maxAttendees: "",
-      registrationDeadline: "",
-      waitlist: false,
-      priceType: "Free",
-      ticketName: "",
-      price: "",
-      quantity: "",
+      title: initialData?.title || "",
+      description: initialData?.description || "",
+      category: initialData?.category || "Tech",
+      eventType: initialData?.event_type || "InPerson",
+      virtualLink: initialData?.virtual_link || "",
+      location: initialData?.location || "",
+      startDate: startDate || "",
+      startTime: startTime || "",
+      endDate: endDate || "",
+      endTime: endTime || "",
+      organizerName: initialData?.organizer_name || "Me",
+      organizerEmail: initialData?.organizer_email || "",
+      maxAttendees: initialData?.max_attendees ? String(initialData.max_attendees) : "",
+      registrationDeadline: initialData?.registration_deadline?.split('T')[0] || "",
+      waitlist: initialData?.waitlist_enabled || false,
+      priceType: initialData?.price_type || "Free",
+      ticketName: initialData?.ticket_name || "",
+      price: initialData?.price ? String(initialData.price) : "",
+      quantity: "100", // BackendEvent doesn't seem to have quantity, defaulting
       paymentProvider: "Stripe",
-      tags: "",
+      tags: initialData?.tags?.join(', ') || "",
     },
   })
 
@@ -164,7 +189,7 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
   const handleRemoveImage = () => {
     setImageFile(null);
     if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
+      if (previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
     }
   };
@@ -218,17 +243,22 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
         data.append("banner", imageFile);
       }
 
-      await createEvent(data);
+      if (initialData) {
+        await updateEvent(initialData.event_id, data);
+        alert("Event updated successfully!");
+      } else {
+        await createEvent(data);
+        alert("Event created successfully!");
+      }
 
       if (refreshMyEvents) {
         await refreshMyEvents();
       }
 
-      alert("Event created successfully!");
       onClose();
     } catch (error: any) {
-      console.error("Create event error:", error);
-      alert(error.response?.data?.message || "Failed to create event.");
+      console.error("Save event error:", error);
+      alert(error.response?.data?.message || "Failed to save event.");
     } finally {
       setIsLoading(false);
     }
@@ -237,7 +267,7 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
   return (
     <div className="bg-card flex flex-col h-full md:h-auto md:max-h-[90vh]">
       <div className="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
-        <h2 className="text-xl font-bold text-foreground">Create New Event</h2>
+        <h2 className="text-xl font-bold text-foreground">{initialData ? "Edit Event" : "Create New Event"}</h2>
         <button onClick={onClose} className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
           <X className="w-5 h-5" />
         </button>
@@ -621,7 +651,7 @@ export function CreateEventForm({ onClose }: CreateEventFormProps) {
           disabled={isLoading || form.formState.isSubmitting}
           className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white font-medium hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? "Creating..." : "Create Event"}
+          {isLoading ? "Saving..." : (initialData ? "Update Event" : "Create Event")}
         </Button>
       </div>
     </div>

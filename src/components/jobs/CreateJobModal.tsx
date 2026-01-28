@@ -1,20 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useJobs } from "@/context/JobsContext"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Check, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { WorkMode, CompanyType, JobFormData } from "@/types/jobs"
+import type { WorkMode, CompanyType, JobFormData, Job } from "@/types/jobs"
 import * as api from "@/services/api/jobs"
 
 interface CreateJobModalProps {
   open?: boolean
   onOpenChange?: (open: boolean) => void
   trigger?: React.ReactNode
+  initialData?: Job
 }
 
-export function CreateJobModal({ open, onOpenChange, trigger }: CreateJobModalProps) {
+export function CreateJobModal({ open, onOpenChange, trigger, initialData }: CreateJobModalProps) {
   const { addJob } = useJobs()
   const [internalOpen, setInternalOpen] = useState(false)
   const isControlled = open !== undefined
@@ -47,6 +48,48 @@ export function CreateJobModal({ open, onOpenChange, trigger }: CreateJobModalPr
     aboutCompany: ""
   })
 
+  // Pre-fill form when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        title: initialData.title,
+        company: initialData.company,
+        location: initialData.location,
+        type: initialData.type,
+        minSalary: "", // Salary parsing would go here if needed
+        maxSalary: "",
+        description: initialData.description || "",
+        skills: initialData.skills?.join(", ") || "",
+        experience: initialData.experience || "Entry Level",
+        workMode: (initialData.workMode as WorkMode) || "Onsite",
+        companyType: (initialData.companyType as CompanyType) || "Startup",
+        industry: initialData.industry || "Technology",
+        easyApply: initialData.easyApply || false,
+        activelyHiring: initialData.activelyHiring || false,
+        aboutCompany: initialData.aboutCompany || ""
+      })
+    } else {
+      // Reset defaults if no initialData (e.g. when opening "Post Job" after editing)
+      setFormData({
+        title: "",
+        company: "",
+        location: "",
+        type: "Full-time",
+        minSalary: "",
+        maxSalary: "",
+        description: "",
+        skills: "",
+        experience: "Entry Level",
+        workMode: "Onsite" as WorkMode,
+        companyType: "Startup" as CompanyType,
+        industry: "Technology",
+        easyApply: true,
+        activelyHiring: true,
+        aboutCompany: ""
+      })
+    }
+  }, [initialData, isOpen]) // Reset/Fill when modal opens or data changes
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -75,35 +118,38 @@ export function CreateJobModal({ open, onOpenChange, trigger }: CreateJobModalPr
         easyApply: formData.easyApply
       }
 
-      await api.createJob(apiData)
-
-      // Trigger context refresh
-      await addJob({} as any)
+      if (initialData?.id) {
+        await api.updateJob(initialData.id, apiData)
+      } else {
+        await api.createJob(apiData)
+        await addJob({} as any) // Trigger context refresh
+      }
 
       handleOpenChange(false)
 
-      // Reset form
-      setFormData({
-        title: "",
-        company: "",
-        location: "",
-        type: "Full-time",
-        minSalary: "",
-        maxSalary: "",
-        description: "",
-        skills: "",
-        experience: "Entry Level",
-        workMode: "Onsite",
-        companyType: "Startup",
-        industry: "Technology",
-        easyApply: true,
-        activelyHiring: true,
-        aboutCompany: ""
-      })
+      if (!initialData) {
+        setFormData({
+          title: "",
+          company: "",
+          location: "",
+          type: "Full-time",
+          minSalary: "",
+          maxSalary: "",
+          description: "",
+          skills: "",
+          experience: "Entry Level",
+          workMode: "Onsite",
+          companyType: "Startup",
+          industry: "Technology",
+          easyApply: true,
+          activelyHiring: true,
+          aboutCompany: ""
+        })
+      }
 
     } catch (err: any) {
-      console.error("Failed to create job", err);
-      setError(err.response?.data?.message || "Failed to post job. Please try again.")
+      console.error("Failed to save job", err);
+      setError(err.response?.data?.message || "Failed to save job. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -115,9 +161,9 @@ export function CreateJobModal({ open, onOpenChange, trigger }: CreateJobModalPr
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0 bg-background rounded-xl border border-border">
         <DialogHeader className="p-6 pb-2 border-b border-border sticky top-0 bg-background z-10">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-bold">Post a Job</DialogTitle>
+            <DialogTitle className="text-xl font-bold">{initialData ? "Edit Job" : "Post a Job"}</DialogTitle>
           </div>
-          <p className="text-sm text-muted-foreground">Create a new job listing to find the best talent.</p>
+          <p className="text-sm text-muted-foreground">{initialData ? "Update the job details below." : "Create a new job listing to find the best talent."}</p>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -338,9 +384,9 @@ export function CreateJobModal({ open, onOpenChange, trigger }: CreateJobModalPr
               {isSubmitting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Posting...
+                  {initialData ? "Updating..." : "Posting..."}
                 </>
-              ) : "Post Job"}
+              ) : (initialData ? "Update Job" : "Post Job")}
             </button>
           </div>
         </form>

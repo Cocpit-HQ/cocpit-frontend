@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Download, FileText, X, ExternalLink } from "lucide-react"
 import { downloadFile } from "@/utils/download"
+import { useTheme } from "next-themes"
 
 interface ResumePreviewModalProps {
     open: boolean
@@ -13,6 +14,7 @@ interface ResumePreviewModalProps {
 }
 
 export function ResumePreviewModal({ open, onOpenChange, userName, resumeName, resumeUrl }: ResumePreviewModalProps) {
+    const { theme } = useTheme()
 
     const handleDownload = () => {
         if (!resumeUrl) return;
@@ -25,8 +27,8 @@ export function ResumePreviewModal({ open, onOpenChange, userName, resumeName, r
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl h-[85vh] bg-[#0B0E14] border border-border p-0 flex flex-col rounded-xl overflow-hidden [&>button]:hidden">
-                <DialogHeader className="px-4 py-3 md:px-6 md:py-4 border-b border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-muted/10 shrink-0">
+            <DialogContent className={`max-w-4xl h-[85vh] border border-border p-0 flex flex-col rounded-xl overflow-hidden [&>button]:hidden ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#0B0E14]'}`}>
+                <DialogHeader className={`px-4 py-3 md:px-6 md:py-4 border-b border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shrink-0 ${theme === 'light' ? 'bg-white' : 'bg-muted/10'}`}>
                     <div className="flex items-center gap-3 w-full md:w-auto">
                         <div className="p-2 bg-blue-500/10 rounded-lg shrink-0">
                             <FileText className="w-5 h-5 text-blue-500" />
