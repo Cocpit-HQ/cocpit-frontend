@@ -18,7 +18,7 @@ import { StoryModal } from '@/components/showcase/StoryModal'
 import { MobileStoryViewer } from '@/components/showcase/MobileStoryViewer'
 import { NotificationPopover } from '@/components/notifications/NotificationPopover'
 import { Post, Comment } from '@/types/entities';
-import { storiesSeed } from '@/constants/stories'
+
 import { StoryDetail, StoryGroup } from '@/types/showcase'
 import { useDebounce } from '@/hooks/use-debounce';
 import { searchUsers } from '@/services/api/user';
@@ -51,6 +51,7 @@ export default function HomePage() {
   }, [])
 
   const [loading, setLoading] = useState(false)
+  const [storyLoading, setStoryLoading] = useState(true)
   const [groups, setGroups] = useState<StoryGroup[]>([])
 
   useEffect(() => {
@@ -63,7 +64,9 @@ export default function HomePage() {
       } catch (error) {
         console.error("Failed to fetch stories", error)
         // Fallback to seed if fetch fails? Or just empty.
-        // setStories(storiesSeed) 
+
+      } finally {
+        setStoryLoading(false)
       }
     }
     fetchStories()
@@ -354,6 +357,7 @@ export default function HomePage() {
                 <div className="md:hidden border-b border-border">
                   <StoryRail
                     groups={groups}
+                    isLoading={storyLoading}
                     onCreateClick={() => setShowCreateStory(true)}
                     onStoryClick={(story) => {
                       // Find group of this story

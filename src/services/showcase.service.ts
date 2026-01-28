@@ -9,7 +9,7 @@ export const showcaseService = {
         return data.map(mapStory);
     },
 
-    createStory: async (storyData: { title: string; description: string; media_url: string; media_type?: string; public_id?: string; media_status?: string }) => {
+    createStory: async (storyData: { title: string; description: string; media_url: string; media_type?: string; public_id?: string; media_status?: string; shared_post_id?: string; story_metadata?: any }) => {
         const { data } = await api.post("/story", storyData);
         return data;
     },
@@ -74,5 +74,20 @@ export const showcaseService = {
             viewers,
             likers
         };
+    },
+
+    addStoryComment: async (storyId: number, content: string) => {
+        const { data } = await api.post(`/stories/${storyId}/comments`, { content });
+        return data;
+    },
+
+    getStoryComments: async (storyId: number) => {
+        const { data } = await api.get(`/stories/${storyId}/comments`);
+        return data;
+    },
+
+    deleteStoryComment: async (commentId: string) => {
+        const { data } = await api.delete(`/stories/comments/${commentId}`);
+        return data;
     }
 };

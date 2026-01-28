@@ -2,14 +2,13 @@
 
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Eye, MessageCircle, Play, Share2, ThumbsUp, X, Plus, Search } from "lucide-react"
+import { ArrowLeft, Eye, MessageCircle, Play, Share2, ThumbsUp, X, Plus, Search, Layers } from "lucide-react"
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import { AppShell } from "@/components/layout/AppShell"
 import type { Page } from "@/types/common"
 import type { StoryDetail, StoryGroup } from "@/types/showcase"
 import { CreateStoryForm } from "@/components/showcase/CreateStoryForm"
-import { storiesSeed } from "@/constants/stories"
 import { AuthorBadge } from "@/components/showcase/AuthorBadge"
 import { StoryModal } from "@/components/showcase/StoryModal"
 import { MobileStoryViewer } from "@/components/showcase/MobileStoryViewer"
@@ -85,10 +84,11 @@ export default function ShowcaseContent() {
     })
   }, [groups, searchQuery])
 
-  const allStories = useMemo(() => {
-    return filteredGroups.flatMap(group => group.stories.map(story => ({ ...story, author: group.author, is_current_user: group.is_current_user })))
-  }, [filteredGroups])
-
+  // Helper to find the group of the currently selected story
+  const selectedStoryGroup = useMemo(() => {
+    if (!selectedStory) return null;
+    return groups.find(g => g.stories.some(s => s.id === selectedStory.id)) || null;
+  }, [selectedStory, groups]);
 
   const formatCompactNumber = (number: number) => {
     if (number >= 1000000) {
@@ -187,61 +187,79 @@ export default function ShowcaseContent() {
                   ))}
 
                 {!loading &&
-                  allStories.map((story) => {
-                    const hasUnviewed = !story.has_viewed && !story.isAuthor;
+                  filteredGroups.map((group) => {
+                    const sortedStories = [...group.stories].sort((a, b) => new Date(a.created_at || new Date()).getTime() - new Date(b.created_at || new Date()).getTime());
+                    const latestStory = sortedStories[sortedStories.length - 1];
+                    const storiesCount = group.stories.length;
+
+                    // Check if there are any unviewed stories in the group (excluding own)
+                    const hasUnviewed = group.stories.some(s => !s.has_viewed) && !group.is_current_user;
 
                     return (
                       <div
-                        key={story.id}
-                        className={`rounded-xl overflow-hidden border transition-all group cursor-pointer bg-card ${story.is_current_user
-                            ? 'border-blue-500'
-                            : hasUnviewed
-                              ? 'border-primary ring-1 ring-primary/20'
-                              : 'border-border hover:border-primary/50'
+                        key={group.author.id || group.author.name}
+                        className={`rounded-xl overflow-hidden border transition-all group cursor-pointer bg-card ${group.is_current_user
+                          ? 'border-blue-500'
+                          : hasUnviewed
+                            ? 'border-primary ring-1 ring-primary/20'
+                            : 'border-border hover:border-primary/50'
                           }`}
                         onClick={() => {
                           const isMobile = window.matchMedia("(max-width: 768px)").matches
                           if (isMobile) {
-                            // Find the group this story belongs to for mobile view
-                            const groupId = groups.find(g => g.stories.some(s => s.id === story.id))?.author.id
-                            setMobileSelectedGroupId(groupId || 0)
+                            setMobileSelectedGroupId(group.author.id || 0)
                           } else {
-                            setSelectedStory(story)
+                            // Find the first unviewed story, or the first one if all viewed
+                            const firstUnviewed = sortedStories.find(s => !s.has_viewed) || sortedStories[0];
+                            setSelectedStory({ ...firstUnviewed, author: group.author })
                           }
                         }}
                       >
                         <div className="relative h-32 overflow-hidden">
-                          <img
-                            src={story.image}
-                            alt={story.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                          {story.isVideo && (
+                          {latestStory.image || latestStory.thumbnail_url ? (
+                            <img
+                              src={latestStory.thumbnail_url || latestStory.image}
+                              alt={latestStory.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className={`w-full h-full ${latestStory.story_metadata?.backgroundStyle || 'bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500'}`} />
+                          )}
+
+                          {/* Top Right Story Count Badge */}
+                          {storiesCount > 1 && (
+                            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2 py-1 rounded-md flex items-center gap-1 z-10 border border-white/10">
+                              <Layers className="w-3 h-3" />
+                              {storiesCount}
+                            </div>
+                          )}
+
+                          {latestStory.isVideo && (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                               <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
                                 <Play className="w-8 h-8 text-white ml-1" />
                               </div>
                             </div>
                           )}
-                          <AuthorBadge story={story} />
+                          <AuthorBadge story={{ ...latestStory, author: group.author }} />
                         </div>
 
                         <div className="p-3">
                           <h3
                             className="mb-1 group-hover:text-primary transition-colors text-foreground"
                           >
-                            {story.is_current_user ? "Your Story" : story.author.name}
+                            {group.is_current_user ? "Your Story" : group.author.name}
                           </h3>
                           <div className="flex flex-wrap items-center justify-between text-xs gap-y-1 text-muted-foreground">
-                            <span>{story.timeAgo}</span>
+                            <span>{latestStory.timeAgo}</span>
                             <div className="flex items-center gap-1.5">
                               <div className="flex items-center gap-1">
                                 <Eye className="w-4 h-4" />
-                                <span>{formatCompactNumber(story.views)}</span>
+                                <span>{formatCompactNumber(latestStory.views)}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <ThumbsUp className="w-4 h-4" />
-                                <span>{formatCompactNumber(story.likes)}</span>
+                                <span>{formatCompactNumber(latestStory.likes)}</span>
                               </div>
                             </div>
                           </div>
@@ -249,7 +267,7 @@ export default function ShowcaseContent() {
                       </div>
                     )
                   })}
-                {!loading && searchQuery && allStories.length === 0 && (
+                {!loading && searchQuery && filteredGroups.length === 0 && (
                   <p
                     className="text-center py-12 text-muted-foreground col-span-2"
                   >
@@ -268,11 +286,31 @@ export default function ShowcaseContent() {
           </div>
         </div>
       </AppShell>
-      {selectedStory && (
+      {selectedStory && selectedStoryGroup && (
         <StoryModal
           story={selectedStory}
           onClose={() => setSelectedStory(null)}
           onStoryUpdate={handleStoryUpdate}
+          onNext={() => {
+            const currentIndex = selectedStoryGroup.stories.findIndex(s => s.id === selectedStory.id);
+            if (currentIndex < selectedStoryGroup.stories.length - 1) {
+              setSelectedStory({ ...selectedStoryGroup.stories[currentIndex + 1], author: selectedStoryGroup.author });
+            } else {
+              setSelectedStory(null); // Close if end of this user's stories
+            }
+          }}
+          onPrev={() => {
+            const currentIndex = selectedStoryGroup.stories.findIndex(s => s.id === selectedStory.id);
+            if (currentIndex > 0) {
+              setSelectedStory({ ...selectedStoryGroup.stories[currentIndex - 1], author: selectedStoryGroup.author });
+            }
+          }}
+          hasNext={
+            selectedStoryGroup.stories.findIndex(s => s.id === selectedStory.id) < selectedStoryGroup.stories.length - 1
+          }
+          hasPrev={
+            selectedStoryGroup.stories.findIndex(s => s.id === selectedStory.id) > 0
+          }
         />
       )}
 

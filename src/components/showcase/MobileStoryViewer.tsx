@@ -5,6 +5,8 @@ import { EmblaCarouselType } from "embla-carousel"
 import { StoryDetail, StoryGroup } from "@/types/showcase"
 import { StoryInteractionPanel } from "./StoryInteractionPanel"
 import { showcaseService } from "@/services/showcase.service"
+import { SharedPostCard } from "./SharedPostCard"
+import { StoryMetadata, StoryLayer } from "@/types/story-editor"
 // import dynamic from "next/dynamic";
 // const ReactPlayer = dynamic(() => import("react-player"), { ssr: false }) as any;
 
@@ -19,6 +21,140 @@ type MobileStoryViewerProps = {
 /* -------------------------------------------------------------------------- */
 /*                               Internal Components                          */
 /* -------------------------------------------------------------------------- */
+
+const ViewerLayerItem = ({ layer, isActive, onVideoEnd, fallbackVideoUrl, onVideoProgress }: {
+    layer: StoryLayer;
+    isActive: boolean;
+    onVideoEnd?: () => void;
+    fallbackVideoUrl?: string;
+    onVideoProgress?: (progress: number) => void;
+}) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const hasTriggeredEnd = useRef(false);
+
+    // Handle video layer trim logic
+    useEffect(() => {
+        if (layer.type === 'video' && videoRef.current && isActive) {
+            const vid = videoRef.current;
+            hasTriggeredEnd.current = false; // Reset on new video
+
+            // Start at trim start
+            if (layer.trim) {
+                vid.currentTime = layer.trim.start;
+            }
+
+            // Wait for video to be ready before playing
+            const playVideo = () => {
+                if (vid.readyState >= 2) { // HAVE_CURRENT_DATA or better
+                    vid.play().catch(err => {
+                        // Ignore AbortError (happens when video is interrupted by new load)
+                        if (err.name !== 'AbortError') {
+                            console.error('Video play failed:', err);
+                        }
+                    });
+                } else {
+                    // Wait for loadeddata event
+                    vid.addEventListener('loadeddata', () => {
+                        vid.play().catch(err => {
+                            if (err.name !== 'AbortError') {
+                                console.error('Video play failed:', err);
+                            }
+                        });
+                    }, { once: true });
+                }
+            };
+
+            playVideo();
+        }
+    }, [layer, isActive]);
+
+    // Determine video source (fallback to Cloudinary URL if blob)
+    const getVideoSrc = () => {
+        if (layer.type === 'video') {
+            // If src is a blob URL, use fallback
+            if (layer.src.startsWith('blob:')) {
+                return fallbackVideoUrl || layer.src;
+            }
+            return layer.src;
+        }
+        return '';
+    };
+
+    return (
+        <div
+            className="absolute origin-center pointer-events-none"
+            style={{
+                left: `${layer.x}%`,
+                top: `${layer.y}%`,
+                width: layer.type === 'text' ? 'auto' : `${layer.width}%`,
+                height: layer.type === 'text' ? 'auto' : `${layer.height}%`,
+                transform: `translate(-50%, -50%) rotate(${layer.rotation}deg) scale(${layer.scale})`,
+                zIndex: layer.zIndex + 10, // Ensure above background
+            }}
+        >
+            {layer.type === 'text' ? (
+                <p style={{
+                    color: layer.style.color,
+                    fontSize: `${layer.style.fontSize}px`, // This might need viewport scaling adjustment
+                    fontWeight: layer.style.fontWeight,
+                    fontFamily: layer.style.fontFamily,
+                    textAlign: layer.style.textAlign,
+                    whiteSpace: 'nowrap',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                    padding: '4px'
+                }}>
+                    {layer.content}
+                </p>
+            ) : layer.type === 'sticker' ? (
+                <img src={layer.src} className="w-full h-full object-contain" />
+            ) : layer.type === 'image' ? (
+                /* Image Layer - movable/scalable */
+                <img src={layer.src} className="w-full h-full object-contain pointer-events-none" />
+            ) : layer.type === 'video' ? (
+                <video
+                    ref={videoRef}
+                    src={getVideoSrc()}
+                    className="w-full h-full object-contain pointer-events-none"
+                    muted={layer.isMuted}
+                    playsInline
+                    onTimeUpdate={(e) => {
+                        const vid = e.currentTarget;
+                        if (layer.trim) {
+                            const trimDuration = layer.trim.end - layer.trim.start;
+                            const currentTime = vid.currentTime - layer.trim.start;
+
+                            // Update progress
+                            if (onVideoProgress && trimDuration > 0) {
+                                const percent = Math.min(100, (currentTime / trimDuration) * 100);
+                                onVideoProgress(percent);
+                            }
+
+                            // Check if we've reached the end of trim
+                            if (vid.currentTime >= layer.trim.end && !hasTriggeredEnd.current) {
+                                hasTriggeredEnd.current = true;
+                                vid.pause();
+                                if (onVideoEnd) onVideoEnd();
+                            }
+                        } else {
+                            // No trim, use full duration
+                            if (onVideoProgress && vid.duration) {
+                                const percent = (vid.currentTime / vid.duration) * 100;
+                                onVideoProgress(percent);
+                            }
+                        }
+                    }}
+                    onEnded={(e) => {
+                        // Natural end (no trim)
+                        if (!layer.trim && !hasTriggeredEnd.current) {
+                            hasTriggeredEnd.current = true;
+                            if (onVideoEnd) onVideoEnd();
+                        }
+                    }}
+                />
+            ) : null}
+        </div>
+    );
+};
 
 // Individual User Story Viewer
 const UserStorySlide = ({
@@ -68,6 +204,20 @@ const UserStorySlide = ({
     // Initialize isLiked state - must be after all other useState hooks
     const [isLiked, setIsLiked] = useState(!!currentStory?.isLiked)
 
+    // Parse Metadata safely
+    const metadata = useMemo(() => {
+        let meta = currentStory?.story_metadata;
+        if (typeof meta === 'string') {
+            try {
+                meta = JSON.parse(meta);
+            } catch (e) {
+                console.error("Failed to parse story_metadata", e);
+                meta = null;
+            }
+        }
+        return (meta as unknown as StoryMetadata) || { layers: [] };
+    }, [currentStory]);
+
     // Track if this is the first time becoming active
     const wasActiveRef = useRef(false)
 
@@ -113,7 +263,7 @@ const UserStorySlide = ({
             // Simplest approach: Just try to reload the video or check status if we have an endpoint
             // Since we rely on global updates, we might just show "Processing" and hope socket/refetch updates it
             // BUT user asked for polling safeguards
-            console.log("Polling story status...", currentStory.id);
+            // console.log("Polling story status...", currentStory.id);
         }, 5000);
 
         // Auto-stop after 60s
@@ -127,17 +277,33 @@ const UserStorySlide = ({
         }
     }, [isActiveUser, currentStory.media_type, currentStory.media_status, currentStory.id]);
 
+    const isNavigatingRef = useRef(false)
+
+    // Reset navigation lock when active user changes or story index changes
+    useEffect(() => {
+        if (isActiveUser) {
+            isNavigatingRef.current = false
+        }
+    }, [isActiveUser, storyIndex])
+
     const handleNext = useCallback(() => {
         // Safety check: ensure we have stories
         if (!sortedStories || sortedStories.length === 0) {
-            onNextUser();
+            if (!isNavigatingRef.current) {
+                isNavigatingRef.current = true;
+                onNextUser();
+            }
             return;
         }
 
+        if (isNavigatingRef.current) return;
+
         if (storyIndex < sortedStories.length - 1) {
+            isNavigatingRef.current = true; // Will be reset by useEffect when storyIndex changes
             setStoryIndex(prev => prev + 1)
             setProgress(0)
         } else {
+            isNavigatingRef.current = true;
             // Defer to next tick to avoid state update during render
             setTimeout(() => onNextUser(), 0)
         }
@@ -170,16 +336,20 @@ const UserStorySlide = ({
 
         const timer = setInterval(() => {
             setProgress(prev => {
-                if (prev >= 100) {
-                    handleNext();
-                    return 100;
-                }
+                if (prev >= 100) return 100;
                 return prev + step;
             });
         }, interval);
 
         return () => clearInterval(timer);
-    }, [isActiveUser, isPaused, showInteraction, isDescriptionExpanded, currentStory, handleNext]);
+    }, [isActiveUser, isPaused, showInteraction, isDescriptionExpanded, currentStory]);
+
+    // Trigger next story when progress reaches 100
+    useEffect(() => {
+        if (progress >= 100) {
+            handleNext();
+        }
+    }, [progress, handleNext]);
 
     const handlePrev = () => {
         // Safety check: ensure we have stories
@@ -276,7 +446,7 @@ const UserStorySlide = ({
 
     return (
         <div
-            className="w-full h-full relative flex-shrink-0"
+            className="w-full h-full relative flex-shrink-0 overflow-hidden"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
         >
@@ -310,8 +480,23 @@ const UserStorySlide = ({
 
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full border border-white/50 overflow-hidden">
-                            <img src={group.author.avatar} alt={group.author.name} className="w-full h-full object-cover" />
+                        <div className="w-8 h-8 rounded-full border border-white/50 overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                            {group.author.avatar ? (
+                                <img
+                                    src={group.author.avatar}
+                                    alt={group.author.name}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        // Hide image on error and show initials instead
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                            ) : null}
+                            {!group.author.avatar && (
+                                <span className="text-white font-bold text-xs">
+                                    {group.author.name?.charAt(0).toUpperCase() || 'U'}
+                                </span>
+                            )}
                         </div>
                         <div>
                             <p className="text-white font-semibold text-sm flex items-center gap-2">
@@ -374,8 +559,23 @@ const UserStorySlide = ({
             {/* Content */}
             <div className="w-full h-full flex items-center justify-center bg-black relative">
 
+                {/* Shared Post Overlay */}
+                {currentStory.shared_post && (
+                    <div className={`absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-8 ${currentStory.story_metadata?.backgroundStyle || ''}`}>
+                        {/* Fallback Background if no style but also no media (text mode) */}
+                        {!currentStory.media_url && !currentStory.story_metadata?.backgroundStyle && (
+                            <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black z-[-1]" />
+                        )}
+
+                        <div style={{ transform: `scale(${currentStory.story_metadata?.scale || 0.9})` }} className="transition-transform duration-200">
+                            <SharedPostCard sharedPost={currentStory.shared_post} />
+                        </div>
+                    </div>
+                )}
+
                 {/* 1. Video Player (HLS) */}
-                {currentStory.media_type === 'video' && isActiveUser ? (
+                {/* Only render if there's no video layer in metadata (legacy support) */}
+                {currentStory.media_type === 'video' && isActiveUser && !metadata.layers?.some(l => l.type === 'video') ? (
                     currentStory.media_status === 'processing' ? (
                         /* Processing State */
                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-10">
@@ -408,25 +608,90 @@ const UserStorySlide = ({
                             autoPlay
                             muted={isMuted}
                             onEnded={handleNext}
+                            // Video Trim Logic
                             onTimeUpdate={(e) => {
+                                const vid = e.currentTarget;
+                                const trim = metadata.trim;
+
+                                // Enforce Trim Loop
+                                if (trim && vid.currentTime >= trim.end) {
+                                    vid.currentTime = trim.start;
+                                    // If we just looped, we don't want to finish the story yet unless it was a natural end, 
+                                    // but usually stories just play once. 
+                                    // With trim, maybe we want to loop the trim section?
+                                    // Standard story behavior: play trim section ONCE then next?
+                                    // Or loop trim section until timeout?
+                                    // Usually stories play for 15s or video duration.
+                                    // Let's assume play ONCE then handleNext.
+                                    handleNext();
+                                }
+
                                 if (!isPaused && !showInteraction) {
-                                    const vid = e.currentTarget;
                                     if (vid.duration) {
-                                        setProgress((vid.currentTime / vid.duration) * 100);
+                                        // Progress based on trimmed duration if exists? Or full duration?
+                                        // Usually progress bar reflects TIME ELAPSED relative to DISPLAY DURATION.
+                                        // Simplified: Use actual video time.
+                                        const duration = trim ? (trim.end - trim.start) : vid.duration;
+                                        const current = trim ? (vid.currentTime - trim.start) : vid.currentTime;
+                                        const percent = Math.max(0, Math.min(100, (current / duration) * 100));
+                                        setProgress(percent);
                                     }
+                                }
+                            }}
+                            onLoadedMetadata={(e) => {
+                                const vid = e.currentTarget;
+                                if (metadata.trim) {
+                                    vid.currentTime = metadata.trim.start;
                                 }
                             }}
                             onError={(e) => console.error("Video Playback Error:", e.currentTarget.error)}
                         />
                     )
-                ) : (
-                    /* 2. Image Render (Standard) */
-                    <img
-                        src={currentStory.image} // For videos this should be the thumbnail if not active
-                        alt={currentStory.title}
-                        className="w-full h-full object-cover"
+                ) : currentStory.image ? (
+                    <>
+                        {/* 2. Image Render (Standard - Instagram Style) */}
+                        {/* Background: Blurred Cover */}
+                        {/* Background: Custom or Blurred Cover */}
+                        <div
+                            className={`absolute inset-0 z-0 overflow-hidden ${(metadata.background?.startsWith('bg-') || metadata.background?.startsWith('from-')) ? metadata.background : 'bg-black'}`}
+                            style={(!metadata.background?.startsWith('bg-') && !metadata.background?.startsWith('from-')) ? { background: metadata.background } : {}}
+                        >
+                            {!metadata.background && (
+                                <>
+                                    <img
+                                        src={currentStory.image}
+                                        alt=""
+                                        className="w-full h-full object-cover blur-2xl scale-110 opacity-50"
+                                    />
+                                    <div className="absolute inset-0 bg-black/30" />
+                                </>
+                            )}
+                        </div>
+
+                        {/* Foreground: Contained Image (Only if NO Image Layers exist in metadata) */}
+                        {!metadata.layers?.some(l => l.type === 'image') && (
+                            <div className="relative z-1 w-full h-full flex items-center justify-center">
+                                <img
+                                    src={currentStory.image}
+                                    alt={currentStory.title}
+                                    className="w-full h-full object-contain drop-shadow-2xl"
+                                />
+                            </div>
+                        )}
+                    </>
+                ) : null}
+
+                {/* Metadata Layers Overlay (Text/Stickers/Images/Videos) */}
+                {metadata.layers?.map(layer => (
+                    <ViewerLayerItem
+                        key={layer.id}
+                        layer={layer}
+                        isActive={isActiveUser}
+                        onVideoEnd={layer.type === 'video' ? handleNext : undefined}
+                        fallbackVideoUrl={currentStory.media_url}
+                        onVideoProgress={layer.type === 'video' ? setProgress : undefined}
                     />
-                )}
+                ))}
 
                 {!showInteraction && (
                     <>
@@ -483,9 +748,12 @@ const UserStorySlide = ({
                         {/* Like Button (Only for others) */}
                         {!isMyStory && (
                             <div
-                                className="absolute bottom-6 right-4 pointer-events-auto"
+                                className="absolute bottom-6 right-4 pointer-events-auto z-50"
                                 onTouchStart={(e) => e.stopPropagation()}
                                 onTouchEnd={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onMouseUp={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
                             >
                                 <button
                                     onClick={(e) => {

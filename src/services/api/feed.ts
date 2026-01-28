@@ -108,3 +108,8 @@ export const createPost = async (data: CreatePostRequest): Promise<CreatePostRes
   const response = await api.post<CreatePostResponse>('/post', data);
   return response.data;
 };
+
+export const getPostById = async (id: string): Promise<BackendPost> => {
+  const response = await api.get<BackendPost>(`/post/${id}`);
+  return response.data;
+};

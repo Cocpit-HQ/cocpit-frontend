@@ -14,8 +14,14 @@ export interface StoryCard {
   timeAgo: string;
   views: number;
   likes: number;
-  comments?: number;
+  comment_count?: number;
+  poll?: unknown;
   isVideo?: boolean;
+  story_metadata?: {
+    backgroundStyle?: string;
+    scale?: number;
+    [key: string]: unknown;
+  };
 }
 
 export interface ShowcaseState extends LoadingState {
@@ -35,6 +41,18 @@ export interface StoryDetail extends StoryCard {
   media_type?: 'image' | 'video';
   media_url?: string;
   thumbnail_url?: string;
+  shared_post?: {
+    is_accessible: boolean;
+    reason?: 'private' | 'personal_connection' | 'unknown';
+    post_id?: string;
+    content?: string;
+    author?: {
+      user_id: string;
+      full_name: string;
+      avatar_url: string;
+    };
+    media?: { url: string; media_type: string }[];
+  };
 }
 
 export interface StoryGroup {

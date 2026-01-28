@@ -26,20 +26,20 @@ export function rotateSize(width: number, height: number, rotation: number) {
 }
 
 /**
- * Returns the cropped image as a Blob.
+ * This function was adapted from the one in the ReadMe of https://github.com/DominicTobias/react-image-crop
  */
 export default async function getCroppedImg(
   imageSrc: string,
   pixelCrop: { x: number; y: number; width: number; height: number },
   rotation = 0,
   flip = { horizontal: false, vertical: false }
-): Promise<Blob | null> {
+): Promise<Blob> {
   const image = await createImage(imageSrc)
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
 
   if (!ctx) {
-    return null
+    throw new Error('Canvas context not found')
   }
 
   const rotRad = getRadianAngle(rotation)
@@ -80,10 +80,63 @@ export default async function getCroppedImg(
   // paste generated rotate image at the top left corner
   ctx.putImageData(data, 0, 0)
 
-  // As a blob
-  return new Promise((resolve) => {
+  // As Base64 string
+  // return canvas.toDataURL('image/jpeg');
+
+  // As Blob (better for large files)
+  return new Promise((resolve, reject) => {
     canvas.toBlob((file) => {
-      resolve(file)
+      if (file) {
+        resolve(file)
+      } else {
+        reject(new Error('Canvas is empty'))
+      }
     }, 'image/jpeg')
   })
+}
+
+export function getGradientImage(style: string, width = 1080, height = 1920): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      reject(new Error('Canvas context not found'));
+      return;
+    }
+
+    let gradient;
+    // Map Tailwind classes to Canvas Gradients
+    if (style.includes('from-indigo-500 via-purple-500 to-pink-500')) {
+      gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, '#6366f1'); // indigo-500
+      gradient.addColorStop(0.5, '#a855f7'); // purple-500
+      gradient.addColorStop(1, '#ec4899'); // pink-500
+    } else if (style.includes('from-blue-400 to-emerald-400')) {
+      gradient = ctx.createLinearGradient(0, height, width, 0); // tr
+      gradient.addColorStop(0, '#60a5fa'); // blue-400
+      gradient.addColorStop(1, '#34d399'); // emerald-400
+    } else if (style.includes('from-amber-500 to-pink-500')) {
+      gradient = ctx.createLinearGradient(0, 0, width, 0); // r
+      gradient.addColorStop(0, '#f59e0b'); // amber-500
+      gradient.addColorStop(1, '#ec4899'); // pink-500
+    } else if (style.includes('from-gray-900 to-gray-600')) {
+      gradient = ctx.createLinearGradient(width, 0, 0, height); // bl
+      gradient.addColorStop(0, '#111827'); // gray-900
+      gradient.addColorStop(1, '#4b5563'); // gray-600
+    } else {
+      // Default black or extract from style if it's a color
+      gradient = '#000000';
+    }
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error('Failed to generate gradient blob'));
+    }, 'image/jpeg');
+  });
 }

@@ -9,7 +9,6 @@ export const mapStory = (story: any): StoryDetail => ({
     timeAgo: new Date(story.created_at).toLocaleDateString(), // You might want a better timeAgo helper
     views: story.view_count || 0,
     likes: story.like_count || 0,
-    comments: 0, // Backend implementation for story comments not fully clear in getStories
     description: story.description,
     authorTitle: story.author_title || "", // Check backend response
     author: {
@@ -23,5 +22,7 @@ export const mapStory = (story: any): StoryDetail => ({
     media_status: story.media_status,
     media_type: story.media_type,
     media_url: story.media_url,
-    thumbnail_url: story.thumbnail_url
+    thumbnail_url: story.thumbnail_url || story.image,
+    shared_post: story.shared_post,
+    story_metadata: story.story_metadata // Pass through metadata
 });

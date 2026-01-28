@@ -1,6 +1,13 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Eye, Heart, MessageCircle, Send } from "lucide-react"
-import { StoryDetail } from "@/types/showcase"
+import { StoryDetail, StoryAuthor } from "@/types/showcase"
+import { showcaseService } from "@/services/showcase.service"
+
+interface StoryAnalytics {
+    viewerCount: number;
+    viewers: StoryAuthor[];
+    likers: StoryAuthor[];
+}
 
 type StoryInteractionPanelProps = {
     isOpen: boolean
@@ -13,36 +20,39 @@ type StoryInteractionPanelProps = {
 export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory }: StoryInteractionPanelProps) {
     const [activeTab, setActiveTab] = useState<"views" | "likes" | "comments">(isMyStory ? "views" : "comments")
     const [comment, setComment] = useState("")
-    const [localComments, setLocalComments] = useState<string[]>([])
-    const [details, setDetails] = useState<any>(null)
+    const [comments, setComments] = useState<any[]>([])
+    const [details, setDetails] = useState<StoryAnalytics | null>(null)
     const [loading, setLoading] = useState(false)
-
-    // Lazy load import to avoid circular dependency if any, or just import normally
-    // We can just import showcaseService at top
-    // But wait, we need to import it. 
+    const [loadingComments, setLoadingComments] = useState(false)
 
     // Reset details when story changes
-    React.useEffect(() => {
+    useEffect(() => {
         setDetails(null);
+        setComments([]);
     }, [story.id]);
 
-    React.useEffect(() => {
-        if (isOpen && isMyStory && !details) {
-            setLoading(true);
-            // We need to import showcaseService. Since it's a component, we can assume it's available or import it.
-            // I will add the import in a separate step or just use dynamic import here to be safe and avoid multi-step edit complexity if inconsistent.
-            // Actually, let's use global import in the file.
-            import("@/services/showcase.service").then(({ showcaseService }) => {
+    useEffect(() => {
+        if (isOpen) {
+            // Fetch Analytics (for My Story)
+            if (isMyStory && !details) {
+                setLoading(true);
                 showcaseService.getStoryDetails(story.id).then(data => {
                     setDetails(data);
-                    setLoading(false);
                 }).catch(err => {
                     console.error("Failed to fetch story details", err);
-                    setLoading(false);
-                })
-            });
+                }).finally(() => setLoading(false));
+            }
+
+            // Fetch Comments (Always)
+            if (comments.length === 0) {
+                setLoadingComments(true)
+                showcaseService.getStoryComments(story.id)
+                    .then(data => setComments(data))
+                    .catch(err => console.error("Failed to fetch comments", err))
+                    .finally(() => setLoadingComments(false))
+            }
         }
-    }, [isOpen, isMyStory, story.id, details]);
+    }, [isOpen, isMyStory, story.id]);
 
     // Use details if available, otherwise fallback to story props (which might be empty)
     const currentViewers = details?.viewers || story.viewers || [];
@@ -52,10 +62,20 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory }: Sto
 
     if (!isOpen) return null
 
-    const handleAddComment = () => {
+    const handleAddComment = async () => {
         if (comment.trim()) {
-            setLocalComments((prev) => [...prev, comment])
-            setComment("")
+            try {
+                const newComment = await showcaseService.addStoryComment(story.id, comment);
+                setComments(prev => [...prev, {
+                    ...newComment.comment,
+                    full_name: "You", // Or fetch user profile if needed, but 'You' is fine for instant UI
+                    avatar_url: null,
+                    is_current_user: true
+                }])
+                setComment("")
+            } catch (err) {
+                console.error("Failed to post comment", err)
+            }
         }
     }
 
@@ -105,7 +125,7 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory }: Sto
                             ${activeTab === "comments" ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}
                         >
                             <MessageCircle className="w-4 h-4" />
-                            <span>{(story.comments || 0) + localComments.length}</span>
+                            <span>{comments.length}</span>
                         </button>
                     </div>
                 )}
@@ -130,7 +150,7 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory }: Sto
                     {activeTab === "views" && isMyStory && (
                         <div className="space-y-4">
                             {loading && <p className="text-center text-sm py-4">Loading views...</p>}
-                            {!loading && currentViewers.map((viewer: any, idx: number) => (
+                            {!loading && currentViewers.map((viewer: StoryAuthor, idx: number) => (
                                 <div key={idx} className="flex items-center gap-3">
                                     <img src={viewer.avatar} alt={viewer.name} className="w-10 h-10 rounded-full object-cover" />
                                     <span className="font-medium">{viewer.name}</span>
@@ -145,7 +165,7 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory }: Sto
                     {activeTab === "likes" && isMyStory && (
                         <div className="space-y-4">
                             {loading && <p className="text-center text-sm py-4">Loading likes...</p>}
-                            {!loading && currentLikers.map((liker: any, idx: number) => (
+                            {!loading && currentLikers.map((liker: StoryAuthor, idx: number) => (
                                 <div key={idx} className="flex items-center gap-3">
                                     <img src={liker.avatar} alt={liker.name} className="w-10 h-10 rounded-full object-cover" />
                                     <div className="flex-1">
@@ -163,20 +183,31 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory }: Sto
                     {(activeTab === "comments" || !isMyStory) && (
                         <div className="flex flex-col h-full">
                             <div className="flex-1 space-y-4 mb-4">
-                                {/* Mock Comments */}
-                                <div className="flex gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-muted" />
-                                    <div className="bg-muted/50 rounded-lg p-3 flex-1">
-                                        <p className="text-sm font-semibold mb-1">Alice</p>
-                                        <p className="text-sm">Great shot! 🔥</p>
+                                {loadingComments && <p className="text-center text-sm py-4">Loading comments...</p>}
+
+                                {!loadingComments && comments.length === 0 && (
+                                    <div className="text-center py-8 text-muted-foreground/50 italic text-sm">
+                                        No comments yet. Be the first to say something!
                                     </div>
-                                </div>
-                                {localComments.map((c, i) => (
+                                )}
+
+                                {!loadingComments && comments.map((c, i) => (
                                     <div key={i} className="flex gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-blue-500" />
+                                        <div className="w-8 h-8 rounded-full bg-muted overflow-hidden flex-shrink-0">
+                                            {c.avatar_url ? (
+                                                <img src={c.avatar_url} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-[10px] font-bold">
+                                                    {c.full_name?.[0]}
+                                                </div>
+                                            )}
+                                        </div>
                                         <div className="bg-muted/50 rounded-lg p-3 flex-1">
-                                            <p className="text-sm font-semibold mb-1">You</p>
-                                            <p className="text-sm">{c}</p>
+                                            <div className="flex justify-between items-start mb-1">
+                                                <p className="text-sm font-semibold">{c.full_name}</p>
+                                                <span className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
+                                            </div>
+                                            <p className="text-sm">{c.content}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -190,10 +221,12 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory }: Sto
                                     value={comment}
                                     onChange={(e) => setComment(e.target.value)}
                                     className="flex-1 px-4 py-2 rounded-full border focus:outline-none focus:border-primary bg-input border-border"
+                                    onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
                                 />
                                 <button
                                     onClick={handleAddComment}
-                                    className="p-2 rounded-full bg-primary text-primary-foreground"
+                                    disabled={!comment.trim()}
+                                    className="p-2 rounded-full bg-primary text-primary-foreground disabled:opacity-50"
                                 >
                                     <Send className="w-5 h-5" />
                                 </button>
