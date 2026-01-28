@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react"
-import { MapPin, MoreVertical, Users } from "lucide-react"
+import { MapPin, MoreVertical, Users, Edit, Trash } from "lucide-react"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Job } from "@/types/jobs"
 import * as api from "@/services/api/jobs"
+import { CreateJobModal } from "../CreateJobModal"
 
 interface JobPostsListProps {
     selectedJobId: string
@@ -11,6 +18,8 @@ interface JobPostsListProps {
 export function JobPostsList({ selectedJobId, onSelectJob }: JobPostsListProps) {
     const [jobs, setJobs] = useState<Job[]>([])
     const [loading, setLoading] = useState(true)
+    const [editingJob, setEditingJob] = useState<Job | undefined>(undefined)
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
     useEffect(() => {
         const fetchJobs = async () => {
@@ -46,7 +55,7 @@ export function JobPostsList({ selectedJobId, onSelectJob }: JobPostsListProps) 
     return (
         <div className="space-y-4">
             <h2 className="text-lg font-semibold text-foreground">Your Job Posts ({jobs.length})</h2>
-            <div className="space-y-4 h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-4 h-[600px] overflow-y-auto pr-2 scrollbar-hide">
                 {jobs.length === 0 ? (
                     <div className="text-center py-10 text-muted-foreground bg-card rounded-xl border border-dashed">
                         No job posts found.
@@ -70,9 +79,44 @@ export function JobPostsList({ selectedJobId, onSelectJob }: JobPostsListProps) 
                                         <h3 className="font-semibold text-foreground">{job.title}</h3>
                                         <p className="text-sm text-muted-foreground">{job.company}</p>
                                     </div>
-                                    <button className="text-muted-foreground hover:text-foreground">
-                                        <MoreVertical className="w-4 h-4" />
-                                    </button>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <button className="text-muted-foreground hover:text-foreground h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors">
+                                                <MoreVertical className="w-4 h-4" />
+                                            </button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={(e) => {
+                                                e.stopPropagation()
+                                                setEditingJob(job)
+                                                setIsEditModalOpen(true)
+                                            }}>
+                                                <Edit className="w-4 h-4 mr-2" />
+                                                Edit Job
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                className="text-red-500 focus:text-red-500"
+                                                onClick={async (e) => {
+                                                    e.stopPropagation()
+                                                    if (confirm("Are you sure you want to delete this job?")) {
+                                                        try {
+                                                            await api.deleteJob(job.id)
+                                                            setJobs(jobs.filter(j => j.id !== job.id))
+                                                            if (selectedJobId === job.id && jobs.length > 1) {
+                                                                onSelectJob(jobs.find(j => j.id !== job.id)?.id || "")
+                                                            }
+                                                        } catch (err) {
+                                                            console.error("Failed to delete job", err)
+                                                            alert("Failed to delete job")
+                                                        }
+                                                    }
+                                                }}
+                                            >
+                                                <Trash className="w-4 h-4 mr-2" />
+                                                Delete Job
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
 
                                 <div className="mb-4">
@@ -126,6 +170,15 @@ export function JobPostsList({ selectedJobId, onSelectJob }: JobPostsListProps) 
                     })
                 )}
             </div>
+
+            <CreateJobModal
+                open={isEditModalOpen}
+                onOpenChange={(open) => {
+                    setIsEditModalOpen(open)
+                    if (!open) setEditingJob(undefined)
+                }}
+                initialData={editingJob}
+            />
         </div>
     )
 }

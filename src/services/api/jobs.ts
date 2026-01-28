@@ -190,3 +190,29 @@ export const getMyCreatedJobs = async (): Promise<Job[]> => {
     const response = await api.get('/jobs/my');
     return response.data.map(transformJob);
 };
+
+
+export const updateJob = async (jobId: string, data: JobFormData): Promise<void> => {
+    const payload = {
+        title: data.jobTitle,
+        company_name: data.companyName,
+        location: data.location,
+        description: data.jobDescription,
+        experience_level: data.experience,
+        job_type: data.jobType,
+        work_mode: data.workMode,
+        company_type: data.companyType,
+        industry: data.industry,
+        about_company: data.aboutCompany,
+        actively_hiring: data.activelyHiring,
+        easy_apply: data.easyApply,
+        minSalary: data.minSalary,
+        maxSalary: data.maxSalary,
+        skills: data.skills.split(",").map(s => s.trim()).filter(Boolean)
+    };
+    await api.put(`/jobs/${jobId}`, payload);
+};
+
+export const deleteJob = async (jobId: string): Promise<void> => {
+    await api.delete(`/jobs/${jobId}`);
+};

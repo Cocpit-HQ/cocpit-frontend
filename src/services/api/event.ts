@@ -45,6 +45,17 @@ export async function createEvent(formData: FormData): Promise<CreateEventRespon
     return response.data;
 }
 
+// Protected: Update Event
+export async function updateEvent(id: number | string, formData: FormData): Promise<BackendEvent> {
+    const response = await api.put<BackendEvent>(`/events/${id}`, formData);
+    return response.data;
+}
+
+// Protected: Delete Event
+export async function deleteEvent(id: number | string): Promise<void> {
+    await api.delete(`/events/${id}`);
+}
+
 // Protected: Get My Created Events
 export async function getMyCreatedEvents(): Promise<BackendEvent[]> {
     const response = await api.get<BackendEvent[]>("/events/me/events/created");
