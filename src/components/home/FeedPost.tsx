@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { PollAnalyticsModal } from './PollAnalyticsModal';
-import { ThumbsUp, MessageCircle, Share2, MoreHorizontal, EyeOff, Trash2, Edit2, Eye, BarChart2, ArrowUpRight } from 'lucide-react'
+import { ThumbsUp, MessageCircle, Share2, MoreHorizontal, EyeOff, Trash2, Edit2, Eye, BarChart2, ArrowUpRight, Link2, Bookmark, UserMinus, Flag, Info, Star } from 'lucide-react'
 
 import useEmblaCarousel from 'embla-carousel-react'
 import { Post, Comment as CommentType } from '@/types/entities'
@@ -320,22 +320,14 @@ export default function FeedPost({
                     {title}
                   </p>
                 )}
-                <div className="flex items-center gap-2">
-                  <p className="text-xs leading-tight text-muted-foreground">
-                    {timeAgo} ago
-                  </p>
-                  {visibility === 'private' && (
-                    <EyeOff className="w-3 h-3 text-muted-foreground" />
-                  )}
-                </div>
               </div>
             </div>
           </div>
-          {isOwnPost && (
+          <div className="flex flex-col items-end">
             <div className="relative">
               <button
                 onClick={() => setShowOptions(!showOptions)}
-                className="text-muted-foreground hover:text-foreground transition-colors p-2"
+                className="text-muted-foreground hover:text-foreground transition-colors p-1"
               >
                 <MoreHorizontal className="w-5 h-5" />
               </button>
@@ -346,57 +338,113 @@ export default function FeedPost({
                     onClick={() => setShowOptions(false)}
                   />
                   <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-10 overflow-hidden">
-                    {!poll && (
-                      <button
-                        onClick={() => {
-                          setIsEditModalOpen(true);
-                          setShowOptions(false);
-                        }}
-                        className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                        <span>Edit Post</span>
-                      </button>
+
+                    {/* Non-Owner Options: Save, Favorite, Copy, About, Report */}
+                    {!isOwnPost && (
+                      <>
+
+
+                        <button
+                          onClick={() => {
+                            console.log("Add to favorites", id);
+                            setShowOptions(false);
+                          }}
+                          className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                        >
+                          <Star className="w-4 h-4" />
+                          <span>Add to favorites</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            console.log("Copy link", id);
+                            if (typeof window !== 'undefined') {
+                              navigator.clipboard.writeText(`${window.location.origin}/post/${id}`);
+                            }
+                            setShowOptions(false);
+                          }}
+                          className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                        >
+                          <Link2 className="w-4 h-4" />
+                          <span>Copy link</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            console.log("Report post", id);
+                            setShowOptions(false);
+                          }}
+                          className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                        >
+                          <Flag className="w-4 h-4" />
+                          <span>Report</span>
+                        </button>
+                      </>
                     )}
 
-                    {poll && (
-                      <button
-                        onClick={() => {
-                          setIsAnalyticsModalOpen(true);
-                          setShowOptions(false);
-                        }}
-                        className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
-                      >
-                        <BarChart2 className="w-4 h-4" />
-                        <span>View Poll Analytics</span>
-                      </button>
-                    )}
+                    {/* Owner Options: Edit, Analytics, Privacy, Delete */}
+                    {isOwnPost && (
+                      <>
+                        {!poll && (
+                          <button
+                            onClick={() => {
+                              setIsEditModalOpen(true);
+                              setShowOptions(false);
+                            }}
+                            className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                            <span>Edit Post</span>
+                          </button>
+                        )}
 
-                    <button
-                      onClick={handleToggleVisibility}
-                      className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
-                    >
-                      {visibility === 'private' ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                      <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        onDelete?.(id)
-                        setShowOptions(false)
-                      }}
-                      className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Delete</span>
-                    </button>
+                        {poll && (
+                          <button
+                            onClick={() => {
+                              setIsAnalyticsModalOpen(true);
+                              setShowOptions(false);
+                            }}
+                            className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                          >
+                            <BarChart2 className="w-4 h-4" />
+                            <span>View Poll Analytics</span>
+                          </button>
+                        )}
+
+                        <button
+                          onClick={handleToggleVisibility}
+                          className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                        >
+                          {visibility === 'private' ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                          <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            onDelete?.(id)
+                            setShowOptions(false)
+                          }}
+                          className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>Delete</span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </>
               )}
             </div>
-          )}
-        </div>
-
-      </div>
+            <div className="flex items-center gap-2 -mt-1">
+              <p className="text-xs leading-tight text-muted-foreground">
+                {timeAgo} ago
+              </p>
+              {visibility === 'private' && (
+                <EyeOff className="w-3 h-3 text-muted-foreground" />
+              )}
+            </div>
+          </div >
+        </div >
+      </div >
 
       <div className="flex-1 flex flex-col justify-center w-full">
         {content && <p className="px-4 md:px-6 leading-relaxed mb-4 text-sm md:text-base text-foreground">{content}</p>}
@@ -595,6 +643,13 @@ export default function FeedPost({
             className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center text-xs md:text-sm">
             <Share2 className="w-4 h-4 md:w-5 md:h-5" />
 
+          </button>
+          <button
+            onClick={() => {
+              console.log("Saving post", id);
+            }}
+            className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center text-xs md:text-sm">
+            <Bookmark className="w-4 h-4 md:w-5 md:h-5" />
           </button>
         </div>
       </div>
