@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { PollAnalyticsModal } from './PollAnalyticsModal';
 import { ThumbsUp, MessageCircle, Share2, MoreHorizontal, EyeOff, Trash2, Edit2, Eye, BarChart2, ArrowUpRight, Link2, Bookmark, UserMinus, Flag, Info, Star } from 'lucide-react'
+import Image from "next/image"
 
 import useEmblaCarousel from 'embla-carousel-react'
 import { Post, Comment as CommentType } from '@/types/entities'
@@ -26,6 +27,7 @@ interface FeedPostProps extends Omit<Post, 'commentData'> {
   onToggleVisibility?: (id: string) => void
   isLiked?: boolean; // Add isLiked to props
   isProfileView?: boolean;
+  priority?: boolean;
 }
 
 export default function FeedPost({
@@ -53,7 +55,8 @@ export default function FeedPost({
   poll,
   isLiked: initialIsLiked = false, // Default
   isProfileView = false,
-  shared_post
+  shared_post,
+  priority = false
 }: FeedPostProps) {
   const [isLiked, setIsLiked] = useState(initialIsLiked)
   const [likeCount, setLikeCount] = useState(typeof likes === 'string' ? parseInt(likes) : likes)
@@ -78,6 +81,34 @@ export default function FeedPost({
   const [currentSlide, setCurrentSlide] = useState(0)
   const [showBadge, setShowBadge] = useState(false)
   const badgeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Dynamic aspect ratio for images (when backend doesn't provide it)
+  const [dynamicAspectRatio, setDynamicAspectRatio] = useState<number | undefined>(
+    aspectRatio && aspectRatio !== 'auto' ? parseFloat(aspectRatio.toString()) : undefined
+  );
+
+  const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    if (!aspectRatio || aspectRatio === 'auto') {
+      const img = event.currentTarget;
+      const ratio = img.naturalWidth / img.naturalHeight;
+      setDynamicAspectRatio(ratio);
+    }
+  };
+
+  const handleVideoLoad = (event: React.SyntheticEvent<HTMLVideoElement>) => {
+    if (!aspectRatio || aspectRatio === 'auto') {
+      const video = event.currentTarget;
+      const ratio = video.videoWidth / video.videoHeight;
+      if (ratio && !isNaN(ratio)) {
+        setDynamicAspectRatio(ratio);
+      }
+    }
+  };
+
+  const finalAspectRatio = dynamicAspectRatio ? `${dynamicAspectRatio}/1` : undefined;
+
+  // Constrain vertical videos (taller than 4:5) to avoid taking up too much screen space
+  const isVerticalVideo = videoSrc && dynamicAspectRatio && dynamicAspectRatio < 0.8;
 
 
 
@@ -451,8 +482,12 @@ export default function FeedPost({
 
         {(hasMultipleImages || imageSrc || videoSrc) && (
           <div
-            className={`w-full overflow-hidden bg-black/5 relative group flex justify-center items-center bg-black ${isProfileView ? 'aspect-square' : ''}`}
-            style={!isProfileView && aspectRatio && aspectRatio !== 'auto' ? { aspectRatio } : undefined}
+            className={`w-full overflow-hidden bg-gray-100 dark:bg-zinc-900 relative group flex flex-col justify-center ${isProfileView ? 'aspect-square' : ''} ${!isProfileView && !finalAspectRatio && !isVerticalVideo ? 'min-h-[300px] md:min-h-[400px]' : ''}`}
+            style={
+              !isProfileView
+                ? (isVerticalVideo ? { height: '550px' } : (finalAspectRatio ? { aspectRatio: finalAspectRatio } : undefined))
+                : undefined
+            }
             onMouseEnter={triggerBadgeVisibility}
             onTouchStart={triggerBadgeVisibility}
           >
@@ -460,30 +495,43 @@ export default function FeedPost({
               <video
                 src={videoSrc}
                 controls
-                className={`w-full ${isProfileView ? 'h-full object-cover' : (aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'max-h-[650px]')} ${!isProfileView ? 'object-contain' : ''}`}
+                playsInline
+                preload="metadata"
+                onLoadedMetadata={handleVideoLoad}
+                className={`w-full h-full bg-black ${isVerticalVideo ? 'object-contain' : 'object-cover'}`}
               />
             ) : hasMultipleImages ? (
-              <div className="overflow-hidden h-full w-full" ref={emblaRef}>
+              <div className="absolute inset-0 overflow-hidden" ref={emblaRef}>
                 <div className="flex h-full">
                   {validImages.map((src, index) => (
-                    <div className="flex-[0_0_100%] min-w-0 relative h-full bg-black flex justify-center items-center" key={index}>
-                      <img
+                    <div className="flex-[0_0_100%] min-w-0 relative h-full flex justify-center items-center bg-gray-100 dark:bg-zinc-900" key={index}>
+                      <Image
                         src={src}
                         alt={`Slide ${index + 1}`}
-                        className={`${isProfileView ? 'w-full h-full object-cover' : 'max-w-full max-h-[650px] object-contain'}`}
+                        fill
+                        className={`${isProfileView ? 'object-cover' : 'object-contain'}`}
+                        priority={priority && index === 0}
+                        sizes="(max-width: 768px) 100vw, 600px"
+                        onLoad={(event) => {
+                          // Only set ratio based on the first image to prevent jumping during slide
+                          if (index === 0) handleImageLoad(event);
+                        }}
                       />
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <img
+              <Image
                 src={contentImgSrc}
                 alt="Post content"
-                className={`w-full ${isProfileView ? 'h-full object-cover' : (aspectRatio && aspectRatio !== 'auto' ? 'h-full' : 'h-auto max-h-[650px]')} ${!isProfileView ? 'object-contain' : ''}`}
+                fill
+                className={`${isProfileView ? 'object-cover' : 'object-contain'}`}
+                priority={priority}
+                sizes="(max-width: 768px) 100vw, 600px"
+                onLoad={handleImageLoad}
               />
             )}
-
             {/* Slide Counter Badge */}
             {hasMultipleImages && (
               <div
@@ -584,10 +632,12 @@ export default function FeedPost({
                     {/* Shared Media */}
                     {(shared_post.imageSrc || (shared_post.images && shared_post.images.length > 0)) && (
                       <div className="relative rounded-lg overflow-hidden mt-2 bg-black/5 aspect-video md:aspect-[2/1] group-hover/shared:scale-[1.01] transition-transform duration-500 ease-out">
-                        <img
+                        <Image
                           src={shared_post.imageSrc || shared_post.images![0]}
                           alt="Shared visual"
-                          className="absolute inset-0 w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 600px"
                         />
                         {/* Multiple Images Indicator */}
                         {shared_post.images && shared_post.images.length > 1 && (
