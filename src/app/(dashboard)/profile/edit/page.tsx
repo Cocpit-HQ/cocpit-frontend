@@ -73,6 +73,7 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
     degree: "",
     location: "",
     about_text: "",
+    mobile_number: "",
   })
   const [errors, setErrors] = useState<Partial<Record<keyof UpdateProfilePayload, string>>>({})
 
@@ -92,6 +93,7 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
           degree: user.degree || user.latest_education?.degree || "",
           location: user.location || "",
           about_text: user.about_text || user.about || "",
+          mobile_number: user.mobile_number || "",
         });
       } catch (error) {
         console.error("Failed to fetch profile", error);
@@ -144,6 +146,14 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
       isValid = false;
     }
 
+    if (!formData.mobile_number) {
+      newErrors.mobile_number = "Mobile number is required";
+      isValid = false;
+    } else if (!/^\d{10}$/.test(formData.mobile_number)) {
+      newErrors.mobile_number = "Mobile number must be exactly 10 digits";
+      isValid = false;
+    }
+
     setErrors(newErrors);
     return isValid;
   }
@@ -164,6 +174,7 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
     else if (id === 'degree') key = 'degree';
     else if (id === 'location') key = 'location';
     else if (id === 'about') key = 'about_text';
+    else if (id === 'mobileNumber') key = 'mobile_number';
 
     if (key) {
       setFormData((prev) => ({ ...prev, [key!]: value }))
@@ -262,6 +273,18 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
                 className={`${inputStyles} ${errors.headline ? "border-red-500" : ""}`}
               />
               {errors.headline && <p className={errorStyles}>{errors.headline}</p>}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="mobileNumber" className={labelStyles}>Mobile Number <span className="text-red-500">*</span></Label>
+              <Input
+                id="mobileNumber"
+                value={formData.mobile_number}
+                onChange={handleChange}
+                className={`${inputStyles} ${errors.mobile_number ? "border-red-500" : ""}`}
+                placeholder="Enter 10 digit mobile number"
+              />
+              {errors.mobile_number && <p className={errorStyles}>{errors.mobile_number}</p>}
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">

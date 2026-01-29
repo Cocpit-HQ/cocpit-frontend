@@ -39,7 +39,7 @@ export interface UserData {
   location: string | null;
   about: string | null;
   email: string;
-  phone?: string;
+  mobile_number?: string;
   open_to: string | null;
   availability: string | null;
   work_preference: string | null;
@@ -65,6 +65,7 @@ export interface UpdateProfilePayload {
   degree: string;
   location: string;
   about_text: string;
+  mobile_number?: string;
 }
 
 export interface Skill {

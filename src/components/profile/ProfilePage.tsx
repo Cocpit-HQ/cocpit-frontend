@@ -45,6 +45,7 @@ import EditCoverPhoto from "@/components/profile/EditCoverPhoto"
 import { ProfileSkeleton } from "@/components/profile/ProfileSkeleton"
 import { EditableExperienceItem } from "@/components/profile/parts/EditableExperienceItem"
 import { EditableEducationItem } from "@/components/profile/parts/EditableEducationItem"
+import { ContactInfoModal } from "@/components/profile/ContactInfoModal"
 
 // New Hooks
 import { useMyProfile, useExperienceMutations, useEducationMutations, useSkillMutations, useAvatarMutations } from "@/hooks/use-my-profile"
@@ -76,6 +77,7 @@ export default function ProfilePage() {
   const [isAddEducationModalOpen, setIsAddEducationModalOpen] = useState(false);
   const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
   const [isEditAvatarOpen, setIsEditAvatarOpen] = useState(false);
+  const [isContactInfoModalOpen, setIsContactInfoModalOpen] = useState(false);
 
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
@@ -335,6 +337,15 @@ export default function ProfilePage() {
                       <Edit2 className="w-4 h-4" />
                       Edit Profile
                     </button>
+
+                    <div className="hidden md:flex flex-col items-end mt-16">
+                      <button
+                        onClick={() => setIsContactInfoModalOpen(true)}
+                        className="text-primary hover:underline font-medium text-sm"
+                      >
+                        Contact info
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex justify-between items-start">
@@ -350,11 +361,7 @@ export default function ProfilePage() {
                       </p>
 
                       <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
-                        <span>{user?.location}</span>
-                        <span>·</span>
-                        <a href="#" className="text-primary hover:underline">
-                          Contact info
-                        </a>
+                        <span className="text-muted-foreground">{user?.location}</span>
                       </div>
 
                       <p className="text-sm text-muted-foreground mb-4">500+ connections</p>
@@ -575,6 +582,12 @@ export default function ProfilePage() {
         currentAvatarUrl={user?.avatar || null}
         onUpload={handleAvatarUpload}
         onDelete={handleAvatarDelete}
+      />
+
+      <ContactInfoModal
+        isOpen={isContactInfoModalOpen}
+        onClose={() => setIsContactInfoModalOpen(false)}
+        user={user}
       />
     </div>
   )
