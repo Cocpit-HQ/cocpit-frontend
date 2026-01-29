@@ -188,9 +188,13 @@ export default function ShowcaseContent() {
 
                 {!loading &&
                   filteredGroups.map((group) => {
+                    if (!group.stories || group.stories.length === 0) return null;
+
                     const sortedStories = [...group.stories].sort((a, b) => new Date(a.created_at || new Date()).getTime() - new Date(b.created_at || new Date()).getTime());
                     const latestStory = sortedStories[sortedStories.length - 1];
                     const storiesCount = group.stories.length;
+
+                    if (!latestStory) return null;
 
                     // Check if there are any unviewed stories in the group (excluding own)
                     const hasUnviewed = group.stories.some(s => !s.has_viewed) && !group.is_current_user;
