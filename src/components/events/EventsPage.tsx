@@ -156,9 +156,7 @@ export function EventsPage() {
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 rounded-full text-xs md:text-sm font-medium capitalize transition-all relative whitespace-nowrap flex-shrink-0 ${activeTab === tab
                 ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md shadow-purple-500/20"
-                : theme === 'light'
-                  ? "bg-[#f3f4f6] text-muted-foreground hover:bg-[#e5e7eb] hover:text-foreground border border-black/5"
-                  : "bg-[#171c28] text-muted-foreground hover:bg-[#1f2536] hover:text-foreground border border-white/5"
+                : "bg-[#f3f4f6] dark:bg-[#171c28] text-muted-foreground hover:bg-[#e5e7eb] dark:hover:bg-[#1f2536] hover:text-foreground border border-black/5 dark:border-white/5"
                 }`}
             >
               {tab === 'upcoming' ? 'Discover' : tab === 'dashboard' ? 'Event Dashboard' : tab.replace('_', ' ')}

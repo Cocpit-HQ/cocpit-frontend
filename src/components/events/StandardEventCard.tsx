@@ -1,4 +1,5 @@
 import React from "react"
+import Image from "next/image"
 import { MapPin, Users, Calendar } from "lucide-react"
 import type { EventCard } from "@/types/event"
 
@@ -10,9 +11,10 @@ interface StandardEventCardProps {
   isSaved: boolean
   isSaving?: boolean
   onToggleSave: (e: React.MouseEvent) => void
+  priority?: boolean
 }
 
-export function StandardEventCard({ event, onClick, className = "", isRegistered, isSaved, isSaving, onToggleSave }: StandardEventCardProps) {
+export function StandardEventCard({ event, onClick, className = "", isRegistered, isSaved, isSaving, onToggleSave, priority = false }: StandardEventCardProps) {
 
   return (
     <div
@@ -21,10 +23,13 @@ export function StandardEventCard({ event, onClick, className = "", isRegistered
     >
       <div className="relative h-48 overflow-hidden">
         {/* ... (existing image code) ... */}
-        <img
-          src={event.image}
+        <Image
+          src={event.image || "https://images.unsplash.com/photo-1540575467063-178a50c2df87"}
           alt={event.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-110"
+          priority={priority}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
         <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-lg text-xs font-bold text-black shadow-sm">
           {event.priceType === 'Paid' ? `$${event.price}` : 'Free'}

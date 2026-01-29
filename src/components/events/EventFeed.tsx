@@ -147,6 +147,7 @@ export function EventFeed({ filters, searchQuery }: EventFeedProps) {
                                     e.stopPropagation();
                                     isSaved(event.id) ? unsave.mutate(event.id) : save.mutate(event.id);
                                 }}
+                                priority={index < 6}
                             />
                         </div>
                     );

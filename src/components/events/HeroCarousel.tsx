@@ -65,6 +65,7 @@ export function HeroCarousel({ events, onEventClick }: HeroCarouselProps) {
                   isActive={index === selectedIndex}
                   onClick={() => handleCardClick(index, event.id)}
                   className={index === selectedIndex ? 'shadow-2xl' : ''}
+                  priority={index === 0} // Mobile usually shows 1 at a time
                 />
               </div>
             ))}
@@ -74,13 +75,14 @@ export function HeroCarousel({ events, onEventClick }: HeroCarouselProps) {
 
       {/* Desktop View: Standard Horizontal Row/Grid */}
       <div className="hidden md:flex gap-6 overflow-x-auto pb-6 scrollbar-hide">
-        {events.map((event) => (
+        {events.map((event, index) => (
           <HeroEventCard
             key={event.id}
             event={event}
             onClick={() => onEventClick(event.id)}
             isActive={true} // Always active on desktop
             className="w-[340px]"
+            priority={index < 4} // Prioritize visible desktop cards
           />
         ))}
       </div>

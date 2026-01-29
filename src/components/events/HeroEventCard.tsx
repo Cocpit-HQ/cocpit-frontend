@@ -1,4 +1,5 @@
 import React from "react"
+import Image from "next/image"
 import { MapPin, Calendar, Users } from "lucide-react"
 import type { EventCard } from "@/types/event"
 
@@ -7,9 +8,10 @@ interface HeroEventCardProps {
   onClick: () => void
   className?: string
   isActive?: boolean
+  priority?: boolean // Added priority prop
 }
 
-export function HeroEventCard({ event, onClick, className = "", isActive = true }: HeroEventCardProps) {
+export function HeroEventCard({ event, onClick, className = "", isActive = true, priority = false }: HeroEventCardProps) {
   // Format date nicely (e.g., "Dec 25")
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
@@ -30,10 +32,13 @@ export function HeroEventCard({ event, onClick, className = "", isActive = true 
       `}
     >
       {/* Background Image */}
-      <img
-        src={event.image}
+      <Image
+        src={event.image || "https://images.unsplash.com/photo-1540575467063-178a50c2df87"}
         alt={event.title}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        fill
+        className="object-cover transition-transform duration-700 group-hover:scale-105"
+        priority={priority}
+        sizes="(max-width: 768px) 100vw, 340px"
       />
 
       {/* Gradient Overlay */}
