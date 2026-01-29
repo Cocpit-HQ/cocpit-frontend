@@ -11,7 +11,7 @@ import {
   Tooltip
 } from 'recharts'
 import { Target, ChevronRight, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { TARGET_ROLES, getSkillGapData, SkillData } from '@/app/analytics/data'
+import { TARGET_ROLES, getSkillGapData, SkillData } from '@/app/(dashboard)/analytics/data';
 
 export function SkillGapVisualizer() {
   const [selectedRole, setSelectedRole] = useState(TARGET_ROLES[0].id)
@@ -153,7 +153,7 @@ export function SkillGapVisualizer() {
             </div>
           </div>
 
-           <button className="w-full mt-2 py-2.5 text-sm font-medium text-[#5B7CFF] bg-[#5B7CFF]/10 hover:bg-[#5B7CFF]/20 rounded-lg transition-colors">
+          <button className="w-full mt-2 py-2.5 text-sm font-medium text-[#5B7CFF] bg-[#5B7CFF]/10 hover:bg-[#5B7CFF]/20 rounded-lg transition-colors">
             View Recommended Courses
           </button>
         </div>

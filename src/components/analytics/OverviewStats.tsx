@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { Eye, Search, UserPlus, MessageSquare, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react'
-import { OverviewStat } from '@/app/analytics/data'
+import { OverviewStat, getOverviewStats } from '@/app/(dashboard)/analytics/data';
 
 interface OverviewStatsProps {
   stats: OverviewStat[]

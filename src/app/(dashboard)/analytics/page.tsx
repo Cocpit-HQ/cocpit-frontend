@@ -8,8 +8,11 @@ import {
   getEngagementData,
   getAudienceIndustries,
   getAudienceLocations,
-  getFunnelData
-} from '@/app/analytics/data'
+  getFunnelData,
+  TARGET_ROLES,
+  getSkillGapData,
+  SkillData
+} from '@/app/(dashboard)/analytics/data'
 
 import { SkillGapVisualizer } from '@/components/analytics/SkillGapVisualizer'
 import { OverviewStats } from '@/components/analytics/OverviewStats'

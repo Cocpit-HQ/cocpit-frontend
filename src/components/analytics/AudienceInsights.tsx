@@ -3,7 +3,7 @@
 import React from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as ReTooltip } from 'recharts'
 import { MapPin, Briefcase } from 'lucide-react'
-import { AudienceMetric } from '@/app/analytics/data'
+import { AudienceMetric } from '@/app/(dashboard)/analytics/data';
 
 interface AudienceInsightsProps {
   industries: AudienceMetric[]
@@ -52,7 +52,7 @@ export function AudienceInsights({ industries, locations }: AudienceInsightsProp
                     ))}
                   </Pie>
                   <ReTooltip
-                     contentStyle={{
+                    contentStyle={{
                       backgroundColor: "var(--card)",
                       borderColor: "var(--border)",
                       borderRadius: '8px',
@@ -64,7 +64,7 @@ export function AudienceInsights({ industries, locations }: AudienceInsightsProp
               </ResponsiveContainer>
               {/* Center Text */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                 <span className="text-xs font-medium text-muted-foreground">Industries</span>
+                <span className="text-xs font-medium text-muted-foreground">Industries</span>
               </div>
             </div>
 
@@ -103,10 +103,10 @@ export function AudienceInsights({ industries, locations }: AudienceInsightsProp
                   <span className="text-muted-foreground">{loc.percentage}%</span>
                 </div>
                 <div className="w-full h-8 rounded-lg relative overflow-hidden flex items-center px-3 bg-muted/30">
-                   <div
-                      className="absolute left-0 top-0 bottom-0 bg-primary/20 rounded-lg transition-all duration-1000"
-                      style={{ width: `${loc.percentage}%` }}
-                   />
+                  <div
+                    className="absolute left-0 top-0 bottom-0 bg-primary/20 rounded-lg transition-all duration-1000"
+                    style={{ width: `${loc.percentage}%` }}
+                  />
                 </div>
               </div>
             ))}

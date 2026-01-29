@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { Filter, MousePointerClick, UserCheck, MessageCircle } from 'lucide-react'
-import { FunnelStage } from '@/app/analytics/data'
+import { FunnelStage, getFunnelData } from '@/app/(dashboard)/analytics/data';
 
 interface RecruiterFunnelProps {
   data: FunnelStage[]
@@ -60,7 +60,7 @@ export function RecruiterFunnel({ data }: RecruiterFunnelProps) {
               {/* Funnel narrowing visual */}
               {!isLast && (
                 <div className="ml-14 my-1 flex justify-center">
-                    {/* Spacer to simulate funnel drop */}
+                  {/* Spacer to simulate funnel drop */}
                 </div>
               )}
             </div>

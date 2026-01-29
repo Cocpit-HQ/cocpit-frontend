@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts'
-import { EngagementDataPoint } from '@/app/analytics/data'
+import { EngagementDataPoint, getEngagementData } from '@/app/(dashboard)/analytics/data';
 
 interface EngagementMetricsProps {
   data: EngagementDataPoint[]
@@ -38,12 +38,12 @@ export function EngagementMetrics({ data }: EngagementMetricsProps) {
           >
             <defs>
               <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#5B7CFF" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#5B7CFF" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#5B7CFF" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#5B7CFF" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="colorLikes" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
