@@ -100,6 +100,7 @@ const ViewerLayerItem = ({ layer, fallbackMedia }: { layer: StoryLayer, fallback
           autoPlay
           loop
           playsInline
+          crossOrigin="anonymous"
           onTimeUpdate={(e) => {
             if (layer.trim) {
               const vid = e.currentTarget;

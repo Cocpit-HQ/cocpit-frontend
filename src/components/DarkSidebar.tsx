@@ -2,31 +2,36 @@
 
 import React from 'react'
 import { Home, Users, Calendar, User, Settings, Briefcase, BarChart3, Crown } from 'lucide-react'
-
-type Page = string
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 interface DarkSidebarProps {
-  navigateTo?: (page: Page) => void
-  currentPage?: string
+  className?: string
 }
 
-export function DarkSidebar({ navigateTo = () => {}, currentPage = 'home' }: DarkSidebarProps) {
+export function DarkSidebar({ className }: DarkSidebarProps) {
+  const pathname = usePathname()
+
   const navItems = [
-    { icon: Home, label: 'Feed', subtext: 'Latest updates', page: 'home' as Page },
-    { icon: Users, label: 'Showcase', subtext: 'Professional stories', page: 'network' as Page },
-    { icon: Calendar, label: 'Events', subtext: 'Network & earn', page: 'events' as Page },
-    { icon: User, label: 'Profile', subtext: 'Your presence', page: 'profile' as Page },
-    { icon: Settings, label: 'Settings', subtext: 'Preferences', page: 'settings' as Page },
+    { icon: Home, label: 'Feed', subtext: 'Latest updates', href: '/feed' },
+    { icon: Users, label: 'Showcase', subtext: 'Professional stories', href: '/showcase' },
+    { icon: Calendar, label: 'Events', subtext: 'Network & earn', href: '/events' },
+    { icon: User, label: 'Profile', subtext: 'Your presence', href: '/profile' },
+    { icon: Settings, label: 'Settings', subtext: 'Preferences', href: '/settings' },
   ];
 
   const quickActions = [
-    { icon: Briefcase, label: 'Jobs', badge: '12 new', page: 'jobs' as Page },
-    { icon: BarChart3, label: 'Analytics', badge: 'Insights', page: 'analytics' as Page },
-    
+    { icon: Briefcase, label: 'Jobs', badge: '12 new', href: '/jobs' },
+    { icon: BarChart3, label: 'Analytics', badge: 'Insights', href: '/analytics' },
   ];
 
+  const isActive = (href: string) => {
+    if (href === '/feed' && pathname === '/') return true
+    return pathname?.startsWith(href)
+  }
+
   return (
-    <aside className="w-64 h-screen fixed left-0 top-0 flex flex-col border-r bg-sidebar border-sidebar-border">
+    <aside className={`w-64 h-screen fixed left-0 top-0 flex flex-col border-r bg-sidebar border-sidebar-border ${className}`}>
       <div className="px-6 py-6 border-b border-sidebar-border">
         <h1 className="text-2xl text-primary">COCPIT</h1>
       </div>
@@ -35,18 +40,18 @@ export function DarkSidebar({ navigateTo = () => {}, currentPage = 'home' }: Dar
         <div className="px-3 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon
-            const isActive = item.page === currentPage
+            const active = isActive(item.href)
             return (
-              <button
+              <Link
                 key={item.label}
-                onClick={() => navigateTo(item.page)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${isActive ? 'bg-primary text-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}>
+                href={item.href}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${active ? 'bg-primary text-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}>
                 <Icon className="w-5 h-5" />
                 <div className="flex-1 text-left">
-                  <div className={`${isActive ? 'text-primary-foreground' : 'text-sidebar-foreground'}`}>{item.label}</div>
-                  {item.subtext && <div className={`text-xs ${isActive ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>{item.subtext}</div>}
+                  <div className={`${active ? 'text-primary-foreground' : 'text-sidebar-foreground'}`}>{item.label}</div>
+                  {item.subtext && <div className={`text-xs ${active ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>{item.subtext}</div>}
                 </div>
-              </button>
+              </Link>
             )
           })}
         </div>
@@ -56,14 +61,15 @@ export function DarkSidebar({ navigateTo = () => {}, currentPage = 'home' }: Dar
           <div className="space-y-1">
             {quickActions.map((item) => {
               const Icon = item.icon
+              const active = isActive(item.href)
               return (
-                <button key={item.label} onClick={() => navigateTo(item.page)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                <Link key={item.label} href={item.href} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${active ? 'bg-primary/10 text-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}>
                   <Icon className="w-5 h-5" />
                   <div className="flex-1 text-left">
                     <div className="text-sidebar-foreground">{item.label}</div>
                     <div className="text-xs text-muted-foreground">{item.badge}</div>
                   </div>
-                </button>
+                </Link>
               )
             })}
           </div>

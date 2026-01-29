@@ -57,30 +57,28 @@ export default function SinglePostPage({ params }: PageProps) {
 
     return (
         <div className="min-h-screen bg-background text-foreground">
-            <AppShell currentPage="home" navigateTo={navigateTo}>
-                <div className="max-w-2xl mx-auto py-6 px-0 md:px-4">
-                    <div className="mb-6 flex items-center gap-4 px-4">
-                        <button
-                            onClick={() => router.back()}
-                            className="text-sm text-primary hover:underline"
-                        >
-                            &larr; Back
-                        </button>
-                        <h1 className="text-2xl font-bold">Post Details</h1>
-                    </div>
-
-                    {loading ? (
-                        <div className="text-center py-10">Loading...</div>
-                    ) : error ? (
-                        <div className="text-center py-10 text-destructive">{error}</div>
-                    ) : post ? (
-                        <FeedPost
-                            {...post}
-                            isOwnPost={false}
-                        />
-                    ) : null}
+            <div className="max-w-2xl mx-auto py-6 px-0 md:px-4">
+                <div className="mb-6 flex items-center gap-4 px-4">
+                    <button
+                        onClick={() => router.back()}
+                        className="text-sm text-primary hover:underline"
+                    >
+                        &larr; Back
+                    </button>
+                    <h1 className="text-2xl font-bold">Post Details</h1>
                 </div>
-            </AppShell>
+
+                {loading ? (
+                    <div className="text-center py-10">Loading...</div>
+                ) : error ? (
+                    <div className="text-center py-10 text-destructive">{error}</div>
+                ) : post ? (
+                    <FeedPost
+                        {...post}
+                        isOwnPost={false}
+                    />
+                ) : null}
+            </div>
         </div>
     )
 }

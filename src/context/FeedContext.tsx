@@ -1,12 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, ReactNode, useCallback } from 'react';
 import { Post } from '@/types/entities';
 import { getFeed } from '@/services/api/feed';
 import { deletePost as apiDeletePost } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 
 import { useSession } from "next-auth/react";
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 
 interface FeedContextType {
   posts: Post[];
@@ -36,10 +37,7 @@ interface FeedProviderProps {
 
 export const FeedProvider = ({ children }: FeedProviderProps) => {
   const { data: session } = useSession();
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [nextCursor, setNextCursor] = useState<{ cursorCreatedAt: string; cursorPostId: string } | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const queryClient = useQueryClient();
 
   const currentUser = {
     id: session?.user?.id || '',
@@ -47,81 +45,115 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
     image: session?.user?.image,
   };
 
-  // Initial fetch
-  useEffect(() => {
-    const fetchInitialPosts = async () => {
-      setLoading(true);
-      try {
-        const response = await getFeed();
-        const mappedPosts = response.posts.map(mapBackendPostToFrontend);
-        setPosts(mappedPosts);
-        setNextCursor(response.nextCursor);
-        setHasMore(!!response.nextCursor);
-      } catch (error) {
-        console.error("Failed to fetch feed:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+    isLoading
+  } = useInfiniteQuery({
+    queryKey: ['feed'],
+    queryFn: async ({ pageParam }) => {
+      const response = await getFeed(pageParam?.cursorCreatedAt, pageParam?.cursorPostId);
+      return {
+        ...response,
+        posts: response.posts.map(mapBackendPostToFrontend)
+      };
+    },
+    initialPageParam: null as { cursorCreatedAt: string; cursorPostId: string } | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
+    refetchOnWindowFocus: false, // Prevent overwhelming refetches
+  });
 
-    fetchInitialPosts();
-  }, []);
+  const posts = React.useMemo(() =>
+    data?.pages.flatMap(page => page.posts) || [],
+    [data?.pages]
+  );
+
+  // Combine initial loading and pagination loading for simpler consumer logic,
+  // or expose them separately if needed. Here we follow previous interface.
+  const loading = isLoading || isFetchingNextPage;
 
   const loadMorePosts = useCallback(async () => {
-    if (!nextCursor || loading) return;
-
-    setLoading(true);
-    try {
-      const response = await getFeed(nextCursor.cursorCreatedAt, nextCursor.cursorPostId);
-      const mappedPosts = response.posts.map(mapBackendPostToFrontend);
-
-      setPosts((prevPosts) => {
-        const existingIds = new Set(prevPosts.map((p) => p.id));
-        const newUniquePosts = mappedPosts.filter((p) => !existingIds.has(p.id));
-        return [...prevPosts, ...newUniquePosts];
-      });
-      setNextCursor(response.nextCursor);
-      setHasMore(!!response.nextCursor);
-    } catch (error) {
-      console.error("Failed to load more posts:", error);
-    } finally {
-      setLoading(false);
+    if (hasNextPage && !isFetchingNextPage) {
+      await fetchNextPage();
     }
-  }, [nextCursor, loading]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const addPost = (post: Post) => {
-    setPosts((prevPosts) => [post, ...prevPosts]);
-  };
+  const addPost = useCallback((post: Post) => {
+    queryClient.setQueryData(['feed'], (oldData: any) => {
+      if (!oldData) return oldData;
 
-  const deletePost = async (id: string) => {
+      // Add to the first page
+      const newPages = [...oldData.pages];
+      if (newPages.length > 0) {
+        newPages[0] = {
+          ...newPages[0],
+          posts: [post, ...newPages[0].posts]
+        };
+      }
+
+      return {
+        ...oldData,
+        pages: newPages
+      };
+    });
+  }, [queryClient]);
+
+  const deletePost = useCallback(async (id: string) => {
     // Optimistic update
-    const previousPosts = [...posts];
-    setPosts((prevPosts) => prevPosts.filter((post) => post.id !== id));
+    queryClient.setQueryData(['feed'], (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        pages: oldData.pages.map((page: any) => ({
+          ...page,
+          posts: page.posts.filter((p: Post) => p.id !== id)
+        }))
+      };
+    });
 
     try {
       await apiDeletePost(id);
     } catch (error) {
       console.error('Failed to delete post:', error);
-      // Revert if failed
-      setPosts(previousPosts);
+      // Revert is complex with infinite query, simplified: invalidate to refetch
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
     }
-  };
+  }, [queryClient]);
 
-  const togglePostVisibility = (id: string) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === id
-          ? { ...post, visibility: post.visibility === 'private' ? 'public' : 'private' }
-          : post
-      )
-    );
-  };
+  const togglePostVisibility = useCallback((id: string) => {
+    queryClient.setQueryData(['feed'], (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        pages: oldData.pages.map((page: any) => ({
+          ...page,
+          posts: page.posts.map((post: Post) =>
+            post.id === id
+              ? { ...post, visibility: post.visibility === 'private' ? 'public' : 'private' }
+              : post
+          )
+        }))
+      };
+    });
+  }, [queryClient]);
 
-  const updatePostInFeed = (id: string, updates: Partial<Post>) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) => (post.id === id ? { ...post, ...updates } : post))
-    );
-  };
+  const updatePostInFeed = useCallback((id: string, updates: Partial<Post>) => {
+    queryClient.setQueryData(['feed'], (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        pages: oldData.pages.map((page: any) => ({
+          ...page,
+          posts: page.posts.map((post: Post) =>
+            post.id === id ? { ...post, ...updates } : post
+          )
+        }))
+      };
+    });
+  }, [queryClient]);
 
   return (
     <FeedContext.Provider value={{
@@ -132,7 +164,7 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
       togglePostVisibility,
       updatePostInFeed,
       loadMorePosts,
-      hasMore,
+      hasMore: !!hasNextPage,
       loading
     }}>
       {children}

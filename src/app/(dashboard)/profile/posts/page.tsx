@@ -82,24 +82,24 @@ export default function ProfilePostsPage() {
 
     // We need to fetch immediately when tab changes
     const loadFirstPage = async () => {
-        if (loadingRef.current) return;
+      if (loadingRef.current) return;
 
-        setLoading(true);
-        loadingRef.current = true;
-        try {
-            const response = await getUserPosts({
-                category: activeTab,
-                limit: 10
-            });
-            setPosts(response.posts.map(mapProfilePostToPost));
-            setNextCursor(response.nextCursor);
-            setHasMore(!!response.nextCursor);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-            loadingRef.current = false;
-        }
+      setLoading(true);
+      loadingRef.current = true;
+      try {
+        const response = await getUserPosts({
+          category: activeTab,
+          limit: 10
+        });
+        setPosts(response.posts.map(mapProfilePostToPost));
+        setNextCursor(response.nextCursor);
+        setHasMore(!!response.nextCursor);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+        loadingRef.current = false;
+      }
     };
     loadFirstPage();
 
@@ -136,7 +136,7 @@ export default function ProfilePostsPage() {
     const observer = new IntersectionObserver(
       entries => {
         if (entries[0].isIntersecting && hasMore && !loadingRef.current) {
-            fetchPosts(false);
+          fetchPosts(false);
         }
       },
       { threshold: 1.0 }
@@ -157,67 +157,64 @@ export default function ProfilePostsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppShell currentPage="profile" navigateTo={navigateTo}>
-        <div className="max-w-3xl mx-auto py-6 md:py-8 pb-20 md:pb-12">
-          {/* Header */}
-          <div className="flex items-center gap-4 mb-6">
-            <button
-                onClick={() => router.back()}
-                className="p-2 rounded-full hover:bg-muted transition-colors text-foreground"
-            >
-                <ArrowLeft className="w-5 h-5" />
-            </button>
-            <h1 className="text-2xl font-bold text-foreground">All Posts</h1>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-            {tabs.map((tab) => (
-                <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${
-                        activeTab === tab
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground'
-                    }`}
-                >
-                    {tab}
-                </button>
-            ))}
-          </div>
-
-          {/* Posts List */}
-          <div className="space-y-4">
-            {posts.length > 0 ? (
-                posts.map(post => (
-                    <div key={post.id} id={`post-${post.id}`}>
-                      <FeedPost
-                        {...post}
-                        initialComments={post.commentData}
-                        isOwnPost={true}
-                        onDelete={handleDeletePost}
-                        onToggleVisibility={handleToggleVisibility}
-                      />
-                    </div>
-                ))
-            ) : (
-                !loading && (
-                    <div className="text-center py-12 bg-card rounded-xl border border-border">
-                        <p className="text-muted-foreground">No posts found in this category.</p>
-                    </div>
-                )
-            )}
-
-            {/* Loading Sentinel */}
-            {hasMore && (
-                <div ref={observerTarget} className="flex justify-center py-4">
-                    {loading && <Loader2 className="w-6 h-6 animate-spin text-primary" />}
-                </div>
-            )}
-          </div>
+      <div className="max-w-3xl mx-auto py-6 md:py-8 pb-20 md:pb-12">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <button
+            onClick={() => router.back()}
+            className="p-2 rounded-full hover:bg-muted transition-colors text-foreground"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-2xl font-bold text-foreground">All Posts</h1>
         </div>
-      </AppShell>
+
+        {/* Tabs */}
+        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border ${activeTab === tab
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground'
+                }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Posts List */}
+        <div className="space-y-4">
+          {posts.length > 0 ? (
+            posts.map(post => (
+              <div key={post.id} id={`post-${post.id}`}>
+                <FeedPost
+                  {...post}
+                  initialComments={post.commentData}
+                  isOwnPost={true}
+                  onDelete={handleDeletePost}
+                  onToggleVisibility={handleToggleVisibility}
+                />
+              </div>
+            ))
+          ) : (
+            !loading && (
+              <div className="text-center py-12 bg-card rounded-xl border border-border">
+                <p className="text-muted-foreground">No posts found in this category.</p>
+              </div>
+            )
+          )}
+
+          {/* Loading Sentinel */}
+          {hasMore && (
+            <div ref={observerTarget} className="flex justify-center py-4">
+              {loading && <Loader2 className="w-6 h-6 animate-spin text-primary" />}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

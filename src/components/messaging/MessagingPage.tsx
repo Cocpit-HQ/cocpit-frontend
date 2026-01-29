@@ -136,68 +136,62 @@ export default function MessagingPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppShell
-        currentPage="messaging"
-        navigateTo={navigateTo}
-        hideBottomNav={!!isMobile && !!selectedChat}
-      >
-        <div className={`max-w-7xl mx-auto px-0 md:px-4 md:py-6 md:pb-10 h-full`}>
-          <div
-            className="bg-card border border-border md:rounded-lg overflow-hidden h-full"
-            style={{
-              height: isMobile
-                ? "100dvh" // Full viewport height on mobile (both list and chat)
-                : "calc(100vh - 140px)" // Desktop view
-            }}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-3 h-full">
-              {/* Chat List - on mobile, hidden if we have a selected chat */}
-              <div
-                className={`${isMobile && selectedChat ? "hidden" : "block"
-                  } md:block h-full overflow-hidden border-r border-border`}
-              >
-                <ChatList
-                  selectedChatId={selectedChat?.id}
-                  onSelectChat={(chat) => {
-                    if (isMobile) {
-                      // On mobile, navigate via URL to keep "Back" button working
-                      router.push(`/messaging?userId=${chat.otherUserId}`);
-                    } else {
-                      setSelectedChat(chat);
-                    }
-                  }}
-                  isMobile={!!isMobile}
-                  chats={chats}
-                  isLoading={isLoading}
-                  error={error}
-                />
-              </div>
+      <div className="max-w-7xl mx-auto px-0 md:px-4 md:py-6 md:pb-10 h-full">
+        <div
+          className="bg-card border border-border md:rounded-lg overflow-hidden h-full"
+          style={{
+            height: isMobile
+              ? "100dvh" // Full viewport height on mobile (both list and chat)
+              : "calc(100vh - 140px)" // Desktop view
+          }}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 h-full">
+            {/* Chat List - on mobile, hidden if we have a selected chat */}
+            <div
+              className={`${isMobile && selectedChat ? "hidden" : "block"
+                } md:block h-full overflow-hidden border-r border-border`}
+            >
+              <ChatList
+                selectedChatId={selectedChat?.id}
+                onSelectChat={(chat) => {
+                  if (isMobile) {
+                    // On mobile, navigate via URL to keep "Back" button working
+                    router.push(`/messaging?userId=${chat.otherUserId}`);
+                  } else {
+                    setSelectedChat(chat);
+                  }
+                }}
+                isMobile={!!isMobile}
+                chats={chats}
+                isLoading={isLoading}
+                error={error}
+              />
+            </div>
 
-              {/* Chat Window - on mobile, only shown if selectedChat */}
-              <div
-                className={`${isMobile && selectedChat
-                  ? "fixed inset-0 z-50 bg-background w-full h-[100dvh] flex flex-col"
-                  : "hidden md:flex md:col-span-2 flex-col h-full overflow-hidden bg-background/50"
-                  }`}
-              >
-                {selectedChat ? (
-                  <ChatWindow
-                    chat={selectedChat}
-                    isMobile={!!isMobile}
-                    onBack={() => {
-                      router.push('/messaging');
-                    }}
-                  />
-                ) : (
-                  <div className="hidden md:flex items-center justify-center h-full text-muted-foreground">
-                    {isLoading ? "Loading..." : "Select a conversation to start messaging"}
-                  </div>
-                )}
-              </div>
+            {/* Chat Window - on mobile, only shown if selectedChat */}
+            <div
+              className={`${isMobile && selectedChat
+                ? "fixed inset-0 z-50 bg-background w-full h-[100dvh] flex flex-col"
+                : "hidden md:flex md:col-span-2 flex-col h-full overflow-hidden bg-background/50"
+                }`}
+            >
+              {selectedChat ? (
+                <ChatWindow
+                  chat={selectedChat}
+                  isMobile={!!isMobile}
+                  onBack={() => {
+                    router.push('/messaging');
+                  }}
+                />
+              ) : (
+                <div className="hidden md:flex items-center justify-center h-full text-muted-foreground">
+                  {isLoading ? "Loading..." : "Select a conversation to start messaging"}
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </AppShell>
+      </div>
     </div>
   )
 }

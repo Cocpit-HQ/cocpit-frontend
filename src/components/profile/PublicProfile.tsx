@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Briefcase, GraduationCap, CheckCircle, MessageCircle, UserPlus, UserCheck } from "lucide-react"
 
-import { AppShell } from "@/components/layout/AppShell"
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import FeedPost from "@/components/home/FeedPost"
 import { SkillOverlap } from "@/components/profile/SkillOverlap"
@@ -216,9 +215,7 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
 
   const isUserFollowing = user ? isFollowing(user.id) : false;
 
-  const navigateTo = (page: Page) => {
-    router.push(routes[page] ?? "/feed")
-  }
+
 
   const handleFollowToggle = () => {
     if (!user) return;
@@ -260,220 +257,218 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppShell currentPage="profile" navigateTo={navigateTo}>
-        <div className="max-w-7xl mx-auto py-6 md:py-8 pb-20 md:pb-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
-            <div className="lg:col-span-8">
-              {/* Header Card */}
-              <div className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border">
-                <div className="h-36 bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899] relative"></div>
+      <div className="max-w-7xl mx-auto py-6 md:py-8 pb-20 md:pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+          <div className="lg:col-span-8">
+            {/* Header Card */}
+            <div className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border">
+              <div className="h-36 bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899] relative"></div>
 
-                <div className="px-6 pb-6">
-                  <div className="flex items-start justify-between -mt-14 mb-4">
-                    <div
-                      className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 relative cursor-pointer"
-                      onClick={() => setIsViewAvatarOpen(true)}
-                    >
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    {!isOwnProfile && (
-                      <div className="mt-16 flex gap-2">
-                        <button
-                          onClick={handleMessage}
-                          className="bg-background hover:bg-muted text-foreground border border-input px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                          Message
-                        </button>
-                        <button
-                          onClick={handleFollowToggle}
-                          disabled={isFollowLoading(user.id)}
-                          className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${isUserFollowing
-                            ? "bg-muted text-foreground hover:bg-muted/80"
-                            : "bg-primary text-primary-foreground hover:opacity-90"
-                            } ${isFollowLoading(user.id) ? "opacity-50 cursor-not-allowed" : ""}`}
-                        >
-                          {isUserFollowing ? (
-                            <>
-                              <UserCheck className="w-4 h-4" />
-                              Following
-                            </>
-                          ) : (
-                            <>
-                              <UserPlus className="w-4 h-4" />
-                              Follow
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h1 className="text-2xl text-foreground">{user.name}</h1>
-                      <CheckCircle className="w-5 h-5 text-primary fill-primary/10" />
-                      {user.connectionStatus !== 'none' && (
-                        <span className="text-sm text-muted-foreground">· {user.connectionStatus === 'connected' ? '1st' : '2nd'}</span>
-                      )}
-                    </div>
-
-                    <p className="text-base mb-2 text-foreground">
-                      {user.headline}
-                    </p>
-
-                    <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
-                      <span>{user.location}</span>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground mb-4">{user.mutualConnections} mutual connections</p>
-
-                    {/* Identity Chips - Read Only */}
-                    {/* Identity Chips - Read Only */}
-                    {user.identity && (
-                      <ProfileIdentityChips initialIdentity={user.identity} readOnly />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Stats Card */}
-              <div className="rounded-xl border p-4 mb-6 bg-card border-border">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <p className="text-xl mb-1 text-foreground">{isUserFollowing ? "501" : "500"}+</p>
-                    <p className="text-xs text-muted-foreground">Connections</p>
-                  </div>
-                  <div className="text-center border-l border-r border-border">
-                    <p className="text-xl mb-1 text-foreground">--</p>
-                    <p className="text-xs text-muted-foreground">Profile Views</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xl mb-1 text-foreground">{publicPosts.length}</p>
-                    <p className="text-xs text-muted-foreground">Posts</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Skill Overlap - Differentiator */}
-              <SkillOverlap currentUserSkills={currentUserSkills} profileUserSkills={user.skills} />
-
-              {/* About */}
-              <div className="rounded-xl border p-6 mb-4 bg-card border-border">
-                <h2 className="text-xl text-foreground mb-4">About</h2>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {user.about}
-                </p>
-              </div>
-
-              {/* Experience */}
-              {user.experiences.length > 0 && (
-                <div className="rounded-xl border p-6 mb-4 bg-card border-border">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl text-foreground">Experience</h2>
-                  </div>
-
-                  <div className="space-y-6">
-                    {user.experiences.map((exp: any) => (
-                      <ReadOnlyExperienceItem
-                        key={exp.id}
-                        experience={exp}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Skills */}
-              {user.skills.length > 0 && (
-                <div className="rounded-xl border p-6 mb-4 bg-card border-border">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl text-foreground">Skills</h2>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {user.skills.map((skill) => (
-                      <SkillProofPill
-                        key={skill}
-                        skill={skill}
-                        experiences={user.experiences as any[]}
-                        posts={publicPosts}
-                        readOnly
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Education */}
-              {user.educations.length > 0 && (
-                <div className="rounded-xl border p-6 bg-card border-border">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl text-foreground">Education</h2>
-                  </div>
-
-                  <div className="space-y-6">
-                    {user.educations.map((edu: any) => (
-                      <ReadOnlyEducationItem
-                        key={edu.id}
-                        education={edu}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Public Posts */}
-              <div className="mt-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl text-foreground font-semibold">Posts</h2>
-                  <button
-                    onClick={() => router.push(`/profile/${userId}/posts`)}
-                    className="text-sm text-primary hover:underline font-medium"
+              <div className="px-6 pb-6">
+                <div className="flex items-start justify-between -mt-14 mb-4">
+                  <div
+                    className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 relative cursor-pointer"
+                    onClick={() => setIsViewAvatarOpen(true)}
                   >
-                    See all posts
-                  </button>
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  {!isOwnProfile && (
+                    <div className="mt-16 flex gap-2">
+                      <button
+                        onClick={handleMessage}
+                        className="bg-background hover:bg-muted text-foreground border border-input px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        Message
+                      </button>
+                      <button
+                        onClick={handleFollowToggle}
+                        disabled={isFollowLoading(user.id)}
+                        className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${isUserFollowing
+                          ? "bg-muted text-foreground hover:bg-muted/80"
+                          : "bg-primary text-primary-foreground hover:opacity-90"
+                          } ${isFollowLoading(user.id) ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        {isUserFollowing ? (
+                          <>
+                            <UserCheck className="w-4 h-4" />
+                            Following
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus className="w-4 h-4" />
+                            Follow
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
+
                 <div>
-                  {loadingPosts ? (
-                    <div className="text-center py-4 text-muted-foreground">Loading posts...</div>
-                  ) : publicPosts.length > 0 ? (
-                    isMobile ? (
-                      <div className="grid grid-cols-2 gap-4">
-                        {publicPosts.slice(0, 4).map(post => (
-                          <PostCard
-                            key={post.id}
-                            post={post}
-                            href={`/profile/${userId}/posts?focusPostId=${post.id}`}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {publicPosts.slice(0, 4).map(post => (
-                          <FeedPost key={post.id} {...post} initialComments={post.commentData} />
-                        ))}
-                      </div>
-                    )
-                  ) : (
-                    <p className="text-muted-foreground text-sm">No recent public activity to show.</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h1 className="text-2xl text-foreground">{user.name}</h1>
+                    <CheckCircle className="w-5 h-5 text-primary fill-primary/10" />
+                    {user.connectionStatus !== 'none' && (
+                      <span className="text-sm text-muted-foreground">· {user.connectionStatus === 'connected' ? '1st' : '2nd'}</span>
+                    )}
+                  </div>
+
+                  <p className="text-base mb-2 text-foreground">
+                    {user.headline}
+                  </p>
+
+                  <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
+                    <span>{user.location}</span>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground mb-4">{user.mutualConnections} mutual connections</p>
+
+                  {/* Identity Chips - Read Only */}
+                  {/* Identity Chips - Read Only */}
+                  {user.identity && (
+                    <ProfileIdentityChips initialIdentity={user.identity} readOnly />
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="lg:col-span-4">
-              <div className="sticky top-8 space-y-6">
-                <SuggestionsPanel />
+            {/* Stats Card */}
+            <div className="rounded-xl border p-4 mb-6 bg-card border-border">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-xl mb-1 text-foreground">{isUserFollowing ? "501" : "500"}+</p>
+                  <p className="text-xs text-muted-foreground">Connections</p>
+                </div>
+                <div className="text-center border-l border-r border-border">
+                  <p className="text-xl mb-1 text-foreground">--</p>
+                  <p className="text-xs text-muted-foreground">Profile Views</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xl mb-1 text-foreground">{publicPosts.length}</p>
+                  <p className="text-xs text-muted-foreground">Posts</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Skill Overlap - Differentiator */}
+            <SkillOverlap currentUserSkills={currentUserSkills} profileUserSkills={user.skills} />
+
+            {/* About */}
+            <div className="rounded-xl border p-6 mb-4 bg-card border-border">
+              <h2 className="text-xl text-foreground mb-4">About</h2>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {user.about}
+              </p>
+            </div>
+
+            {/* Experience */}
+            {user.experiences.length > 0 && (
+              <div className="rounded-xl border p-6 mb-4 bg-card border-border">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl text-foreground">Experience</h2>
+                </div>
+
+                <div className="space-y-6">
+                  {user.experiences.map((exp: any) => (
+                    <ReadOnlyExperienceItem
+                      key={exp.id}
+                      experience={exp}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Skills */}
+            {user.skills.length > 0 && (
+              <div className="rounded-xl border p-6 mb-4 bg-card border-border">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl text-foreground">Skills</h2>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {user.skills.map((skill) => (
+                    <SkillProofPill
+                      key={skill}
+                      skill={skill}
+                      experiences={user.experiences as any[]}
+                      posts={publicPosts}
+                      readOnly
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Education */}
+            {user.educations.length > 0 && (
+              <div className="rounded-xl border p-6 bg-card border-border">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl text-foreground">Education</h2>
+                </div>
+
+                <div className="space-y-6">
+                  {user.educations.map((edu: any) => (
+                    <ReadOnlyEducationItem
+                      key={edu.id}
+                      education={edu}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Public Posts */}
+            <div className="mt-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl text-foreground font-semibold">Posts</h2>
+                <button
+                  onClick={() => router.push(`/profile/${userId}/posts`)}
+                  className="text-sm text-primary hover:underline font-medium"
+                >
+                  See all posts
+                </button>
+              </div>
+              <div>
+                {loadingPosts ? (
+                  <div className="text-center py-4 text-muted-foreground">Loading posts...</div>
+                ) : publicPosts.length > 0 ? (
+                  isMobile ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      {publicPosts.slice(0, 4).map(post => (
+                        <PostCard
+                          key={post.id}
+                          post={post}
+                          href={`/profile/${userId}/posts?focusPostId=${post.id}`}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {publicPosts.slice(0, 4).map(post => (
+                        <FeedPost key={post.id} {...post} initialComments={post.commentData} />
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  <p className="text-muted-foreground text-sm">No recent public activity to show.</p>
+                )}
               </div>
             </div>
           </div>
+
+          <div className="lg:col-span-4">
+            <div className="sticky top-8 space-y-6">
+              <SuggestionsPanel />
+            </div>
+          </div>
         </div>
-      </AppShell>
+      </div>
       <ViewAvatarModal
         isOpen={isViewAvatarOpen}
         onClose={() => setIsViewAvatarOpen(false)}

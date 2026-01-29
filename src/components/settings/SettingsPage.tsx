@@ -67,9 +67,8 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: () =>
       className={`relative w-12 h-6 rounded-full transition-colors ${checked ? "bg-primary" : "bg-secondary"}`}
     >
       <div
-        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
-          checked ? "translate-x-6" : "translate-x-0"
-        }`}
+        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${checked ? "translate-x-6" : "translate-x-0"
+          }`}
       />
     </button>
   )
@@ -91,11 +90,10 @@ function SettingsNavCard({
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left p-4 rounded-xl transition-all border ${
-        isActive
-          ? "bg-primary border-primary"
-          : "bg-card border-border hover:border-secondary shadow-sm"
-      }`}
+      className={`w-full text-left p-4 rounded-xl transition-all border ${isActive
+        ? "bg-primary border-primary"
+        : "bg-card border-border hover:border-secondary shadow-sm"
+        }`}
     >
       <div className="flex items-start gap-3">
         <div className={`${isActive ? "text-primary-foreground" : "text-primary"}`}>{icon}</div>
@@ -126,19 +124,17 @@ function ThemeOption({
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center justify-between p-4 rounded-lg border transition-all ${
-        isSelected
-          ? "bg-sidebar border-primary"
-          : "bg-sidebar border-sidebar-border hover:border-secondary"
-      }`}
+      className={`w-full flex items-center justify-between p-4 rounded-lg border transition-all ${isSelected
+        ? "bg-sidebar border-primary"
+        : "bg-sidebar border-sidebar-border hover:border-secondary"
+        }`}
     >
       <div className="flex items-center gap-3">
         <div
-          className={`${
-            isSelected
-              ? "text-primary"
-              : "text-muted-foreground"
-          }`}
+          className={`${isSelected
+            ? "text-primary"
+            : "text-muted-foreground"
+            }`}
         >
           {icon}
         </div>
@@ -148,11 +144,10 @@ function ThemeOption({
         </div>
       </div>
       <div
-        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-          isSelected
-            ? "border-primary"
-            : "border-muted-foreground"
-        }`}
+        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected
+          ? "border-primary"
+          : "border-muted-foreground"
+          }`}
       >
         {isSelected && <div className="w-3 h-3 rounded-full bg-primary" />}
       </div>
@@ -213,194 +208,192 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppShell currentPage="settings" navigateTo={navigateTo}>
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
-          <div className="mb-6 md:mb-8 flex items-center gap-4">
-            <button
-              onClick={() => router.push("/profile")}
-              className="p-2 rounded-full transition-all hover:bg-muted"
-            >
-              <ArrowLeft className="w-5 h-5 text-foreground" />
-            </button>
-            <div>
-              <h1 className="mb-2 text-foreground">Settings</h1>
-              <p className="text-muted-foreground">
-                Manage your account preferences and privacy settings
-              </p>
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
+        <div className="mb-6 md:mb-8 flex items-center gap-4">
+          <button
+            onClick={() => router.push("/profile")}
+            className="p-2 rounded-full transition-all hover:bg-muted"
+          >
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
+          <div>
+            <h1 className="mb-2 text-foreground">Settings</h1>
+            <p className="text-muted-foreground">
+              Manage your account preferences and privacy settings
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-3">
+            <div className="space-y-3">
+              <SettingsNavCard
+                icon={<Palette className="w-5 h-5" />}
+                title="Appearance"
+                description="Customize your visual experience"
+                isActive={activeSection === "appearance"}
+                onClick={() => setActiveSection("appearance")}
+              />
+              <SettingsNavCard
+                icon={<Bell className="w-5 h-5" />}
+                title="Notifications"
+                description="Manage notification preferences"
+                isActive={activeSection === "notifications"}
+                onClick={() => setActiveSection("notifications")}
+              />
+              <SettingsNavCard
+                icon={<Lock className="w-5 h-5" />}
+                title="Privacy & Security"
+                description="Control how you share your information"
+                isActive={activeSection === "privacy"}
+                onClick={() => setActiveSection("privacy")}
+              />
+              <SettingsNavCard
+                icon={<User className="w-5 h-5" />}
+                title="Account"
+                description="Manage your account settings"
+                isActive={activeSection === "account"}
+                onClick={() => setActiveSection("account")}
+              />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div className="lg:col-span-3">
-              <div className="space-y-3">
-                <SettingsNavCard
-                  icon={<Palette className="w-5 h-5" />}
-                  title="Appearance"
-                  description="Customize your visual experience"
-                  isActive={activeSection === "appearance"}
-                  onClick={() => setActiveSection("appearance")}
-                />
-                <SettingsNavCard
-                  icon={<Bell className="w-5 h-5" />}
-                  title="Notifications"
-                  description="Manage notification preferences"
-                  isActive={activeSection === "notifications"}
-                  onClick={() => setActiveSection("notifications")}
-                />
-                <SettingsNavCard
-                  icon={<Lock className="w-5 h-5" />}
-                  title="Privacy & Security"
-                  description="Control how you share your information"
-                  isActive={activeSection === "privacy"}
-                  onClick={() => setActiveSection("privacy")}
-                />
-                <SettingsNavCard
-                  icon={<User className="w-5 h-5" />}
-                  title="Account"
-                  description="Manage your account settings"
-                  isActive={activeSection === "account"}
-                  onClick={() => setActiveSection("account")}
-                />
-              </div>
-            </div>
+          <div className="lg:col-span-6">
+            {activeSection === "appearance" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="mb-2 text-foreground">Appearance</h2>
+                  <p className="text-sm text-muted-foreground">Customize your visual experience</p>
+                </div>
 
-            <div className="lg:col-span-6">
-              {activeSection === "appearance" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="mb-2 text-foreground">Appearance</h2>
-                    <p className="text-sm text-muted-foreground">Customize your visual experience</p>
+                <div className="rounded-xl p-6 bg-card border border-border">
+                  <h3 className="text-foreground mb-4">Theme</h3>
+
+                  <div className="space-y-3">
+                    <ThemeOption
+                      icon={<Zap className="w-5 h-5" />}
+                      title="Navy Mode"
+                      description="The classic experience"
+                      isSelected={pendingTheme === "navy"}
+                      onClick={() => setPendingTheme("navy")}
+                    />
+                    <ThemeOption
+                      icon={<Sun className="w-5 h-5" />}
+                      title="Light Mode"
+                      description="Clean and bright interface"
+                      isSelected={pendingTheme === "light"}
+                      onClick={() => setPendingTheme("light")}
+                    />
+                    <ThemeOption
+                      icon={<Moon className="w-5 h-5" />}
+                      title="Dark Mode"
+                      description="Easy on the eyes, perfect for night"
+                      isSelected={pendingTheme === "dark"}
+                      onClick={() => setPendingTheme("dark")}
+                    />
+                    <ThemeOption
+                      icon={<Monitor className="w-5 h-5" />}
+                      title="System"
+                      description="Follow your device's setting"
+                      isSelected={pendingTheme === "system"}
+                      onClick={() => setPendingTheme("system")}
+                    />
                   </div>
+                </div>
 
-                  <div className="rounded-xl p-6 bg-card border border-border">
-                    <h3 className="text-foreground mb-4">Theme</h3>
+                <div className="rounded-xl p-6 bg-card border border-border">
+                  <h3 className="mb-4 text-foreground">Display</h3>
 
-                    <div className="space-y-3">
-                      <ThemeOption
-                        icon={<Zap className="w-5 h-5" />}
-                        title="Navy Mode"
-                        description="The classic experience"
-                        isSelected={pendingTheme === "navy"}
-                        onClick={() => setPendingTheme("navy")}
-                      />
-                      <ThemeOption
-                        icon={<Sun className="w-5 h-5" />}
-                        title="Light Mode"
-                        description="Clean and bright interface"
-                        isSelected={pendingTheme === "light"}
-                        onClick={() => setPendingTheme("light")}
-                      />
-                      <ThemeOption
-                        icon={<Moon className="w-5 h-5" />}
-                        title="Dark Mode"
-                        description="Easy on the eyes, perfect for night"
-                        isSelected={pendingTheme === "dark"}
-                        onClick={() => setPendingTheme("dark")}
-                      />
-                      <ThemeOption
-                        icon={<Monitor className="w-5 h-5" />}
-                        title="System"
-                        description="Follow your device's setting"
-                        isSelected={pendingTheme === "system"}
-                        onClick={() => setPendingTheme("system")}
-                      />
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="mb-1 text-foreground">Compact mode</p>
+                      <p className="text-sm text-muted-foreground">Show more content in less space</p>
                     </div>
-                  </div>
-
-                  <div className="rounded-xl p-6 bg-card border border-border">
-                    <h3 className="mb-4 text-foreground">Display</h3>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="mb-1 text-foreground">Compact mode</p>
-                        <p className="text-sm text-muted-foreground">Show more content in less space</p>
-                      </div>
-                      <ToggleSwitch checked={compactMode} onChange={() => setCompactMode(!compactMode)} />
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleSave}
-                    className="w-full bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:opacity-90 transition-all"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              )}
-
-              {activeSection === "notifications" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="mb-2 text-foreground">Notifications</h2>
-                    <p className="text-sm text-muted-foreground">Manage notification preferences</p>
-                  </div>
-
-                  <div className="rounded-xl p-6 space-y-4 bg-card border border-border">
-                    <ToggleSetting title="Email notifications" description="Receive email updates about your activity" />
-                    <ToggleSetting title="Push notifications" description="Get notifications on your devices" />
-                    <ToggleSetting title="Message notifications" description="Get notified about new messages" />
-                    <ToggleSetting title="Job alerts" description="Receive notifications about job matches" />
+                    <ToggleSwitch checked={compactMode} onChange={() => setCompactMode(!compactMode)} />
                   </div>
                 </div>
-              )}
 
-              {activeSection === "privacy" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="mb-2 text-foreground">Privacy & Security</h2>
-                    <p className="text-sm text-muted-foreground">Control how you share your information</p>
-                  </div>
-
-                  <div className="rounded-xl p-6 space-y-4 bg-card border border-border">
-                    <ToggleSetting title="Profile visibility" description="Make your profile visible to everyone" />
-                    <ToggleSetting title="Show activity status" description="Let others see when you're online" />
-                    <ToggleSetting title="Search engine indexing" description="Allow search engines to show your profile" />
-                  </div>
-                </div>
-              )}
-
-              {activeSection === "account" && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="mb-2 text-foreground">Account</h2>
-                    <p className="text-sm text-muted-foreground">Manage your account settings</p>
-                  </div>
-
-                  <div className="rounded-xl p-6 space-y-4 bg-card border border-border">
-                    <AccountSetting label="Email" value="alex.johnson@email.com" />
-                    <AccountSetting label="Phone" value="+1 (555) 123-4567" />
-                    <AccountSetting label="Password" value="••••••••" />
-                    <AccountSetting label="Two-factor authentication" value="Disabled" />
-
-                    {!isMobile && (
-                      <div className="pt-4 border-t border-border">
-                        <p className="text-sm mb-1 text-muted-foreground">Session</p>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          End your current session on this device.
-                        </p>
-                        <Button
-                          variant="outline"
-                          className="text-primary border-primary/50 hover:bg-primary/10 hover:text-primary"
-                          onClick={() => setShowLogoutModal(true)}
-                        >
-                          <LogOut className="w-4 h-4 mr-2" />
-                          Log out
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="lg:col-span-3">
-              <div className="sticky top-8">
-                <SuggestionsPanel />
+                <button
+                  onClick={handleSave}
+                  className="w-full bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:opacity-90 transition-all"
+                >
+                  Save Changes
+                </button>
               </div>
+            )}
+
+            {activeSection === "notifications" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="mb-2 text-foreground">Notifications</h2>
+                  <p className="text-sm text-muted-foreground">Manage notification preferences</p>
+                </div>
+
+                <div className="rounded-xl p-6 space-y-4 bg-card border border-border">
+                  <ToggleSetting title="Email notifications" description="Receive email updates about your activity" />
+                  <ToggleSetting title="Push notifications" description="Get notifications on your devices" />
+                  <ToggleSetting title="Message notifications" description="Get notified about new messages" />
+                  <ToggleSetting title="Job alerts" description="Receive notifications about job matches" />
+                </div>
+              </div>
+            )}
+
+            {activeSection === "privacy" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="mb-2 text-foreground">Privacy & Security</h2>
+                  <p className="text-sm text-muted-foreground">Control how you share your information</p>
+                </div>
+
+                <div className="rounded-xl p-6 space-y-4 bg-card border border-border">
+                  <ToggleSetting title="Profile visibility" description="Make your profile visible to everyone" />
+                  <ToggleSetting title="Show activity status" description="Let others see when you're online" />
+                  <ToggleSetting title="Search engine indexing" description="Allow search engines to show your profile" />
+                </div>
+              </div>
+            )}
+
+            {activeSection === "account" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="mb-2 text-foreground">Account</h2>
+                  <p className="text-sm text-muted-foreground">Manage your account settings</p>
+                </div>
+
+                <div className="rounded-xl p-6 space-y-4 bg-card border border-border">
+                  <AccountSetting label="Email" value="alex.johnson@email.com" />
+                  <AccountSetting label="Phone" value="+1 (555) 123-4567" />
+                  <AccountSetting label="Password" value="••••••••" />
+                  <AccountSetting label="Two-factor authentication" value="Disabled" />
+
+                  {!isMobile && (
+                    <div className="pt-4 border-t border-border">
+                      <p className="text-sm mb-1 text-muted-foreground">Session</p>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        End your current session on this device.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="text-primary border-primary/50 hover:bg-primary/10 hover:text-primary"
+                        onClick={() => setShowLogoutModal(true)}
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Log out
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="lg:col-span-3">
+            <div className="sticky top-8">
+              <SuggestionsPanel />
             </div>
           </div>
         </div>
-      </AppShell>
+      </div>
 
       <Dialog open={showLogoutModal} onOpenChange={setShowLogoutModal}>
         <DialogContent>

@@ -270,153 +270,136 @@ export function EventsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppShell currentPage="events" navigateTo={navigateTo}>
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
 
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">Events</h1>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Events</h1>
+          </div>
+          <button
+            onClick={() => setShowCreateEvent(true)}
+            className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-6 py-3 rounded-xl hover:opacity-90 transition-all font-medium shadow-lg shadow-purple-500/20"
+          >
+            <Plus className="w-5 h-5" />
+            Create Event
+          </button>
+        </div>
+
+        {/* Search and Filter Row */}
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
+          <div className="flex gap-3 w-full">
+            <div className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search events (location)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 rounded-xl border focus:outline-none focus:border-primary bg-card border-border text-foreground placeholder-muted-foreground"
+              />
             </div>
+            <div className="flex-shrink-0">
+              <EventFilters filters={filters} setFilters={setFilters} />
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Chips */}
+        {(filters.categories.length > 0 || filters.types.length > 0 || filters.prices.length > 0 || filters.dates.length > 0 || filters.popular) && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            {filters.popular && (
+              <div className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                Popular
+                <button onClick={removePopular} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
+              </div>
+            )}
+            {filters.types.map(t => (
+              <div key={t} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                {t === 'InPerson' ? 'In-person' : t}
+                <button onClick={() => removeFilter('types', t)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
+              </div>
+            ))}
+            {filters.prices.map(p => (
+              <div key={p} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                {p}
+                <button onClick={() => removeFilter('prices', p)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
+              </div>
+            ))}
+            {filters.categories.map(c => (
+              <div key={c} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                {c}
+                <button onClick={() => removeFilter('categories', c)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
+              </div>
+            ))}
+            {filters.dates.map(d => (
+              <div key={d} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                {d}
+                <button onClick={() => removeFilter('dates', d)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
+              </div>
+            ))}
             <button
-              onClick={() => setShowCreateEvent(true)}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-6 py-3 rounded-xl hover:opacity-90 transition-all font-medium shadow-lg shadow-purple-500/20"
+              onClick={() => setFilters(initialFilterState)}
+              className="text-sm text-muted-foreground hover:text-foreground underline px-2"
             >
-              <Plus className="w-5 h-5" />
-              Create Event
+              Clear all
             </button>
           </div>
+        )}
 
-          {/* Search and Filter Row */}
-          <div className="flex flex-col md:flex-row gap-4 mb-4">
-            <div className="flex gap-3 w-full">
-              <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search events (location)..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-xl border focus:outline-none focus:border-primary bg-card border-border text-foreground placeholder-muted-foreground"
+        {/* Tabs */}
+        <div className="flex gap-3 md:gap-4 mb-8 overflow-x-auto scrollbar-hide py-1">
+          {["upcoming", "registered", "saved", "my_events", "dashboard"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 rounded-full text-xs md:text-sm font-medium capitalize transition-all relative whitespace-nowrap flex-shrink-0 ${activeTab === tab
+                ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md shadow-purple-500/20"
+                : theme === 'light'
+                  ? "bg-[#f3f4f6] text-muted-foreground hover:bg-[#e5e7eb] hover:text-foreground border border-black/5"
+                  : "bg-[#171c28] text-muted-foreground hover:bg-[#1f2536] hover:text-foreground border border-white/5"
+                }`}
+            >
+              {tab === 'upcoming' ? 'Discover' : tab === 'dashboard' ? 'Event Dashboard' : tab.replace('_', ' ')}
+            </button>
+          ))}
+        </div>
+
+        {/* Content Area */}
+        {activeTab === 'upcoming' ? (
+          <div className="space-y-10 animate-in fade-in duration-500">
+
+            {/* Suggestions Section */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-foreground">Suggested for you</h2>
+                {/* Placeholder for future suggestion settings or "See all" */}
+              </div>
+
+              {isInitialLoading ? (
+                <div className="w-full h-64 bg-muted animate-pulse rounded-xl" />
+              ) : suggestedEvents.length > 0 ? (
+                <HeroCarousel
+                  events={suggestedEvents}
+                  onEventClick={(id) => router.push(`/events/${id}`)}
                 />
-              </div>
-              <div className="flex-shrink-0">
-                <EventFilters filters={filters} setFilters={setFilters} />
-              </div>
-            </div>
-          </div>
-
-          {/* Filter Chips */}
-          {(filters.categories.length > 0 || filters.types.length > 0 || filters.prices.length > 0 || filters.dates.length > 0 || filters.popular) && (
-            <div className="flex flex-wrap gap-2 mb-6">
-              {filters.popular && (
-                <div className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                  Popular
-                  <button onClick={removePopular} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
+              ) : (
+                <div className="p-8 text-center text-muted-foreground bg-card rounded-xl border border-border">
+                  <p>No suggestions available at the moment.</p>
                 </div>
               )}
-              {filters.types.map(t => (
-                <div key={t} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                  {t === 'InPerson' ? 'In-person' : t}
-                  <button onClick={() => removeFilter('types', t)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
-                </div>
-              ))}
-              {filters.prices.map(p => (
-                <div key={p} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                  {p}
-                  <button onClick={() => removeFilter('prices', p)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
-                </div>
-              ))}
-              {filters.categories.map(c => (
-                <div key={c} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                  {c}
-                  <button onClick={() => removeFilter('categories', c)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
-                </div>
-              ))}
-              {filters.dates.map(d => (
-                <div key={d} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
-                  {d}
-                  <button onClick={() => removeFilter('dates', d)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
-                </div>
-              ))}
-              <button
-                onClick={() => setFilters(initialFilterState)}
-                className="text-sm text-muted-foreground hover:text-foreground underline px-2"
-              >
-                Clear all
-              </button>
-            </div>
-          )}
+            </section>
 
-          {/* Tabs */}
-          <div className="flex gap-3 md:gap-4 mb-8 overflow-x-auto scrollbar-hide py-1">
-            {["upcoming", "registered", "saved", "my_events", "dashboard"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-full text-xs md:text-sm font-medium capitalize transition-all relative whitespace-nowrap flex-shrink-0 ${activeTab === tab
-                  ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md shadow-purple-500/20"
-                  : theme === 'light'
-                    ? "bg-[#f3f4f6] text-muted-foreground hover:bg-[#e5e7eb] hover:text-foreground border border-black/5"
-                    : "bg-[#171c28] text-muted-foreground hover:bg-[#1f2536] hover:text-foreground border border-white/5"
-                  }`}
-              >
-                {tab === 'upcoming' ? 'Discover' : tab === 'dashboard' ? 'Event Dashboard' : tab.replace('_', ' ')}
-              </button>
-            ))}
-          </div>
+            {/* All Events Section (Infinite Scroll) */}
+            <section>
+              <h2 className="text-2xl font-bold mb-4 text-foreground">All Events</h2>
 
-          {/* Content Area */}
-          {activeTab === 'upcoming' ? (
-            <div className="space-y-10 animate-in fade-in duration-500">
-
-              {/* Suggestions Section */}
-              <section>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold text-foreground">Suggested for you</h2>
-                  {/* Placeholder for future suggestion settings or "See all" */}
-                </div>
-
-                {isInitialLoading ? (
-                  <div className="w-full h-64 bg-muted animate-pulse rounded-xl" />
-                ) : suggestedEvents.length > 0 ? (
-                  <HeroCarousel
-                    events={suggestedEvents}
-                    onEventClick={(id) => router.push(`/events/${id}`)}
-                  />
-                ) : (
-                  <div className="p-8 text-center text-muted-foreground bg-card rounded-xl border border-border">
-                    <p>No suggestions available at the moment.</p>
-                  </div>
-                )}
-              </section>
-
-              {/* All Events Section (Infinite Scroll) */}
-              <section>
-                <h2 className="text-2xl font-bold mb-4 text-foreground">All Events</h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {displayEvents.map((event, index) => {
-                    if (displayEvents.length === index + 1) {
-                      return (
-                        <div ref={lastEventElementRef} key={event.id}>
-                          <StandardEventCard
-                            event={event}
-                            onClick={() => router.push(`/events/${event.id}`)}
-                            isRegistered={isRegistered(event.id)}
-                            isSaved={isSaved(event.id)}
-                            isSaving={isSaving(event.id)}
-                            onToggleSave={(e) => {
-                              e.stopPropagation();
-                              isSaved(event.id) ? unsaveEvent(event.id) : saveEvent(event.id);
-                            }}
-                          />
-                        </div>
-                      )
-                    } else {
-                      return (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {displayEvents.map((event, index) => {
+                  if (displayEvents.length === index + 1) {
+                    return (
+                      <div ref={lastEventElementRef} key={event.id}>
                         <StandardEventCard
-                          key={event.id}
                           event={event}
                           onClick={() => router.push(`/events/${event.id}`)}
                           isRegistered={isRegistered(event.id)}
@@ -427,76 +410,91 @@ export function EventsPage() {
                             isSaved(event.id) ? unsaveEvent(event.id) : saveEvent(event.id);
                           }}
                         />
-                      )
-                    }
-                  })}
+                      </div>
+                    )
+                  } else {
+                    return (
+                      <StandardEventCard
+                        key={event.id}
+                        event={event}
+                        onClick={() => router.push(`/events/${event.id}`)}
+                        isRegistered={isRegistered(event.id)}
+                        isSaved={isSaved(event.id)}
+                        isSaving={isSaving(event.id)}
+                        onToggleSave={(e) => {
+                          e.stopPropagation();
+                          isSaved(event.id) ? unsaveEvent(event.id) : saveEvent(event.id);
+                        }}
+                      />
+                    )
+                  }
+                })}
 
-                  {/* Skeletons for initial loading or loading more */}
-                  {(isInitialLoading || isLoadingPaged) && (
-                    <>
-                      <EventSkeleton />
-                      <EventSkeleton />
-                      <EventSkeleton />
-                    </>
+                {/* Skeletons for initial loading or loading more */}
+                {(isInitialLoading || isLoadingPaged) && (
+                  <>
+                    <EventSkeleton />
+                    <EventSkeleton />
+                    <EventSkeleton />
+                  </>
+                )}
+              </div>
+
+              {!isInitialLoading && !hasMore && displayEvents.length > 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>You&apos;ve reached the end!</p>
+                </div>
+              )}
+
+              {!isInitialLoading && displayEvents.length === 0 && (
+                <div className="text-center py-12 text-muted-foreground">
+                  <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p className="text-lg">No events found matching your criteria.</p>
+                </div>
+              )}
+            </section>
+          </div>
+        ) : activeTab === 'dashboard' ? (
+          <EventDashboard navigateTo={navigateTo} theme={(theme || 'dark') as Theme} />
+        ) : (
+          // Other Tabs (Unchanged layout mostly, but using local state/context logic)
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(activeTab === 'registered' ? registeredEvents : getContextTabEvents()).length === 0 ? (
+              <div className="col-span-full text-center py-12 text-muted-foreground">
+                <p>No events found in this section.</p>
+              </div>
+            ) : (
+              (activeTab === 'registered' ? registeredEvents : getContextTabEvents()).map((event) => (
+                <div key={event.id} className="relative group">
+                  <StandardEventCard
+                    event={event}
+                    onClick={() => router.push(`/events/${event.id}`)}
+                    isRegistered={activeTab === 'registered' ? true : isRegistered(event.id)}
+                    isSaved={isSaved(event.id)}
+                    isSaving={isSaving(event.id)}
+                    onToggleSave={(e) => {
+                      e.stopPropagation();
+                      isSaved(event.id) ? unsaveEvent(event.id) : saveEvent(event.id);
+                    }}
+                  />
+                  {activeTab === 'registered' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleUnregister(event.id)
+                      }}
+                      className="absolute top-4 right-4 z-20 bg-red-500 text-white text-xs px-3 py-1 rounded shadow-md hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      {unregisteringId === event.id ? 'Processing...' : 'Unregister'}
+                    </button>
                   )}
                 </div>
+              ))
+            )}
+          </div>
+        )}
 
-                {!isInitialLoading && !hasMore && displayEvents.length > 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>You&apos;ve reached the end!</p>
-                  </div>
-                )}
-
-                {!isInitialLoading && displayEvents.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p className="text-lg">No events found matching your criteria.</p>
-                  </div>
-                )}
-              </section>
-            </div>
-          ) : activeTab === 'dashboard' ? (
-            <EventDashboard navigateTo={navigateTo} theme={(theme || 'dark') as Theme} />
-          ) : (
-            // Other Tabs (Unchanged layout mostly, but using local state/context logic)
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(activeTab === 'registered' ? registeredEvents : getContextTabEvents()).length === 0 ? (
-                <div className="col-span-full text-center py-12 text-muted-foreground">
-                  <p>No events found in this section.</p>
-                </div>
-              ) : (
-                (activeTab === 'registered' ? registeredEvents : getContextTabEvents()).map((event) => (
-                  <div key={event.id} className="relative group">
-                    <StandardEventCard
-                      event={event}
-                      onClick={() => router.push(`/events/${event.id}`)}
-                      isRegistered={activeTab === 'registered' ? true : isRegistered(event.id)}
-                      isSaved={isSaved(event.id)}
-                      isSaving={isSaving(event.id)}
-                      onToggleSave={(e) => {
-                        e.stopPropagation();
-                        isSaved(event.id) ? unsaveEvent(event.id) : saveEvent(event.id);
-                      }}
-                    />
-                    {activeTab === 'registered' && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleUnregister(event.id)
-                        }}
-                        className="absolute top-4 right-4 z-20 bg-red-500 text-white text-xs px-3 py-1 rounded shadow-md hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        {unregisteringId === event.id ? 'Processing...' : 'Unregister'}
-                      </button>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-
-        </div>
-      </AppShell>
+      </div>
 
       {/* Create Event Modal */}
       {showCreateEvent && (

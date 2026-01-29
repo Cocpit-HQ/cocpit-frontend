@@ -2,30 +2,27 @@
 
 import React from "react";
 import { DarkSidebar } from "@/components/DarkSidebar";
-import type { Page } from "@/types/common";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useActionModal } from "@/context/ActionModalContext";
+// import { usePathname } from "next/navigation";
 
 interface AppShellProps {
-  currentPage: Page;
   children: React.ReactNode;
-  navigateTo?: (page: Page) => void;
   hideBottomNav?: boolean;
 }
 
 export function AppShell({
-  currentPage,
   children,
-  navigateTo,
   hideBottomNav = false,
 }: AppShellProps) {
   const { toggleOptions } = useActionModal();
+  // const pathname = usePathname();
 
   return (
     <div className="relative flex h-screen">
       {/* Desktop sidebar */}
       <div className="hidden md:block">
-        <DarkSidebar navigateTo={navigateTo} currentPage={currentPage} />
+        <DarkSidebar />
       </div>
 
       {/* Main content */}
@@ -33,7 +30,7 @@ export function AppShell({
 
       {/* Mobile bottom navigation */}
       {!hideBottomNav && (
-        <MobileBottomNav currentPage={currentPage} onAdd={toggleOptions} />
+        <MobileBottomNav onAdd={toggleOptions} />
       )}
     </div>
   );

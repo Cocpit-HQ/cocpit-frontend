@@ -54,15 +54,13 @@ export default function ConversationPage() {
     if (!chat || error) {
         return (
             <div className="min-h-screen bg-background">
-                <AppShell currentPage="messaging" navigateTo={navigateTo}>
-                    <div className="flex items-center justify-center h-full">
-                        {error ? (
-                            <p className="text-red-500">Error loading conversations.</p>
-                        ) : (
-                            <p>Chat not found.</p>
-                        )}
-                    </div>
-                </AppShell>
+                <div className="flex items-center justify-center h-full">
+                    {error ? (
+                        <p className="text-red-500">Error loading conversations.</p>
+                    ) : (
+                        <p>Chat not found.</p>
+                    )}
+                </div>
             </div>
         )
     }
@@ -83,27 +81,25 @@ export default function ConversationPage() {
     // On desktop, show the same split view as the main page, but with the specific chat selected
     return (
         <div className="min-h-screen bg-background">
-            <AppShell currentPage="messaging" navigateTo={navigateTo}>
-                <div className="max-w-7xl mx-auto px-0 md:px-4 md:py-6 pb-20 md:pb-10 h-full">
-                    <div
-                        className="bg-card border border-border md:rounded-lg overflow-hidden h-full"
-                    >
-                        <div className="grid grid-cols-1 md:grid-cols-3 h-full">
-                            <ChatList
-                                selectedChatId={chat.id}
-                                onSelectChat={(c) => router.push(`/messaging/${c.id}`)}
-                                isMobile={false}
-                                chats={chats}
-                                isLoading={isLoading}
-                                error={error}
-                            />
-                            <div className="md:col-span-2 flex flex-col h-full overflow-hidden">
-                                <ChatWindow chat={chat} isMobile={false} />
-                            </div>
+            <div className="max-w-7xl mx-auto px-0 md:px-4 md:py-6 pb-20 md:pb-10 h-full">
+                <div
+                    className="bg-card border border-border md:rounded-lg overflow-hidden h-full"
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-3 h-full">
+                        <ChatList
+                            selectedChatId={chat.id}
+                            onSelectChat={(c) => router.push(`/messaging/${c.id}`)}
+                            isMobile={false}
+                            chats={chats}
+                            isLoading={isLoading}
+                            error={error}
+                        />
+                        <div className="md:col-span-2 flex flex-col h-full overflow-hidden">
+                            <ChatWindow chat={chat} isMobile={false} />
                         </div>
                     </div>
                 </div>
-            </AppShell>
+            </div>
         </div>
     )
 }

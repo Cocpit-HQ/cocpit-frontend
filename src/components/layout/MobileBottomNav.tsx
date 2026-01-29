@@ -1,13 +1,11 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
-import { useRouter, usePathname } from "next/navigation"
+import React from "react"
+import { usePathname } from "next/navigation"
+import Link from "next/link"
 import { Home, Briefcase, Plus, Calendar, User } from "lucide-react"
 
-import type { Page } from "@/types/common"
-
 interface MobileBottomNavProps {
-  currentPage: Page
   onAdd?: () => void
 }
 
@@ -18,14 +16,12 @@ const NAV_ROUTES: Record<string, string> = {
   profile: "/profile",
 }
 
-export function MobileBottomNav({ currentPage, onAdd }: MobileBottomNavProps) {
-  const router = useRouter()
+export function MobileBottomNav({ onAdd }: MobileBottomNavProps) {
   const pathname = usePathname()
 
-  const handleNavigate = (page: Page) => {
-    const target = NAV_ROUTES[page] ?? "/feed"
-    if (pathname === target) return
-    router.push(target)
+  const isActive = (route: string) => {
+    if (route === "/feed" && pathname === "/") return true
+    return pathname?.startsWith(route)
   }
 
   return (
@@ -33,43 +29,37 @@ export function MobileBottomNav({ currentPage, onAdd }: MobileBottomNavProps) {
       className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t bg-background/95 border-border backdrop-blur-md"
     >
       <div className="max-w-md mx-auto flex items-center justify-between px-4 py-2">
-        <button
-          type="button"
-          onClick={() => handleNavigate("home")}
+        <Link
+          href="/feed"
           className="flex flex-col items-center gap-1 flex-1"
         >
           <Home
-            className={`w-5 h-5 ${
-              currentPage === "home" ? "text-primary" : "text-muted-foreground"
-            }`}
+            className={`w-5 h-5 ${isActive("/feed") ? "text-primary" : "text-muted-foreground"
+              }`}
           />
           <span
-            className={`text-xs ${
-              currentPage === "home" ? "text-primary" : "text-muted-foreground"
-            }`}
+            className={`text-xs ${isActive("/feed") ? "text-primary" : "text-muted-foreground"
+              }`}
           >
             Feed
           </span>
-        </button>
+        </Link>
 
-        <button
-          type="button"
-          onClick={() => handleNavigate("jobs")}
+        <Link
+          href="/jobs"
           className="flex flex-col items-center gap-1 flex-1"
         >
           <Briefcase
-            className={`w-5 h-5 ${
-              currentPage === "jobs" ? "text-primary" : "text-muted-foreground"
-            }`}
+            className={`w-5 h-5 ${isActive("/jobs") ? "text-primary" : "text-muted-foreground"
+              }`}
           />
           <span
-            className={`text-xs ${
-              currentPage === "jobs" ? "text-primary" : "text-muted-foreground"
-            }`}
+            className={`text-xs ${isActive("/jobs") ? "text-primary" : "text-muted-foreground"
+              }`}
           >
             Jobs
           </span>
-        </button>
+        </Link>
 
         <button
           type="button"
@@ -82,43 +72,37 @@ export function MobileBottomNav({ currentPage, onAdd }: MobileBottomNavProps) {
           </div>
         </button>
 
-        <button
-          type="button"
-          onClick={() => handleNavigate("events")}
+        <Link
+          href="/events"
           className="flex flex-col items-center gap-1 flex-1"
         >
           <Calendar
-            className={`w-5 h-5 ${
-              currentPage === "events" ? "text-primary" : "text-muted-foreground"
-            }`}
+            className={`w-5 h-5 ${isActive("/events") ? "text-primary" : "text-muted-foreground"
+              }`}
           />
           <span
-            className={`text-xs ${
-              currentPage === "events" ? "text-primary" : "text-muted-foreground"
-            }`}
+            className={`text-xs ${isActive("/events") ? "text-primary" : "text-muted-foreground"
+              }`}
           >
             Events
           </span>
-        </button>
+        </Link>
 
-        <button
-          type="button"
-          onClick={() => handleNavigate("profile")}
+        <Link
+          href="/profile"
           className="flex flex-col items-center gap-1 flex-1"
         >
           <User
-            className={`w-5 h-5 ${
-              currentPage === "profile" ? "text-primary" : "text-muted-foreground"
-            }`}
+            className={`w-5 h-5 ${isActive("/profile") ? "text-primary" : "text-muted-foreground"
+              }`}
           />
           <span
-            className={`text-xs ${
-              currentPage === "profile" ? "text-primary" : "text-muted-foreground"
-            }`}
+            className={`text-xs ${isActive("/profile") ? "text-primary" : "text-muted-foreground"
+              }`}
           >
             Profile
           </span>
-        </button>
+        </Link>
       </div>
     </nav>
   )
