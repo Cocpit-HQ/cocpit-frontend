@@ -20,9 +20,16 @@ export const eventKeys = {
     saved: ["events", "saved"] as const,
 };
 
-// --- Infinite Feed Hook ---
+import { useSession } from "next-auth/react";
+
+// ... imports
+
+// ... keys
+
+// ... Infinite Feed Hook (Public - No change)
 export function useEventFeed(filters: any) {
     return useInfiniteQuery({
+        // ... (same implementation)
         queryKey: eventKeys.feed(filters),
         queryFn: async ({ pageParam }) => {
             const params = { ...filters, cursor: pageParam };
@@ -34,50 +41,53 @@ export function useEventFeed(filters: any) {
         },
         getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextCursor : undefined,
         initialPageParam: undefined as string | undefined,
-        staleTime: 1000 * 60 * 2, // 2 minutes
+        staleTime: 1000 * 60 * 2,
     });
 }
 
 // --- My Created Events ---
 export function useMyEvents() {
+    const { status } = useSession();
     return useQuery({
         queryKey: eventKeys.myEvents,
         queryFn: async () => {
             const data = await getMyCreatedEvents();
-            // getMyCreatedEvents returns BackendEvent[], map it
             return data.map(mapBackendEventToEventCard);
         },
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        enabled: status === "authenticated",
+        staleTime: 1000 * 60 * 5,
     });
 }
 
 // --- Registered Events ---
 export function useRegisteredEvents() {
+    const { status } = useSession();
     return useQuery({
         queryKey: eventKeys.registered,
         queryFn: async () => {
-            // getMyRegisteredEvents already returns EventCard[]
             const data = await getMyRegisteredEvents();
             return data;
         },
+        enabled: status === "authenticated",
         staleTime: 1000 * 60 * 5,
     });
 }
 
 // --- Saved Events ---
 export function useSavedEvents() {
+    const { status } = useSession();
     return useQuery({
         queryKey: eventKeys.saved,
         queryFn: async () => {
-            // getMySavedEvents already returns EventCard[]
             const data = await getMySavedEvents();
             return data;
         },
+        enabled: status === "authenticated",
         staleTime: 1000 * 60 * 5,
     });
 }
 
-// --- Single Event ---
+// --- Single Event (Public - No change, but id check exists) ---
 export function useEventDetail(id: string | number) {
     return useQuery({
         queryKey: eventKeys.detail(id),
