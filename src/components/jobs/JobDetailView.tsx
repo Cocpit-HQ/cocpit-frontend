@@ -14,9 +14,15 @@ interface JobDetailViewProps {
 
 import { useRouter } from "next/navigation"
 
-export function JobDetailView({ job }: JobDetailViewProps) {
+export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
   const router = useRouter()
-  const { saveJob } = useJobs()
+  const { jobs, saveJob } = useJobs()
+
+  // Try to find the job in the live context (which might have updated status)
+  // If not found (e.g., direct link, not in feed yet), fallback to initialJob
+  const displayJob = jobs.find(j => j.id === initialJob.id) || initialJob
+  const job = displayJob;
+
   const [showQuickApply, setShowQuickApply] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
 

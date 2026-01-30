@@ -44,11 +44,14 @@ function transformJob(backendJob: any): Job {
         location: backendJob.location,
         type: backendJob.job_type,
         postedTime: backendJob.created_at ? formatTimeAgo(backendJob.created_at) : "Recently",
-        applicants: backendJob.applicants_count || 0,
+        applicants: backendJob.applicants || backendJob.applicants_count || 0,
         salary: formatSalary(backendJob.salary_min, backendJob.salary_max),
         logo: `gradient-${(parseInt(backendJob.job_id.slice(0, 8), 16) % 6) + 1}`,
         isOffer: backendJob.is_offer,
         isSaved: backendJob.isSaved,
+        createdAt: backendJob.created_at,
+        savedAt: backendJob.saved_at,
+        appliedAt: backendJob.applied_at || backendJob.appliedAt, // Handle inconsistent naming if any
 
         // Detailed fields
         description: backendJob.description,
@@ -77,7 +80,11 @@ function transformJob(backendJob: any): Job {
 
 // --- API Methods ---
 
-export type JobSearchParams = Partial<JobFilters> & { search?: string };
+export type JobSearchParams = Partial<JobFilters> & {
+    search?: string;
+    limit?: number;
+    cursor?: string;
+};
 
 export const getAllJobs = async (filters?: JobSearchParams): Promise<Job[]> => {
     const params = new URLSearchParams();
@@ -96,6 +103,9 @@ export const getAllJobs = async (filters?: JobSearchParams): Promise<Job[]> => {
         if (filters.datePosted && filters.datePosted !== "Any Time") {
             params.append("datePosted", filters.datePosted);
         }
+
+        if (filters.limit) params.append("limit", filters.limit.toString());
+        if (filters.cursor) params.append("cursor", filters.cursor);
     }
 
     const response = await api.get(`/jobs?${params.toString()}`);
@@ -121,6 +131,9 @@ export const getJobOffers = async (filters?: JobSearchParams): Promise<Job[]> =>
         if (filters.datePosted && filters.datePosted !== "Any Time") {
             params.append("datePosted", filters.datePosted);
         }
+
+        if (filters.limit) params.append("limit", filters.limit.toString());
+        if (filters.cursor) params.append("cursor", filters.cursor);
     }
 
     const response = await api.get(`/jobs/offers?${params.toString()}`);
@@ -132,13 +145,33 @@ export const getJobById = async (id: string): Promise<Job> => {
     return transformJob(response.data);
 };
 
-export const getMySavedJobs = async (): Promise<Job[]> => {
-    const response = await api.get('/jobs/saved/me');
+export const getMySavedJobs = async (filters?: JobSearchParams): Promise<Job[]> => {
+    const params = new URLSearchParams();
+    if (filters) {
+        // Reuse similar logic or build a helper if strict strict typing needed, 
+        // but for now just pass pagination & basic filters if supported
+        if (filters.limit) params.append("limit", filters.limit.toString());
+        if (filters.cursor) params.append("cursor", filters.cursor);
+
+        // Pass other filters if backend supports them (it does now)
+        if (filters.search) params.append("search", filters.search); // Note: backend might expect 'title' or 'location' separately
+        // For brevity, let's assume specific My Jobs filters might be wired up later or reuse logic.
+        // But critically we need pagination.
+    }
+    const response = await api.get(`/jobs/saved/me?${params.toString()}`);
     return response.data.map(transformJob);
 };
 
-export const getMyApplications = async (status: string): Promise<Job[]> => {
-    const response = await api.get(`/jobs/applications/me?status=${status}`);
+export const getMyApplications = async (status: string, filters?: JobSearchParams): Promise<Job[]> => {
+    const params = new URLSearchParams();
+    params.append("status", status);
+
+    if (filters) {
+        if (filters.limit) params.append("limit", filters.limit.toString());
+        if (filters.cursor) params.append("cursor", filters.cursor);
+    }
+
+    const response = await api.get(`/jobs/applications/me?${params.toString()}`);
     return response.data.map(transformJob);
 };
 
@@ -186,8 +219,15 @@ export const getJobApplicants = async (jobId: string) => {
     return response.data;
 };
 
-export const getMyCreatedJobs = async (): Promise<Job[]> => {
-    const response = await api.get('/jobs/my');
+export const getMyCreatedJobs = async (filters?: JobSearchParams): Promise<Job[]> => {
+    const params = new URLSearchParams();
+    if (filters) {
+        if (filters.limit) params.append("limit", filters.limit.toString());
+        if (filters.cursor) params.append("cursor", filters.cursor);
+        if (filters.search) params.append("title", filters.search);
+        // Add other filters if recruiter dashboard supports them
+    }
+    const response = await api.get(`/jobs/my?${params.toString()}`);
     return response.data.map(transformJob);
 };
 
