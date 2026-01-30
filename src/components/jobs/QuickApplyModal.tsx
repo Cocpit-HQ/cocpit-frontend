@@ -33,7 +33,7 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone: "",
+    mobile_number: "",
     resume: null as File | null,
     coverNote: ""
   })
@@ -53,8 +53,8 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
             ...prev,
             name: data.user.name,
             email: data.user.email,
-            phone: data.user.phone || "",
-            coverNote: ""
+            mobile_number: data.user.mobile_number || "",
+            coverNote: "" // Reset cover note on new open? optional
           }));
 
           if (data.resume && data.resume.url) {
@@ -99,7 +99,7 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
       const data = new FormData();
       data.append("full_name", formData.name);
       data.append("email", formData.email);
-      data.append("phone", formData.phone);
+      data.append("mobile_number", formData.mobile_number);
       data.append("cover_note", formData.coverNote);
 
       if (resumeSource === 'upload') {
@@ -129,13 +129,13 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
           setFormData({
             name: profile.user.name,
             email: profile.user.email,
-            phone: profile.user.phone || "",
+            mobile_number: profile.user.mobile_number || "",
             resume: null,
             coverNote: ""
           })
           if (profile.resume?.url) setResumeSource('profile'); else setResumeSource('upload');
         } else {
-          setFormData({ name: "", email: "", phone: "", resume: null, coverNote: "" })
+          setFormData({ name: "", email: "", mobile_number: "", resume: null, coverNote: "" })
         }
 
       }, 2000)
@@ -203,12 +203,12 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Phone (Optional)</label>
+                  <label className="text-sm font-medium">Mobile Number (Optional)</label>
                   <input
                     type="tel"
                     className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none"
-                    value={formData.phone}
-                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                    value={formData.mobile_number}
+                    onChange={e => setFormData({ ...formData, mobile_number: e.target.value })}
                   />
                 </div>
               </div>
