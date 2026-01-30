@@ -18,6 +18,9 @@ export interface Job {
   company: string;
   location: string;
   type: string;
+  createdAt?: string; // ISO date string for cursor
+  savedAt?: string;  // ISO date string for cursor
+  appliedAt?: string; // ISO date string for cursor
   postedTime: string;
   applicants: number;
   salary: string;
@@ -91,4 +94,9 @@ export interface JobsContextType {
   setActiveTab: (tab: JobListMode) => void;
   myJobsTab: MyJobsTab;
   setMyJobsTab: (tab: MyJobsTab) => void;
+  // Pagination State
+  isLoading: boolean;
+  isFetchingNextPage: boolean;
+  hasNextPage: boolean;
+  fetchNextPage: () => void;
 }

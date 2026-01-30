@@ -62,46 +62,50 @@ export function JobFiltersSidebar() {
   }
 
   return (
-    <div className="hidden lg:block lg:col-span-1 space-y-6">
-      <div className="bg-card border border-border rounded-xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-foreground">Filters</h3>
-          <button
-            onClick={() => updateFilters({
-              jobType: [],
-              workMode: [],
-              companyType: [],
-              industry: [],
-              locations: [],
-              experience: "All Levels",
-              salaryRange: "Any",
-              datePosted: "Any Time",
-              easyApply: false,
-              activelyHiring: false
-            })}
-            className="text-xs text-primary hover:underline"
-          >
-            Clear all
-          </button>
+    <div className="hidden lg:block lg:col-span-1 space-y-6 lg:sticky lg:top-52 lg:h-[calc(100vh-14rem)]">
+      <div className="relative h-full bg-card border border-border rounded-xl flex flex-col overflow-hidden">
+        {/* Top Header - Fixed */}
+        <div className="p-6 pb-2 shrink-0 z-10 bg-card border-b border-border shadow-[0_4px_12px_-4px_rgba(0,0,0,0.1)]">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-foreground">Filters</h3>
+            <button
+              onClick={() => updateFilters({
+                jobType: [],
+                workMode: [],
+                companyType: [],
+                industry: [],
+                locations: [],
+                experience: "All Levels",
+                salaryRange: "Any",
+                datePosted: "Any Time",
+                easyApply: false,
+                activelyHiring: false
+              })}
+              className="text-xs text-primary hover:underline"
+            >
+              Clear all
+            </button>
+          </div>
         </div>
 
-        <div className="">
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden p-6 pt-2">
           {/* Toggles */}
           <div className="space-y-3 pb-4 border-b border-border">
-             <label className="flex items-center justify-between cursor-pointer">
-               <span className="text-sm">Easy Apply</span>
-               <div className={cn("w-10 h-6 rounded-full p-1 transition-colors", filters.easyApply ? "bg-primary" : "bg-muted")}>
-                 <div className={cn("w-4 h-4 bg-white rounded-full transition-transform", filters.easyApply ? "translate-x-4" : "")} />
-               </div>
-               <input type="checkbox" className="hidden" checked={filters.easyApply} onChange={(e) => updateFilters({ easyApply: e.target.checked })} />
-             </label>
-             <label className="flex items-center justify-between cursor-pointer">
-               <span className="text-sm">Actively Hiring</span>
-               <div className={cn("w-10 h-6 rounded-full p-1 transition-colors", filters.activelyHiring ? "bg-primary" : "bg-muted")}>
-                 <div className={cn("w-4 h-4 bg-white rounded-full transition-transform", filters.activelyHiring ? "translate-x-4" : "")} />
-               </div>
-               <input type="checkbox" className="hidden" checked={filters.activelyHiring} onChange={(e) => updateFilters({ activelyHiring: e.target.checked })} />
-             </label>
+            <label className="flex items-center justify-between cursor-pointer">
+              <span className="text-sm">Easy Apply</span>
+              <div className={cn("w-10 h-6 rounded-full p-1 transition-colors", filters.easyApply ? "bg-primary" : "bg-muted")}>
+                <div className={cn("w-4 h-4 bg-white rounded-full transition-transform", filters.easyApply ? "translate-x-4" : "")} />
+              </div>
+              <input type="checkbox" className="hidden" checked={filters.easyApply} onChange={(e) => updateFilters({ easyApply: e.target.checked })} />
+            </label>
+            <label className="flex items-center justify-between cursor-pointer">
+              <span className="text-sm">Actively Hiring</span>
+              <div className={cn("w-10 h-6 rounded-full p-1 transition-colors", filters.activelyHiring ? "bg-primary" : "bg-muted")}>
+                <div className={cn("w-4 h-4 bg-white rounded-full transition-transform", filters.activelyHiring ? "translate-x-4" : "")} />
+              </div>
+              <input type="checkbox" className="hidden" checked={filters.activelyHiring} onChange={(e) => updateFilters({ activelyHiring: e.target.checked })} />
+            </label>
           </div>
 
           <FilterSection title="Experience Level">
@@ -180,21 +184,21 @@ export function JobFiltersSidebar() {
           </FilterSection>
 
           <FilterSection title="Location">
-             <div className="flex flex-wrap gap-2 p-2 border rounded-lg min-h-[42px] bg-muted/30 border-border mb-2">
-               {filters.locations.map((loc) => (
-                  <span key={loc} className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-primary/10 text-primary">
-                    {loc}
-                    <button onClick={() => removeLocation(loc)} className="hover:opacity-70"><Check className="w-3 h-3 rotate-45" /></button>
-                  </span>
-               ))}
-               <input
-                  type="text"
-                  value={locationInput}
-                  onChange={(e) => setLocationInput(e.target.value)}
-                  onKeyDown={handleAddLocation}
-                  placeholder="Add city..."
-                  className="flex-1 bg-transparent text-sm focus:outline-none min-w-[60px] text-foreground placeholder-muted-foreground"
-               />
+            <div className="flex flex-wrap gap-2 p-2 border rounded-lg min-h-[42px] bg-muted/30 border-border mb-2">
+              {filters.locations.map((loc) => (
+                <span key={loc} className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-primary/10 text-primary">
+                  {loc}
+                  <button onClick={() => removeLocation(loc)} className="hover:opacity-70"><Check className="w-3 h-3 rotate-45" /></button>
+                </span>
+              ))}
+              <input
+                type="text"
+                value={locationInput}
+                onChange={(e) => setLocationInput(e.target.value)}
+                onKeyDown={handleAddLocation}
+                placeholder="Add city..."
+                className="flex-1 bg-transparent text-sm focus:outline-none min-w-[60px] text-foreground placeholder-muted-foreground"
+              />
             </div>
           </FilterSection>
 
@@ -228,6 +232,9 @@ export function JobFiltersSidebar() {
             ))}
           </FilterSection>
         </div>
+
+        {/* Bottom Fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent pointer-events-none z-10" />
       </div>
     </div>
   )

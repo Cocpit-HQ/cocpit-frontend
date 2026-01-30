@@ -54,7 +54,7 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
             name: data.user.name,
             email: data.user.email,
             phone: data.user.phone || "",
-            coverNote: "" // Reset cover note on new open? optional
+            coverNote: ""
           }));
 
           if (data.resume && data.resume.url) {
