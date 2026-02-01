@@ -4,39 +4,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { MapPin, FileText, Download, X, Check } from "lucide-react"
 import { downloadFile } from "@/utils/download"
 import { useTheme } from "next-themes"
-
-export interface Applicant {
-    id: string
-    name: string
-    headline: string
-    location: string
-    email?: string
-    phone?: string
-    about?: string
-    skills?: string[]
-    experience?: {
-        role: string
-        company: string
-        duration: string
-    }[]
-    education?: {
-        degree: string
-        school: string
-        year: string
-    }[]
-    resumeName?: string
-    resumeUrl?: string
-    initials: string
-    color: string
-}
+import { type Applicant } from "@/types/jobs"
 
 interface ApplicantDetailsModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     applicant: Applicant | null
+    onStatusUpdate?: (status: string) => void
+    onShortlist?: () => void
 }
 
-export function ApplicantDetailsModal({ open, onOpenChange, applicant }: ApplicantDetailsModalProps) {
+export function ApplicantDetailsModal({ open, onOpenChange, applicant, onStatusUpdate, onShortlist }: ApplicantDetailsModalProps) {
     const { theme } = useTheme()
 
     if (!applicant) return null
@@ -135,7 +113,7 @@ export function ApplicantDetailsModal({ open, onOpenChange, applicant }: Applica
                                         <p className="text-sm font-medium text-foreground">
                                             {applicant.resumeName || "resume.pdf"}
                                         </p>
-                                        <p className="text-xs text-muted-foreground">2.4 MB • PDF Document</p>
+                                        <p className="text-xs text-muted-foreground">PDF Document</p>
                                     </div>
                                 </div>
                                 <button
@@ -153,25 +131,45 @@ export function ApplicantDetailsModal({ open, onOpenChange, applicant }: Applica
                                 </button>
                             </div>
                         </section>
+
+
                     </div>
                 </div>
 
                 {/* Footer Actions */}
                 <div className="p-4 border-t border-border bg-muted/10 flex justify-end gap-3 rounded-b-xl">
-                    <button
-                        onClick={() => onOpenChange(false)}
-                        className="px-4 py-2 rounded-lg bg-red-500/10 text-red-500 text-sm font-medium hover:bg-red-500/20 transition-colors flex items-center gap-2"
-                    >
-                        <X className="w-4 h-4" />
-                        Reject
-                    </button>
-                    <button
-                        onClick={() => onOpenChange(false)}
-                        className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
-                    >
-                        <Check className="w-4 h-4" />
-                        Shortlist
-                    </button>
+                    {applicant.status === 'Rejected' ? (
+                        <button
+                            onClick={() => onStatusUpdate?.("Applied")} // Move back to Applied
+                            className="px-4 py-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors text-sm font-medium flex items-center gap-2"
+                        >
+                            Undo Rejection
+                        </button>
+                    ) : (applicant.status === 'Applied' || !applicant.status) ? (
+                        <>
+                            <button
+                                onClick={() => onStatusUpdate?.("Rejected")}
+                                className="px-4 py-2 rounded-lg bg-red-500/10 text-red-500 text-sm font-medium hover:bg-red-500/20 transition-colors flex items-center gap-2"
+                            >
+                                <X className="w-4 h-4" />
+                                Reject
+                            </button>
+                            <button
+                                onClick={() => onShortlist?.()}
+                                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
+                            >
+                                <Check className="w-4 h-4" />
+                                Shortlist
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            onClick={() => onOpenChange(false)}
+                            className="px-4 py-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors text-sm font-medium"
+                        >
+                            Close
+                        </button>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>

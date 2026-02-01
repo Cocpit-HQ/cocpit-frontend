@@ -45,7 +45,8 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
     industry: "Technology",
     easyApply: true,
     activelyHiring: true,
-    aboutCompany: ""
+    aboutCompany: "",
+
   })
 
   // Pre-fill form when initialData changes
@@ -66,7 +67,8 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
         industry: initialData.industry || "Technology",
         easyApply: initialData.easyApply || false,
         activelyHiring: initialData.activelyHiring || false,
-        aboutCompany: initialData.aboutCompany || ""
+        aboutCompany: initialData.aboutCompany || "",
+
       })
     } else {
       // Reset defaults if no initialData (e.g. when opening "Post Job" after editing)
@@ -85,7 +87,8 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
         industry: "Technology",
         easyApply: true,
         activelyHiring: true,
-        aboutCompany: ""
+        aboutCompany: "",
+
       })
     }
   }, [initialData, isOpen]) // Reset/Fill when modal opens or data changes
@@ -115,7 +118,8 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
         industry: formData.industry,
         aboutCompany: formData.aboutCompany,
         activelyHiring: formData.activelyHiring,
-        easyApply: formData.easyApply
+        easyApply: formData.easyApply,
+
       }
 
       if (initialData?.id) {
@@ -143,7 +147,8 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
           industry: "Technology",
           easyApply: true,
           activelyHiring: true,
-          aboutCompany: ""
+          aboutCompany: "",
+
         })
       }
 
@@ -366,6 +371,9 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
                 </div>
               </label>
             </div>
+
+            {/* Voice Pitch Requirement */}
+
           </div>
 
           <div className="pt-4 border-t border-border flex justify-end gap-3 sticky bottom-0 bg-background pb-6">

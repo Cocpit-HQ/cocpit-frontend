@@ -48,7 +48,6 @@ export function JobTabs({ mode, setMode, myJobsTab, setMyJobsTab, offersCount }:
         <div className="mb-6 flex gap-2 overflow-x-auto">
           {(
             [
-              { id: "in-progress", label: "In Progress" },
               { id: "applied", label: "Applied" },
               { id: "in-past", label: "In Past" },
               { id: "saved", label: "Saved" },

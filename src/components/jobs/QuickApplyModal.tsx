@@ -8,12 +8,14 @@ import * as api from "@/services/api/jobs"
 import { getProfile } from "@/services/api/profile"
 import { UserProfile } from "@/types/user"
 
+
 interface QuickApplyModalProps {
   open?: boolean
   onOpenChange?: (open: boolean) => void
   trigger?: React.ReactNode
   jobId: string
   jobTitle: string
+
 }
 
 export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }: QuickApplyModalProps) {
@@ -41,6 +43,7 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [resumeSource, setResumeSource] = useState<'profile' | 'upload'>('upload');
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+
 
   // Fetch profile on mount or when modal opens
   useEffect(() => {
@@ -95,6 +98,8 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
       return;
     }
 
+
+
     try {
       const data = new FormData();
       data.append("full_name", formData.name);
@@ -112,6 +117,8 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
           data.append("resume_url", profile.resume.url);
         }
       }
+
+
 
       await api.applyToJob(jobId, data);
 
@@ -287,6 +294,8 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
                   onChange={e => setFormData({ ...formData, coverNote: e.target.value })}
                 />
               </div>
+
+
 
               <div className="pt-2">
                 <button

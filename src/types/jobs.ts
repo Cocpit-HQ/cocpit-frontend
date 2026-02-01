@@ -1,6 +1,6 @@
 export type JobListMode = "view" | "my-jobs" | "offers" | "dashboard";
 
-export type JobStatus = "in-progress" | "applied" | "in-past";
+export type JobStatus = "in-progress" | "applied" | "in-past" | "shortlisted" | "approved" | "rejected" | "interview" | "offer";
 export type MyJobsTab = JobStatus | "saved";
 
 export type WorkMode = "Remote" | "Hybrid" | "Onsite";
@@ -14,6 +14,7 @@ export interface TimelineEvent {
 
 export interface Job {
   id: string; // UUID from backend
+  recruiterId: string;
   title: string;
   company: string;
   location: string;
@@ -30,6 +31,9 @@ export interface Job {
   isSaved?: boolean;
   hasApplied?: boolean;
   applicationStatus?: string;
+  applicationId?: string;
+  applicationScreening?: Screening;
+
 
   // New fields
   description?: string;
@@ -44,6 +48,7 @@ export interface Job {
   recruiterInsight?: string;
   applicationTimeline?: TimelineEvent[];
   aboutCompany?: string;
+
 }
 
 export interface JobFilters {
@@ -76,6 +81,7 @@ export interface JobFormData {
   aboutCompany: string;
   activelyHiring: boolean;
   easyApply: boolean;
+
 }
 
 export interface JobsContextType {
@@ -99,4 +105,41 @@ export interface JobsContextType {
   isFetchingNextPage: boolean;
   hasNextPage: boolean;
   fetchNextPage: () => void;
+}
+
+export interface Screening {
+  required: boolean
+  type: "voice" | "video"
+  question: string
+  submittedAt?: string
+  responseUrl?: string
+}
+
+export interface Applicant {
+  id: string
+  name: string
+  headline: string
+  location: string
+  email?: string
+  phone?: string
+  about?: string
+  skills?: string[]
+  experience?: {
+    role: string
+    company: string
+    duration: string
+  }[]
+  education?: {
+    degree: string
+    school: string
+    year: string
+  }[]
+  resumeName?: string
+  resumeUrl?: string
+
+  initials: string
+  color: string
+  status: string
+  appliedAt?: string
+  screening?: Screening | null
 }

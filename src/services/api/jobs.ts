@@ -39,6 +39,7 @@ function formatSalary(min?: number | string, max?: number | string): string {
 function transformJob(backendJob: any): Job {
     return {
         id: backendJob.job_id, // UUID string
+        recruiterId: backendJob.recruiter_id,
         title: backendJob.title,
         company: backendJob.company_name || backendJob.recruiter_name || "Unknown Company",
         location: backendJob.location,
@@ -74,7 +75,80 @@ function transformJob(backendJob: any): Job {
         // Mocking missing fields gracefully or using provided
         matchScore: backendJob.match_score,
         recruiterInsight: backendJob.recruiter_insight,
-        applicationTimeline: []
+        applicationTimeline: (() => {
+            const status = backendJob.applicationStatus || backendJob.current_status;
+            if (!status) return [];
+
+            const currentLower = status.toLowerCase();
+            const steps = ['Application Sent', 'Application Viewed'];
+
+            // Only add Shortlisted if the user reached that stage or beyond, OR if not rejected
+            // If rejected, we assume direct rejection unless we have history (which we assume we don't for now)
+            // So if 'Rejected', we skip Shortlisted.
+            if (currentLower !== 'rejected') {
+                steps.push('Shortlisted');
+            }
+
+            // Add dynamic steps
+            if (backendJob.screeningRequired) {
+                // Step 4: Task Status
+                if (backendJob.screeningSubmittedAt) {
+                    steps.push('Task Submitted');
+                } else if (currentLower !== 'rejected') {
+                    // Only show pending task if not rejected
+                    steps.push('Task Assignment');
+                }
+
+                // Step 5: Final Status
+                const appStatus = backendJob.applicationStatus || backendJob.current_status;
+                if (appStatus === 'Approved') {
+                    steps.push('Approved');
+                } else if (appStatus === 'Rejected') {
+                    steps.push('Rejected');
+                }
+            } else {
+                const appStatus = backendJob.applicationStatus || backendJob.current_status;
+                if (appStatus === 'Approved') steps.push('Approved');
+                if (appStatus === 'Rejected') steps.push('Rejected');
+            }
+
+            // Map status to step index
+            let completedIndex = -1;
+
+            if (currentLower === 'applied') completedIndex = 0; // Sent
+            else if (currentLower === 'under review' || currentLower === 'viewed') completedIndex = 1; // Viewed
+
+            else if (currentLower.includes('shortlisted')) completedIndex = 2; // Shortlisted
+
+            else if (currentLower.includes('pending task') || currentLower.includes('submission')) {
+                if (backendJob.screeningSubmittedAt) completedIndex = 3;
+                else completedIndex = 2;
+            }
+            else if (currentLower === 'approved') {
+                // Sent, Viewed, Shortlisted, (Task?), Approved
+                // If screening required: Sent (0), Viewed(1), Shortlisted(2), Task(3), Approved(4)
+                // If no screening: Sent(0), Viewed(1), Shortlisted(2), Approved(3)
+                completedIndex = backendJob.screeningRequired ? 4 : 3;
+            }
+            else if (currentLower === 'rejected') {
+                // Sent(0), Viewed(1), Rejected(2)  <-- Shortlisted skipped
+                completedIndex = 2;
+            }
+
+            return steps.map((s, idx) => ({
+                status: s,
+                completed: idx <= completedIndex,
+                date: idx === 0 ? formatTimeAgo(backendJob.appliedAt || new Date().toISOString()) : undefined
+            }));
+        })(),
+
+        applicationId: backendJob.applicationId,
+        applicationScreening: backendJob.screeningRequired ? {
+            required: true,
+            type: backendJob.screeningType,
+            question: backendJob.screeningQuestion,
+            submittedAt: backendJob.screeningSubmittedAt
+        } : undefined
     };
 }
 
@@ -191,6 +265,7 @@ export const createJob = async (data: JobFormData): Promise<void> => {
         easy_apply: data.easyApply,
         minSalary: data.minSalary,
         maxSalary: data.maxSalary,
+
         skills: data.skills.split(",").map(s => s.trim()).filter(Boolean)
     };
 
@@ -248,6 +323,7 @@ export const updateJob = async (jobId: string, data: JobFormData): Promise<void>
         easy_apply: data.easyApply,
         minSalary: data.minSalary,
         maxSalary: data.maxSalary,
+
         skills: data.skills.split(",").map(s => s.trim()).filter(Boolean)
     };
     await api.put(`/jobs/${jobId}`, payload);
@@ -256,3 +332,20 @@ export const updateJob = async (jobId: string, data: JobFormData): Promise<void>
 export const deleteJob = async (jobId: string): Promise<void> => {
     await api.delete(`/jobs/${jobId}`);
 };
+
+export const getRecruiterStats = async (recruiterId: string) => {
+    const response = await api.get(`/jobs/recruiter/${recruiterId}/stats`);
+    return response.data;
+};
+
+export const updateApplicationStatus = async (applicationId: string, status: string, screening?: { required: boolean, type: "voice" | "video", question: string } | null) => {
+    const payload = { status, screening };
+    const response = await api.put(`/jobs/applications/${applicationId}/status`, payload);
+    return response.data;
+};
+
+export const submitTask = async (applicationId: string, formData: FormData) => {
+    const response = await api.post(`/jobs/applications/${applicationId}/submit-task`, formData);
+    return response.data;
+};
+

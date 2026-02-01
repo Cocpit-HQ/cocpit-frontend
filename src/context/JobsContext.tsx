@@ -34,7 +34,7 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
   const [filters, setFilters] = useState<JobFilters>(INITIAL_FILTERS);
   const [searchKeywords, setSearchKeywords] = useState("");
   const [activeTab, setActiveTab] = useState<JobListMode>("view");
-  const [myJobsTab, setMyJobsTab] = useState<MyJobsTab>("in-progress");
+  const [myJobsTab, setMyJobsTab] = useState<MyJobsTab>("applied");
 
   // Debounce inputs to prevent rapid refetching
   const debouncedSearch = useDebounce(searchKeywords, 500);

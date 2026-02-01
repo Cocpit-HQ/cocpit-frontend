@@ -4,6 +4,7 @@ export const jobs: Job[] = [
   // Open jobs (for "View Jobs" tab)
   {
     id: "1",
+    recruiterId: "mock-recruiter-1",
     title: "Senior Financial Analyst",
     company: "JPMorgan Chase",
     location: "New York, NY",
@@ -15,6 +16,7 @@ export const jobs: Job[] = [
   },
   {
     id: "2",
+    recruiterId: "mock-recruiter-1",
     title: "Business Analyst",
     company: "McKinsey & Company",
     location: "Boston, MA",
@@ -26,6 +28,7 @@ export const jobs: Job[] = [
   },
   {
     id: "3",
+    recruiterId: "mock-recruiter-1",
     title: "Product Manager",
     company: "Google",
     location: "San Francisco, CA",
@@ -37,6 +40,7 @@ export const jobs: Job[] = [
   },
   {
     id: "4",
+    recruiterId: "mock-recruiter-1",
     title: "Data Analyst",
     company: "Meta",
     location: "Remote",
@@ -49,6 +53,7 @@ export const jobs: Job[] = [
   // Offer cards (for "Offers" tab)
   {
     id: "5",
+    recruiterId: "mock-recruiter-1",
     title: "Senior Financial Analyst",
     company: "JPMorgan Chase",
     location: "New York, NY",
@@ -61,6 +66,7 @@ export const jobs: Job[] = [
   },
   {
     id: "6",
+    recruiterId: "mock-recruiter-1",
     title: "Business Analyst",
     company: "McKinsey & Company",
     location: "Boston, MA",
@@ -74,6 +80,7 @@ export const jobs: Job[] = [
   // My jobs (various statuses)
   {
     id: "7",
+    recruiterId: "mock-recruiter-1",
     title: "Senior Product Analyst",
     company: "Netflix",
     location: "New York, NY",
@@ -86,6 +93,7 @@ export const jobs: Job[] = [
   },
   {
     id: "8",
+    recruiterId: "mock-recruiter-1",
     title: "Product Designer",
     company: "Adobe",
     location: "Remote",
@@ -98,6 +106,7 @@ export const jobs: Job[] = [
   },
   {
     id: "9",
+    recruiterId: "mock-recruiter-1",
     title: "UX Researcher",
     company: "Spotify",
     location: "Remote",
@@ -110,6 +119,7 @@ export const jobs: Job[] = [
   },
   {
     id: "10",
+    recruiterId: "mock-recruiter-1",
     title: "Product Owner",
     company: "Stripe",
     location: "San Francisco, CA",

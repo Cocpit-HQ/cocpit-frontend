@@ -10,6 +10,19 @@ type StoryRailProps = {
   isLoading?: boolean
 }
 
+// Helper to determine image source
+function getStoryImage(story: StoryDetail): string | null {
+  if (story.thumbnail_url) return story.thumbnail_url;
+
+  if (story.media_type === 'video' || (story.image && (story.image.endsWith('.mp4') || story.image.endsWith('.mov')))) {
+    if (story.image && story.image.includes('cloudinary')) {
+      return story.image.replace(/\.[^/.]+$/, ".jpg");
+    }
+    return null;
+  }
+  return story.image || null;
+}
+
 export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading }: StoryRailProps) {
 
   return (
@@ -59,37 +72,26 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading }: St
               }
 
               const story = group.stories[group.stories.length - 1];
+              const displayImage = getStoryImage(story);
+
               return (
                 <div key="my-story" className="flex-shrink-0 w-28 h-40 relative border-2 border-blue-500 rounded-xl overflow-hidden">
                   <button
                     onClick={() => onStoryClick(story)}
                     className="w-full h-full rounded-xl overflow-hidden group bg-black"
                   >
-                    {(() => {
-                      const imgSrc = (() => {
-                        if (story.thumbnail_url) return story.thumbnail_url;
-                        if (story.media_type === 'video' || (story.image && (story.image.endsWith('.mp4') || story.image.endsWith('.mov')))) {
-                          if (story.image && story.image.includes('cloudinary')) {
-                            return story.image.replace(/\.[^/.]+$/, ".jpg");
-                          }
-                          return null;
-                        }
-                        return story.image;
-                      })() || story.image;
-
-                      if (!imgSrc) return null;
-
-                      return (
-                        <img
-                          src={imgSrc}
-                          alt={story.title}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      );
-                    })()}
+                    {displayImage ? (
+                      <img
+                        src={displayImage}
+                        alt={story.title}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gray-800" />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <span className="absolute bottom-2 left-0 w-full text-white text-xs font-medium truncate text-center shadow-black drop-shadow-md">
                       Your Story
@@ -114,6 +116,7 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading }: St
 
             const story = group.stories[group.stories.length - 1];
             const hasUnviewed = group.stories.some(s => !s.has_viewed && !s.isAuthor);
+            const displayImage = getStoryImage(story);
 
             return (
               <button
@@ -121,25 +124,18 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading }: St
                 onClick={() => onStoryClick(story)}
                 className={`flex-shrink-0 w-28 h-40 rounded-xl relative overflow-hidden group bg-black`}
               >
-                <img
-                  src={(() => {
-                    // Use explicit thumbnail if available
-                    if (story.thumbnail_url) return story.thumbnail_url;
-
-                    if (story.media_type === 'video' || (story.image && (story.image.endsWith('.mp4') || story.image.endsWith('.mov')))) {
-                      if (story.image && story.image.includes('cloudinary')) {
-                        return story.image.replace(/\.[^/.]+$/, ".jpg");
-                      }
-                      return undefined;
-                    }
-                    return story.image;
-                  })() || story.image}
-                  alt={story.title}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
+                {displayImage ? (
+                  <img
+                    src={displayImage}
+                    alt={story.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gray-800" />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
                 {story.media_type === 'video' && (
@@ -156,11 +152,15 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading }: St
 
                 <div className="absolute bottom-2 left-2 right-2 flex flex-col items-center">
                   <div className={`w-8 h-8 rounded-full p-0.5 bg-gradient-to-br from-blue-400 to-purple-500 mb-1 ${hasUnviewed ? 'animate-pulse' : ''}`}>
-                    <img
-                      src={group.author.avatar}
-                      alt={group.author.name}
-                      className="w-full h-full rounded-full object-cover border-2 border-white"
-                    />
+                    {group.author.avatar ? (
+                      <img
+                        src={group.author.avatar}
+                        alt={group.author.name}
+                        className="w-full h-full rounded-full object-cover border-2 border-white"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-gray-500 border-2 border-white" />
+                    )}
                   </div>
                   <span className="text-white text-xs font-medium truncate w-full text-center shadow-black drop-shadow-md">
                     {group.author.name}

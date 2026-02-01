@@ -1,12 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, MapPin, Briefcase, Clock, DollarSign, Building, Globe, Zap, CheckCircle, Bookmark, Share2 } from "lucide-react"
+import { ArrowLeft, MapPin, Briefcase, Clock, DollarSign, Building, Globe, Zap, CheckCircle, Bookmark, Share2, X } from "lucide-react"
 import { useJobs } from "@/context/JobsContext"
 import { cn } from "@/lib/utils"
 import { QuickApplyModal } from "@/components/jobs/QuickApplyModal"
 import { type Job } from "@/types/jobs"
+import { getRecruiterStats } from "@/services/api/jobs"
+import { TaskSubmissionModal } from "./dashboard/TaskSubmissionModal"
+
 
 interface JobDetailViewProps {
   job: Job
@@ -24,7 +27,16 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
   const job = displayJob;
 
   const [showQuickApply, setShowQuickApply] = useState(false)
+  const [showTaskModal, setShowTaskModal] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
+  const [recruiterStats, setRecruiterStats] = useState<{ responseRate: number, typicallyRespondsIn: string, isActive: boolean } | null>(null)
+
+
+  useEffect(() => {
+    if (job.recruiterId) {
+      getRecruiterStats(job.recruiterId).then(setRecruiterStats).catch(console.error)
+    }
+  }, [job.recruiterId])
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href)
@@ -35,6 +47,10 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
   // Helper for Timeline
   const renderTimeline = () => {
     if (!job.applicationTimeline || job.applicationTimeline.length === 0) return null
+
+    // Check if we need to glow the Task Assignment step
+    const isTaskPending = job.applicationScreening?.required && !job.applicationScreening.submittedAt;
+
     return (
       <div className="bg-card border border-border rounded-xl p-6 mb-6">
         <h3 className="font-semibold text-lg mb-6">Application Status</h3>
@@ -42,23 +58,32 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
           <div className="hidden sm:block absolute left-0 right-0 top-[15px] h-0.5 bg-muted -z-10" />
           <div className="sm:hidden absolute top-0 bottom-0 left-[15px] w-0.5 bg-muted -z-10" />
 
-          {job.applicationTimeline.map((step, idx) => (
-            <div key={idx} className="flex sm:flex-col items-center gap-4 sm:gap-2 bg-card z-10 pr-4 sm:pr-0">
-              <div className={cn(
-                "w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0",
-                step.completed ? "bg-primary border-primary text-primary-foreground" : "bg-card border-muted-foreground text-muted-foreground"
-              )}>
-                {step.completed && <CheckCircle className="w-4 h-4" />}
+          {job.applicationTimeline.map((step, idx) => {
+            // Glow if this is the Task Assignment step and it's pending (or just the active step)
+            const isGlow = step.status === 'Task Assignment' && isTaskPending;
+
+            return (
+              <div key={idx} className="flex sm:flex-col items-center gap-4 sm:gap-2 bg-card z-10 pr-4 sm:pr-0">
+                <div className={cn(
+                  "w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-500",
+                  step.completed
+                    ? (step.status === 'Rejected' ? "bg-red-500 border-red-500 text-white" : "bg-primary border-primary text-primary-foreground")
+                    : isGlow ? "bg-card border-primary text-primary shadow-[0_0_15px_rgba(var(--primary),0.5)] animate-pulse" :
+                      "bg-card border-muted-foreground text-muted-foreground"
+                )}>
+                  {step.completed && (step.status === 'Rejected' ? <X className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />)}
+                  {isGlow && <div className="w-2 h-2 bg-primary rounded-full animate-ping" />}
+                </div>
+                <div className="flex flex-col sm:items-center">
+                  <span className={cn(
+                    "text-sm font-medium",
+                    step.completed ? "text-primary" : isGlow ? "text-primary font-bold" : "text-muted-foreground"
+                  )}>{step.status}</span>
+                  {step.date && <span className="text-xs text-muted-foreground">{step.date}</span>}
+                </div>
               </div>
-              <div className="flex flex-col sm:items-center">
-                <span className={cn(
-                  "text-sm font-medium",
-                  step.completed ? "text-primary" : "text-muted-foreground"
-                )}>{step.status}</span>
-                {step.date && <span className="text-xs text-muted-foreground">{step.date}</span>}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     )
@@ -165,6 +190,28 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
         {/* Status / Timeline (if applicable) */}
         {(job.status === 'applied' || job.status === 'in-progress' || job.hasApplied) && renderTimeline()}
 
+        {/* Action Required Prompt */}
+        {job.applicationScreening?.required && !job.applicationScreening.submittedAt && (
+          <div className="max-w-4xl mx-auto mb-6 bg-orange-500/5 border border-orange-500/40 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 shadow-[0_0_20px_rgba(249,115,22,0.15)]">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
+                {job.applicationScreening.type === 'video' ? <Zap className="w-6 h-6 text-orange-500" /> : <Zap className="w-6 h-6 text-orange-500" />}
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Action Required</h3>
+                <p className="text-sm text-muted-foreground">The recruiter has requested a {job.applicationScreening.type} introduction.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowTaskModal(true)}
+              className="whitespace-nowrap px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg transition-colors shadow-lg shadow-orange-500/20"
+            >
+              Complete Task
+            </button>
+          </div>
+        )}
+
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             {/* About Job */}
@@ -198,6 +245,23 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
               <p className="text-sm text-muted-foreground mb-3">
                 {job.recruiterInsight || "Recruiters are actively reviewing applications for this role."}
               </p>
+
+              {recruiterStats && (
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="bg-background/80 p-2 rounded-lg border border-primary/10 text-center">
+                    <div className="text-xs text-muted-foreground">Response Rate</div>
+                    <div className={`font-bold ${recruiterStats.responseRate > 50 ? 'text-green-500' : 'text-orange-500'}`}>
+                      {recruiterStats.responseRate}%
+                    </div>
+                  </div>
+                  <div className="bg-background/80 p-2 rounded-lg border border-primary/10 text-center">
+                    <div className="text-xs text-muted-foreground">Responds In</div>
+                    <div className="font-bold text-foreground">
+                      {recruiterStats.typicallyRespondsIn}
+                    </div>
+                  </div>
+                </div>
+              )}
               {job.matchScore && (
                 <div className="bg-background/50 rounded-lg p-3 border border-primary/10">
                   <div className="flex justify-between text-sm mb-1">
@@ -241,6 +305,20 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
         onOpenChange={setShowQuickApply}
         jobId={job.id}
         jobTitle={job.title}
+
+      />
+
+      <TaskSubmissionModal
+        open={showTaskModal}
+        onOpenChange={setShowTaskModal}
+        applicationId={job.applicationId!}
+        taskType={job.applicationScreening?.type || 'voice'}
+        question={job.applicationScreening?.question || ''}
+        onSuccess={() => {
+          setShowTaskModal(false)
+          router.refresh()
+          // Optionally trigger a context reload if exposed, but refresh works for server components/data
+        }}
       />
     </div>
   )
