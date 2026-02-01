@@ -37,6 +37,18 @@ export const SharedPostCard: React.FC<SharedPostCardProps> = ({ sharedPost, onCl
         }
     };
 
+    const [duration, setDuration] = React.useState(0);
+    const [currentTime, setCurrentTime] = React.useState(0);
+
+    const formatTime = (time: number) => {
+        if (!time || isNaN(time)) return "0:00";
+        const minutes = Math.floor(time / 60);
+        const seconds = Math.floor(time % 60);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    const remainingTime = Math.max(0, duration - currentTime);
+
     return (
         <div
             className="w-full max-w-sm bg-black/40 backdrop-blur-md border border-white/20 rounded-2xl overflow-hidden shadow-xl pointer-events-auto"
@@ -84,9 +96,22 @@ export const SharedPostCard: React.FC<SharedPostCardProps> = ({ sharedPost, onCl
                     {sharedPost.media && sharedPost.media.length > 0 && (
                         <div className="rounded-lg overflow-hidden mt-2 aspect-video bg-black/50 relative">
                             {sharedPost.media[0].media_type === 'video' ? (
-                                <div className="absolute inset-0 flex items-center justify-center text-white bg-black/30">
-                                    <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                                </div>
+                                <>
+                                    <video
+                                        src={sharedPost.media[0].url}
+                                        className="w-full h-full object-cover"
+                                        autoPlay
+                                        muted
+                                        loop
+                                        playsInline
+                                        controls={false}
+                                        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+                                        onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                                    />
+                                    <div className="absolute top-2 left-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-md text-white/90 text-[10px] font-medium tracking-wide border border-white/10">
+                                        {formatTime(remainingTime)}
+                                    </div>
+                                </>
                             ) : (
                                 <img src={sharedPost.media[0].url} className="w-full h-full object-cover" />
                             )}

@@ -1,4 +1,4 @@
-export type LayerType = 'text' | 'sticker' | 'image' | 'video';
+export type LayerType = 'text' | 'sticker' | 'image' | 'video' | 'post';
 
 export interface BaseLayer {
     id: string;
@@ -53,7 +53,20 @@ export interface ImageLayer extends BaseLayer {
     src: string;
 }
 
-export type StoryLayer = TextLayer | StickerLayer | ImageLayer | VideoLayer;
+export interface PostLayer extends BaseLayer {
+    type: 'post';
+    post_data: {
+        id?: string;
+        content?: string;
+        author?: {
+            name: string;
+            avatar?: string;
+        };
+        media?: { url: string; media_type?: string }[];
+    };
+}
+
+export type StoryLayer = TextLayer | StickerLayer | ImageLayer | VideoLayer | PostLayer;
 
 export interface StoryMetadata {
     version: "1.0";

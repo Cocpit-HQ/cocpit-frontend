@@ -50,7 +50,7 @@ export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-24 md:pb-0">
+      <div className="flex-1 overflow-y-auto pb-24 md:pb-0 scrollbar-hide">
         {isLoading && <div className="p-8 text-center text-muted-foreground">Loading conversations...</div>}
         {error && <div className="p-8 text-center text-red-500">Failed to load conversations</div>}
 

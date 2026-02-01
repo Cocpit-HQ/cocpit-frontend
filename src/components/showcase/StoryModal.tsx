@@ -3,6 +3,7 @@ import { Eye, MessageCircle, Play, Share2, ThumbsUp, X, Send, Smile, Search, Che
 import { StoryAuthor, StoryDetail } from "@/types/showcase"
 import { showcaseService } from "@/services/showcase.service"
 import { StoryMetadata, StoryLayer } from "@/types/story-editor"
+import { useRouter } from "next/navigation"
 
 type StoryModalProps = {
   story: StoryDetail
@@ -39,6 +40,7 @@ const SHARE_USERS = [
 
 const ViewerLayerItem = ({ layer, fallbackMedia }: { layer: StoryLayer, fallbackMedia?: string }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const router = useRouter();
 
   // Handle video playback
   useEffect(() => {
@@ -58,17 +60,25 @@ const ViewerLayerItem = ({ layer, fallbackMedia }: { layer: StoryLayer, fallback
   }, [layer]);
 
   const getSource = () => {
-    if (layer.type === 'text') return '';
+    if (layer.type === 'text' || layer.type === 'post') return '';
+    // @ts-ignore - we know other types have src
     const src = layer.src;
-    if (src.startsWith('blob:') && fallbackMedia) {
+    if (src && src.startsWith('blob:') && fallbackMedia) {
       return fallbackMedia;
     }
-    return src;
+    return src || '';
+  };
+
+  const handlePostClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (layer.type === 'post' && layer.post_data.id) {
+      router.push(`/post/${layer.post_data.id}`);
+    }
   };
 
   return (
     <div
-      className="absolute origin-center pointer-events-none"
+      className={`absolute origin-center ${layer.type === 'post' ? 'pointer-events-auto cursor-pointer' : 'pointer-events-none'}`}
       style={{
         left: `${layer.x}%`,
         top: `${layer.y}%`,
@@ -77,6 +87,7 @@ const ViewerLayerItem = ({ layer, fallbackMedia }: { layer: StoryLayer, fallback
         transform: `translate(-50%, -50%) rotate(${layer.rotation}deg) scale(${layer.scale})`,
         zIndex: layer.zIndex + 10,
       }}
+      onClick={layer.type === 'post' ? handlePostClick : undefined}
     >
       {layer.type === 'text' ? (
         <p style={{
@@ -91,7 +102,7 @@ const ViewerLayerItem = ({ layer, fallbackMedia }: { layer: StoryLayer, fallback
         }}>
           {layer.content}
         </p>
-      ) : layer.type === 'video' ? (
+      ) : layer.type === 'video' && getSource() ? (
         <video
           ref={videoRef}
           src={getSource()}
@@ -115,10 +126,47 @@ const ViewerLayerItem = ({ layer, fallbackMedia }: { layer: StoryLayer, fallback
             }
           }}
         />
-      ) : layer.type === 'sticker' ? (
+      ) : layer.type === 'sticker' && getSource() ? (
         <img src={getSource()} className="w-full h-full object-contain" />
-      ) : layer.type === 'image' ? (
+      ) : layer.type === 'image' && getSource() ? (
         <img src={getSource()} className="w-full h-full object-contain" />
+      ) : layer.type === 'post' ? (
+        <div className="w-full h-full bg-white dark:bg-card rounded-xl p-4 shadow-lg border border-border flex flex-col gap-3 overflow-hidden hover:bg-gray-50 dark:hover:bg-muted/50 transition-colors">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-secondary overflow-hidden shrink-0">
+              {layer.post_data.author?.avatar ? (
+                <img src={layer.post_data.author.avatar} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center font-bold text-xs text-muted-foreground">
+                  {layer.post_data.author?.name?.[0]}
+                </div>
+              )}
+            </div>
+            <div className="text-xs font-bold text-gray-900 dark:text-foreground">{layer.post_data.author?.name}</div>
+          </div>
+          {layer.post_data.content && (
+            <p className="text-xs text-gray-800 dark:text-foreground line-clamp-3 leading-relaxed">
+              {layer.post_data.content}
+            </p>
+          )}
+          {layer.post_data.media?.[0]?.url && (
+            <div className="relative flex-1 min-h-0 w-full rounded-lg overflow-hidden bg-gray-100 dark:bg-muted">
+              {layer.post_data.media[0].media_type === 'video' ? (
+                <video
+                  src={layer.post_data.media[0].url}
+                  className="w-full h-full object-cover"
+                  controls
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+              ) : (
+                <img src={layer.post_data.media[0].url} alt="Post media" className="w-full h-full object-cover" />
+              )}
+            </div>
+          )}
+        </div>
       ) : null}
     </div>
   );
@@ -176,7 +224,24 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
 
     // Legacy Support: If no layers, create one from the base media
     if (layers.length === 0) {
-      if (story.isVideo || story.media_type === 'video') {
+      if (story.shared_post) {
+        layers.push({
+          id: 'shared-post',
+          type: 'post',
+          x: 50, y: 50, width: 80, height: 60, rotation: 0, scale: 1, zIndex: 0,
+          post_data: {
+            id: story.shared_post.post_id,
+            content: story.shared_post.content,
+            author: {
+              name: story.shared_post.author?.full_name || 'Unknown',
+              avatar: story.shared_post.author?.avatar_url
+            },
+            media: story.shared_post.media
+          },
+          style: {}
+        } as any);
+      }
+      else if (story.isVideo || story.media_type === 'video') {
         layers.push({
           id: 'legacy-video',
           type: 'video',
