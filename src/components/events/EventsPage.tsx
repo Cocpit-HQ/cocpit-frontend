@@ -43,6 +43,11 @@ export function EventsPage() {
     router.replace(`/events?${params.toString()}`, { scroll: false });
   };
 
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   useEffect(() => {
     const tabFromUrl = searchParams.get('tab');
     if (tabFromUrl && tabFromUrl !== activeTab) {
@@ -156,7 +161,7 @@ export function EventsPage() {
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 rounded-full text-xs md:text-sm font-medium capitalize transition-all relative whitespace-nowrap flex-shrink-0 ${activeTab === tab
                 ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md shadow-purple-500/20"
-                : "bg-[#f3f4f6] dark:bg-[#171c28] text-muted-foreground hover:bg-[#e5e7eb] dark:hover:bg-[#1f2536] hover:text-foreground border border-black/5 dark:border-white/5"
+                : "bg-muted text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground border border-black/5 dark:border-white/5"
                 }`}
             >
               {tab === 'upcoming' ? 'Discover' : tab === 'dashboard' ? 'Event Dashboard' : tab.replace('_', ' ')}
@@ -191,7 +196,7 @@ export function EventsPage() {
             <EventFeed filters={filters} searchQuery={searchQuery} />
           </div>
         ) : activeTab === 'dashboard' ? (
-          <EventDashboard navigateTo={navigateTo} theme={(theme || 'dark') as Theme} />
+          <EventDashboard navigateTo={navigateTo} theme={mounted ? (theme || 'dark') as Theme : 'dark'} />
         ) : (
           // Other Tabs
           <UserEventsList type={activeTab as 'my_events' | 'registered' | 'saved'} />
@@ -201,7 +206,7 @@ export function EventsPage() {
 
       {/* Create Event Modal */}
       {showCreateEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/10 backdrop-blur-sm">
           <CreateEventForm onClose={() => {
             setShowCreateEvent(false);
             if (activeTab !== 'my_events') {

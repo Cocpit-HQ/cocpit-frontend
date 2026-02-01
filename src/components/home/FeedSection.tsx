@@ -8,7 +8,7 @@ import { useFeed } from '@/context/FeedContext';
 import { useInView } from '@/hooks/use-in-view';
 import { useActionModal } from '@/context/ActionModalContext';
 import { StoryRail } from './StoryRail';
-import { FeedTabs } from './FeedTabs';
+import { FeedSortDropdown } from './FeedSortDropdown';
 import { PostType } from './CreatePostModal';
 import { StoryGroup, StoryDetail } from '@/types/showcase';
 
@@ -68,14 +68,14 @@ export const FeedSection = ({
                 />
             </div>
 
-            {/* Feed Tabs */}
-            <div className="md:hidden mt-4">
-                <FeedTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-            </div>
-
             {/* Create Post */}
             <div className="hidden md:block">
                 <CreatePost onOpenModal={openModal as (type?: PostType) => void} />
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="flex justify-end mb-4 px-1 mt-4 md:mt-0">
+                <FeedSortDropdown activeTab={activeTab} setActiveTab={setActiveTab} />
             </div>
 
             {/* Posts */}

@@ -11,6 +11,7 @@ import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
+import { useTheme } from "next-themes"
 
 const createEventSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -81,29 +82,35 @@ const createEventSchema = z.object({
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "Event start time must be in the future",
-      path: ["startTime"], // or startDate
+      path: ["startTime"],
     })
   }
 
-  if (data.endDate && data.endTime) {
-    const endDateTime = new Date(`${data.endDate}T${data.endTime}`)
-    if (endDateTime <= startDateTime) {
+  if (data.endDate) {
+    if (data.endDate < data.startDate) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "End time must be after start time",
-        path: ["endTime"],
+        message: "End date must be greater than start date",
+        path: ["endDate"],
       })
+    } else if (data.endDate === data.startDate && data.endTime) {
+      // Same day, check times (HH:MM strings are comparable)
+      if (data.endTime <= data.startTime) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "End time must be after start time",
+          path: ["endTime"],
+        })
+      }
     }
   }
 
   if (data.registrationDeadline) {
-    // Deadline is typically end of day, but let's just compare dates
-    const deadlineDate = new Date(data.registrationDeadline)
-    const startDateOnly = new Date(data.startDate)
-    if (deadlineDate >= startDateOnly) {
+    // Registration must be strictly before the start date (as per user request)
+    if (data.registrationDeadline >= data.startDate) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Registration deadline must be before event day",
+        message: "Registration deadline must be before event start date",
         path: ["registrationDeadline"],
       })
     }
@@ -120,6 +127,7 @@ interface CreateEventFormProps {
 }
 
 export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) {
+  const { theme } = useTheme()
   const { refreshMyEvents } = useEvents()
   const [isLoading, setIsLoading] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -265,10 +273,10 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
   }
 
   return (
-    <div className="bg-card flex flex-col h-full md:h-auto md:max-h-[90vh]">
-      <div className="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
+    <div className={`${theme === 'light' ? 'bg-white/10 border-white/20' : 'bg-[#2d3548]/40 border-white/10'} backdrop-blur-[80px] border flex flex-col h-full md:h-auto md:max-h-[90vh] md:rounded-2xl shadow-2xl overflow-hidden`}>
+      <div className={`flex items-center justify-between p-6 border-b ${theme === 'light' ? 'border-black/5' : 'border-white/10'} flex-shrink-0`}>
         <h2 className="text-xl font-bold text-foreground">{initialData ? "Edit Event" : "Create New Event"}</h2>
-        <button onClick={onClose} className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+        <button onClick={onClose} className={`p-2 rounded-full transition-colors ${theme === 'light' ? 'hover:bg-black/5 text-muted-foreground hover:text-foreground' : 'hover:bg-white/10 text-muted-foreground hover:text-foreground'}`}>
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -289,7 +297,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                 <input
                   type="text"
                   {...form.register("title")}
-                  className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                  className={`w-full px-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5 focus:bg-white/40' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors`}
                   placeholder="e.g. Tech Mixer 2024"
                 />
                 {form.formState.errors.title && <p className="text-red-500 text-sm mt-1">{form.formState.errors.title.message}</p>}
@@ -300,7 +308,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                 <textarea
                   rows={3}
                   {...form.register("description")}
-                  className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary resize-none"
+                  className={`w-full px-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5 focus:bg-white/40' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary resize-none transition-colors`}
                   placeholder="What is this event about?"
                 />
                 {form.formState.errors.description && <p className="text-red-500 text-sm mt-1">{form.formState.errors.description.message}</p>}
@@ -316,11 +324,11 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                     </button>
                   </div>
                 ) : (
-                  <div className="mt-2 flex justify-center rounded-lg border border-dashed border-border px-6 py-10">
+                  <div className={`mt-2 flex justify-center rounded-lg border border-dashed px-6 py-10 ${theme === 'light' ? 'bg-white/20 border-black/5' : 'bg-white/5 border-white/10'}`}>
                     <div className="text-center">
                       <Image className="mx-auto h-12 w-12 text-muted-foreground" />
                       <div className="mt-4 flex text-sm leading-6 text-muted-foreground">
-                        <label className="relative cursor-pointer rounded-md bg-card font-semibold text-primary hover:text-primary/80">
+                        <label className="relative cursor-pointer rounded-md font-semibold text-primary hover:text-primary/80">
                           <span>Upload a file</span>
                           <input type="file" className="sr-only" accept="image/*" onChange={handleFileChange} />
                         </label>
@@ -337,7 +345,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                   <Label className="mb-2 block">Category</Label>
                   <select
                     {...form.register("category")}
-                    className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                    className={`w-full px-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5 focus:bg-white/40' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors appearance-none`}
                   >
                     <option>Tech</option>
                     <option>Business</option>
@@ -354,14 +362,14 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                     name="eventType"
                     control={form.control}
                     render={({ field }) => (
-                      <div className="flex gap-2 p-1 bg-muted rounded-xl">
+                      <div className={`flex gap-2 p-1 rounded-xl ${theme === 'light' ? 'bg-black/5' : 'bg-white/5'}`}>
                         {['InPerson', 'Online'].map((type) => (
                           <button
                             type="button"
                             key={type}
                             onClick={() => field.onChange(type)}
                             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${field.value === type
-                              ? 'bg-card text-primary shadow-sm'
+                              ? `${theme === 'light' ? 'bg-white shadow-sm text-primary' : 'bg-white/10 text-primary shadow-sm'}`
                               : 'text-muted-foreground hover:text-foreground'
                               }`}
                           >
@@ -382,7 +390,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                     <input
                       type="text"
                       {...form.register("location")}
-                      className="w-full pl-12 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                      className={`w-full pl-12 pr-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5 focus:bg-white/40' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors`}
                       placeholder="Enter full address"
                     />
                   </div>
@@ -394,7 +402,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                   <input
                     type="url"
                     {...form.register("virtualLink")}
-                    className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                    className={`w-full px-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5 focus:bg-white/40' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors`}
                     placeholder="https://zoom.us/..."
                   />
                   {form.formState.errors.virtualLink && <p className="text-red-500 text-sm mt-1">{form.formState.errors.virtualLink.message}</p>}
@@ -409,7 +417,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                     <input
                       type="date"
                       {...form.register("startDate")}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5 focus:bg-white/40' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors`}
                     />
                   </div>
                   {form.formState.errors.startDate && <p className="text-red-500 text-sm mt-1">{form.formState.errors.startDate.message}</p>}
@@ -421,7 +429,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                     <input
                       type="time"
                       {...form.register("startTime")}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5 focus:bg-white/40' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors`}
                     />
                   </div>
                   {form.formState.errors.startTime && <p className="text-red-500 text-sm mt-1">{form.formState.errors.startTime.message}</p>}
@@ -436,9 +444,10 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                     <input
                       type="date"
                       {...form.register("endDate")}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5 focus:bg-white/40' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors`}
                     />
                   </div>
+                  {form.formState.errors.endDate && <p className="text-red-500 text-sm mt-1">{form.formState.errors.endDate.message}</p>}
                 </div>
                 <div>
                   <Label className="mb-2 block">End Time</Label>
@@ -447,9 +456,10 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                     <input
                       type="time"
                       {...form.register("endTime")}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5 focus:bg-white/40' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors`}
                     />
                   </div>
+                  {form.formState.errors.endTime && <p className="text-red-500 text-sm mt-1">{form.formState.errors.endTime.message}</p>}
                 </div>
               </div>
             </div>
@@ -471,7 +481,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                   <input
                     type="text"
                     {...form.register("organizerName")}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                    className={`w-full pl-10 pr-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/50 border-black/5 focus:bg-white/80' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors`}
                   />
                 </div>
                 {form.formState.errors.organizerName && <p className="text-red-500 text-sm mt-1">{form.formState.errors.organizerName.message}</p>}
@@ -483,7 +493,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                   <input
                     type="email"
                     {...form.register("organizerEmail")}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                    className={`w-full pl-10 pr-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/50 border-black/5 focus:bg-white/80' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors`}
                   />
                 </div>
                 {form.formState.errors.organizerEmail && <p className="text-red-500 text-sm mt-1">{form.formState.errors.organizerEmail.message}</p>}
@@ -507,7 +517,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                   <input
                     type="number"
                     {...form.register("maxAttendees")}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                    className={`w-full pl-10 pr-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/50 border-black/5 focus:bg-white/80' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors`}
                     placeholder="Unlimited"
                   />
                 </div>
@@ -517,8 +527,9 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                 <input
                   type="date"
                   {...form.register("registrationDeadline")}
-                  className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                  className={`w-full px-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5 focus:bg-white/40' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors`}
                 />
+                {form.formState.errors.registrationDeadline && <p className="text-red-500 text-sm mt-1">{form.formState.errors.registrationDeadline.message}</p>}
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -580,13 +591,13 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
             </div>
 
             {priceType === 'Paid' && (
-              <div className="p-4 rounded-xl bg-muted/50 border border-border space-y-4">
+              <div className={`p-4 rounded-xl border space-y-4 ${theme === 'light' ? 'bg-black/5 border-black/5' : 'bg-white/5 border-white/10'}`}>
                 <div>
                   <Label className="mb-2 block">Ticket Name *</Label>
                   <input
                     type="text"
                     {...form.register("ticketName")}
-                    className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                    className={`w-full px-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5 focus:bg-white/40' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors`}
                     placeholder="e.g. General Admission"
                   />
                   {form.formState.errors.ticketName && <p className="text-red-500 text-sm mt-1">{form.formState.errors.ticketName.message}</p>}
@@ -599,7 +610,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                       <input
                         type="number"
                         {...form.register("price")}
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                        className={`w-full pl-10 pr-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5 focus:bg-white/40' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors`}
                         placeholder="0.00"
                       />
                     </div>
@@ -610,7 +621,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                     <input
                       type="number"
                       {...form.register("quantity")}
-                      className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                      className={`w-full px-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5 focus:bg-white/40' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors`}
                       placeholder="100"
                     />
                   </div>
@@ -619,7 +630,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
                   <Label className="mb-2 block">Payment Provider (Mock)</Label>
                   <select
                     {...form.register("paymentProvider")}
-                    className="w-full px-4 py-3 rounded-xl border bg-input border-border text-foreground focus:outline-none focus:border-primary"
+                    className={`w-full px-4 py-3 rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5 focus:bg-white/40' : 'bg-white/5 border-white/10 focus:bg-white/10'} text-foreground focus:outline-none focus:border-primary transition-colors appearance-none`}
                   >
                     <option>Stripe</option>
                     <option>Razorpay</option>
@@ -637,11 +648,11 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
         </form>
       </div>
 
-      <div className="p-6 border-t border-border flex gap-4 flex-shrink-0 bg-card z-10">
+      <div className={`p-6 border-t ${theme === 'light' ? 'border-black/5 bg-white/20' : 'border-white/10 bg-black/20'} backdrop-blur-[80px] flex gap-4 flex-shrink-0 z-10`}>
         <button
           onClick={onClose}
           type="button"
-          className="flex-1 px-6 py-3 rounded-xl border font-medium hover:bg-muted transition-colors border-border text-muted-foreground"
+          className={`flex-1 px-6 py-3 rounded-xl border font-medium transition-colors ${theme === 'light' ? 'border-black/10 text-muted-foreground hover:bg-black/5 hover:text-foreground' : 'border-white/10 text-muted-foreground hover:bg-white/10 hover:text-foreground'}`}
         >
           Cancel
         </button>
