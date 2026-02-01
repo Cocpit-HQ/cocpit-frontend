@@ -194,7 +194,7 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                 {/* All Events */}
                 <div
                     onClick={() => setSelectedStat("all_events")}
-                    className={`bg-card rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'all_events' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                    className={`${theme === 'light' ? 'bg-white/60 border-black/5 hover:bg-white/80' : 'bg-white/5 border-white/10 hover:bg-white/10'} backdrop-blur-md rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'all_events' ? 'border-primary ring-1 ring-primary' : `${theme === 'light' ? 'hover:border-black/10' : 'hover:border-white/20'}`}`}
                 >
                     <div className="flex justify-between items-start z-10">
                         <div>
@@ -211,7 +211,7 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                 {/* Active Events */}
                 <div
                     onClick={() => setSelectedStat("active_events")}
-                    className={`bg-card rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'active_events' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                    className={`${theme === 'light' ? 'bg-white/60 border-black/5 hover:bg-white/80' : 'bg-white/5 border-white/10 hover:bg-white/10'} backdrop-blur-md rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'active_events' ? 'border-primary ring-1 ring-primary' : `${theme === 'light' ? 'hover:border-black/10' : 'hover:border-white/20'}`}`}
                 >
                     <div className="flex justify-between items-start z-10">
                         <div>
@@ -228,7 +228,7 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                 {/* Tickets Sold */}
                 <div
                     onClick={() => setSelectedStat("tickets_sold")}
-                    className={`bg-card rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'tickets_sold' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                    className={`${theme === 'light' ? 'bg-white/60 border-black/5 hover:bg-white/80' : 'bg-white/5 border-white/10 hover:bg-white/10'} backdrop-blur-md rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'tickets_sold' ? 'border-primary ring-1 ring-primary' : `${theme === 'light' ? 'hover:border-black/10' : 'hover:border-white/20'}`}`}
                 >
                     <div className="flex justify-between items-start z-10 w-full">
                         <div>
@@ -256,7 +256,7 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                 {/* Total Revenue */}
                 <div
                     onClick={() => setSelectedStat("total_revenue_top")}
-                    className={`bg-card rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'total_revenue_top' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                    className={`${theme === 'light' ? 'bg-white/60 border-black/5 hover:bg-white/80' : 'bg-white/5 border-white/10 hover:bg-white/10'} backdrop-blur-md rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'total_revenue_top' ? 'border-primary ring-1 ring-primary' : `${theme === 'light' ? 'hover:border-black/10' : 'hover:border-white/20'}`}`}
                 >
                     <div className="flex justify-between items-start z-10">
                         <div>
@@ -275,7 +275,7 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
 
                 {/* Left Column: Your Events List */}
                 <div className="lg:col-span-1 flex flex-col gap-4">
-                    <div className="bg-card border border-border rounded-xl p-4 h-[400px] md:h-[600px] flex flex-col">
+                    <div className={`${theme === 'light' ? 'bg-white/60 border-black/5' : 'bg-white/5 border-white/10'} backdrop-blur-md border rounded-xl p-4 h-[400px] md:h-[600px] flex flex-col`}>
                         <div className="flex items-center justify-between mb-4 px-1">
                             <h3 className="font-semibold text-foreground">Your Events</h3>
                             <span className="text-xs text-muted-foreground">{filteredEvents.length} events</span>
@@ -336,7 +336,7 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                 {/* Right Column: Event Details */}
                 <div className="lg:col-span-2" ref={detailsRef}>
                     {selectedEvent ? (
-                        <div className="bg-card border border-border rounded-xl p-6 h-auto md:h-[600px] overflow-y-auto scrollbar-hide">
+                        <div className={`${theme === 'light' ? 'bg-white/60 border-black/5' : 'bg-white/5 border-white/10'} backdrop-blur-md border rounded-xl p-6 h-auto md:h-[600px] overflow-y-auto scrollbar-hide`} >
                             {/* Event Header */}
                             <div className="flex justify-between items-start mb-6">
                                 <div>
@@ -547,7 +547,7 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
 
                         </div>
                     ) : (
-                        <div className="bg-card border border-border rounded-xl p-6 h-[600px] flex items-center justify-center text-muted-foreground">
+                        <div className={`${theme === 'light' ? 'bg-white/60 border-black/5' : 'bg-white/5 border-white/10'} backdrop-blur-md border rounded-xl p-6 h-[600px] flex items-center justify-center text-muted-foreground`}>
                             <p>Select an event to view details</p>
                         </div>
                     )}
@@ -555,17 +555,19 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
             </div>
 
             {/* Edit Modal */}
-            {showEditModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <CreateEventForm
-                        onClose={() => {
-                            setShowEditModal(false);
-                            setEditingEvent(null);
-                        }}
-                        initialData={editingEvent}
-                    />
-                </div>
-            )}
+            {
+                showEditModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/10 backdrop-blur-sm">
+                        <CreateEventForm
+                            onClose={() => {
+                                setShowEditModal(false);
+                                setEditingEvent(null);
+                            }}
+                            initialData={editingEvent}
+                        />
+                    </div>
+                )
+            }
         </div>
     );
 }

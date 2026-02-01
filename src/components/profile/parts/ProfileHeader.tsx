@@ -54,8 +54,8 @@ export function ProfileHeader({
                                 onClick={onFollowToggle}
                                 disabled={isFollowLoading}
                                 className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${isUserFollowing
-                                        ? "bg-muted text-foreground hover:bg-muted/80"
-                                        : "bg-primary text-primary-foreground hover:opacity-90"
+                                    ? "bg-muted text-foreground hover:bg-muted/80"
+                                    : "bg-primary text-primary-foreground hover:opacity-90"
                                     } ${isFollowLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                             >
                                 {isUserFollowing ? (

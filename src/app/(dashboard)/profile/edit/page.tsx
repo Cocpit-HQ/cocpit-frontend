@@ -1,16 +1,14 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
 import { ArrowLeft, Save } from "lucide-react"
 
-import { AppShell } from "@/components/layout/AppShell"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import type { Page, Theme } from "@/types/common"
+import type { Page } from "@/types/common"
 import { getProfile, updateProfile } from "@/services/api/profile"
 import type { UpdateProfilePayload } from "@/types/user"
 import { useToast } from "@/hooks/use-toast"
@@ -25,38 +23,9 @@ const routes: Record<string, string> = {
   analytics: "/analytics",
 }
 
-function useSystemTheme() {
-  const [systemTheme, setSystemTheme] = useState<Theme>("light")
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
-    const updateTheme = (matches: boolean) => setSystemTheme(matches ? "dark" : "light")
-    updateTheme(mediaQuery.matches)
-    const listener = (event: MediaQueryListEvent) => updateTheme(event.matches)
-    mediaQuery.addEventListener("change", listener)
-    return () => mediaQuery.removeEventListener("change", listener)
-  }, [])
-
-  return systemTheme
-}
-
-interface EditProfilePageProps {
-  isDark?: boolean
-}
-
-export default function EditProfilePage({ isDark: externalIsDark }: EditProfilePageProps) {
+export default function EditProfilePage() {
   const router = useRouter()
-  const { theme } = useTheme()
-  const systemTheme = useSystemTheme()
   const { toast } = useToast()
-
-  const internalIsDark = useMemo(
-    () => theme === "dark" || (theme === "system" && systemTheme === "dark"),
-    [systemTheme, theme]
-  )
-
-  const isDark = externalIsDark ?? internalIsDark
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
@@ -194,6 +163,7 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
       toast({
         title: "Success",
         description: "Profile updated successfully",
+
       });
       router.push("/profile");
     } catch (error: any) {
@@ -212,14 +182,13 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
     }
   }
 
-  const inputStyles = isDark
-    ? "bg-[#171c28] border-[#2d3548] text-white placeholder-gray-500"
-    : "bg-[#0b1020]/5 border-gray-300 text-gray-900 placeholder-gray-500"
-  const labelStyles = `text-sm font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`
-  const errorStyles = "text-xs text-red-500 mt-1"
+  // Styles using semantic CSS variables that adapt to theme (Navy/Dark/Light)
+  const inputStyles = "bg-background border-border text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+  const labelStyles = "text-sm font-medium text-foreground"
+  const errorStyles = "text-xs text-destructive mt-1"
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-[#171c28]" : "bg-[#F3F2EF]"}`}>
+    <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
 
         {/* Header */}
@@ -227,22 +196,22 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.back()}
-              className={`p-2 rounded-full hover:bg-opacity-10 hover:bg-gray-500 transition-all ${isDark ? "text-white" : "text-gray-900"}`}
+              className="p-2 rounded-full hover:bg-muted transition-all text-foreground"
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
-            <h1 className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Edit Profile</h1>
+            <h1 className="text-2xl font-bold text-foreground">Edit Profile</h1>
           </div>
           <div className="flex gap-3">
             <Button
               variant="outline"
               onClick={() => router.back()}
-              className={isDark ? "border-[#2d3548] text-gray-300 hover:bg-[#171c28] bg-transparent" : "border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent"}
+              className="border-border text-muted-foreground hover:bg-muted bg-transparent"
               disabled={isLoading}
             >
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={isLoading} className="bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white hover:opacity-90 transition-all gap-2 border-0">
+            <Button onClick={handleSave} disabled={isLoading} className="bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white hover:opacity-90 transition-all gap-2 border-0 shadow-lg shadow-blue-500/20">
               <Save className="w-4 h-4" />
               {isLoading ? "Saving..." : "Save Changes"}
             </Button>
@@ -250,7 +219,7 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
         </div>
 
         {/* Form Container */}
-        <div className={`${isDark ? "bg-[#242b3d] border-[#2d3548]" : "bg-white border-gray-200"} rounded-xl border p-6 md:p-8 shadow-sm`}>
+        <div className="bg-card border-border rounded-xl border p-6 md:p-8 shadow-sm">
           <div className="grid gap-6">
 
             <div className="grid gap-2">
@@ -259,7 +228,7 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
                 id="name"
                 value={formData.full_name}
                 onChange={handleChange}
-                className={`${inputStyles} ${errors.full_name ? "border-red-500" : ""}`}
+                className={`${inputStyles} ${errors.full_name ? "border-destructive" : ""}`}
               />
               {errors.full_name && <p className={errorStyles}>{errors.full_name}</p>}
             </div>
@@ -270,18 +239,18 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
                 id="headline"
                 value={formData.headline}
                 onChange={handleChange}
-                className={`${inputStyles} ${errors.headline ? "border-red-500" : ""}`}
+                className={`${inputStyles} ${errors.headline ? "border-destructive" : ""}`}
               />
               {errors.headline && <p className={errorStyles}>{errors.headline}</p>}
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="mobileNumber" className={labelStyles}>Mobile Number <span className="text-red-500">*</span></Label>
+              <Label htmlFor="mobileNumber" className={labelStyles}>Mobile Number <span className="text-destructive">*</span></Label>
               <Input
                 id="mobileNumber"
                 value={formData.mobile_number}
                 onChange={handleChange}
-                className={`${inputStyles} ${errors.mobile_number ? "border-red-500" : ""}`}
+                className={`${inputStyles} ${errors.mobile_number ? "border-destructive" : ""}`}
                 placeholder="Enter 10 digit mobile number"
               />
               {errors.mobile_number && <p className={errorStyles}>{errors.mobile_number}</p>}
@@ -294,7 +263,7 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
                   id="jobTitle"
                   value={formData.job_title}
                   onChange={handleChange}
-                  className={`${inputStyles} ${errors.job_title ? "border-red-500" : ""}`}
+                  className={`${inputStyles} ${errors.job_title ? "border-destructive" : ""}`}
                 />
                 {errors.job_title && <p className={errorStyles}>{errors.job_title}</p>}
               </div>
@@ -304,7 +273,7 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
                   id="company"
                   value={formData.company_name}
                   onChange={handleChange}
-                  className={`${inputStyles} ${errors.company_name ? "border-red-500" : ""}`}
+                  className={`${inputStyles} ${errors.company_name ? "border-destructive" : ""}`}
                 />
                 {errors.company_name && <p className={errorStyles}>{errors.company_name}</p>}
               </div>
@@ -317,7 +286,7 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
                   id="school"
                   value={formData.school}
                   onChange={handleChange}
-                  className={`${inputStyles} ${errors.school ? "border-red-500" : ""}`}
+                  className={`${inputStyles} ${errors.school ? "border-destructive" : ""}`}
                 />
                 {errors.school && <p className={errorStyles}>{errors.school}</p>}
               </div>
@@ -327,7 +296,7 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
                   id="degree"
                   value={formData.degree}
                   onChange={handleChange}
-                  className={`${inputStyles} ${errors.degree ? "border-red-500" : ""}`}
+                  className={`${inputStyles} ${errors.degree ? "border-destructive" : ""}`}
                 />
                 {errors.degree && <p className={errorStyles}>{errors.degree}</p>}
               </div>
@@ -339,7 +308,7 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
                 id="location"
                 value={formData.location}
                 onChange={handleChange}
-                className={`${inputStyles} ${errors.location ? "border-red-500" : ""}`}
+                className={`${inputStyles} ${errors.location ? "border-destructive" : ""}`}
               />
               {errors.location && <p className={errorStyles}>{errors.location}</p>}
             </div>
@@ -350,7 +319,7 @@ export default function EditProfilePage({ isDark: externalIsDark }: EditProfileP
                 id="about"
                 value={formData.about_text}
                 onChange={handleChange}
-                className={`${inputStyles} min-h-[150px] ${errors.about_text ? "border-red-500" : ""}`}
+                className={`${inputStyles} min-h-[150px] ${errors.about_text ? "border-destructive" : ""}`}
               />
               {errors.about_text && <p className={errorStyles}>{errors.about_text}</p>}
             </div>
