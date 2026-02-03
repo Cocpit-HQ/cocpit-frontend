@@ -53,7 +53,7 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
     isFetchingNextPage,
     isLoading
   } = useInfiniteQuery({
-    queryKey: ['feed'],
+    queryKey: ['feed', currentUser.id],
     queryFn: async ({ pageParam }) => {
       const response = await getFeed(pageParam?.cursorCreatedAt, pageParam?.cursorPostId);
       return {
@@ -82,7 +82,7 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const addPost = useCallback((post: Post) => {
-    queryClient.setQueryData(['feed'], (oldData: any) => {
+    queryClient.setQueryData(['feed', currentUser.id], (oldData: any) => {
       if (!oldData) return oldData;
 
       // Add to the first page
@@ -103,7 +103,7 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
 
   const deletePost = useCallback(async (id: string) => {
     // Optimistic update
-    queryClient.setQueryData(['feed'], (oldData: any) => {
+    queryClient.setQueryData(['feed', currentUser.id], (oldData: any) => {
       if (!oldData) return oldData;
       return {
         ...oldData,
@@ -119,12 +119,12 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
     } catch (error) {
       console.error('Failed to delete post:', error);
       // Revert is complex with infinite query, simplified: invalidate to refetch
-      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['feed', currentUser.id] });
     }
-  }, [queryClient]);
+  }, [queryClient, currentUser.id]);
 
   const togglePostVisibility = useCallback((id: string) => {
-    queryClient.setQueryData(['feed'], (oldData: any) => {
+    queryClient.setQueryData(['feed', currentUser.id], (oldData: any) => {
       if (!oldData) return oldData;
       return {
         ...oldData,
@@ -141,7 +141,7 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
   }, [queryClient]);
 
   const updatePostInFeed = useCallback((id: string, updates: Partial<Post>) => {
-    queryClient.setQueryData(['feed'], (oldData: any) => {
+    queryClient.setQueryData(['feed', currentUser.id], (oldData: any) => {
       if (!oldData) return oldData;
       return {
         ...oldData,

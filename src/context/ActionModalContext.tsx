@@ -44,7 +44,7 @@ export const ActionModalProvider = ({ children }: ActionModalProviderProps) => {
   return (
     <ActionModalContext.Provider value={{ toggleOptions, openModal }}>
       {children}
-      
+
       {/* Replaced PostWithOptions with MobileCreateMenu */}
       <MobileCreateMenu
         open={isOptionsOpen}
@@ -54,7 +54,7 @@ export const ActionModalProvider = ({ children }: ActionModalProviderProps) => {
           openModal(type);
         }}
       />
-      
+
       <CreatePostModal
         isOpen={isModalOpen}
         onClose={closeModal}

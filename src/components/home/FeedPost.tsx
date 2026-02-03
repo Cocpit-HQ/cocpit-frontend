@@ -60,6 +60,15 @@ export default function FeedPost({
 }: FeedPostProps) {
   const [isLiked, setIsLiked] = useState(initialIsLiked)
   const [likeCount, setLikeCount] = useState(typeof likes === 'string' ? parseInt(likes) : likes)
+
+  // Sync state with props
+  useEffect(() => {
+    setIsLiked(initialIsLiked);
+  }, [initialIsLiked]);
+
+  useEffect(() => {
+    setLikeCount(typeof likes === 'string' ? parseInt(likes) : likes);
+  }, [likes]);
   const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false)
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
@@ -86,6 +95,37 @@ export default function FeedPost({
   const [dynamicAspectRatio, setDynamicAspectRatio] = useState<number | undefined>(
     aspectRatio && aspectRatio !== 'auto' ? parseFloat(aspectRatio.toString()) : undefined
   );
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Video Autoplay Observer
+  useEffect(() => {
+    if (!videoRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            videoRef.current?.play().catch((error) => {
+              // Auto-play might be blocked (e.g., if not muted or user hasn't interacted)
+              console.log("Autoplay prevented:", error);
+            });
+          } else {
+            videoRef.current?.pause();
+          }
+        });
+      },
+      {
+        threshold: 0.6, // Trigger when 60% of the video is visible
+      }
+    );
+
+    observer.observe(videoRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [videoSrc]);
 
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
     if (!aspectRatio || aspectRatio === 'auto') {
@@ -493,8 +533,10 @@ export default function FeedPost({
           >
             {videoSrc ? (
               <video
+                ref={videoRef}
                 src={videoSrc}
                 controls
+                muted // Required for autoplay in most browsers
                 playsInline
                 preload="metadata"
                 onLoadedMetadata={handleVideoLoad}
