@@ -43,6 +43,7 @@
     "dayjs": "^1.11.19",
     "debounce": "^3.0.0",
     "embla-carousel-react": "^8.6.0",
+    "emoji-picker-react": "^4.17.4",
     "input-otp": "^1.4.2",
     "jwt-decode": "^4.0.0",
     "lodash.debounce": "^4.0.8",

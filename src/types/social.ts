@@ -27,14 +27,16 @@ export interface Notification {
     notification_id: string;
     user_id: string; // recipient
     sender_id: string; // actor
-    type: 'connection_request' | 'connection_accepted' | 'like' | 'comment' | 'follow' | 'job_alert' | 'repost';
+    type: 'connection_request' | 'connection_accepted' | 'like' | 'comment' | 'follow' | 'job_alert' | 'repost' | 'mention' | 'reply';
     actor_name: string;
     actor_avatar: string | null;
     reference_id: string | null;
     text: string;
     is_read: boolean;
     created_at: string;
+    metadata?: any; // For flexible payload like comment_id
 }
+
 
 export interface Follower {
     follower_id: string;

@@ -154,7 +154,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     // Backend doesn't return likes/comments/shares counts in the list view provided
     likes: backendPost.like_count,
     isLiked: backendPost.is_liked,
-    comments: "0",
+    comments: (backendPost.comment_count || 0).toString(),
     shares: "0",
     commentData: [], // Backend doesn't provide comments in feed list
     category: (backendPost.category_name as any) || undefined,

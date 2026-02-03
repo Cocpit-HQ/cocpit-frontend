@@ -37,14 +37,22 @@ export interface Education {
 }
 
 export interface Comment {
-  id: number;
+  id: string | number;
+  authorId?: string; // Added for permission checks
   author: {
     name: string;
     avatar: string;
+    account_name?: string; // Added for mentions
   };
   text: string;
   timeAgo: string;
-  likes: number;
+  created_at: string; // For sorting
+  like_count: number; // Changed from 'likes' to match backend
+  is_liked: boolean; // Added to track if current user liked
+  parent_id?: string | number | null; // For reply relationships
+  is_pinned?: boolean; // For pinning
+  pinned_at?: string | null; // When it was pinned
+  pinned_by?: string | null; // Who pinned it
 }
 
 export interface PollOption {

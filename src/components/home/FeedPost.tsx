@@ -4,18 +4,33 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { PollAnalyticsModal } from './PollAnalyticsModal';
 import { ThumbsUp, MessageCircle, Share2, MoreHorizontal, EyeOff, Trash2, Edit2, Eye, BarChart2, ArrowUpRight, Link2, Bookmark, UserMinus, Flag, Info, Star } from 'lucide-react'
 import Image from "next/image"
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+
+// Extend dayjs with relativeTime plugin
+dayjs.extend(relativeTime)
 
 import useEmblaCarousel from 'embla-carousel-react'
-import { Post, Comment as CommentType } from '@/types/entities'
+import { toast } from 'sonner'
+import { Comment as CommentType, Post, PollOption } from '@/types/entities'
+import { formatTimeAgo } from '@/lib/utils/timeFormatter'
 import CommentSection from './CommentSection'
 import MobileCommentDrawer from './MobileCommentDrawer'
 import { SharePostModal } from './SharePostModal'
 import { PollCard } from './PollCard'
 import { CreatePostModal } from './CreatePostModal'
-import { updatePost, toggleLike, voteInPoll, removeVote } from '@/services/api/posts' // Import toggleLike and voteInPoll
+import { updatePost, toggleLike, voteInPoll, removeVote, addComment, deleteComment, getComments, deletePost } from '@/services/api/posts'
 import { useFeed } from '@/context/FeedContext'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface FeedPostProps extends Omit<Post, 'commentData'> {
   initialComments?: CommentType[]
@@ -72,7 +87,10 @@ export default function FeedPost({
   const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false)
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
+
   const [postComments, setPostComments] = useState<CommentType[]>(initialComments)
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+
   const [showOptions, setShowOptions] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
@@ -90,6 +108,7 @@ export default function FeedPost({
   const [currentSlide, setCurrentSlide] = useState(0)
   const [showBadge, setShowBadge] = useState(false)
   const badgeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const searchParams = useSearchParams();
 
   // Dynamic aspect ratio for images (when backend doesn't provide it)
   const [dynamicAspectRatio, setDynamicAspectRatio] = useState<number | undefined>(
@@ -190,6 +209,56 @@ export default function FeedPost({
     }
   }, [emblaApi, onSelect, triggerBadgeVisibility])
 
+  // --- COMMENT LOGIC ---
+  const fetchPostComments = useCallback(async () => {
+    // Always fetch to get latest like states - removed commentsLoaded check
+    try {
+      const data = await getComments(id);
+      // Map properties to match CommentType
+      // Backend: comment_id, content, created_at, author_id, full_name, avatar_url, headline, like_count, is_liked
+      // Frontend: id, text, timeAgo, likes, author { name, avatar }, authorId
+      const mappedComments: CommentType[] = data.map((c: any) => ({
+        id: c.comment_id,
+        text: c.content,
+        timeAgo: formatTimeAgo(c.created_at),
+        created_at: c.created_at, // Added for sorting
+        like_count: c.like_count || 0, // From backend
+        is_liked: c.is_liked || false, // From backend
+        is_pinned: c.is_pinned || false, // From backend
+        pinned_at: c.pinned_at || null, // From backend
+        pinned_by: c.pinned_by || null, // From backend
+        authorId: c.author_id,
+        parent_id: c.parent_id || null, // Added for reply threading
+        author: {
+          name: c.full_name || 'User',
+          avatar: c.avatar_url || '/assets/pngegg.png',
+          account_name: c.account_name
+        }
+      }));
+      setPostComments(mappedComments);
+      setCommentsLoaded(true);
+    } catch (err) {
+      console.error("Failed to load comments", err);
+    }
+  }, [id]); // Removed commentsLoaded from dependencies
+
+  useEffect(() => {
+    if (isCommentSectionOpen || isMobileDrawerOpen) {
+      fetchPostComments();
+    }
+  }, [isCommentSectionOpen, isMobileDrawerOpen, fetchPostComments]);
+
+  // Restore comment section/drawer state from URL back navigation
+  useEffect(() => {
+    const openPostId = searchParams.get('openPost');
+    if (openPostId === id.toString()) {
+      setIsCommentSectionOpen(true);
+      setIsMobileDrawerOpen(true);
+      // fetchPostComments is already triggered by the effect above
+    }
+  }, [searchParams, id]);
+
+
   const handleLike = async () => {
     // Optimistic Update
     const prevLiked = isLiked;
@@ -224,19 +293,68 @@ export default function FeedPost({
     }
   }
 
-  const handleAddComment = (commentText: string) => {
-    const newComment: CommentType = {
-      id: Date.now(),
+  const handleAddComment = async (commentText: string, replyToId?: string | number) => {
+    if (!session?.user?.id) {
+      toast.error("You must be logged in to comment");
+      return;
+    }
+
+    const tempId = Date.now();
+    const tempComment: CommentType = {
+      id: tempId,
+      authorId: session.user.id.toString(), // Ensure string if needed
       author: {
-        name: 'Current User', // This would come from auth context
-        avatar: '/assets/pngegg.png',
+        name: session.user.name || 'You',
+        avatar: session.user.image || '/assets/pngegg.png',
       },
       text: commentText,
       timeAgo: 'Just now',
-      likes: 0,
+      created_at: new Date().toISOString(),
+      like_count: 0,
+      is_liked: false,
+      parent_id: replyToId || null
     };
-    setPostComments([newComment, ...postComments]);
+
+    // Optimistic
+    setPostComments([tempComment, ...postComments]);
+
+    try {
+      const response = await addComment(id, commentText, replyToId);
+      const newComment = response.comment;
+
+      // Update with real data
+      setPostComments(prev => prev.map(c =>
+        c.id === tempId ? {
+          ...c,
+          id: newComment.comment_id,
+          // usage of backend returned date if needed, or keep 'Just now'
+          timeAgo: 'Just now'
+        } : c
+      ));
+
+    } catch (err) {
+      console.error("Failed to post comment", err);
+      toast.error("Failed to post comment");
+      // Revert
+      setPostComments(prev => prev.filter(c => c.id !== tempId));
+    }
   };
+
+  const handleDeleteComment = async (commentId: string | number) => {
+    // Optimistic delete
+    const previousComments = [...postComments];
+    setPostComments(prev => prev.filter(c => c.id !== commentId));
+
+    try {
+      await deleteComment(commentId.toString());
+      toast.success("Comment deleted");
+    } catch (err) {
+      console.error("Failed to delete comment", err);
+      toast.error("Failed to delete comment");
+      // Revert
+      setPostComments(previousComments);
+    }
+  }
 
   const handleToggleVisibility = async () => {
     const newVisibility = visibility === 'public' ? 'private' : 'public';
@@ -247,8 +365,10 @@ export default function FeedPost({
 
     try {
       await updatePost(id, { visibility: newVisibility });
+      toast.info(`Post is now ${newVisibility}`);
     } catch (e) {
       console.error("Failed to toggle visibility", e);
+      toast.error("Failed to update visibility");
       // Revert
       updatePostInFeed(id, { visibility: visibility });
     }
@@ -298,6 +418,7 @@ export default function FeedPost({
       }
     } catch (error) {
       console.error("Vote failed", error);
+      toast.error("Failed to record vote");
       setPollData(previousPollData); // Revert
     } finally {
       setIsVoting(false);
@@ -351,13 +472,14 @@ export default function FeedPost({
       }
     } catch (error) {
       console.error("Shared vote failed", error);
+      toast.error("Failed to record vote on shared post");
       setSharedPollData(previousPollData);
     } finally {
       setIsSharedVoting(false);
     }
   };
 
-  const commentsCount = postComments.length > 0 ? postComments.length : initialCommentsCount;
+  const commentsCount = commentsLoaded ? postComments.length : (typeof initialCommentsCount === 'string' ? parseInt(initialCommentsCount) : initialCommentsCount);
 
   return (
     <div id={`post-${id}`} className="bg-card border-border md:rounded-xl border overflow-hidden flex flex-col h-full">
@@ -386,6 +508,7 @@ export default function FeedPost({
                 </Link>
               )}
               <div className="flex flex-col gap-0.5">
+                {/* Only show "Edited" or time if relevant. Current design shows time. */}
                 {title && (
                   <p className="text-xs md:text-sm leading-tight text-muted-foreground">
                     {title}
@@ -431,6 +554,7 @@ export default function FeedPost({
                             console.log("Copy link", id);
                             if (typeof window !== 'undefined') {
                               navigator.clipboard.writeText(`${window.location.origin}/post/${id}`);
+                              toast.success("Link copied!");
                             }
                             setShowOptions(false);
                           }}
@@ -443,6 +567,7 @@ export default function FeedPost({
                         <button
                           onClick={() => {
                             console.log("Report post", id);
+                            toast.success("Report submitted");
                             setShowOptions(false);
                           }}
                           className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
@@ -751,6 +876,10 @@ export default function FeedPost({
           <CommentSection
             comments={postComments}
             onAddComment={handleAddComment}
+            onDeleteComment={handleDeleteComment}
+            currentUserId={session?.user?.id?.toString()}
+            isPostOwner={isOwnPost}
+            postId={id}
           />
         )
       }
@@ -760,6 +889,10 @@ export default function FeedPost({
         onOpenChange={setIsMobileDrawerOpen}
         comments={postComments}
         onAddComment={handleAddComment}
+        onDeleteComment={handleDeleteComment}
+        currentUserId={session?.user?.id?.toString()}
+        isPostOwner={isOwnPost}
+        postId={id}
       />
 
       <SharePostModal

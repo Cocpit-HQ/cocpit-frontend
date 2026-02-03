@@ -7,6 +7,7 @@ import FeedPost from "@/components/home/FeedPost"
 import { mapBackendPostToFrontend } from "@/lib/mappers/feed.mapper"
 import { Post } from "@/types/entities"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 
 interface PageProps {
     params: Promise<{
@@ -19,6 +20,7 @@ export default function SinglePostPage({ params }: PageProps) {
     const { id } = use(params)
 
     const router = useRouter()
+    const { data: session } = useSession()
     const [post, setPost] = useState<Post | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
@@ -55,6 +57,11 @@ export default function SinglePostPage({ params }: PageProps) {
         router.push(routes[page] ?? '/feed')
     }
 
+    // Determine if current user is the post owner
+    const isOwnPost = post && session?.user?.id
+        ? post.authorId?.toString() === session.user.id.toString()
+        : false
+
     return (
         <div className="min-h-screen bg-background text-foreground">
             <div className="max-w-2xl mx-auto py-6 px-0 md:px-4">
@@ -75,7 +82,7 @@ export default function SinglePostPage({ params }: PageProps) {
                 ) : post ? (
                     <FeedPost
                         {...post}
-                        isOwnPost={false}
+                        isOwnPost={isOwnPost}
                     />
                 ) : null}
             </div>

@@ -22,6 +22,7 @@ export interface BackendPost {
   title?: string;
   post_type?: string;
   like_count: number;
+  comment_count: number;
   is_liked: boolean;
   shared_post?: {
     is_accessible: boolean;

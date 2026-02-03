@@ -52,3 +52,29 @@ export const getPollAnalytics = async (postId: string): Promise<any> => {
   const response = await api.get<any>(`/post/${postId}/poll/analytics`);
   return response.data;
 };
+
+// Comments
+export const addComment = async (postId: string, content: string, parent_id?: string | number | null) => {
+  const response = await api.post(`/post/${postId}/comments`, { content, parent_id: parent_id || null });
+  return response.data;
+};
+
+export const getComments = async (postId: string) => {
+  const response = await api.get(`/post/${postId}/comments`);
+  return response.data;
+};
+
+export const deleteComment = async (commentId: string) => {
+  const response = await api.delete(`/post/comments/${commentId}`);
+  return response.data;
+};
+
+export const toggleCommentLike = async (commentId: string | number) => {
+  const response = await api.post(`/comments/${commentId}/like`);
+  return response.data;
+};
+
+export const toggleCommentPin = async (commentId: string | number) => {
+  const response = await api.post(`/comments/${commentId}/pin`);
+  return response.data;
+};

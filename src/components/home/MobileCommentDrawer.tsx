@@ -1,12 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Comment as CommentType } from '@/types/entities';
-import CommentList from './CommentList';
+import React, { useState } from 'react';
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
+  DrawerFooter,
+  DrawerClose,
 } from '@/components/ui/drawer';
+import CommentList from './CommentList';
+import CommentInput from './CommentInput';
+import { Comment as CommentType } from '@/types/entities';
 import { X } from 'lucide-react';
 
 interface MobileCommentDrawerProps {
@@ -14,7 +17,11 @@ interface MobileCommentDrawerProps {
   onOpenChange: (open: boolean) => void;
   comments: CommentType[];
   isDark?: boolean;
-  onAddComment: (commentText: string) => void;
+  onAddComment: (commentText: string, replyToId?: string | number) => void;
+  onDeleteComment?: (commentId: string | number) => void;
+  currentUserId?: string;
+  isPostOwner?: boolean;
+  postId?: string | number;
 }
 
 export default function MobileCommentDrawer({
@@ -22,94 +29,63 @@ export default function MobileCommentDrawer({
   onOpenChange,
   comments,
   onAddComment,
+  onDeleteComment,
+  currentUserId,
+  isPostOwner,
+  postId
 }: MobileCommentDrawerProps) {
-  const [newComment, setNewComment] = useState('');
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [replyingTo, setReplyingTo] = useState<{ name: string; id: string | number } | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newComment.trim()) {
-      const commentText = replyingTo
-        ? `@${replyingTo} ${newComment.trim()}`
-        : newComment.trim();
-
-      onAddComment(commentText);
-      setNewComment('');
-      setReplyingTo(null);
-    }
+  const handleReply = (authorName: string, commentId: string | number) => {
+    setReplyingTo({ name: authorName, id: commentId });
   };
 
-  const handleReply = (authorName: string) => {
-    setReplyingTo(authorName);
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
-
-  const cancelReply = () => {
+  const handleCancelReply = () => {
     setReplyingTo(null);
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
+  };
+
+  const handleClose = () => {
+    onOpenChange(false);
+    setReplyingTo(null);
   };
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="flex flex-col h-[95vh] rounded-t-xl bg-card border-border">
-        <DrawerHeader className="flex-shrink-0 border-b border-border p-4">
-          <DrawerTitle className="text-center text-base font-semibold text-foreground">
-            Comments
+      <DrawerContent className="h-[85vh] flex flex-col rounded-t-[20px]">
+        {/* Header */}
+        <DrawerHeader className="border-b border-border py-4 flex items-center justify-between shrink-0">
+          <DrawerTitle className="text-center w-full text-base font-semibold">
+            Comments <span className="text-muted-foreground font-normal">({comments.length})</span>
           </DrawerTitle>
+          {/* Absolute close button mostly for visual assurance on mobile web */}
+          <DrawerClose className="absolute right-4 top-4 p-2 bg-muted/50 rounded-full" onClick={handleClose}>
+            <X className="w-4 h-4" />
+          </DrawerClose>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* Scrollable List */}
+        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
           <CommentList
             comments={comments}
             onReply={handleReply}
+            onDelete={onDeleteComment}
+            currentUserId={currentUserId}
+            isPostOwner={isPostOwner}
+            postId={postId}
           />
+          {/* Spacer to ensure last comment isn't hidden by sticky input */}
+          <div className="h-4" />
         </div>
 
-        {/* Fixed Input Section */}
-        <div className="flex-shrink-0 border-t border-border bg-card pb-safe">
-          {replyingTo && (
-            <div className="px-4 py-2 flex items-center justify-between text-xs bg-muted text-muted-foreground">
-              <span>Replying to <span className="font-semibold text-primary">@{replyingTo}</span></span>
-              <button onClick={cancelReply} className="p-1 hover:bg-muted/80 rounded-full">
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="p-3 flex items-end gap-3">
-             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-400 to-gray-500 overflow-hidden flex-shrink-0 mb-1">
-              {/* Current user avatar placeholder */}
-              <img src="/assets/pngegg.png" alt="Your avatar" className="w-full h-full object-cover" />
-            </div>
-            <div className="flex-1 relative">
-              <textarea
-                ref={inputRef}
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder={replyingTo ? `Reply to ${replyingTo}...` : "Add a comment..."}
-                className="w-full p-3 pr-12 rounded-2xl text-sm resize-none max-h-32 focus:outline-none border bg-muted text-foreground placeholder-muted-foreground border-transparent focus:border-primary"
-                rows={1}
-                style={{ minHeight: '44px' }}
-                onInput={(e) => {
-                  const target = e.target as HTMLTextAreaElement;
-                  target.style.height = 'auto';
-                  target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
-                }}
-              />
-              <button
-                type="submit"
-                disabled={!newComment.trim()}
-                className="absolute right-2 bottom-2 p-1.5 text-primary disabled:opacity-40 disabled:cursor-not-allowed font-semibold text-sm transition-opacity"
-              >
-                Post
-              </button>
-            </div>
-          </form>
+        {/* Sticky Input Footer */}
+        <div className="p-4 border-t border-border bg-card mt-auto pb-6 md:pb-4">
+          <CommentInput
+            onAddComment={(text) => onAddComment(text, replyingTo?.id)}
+            replyingTo={replyingTo}
+            onCancelReply={handleCancelReply}
+            currentUserAvatar="/assets/pngegg.png"
+            autoFocus={false} // Don't auto-focus on open to prevent keyboard jumping immediately
+          />
         </div>
       </DrawerContent>
     </Drawer>

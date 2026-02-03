@@ -102,6 +102,25 @@ export function NotificationPopover() {
                 } else if (notification.type === 'repost' && notification.reference_id) {
                   router.push(`/post/${notification.reference_id}`)
                   setIsOpen(false)
+                } else if ((notification.type === 'comment' || notification.type === 'mention' || notification.type === 'reply') && notification.reference_id) {
+                  // Extract comment_id from metadata if available (it might be stringified)
+                  let commentId;
+                  try {
+                    if (typeof notification.metadata === 'string') {
+                      const meta = JSON.parse(notification.metadata);
+                      commentId = meta.comment_id;
+                    } else if (typeof notification.metadata === 'object') {
+                      // @ts-ignore
+                      commentId = notification.metadata?.comment_id;
+                    }
+                  } catch (e) { console.error("Error parsing metadata", e) }
+
+                  const url = commentId
+                    ? `/post/${notification.reference_id}?commentId=${commentId}`
+                    : `/post/${notification.reference_id}`;
+
+                  router.push(url);
+                  setIsOpen(false);
                 }
               }}
               className={`p-4 flex gap-3 hover:bg-muted/50 transition-colors cursor-pointer ${!notification.is_read ? "bg-muted/30" : ""}`}
