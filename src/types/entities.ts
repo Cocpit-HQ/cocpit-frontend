@@ -93,4 +93,6 @@ export interface Post {
   visibility?: 'public' | 'private';
   poll?: Poll | null;
   shared_post?: Post | null;
+  isAvailable?: boolean;
+  unavailableReason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
 }

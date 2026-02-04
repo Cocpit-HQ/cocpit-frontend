@@ -66,13 +66,22 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     const sp = backendPost.shared_post;
 
     if (sp.is_accessible === false) {
+      let content = "This content is unavailable.";
+      if (sp.reason === "deleted") {
+        content = "This post has been deleted by the original author.";
+      } else if (sp.reason === "private" || sp.reason === "personal_connection") {
+        content = "This content is unavailable because it's private or restricted.";
+      } else if (sp.reason) {
+        content = `This content is unavailable: ${sp.reason}`;
+      }
+
       sharedPost = {
         id: "unavailable",
         authorId: sp.author?.user_id || "",
         author: sp.author?.full_name || "Unknown",
         authorAvatar: sp.author?.avatar_url || null,
         timeAgo: "",
-        content: sp.reason ? `This content is unavailable: ${sp.reason}` : "This content is unavailable.",
+        content: content,
         likes: 0,
         comments: "0",
         shares: "0",
@@ -131,6 +140,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         images: spImages.length > 0 ? spImages : undefined,
         videoSrc: spVideoSrc,
         likes: sp.like_count || 0,
+        isLiked: (sp as any).is_liked, // New field from backend
         comments: (sp.comment_count || 0).toString(),
         shares: "0",
         poll: spPoll,

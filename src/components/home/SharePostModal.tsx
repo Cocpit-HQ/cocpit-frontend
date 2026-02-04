@@ -34,13 +34,14 @@ interface SharePostModalProps {
   isOpen: boolean
   onClose: () => void
   postId: string
+  postCategory?: string
 }
 
 const getAvatarGradient = (avatar: string) => {
   return (avatarGradients as any)[avatar] || "from-gray-400 to-gray-500";
 }
 
-export function SharePostModal({ isOpen, onClose, postId }: SharePostModalProps) {
+export function SharePostModal({ isOpen, onClose, postId, postCategory }: SharePostModalProps) {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   const [message, setMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
@@ -135,14 +136,15 @@ export function SharePostModal({ isOpen, onClose, postId }: SharePostModalProps)
   }
 
   const handleRepost = () => {
+    if (postCategory === 'Personal') {
+      toast({
+        title: "Share restricted",
+        description: "Personal posts cannot be reposted to the feed.",
+        variant: "destructive"
+      });
+      return;
+    }
     setIsRepostModalOpen(true);
-    // Don't close share modal yet, let Repost modal handle flow or close it?
-    // Better to close share modal so Repost modal is top level
-    // onClose(); // Actually, CreatePostModal is rendered inside this component tree currently in FeedPost,
-    // but here we are inside SharePostModal.
-    // We can render CreatePostModal conditionally here or trigger callback.
-    // Given structure, let's render it here if possible or just navigate.
-    // For now, let's assume we render it here.
   }
 
   if (isRepostModalOpen) {
@@ -160,11 +162,17 @@ export function SharePostModal({ isOpen, onClose, postId }: SharePostModalProps)
 
   const OptionsView = (
     <div className="p-4 space-y-2">
-      <Button variant="ghost" className="w-full justify-start gap-3 h-12" onClick={handleRepost}>
+      <Button
+        variant="ghost"
+        className={`w-full justify-start gap-3 h-12 ${postCategory === 'Personal' ? 'opacity-50 cursor-not-allowed' : ''}`}
+        onClick={handleRepost}
+      >
         <Rss className="w-5 h-5" />
-        <div className="flex flex-col items-start">
+        <div className="flex flex-col items-start text-left">
           <span className="font-medium">Share to Feed</span>
-          <span className="text-xs text-muted-foreground">Repost this to your feed</span>
+          <span className="text-xs text-muted-foreground">
+            {postCategory === 'Personal' ? 'Personal posts cannot be reposted' : 'Repost this to your feed'}
+          </span>
         </div>
       </Button>
       <Button variant="ghost" className="w-full justify-start gap-3 h-12" onClick={handleShareToStory}>

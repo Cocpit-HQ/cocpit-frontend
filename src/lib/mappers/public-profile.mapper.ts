@@ -79,5 +79,65 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
     visibility: publicPost.visibility as 'public' | 'private', // Assuming backend visibility matches
     poll: poll,
     category: category,
+    shared_post: (() => {
+      const sp = publicPost.shared_post;
+      if (!sp) return undefined;
+
+      if (!sp.is_accessible) {
+        let content = "This content is unavailable.";
+        if (sp.reason === "deleted") {
+          content = "This post has been deleted by the original author.";
+        } else if (sp.reason === "private" || sp.reason === "personal_connection") {
+          content = "This content is unavailable because it's private or restricted.";
+        }
+
+        return {
+          id: "unavailable",
+          authorId: sp.author?.user_id || "",
+          author: sp.author?.full_name || "Unknown",
+          authorAvatar: sp.author?.avatar_url || null,
+          timeAgo: "",
+          content: content,
+          likes: 0,
+          comments: "0",
+          shares: "0",
+          isAvailable: false,
+          unavailableReason: sp.reason
+        } as Post & { isAvailable?: boolean; unavailableReason?: string };
+      }
+
+      if (sp.author && sp.post_id) {
+        return {
+          id: sp.post_id,
+          authorId: sp.author.user_id,
+          author: sp.author.full_name,
+          authorAvatar: sp.author.avatar_url,
+          timeAgo: sp.created_at ? dayjs(sp.created_at).fromNow() : "",
+          content: sp.content || "",
+          imageSrc: sp.media?.find(m => m.media_type === 'image')?.url,
+          likes: sp.like_count || 0,
+          isLiked: sp.is_liked,
+          comments: (sp.comment_count || 0).toString(),
+          shares: "0",
+          images: sp.media?.filter(m => m.media_type === 'image').map(m => m.url),
+          videoSrc: sp.media?.find(m => m.media_type === 'video')?.url,
+          isAvailable: true,
+          poll: sp.poll ? {
+            poll_id: sp.poll.poll_id,
+            total_votes: sp.poll.total_votes || 0,
+            duration: sp.poll.duration || "1 day",
+            is_active: sp.poll.is_active || false,
+            user_vote: sp.poll.user_vote,
+            options: sp.poll.options?.map(o => ({
+              option_id: o.option_id,
+              option_text: o.option_text,
+              vote_count: o.vote_count || 0
+            })) || []
+          } : undefined
+        } as Post & { isAvailable?: boolean };
+      }
+
+      return undefined;
+    })()
   };
 };

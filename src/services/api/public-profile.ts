@@ -36,6 +36,23 @@ export interface PublicPost {
   is_liked: boolean;
   comment_count: number;
   poll: PublicPostPoll | null;
+  shared_post?: {
+    is_accessible: boolean;
+    reason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
+    post_id?: string;
+    content?: string;
+    created_at?: string;
+    author?: {
+      user_id: string;
+      full_name: string;
+      avatar_url: string | null;
+    };
+    media?: { url: string; media_type: 'image' | 'video' }[];
+    like_count?: number;
+    comment_count?: number;
+    is_liked?: boolean;
+    poll?: PublicPostPoll | null;
+  };
 }
 
 export interface PublicPostsResponse {

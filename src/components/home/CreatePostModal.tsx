@@ -11,6 +11,7 @@ import { Post } from '@/types/entities';
 import { MediaCropper } from './MediaCropper';
 import getCroppedImg from '@/lib/canvasUtils';
 import { PostPreview } from './PostPreview';
+import { toast } from 'sonner';
 // Import Area type for onCropComplete
 import { Area } from 'react-easy-crop';
 
@@ -304,6 +305,12 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
         // Fetch shared post if exists
         if (sharedPostId) {
           getPostById(sharedPostId).then(post => {
+            if (post.category_name === 'Personal') {
+              toast.error("Personal posts cannot be reposted.");
+              onClose();
+              return;
+            }
+
             const mapped: Post = {
               id: post.post_id,
               authorId: post.author_id,
@@ -318,6 +325,9 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
               authorAvatar: post.author_avatar || undefined
             };
             setSharedPost(mapped);
+            // Auto-inherit settings
+            setPostCategory(post.category_name as any || 'Professional');
+            setVisibility(post.visibility as any || 'public');
           })
         }
       }
@@ -851,8 +861,15 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
         addPost(newPost);
       }
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to save post:", error);
+      if (error.response?.status === 409) {
+        toast.error("You have already shared this post.");
+      } else if (error.status === 409) {
+        toast.error("You have already shared this post.");
+      } else {
+        toast.error("Failed to save post. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }

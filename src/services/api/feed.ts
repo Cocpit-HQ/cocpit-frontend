@@ -26,7 +26,7 @@ export interface BackendPost {
   is_liked: boolean;
   shared_post?: {
     is_accessible: boolean;
-    reason?: 'private' | 'personal_connection' | 'unknown';
+    reason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
     post_id?: string;
     content?: string;
     created_at?: string;
@@ -38,6 +38,7 @@ export interface BackendPost {
     media?: BackendMedia[];
     like_count?: number;
     comment_count?: number;
+    is_liked?: boolean;
     poll?: BackendPoll | null;
   } | null;
 }

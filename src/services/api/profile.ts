@@ -44,6 +44,23 @@ export interface ProfilePost {
   is_liked: boolean;
   comment_count: string;
   poll: ProfilePostPoll | null;
+  shared_post?: {
+    is_accessible: boolean;
+    reason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
+    post_id?: string;
+    content?: string;
+    created_at?: string;
+    author?: {
+      user_id: string;
+      full_name: string;
+      avatar_url: string | null;
+    };
+    media?: { url: string; media_type: 'image' | 'video' }[];
+    like_count?: number;
+    comment_count?: number;
+    is_liked?: boolean;
+    poll?: ProfilePostPoll | null;
+  };
 }
 
 export interface GetUserPostsResponse {

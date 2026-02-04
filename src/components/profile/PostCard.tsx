@@ -10,17 +10,23 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post, href, onDelete, isOwnPost }: PostCardProps) {
-  const imageSrc = post.imageSrc || (post.images && post.images.length > 0 ? post.images[0] : null);
+  const mainPostImage = post.imageSrc || (post.images && post.images.length > 0 ? post.images[0] : null);
+  const sharedPostImage = post.shared_post?.imageSrc || (post.shared_post?.images && post.shared_post.images.length > 0 ? post.shared_post.images[0] : null);
+  const displayImage = mainPostImage || sharedPostImage;
+
+  const noImageContent = post.content || post.shared_post?.content || "No content";
 
   return (
     <div className="relative group">
       <Link href={href || `/profile/posts#post-${post.id}`} className="block w-full h-full">
         <div className="aspect-square bg-card border border-border rounded-xl overflow-hidden relative">
-          {imageSrc ? (
-            <img src={imageSrc} alt={post.title || ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          {displayImage ? (
+            <img src={displayImage} alt={post.title || ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
           ) : (
             <div className="w-full h-full bg-muted flex items-center justify-center">
-              <p className="text-xs text-muted-foreground p-4 text-center">{post.content}</p>
+              <p className="text-xs text-muted-foreground p-4 text-center">
+                {noImageContent}
+              </p>
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
