@@ -20,7 +20,7 @@ const formatTimeAgo = (isoString: string): string => {
 };
 
 export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread => {
-  if (!backendChat.other_user_id) {
+  if (!backendChat.other_user_id && !backendChat.is_group) {
     console.warn(`Conversation ${backendChat.conversation_id} is missing 'other_user_id'. This conversation might not support direct messaging.`);
   }
   return {
@@ -34,21 +34,28 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     online: false, // Default to false, updated via socket
     pinnedContext: undefined,
     otherUserId: backendChat.other_user_id, // Map other_user_id
+    isGroup: backendChat.is_group,
   };
 };
 
 export const mapBackendMessageToMessage = (backendMessage: BackendMessage, currentUserId?: string): Message => {
   return {
     id: backendMessage.message_id,
+    senderId: backendMessage.sender_id,
     sender: backendMessage.sender_id === currentUserId ? "me" : "other",
+    senderName: backendMessage.sender_name,
+    senderAvatar: backendMessage.sender_avatar,
     text: backendMessage.text_content,
     time: formatTime(backendMessage.created_at),
+    type: (backendMessage.message_type === 'system' || (backendMessage as any).type === 'system') ? 'system' : 'text',
     sharedPost: backendMessage.shared_post ? {
       id: backendMessage.shared_post.post_id,
       content: backendMessage.shared_post.content,
       author: backendMessage.shared_post.author.full_name,
       authorAvatar: backendMessage.shared_post.author.avatar_url,
       media: backendMessage.shared_post.media?.map(m => ({ url: m.url, type: m.media_type as 'image' | 'video' }))
-    } : null
+    } : null,
+    action_type: backendMessage.action_type,
+    target_id: backendMessage.target_id
   };
 };
