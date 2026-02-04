@@ -12,6 +12,7 @@ import { CreateStoryForm } from "@/components/showcase/CreateStoryForm"
 import { AuthorBadge } from "@/components/showcase/AuthorBadge"
 import { StoryModal } from "@/components/showcase/StoryModal"
 import { MobileStoryViewer } from "@/components/showcase/MobileStoryViewer"
+import { StoryCard } from "@/components/showcase/StoryCard"
 import { showcaseService } from "@/services/showcase.service"
 
 const routes: Record<string, string> = {
@@ -29,7 +30,7 @@ function ShowcaseSkeletonCard() {
     <div
       className="rounded-xl overflow-hidden border animate-pulse bg-card border-border"
     >
-      <div className="h-32 bg-muted" />
+      <div className="h-48 bg-muted" />
       <div className="p-3 space-y-3">
         <div
           className="h-5 rounded w-3/4 bg-muted"
@@ -107,15 +108,7 @@ export default function ShowcaseContent() {
     return processedGroups.find(g => g.stories.some(s => s.id === selectedStory.id)) || null;
   }, [selectedStory, processedGroups]);
 
-  const formatCompactNumber = (number: number) => {
-    if (number >= 1000000) {
-      return (number / 1000000).toFixed(1).replace(/\.0$/, '') + 'm';
-    }
-    if (number >= 1000) {
-      return (number / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
-    }
-    return number.toString();
-  };
+  // formatCompactNumber moved to utils
 
   const handleCreateStory = (newStory: StoryDetail) => {
     setGroups(prevGroups => {
@@ -169,21 +162,21 @@ export default function ShowcaseContent() {
       <header
         className="sticky top-0 z-20 border-b px-4 py-3 md:py-4 bg-background border-border"
       >
-        <div className="max-w-7xl mx-auto flex items-center gap-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-center gap-3">
           <button
             onClick={() => router.back()}
-            className="md:hidden p-2 rounded-full transition-colors -ml-2 hover:bg-muted text-foreground"
+            className="md:hidden absolute left-4 p-2 rounded-full transition-colors hover:bg-muted text-foreground"
           >
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
-          <div className="flex items-center gap-3 max-w-2xl w-full">
-            <Search className="w-5 h-5 text-muted-foreground" />
+          <div className="relative max-w-2xl w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search stories by author..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border focus:outline-none focus:border-primary bg-card text-foreground placeholder-muted-foreground border-border"
+              className="w-full pl-10 pr-4 py-2 rounded-full border focus:outline-none focus:border-primary bg-card text-foreground placeholder-muted-foreground border-border"
             />
           </div>
         </div>
@@ -213,88 +206,22 @@ export default function ShowcaseContent() {
                 processedGroups.map((group) => {
                   if (!group.stories || group.stories.length === 0) return null;
 
-                  // Stories are already sorted in processedGroups
-                  const sortedStories = group.stories;
-                  const latestStory = sortedStories[sortedStories.length - 1];
-                  const storiesCount = group.stories.length;
-
-                  if (!latestStory) return null;
-
-                  // Check if there are any unviewed stories in the group (excluding own)
-                  const hasUnviewed = group.stories.some(s => !s.has_viewed) && !group.is_current_user;
-
                   return (
-                    <div
+                    <StoryCard
                       key={group.author.id || group.author.name}
-                      className={`rounded-xl overflow-hidden border transition-all group cursor-pointer bg-card ${group.is_current_user
-                        ? 'border-blue-500'
-                        : hasUnviewed
-                          ? 'border-primary ring-1 ring-primary/20'
-                          : 'border-border hover:border-primary/50'
-                        }`}
+                      group={group}
                       onClick={() => {
                         const isMobile = window.matchMedia("(max-width: 768px)").matches
                         if (isMobile) {
                           setMobileSelectedGroupId(group.author.id || 0)
                         } else {
                           // Find the first unviewed story, or the first one if all viewed
+                          const sortedStories = group.stories
                           const firstUnviewed = sortedStories.find(s => !s.has_viewed) || sortedStories[0];
                           setSelectedStory({ ...firstUnviewed, author: group.author })
                         }
                       }}
-                    >
-                      <div className="relative h-32 overflow-hidden">
-                        {latestStory.image || latestStory.thumbnail_url ? (
-                          <img
-                            src={latestStory.thumbnail_url || latestStory.image}
-                            alt={latestStory.title}
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className={`w-full h-full ${latestStory.story_metadata?.backgroundStyle || 'bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500'}`} />
-                        )}
-
-                        {/* Top Right Story Count Badge */}
-                        {storiesCount > 1 && (
-                          <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2 py-1 rounded-md flex items-center gap-1 z-10 border border-white/10">
-                            <Layers className="w-3 h-3" />
-                            {storiesCount}
-                          </div>
-                        )}
-
-                        {latestStory.isVideo && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                              <Play className="w-8 h-8 text-white ml-1" />
-                            </div>
-                          </div>
-                        )}
-                        <AuthorBadge story={{ ...latestStory, author: group.author }} />
-                      </div>
-
-                      <div className="p-3">
-                        <h3
-                          className="mb-1 group-hover:text-primary transition-colors text-foreground"
-                        >
-                          {group.is_current_user ? "Your Story" : group.author.name}
-                        </h3>
-                        <div className="flex flex-wrap items-center justify-between text-xs gap-y-1 text-muted-foreground">
-                          <span>{latestStory.timeAgo}</span>
-                          <div className="flex items-center gap-1.5">
-                            <div className="flex items-center gap-1">
-                              <Eye className="w-4 h-4" />
-                              <span>{formatCompactNumber(latestStory.views)}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <ThumbsUp className="w-4 h-4" />
-                              <span>{formatCompactNumber(latestStory.likes)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    />
                   )
                 })}
               {!loading && searchQuery && processedGroups.length === 0 && (

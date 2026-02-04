@@ -95,7 +95,7 @@ export const HomeHeader = () => {
                             onBlur={() => {
                                 setTimeout(() => setIsSearchFocused(false), 200);
                             }}
-                            className="w-full pl-10 pr-4 py-2.5 rounded-lg border focus:outline-none focus:border-primary bg-card text-foreground placeholder-muted-foreground border-border"
+                            className="w-full pl-10 pr-4 py-2.5 rounded-full border focus:outline-none focus:border-primary bg-card text-foreground placeholder-muted-foreground border-border"
                         />
 
                         {/* Search Dropdown */}
@@ -141,14 +141,6 @@ export const HomeHeader = () => {
 
                 {/* --- Mobile Header (Hidden from md screens up) --- */}
                 <div className="md:hidden flex items-center gap-2 relative">
-                    {/* App Logo */}
-                    <Link href="/feed" className="flex-shrink-0">
-                        <img
-                            src="/assets/logo.PNG"
-                            alt="Cockpit Logo"
-                            className="h-8 w-auto"
-                        />
-                    </Link>
                     {/* Mobile Search Bar */}
                     <div className="flex-1 flex items-center gap-3 relative">
                         <Search className="w-4 h-4 text-muted-foreground absolute left-3" />

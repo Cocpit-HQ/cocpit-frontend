@@ -195,7 +195,17 @@ export default function SettingsPage() {
 
   const [activeSection, setActiveSection] = useState<SettingsSection>("appearance")
   const [compactMode, setCompactMode] = useState(false)
-  const [pendingTheme, setPendingTheme] = useState<Theme>(theme as Theme ?? "navy")
+
+  // Fix hydration mismatch: Initialize with a deterministic value
+  const [pendingTheme, setPendingTheme] = useState<Theme>("navy")
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    if (theme) {
+      setPendingTheme(theme as Theme)
+    }
+  }, [theme])
 
   const handleSave = () => {
     setTheme(pendingTheme)

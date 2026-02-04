@@ -489,3 +489,9 @@
     --background: #101112;
   }
 }
+
+@media (max-width: 768px) {
+  [data-theme="navy"] {
+    --background: #242b3d;
+  }
+}

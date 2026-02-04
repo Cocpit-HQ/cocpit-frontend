@@ -102,7 +102,7 @@ export function EventsPage() {
                 placeholder="Search events (location)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 rounded-xl border focus:outline-none focus:border-primary bg-card border-border text-foreground placeholder-muted-foreground"
+                className="w-full pl-12 pr-4 py-3 rounded-full border focus:outline-none focus:border-primary bg-card border-border text-foreground placeholder-muted-foreground"
               />
             </div>
             <div className="flex-shrink-0">
