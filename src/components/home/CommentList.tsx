@@ -54,21 +54,6 @@ export default function CommentList({ comments, onReply, onDelete, currentUserId
     return { rootComments, replyMap };
   }, [comments]);
 
-  // Wrapper to handle cascade delete
-  const handleCascadeDelete = (commentId: string | number) => {
-    if (!onDelete) return;
-
-    // 1. Delete the root itself
-    onDelete(commentId);
-
-    // 2. Delete all its children (if any)
-    const replies = replyMap.get(commentId);
-    if (replies) {
-      replies.forEach(reply => {
-        onDelete(reply.id);
-      });
-    }
-  };
 
   // Scroll to comment logic
   const searchParams = useSearchParams();
@@ -97,7 +82,7 @@ export default function CommentList({ comments, onReply, onDelete, currentUserId
           <Comment
             comment={root}
             onReply={onReply}
-            onDelete={handleCascadeDelete} 
+            onDelete={onDelete}
             currentUserId={currentUserId}
             variant="root"
             isPostOwner={isPostOwner}
@@ -108,7 +93,7 @@ export default function CommentList({ comments, onReply, onDelete, currentUserId
             <ReplyGroup
               replies={replyMap.get(root.id)!}
               onReply={onReply}
-              onDelete={onDelete} 
+              onDelete={onDelete}
               currentUserId={currentUserId}
               isDark={false}
               isPostOwner={isPostOwner}

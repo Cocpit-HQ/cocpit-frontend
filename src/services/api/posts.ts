@@ -59,13 +59,18 @@ export const addComment = async (postId: string, content: string, parent_id?: st
   return response.data;
 };
 
+export const updateComment = async (commentId: string, content: string) => {
+  const response = await api.put(`/comments/${commentId}`, { content });
+  return response.data;
+};
+
 export const getComments = async (postId: string) => {
   const response = await api.get(`/post/${postId}/comments`);
   return response.data;
 };
 
 export const deleteComment = async (commentId: string) => {
-  const response = await api.delete(`/post/comments/${commentId}`);
+  const response = await api.delete(`/comments/${commentId}`);
   return response.data;
 };
 
