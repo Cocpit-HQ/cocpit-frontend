@@ -8,21 +8,7 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {
-      fontFamily: {
-        sans: ["var(--font-geist-sans)"],
-        mono: ["var(--font-geist-mono)"],
-      },
-      colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        primary: "var(--primary)",
-        "primary-foreground": "var(--primary-foreground)",
-        "muted-foreground": "var(--muted-foreground)",
-        border: "var(--border)",
-        card: "var(--card)",
-      },
-    },
+    extend: {},
   },
   plugins: [],
 };

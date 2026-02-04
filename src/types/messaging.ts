@@ -20,6 +20,11 @@ export interface BackendMessage {
   text_content: string;
   created_at: string;
   read_at: string | null;
+  sender_name?: string;
+  sender_avatar?: string;
+  message_type?: string;
+  action_type?: string;
+  target_id?: string;
   shared_post?: {
     post_id: string;
     content: string;
@@ -43,13 +48,24 @@ export interface ChatThread {
   online: boolean; // Note: Backend response doesn't seem to have online status, might need socket
   pinnedContext?: string;
   otherUserId?: string; // Added to support sending messages to user
+  isGroup?: boolean; // Added for Group Chat
 }
 
 export interface Message {
   id: string; // was number | string
+  senderId?: string;
   sender: "me" | "other";
+  senderName?: string;
+  senderAvatar?: string;
   text: string;
+  // Compatibility fields for backend objects
+  text_content?: string;
+  created_at?: string;
+
   time: string;
+  type?: 'text' | 'system';
+  action_type?: string;
+  target_id?: string;
   isFirstInGroup?: boolean;
   isLastInGroup?: boolean;
   sharedPost?: {

@@ -71,9 +71,9 @@ export function SharePostModal({ isOpen, onClose, postId }: SharePostModalProps)
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
-  // Filter users based on search
+  /* Safe navigation for name in case of missing data */
   const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchQuery.toLowerCase())
+    (user.name || "").toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const toggleUser = (userId: string) => {
@@ -239,7 +239,7 @@ export function SharePostModal({ isOpen, onClose, postId }: SharePostModalProps)
                   }`}
               >
                 <div className={`w-10 h-10 rounded-full flex-shrink-0 bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-medium text-sm`}>
-                  {user.name.charAt(0)}
+                  {(user.name || "?").charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{user.name}</p>
