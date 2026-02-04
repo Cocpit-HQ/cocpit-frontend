@@ -173,7 +173,7 @@ export function EventFilters({ filters, setFilters }: EventFiltersProps) {
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" className="gap-2 bg-card border-border text-foreground">
+          <Button variant="outline" className="gap-2 bg-card border-border text-foreground rounded-full">
             <Filter className="h-4 w-4" />
             Filters
           </Button>
@@ -191,7 +191,7 @@ export function EventFilters({ filters, setFilters }: EventFiltersProps) {
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
-        <Button variant="outline" size="default" className="gap-2 bg-card border-border text-foreground px-4">
+        <Button variant="outline" size="default" className="gap-2 bg-card border-border text-foreground px-4 rounded-full">
           <Filter className="h-4 w-4" />
           Filter
         </Button>

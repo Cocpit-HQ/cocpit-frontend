@@ -33,12 +33,12 @@ export default function ChatListItem({ chat, isSelected, isMobile }: ChatListIte
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-2 min-w-0 overflow-hidden">
-              <h3 className="font-semibold truncate text-foreground flex-shrink-0 max-w-[60%]">
+            <div className="flex items-center gap-2 min-w-0 overflow-hidden flex-1">
+              <h3 className="font-semibold truncate text-foreground min-w-0">
                 {chat.name}
               </h3>
               {chat.role && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary truncate">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary whitespace-nowrap flex-shrink-0">
                   {chat.role}
                 </span>
               )}

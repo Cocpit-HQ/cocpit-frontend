@@ -220,7 +220,7 @@ export default function CommentInput({
                 </div>
             )}
 
-            <div className={`relative flex items-end gap-2 p-2 sm:p-3 border border-border bg-muted/20 ${replyingTo ? 'rounded-b-xl border-t-0' : 'rounded-xl'} focus-within:ring-1 focus-within:ring-primary/50 transition-all`}>
+            <div className={`relative flex items-end gap-2 p-1 sm:p-2 border border-border bg-muted/20 ${replyingTo ? 'rounded-b-xl border-t-0' : 'rounded-xl'} focus-within:ring-1 focus-within:ring-primary/50 transition-all`}>
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 overflow-hidden flex-shrink-0 mb-1 hidden sm:block">
                     <img src={currentUserAvatar} alt="User" className="w-full h-full object-cover" />
                 </div>
@@ -232,7 +232,7 @@ export default function CommentInput({
                         onChange={handleTextChange}
                         onKeyDown={handleKeyDown}
                         placeholder={replyingTo ? `Reply to ${replyingTo.name}...` : "Add a comment..."}
-                        className="w-full bg-transparent border-none focus:ring-0 p-2 sm:p-2.5 min-h-[44px] max-h-32 resize-none text-sm sm:text-base placeholder:text-muted-foreground/60 scrollbar-hide focus:outline-none"
+                        className="w-full bg-transparent border-none focus:ring-0 p-1.5 sm:p-2 min-h-[36px] max-h-32 resize-none text-sm sm:text-base placeholder:text-muted-foreground/60 scrollbar-hide focus:outline-none"
                         rows={1}
                         style={{ height: 'auto' }}
                     />

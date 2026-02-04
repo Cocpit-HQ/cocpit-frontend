@@ -489,7 +489,7 @@ export default function FeedPost({
   const commentsCount = commentsLoaded ? postComments.length : (typeof initialCommentsCount === 'string' ? parseInt(initialCommentsCount) : initialCommentsCount);
 
   return (
-    <div id={`post-${id}`} className="bg-card border-border md:rounded-xl border overflow-hidden flex flex-col h-full">
+    <div id={`post-${id}`} className="bg-card border-border md:rounded-xl md:border overflow-hidden flex flex-col h-full">
       <div className="px-4 md:px-6 pt-4 md:pt-6 pb-2">
         <div className="flex items-start justify-between mb-4">
           <div className="flex gap-3">
@@ -852,42 +852,45 @@ export default function FeedPost({
 
       </div>
 
-      <div className="px-4 md:px-6 py-3 border-t border-border mt-auto">
-        <div className="flex items-center justify-between text-xs md:text-sm mb-3 text-muted-foreground">
-          <span>{likeCount} likes</span>
-          <div className="flex gap-3">
-            <span className="cursor-pointer" onClick={handleToggleCommentSection}>{commentsCount} comments</span>
-            <span>{shares} shares</span>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between pt-3 border-t border-border">
+      <div className="px-4 md:px-6 py-2 md:py-3 border-t border-border mt-auto">
+        <div className="flex items-center justify-between">
           <button
             onClick={handleLike}
-            className={`flex items-center gap-2 ${isLiked ? 'text-primary' : 'text-muted-foreground hover:text-primary'} transition-colors flex-1 justify-center text-xs md:text-sm`}>
+            className={`flex flex-col items-center gap-1 ${isLiked ? 'text-primary' : 'text-muted-foreground hover:text-primary'} transition-colors flex-1 justify-center py-2 rounded-lg hover:bg-muted/50 text-xs md:text-sm`}
+          >
             <ThumbsUp className={`w-4 h-4 md:w-5 md:h-5 ${isLiked ? 'fill-current' : ''}`} />
-
+            {likeCount > 0 && <span className="font-medium leading-none">{likeCount}</span>}
           </button>
+
           <button
             onClick={handleToggleCommentSection}
-            className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center text-xs md:text-sm">
+            className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center py-2 rounded-lg hover:bg-muted/50 text-xs md:text-sm"
+          >
             <MessageCircle className="w-4 h-4 md:w-5 md:h-5" />
-
+            {(typeof commentsCount === 'number' ? commentsCount : parseInt(commentsCount || '0')) > 0 && (
+              <span className="font-medium leading-none">{commentsCount}</span>
+            )}
           </button>
+
           <button
             onClick={() => {
               if (onShare) onShare()
               setIsShareModalOpen(true)
             }}
-            className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center text-xs md:text-sm">
+            className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center py-2 rounded-lg hover:bg-muted/50 text-xs md:text-sm"
+          >
             <Share2 className="w-4 h-4 md:w-5 md:h-5" />
-
+            {(typeof shares === 'number' ? shares : parseInt(shares || '0')) > 0 && (
+              <span className="font-medium leading-none">{shares}</span>
+            )}
           </button>
+
           <button
             onClick={() => {
               console.log("Saving post", id);
             }}
-            className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center text-xs md:text-sm">
+            className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center py-2 rounded-lg hover:bg-muted/50 text-xs md:text-sm"
+          >
             <Bookmark className="w-4 h-4 md:w-5 md:h-5" />
           </button>
         </div>

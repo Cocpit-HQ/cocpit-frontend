@@ -27,12 +27,12 @@ export default function CommentSection({ comments, onAddComment, onDeleteComment
   };
 
   return (
-    <div className="flex flex-col md:max-h-[550px] bg-background md:bg-muted/30 relative">
+    <div className="flex flex-col md:max-h-[250px] bg-background md:bg-muted/30 relative">
 
       {/* Scrollable Comments List */}
-      <div className="flex-1 overflow-y-auto min-h-0 p-4 md:p-6 pb-4 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto min-h-0 p-2 pb-6 scrollbar-hide">
         {comments.length === 0 ? (
-          <div className="text-center py-10 text-muted-foreground text-sm">
+          <div className="text-center py-2 text-muted-foreground text-sm">
             No comments yet. Be the first to say something!
           </div>
         ) : (
