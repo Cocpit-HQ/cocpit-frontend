@@ -300,9 +300,15 @@ export default function FeedPost({
     }
 
     const tempId = Date.now();
+
+    // Optimistically promote parent_id if replying to a reply
+    const optimisticParentId = replyToId
+      ? (postComments.find(c => c.id === replyToId)?.parent_id || replyToId)
+      : null;
+
     const tempComment: CommentType = {
       id: tempId,
-      authorId: session.user.id.toString(), // Ensure string if needed
+      authorId: session.user.id.toString(),
       author: {
         name: session.user.name || 'You',
         avatar: session.user.image || '/assets/pngegg.png',
@@ -312,22 +318,22 @@ export default function FeedPost({
       created_at: new Date().toISOString(),
       like_count: 0,
       is_liked: false,
-      parent_id: replyToId || null
+      parent_id: optimisticParentId
     };
 
-    // Optimistic
+    // Optimistic update
     setPostComments([tempComment, ...postComments]);
 
     try {
       const response = await addComment(id, commentText, replyToId);
       const newComment = response.comment;
 
-      // Update with real data
+      // Update with real data, including the promoted parent_id
       setPostComments(prev => prev.map(c =>
         c.id === tempId ? {
           ...c,
           id: newComment.comment_id,
-          // usage of backend returned date if needed, or keep 'Just now'
+          parent_id: newComment.parent_id,
           timeAgo: 'Just now'
         } : c
       ));

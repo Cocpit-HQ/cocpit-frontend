@@ -30,11 +30,21 @@ export default function CommentList({ comments, onReply, onDelete, currentUserId
       }
     });
 
-    // ✅ CORRECTED: Explicit DESC sorting for root comments (newest first)
-    // Don't rely on backend order - be explicit for safety
     const rootComments = comments
       .filter(c => !c.parent_id)
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      .sort((a, b) => {
+        // 1. Pinned comments first
+        if (a.is_pinned && !b.is_pinned) return -1;
+        if (!a.is_pinned && b.is_pinned) return 1;
+
+        // 2. If both are pinned, sort by pinned_at DESC (newest pin at top)
+        if (a.is_pinned && b.is_pinned) {
+          return new Date(b.pinned_at || b.created_at).getTime() - new Date(a.pinned_at || a.created_at).getTime();
+        }
+
+        // 3. Otherwise sort by created_at DESC (newest first)
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
 
     // Sort replies chronologically (ASC) for readability
     replyMap.forEach((replies) => {
@@ -87,7 +97,7 @@ export default function CommentList({ comments, onReply, onDelete, currentUserId
           <Comment
             comment={root}
             onReply={onReply}
-            onDelete={handleCascadeDelete} // Use the wrapper here
+            onDelete={handleCascadeDelete} 
             currentUserId={currentUserId}
             variant="root"
             isPostOwner={isPostOwner}
@@ -98,7 +108,7 @@ export default function CommentList({ comments, onReply, onDelete, currentUserId
             <ReplyGroup
               replies={replyMap.get(root.id)!}
               onReply={onReply}
-              onDelete={onDelete} // Replies trigger normal delete (they have no children in flat mode)
+              onDelete={onDelete} 
               currentUserId={currentUserId}
               isDark={false}
               isPostOwner={isPostOwner}
