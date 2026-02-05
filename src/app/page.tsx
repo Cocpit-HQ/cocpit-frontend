@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import LoginForm from "@/components/auth/LoginForm";
 import Image from "next/image";
 import { Briefcase } from "lucide-react";
@@ -29,7 +30,9 @@ export default function Home() {
               </span>
             </div>
 
-            <LoginForm />
+            <Suspense fallback={<div className="h-64 animate-pulse bg-muted rounded-xl" />}>
+              <LoginForm />
+            </Suspense>
           </div>
 
           {/* Left side - Branding with animation */}
