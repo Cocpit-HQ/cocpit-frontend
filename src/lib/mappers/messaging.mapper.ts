@@ -28,7 +28,7 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     name: backendChat.other_user_name,
     role: backendChat.other_user_headline || "",
     lastMessage: backendChat.last_message_text,
-    time: backendChat.timeAgo || formatTimeAgo(backendChat.updated_at),
+    time: backendChat.timeAgo || formatTimeAgo(backendChat.last_message_at || backendChat.updated_at),
     unread: backendChat.unread_count,
     avatar: backendChat.other_user_avatar || "gradient-1", // Use the URL if present, or fallback to a gradient default
     online: false, // Default to false, updated via socket
@@ -37,19 +37,22 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     isGroup: backendChat.is_group,
     isBlockedByMe: backendChat.is_blocked_by_me || false,
     isBlockedByOther: backendChat.is_blocked_by_other || false,
+    lastMessageAt: backendChat.last_message_at || backendChat.updated_at || new Date().toISOString(),
   };
 };
 
 export const mapBackendMessageToMessage = (backendMessage: BackendMessage, currentUserId?: string): Message => {
+  const isMe = currentUserId && String(backendMessage.sender_id) === String(currentUserId);
+
   return {
     id: backendMessage.message_id,
     senderId: backendMessage.sender_id,
-    sender: backendMessage.sender_id === currentUserId ? "me" : "other",
+    sender: isMe ? "me" : "other",
     senderName: backendMessage.sender_name,
     senderAvatar: backendMessage.sender_avatar,
     text: backendMessage.text_content,
     time: formatTime(backendMessage.created_at),
-    type: (backendMessage.message_type === 'system' || (backendMessage as any).type === 'system') ? 'system' : 'text',
+    type: (backendMessage.message_type === 'system' || (backendMessage as any).type === 'system' || (backendMessage as any).is_system || backendMessage.action_type || backendMessage.sender_id === null) ? 'system' : 'text',
     sharedPost: backendMessage.shared_post ? {
       id: backendMessage.shared_post.post_id,
       content: backendMessage.shared_post.content,

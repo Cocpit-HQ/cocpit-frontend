@@ -4,14 +4,14 @@ import React, { useState, useEffect } from "react"
 import { Search, Plus } from "lucide-react"
 import { ChatThread } from "@/types/messaging"
 import ChatListItem from "./ChatListItem"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useSession } from "next-auth/react"
 import { getConversations } from "@/services/api/messaging"
 import { getPendingInvitations, respondInvitation } from "@/services/api/group-chat"
 import { mapBackendChatToChatThread } from "@/lib/mappers/messaging.mapper"
 import { useSocket } from "@/context/SocketContext"
 import { Button } from "@/components/ui/button"
 import InvitationCard from "../group-chat/InvitationCard"
-import { useQueryClient } from "@tanstack/react-query" // Add missing import
 
 interface ChatListProps {
   selectedChatId?: string // Updated to string
@@ -28,10 +28,17 @@ export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats
   const { socket, isUserOnline } = useSocket();
   const queryClient = useQueryClient();
 
+  const { data: session } = useSession();
   const { data: invitations = [] } = useQuery({
     queryKey: ['invitations'],
     queryFn: getPendingInvitations
   });
+
+  useEffect(() => {
+    console.log("ChatList Rendered. Current User ID:", session?.user?.id);
+    console.log("Invitations Data:", invitations);
+  }, [session, invitations]);
+
 
   const handleRespond = async (invitationId: string, action: 'accept' | 'reject') => {
     try {

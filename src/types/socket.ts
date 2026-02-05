@@ -9,6 +9,7 @@ export interface NotificationPayload {
   senderName?: string;
   senderAvatar?: string;
   conversationId?: string;
+  isGroup?: boolean;
 }
 
 export interface ErrorPayload {

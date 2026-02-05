@@ -133,7 +133,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             <div
               className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
-                if (payload.from) {
+                if (payload.isGroup) {
+                  router.push(`/messaging?groupId=${payload.conversationId}`);
+                } else if (payload.from) {
                   router.push(`/messaging?userId=${payload.from}`);
                 }
               }}
