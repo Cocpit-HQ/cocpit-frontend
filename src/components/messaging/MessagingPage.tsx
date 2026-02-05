@@ -31,6 +31,8 @@ const routes: Record<string, string> = {
   messaging: "/messaging",
 }
 
+const UNKNOWN_USER = { id: "unknown" };
+
 export default function MessagingPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -59,30 +61,29 @@ export default function MessagingPage() {
 
     if (isLoading) return;
 
-    if (userId) {
-      // Race Condition Protection:
-      if (userId === processedUserIdRef.current) {
-        return;
-      }
+    // Helper to safely set selected chat if different
+    const safelySetSelectedChat = (chat: ChatThread | null) => {
+      setSelectedChat(prev => {
+        if (prev?.id === chat?.id) return prev;
+        return chat;
+      });
+    };
 
-      // Check if we already have a conversation with this user
+    if (userId) {
+      if (userId === processedUserIdRef.current) return;
+
       const existingChat = chats.find(c => c.otherUserId === userId);
 
       if (existingChat) {
-        if (selectedChat?.id !== existingChat.id) {
-          setSelectedChat(existingChat);
-          processedUserIdRef.current = userId; // Mark as processed
-        }
+        safelySetSelectedChat(existingChat);
+        processedUserIdRef.current = userId;
       } else {
-        // No existing chat, fetch user details to create a draft
-        // Avoid re-fetching if we already created a draft for this user
-        if (selectedChat?.id === 'new' && selectedChat.otherUserId === userId) return;
+        // Prevent repeated fetching for the same new user
+        if (processedUserIdRef.current === userId) return;
 
+        // No existing chat, fetch user details to create a draft
         const fetchUserAndCreateDraft = async () => {
-          if (!userId || userId === 'null' || userId === 'undefined') {
-            // console.warn("Invalid userId for new chat:", userId);
-            return;
-          }
+          if (!userId || userId === 'null' || userId === 'undefined') return;
           try {
             const user = await getUserById(userId);
             const newChat: ChatThread = {
@@ -93,11 +94,12 @@ export default function MessagingPage() {
               avatar: user.avatar_url || "gradient-1",
               lastMessage: "",
               time: new Date().toISOString(),
+              lastMessageAt: new Date().toISOString(),
               unread: 0,
               online: false
             };
-            setSelectedChat(newChat);
-            processedUserIdRef.current = userId; // Mark as processed
+            safelySetSelectedChat(newChat);
+            processedUserIdRef.current = userId;
           } catch (err) {
             console.error("Failed to fetch user details for new chat", err);
           }
@@ -105,40 +107,78 @@ export default function MessagingPage() {
         fetchUserAndCreateDraft();
       }
     } else if (groupId) {
+      if (groupId === processedUserIdRef.current) return;
+
       const groupChat = chats.find(c => c.id === groupId);
       if (groupChat) {
-        if (selectedChat?.id !== groupChat.id) {
-          setSelectedChat(groupChat);
-        }
+        safelySetSelectedChat(groupChat);
         processedUserIdRef.current = groupId;
       }
     } else if (chats.length > 0 && !isMobile) {
-      // Desktop default selection when no userId is present
+      // Desktop default selection
       setSelectedChat(prev => prev ? prev : chats[0]);
-      processedUserIdRef.current = null; // Clear processed user when userId is removed
-    } else if (!userId && !groupId && isMobile) { // Added !groupId to ensure it's only when no specific chat is requested
-      // On mobile, if userId/groupId is removed from URL, clear selected chat
-      setSelectedChat(null);
+      processedUserIdRef.current = null;
+    } else if (!userId && !groupId && isMobile) {
+      safelySetSelectedChat(null);
       processedUserIdRef.current = null;
     }
-  }, [searchParams, chats, isMobile, isLoading, selectedChat]);
+  }, [searchParams, chats, isMobile, isLoading]); // Removed selectedChat dependency
 
   // Listen for new messages to update the conversation list
   useEffect(() => {
     if (!socket) return;
 
-    const handleNotification = (payload: any) => {
-      if (payload.type === 'message') {
-        queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      }
+    const handleNewMessage = (message: any) => {
+      queryClient.setQueryData(['conversations'], (oldData: ChatThread[] | undefined) => {
+        if (!oldData) return oldData;
+        let conversationExists = false;
+
+        const updatedList = oldData.map(c => {
+          // Check match by ID (group/conv ID) OR by otherUserId (for 1-on-1 if conversion_id not present in list yet)
+          // Also handle simplified match if message.conversation_id matches c.id
+          const isMatch = c.id === message.conversation_id ||
+            c.id === message.group_id ||
+            (!c.isGroup && c.otherUserId === message.sender_id) || // Incoming 1-on-1
+            (!c.isGroup && c.otherUserId === message.target_id);   // Outgoing 1-on-1 (if not optimistic)
+
+          if (isMatch) {
+            conversationExists = true;
+            return {
+              ...c,
+              lastMessage: message.text_content || (message.shared_post ? "Shared a post" : "Attachment"), // Handle non-text
+              time: message.created_at || new Date().toISOString(),
+              lastMessageAt: new Date().toISOString(), // FORCE update to now to ensure it jumps to top
+              unread: (c.id === selectedChat?.id || (selectedChat?.isGroup && selectedChat.id === c.id)) ? 0 : (c.unread + 1)
+            };
+          }
+          return c;
+        });
+
+        if (conversationExists) {
+          return [...updatedList].sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
+        } else {
+          // New conversation (or not in list), invalidate to fetch
+          queryClient.invalidateQueries({ queryKey: ['conversations'] });
+          return oldData;
+        }
+      });
     };
 
+    const handleNotification = (payload: any) => {
+      if (payload.type !== 'message') {
+        // handle other notifications
+      }
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    };
+
+    socket.on('new_message', handleNewMessage);
     socket.on('notification', handleNotification);
 
     return () => {
+      socket.off('new_message', handleNewMessage);
       socket.off('notification', handleNotification);
     };
-  }, [socket, queryClient]);
+  }, [socket, queryClient, selectedChat?.id]); // Only depend on ID, not full object
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
@@ -201,7 +241,7 @@ export default function MessagingPage() {
                   <GroupChatProvider groupId={selectedChat.id}>
                     <GroupChat
                       groupId={selectedChat.id}
-                      currentUser={user || { id: "unknown" }} // Fallback for loading state
+                      currentUser={user || UNKNOWN_USER}
                       onBack={() => {
                         if (isMobile) router.push('/messaging');
                         else setSelectedChat(null);

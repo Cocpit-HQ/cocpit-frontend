@@ -135,16 +135,16 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
       }
     };
 
-    socket.on('newMessage', handleNewMessage);
+    socket.on('new_message', handleNewMessage);
     socket.on('isTyping', handleTyping);
     socket.on('stoppedTyping', handleStopTyping);
 
     return () => {
-      socket.off('newMessage', handleNewMessage);
+      socket.off('new_message', handleNewMessage);
       socket.off('isTyping', handleTyping);
       socket.off('stoppedTyping', handleStopTyping);
     };
-  }, [socket, chat, session?.user?.id, queryClient]);
+  }, [socket, chat.id, session?.user?.id, queryClient]); // Depend only on chat.id, not the full chat object
 
   const sendMessageMutation = useMutation({
     mutationFn: async (text: string) => {

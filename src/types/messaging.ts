@@ -13,6 +13,7 @@ export interface BackendChat {
   timeAgo?: string;
   is_blocked_by_me?: boolean;
   is_blocked_by_other?: boolean;
+  last_message_at?: string; // Added
 }
 
 export interface BackendMessage {
@@ -54,6 +55,7 @@ export interface ChatThread {
   isGroup?: boolean; // Added for Group Chat
   isBlockedByMe?: boolean;
   isBlockedByOther?: boolean;
+  lastMessageAt: string; // ISO string for sorting (was timestamp)
 }
 
 export interface Message {
