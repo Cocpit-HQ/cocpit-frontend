@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 
 import BlockedUsersPage from "@/app/(dashboard)/settings/blocked/page"
+import ActiveSessions from "@/components/settings/ActiveSessions"
 
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
@@ -36,7 +37,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { useIsMobile } from "@/hooks/use-mobile"
 import type { Page, Theme } from "@/types/common"
 
-type SettingsSection = "appearance" | "notifications" | "privacy" | "account" | "blocked"
+type SettingsSection = "appearance" | "notifications" | "privacy" | "account" | "blocked" | "sessions"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -298,6 +299,13 @@ export default function SettingsPage() {
                   isActive={activeSection === "blocked"}
                   onClick={() => handleSectionClick("blocked")}
                 />
+                <SettingsNavCard
+                  icon={<Monitor className="w-5 h-5" />}
+                  title="Active Sessions"
+                  description="Manage your logged-in devices"
+                  isActive={activeSection === "sessions"}
+                  onClick={() => handleSectionClick("sessions")}
+                />
               </div>
             </div>
           )}
@@ -439,6 +447,11 @@ export default function SettingsPage() {
                   <div className="rounded-xl bg-card border border-border overflow-hidden">
                     <BlockedUsersPage />
                   </div>
+                </div>
+              )}
+              {activeSection === "sessions" && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <ActiveSessions />
                 </div>
               )}
             </div>

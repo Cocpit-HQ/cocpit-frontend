@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 import { useToast } from '@/hooks/use-toast';
+import { useSession } from 'next-auth/react';
 
 interface SocialContextType {
   followingIds: string[];
@@ -55,13 +56,13 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
 
     try {
       await api.post(`/users/${id}/follow`);
-        setFollowingLoading((prev) => {
+      setFollowingLoading((prev) => {
         const next = new Set(prev);
         next.delete(id);
         return next;
       });
     } catch (error) {
-      console.error('Failed to follow user:', error);          
+      console.error('Failed to follow user:', error);
       setFollowingIds((prev) => prev.filter((userId) => userId !== id));
 
       setFollowingLoading((prev) => {
@@ -148,7 +149,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
       toast({ title: "User blocked", description: "You will no longer see their content." });
     } catch (error) {
       console.error("Block failed", error);
-      setBlockedIds(prev => prev.filter(uid => uid !== id)); 
+      setBlockedIds(prev => prev.filter(uid => uid !== id));
       toast({ title: "Error", description: "Failed to block user", variant: "destructive" });
     }
   };
@@ -165,14 +166,18 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     }
   };
 
+  const { data: session, status } = useSession();
+
   React.useEffect(() => {
-    api.get('/users/me/blocks').then(res => {
-      const ids = res.data.map((u: any) => u.user_id);
-      setBlockedIds(ids);
-    }).catch(err => {
-      console.warn("Failed to fetch blocked users", err);
-    });
-  }, []);
+    if (status === 'authenticated' && !session?.user?.error) {
+      api.get('/users/me/blocks').then(res => {
+        const ids = res.data.map((u: any) => u.user_id);
+        setBlockedIds(ids);
+      }).catch(err => {
+        console.warn("Failed to fetch blocked users", err);
+      });
+    }
+  }, [status]);
 
   return (
     <SocialContext.Provider value={{

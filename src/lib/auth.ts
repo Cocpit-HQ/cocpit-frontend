@@ -48,6 +48,13 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
 
     if (!response.ok) {
       console.error(`Refresh failed with status ${response.status}:`, refreshedTokens);
+      // Return a special error if the session is invalid
+      if (refreshedTokens.error === "SESSION_INVALID") {
+        return {
+          ...token,
+          error: "SESSION_INVALID",
+        } as JWT;
+      }
       throw refreshedTokens;
     }
 
@@ -94,7 +101,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         console.log("Authorize function called with credentials:", credentials?.email);
         if (!credentials?.email || !credentials?.password) {
           console.error("Credentials missing email or password.");
@@ -102,13 +109,21 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
+          // Extract User-Agent and IP from the request object (NextAuth v4 provides this in authorize)
+          const userAgent = (req as any)?.headers?.["user-agent"] || "node";
+          const xForwardedFor = (req as any)?.headers?.["x-forwarded-for"] || "";
+
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
             method: "POST",
             body: JSON.stringify({
               email: credentials.email,
               password: credentials.password,
             }),
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "User-Agent": userAgent,
+              "X-Forwarded-For": xForwardedFor,
+            },
           });
           console.log("Login API response status:", res.status);
 
@@ -194,7 +209,16 @@ export const authOptions: NextAuthOptions = {
       }
 
       // Access token has expired, try to update it
-      return refreshAccessToken(token);
+      const refreshedToken = await refreshAccessToken(token);
+
+      // If the refresh resulted in SESSION_INVALID, return null to destroy the session
+      if (refreshedToken.error === "SESSION_INVALID") {
+        console.warn("JWT Callback: Session is invalid. Returning null to terminate.");
+        // We cast to any to satisfy NextAuth types while triggering session destruction
+        return null as any;
+      }
+
+      return refreshedToken;
     },
     async session({ session, token }) {
       if (token) {

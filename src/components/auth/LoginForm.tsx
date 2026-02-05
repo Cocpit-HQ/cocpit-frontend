@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import styles from "./LoginForm.module.css";
 import { signIn, getSession } from "next-auth/react";
@@ -16,6 +16,15 @@ const LoginForm = () => {
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const reason = searchParams.get("reason");
+  const [sessionEnded, setSessionEnded] = useState(false);
+
+  useEffect(() => {
+    if (reason === "session_ended") {
+      setSessionEnded(true);
+    }
+  }, [reason]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +84,15 @@ const LoginForm = () => {
           Welcome back! Enter your details below.
         </p>
       </div>
+
+      {sessionEnded && (
+        <div className="mb-6 p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-start gap-3 text-amber-500 animate-in fade-in slide-in-from-top-2 duration-300">
+          <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />
+          <p className="text-sm font-medium leading-relaxed">
+            You were signed out because your session ended. This happens if you log out from another device or if your session expires.
+          </p>
+        </div>
+      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit} className={styles.form}>

@@ -1,6 +1,6 @@
 import axios from "axios";
-import { getSession } from "next-auth/react";
-import { logout } from "@/lib/logout";
+import { signOut, getSession } from "next-auth/react";
+import { hardLogout } from "@/lib/logout";
 
 // Public API client (No Auth)
 export const publicApi = axios.create({
@@ -21,6 +21,12 @@ api.interceptors.request.use(
 
     if (session?.user?.accessToken) {
       config.headers.Authorization = `Bearer ${session.user.accessToken}`;
+    }
+
+    // Safeguard: If the session already has an error, don't proceed with authenticated requests
+    if (session?.user?.error === "RefreshAccessTokenError" || session?.user?.error === "SESSION_INVALID") {
+      console.warn(`[Axios] Blocking request due to session error: ${session.user.error}`);
+      return Promise.reject(new Error("SESSION_INVALID"));
     }
 
     // Set Content-Type to JSON for all requests except for FormData.
@@ -46,32 +52,41 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // Trigger a session update to refresh the token on the server
-        const newSession = await getSession();
-
-        // Check if refresh failed (indicated by error property or invalid session)
-        if (newSession?.user?.error === "RefreshAccessTokenError" || !newSession?.user?.accessToken) {
-          await logout();
+        // 1. Detect deterministic SESSION_INVALID signal from backend
+        if (error.response?.data?.error === "SESSION_INVALID") {
+          console.error("Critical: Session revoked or invalidated. Triggering hard logout.");
+          await hardLogout("session_ended");
           return Promise.reject(error);
         }
 
-        // Update the header with the new token
+        // 2. Trigger a session update to refresh the token on the server
+        const newSession = await getSession();
+
+        // 3. Check if refresh failed (indicated by error property or invalid session)
+        if (newSession?.user?.error === "RefreshAccessTokenError" || !newSession?.user?.accessToken) {
+          console.warn("Refresh token expired or missing. Logging out...");
+          await hardLogout("session_ended");
+          return Promise.reject(error);
+        }
+
+        // 4. Update the header with the new token
         const newToken = newSession.user.accessToken;
         const oldToken = originalRequest.headers.Authorization?.split(" ")[1];
 
         if (newToken === oldToken) {
-          console.warn("Token refresh returned same token. Aborting retry to prevent loop.");
-          await logout();
+          console.warn("Token refresh returned same token for 401 response. Session likely revoked. Logging out.");
+          await hardLogout("session_ended");
           return Promise.reject(error);
         }
 
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
-        // Retry the original request
+        // 5. Retry the original request
         return api(originalRequest);
       } catch (refreshError) {
         // If anything goes wrong during refresh attempt, logout
-        await logout();
+        console.error("Exception during token refresh handling:", refreshError);
+        await hardLogout("session_ended");
         return Promise.reject(refreshError);
       }
     }
