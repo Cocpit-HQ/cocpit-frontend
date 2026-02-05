@@ -40,12 +40,11 @@ export default function ProfilePostsPage() {
   };
 
   const fetchPosts = useCallback(async (reset = false) => {
-    if (loadingRef.current) return; // Prevent duplicate fetches using ref
+    if (loadingRef.current && !reset) return;
 
     setLoading(true);
     loadingRef.current = true;
     try {
-      // If resetting, we start fresh. Otherwise use current cursor.
       const currentCursor = reset ? undefined : nextCursor;
 
       const response = await getUserPosts({
@@ -60,7 +59,12 @@ export default function ProfilePostsPage() {
       if (reset) {
         setPosts(mappedPosts);
       } else {
-        setPosts(prev => [...prev, ...mappedPosts]);
+        setPosts(prev => {
+          // Avoid duplicate keys by filtering out posts already in state
+          const existingIds = new Set(prev.map(p => p.id));
+          const uniqueNewPosts = mappedPosts.filter(p => !existingIds.has(p.id));
+          return [...prev, ...uniqueNewPosts];
+        });
       }
 
       setNextCursor(response.nextCursor);
@@ -75,34 +79,17 @@ export default function ProfilePostsPage() {
 
   // Handle Category Change
   useEffect(() => {
-    // Reset state immediately
+    // Reset state immediately and fetch first page
     setPosts([]);
     setNextCursor(null);
     setHasMore(true);
 
-    // We need to fetch immediately when tab changes
-    const loadFirstPage = async () => {
-      if (loadingRef.current) return;
+    // Small delay to ensure state reset propagates before fetch
+    const timeoutId = setTimeout(() => {
+      fetchPosts(true);
+    }, 0);
 
-      setLoading(true);
-      loadingRef.current = true;
-      try {
-        const response = await getUserPosts({
-          category: activeTab,
-          limit: 10
-        });
-        setPosts(response.posts.map(mapProfilePostToPost));
-        setNextCursor(response.nextCursor);
-        setHasMore(!!response.nextCursor);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-        loadingRef.current = false;
-      }
-    };
-    loadFirstPage();
-
+    return () => clearTimeout(timeoutId);
   }, [activeTab]);
 
   const handleDeletePost = async (id: string) => {
