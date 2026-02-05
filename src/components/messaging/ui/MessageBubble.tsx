@@ -17,9 +17,11 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
     <div className={`flex w-full ${isMe ? "justify-end" : "justify-start"} mb-1`}>
       <div className={`max-w-[75%] md:max-w-[60%] flex flex-col ${isMe ? "items-end" : "items-start"}`}>
         <div
-          className={`px-3 py-2 md:px-4 md:py-2.5 relative break-words text-sm md:text-base ${isMe
-            ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
-            : "bg-muted text-foreground rounded-2xl rounded-tl-sm border border-border shadow-sm"
+          className={`px-3 py-2 md:px-4 md:py-2.5 relative break-words text-sm md:text-base ${message.isBlocked
+              ? "bg-muted/30 text-muted-foreground italic border border-dashed border-border rounded-2xl rounded-tl-sm"
+              : isMe
+                ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
+                : "bg-muted text-foreground rounded-2xl rounded-tl-sm border border-border shadow-sm"
             }`}
         >
           {message.sharedPost && (

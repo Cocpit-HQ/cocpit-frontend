@@ -11,6 +11,8 @@ export interface BackendChat {
   last_message_text: string;
   unread_count: number;
   timeAgo?: string;
+  is_blocked_by_me?: boolean;
+  is_blocked_by_other?: boolean;
 }
 
 export interface BackendMessage {
@@ -25,6 +27,7 @@ export interface BackendMessage {
   message_type?: string;
   action_type?: string;
   target_id?: string;
+  is_blocked?: boolean; // Blocked status from backend
   shared_post?: {
     post_id: string;
     content: string;
@@ -49,6 +52,8 @@ export interface ChatThread {
   pinnedContext?: string;
   otherUserId?: string; // Added to support sending messages to user
   isGroup?: boolean; // Added for Group Chat
+  isBlockedByMe?: boolean;
+  isBlockedByOther?: boolean;
 }
 
 export interface Message {
@@ -58,6 +63,7 @@ export interface Message {
   senderName?: string;
   senderAvatar?: string;
   text: string;
+  isBlocked?: boolean; // Admin/Block status
   // Compatibility fields for backend objects
   text_content?: string;
   created_at?: string;

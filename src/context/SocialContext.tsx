@@ -13,6 +13,11 @@ interface SocialContextType {
   startChat: (userId: string) => void;
   isFollowLoading: (id: string) => boolean;
   syncFollowStatus: (userId: string, isFollowing: boolean) => void;
+
+  blockedIds: string[];
+  blockUser: (id: string) => Promise<void>;
+  unblockUser: (id: string) => Promise<void>;
+  isBlocked: (id: string) => boolean;
 }
 
 const SocialContext = createContext<SocialContextType | undefined>(undefined);
@@ -32,7 +37,6 @@ interface SocialProviderProps {
 export const SocialProvider = ({ children }: SocialProviderProps) => {
   const router = useRouter();
   const { toast } = useToast();
-  // Mock initial following state
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [followingLoading, setFollowingLoading] = useState<Set<string>>(new Set());
 
@@ -41,40 +45,31 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   };
 
   const followUser = async (id: string) => {
-    // 1. Set loading state
     setFollowingLoading((prev) => {
       const next = new Set(prev);
       next.add(id);
       return next;
     });
 
-    // 2. Optimistic update
     setFollowingIds((prev) => [...prev, id]);
 
     try {
-      // 3. API call
       await api.post(`/users/${id}/follow`);
-
-      // 4. On success, just clear loading (state already updated)
-      setFollowingLoading((prev) => {
+        setFollowingLoading((prev) => {
         const next = new Set(prev);
         next.delete(id);
         return next;
       });
     } catch (error) {
-      console.error('Failed to follow user:', error);
-
-      // 5. Revert optimistic update
+      console.error('Failed to follow user:', error);          
       setFollowingIds((prev) => prev.filter((userId) => userId !== id));
 
-      // Clear loading
       setFollowingLoading((prev) => {
         const next = new Set(prev);
         next.delete(id);
         return next;
       });
 
-      // Show toast
       toast({
         title: "Error",
         description: "Failed to follow user. Please try again.",
@@ -84,21 +79,17 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   };
 
   const unfollowUser = async (id: string) => {
-    // 1. Set loading state
     setFollowingLoading((prev) => {
       const next = new Set(prev);
       next.add(id);
       return next;
     });
 
-    // 2. Optimistic update
     setFollowingIds((prev) => prev.filter((userId) => userId !== id));
 
     try {
-      // 3. API call
       await api.delete(`/users/${id}/unfollow`);
 
-      // 4. On success, just clear loading
       setFollowingLoading((prev) => {
         const next = new Set(prev);
         next.delete(id);
@@ -107,17 +98,14 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     } catch (error) {
       console.error('Failed to unfollow user:', error);
 
-      // 5. Revert optimistic update
       setFollowingIds((prev) => [...prev, id]);
 
-      // Clear loading
       setFollowingLoading((prev) => {
         const next = new Set(prev);
         next.delete(id);
         return next;
       });
 
-      // Show toast
       toast({
         title: "Error",
         description: "Failed to unfollow user. Please try again.",
@@ -131,7 +119,6 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   };
 
   const startChat = (userId: string) => {
-    // Navigate to messaging with the user ID to potentially open specific chat
     router.push(`/messaging?userId=${userId}`);
   };
 
@@ -147,8 +134,51 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     });
   };
 
+  const [blockedIds, setBlockedIds] = useState<string[]>([]);
+
+  const isBlocked = (id: string) => blockedIds.includes(id);
+
+  const blockUser = async (id: string) => {
+    setBlockedIds(prev => [...prev, id]);
+
+    setFollowingIds(prev => prev.filter(uid => uid !== id));
+
+    try {
+      await api.post(`/users/${id}/block`);
+      toast({ title: "User blocked", description: "You will no longer see their content." });
+    } catch (error) {
+      console.error("Block failed", error);
+      setBlockedIds(prev => prev.filter(uid => uid !== id)); 
+      toast({ title: "Error", description: "Failed to block user", variant: "destructive" });
+    }
+  };
+
+  const unblockUser = async (id: string) => {
+    setBlockedIds(prev => prev.filter(uid => uid !== id));
+    try {
+      await api.delete(`/users/${id}/unblock`);
+      toast({ title: "User unblocked" });
+    } catch (error) {
+      console.error("Unblock failed", error);
+      setBlockedIds(prev => [...prev, id]); // Revert
+      toast({ title: "Error", description: "Failed to unblock user", variant: "destructive" });
+    }
+  };
+
+  React.useEffect(() => {
+    api.get('/users/me/blocks').then(res => {
+      const ids = res.data.map((u: any) => u.user_id);
+      setBlockedIds(ids);
+    }).catch(err => {
+      console.warn("Failed to fetch blocked users", err);
+    });
+  }, []);
+
   return (
-    <SocialContext.Provider value={{ followingIds, followUser, unfollowUser, isFollowing, startChat, isFollowLoading, syncFollowStatus }}>
+    <SocialContext.Provider value={{
+      followingIds, followUser, unfollowUser, isFollowing, startChat, isFollowLoading, syncFollowStatus,
+      blockedIds, blockUser, unblockUser, isBlocked
+    }}>
       {children}
     </SocialContext.Provider>
   );

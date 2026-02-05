@@ -35,6 +35,8 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     pinnedContext: undefined,
     otherUserId: backendChat.other_user_id, // Map other_user_id
     isGroup: backendChat.is_group,
+    isBlockedByMe: backendChat.is_blocked_by_me || false,
+    isBlockedByOther: backendChat.is_blocked_by_other || false,
   };
 };
 
@@ -56,6 +58,7 @@ export const mapBackendMessageToMessage = (backendMessage: BackendMessage, curre
       media: backendMessage.shared_post.media?.map(m => ({ url: m.url, type: m.media_type as 'image' | 'video' }))
     } : null,
     action_type: backendMessage.action_type,
-    target_id: backendMessage.target_id
+    target_id: backendMessage.target_id,
+    isBlocked: backendMessage.is_blocked || false,
   };
 };

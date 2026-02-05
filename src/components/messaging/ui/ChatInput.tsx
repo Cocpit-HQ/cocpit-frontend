@@ -7,11 +7,12 @@ interface ChatInputProps {
   onSendMessage: (text: string) => void
   onTyping?: () => void
   disabled?: boolean
+  disabledMessage?: string
 }
 
 const EMOJI_LIST = ["😀", "😂", "😍", "🥺", "🔥", "👍", "👎", "🎉", "❤️", "💼", "🚀", "💯", "👏", "🤔", "👀", "✨", "✅", "❌", "🙌", "😎"];
 
-export default function ChatInput({ onSendMessage, onTyping, disabled }: ChatInputProps) {
+export default function ChatInput({ onSendMessage, onTyping, disabled, disabledMessage }: ChatInputProps) {
   const [text, setText] = useState("")
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -19,18 +20,18 @@ export default function ChatInput({ onSendMessage, onTyping, disabled }: ChatInp
   const emojiButtonRef = useRef<HTMLButtonElement>(null)
 
   const handleSend = () => {
-    if (disabled) return; // Prevent sending if disabled
+    if (disabled) return; 
     if (text.trim()) {
       onSendMessage(text)
       setText("")
       if (textareaRef.current) {
-        textareaRef.current.style.height = '44px'; // Reset height
+        textareaRef.current.style.height = '44px'; 
       }
     }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (disabled) return; // Prevent sending if disabled
+    if (disabled) return; 
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       handleSend()
@@ -57,7 +58,7 @@ export default function ChatInput({ onSendMessage, onTyping, disabled }: ChatInp
       textarea.style.height = 'auto';
       textarea.style.height = `${Math.min(textarea.scrollHeight, 128)}px`;
     }, 0);
-    
+
     setShowEmojiPicker(false);
   };
 
@@ -65,7 +66,7 @@ export default function ChatInput({ onSendMessage, onTyping, disabled }: ChatInp
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        pickerRef.current && 
+        pickerRef.current &&
         !pickerRef.current.contains(event.target as Node) &&
         emojiButtonRef.current &&
         !emojiButtonRef.current.contains(event.target as Node)
@@ -105,13 +106,13 @@ export default function ChatInput({ onSendMessage, onTyping, disabled }: ChatInp
               e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`
             }}
             onKeyDown={handleKeyDown}
-            placeholder={disabled ? "Cannot send messages to this conversation" : "Write a message..."}
+            placeholder={disabledMessage || (disabled ? "Cannot send messages to this conversation" : "Write a message...")}
             rows={1}
             className="w-full pl-4 pr-10 py-3 bg-transparent border-0 resize-none focus:outline-none max-h-32 text-sm md:text-base text-foreground placeholder-muted-foreground"
             style={{ minHeight: "44px" }}
             disabled={disabled}
           />
-          
+
           <button
             ref={emojiButtonRef}
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -141,11 +142,10 @@ export default function ChatInput({ onSendMessage, onTyping, disabled }: ChatInp
         <button
           onClick={handleSend}
           disabled={!text.trim() || disabled}
-          className={`p-3 rounded-full transition-colors mb-0.5 shadow-md ${
-            text.trim() && !disabled 
-              ? "bg-primary text-primary-foreground hover:opacity-90" 
+          className={`p-3 rounded-full transition-colors mb-0.5 shadow-md ${text.trim() && !disabled
+              ? "bg-primary text-primary-foreground hover:opacity-90"
               : "bg-muted text-muted-foreground cursor-not-allowed"
-          }`}
+            }`}
         >
           <Send className="w-4 h-4 md:w-5 md:h-5" />
         </button>

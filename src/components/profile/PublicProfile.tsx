@@ -4,6 +4,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { Ban } from "lucide-react";
 
 import SuggestionsPanel from "@/components/SuggestionsPanel";
 import PostCard from "./PostCard";
@@ -65,9 +66,21 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
 
   if (userError || !user) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-lg text-red-500">
-          {userError ? "Failed to load profile" : "User not found"}
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <div className="text-center space-y-4 max-w-md mx-auto">
+          <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+            <Ban className="w-10 h-10 text-muted-foreground" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Profile Unavailable</h1>
+          <p className="text-muted-foreground">
+            The user you are looking for could not be found. They may have been removed or the link is incorrect.
+          </p>
+          <button
+            onClick={() => router.push('/feed')}
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 mt-4"
+          >
+            Return to Feed
+          </button>
         </div>
       </div>
     );

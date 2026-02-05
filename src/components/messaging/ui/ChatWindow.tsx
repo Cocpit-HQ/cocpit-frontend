@@ -14,6 +14,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getMessages, sendMessage, markAsRead } from "@/services/api/messaging"
 import { mapBackendMessageToMessage } from "@/lib/mappers/messaging.mapper"
 import Avatar from "@/components/shared/Avatar"
+import { useSocial } from "@/context/SocialContext"
 
 interface ChatWindowProps {
   chat: ChatThread
@@ -27,19 +28,29 @@ const getAvatarGradient = (avatar: string) => {
 
 export default function ChatWindow({ chat: initialChat, isMobile, onBack }: ChatWindowProps) {
   const { socket, isUserOnline, setActiveConversationId } = useSocket();
+  const { unblockUser, isBlocked } = useSocial();
   const { data: session } = useSession();
   const [typingUser, setTypingUser] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
+  const isBlockedByMe = initialChat.otherUserId ? isBlocked(initialChat.otherUserId) : false;
+  const isBlockedByOther = initialChat.isBlockedByOther;
+
   const chat = {
     ...initialChat,
-    online: initialChat.otherUserId ? isUserOnline(initialChat.otherUserId) : false
+    online: (!isBlockedByMe && !isBlockedByOther && initialChat.otherUserId) ? isUserOnline(initialChat.otherUserId) : false
+  };
+
+  const handleUnblock = async () => {
+    if (!chat.otherUserId) return;
+    await unblockUser(chat.otherUserId);
+    queryClient.invalidateQueries({ queryKey: ['messages', chat.id] });
+    queryClient.invalidateQueries({ queryKey: ['conversations'] });
   };
 
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTypingRef = useRef<number>(0);
 
-  // Fetch messages from API
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ['messages', chat.id],
     queryFn: async () => {
@@ -49,7 +60,6 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
     enabled: !!chat.id && chat.id !== 'new' && !!session?.user?.id,
   });
 
-  // Mark as read on mount or when chat.id changes
   // Mark as read on mount or when chat.id changes
   useEffect(() => {
     setActiveConversationId(chat.id);
@@ -164,18 +174,13 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
       console.error("Failed to send message", err);
     },
     onSuccess: (data, variables, context) => {
-      // Replace optimistic message with real one from API response
-      // We need to be careful not to duplicate if socket event already handled it
       queryClient.setQueryData(['messages', chat.id], (old: Message[] | undefined) => {
         const realMessage = mapBackendMessageToMessage(data.data, session?.user?.id);
         const current = old || [];
 
-        // If the socket already inserted the real message (by ID), remove the temp one
         if (current.some(m => m.id === realMessage.id)) {
           return current.filter(m => m.id !== context.tempId);
         }
-
-        // Otherwise replace temp with real
         return current.map(m => m.id === context.tempId ? realMessage : m);
       });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -183,9 +188,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
   });
 
   const handleSendMessage = (text: string) => {
-    if (!chat.otherUserId) {
-      console.error("Cannot send message: targetUserId is missing. Conversation ID used as fallback, which might be incorrect.");
-      // Optionally, display an error to the user or disable the input field
+    if (!chat.otherUserId || isBlockedByMe || isBlockedByOther) {
       return;
     }
     sendMessageMutation.mutate(text);
@@ -195,7 +198,6 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
     if (!socket || !chat) return;
 
     const now = Date.now();
-    // Throttle typing event to every 2 seconds
     if (now - lastTypingRef.current > 2000) {
       socket.emit('typing', { conversationId: chat.id.toString() });
       lastTypingRef.current = now;
@@ -203,7 +205,6 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
 
-    // Stop typing after 3 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
       socket.emit('stopTyping', { conversationId: chat.id.toString() });
     }, 3000);
@@ -230,10 +231,10 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground">
+            <button disabled={!!(isBlockedByMe || isBlockedByOther)} className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground disabled:opacity-50">
               <Phone className="w-5 h-5" />
             </button>
-            <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground">
+            <button disabled={!!(isBlockedByMe || isBlockedByOther)} className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground disabled:opacity-50">
               <Video className="w-5 h-5" />
             </button>
             <button className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground">
@@ -255,13 +256,30 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
         <MessageList messages={messages} />
       )}
 
-      {typingUser && (
+      {typingUser && !isBlockedByMe && !isBlockedByOther && (
         <div className="px-4 py-2 text-xs text-muted-foreground italic">
           {typingUser} is typing...
         </div>
       )}
 
-      <ChatInput onSendMessage={handleSendMessage} onTyping={handleTypingInput} disabled={!chat.otherUserId} />
+      {isBlockedByMe ? (
+        <div className="p-4 border-t bg-muted/30 flex flex-col items-center justify-center gap-2 text-center mt-auto shrink-0">
+          <p className="text-sm text-muted-foreground">You have blocked this user</p>
+          <button
+            onClick={handleUnblock}
+            className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-full hover:bg-primary/90 transition-colors"
+          >
+            Unblock to chat
+          </button>
+        </div>
+      ) : (
+        <ChatInput
+          onSendMessage={handleSendMessage}
+          onTyping={handleTypingInput}
+          disabled={!chat.otherUserId || !!isBlockedByOther}
+          disabledMessage={isBlockedByOther ? "User not found" : undefined}
+        />
+      )}
     </div>
   )
 }

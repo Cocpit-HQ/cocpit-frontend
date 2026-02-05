@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import { useSocial } from '@/context/SocialContext';
 
 interface CommentProps {
   comment: CommentType;
@@ -18,13 +19,12 @@ interface CommentProps {
   onReply?: (authorName: string, commentId: string | number, accountName?: string) => void;
   onDelete?: (commentId: string | number) => void;
   currentUserId?: string;
-  variant?: 'root' | 'reply'; // New prop for visual hierarchy
+  variant?: 'root' | 'reply'; 
   isGrouped?: boolean;
   isPostOwner?: boolean;
-  postId?: string | number; // Added for navigation context
+  postId?: string | number; 
 }
 
-// Simple regex to linkify mentions
 const formatCommentText = (text: string, postId?: string | number, currentCommentId?: string | number) => {
   if (!text) return null;
   const parts = text.split(/(@\w+)/g);
@@ -32,7 +32,6 @@ const formatCommentText = (text: string, postId?: string | number, currentCommen
     if (part.startsWith('@')) {
       const accountName = part.substring(1);
 
-      // Build search params for navigation state
       const params = new URLSearchParams();
       if (postId) params.set('openPost', postId.toString());
       if (currentCommentId) params.set('commentId', currentCommentId.toString());
@@ -59,16 +58,25 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
   const [isLiked, setIsLiked] = useState(is_liked);
   const [likes, setLikes] = useState(like_count);
   const [isPinned, setIsPinned] = useState(is_pinned || false);
+  const { blockUser } = useSocial();
 
-  // Sync state with props when backend data changes (e.g., when reopening comment section)
+  const handleBlock = async () => {
+    try {
+      await blockUser(String(authorId));
+      toast.success(`You have blocked ${author.name}`);
+    } catch (err: any) {
+      // blockUser handles error toast usually, but just in case
+      console.error("Block failed", err);
+    }
+  };
+
   useEffect(() => {
     setIsLiked(is_liked);
     setLikes(like_count);
     setIsPinned(is_pinned || false);
-  }, [is_liked, like_count, is_pinned, id]); // Re-sync when these values change
+  }, [is_liked, like_count, is_pinned, id]); 
 
   const handleLike = async () => {
-    // Optimistic update
     const prevLiked = isLiked;
     const prevLikes = likes;
 
@@ -77,11 +85,9 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
 
     try {
       const result = await toggleCommentLike(id);
-      // Sync with server response
       setIsLiked(result.liked);
       setLikes(result.likeCount);
     } catch (error) {
-      // Revert on error
       console.error('Failed to toggle comment like:', error);
       setIsLiked(prevLiked);
       setLikes(prevLikes);
@@ -89,7 +95,6 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
   };
 
   const handlePin = async () => {
-    // Optimistic update
     const prevPinned = isPinned;
     setIsPinned(!isPinned);
 
@@ -199,11 +204,13 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
                 </>
               )}
 
-              {/* Block User Placeholder */}
-              <DropdownMenuItem onClick={() => toast.info("Block feature coming soon")}>
-                <Ban className="w-4 h-4 mr-2" />
-                Block User
-              </DropdownMenuItem>
+              {/* Block User - Hide if it's my own comment */}
+              {!isOwner && (
+                <DropdownMenuItem onClick={handleBlock}>
+                  <Ban className="w-4 h-4 mr-2" />
+                  Block User
+                </DropdownMenuItem>
+              )}
 
               <DropdownMenuItem onClick={() => toast.info("Reported")}>
                 <Flag className="w-4 h-4 mr-2" />

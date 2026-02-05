@@ -16,6 +16,28 @@ interface ProfileHeaderProps {
     onAvatarClick: () => void;
 }
 
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { MoreVertical, Ban } from "lucide-react";
+import { useSocial } from "@/context/SocialContext";
+import { useState } from "react";
+
+// ... existing component props ...
+
 export function ProfileHeader({
     user,
     isOwnProfile,
@@ -25,8 +47,40 @@ export function ProfileHeader({
     onMessage,
     onAvatarClick,
 }: ProfileHeaderProps) {
+    const { blockUser } = useSocial();
+    const [showBlockDialog, setShowBlockDialog] = useState(false);
+
+    const handleBlock = async () => {
+        await blockUser(user.id);
+        setShowBlockDialog(false);
+        // Note: The page might need refresh or redirect, but 404 block logic handles view.
+        // For smoother UX, maybe router.push('/feed')? 
+        // Let's assume the component consuming this might handle it, or we force it here.
+        // For now, allow Optimistic UI to take effect (clears following) and Toast to show.
+        // A reload will show 404.
+        window.location.reload();
+    };
+
     return (
         <div className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border">
+            {/* Block Confirmation Dialog */}
+            <AlertDialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Block {user.name}?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            They will not be able to find your profile, posts, or message you. This will also remove any connection between you.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleBlock} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Block
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
             <div className="h-36 bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899] relative"></div>
 
             <div className="px-6 pb-6">
@@ -70,6 +124,21 @@ export function ProfileHeader({
                                     </>
                                 )}
                             </button>
+
+                            {/* Dropdown Menu for More Actions */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="bg-background hover:bg-muted text-foreground border border-input p-2 rounded-lg transition-colors flex items-center justify-center">
+                                        <MoreVertical className="w-5 h-5" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => setShowBlockDialog(true)} className="text-destructive focus:text-destructive cursor-pointer">
+                                        <Ban className="w-4 h-4 mr-2" />
+                                        Block User
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     )}
                 </div>
