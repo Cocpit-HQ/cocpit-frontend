@@ -16,10 +16,13 @@ import {
   Zap,
   LogOut,
   Ban,
+  Trash2,
 } from "lucide-react"
 
 import BlockedUsersPage from "@/app/(dashboard)/settings/blocked/page"
 import ActiveSessions from "@/components/settings/ActiveSessions"
+import { deleteAccount } from "@/services/api/user"
+import { toast } from "sonner"
 
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
@@ -192,6 +195,9 @@ export default function SettingsPage() {
   const systemTheme = useSystemTheme()
   const { logout } = useAuth()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletePassword, setDeletePassword] = useState("")
+  const [isDeleting, setIsDeleting] = useState(false)
   const isMobile = useIsMobile()
 
   const navigateTo = (page: Page) => {
@@ -222,6 +228,24 @@ export default function SettingsPage() {
   const handleLogout = async () => {
     await logout()
     router.push("/")
+  }
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      toast.error("Password is required")
+      return
+    }
+
+    try {
+      setIsDeleting(true)
+      await deleteAccount(deletePassword)
+      toast.success("Account deleted successfully")
+      await logout()
+      router.push("/")
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to delete account")
+      setIsDeleting(false)
+    }
   }
 
   const handleBack = () => {
@@ -425,14 +449,24 @@ export default function SettingsPage() {
                         <p className="text-sm text-muted-foreground mb-2">
                           End your current session on this device.
                         </p>
-                        <Button
-                          variant="outline"
-                          className="text-primary border-primary/50 hover:bg-primary/10 hover:text-primary"
-                          onClick={() => setShowLogoutModal(true)}
-                        >
-                          <LogOut className="w-4 h-4 mr-2" />
-                          Log out
-                        </Button>
+                        <div className="flex flex-wrap gap-4">
+                          <Button
+                            variant="outline"
+                            className="text-primary border-primary/50 hover:bg-primary/10 hover:text-primary"
+                            onClick={() => setShowLogoutModal(true)}
+                          >
+                            <LogOut className="w-4 h-4 mr-2" />
+                            Log out
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="text-destructive border-destructive/50 hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => setShowDeleteModal(true)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete Account
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -479,6 +513,50 @@ export default function SettingsPage() {
             </Button>
             <Button onClick={handleLogout}>
               Log out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />
+              Delete Account?
+            </DialogTitle>
+            <DialogDescription>
+              This action is <span className="font-bold text-destructive">permanent and irreversible</span>.
+              All your profile data, connections, and settings will be deleted.
+              Your messages will be anonymized but not removed.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Verify your password</label>
+              <input
+                type="password"
+                className="w-full p-2 rounded-md border border-border bg-background"
+                placeholder="Current password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setShowDeleteModal(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Permanently Delete Account"}
             </Button>
           </DialogFooter>
         </DialogContent>
