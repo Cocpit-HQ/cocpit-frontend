@@ -48,3 +48,14 @@ export const logoutAllOtherSessions = async (password?: string) => {
   });
   return response.data;
 };
+
+// --- Password Reset ---
+
+export const resetPassword = async (email: string, newPassword: string) => {
+  const response = await publicApi.post("/auth/reset-password", {
+    email,
+    newPassword
+  });
+  return response.data;
+};
+
