@@ -76,6 +76,7 @@ export default function FeedPost({
 }: FeedPostProps) {
   const [isLiked, setIsLiked] = useState(initialIsLiked)
   const [likeCount, setLikeCount] = useState(typeof likes === 'string' ? parseInt(likes) : likes)
+  const [isExpanded, setIsExpanded] = useState(false)
 
   // Sync state with props
   useEffect(() => {
@@ -655,7 +656,25 @@ export default function FeedPost({
       </div >
 
       <div className="flex-1 flex flex-col justify-center w-full">
-        {content && <p className="px-4 md:px-6 leading-relaxed mb-4 text-sm md:text-base text-foreground">{content}</p>}
+        {content && (
+          <div className="px-4 md:px-6 mb-4">
+            <p className={`leading-relaxed text-sm md:text-base text-foreground whitespace-pre-wrap ${!isExpanded ? 'line-clamp-2' : ''}`}>
+              {content}
+            </p>
+            {(content.length > 100 || content.split('\n').length > 2) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsExpanded(!isExpanded);
+                }}
+                className="text-sm text-muted-foreground hover:text-foreground mt-1 font-medium focus:outline-none"
+              >
+                {isExpanded ? 'Show less' : 'Read more'}
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Shared Post Section - Premium Glassmorphism UI (Prioritized above media) */}
         {shared_post && (
