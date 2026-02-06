@@ -25,7 +25,7 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
   }
   return {
     id: backendChat.conversation_id,
-    name: backendChat.other_user_name,
+    name: backendChat.other_user_name || "Deleted User",
     role: backendChat.other_user_headline || "",
     lastMessage: backendChat.last_message_text,
     time: backendChat.timeAgo || formatTimeAgo(backendChat.last_message_at || backendChat.updated_at),
@@ -43,16 +43,17 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
 
 export const mapBackendMessageToMessage = (backendMessage: BackendMessage, currentUserId?: string): Message => {
   const isMe = currentUserId && String(backendMessage.sender_id) === String(currentUserId);
+  const isDeletedUser = backendMessage.sender_id === null;
 
   return {
     id: backendMessage.message_id,
     senderId: backendMessage.sender_id,
     sender: isMe ? "me" : "other",
-    senderName: backendMessage.sender_name,
+    senderName: isDeletedUser ? "Deleted User" : (backendMessage.sender_name || "Unknown"),
     senderAvatar: backendMessage.sender_avatar,
     text: backendMessage.text_content,
     time: formatTime(backendMessage.created_at),
-    type: (backendMessage.message_type === 'system' || (backendMessage as any).type === 'system' || (backendMessage as any).is_system || backendMessage.action_type || backendMessage.sender_id === null) ? 'system' : 'text',
+    type: (backendMessage.message_type === 'system' || (backendMessage as any).type === 'system' || (backendMessage as any).is_system || backendMessage.action_type) ? 'system' : 'text',
     sharedPost: backendMessage.shared_post ? {
       id: backendMessage.shared_post.post_id,
       content: backendMessage.shared_post.content,

@@ -43,7 +43,7 @@ export default function GroupMessageList({ messages, currentUserId }: GroupMessa
                         <div key={msg.id || index} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
                             {showSenderName && (
                                 <span className="text-xs text-muted-foreground mb-1 ml-1 font-medium">
-                                    {msg.senderName || "Unknown"}
+                                    {msg.senderName || "Deleted User"}
                                 </span>
                             )}
                             <div

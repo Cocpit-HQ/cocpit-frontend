@@ -11,3 +11,10 @@ export const getUserById = async (id: string): Promise<PublicUserProfileResponse
   const response = await api.get(`/users/${id}`);
   return response.data;
 };
+
+export const deleteAccount = async (password: string): Promise<{ message: string }> => {
+  const response = await api.delete("/users/account", {
+    data: { password },
+  });
+  return response.data;
+};
