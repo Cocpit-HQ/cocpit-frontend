@@ -11,11 +11,11 @@ export interface GroupDetails {
 export interface GroupMember {
     user_id: string;
     full_name: string;
-    avatar_url: string;
+    avatar_url?: string;
     headline?: string;
-    joined_at?: string;
+    joined_at: string;
+    role: 'admin' | 'member'; // Added role
     left_at?: string | null;
-    // role?: 'admin' | 'member'; // If implemented
 }
 
 export interface Invitation {

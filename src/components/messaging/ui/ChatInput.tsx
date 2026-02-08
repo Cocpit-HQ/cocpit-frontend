@@ -20,18 +20,18 @@ export default function ChatInput({ onSendMessage, onTyping, disabled, disabledM
   const emojiButtonRef = useRef<HTMLButtonElement>(null)
 
   const handleSend = () => {
-    if (disabled) return; 
+    if (disabled) return;
     if (text.trim()) {
       onSendMessage(text)
       setText("")
       if (textareaRef.current) {
-        textareaRef.current.style.height = '44px'; 
+        textareaRef.current.style.height = '44px';
       }
     }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (disabled) return; 
+    if (disabled) return;
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       handleSend()
@@ -102,13 +102,17 @@ export default function ChatInput({ onSendMessage, onTyping, disabled, disabledM
             onChange={(e) => {
               setText(e.target.value)
               onTyping?.()
-              e.target.style.height = 'auto'
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`
+
+              const target = e.target;
+              target.style.height = 'auto';
+              const newHeight = Math.min(target.scrollHeight, 128);
+              target.style.height = `${newHeight}px`;
+              target.style.overflowY = target.scrollHeight > 128 ? 'auto' : 'hidden';
             }}
             onKeyDown={handleKeyDown}
             placeholder={disabledMessage || (disabled ? "Cannot send messages to this conversation" : "Write a message...")}
             rows={1}
-            className="w-full pl-4 pr-10 py-3 bg-transparent border-0 resize-none focus:outline-none max-h-32 text-sm md:text-base text-foreground placeholder-muted-foreground"
+            className="w-full pl-4 pr-10 py-3 bg-transparent border-0 resize-none focus:outline-none max-h-32 text-sm md:text-base text-foreground placeholder-muted-foreground scrollbar-hide overflow-hidden"
             style={{ minHeight: "44px" }}
             disabled={disabled}
           />
@@ -143,8 +147,8 @@ export default function ChatInput({ onSendMessage, onTyping, disabled, disabledM
           onClick={handleSend}
           disabled={!text.trim() || disabled}
           className={`p-3 rounded-full transition-colors mb-0.5 shadow-md ${text.trim() && !disabled
-              ? "bg-primary text-primary-foreground hover:opacity-90"
-              : "bg-muted text-muted-foreground cursor-not-allowed"
+            ? "bg-primary text-primary-foreground hover:opacity-90"
+            : "bg-muted text-muted-foreground cursor-not-allowed"
             }`}
         >
           <Send className="w-4 h-4 md:w-5 md:h-5" />

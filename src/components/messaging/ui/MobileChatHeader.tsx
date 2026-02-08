@@ -1,18 +1,27 @@
-"use client"
-
 import React from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, MoreHorizontal, Phone, Video } from "lucide-react"
-import { ChatThread } from "@/types/messaging"
+import { ArrowLeft, MoreVertical, Phone, Video, X, Copy, Pencil, Info as InfoIcon } from "lucide-react"
+import { ChatThread, Message } from "@/types/messaging"
 import Avatar from "@/components/shared/Avatar"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface MobileChatHeaderProps {
   chat: ChatThread;
   onBack: () => void;
+  selectedMessage?: Message | null;
+  onMessageAction?: (action: string) => void;
+  currentUserId?: string;
 }
 
-export default function MobileChatHeader({ chat, onBack }: MobileChatHeaderProps) {
+export default function MobileChatHeader({ chat, onBack, selectedMessage, onMessageAction, currentUserId }: MobileChatHeaderProps) {
   const router = useRouter()
+  const isMyMessage = selectedMessage && (selectedMessage.sender === 'me' || selectedMessage.senderId === currentUserId);
 
   return (
     <div
@@ -29,36 +38,72 @@ export default function MobileChatHeader({ chat, onBack }: MobileChatHeaderProps
           <ArrowLeft className="w-6 h-6" />
         </button>
 
-        <div className="flex items-center gap-2 overflow-hidden flex-1">
-          <Avatar
-            url={chat.avatar}
-            name={chat.name}
-            size="sm" // w-9 h-9 is 36px. sm is 32px (w-8), md is 40px (w-10). Let's use md adjusted or just md. md is w-10. original was w-9. Close enough.
-            online={chat.online}
-          />
-          <div className="flex-1 min-w-0 flex flex-col justify-center">
-            <h3 className="font-semibold text-sm text-foreground truncate w-full">
-              {chat.name}
-            </h3>
-            {chat.role && (
-              <p className="text-xs text-primary truncate w-full">{chat.role}</p>
-            )}
-            {!chat.role && (
-              <p className="text-xs text-muted-foreground truncate w-full">
-                {chat.online ? "Active now" : "Offline"}
-              </p>
-            )}
+        {!selectedMessage ? (
+          <div className="flex items-center gap-2 overflow-hidden flex-1">
+            <Avatar
+              url={chat.avatar}
+              name={chat.name}
+              size="sm"
+              online={chat.online}
+            />
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
+              <h3 className="font-semibold text-sm text-foreground truncate w-full">
+                {chat.name}
+              </h3>
+              {chat.role && (
+                <p className="text-xs text-primary truncate w-full">{chat.role}</p>
+              )}
+              {!chat.role && (
+                <p className="text-xs text-muted-foreground truncate w-full">
+                  {chat.online ? "Active now" : "Offline"}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="font-medium text-foreground">1 Selected</div>
+        )}
       </div>
 
       <div className="flex items-center gap-1 shrink-0">
-        <button className="p-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground">
-          <Phone className="w-5 h-5" />
-        </button>
-        <button className="p-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground">
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
+        {selectedMessage ? (
+          <>
+            <Button variant="ghost" size="icon" onClick={() => onMessageAction?.('close')} title="Close Selection">
+              <X className="h-5 w-5" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onMessageAction?.('copy')}>
+                  <Copy className="w-4 h-4 mr-2" /> Copy
+                </DropdownMenuItem>
+                {isMyMessage && (
+                  <>
+                    <DropdownMenuItem onClick={() => onMessageAction?.('info')}>
+                      <InfoIcon className="w-4 h-4 mr-2" /> Info
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onMessageAction?.('edit')}>
+                      <Pencil className="w-4 h-4 mr-2" /> Edit
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        ) : (
+          <>
+            <button className="p-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground">
+              <Phone className="w-5 h-5" />
+            </button>
+            <button className="p-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground">
+              <MoreVertical className="w-5 h-5" />
+            </button>
+          </>
+        )}
       </div>
     </div>
   )

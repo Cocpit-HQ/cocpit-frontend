@@ -8,13 +8,14 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Camera, Loader2, Upload } from "lucide-react";
+import { Camera, Loader2, Upload, Trash2 } from "lucide-react";
 
 interface GroupAvatarUploadModalProps {
     isOpen: boolean;
     onClose: () => void;
     currentAvatarUrl: string | null;
     onUpload: (file: File) => Promise<void>;
+    onDelete?: () => Promise<void>;
 }
 
 export function GroupAvatarUploadModal({
@@ -22,6 +23,7 @@ export function GroupAvatarUploadModal({
     onClose,
     currentAvatarUrl,
     onUpload,
+    onDelete,
 }: GroupAvatarUploadModalProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -41,6 +43,21 @@ export function GroupAvatarUploadModal({
                 if (fileInputRef.current) {
                     fileInputRef.current.value = "";
                 }
+            }
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!onDelete) return;
+        if (confirm("Are you sure you want to remove the group photo?")) {
+            try {
+                setIsUploading(true);
+                await onDelete();
+                onClose();
+            } catch (error) {
+                console.error("Delete failed", error);
+            } finally {
+                setIsUploading(false);
             }
         }
     };
@@ -74,8 +91,20 @@ export function GroupAvatarUploadModal({
                             disabled={isUploading}
                         >
                             {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                            Upload New Photo
+                            Upload Photo
                         </Button>
+
+                        {currentAvatarUrl && onDelete && (
+                            <Button
+                                variant="outline"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 gap-2"
+                                onClick={handleDelete}
+                                disabled={isUploading}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                                Remove Photo
+                            </Button>
+                        )}
                     </div>
 
                     <input

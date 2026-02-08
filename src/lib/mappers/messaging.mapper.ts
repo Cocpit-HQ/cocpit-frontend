@@ -64,5 +64,7 @@ export const mapBackendMessageToMessage = (backendMessage: BackendMessage, curre
     action_type: backendMessage.action_type,
     target_id: backendMessage.target_id,
     isBlocked: backendMessage.is_blocked || false,
+    read_at: backendMessage.read_at,
+    is_deleted_for_everyone: backendMessage.is_deleted_for_everyone || false,
   };
 };

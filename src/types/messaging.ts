@@ -29,6 +29,7 @@ export interface BackendMessage {
   action_type?: string;
   target_id?: string;
   is_blocked?: boolean; // Blocked status from backend
+  is_deleted_for_everyone?: boolean; // Deleted status from backend
   shared_post?: {
     post_id: string;
     content: string;
@@ -66,9 +67,12 @@ export interface Message {
   senderAvatar?: string;
   text: string;
   isBlocked?: boolean; // Admin/Block status
+  read_at: string | null;
   // Compatibility fields for backend objects
   text_content?: string;
   created_at?: string;
+  is_edited?: boolean;
+  edited_at?: string;
 
   time: string;
   type?: 'text' | 'system';
@@ -83,4 +87,6 @@ export interface Message {
     authorAvatar: string;
     media?: { url: string; type: 'image' | 'video' }[];
   } | null;
+  is_deleted?: boolean;
+  is_deleted_for_everyone?: boolean;
 }
