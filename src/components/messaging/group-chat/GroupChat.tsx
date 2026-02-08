@@ -8,10 +8,16 @@ import GroupMessageInput from "./GroupMessageInput";
 import GroupDetails from "./GroupDetails";
 import AddMemberModal from "./AddMemberModal";
 import { Loader2 } from "lucide-react";
-import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
-import { sendMessage } from "../../../services/api/group-chat";
+import { useQueryClient, useQuery, useMutation, useInfiniteQuery, InfiniteData } from "@tanstack/react-query";
+import { sendMessage as sendGroupMessage } from "../../../services/api/group-chat";
+import { editMessage, deleteMessage } from "../../../services/api/messaging";
 import { Message } from "../../../types/messaging";
 import { useSocket } from "../../../context/SocketContext";
+import { TypingPayload } from "../../../types/socket";
+import { useRef } from "react";
+import MessageInfoModal from "../MessageInfoModal";
+import { DeleteMessageModal } from "../ui/DeleteMessageModal";
+import { useToast } from "@/hooks/use-toast";
 
 interface GroupChatProps {
     groupId: string;
@@ -22,29 +28,113 @@ interface GroupChatProps {
 
 export default function GroupChat({ groupId, currentUser, messages = [], onBack }: GroupChatProps) {
     const { activeGroup, isLoading, inviteMember } = useGroupChat();
+    const { toast } = useToast();
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
     const queryClient = useQueryClient();
     const { socket, setActiveConversationId } = useSocket();
+    const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+    const [isMessageInfoOpen, setIsMessageInfoOpen] = useState(false);
+    const [messageToDelete, setMessageToDelete] = useState<Message | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-    const { data: fetchedMessages = [] } = useQuery({
-        queryKey: ['messages', groupId],
-        queryFn: async () => {
-            const { getMessages } = await import("../../../services/api/messaging");
-            const { mapBackendMessageToMessage } = await import("../../../lib/mappers/messaging.mapper");
-            const backendMessages = await getMessages(groupId);
-            return backendMessages.map(m => mapBackendMessageToMessage(m, currentUser.id || currentUser.user_id));
+    const handleMessageAction = (action: string) => {
+        if (!selectedMessage) return;
+
+        if (action === 'info') {
+            setIsMessageInfoOpen(true);
+        } else if (action === 'copy') {
+            navigator.clipboard.writeText(selectedMessage.text || selectedMessage.text_content || "");
+            setSelectedMessage(null);
+        } else if (action === 'edit') {
+            setEditingMessageId(selectedMessage.id);
+            setSelectedMessage(null);
+        } else if (action === 'delete') {
+            setMessageToDelete(selectedMessage);
+            setIsDeleteModalOpen(true);
+            setSelectedMessage(null);
+        } else if (action === 'close') {
+            setSelectedMessage(null);
+        }
+    };
+
+    const handleMessageClick = (message: Message) => {
+        if (selectedMessage?.id === message.id) {
+            setSelectedMessage(null); // Toggle off
+        } else {
+            setSelectedMessage(message);
+        }
+    };
+
+    const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+
+    const editMessageMutation = useMutation({
+        mutationFn: async ({ messageId, text }: { messageId: string, text: string }) => {
+            return editMessage(messageId, text);
+        },
+        onSuccess: () => {
+            setEditingMessageId(null);
+        },
+        onError: (error) => {
+            console.error("Failed to edit message:", error);
+            toast({
+                title: "Error",
+                description: "Failed to edit message",
+                variant: "destructive"
+            });
         }
     });
 
+    const handleSaveEdit = (messageId: string, text: string) => {
+        editMessageMutation.mutate({ messageId, text });
+    };
+
+    const [typingMap, setTypingMap] = useState<Map<string, string>>(new Map());
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const lastTypingRef = useRef<number>(0);
+
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading: isMessagesLoading
+    } = useInfiniteQuery({
+        queryKey: ['messages', groupId],
+        queryFn: async ({ pageParam }) => {
+            const { getMessages } = await import("../../../services/api/messaging");
+            const { mapBackendMessageToMessage } = await import("../../../lib/mappers/messaging.mapper");
+            const backendMessages = await getMessages(groupId, 50, pageParam);
+            return backendMessages.map(m => mapBackendMessageToMessage(m, currentUser.id || currentUser.user_id));
+        },
+        getNextPageParam: (lastPage) => {
+            if (lastPage.length < 50) return undefined;
+            return lastPage[0]?.created_at;
+        },
+        initialPageParam: null as string | null,
+        enabled: !!groupId,
+        staleTime: Infinity,
+    });
+
+    const fetchedMessages = React.useMemo(() => {
+        if (!data) return [];
+        return [...data.pages].reverse().flatMap(page => page);
+    }, [data]);
+
     useEffect(() => {
         if (!socket) return;
+
+        // Reset typing state when group changes
+        setTypingMap(new Map());
 
         // Inform context of active conversation to suppress notifications
         setActiveConversationId(groupId);
 
         // Join the conversation room (standardized with ChatWindow)
         socket.emit('joinConversation', { conversationId: groupId });
+
+        // Explicitly join group room
+        socket.emit('joinGroup', { groupId: groupId });
 
         const handleNewMessage = async (message: any) => {
             // Filter
@@ -54,24 +144,44 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
             const uiMessage = mapBackendMessageToMessage(message, currentUser.id || currentUser.user_id);
             const isMe = message.sender_id === (currentUser.id || currentUser.user_id);
 
-            queryClient.setQueryData(['messages', groupId], (old: Message[] | undefined) => {
-                const current = old || [];
+            // Clear typing indicator for the sender
+            setTypingMap(prev => {
+                const next = new Map(prev);
+                next.delete(message.sender_id);
+                return next;
+            });
 
-                // Deduplicate by ID
-                if (current.some(m => m.id === uiMessage.id)) return current;
+            queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
+                if (!old) return undefined;
 
-                // Handle optimistic update replacement for own messages
+                // Check if real ID already exists in any page
+                const existsPage = old.pages.findIndex(page => page.some(m => m.id === uiMessage.id));
+
+                if (existsPage !== -1) {
+                    // Update existing message
+                    const newPages = [...old.pages];
+                    newPages[existsPage] = newPages[existsPage].map(m => m.id === uiMessage.id ? uiMessage : m);
+                    return { ...old, pages: newPages };
+                }
+
+                const newPages = [...old.pages];
+
+                // Handle optimistic update replacement for own messages in FIRST page
                 if (isMe) {
-                    const optimisticMatch = current.find(m =>
+                    const firstPage = newPages[0];
+                    const optimisticMatch = firstPage.find(m =>
                         m.id.startsWith('temp-') &&
                         m.text === uiMessage.text
                     );
                     if (optimisticMatch) {
-                        return current.map(m => m.id === optimisticMatch.id ? uiMessage : m);
+                        newPages[0] = firstPage.map(m => m.id === optimisticMatch.id ? uiMessage : m);
+                        return { ...old, pages: newPages };
                     }
                 }
 
-                return [...current, uiMessage];
+                // Append to first page (most recent)
+                newPages[0] = [...newPages[0], uiMessage];
+                return { ...old, pages: newPages };
             });
 
             // Update last message in specific conversation without refetching all conversation lists? 
@@ -81,24 +191,87 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
             // We could also mark as read if focused, just like ChatWindow
         };
 
+        const handleTyping = (payload: TypingPayload) => {
+            // Check if matches this group
+            if (payload.conversationId === groupId && payload.isGroup) {
+                // Ignore self (though backend shouldn't send it to self usually)
+                const myId = currentUser.id || currentUser.user_id;
+                if (payload.senderId && payload.senderId !== myId) {
+                    if (payload.username) {
+                        setTypingMap(prev => new Map(prev).set(payload.senderId!, payload.username!));
+                    }
+                }
+            }
+        };
+
+        const handleStopTyping = (payload: TypingPayload) => {
+            if (payload.conversationId === groupId && payload.isGroup) {
+                if (payload.senderId) {
+                    setTypingMap(prev => {
+                        const next = new Map(prev);
+                        next.delete(payload.senderId!);
+                        return next;
+                    });
+                }
+            }
+        };
+
+        const handleMessageDeletedForMe = (payload: { messageId: string }) => {
+            queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
+                if (!old) return undefined;
+                return {
+                    ...old,
+                    pages: old.pages.map(page => page.filter(m => m.id !== payload.messageId))
+                };
+            });
+            // Also update conversation list logic here if needed, but invalidation is safer
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        };
+
+        const handleMessageDeletedForEveryone = (payload: { messageId: string, conversationId: string }) => {
+            if (payload.conversationId !== groupId) return;
+
+            queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
+                if (!old) return undefined;
+                return {
+                    ...old,
+                    pages: old.pages.map(page => page.map(m => {
+                        if (m.id === payload.messageId) {
+                            return { ...m, text: "This message was deleted", is_deleted_for_everyone: true };
+                        }
+                        return m;
+                    }))
+                };
+            });
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        };
+
         socket.on('new_message', handleNewMessage);
+        socket.on('isTyping', handleTyping);
+        socket.on('stoppedTyping', handleStopTyping);
+        socket.on('message_deleted_for_me', handleMessageDeletedForMe);
+        socket.on('message_deleted_for_everyone', handleMessageDeletedForEveryone);
 
         return () => {
             socket.off('new_message', handleNewMessage);
+            socket.off('isTyping', handleTyping);
+            socket.off('stoppedTyping', handleStopTyping);
+            socket.off('message_deleted_for_me', handleMessageDeletedForMe);
+            socket.off('message_deleted_for_everyone', handleMessageDeletedForEveryone);
             setActiveConversationId(null);
         };
     }, [socket, groupId, queryClient, currentUser, setActiveConversationId]);
 
     const sendMessageMutation = useMutation({
         mutationFn: async (text: string) => {
-            return await sendMessage(groupId, text);
+            return await sendGroupMessage(groupId, text);
         },
         onMutate: async (text: string) => {
             // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
             await queryClient.cancelQueries({ queryKey: ['messages', groupId] });
 
             // Snapshot the previous value
-            const previousMessages = queryClient.getQueryData<Message[]>(['messages', groupId]);
+            const previousMessages = queryClient.getQueryData<InfiniteData<Message[]>>(['messages', groupId]);
 
             // Optimistically update to the new value
             const optimisticMessage: Message = {
@@ -110,10 +283,15 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                 time: new Date().toISOString(),
                 created_at: new Date().toISOString(),
                 type: 'text',
+                read_at: null,
             };
 
-            queryClient.setQueryData(['messages', groupId], (old: Message[] | undefined) => {
-                return [...(old || []), optimisticMessage];
+            queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
+                if (!old) return { pages: [[optimisticMessage]], pageParams: [null] };
+
+                const newPages = [...old.pages];
+                newPages[0] = [...newPages[0], optimisticMessage];
+                return { ...old, pages: newPages };
             });
 
             queryClient.setQueryData(['conversations'], (oldData: any[]) => {
@@ -141,14 +319,17 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
             // Return a context object with the snapshotted value
             return { previousMessages, tempId: optimisticMessage.id };
         },
-        onError: (err: unknown, newTodo: string, context: { previousMessages: Message[] | undefined; tempId: string } | undefined) => {
+        onError: (err: unknown, newTodo: string, context: { previousMessages: InfiniteData<Message[]> | undefined; tempId: string } | undefined) => {
             queryClient.setQueryData(['messages', groupId], context?.previousMessages);
             // Revert conversations list if needed? It's tricky without previous state snapshot of conversations.
             // For now, just invalidate on error.
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
             console.error("Failed to send", err);
         },
-        onSuccess: (data: any, variables: string, context: { previousMessages: Message[] | undefined; tempId: string } | undefined) => {
+        onSuccess: (data: any, variables: string, context: { previousMessages: InfiniteData<Message[]> | undefined; tempId: string } | undefined) => {
+            // Clear typing indicator immediately on send
+            setTypingMap(new Map());
+
             // Invalidate to fetch the true state
             queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -163,8 +344,8 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
 
         const markRead = async () => {
             try {
-                const { markAsRead } = await import("../../../services/api/messaging");
-                await markAsRead(groupId);
+                const { markGroupAsRead } = await import("../../../services/api/group-chat");
+                await markGroupAsRead(groupId);
 
                 // Optimistically update conversation unread count
                 queryClient.setQueryData(['conversations'], (oldData: any[]) => {
@@ -190,10 +371,39 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
     }, [groupId, displayMessages.length, queryClient]); // Trigger when messages change too
 
     const handleSendMessage = (text: string) => {
+        // Stop typing immediately when sending
+        if (socket) {
+            socket.emit('stopGroupTyping', { groupId: groupId });
+        }
         sendMessageMutation.mutate(text);
     };
 
-    if (isLoading) {
+    const handleTypingInput = () => {
+        if (!socket) return;
+
+        const now = Date.now();
+        if (now - lastTypingRef.current > 2000) {
+            socket.emit('groupTyping', { groupId: groupId });
+            lastTypingRef.current = now;
+        }
+
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+        typingTimeoutRef.current = setTimeout(() => {
+            socket.emit('stopGroupTyping', { groupId: groupId });
+        }, 3000);
+    }
+
+    // Derived typing string for display
+    let typingStatus: string | null = null;
+    const typingUsers = Array.from(typingMap.values());
+    if (typingUsers.length === 1) {
+        typingStatus = `${typingUsers[0]} is typing...`;
+    } else if (typingUsers.length > 1) {
+        typingStatus = `${typingUsers.join(", ")} are typing...`;
+    }
+
+    if (isLoading && !fetchedMessages.length) {
         return <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-muted-foreground" /></div>;
     }
 
@@ -201,18 +411,41 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
         return <div className="h-full flex items-center justify-center text-muted-foreground">Group not found</div>;
     }
 
+
+
     return (
         <div className="flex flex-col h-full bg-background relative">
             <GroupHeader
                 onOpenDetails={() => setIsDetailsOpen(true)}
                 onAddMember={() => setIsAddMemberOpen(true)}
                 onBack={onBack}
+                typingStatus={typingStatus}
+                selectedMessage={selectedMessage}
+                onMessageAction={handleMessageAction}
+                currentUserId={currentUser.id || currentUser.user_id || ""}
             />
 
-            <GroupMessageList messages={displayMessages} currentUserId={currentUser.id || currentUser.user_id || ""} />
+            <div className="flex-1 flex flex-col overflow-hidden relative">
+                <GroupMessageList
+                    messages={displayMessages}
+                    currentUserId={currentUser.id || currentUser.user_id || ""}
+                    onLoadMore={fetchNextPage}
+                    hasMore={hasNextPage}
+                    isLoadingMore={isFetchingNextPage}
+                    onMessageClick={handleMessageClick}
+                    selectedMessageId={selectedMessage?.id}
+                    editingMessageId={editingMessageId}
+                    onSaveEdit={handleSaveEdit}
+                    onCancelEdit={() => setEditingMessageId(null)}
+                />
+            </div>
 
             {activeGroup?.members.some(m => m.user_id === (currentUser.id || currentUser.user_id)) ? (
-                <GroupMessageInput onSendMessage={handleSendMessage} />
+                <GroupMessageInput
+                    onSendMessage={handleSendMessage}
+                    onTyping={handleTypingInput}
+                    isLoading={isLoading || isMessagesLoading}
+                />
             ) : (
                 <div className="p-4 border-t border-border bg-card/50 backdrop-blur-sm text-center text-muted-foreground text-sm">
                     You left this group. <span className="text-xs opacity-70 block mt-1">You can delete this chat from your list in group info.</span>
@@ -231,6 +464,79 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                 onClose={() => setIsAddMemberOpen(false)}
                 onInvite={(uid) => inviteMember(uid)}
             />
+
+            {selectedMessage && (
+                <MessageInfoModal
+                    isOpen={isMessageInfoOpen}
+                    onClose={() => setIsMessageInfoOpen(false)}
+                    messageId={selectedMessage.id}
+                    messageContent={selectedMessage.text}
+                />
+            )}
+
+            {messageToDelete && (
+                <DeleteMessageModal
+                    open={isDeleteModalOpen}
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setIsDeleteModalOpen(false);
+                            setMessageToDelete(null);
+                        }
+                    }}
+                    onDeleteForMe={async () => {
+                        if (!messageToDelete) return;
+                        const msgId = messageToDelete.id;
+                        // Optimistic Update
+                        queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
+                            if (!old) return undefined;
+                            return {
+                                ...old,
+                                pages: old.pages.map(page => page.filter(m => m.id !== msgId))
+                            };
+                        });
+
+                        setIsDeleteModalOpen(false);
+                        setMessageToDelete(null);
+
+                        try {
+                            await deleteMessage(msgId, false);
+                        } catch (e) {
+                            console.error("Failed to delete for me", e);
+                            queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
+                        }
+                    }}
+                    onDeleteForEveryone={async () => {
+                        if (!messageToDelete) return;
+                        const msgId = messageToDelete.id;
+
+                        // Optimistic Update
+                        queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
+                            if (!old) return undefined;
+                            return {
+                                ...old,
+                                pages: old.pages.map(page => page.map(m => {
+                                    if (m.id === msgId) {
+                                        return { ...m, text: "This message was deleted", is_deleted_for_everyone: true };
+                                    }
+                                    return m;
+                                }))
+                            };
+                        });
+
+                        setIsDeleteModalOpen(false);
+                        setMessageToDelete(null);
+
+                        try {
+                            await deleteMessage(msgId, true);
+                        } catch (e) {
+                            console.error("Failed to delete for everyone", e);
+                            queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
+                        }
+                    }}
+                    isSender={!!(messageToDelete && (messageToDelete.sender === 'me' || (messageToDelete.senderId && String(messageToDelete.senderId) === String(currentUser.id || currentUser.user_id))))}
+                />
+            )}
         </div>
     );
 }
+

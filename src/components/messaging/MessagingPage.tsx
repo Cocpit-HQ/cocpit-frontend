@@ -171,12 +171,30 @@ export default function MessagingPage() {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     };
 
+    const handleGroupUpdate = (updatedGroup: any) => {
+      queryClient.setQueryData(['conversations'], (oldData: ChatThread[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(c => {
+          if (c.id === updatedGroup.conversation_id) {
+            return {
+              ...c,
+              name: updatedGroup.conversation_name || c.name,
+              avatar: ("group_avatar" in updatedGroup) ? (updatedGroup.group_avatar || "") : c.avatar
+            };
+          }
+          return c;
+        });
+      });
+    };
+
     socket.on('new_message', handleNewMessage);
     socket.on('notification', handleNotification);
+    socket.on('group_updated', handleGroupUpdate);
 
     return () => {
       socket.off('new_message', handleNewMessage);
       socket.off('notification', handleNotification);
+      socket.off('group_updated', handleGroupUpdate);
     };
   }, [socket, queryClient, selectedChat?.id]); // Only depend on ID, not full object
 

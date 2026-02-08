@@ -50,7 +50,22 @@ export const removeMember = async (groupId: string, userId: string) => {
     return response.data;
 };
 
-export const updateGroupAvatar = async (groupId: string, avatarUrl: string) => {
+export const promoteToAdmin = async (groupId: string, userId: string) => {
+    const response = await api.post(`/groups/${groupId}/members/${userId}/promote`);
+    return response.data;
+};
+
+export const updateGroupAvatar = async (groupId: string, avatarUrl: string | null) => {
     const response = await api.put(`/groups/${groupId}/avatar`, { avatarUrl });
+    return response.data;
+};
+
+export const markGroupAsRead = async (groupId: string) => {
+    const response = await api.post(`/groups/${groupId}/read`);
+    return response.data;
+};
+
+export const getMessageReadReceipts = async (groupId: string, messageId: string) => {
+    const response = await api.get(`/groups/${groupId}/messages/${messageId}/read`);
     return response.data;
 };

@@ -40,6 +40,8 @@ export interface SocketMessage {
 export interface TypingPayload {
   conversationId: string;
   senderId?: string; // Present in server->client event
+  isGroup?: boolean;
+  username?: string;
 }
 
 export interface MessageReadPayload {

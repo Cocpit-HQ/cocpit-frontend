@@ -3,12 +3,13 @@ import { Paperclip, Send, Smile, Mic } from "lucide-react";
 
 interface GroupMessageInputProps {
     onSendMessage: (text: string) => void;
+    onTyping?: () => void;
     isLoading?: boolean;
 }
 
 const EMOJI_LIST = ["😀", "😂", "😍", "🥺", "🔥", "👍", "👎", "🎉", "❤️", "💼", "🚀", "💯", "👏", "🤔", "👀", "✨", "✅", "❌", "🙌", "😎"];
 
-export default function GroupMessageInput({ onSendMessage, isLoading }: GroupMessageInputProps) {
+export default function GroupMessageInput({ onSendMessage, onTyping, isLoading }: GroupMessageInputProps) {
     const [text, setText] = useState("");
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -93,13 +94,18 @@ export default function GroupMessageInput({ onSendMessage, isLoading }: GroupMes
                         value={text}
                         onChange={(e) => {
                             setText(e.target.value);
-                            e.target.style.height = 'auto';
-                            e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
+                            if (onTyping) onTyping();
+
+                            const target = e.target;
+                            target.style.height = 'auto';
+                            const newHeight = Math.min(target.scrollHeight, 128);
+                            target.style.height = `${newHeight}px`;
+                            target.style.overflowY = target.scrollHeight > 128 ? 'auto' : 'hidden';
                         }}
                         onKeyDown={handleKeyDown}
                         placeholder="Type a message..."
                         rows={1}
-                        className="w-full pl-4 pr-10 py-3 bg-transparent border-0 resize-none focus:outline-none max-h-32 text-sm md:text-base text-foreground placeholder-muted-foreground"
+                        className="w-full pl-4 pr-10 py-3 bg-transparent border-0 resize-none focus:outline-none max-h-32 text-sm md:text-base text-foreground placeholder-muted-foreground scrollbar-hide overflow-hidden"
                         style={{ minHeight: "44px" }}
                         disabled={isLoading}
                     />

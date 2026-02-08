@@ -6,8 +6,10 @@ export const getConversations = async (): Promise<BackendChat[]> => {
   return response.data;
 };
 
-export const getMessages = async (conversationId: string): Promise<BackendMessage[]> => {
-  const response = await api.get(`/conversations/${conversationId}/messages`);
+export const getMessages = async (conversationId: string, limit: number = 50, before?: string | null): Promise<BackendMessage[]> => {
+  const params: any = { limit };
+  if (before) params.before = before;
+  const response = await api.get(`/conversations/${conversationId}/messages`, { params });
   return response.data;
 };
 
@@ -23,5 +25,17 @@ export const sendMessage = async (targetUserId: string, text_content: string, sh
 
 export const markAsRead = async (conversationId: string) => {
   const response = await api.patch(`/conversations/${conversationId}/read`);
+  return response.data;
+};
+
+export const editMessage = async (messageId: string, text_content: string) => {
+  const response = await api.patch(`/messages/${messageId}/edit`, { text_content });
+  return response.data;
+};
+
+export const deleteMessage = async (messageId: string, deleteForEveryone: boolean = false) => {
+  const response = await api.delete(`/messages/${messageId}`, {
+    data: { deleteForEveryone }
+  });
   return response.data;
 };
