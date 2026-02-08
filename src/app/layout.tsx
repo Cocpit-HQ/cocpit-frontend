@@ -7,6 +7,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { ActionModalProvider } from "@/context/ActionModalContext";
 import { FeedProvider } from "@/context/FeedContext";
 import { JobsProvider } from "@/context/JobsContext";
+import { PostUploadProvider } from "@/context/PostUploadContext";
+import { GlobalUploadProgress } from "@/components/ui/GlobalUploadProgress";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,13 +37,16 @@ export default function RootLayout({
       >
         <Providers>
           <FeedProvider>
-            <JobsProvider>
-              <ActionModalProvider>
-                {children}
-                <Toaster />
-                <Sonner />
-              </ActionModalProvider>
-            </JobsProvider>
+            <PostUploadProvider>
+              <JobsProvider>
+                <ActionModalProvider>
+                  {children}
+                  <GlobalUploadProgress />
+                  <Toaster />
+                  <Sonner />
+                </ActionModalProvider>
+              </JobsProvider>
+            </PostUploadProvider>
           </FeedProvider>
         </Providers>
       </body>

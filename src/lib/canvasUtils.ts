@@ -140,3 +140,62 @@ export function getGradientImage(style: string, width = 1080, height = 1920): Pr
     }, 'image/jpeg');
   });
 }
+
+/**
+ * Creates a padded image (letterboxed/pillarboxed) to fit a specific aspect ratio.
+ */
+export async function getPaddedImg(
+  imageSrc: string,
+  aspect: number,
+  fillColor = '#000000'
+): Promise<Blob> {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    throw new Error('Canvas context not found');
+  }
+
+  const { width, height } = image;
+  const imageAspect = width / height;
+
+  let targetWidth, targetHeight;
+
+  // Determine target dimensions based on aspect ratio
+  // We want the resulting image to maintain the source resolution quality
+  if (aspect > imageAspect) {
+    // Target is wider than image (pillarbox - bars on sides)
+    // Height is the constraint (match source height), width increases
+    targetHeight = height;
+    targetWidth = height * aspect;
+  } else {
+    // Target is taller than image (letterbox - bars on top/bottom)
+    // Width is the constraint (match source width), height increases
+    targetWidth = width;
+    targetHeight = width / aspect;
+  }
+
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+
+  // Fill background
+  ctx.fillStyle = fillColor;
+  ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+  // Draw image centered
+  const x = (targetWidth - width) / 2;
+  const y = (targetHeight - height) / 2;
+
+  ctx.drawImage(image, x, y);
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((file) => {
+      if (file) {
+        resolve(file);
+      } else {
+        reject(new Error('Canvas is empty'));
+      }
+    }, 'image/jpeg');
+  });
+}

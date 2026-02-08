@@ -14,6 +14,8 @@ interface MediaCropperProps {
   onAspectChange: (aspect: number) => void;
   isMobile: boolean;
   readOnly?: boolean;
+  fitMode: 'cover' | 'contain';
+  onFitModeChange: (mode: 'cover' | 'contain') => void;
 }
 
 const ASPECT_RATIOS = [
@@ -33,15 +35,37 @@ export function MediaCropper({
   onAspectChange,
   isMobile,
   readOnly,
+  fitMode,
+  onFitModeChange,
 }: MediaCropperProps) {
   return (
     <div className="flex flex-col h-full w-full gap-4">
       {/* Cropper Area */}
-      <div className="relative w-full h-[300px] md:h-[400px] bg-black rounded-lg overflow-hidden">
+      <div className="relative w-full h-[300px] md:h-[400px] bg-black rounded-lg overflow-hidden flex items-center justify-center">
         {readOnly ? (
-            <img src={imageSrc} className="w-full h-full object-contain" alt="Post media" />
+          <img src={imageSrc} className="w-full h-full object-contain" alt="Post media" />
+        ) : fitMode === 'contain' ? (
+          // Contain Mode: Show image respecting aspect ratio with padding
+          // We create a container with the target aspect ratio, centered in the viewing area
+          <div
+            className="relative flex items-center justify-center bg-black"
+            style={{
+              width: aspect >= 1 ? '100%' : 'auto',
+              height: aspect < 1 ? '100%' : 'auto',
+              aspectRatio: `${aspect}`,
+              maxWidth: '100%',
+              maxHeight: '100%'
+            }}
+          >
+            <img
+              src={imageSrc}
+              className="max-w-full max-h-full object-contain"
+              alt="Post media"
+            />
+          </div>
         ) : (
-            <Cropper
+          // Cover Mode: Standard Cropper
+          <Cropper
             image={imageSrc}
             crop={crop}
             zoom={zoom}
@@ -50,63 +74,86 @@ export function MediaCropper({
             onZoomChange={onZoomChange}
             onCropComplete={onCropComplete}
             showGrid={true}
-            objectFit="contain" // Ensures image is contained within the cropper area initially
+            objectFit="contain" // This ensures initial load is sane, but zoom allows covering
             style={{
-                containerStyle: { background: '#000' },
-                cropAreaStyle: { border: '2px solid rgba(255, 255, 255, 0.5)' },
+              containerStyle: { background: '#000' },
+              cropAreaStyle: { border: '2px solid rgba(255, 255, 255, 0.5)' },
             }}
-            />
+          />
         )}
       </div>
 
       {/* Controls - Hide if readOnly */}
       {!readOnly && (
-      <div className="flex flex-col gap-4 px-2">
-        {/* Zoom Control */}
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-muted-foreground w-12">Zoom</span>
-          <input
-            type="range"
-            value={zoom}
-            min={1}
-            max={3}
-            step={0.1}
-            aria-labelledby="Zoom"
-            onChange={(e) => onZoomChange(Number(e.target.value))}
-            className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
-          />
-        </div>
+        <div className="flex flex-col gap-4 px-2">
+          {/* Zoom Control - Only for Cover mode */}
+          {fitMode === 'cover' && (
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-muted-foreground w-12">Zoom</span>
+              <input
+                type="range"
+                value={zoom}
+                min={1}
+                max={3}
+                step={0.1}
+                aria-labelledby="Zoom"
+                onChange={(e) => onZoomChange(Number(e.target.value))}
+                className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
+              />
+            </div>
+          )}
 
-        {/* Aspect Ratio Selector */}
-        <div className="flex items-center justify-between md:justify-start md:gap-4">
-          <span className="text-sm font-medium text-muted-foreground md:w-12">Ratio</span>
+          {/* Fit/Fill Toggle */}
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-muted-foreground w-12">Mode</span>
+            <div className="flex bg-muted/50 p-1 rounded-lg">
+              <button
+                type="button"
+                onClick={() => onFitModeChange('cover')}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${fitMode === 'cover' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Fill
+              </button>
+              <button
+                type="button"
+                onClick={() => onFitModeChange('contain')}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${fitMode === 'contain' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Fit
+              </button>
+            </div>
+          </div>
 
-          <div className="flex gap-2 bg-muted/50 p-1 rounded-lg">
-            {ASPECT_RATIOS.map((ratio) => {
-              const Icon = ratio.icon;
-              const isActive = aspect === ratio.value;
+          {/* Aspect Ratio Selector */}
+          <div className="flex items-center justify-between md:justify-start md:gap-4">
+            <span className="text-sm font-medium text-muted-foreground md:w-12">Ratio</span>
 
-              return (
-                <button
-                  key={ratio.label}
-                  onClick={() => onAspectChange(ratio.value)}
-                  className={`
+            <div className="flex gap-2 bg-muted/50 p-1 rounded-lg">
+              {ASPECT_RATIOS.map((ratio) => {
+                const Icon = ratio.icon;
+                const isActive = aspect === ratio.value;
+
+                return (
+                  <button
+                    key={ratio.label}
+                    onClick={() => onAspectChange(ratio.value)}
+                    className={`
                     flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
                     ${isActive
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                    }
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                      }
                   `}
-                  title={ratio.label}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className={`${isMobile ? 'hidden' : 'inline'}`}>{ratio.label}</span>
-                </button>
-              );
-            })}
+                    title={ratio.label}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className={`${isMobile ? 'hidden' : 'inline'}`}>{ratio.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
       )}
     </div>
   );
