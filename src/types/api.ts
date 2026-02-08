@@ -74,4 +74,8 @@ export interface PublicUserProfileResponse {
   educations: ApiEducation[];
   skills: string[];
   is_following: boolean;
+  is_followed_by?: boolean;
+  connection_request_status?: 'pending' | 'rejected' | 'blocked' | null;
+  connection_request_id?: string | null;
+  connection_request_sender?: 'me' | 'them' | null;
 }

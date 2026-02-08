@@ -13,6 +13,7 @@ import { Notification } from "@/types/social"
 import { getNotifications, markNotificationAsRead } from "@/services/api/notifications"
 import { useSession } from "next-auth/react"
 import { formatDistanceToNow } from "date-fns"
+import { useSocket } from "@/context/SocketContext"
 import Avatar from "@/components/shared/Avatar"
 
 export function NotificationPopover() {
@@ -21,6 +22,8 @@ export function NotificationPopover() {
   const [isOpen, setIsOpen] = useState(false)
   const { data: session } = useSession()
   const user = session?.user
+
+  const { socket } = useSocket()
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -37,6 +40,20 @@ export function NotificationPopover() {
       fetchNotifications()
     }
   }, [isOpen, user])
+
+  // Listen for real-time notifications
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewNotification = (newNotification: Notification) => {
+      setNotifications(prev => [newNotification, ...prev].slice(0, 5));
+    };
+
+    socket.on("notification", handleNewNotification);
+    return () => {
+      socket.off("notification", handleNewNotification);
+    }
+  }, [socket]);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length
 
@@ -102,6 +119,9 @@ export function NotificationPopover() {
                 } else if (notification.type === 'repost' && notification.reference_id) {
                   router.push(`/post/${notification.reference_id}`)
                   setIsOpen(false)
+                } else if ((notification.type === 'connection_accepted' || notification.type === 'connection_request') && notification.reference_id) {
+                  router.push(`/profile/${notification.reference_id}`)
+                  setIsOpen(false)
                 } else if ((notification.type === 'comment' || notification.type === 'mention' || notification.type === 'reply') && notification.reference_id) {
                   // Extract comment_id from metadata if available (it might be stringified)
                   let commentId;
@@ -137,7 +157,15 @@ export function NotificationPopover() {
                   <span className="font-bold">{notification.actor_name}</span> {notification.text.replace(notification.actor_name || '', '').trim()}
                 </p>
                 <p className="text-xs mt-1 text-muted-foreground">
-                  {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                  {(() => {
+                    try {
+                      return notification.created_at
+                        ? formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })
+                        : "Just now";
+                    } catch (e) {
+                      return "Just now";
+                    }
+                  })()}
                 </p>
               </div>
               {!notification.is_read && (

@@ -5,6 +5,7 @@ import React from "react";
 import { MessageCircle, UserPlus, UserCheck, CheckCircle } from "lucide-react";
 import { ProfileIdentityChips } from "@/components/profile/ProfileIdentityChips";
 import { User } from "@/types/user";
+import { ConnectionButton } from "@/components/profile/ConnectionButton";
 
 interface ProfileHeaderProps {
     user: User;
@@ -104,6 +105,14 @@ export function ProfileHeader({
                                 <MessageCircle className="w-4 h-4" />
                                 Message
                             </button>
+                            <ConnectionButton
+                                userId={user.id}
+                                isFollowing={user.is_following || false}
+                                isFollowedBy={user.is_followed_by || false}
+                                connectionRequestStatus={user.connection_request_status}
+                                connectionRequestId={user.connection_request_id}
+                                connectionRequestSender={user.connection_request_sender}
+                            />
                             <button
                                 onClick={onFollowToggle}
                                 disabled={isFollowLoading}

@@ -80,7 +80,12 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
             openTo: (Array.isArray(data.open_to) ? data.open_to[0] : data.open_to) as any || 'Full-time',
             availability: data.availability as any || 'Casual Networking',
             workPreference: data.work_preference as any || 'Onsite',
-        }
+        },
+        is_following: data.is_following,
+        is_followed_by: data.is_followed_by,
+        connection_request_status: data.connection_request_status,
+        connection_request_id: data.connection_request_id,
+        connection_request_sender: data.connection_request_sender,
     };
 };
 

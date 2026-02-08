@@ -15,6 +15,11 @@ export interface User {
   mutualConnections: number; // Mock count
   isCurrentUser?: boolean;
   identity?: ProfileIdentity;
+  is_following?: boolean;
+  is_followed_by?: boolean;
+  connection_request_status?: 'pending' | 'rejected' | 'blocked' | null;
+  connection_request_id?: string | null;
+  connection_request_sender?: 'me' | 'them' | null;
 }
 
 export interface UserProfile {
@@ -43,8 +48,9 @@ export interface UserData {
   open_to: string | null;
   availability: string | null;
   work_preference: string | null;
-  profile_views: number;
-  search_appearances: number;
+  followers_count: number;
+  following_count: number;
+  connections_count: number;
   latest_education: {
     school: string;
     degree: string;
@@ -54,6 +60,11 @@ export interface UserData {
   school?: string;
   degree?: string;
   about_text?: string;
+  is_following?: boolean;
+  is_followed_by?: boolean;
+  connection_request_status?: 'pending' | 'rejected' | 'blocked' | null;
+  connection_request_id?: string | null;
+  connection_request_sender?: 'me' | 'them' | null;
 }
 
 export interface UpdateProfilePayload {

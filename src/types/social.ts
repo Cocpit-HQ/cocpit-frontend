@@ -2,17 +2,20 @@ export interface ConnectionRequest {
     id: string;
     sender_id: string;
     receiver_id: string;
+    created_at: string;
+    updated_at?: string;
+    status: 'pending' | 'accepted' | 'rejected' | 'connected' | 'blocked';
+    direction?: 'incoming' | 'outgoing';
+    otherUser?: {
+        name: string;
+        avatar: string | null;
+        headline?: string;
+    };
     sender: {
         name: string;
         avatar: string | null;
-        headline: string | null;
+        headline?: string | null;
     };
-    receiver?: {
-        name: string;
-        avatar: string | null;
-    };
-    status: 'pending' | 'accepted' | 'rejected';
-    created_at: string;
 }
 
 export interface Connection {
@@ -35,6 +38,8 @@ export interface Notification {
     is_read: boolean;
     created_at: string;
     metadata?: any; // For flexible payload like comment_id
+    request_id?: string;
+    request_status?: string;
 }
 
 
@@ -51,4 +56,12 @@ export interface Following {
     full_name: string;
     avatar_url: string | null;
     headline: string | null;
+}
+
+export interface RelationshipStatus {
+    status: 'me' | 'connected' | 'pending_sent' | 'pending_received' | 'cooldown' | 'blocked' | 'none';
+    is_following: boolean;
+    is_followed_by: boolean;
+    request_id: string | null;
+    sender?: string;
 }

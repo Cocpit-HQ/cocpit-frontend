@@ -46,6 +46,7 @@ import { ProfileSkeleton } from "@/components/profile/ProfileSkeleton"
 import { EditableExperienceItem } from "@/components/profile/parts/EditableExperienceItem"
 import { EditableEducationItem } from "@/components/profile/parts/EditableEducationItem"
 import { ContactInfoModal } from "@/components/profile/ContactInfoModal"
+import { FollowListModal } from "@/components/profile/FollowListModal"
 
 // New Hooks
 import { useMyProfile, useExperienceMutations, useEducationMutations, useSkillMutations, useAvatarMutations } from "@/hooks/use-my-profile"
@@ -78,6 +79,8 @@ export default function ProfilePage() {
   const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
   const [isEditAvatarOpen, setIsEditAvatarOpen] = useState(false);
   const [isContactInfoModalOpen, setIsContactInfoModalOpen] = useState(false);
+  const [isFollowListModalOpen, setIsFollowListModalOpen] = useState(false);
+  const [activeFollowTab, setActiveFollowTab] = useState<"followers" | "following" | "connections">("followers");
 
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
@@ -266,6 +269,11 @@ export default function ProfilePage() {
     document.getElementById("experience-section")?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const openFollowList = (tab: "followers" | "following" | "connections") => {
+    setActiveFollowTab(tab);
+    setIsFollowListModalOpen(true);
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto pt-0 md:pt-8 pb-20 md:pb-12">
@@ -348,6 +356,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
+
                   <div className="flex justify-between items-start">
                     <div className="flex-1 min-w-0 mr-4">
                       <div className="flex items-center gap-2 mb-1">
@@ -364,7 +373,9 @@ export default function ProfilePage() {
                         <span className="text-muted-foreground">{user?.location}</span>
                       </div>
 
-                      <p className="text-sm text-muted-foreground mb-4">500+ connections</p>
+                      <button onClick={() => openFollowList("connections")} className="text-sm text-primary hover:underline font-medium mb-4">
+                        {(user?.connections_count || 0) > 500 ? "500+" : user?.connections_count} connections
+                      </button>
                     </div>
 
                     <div className="flex flex-col gap-2 pt-2">
@@ -401,20 +412,22 @@ export default function ProfilePage() {
               {/* Stats & Resume */}
               <div className="rounded-xl border p-4 mb-6 bg-card border-border">
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <p className="text-xl mb-1 text-foreground">500+</p>
+                  <div className="text-center cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors" onClick={() => openFollowList("followers")}>
+                    <p className="text-xl font-semibold mb-1 text-foreground">{user?.followers_count || 0}</p>
+                    <p className="text-xs text-muted-foreground">Followers</p>
+                  </div>
+                  <div className="text-center border-l border-r border-border cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors" onClick={() => openFollowList("following")}>
+                    <p className="text-xl font-semibold mb-1 text-foreground">{user?.following_count || 0}</p>
+                    <p className="text-xs text-muted-foreground">Following</p>
+                  </div>
+                  <div className="text-center cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors" onClick={() => openFollowList("connections")}>
+                    <p className="text-xl font-semibold mb-1 text-foreground">{user?.connections_count || 0}</p>
                     <p className="text-xs text-muted-foreground">Connections</p>
-                  </div>
-                  <div className="text-center border-l border-r border-border">
-                    <p className="text-xl mb-1 text-foreground">{user?.profile_views}</p>
-                    <p className="text-xs text-muted-foreground">Profile Views</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xl mb-1 text-foreground">{user?.search_appearances}</p>
-                    <p className="text-xs text-muted-foreground">Search Appearances</p>
                   </div>
                 </div>
               </div>
+
+
 
               <LivingResume experiences={experiences} skills={skills.map(s => s.name)} />
 
@@ -582,6 +595,13 @@ export default function ProfilePage() {
         currentAvatarUrl={user?.avatar || null}
         onUpload={handleAvatarUpload}
         onDelete={handleAvatarDelete}
+      />
+
+      <FollowListModal
+        isOpen={isFollowListModalOpen}
+        onClose={() => setIsFollowListModalOpen(false)}
+        initialTab={activeFollowTab}
+        userId={user?.id || ""}
       />
 
       <ContactInfoModal

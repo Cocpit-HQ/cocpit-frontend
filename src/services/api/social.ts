@@ -13,9 +13,16 @@ export const unfollowUser = async (userId: string) => {
     return response.data;
 };
 
-export const getFollowers = async (userId: string): Promise<Follower[]> => {
-    const response = await api.get(`/users/${userId}/followers`);
-    return response.data.followers; // Backend often wraps in { followers: [...] }
+export const getFollowers = async (userId: string, search?: string): Promise<Follower[]> => {
+    const params = search ? { search } : {};
+    const response = await api.get(`/users/${userId}/followers`, { params });
+    return response.data;
+};
+
+export const getFollowing = async (userId: string, search?: string): Promise<Following[]> => {
+    const params = search ? { search } : {};
+    const response = await api.get(`/users/${userId}/following`, { params });
+    return response.data;
 };
 
 export const getFollowersCount = async (userId: string): Promise<{ count: number }> => {
@@ -25,23 +32,34 @@ export const getFollowersCount = async (userId: string): Promise<{ count: number
 
 // --- Connections ---
 
-export const sendConnectionRequest = async (userId: string) => {
-    const response = await api.post(`/users/${userId}/connect`);
+export const sendConnectionRequest = async (userId: string, message?: string) => {
+    const response = await api.post(`/users/${userId}/connect`, { message });
+    return response.data;
+};
+
+export const getRelationshipStatus = async (userId: string) => {
+    const response = await api.get(`/users/${userId}/relationship`);
     return response.data;
 };
 
 export const getPendingRequests = async (): Promise<ConnectionRequest[]> => {
     const response = await api.get("/connections/requests");
-    return response.data; // Ensure backend returns array directly or adjust
-};
-
-export const handleConnectionRequest = async (requestId: string, action: 'accept' | 'reject') => {
-    const response = await api.patch(`/connections/${requestId}`, { status: action });
     return response.data;
 };
 
-export const getMyConnections = async (): Promise<Connection[]> => {
-    const response = await api.get("/my/connections");
+export const getConnectionRequestHistory = async (): Promise<ConnectionRequest[]> => {
+    const response = await api.get("/connections/history");
+    return response.data;
+};
+
+export const handleConnectionRequest = async (requestId: string, status: 'connected' | 'rejected' | 'blocked') => {
+    const response = await api.patch(`/connections/${requestId}`, { status });
+    return response.data;
+};
+
+export const getMyConnections = async (search?: string): Promise<Connection[]> => {
+    const params = search ? { search } : {};
+    const response = await api.get("/my/connections", { params });
     return response.data;
 };
 
