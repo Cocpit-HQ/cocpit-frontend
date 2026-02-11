@@ -38,7 +38,7 @@ export default function AddMemberModal({ isOpen, onClose, onInvite }: AddMemberM
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md z-50">
                 <DialogHeader>
                     <DialogTitle>Add Members</DialogTitle>
                 </DialogHeader>

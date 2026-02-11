@@ -13,14 +13,31 @@ export const getMessages = async (conversationId: string, limit: number = 50, be
   return response.data;
 };
 
-export const sendMessage = async (targetUserId: string, text_content: string, shared_post_id?: string) => {
-  console.log("Sending message with:", { targetUserId, text_content, shared_post_id });
-  const response = await api.post("/messages", {
-    targetUserId,
-    text_content,
-    shared_post_id,
-  });
-  return response.data;
+export const sendMessage = async (targetUserId: string, text_content: string, shared_post_id?: string, files?: File[]) => {
+  console.log("Sending message with:", { targetUserId, text_content, shared_post_id, files });
+
+  if (files && files.length > 0) {
+    const formData = new FormData();
+    formData.append("targetUserId", targetUserId);
+    if (text_content) formData.append("text_content", text_content);
+    if (shared_post_id) formData.append("shared_post_id", shared_post_id);
+
+    files.forEach((file) => {
+      formData.append("images", file);
+    });
+
+    const response = await api.post("/messages", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  } else {
+    const response = await api.post("/messages", {
+      targetUserId,
+      text_content,
+      shared_post_id,
+    });
+    return response.data;
+  }
 };
 
 export const markAsRead = async (conversationId: string) => {

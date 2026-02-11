@@ -224,11 +224,8 @@ export default function MessagingPage() {
                 onSelectChat={(chat) => {
                   if (isMobile) {
                     // On mobile, navigate via URL to keep "Back" button working
-                    if (chat.isGroup) {
-                      router.push(`/messaging?groupId=${chat.id}`);
-                    } else {
-                      router.push(`/messaging?userId=${chat.otherUserId}`);
-                    }
+                    // Use groupId (conversationId) for all existing chats to handle Deleted Users (who have no otherUserId)
+                    router.push(`/messaging?groupId=${chat.id}`);
                   } else {
                     setSelectedChat(chat);
                   }

@@ -14,9 +14,10 @@ interface MessageListProps {
   onCancelEdit?: () => void
   selectedMessageId?: string | null
   onMessageClick?: (message: Message) => void
+  onMediaClick?: (url: string, type: 'image' | 'video' | 'document', name?: string) => void
 }
 
-const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, onMessageClick }, ref) => {
+const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, onMessageClick, onMediaClick }, ref) => {
   const localRef = useRef<HTMLDivElement>(null)
   const scrollRef = (ref as React.RefObject<HTMLDivElement>) || localRef
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true)
@@ -67,6 +68,13 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
   }, [messages])
 
 
+  // Handle media load to ensure we stay at bottom if already there
+  const handleMediaLoad = () => {
+    if (shouldScrollToBottom && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }
+
   return (
     <div
       ref={scrollRef}
@@ -98,6 +106,8 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
             onCancelEdit={onCancelEdit}
             isSelected={selectedMessageId === msg.id}
             onMessageClick={onMessageClick}
+            onMediaClick={onMediaClick}
+            onMediaLoad={handleMediaLoad}
           />
         )
       })}

@@ -1,10 +1,10 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from "react"
-import { Paperclip, Send, Smile } from "lucide-react"
+import { Paperclip, Send, Smile, X, FileText, Film, Image as ImageIcon } from "lucide-react"
 
 interface ChatInputProps {
-  onSendMessage: (text: string) => void
+  onSendMessage: (text: string, files: File[]) => void
   onTyping?: () => void
   disabled?: boolean
   disabledMessage?: string
@@ -15,15 +15,18 @@ const EMOJI_LIST = ["😀", "😂", "😍", "🥺", "🔥", "👍", "👎", "�
 export default function ChatInput({ onSendMessage, onTyping, disabled, disabledMessage }: ChatInputProps) {
   const [text, setText] = useState("")
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [files, setFiles] = useState<File[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const pickerRef = useRef<HTMLDivElement>(null)
   const emojiButtonRef = useRef<HTMLButtonElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleSend = () => {
     if (disabled) return;
-    if (text.trim()) {
-      onSendMessage(text)
+    if (text.trim() || files.length > 0) {
+      onSendMessage(text, files)
       setText("")
+      setFiles([])
       if (textareaRef.current) {
         textareaRef.current.style.height = '44px';
       }
@@ -37,6 +40,17 @@ export default function ChatInput({ onSendMessage, onTyping, disabled, disabledM
       handleSend()
     }
   }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
 
   const insertEmoji = (emoji: string) => {
     const textarea = textareaRef.current;
@@ -83,14 +97,55 @@ export default function ChatInput({ onSendMessage, onTyping, disabled, disabledM
     };
   }, [showEmojiPicker]);
 
+  const getFileIcon = (file: File) => {
+    if (file.type.startsWith('image/')) return <ImageIcon className="w-4 h-4" />;
+    if (file.type.startsWith('video/')) return <Film className="w-4 h-4" />;
+    return <FileText className="w-4 h-4" />;
+  };
+
   return (
     <div
       className="p-3 md:p-4 border-t w-full bg-background border-border shrink-0"
     >
+      {/* File Previews */}
+      {files.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto mb-2 pb-2">
+          {files.map((file, index) => (
+            <div key={index} className="relative group bg-muted rounded-lg p-2 flex items-center gap-2 min-w-[120px]">
+              {file.type.startsWith('image/') ? (
+                <div className="w-10 h-10 relative overflow-hidden rounded bg-background">
+                  <img src={URL.createObjectURL(file)} alt="preview" className="object-cover w-full h-full" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 flex items-center justify-center bg-background rounded text-muted-foreground">
+                  {getFileIcon(file)}
+                </div>
+              )}
+              <span className="text-xs truncate max-w-[100px]">{file.name}</span>
+              <button
+                onClick={() => removeFile(index)}
+                className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-end gap-2 max-w-4xl mx-auto">
+        <input
+          type="file"
+          multiple
+          ref={fileInputRef}
+          className="hidden"
+          onChange={handleFileSelect}
+          accept="image/*,video/*,application/pdf"
+        />
         <button
           className="p-2 rounded-full transition-colors mb-1 hover:bg-muted text-muted-foreground"
           disabled={disabled}
+          onClick={() => fileInputRef.current?.click()}
         >
           <Paperclip className="w-5 h-5" />
         </button>
@@ -145,8 +200,8 @@ export default function ChatInput({ onSendMessage, onTyping, disabled, disabledM
 
         <button
           onClick={handleSend}
-          disabled={!text.trim() || disabled}
-          className={`p-3 rounded-full transition-colors mb-0.5 shadow-md ${text.trim() && !disabled
+          disabled={(!text.trim() && files.length === 0) || disabled}
+          className={`p-3 rounded-full transition-colors mb-0.5 shadow-md ${(text.trim() || files.length > 0) && !disabled
             ? "bg-primary text-primary-foreground hover:opacity-90"
             : "bg-muted text-muted-foreground cursor-not-allowed"
             }`}
