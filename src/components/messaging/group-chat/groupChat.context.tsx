@@ -112,11 +112,22 @@ export const GroupChatProvider: React.FC<{ groupId?: string; children: React.Rea
         socket.on('group_role_update', handleRoleUpdate);
         socket.on('messages_read', handleMessagesRead);
 
+        socket.on('removed_from_group', (payload: any) => {
+            if (payload.groupId === groupId) {
+                // Determine behavior? 
+                // Refetch to update "members" list (so user sees they are gone)
+                refetch();
+                queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            }
+        });
+
         return () => {
             socket.off('group_updated', handleGroupUpdate);
             socket.off('invitation_update', handleInvitationUpdate);
             socket.off('group_role_update', handleRoleUpdate);
+            socket.off('group_role_update', handleRoleUpdate);
             socket.off('messages_read', handleMessagesRead);
+            socket.off('removed_from_group');
         };
     }, [socket, groupId, refetch, queryClient]);
 
