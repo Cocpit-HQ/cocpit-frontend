@@ -187,14 +187,21 @@ export default function MessagingPage() {
       });
     };
 
+    const handleConversationUpdated = (payload: any) => {
+      // Trigger refetch to get the accurate last message (handling delete-for-me/everyone)
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    };
+
     socket.on('new_message', handleNewMessage);
     socket.on('notification', handleNotification);
     socket.on('group_updated', handleGroupUpdate);
+    socket.on('conversation-updated', handleConversationUpdated);
 
     return () => {
       socket.off('new_message', handleNewMessage);
       socket.off('notification', handleNotification);
       socket.off('group_updated', handleGroupUpdate);
+      socket.off('conversation-updated', handleConversationUpdated);
     };
   }, [socket, queryClient, selectedChat?.id]); // Only depend on ID, not full object
 

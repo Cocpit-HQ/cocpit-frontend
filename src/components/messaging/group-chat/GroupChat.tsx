@@ -368,6 +368,10 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
 
         const timer = setTimeout(async () => {
             try {
+                // Check if user is still a member before marking as read
+                const isMember = activeGroup?.members.some(m => m.user_id === (currentUser.id || currentUser.user_id));
+                if (!isMember) return;
+
                 // Only mark read if there are messages
                 if (displayMessages.length > 0) {
                     const { markGroupAsRead } = await import("../../../services/api/group-chat");
