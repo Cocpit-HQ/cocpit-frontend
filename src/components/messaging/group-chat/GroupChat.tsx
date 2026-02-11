@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useGroupChat } from "./groupChat.context";
 import GroupHeader from "./GroupHeader";
 import GroupMessageList from "./GroupMessageList";
-import GroupMessageInput from "./GroupMessageInput";
+import UnifiedMessageInput from "../ui/UnifiedMessageInput";
 import GroupDetails from "./GroupDetails";
 import AddMemberModal from "./AddMemberModal";
 import { Loader2 } from "lucide-react";
@@ -17,7 +17,9 @@ import { TypingPayload } from "../../../types/socket";
 import { useRef } from "react";
 import MessageInfoModal from "../MessageInfoModal";
 import { DeleteMessageModal } from "../ui/DeleteMessageModal";
+import MediaPreviewModal from "../ui/MediaPreviewModal";
 import { useToast } from "@/hooks/use-toast";
+import ChatSkeleton from "../ui/ChatSkeleton";
 
 interface GroupChatProps {
     groupId: string;
@@ -37,34 +39,40 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
     const [isMessageInfoOpen, setIsMessageInfoOpen] = useState(false);
     const [messageToDelete, setMessageToDelete] = useState<Message | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [previewMedia, setPreviewMedia] = useState<{ url: string, type: 'image' | 'video' | 'document', name?: string } | null>(null);
 
-    const handleMessageAction = (action: string) => {
-        if (!selectedMessage) return;
+    const handleMediaClick = (url: string, type: 'image' | 'video' | 'document', name?: string) => {
+        setPreviewMedia({ url, type, name });
+    };
+
+    const handleMessageAction = React.useCallback((action: string, msg?: Message) => {
+        const targetMsg = msg || selectedMessage;
+        if (!targetMsg) return;
 
         if (action === 'info') {
             setIsMessageInfoOpen(true);
         } else if (action === 'copy') {
-            navigator.clipboard.writeText(selectedMessage.text || selectedMessage.text_content || "");
+            navigator.clipboard.writeText(targetMsg.text || targetMsg.text_content || "");
             setSelectedMessage(null);
         } else if (action === 'edit') {
-            setEditingMessageId(selectedMessage.id);
+            setEditingMessageId(targetMsg.id);
             setSelectedMessage(null);
         } else if (action === 'delete') {
-            setMessageToDelete(selectedMessage);
+            setMessageToDelete(targetMsg);
             setIsDeleteModalOpen(true);
             setSelectedMessage(null);
         } else if (action === 'close') {
             setSelectedMessage(null);
         }
-    };
+    }, [selectedMessage]);
 
-    const handleMessageClick = (message: Message) => {
+    const handleMessageClick = React.useCallback((message: Message) => {
         if (selectedMessage?.id === message.id) {
             setSelectedMessage(null); // Toggle off
         } else {
             setSelectedMessage(message);
         }
-    };
+    }, [selectedMessage]);
 
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
 
@@ -221,7 +229,16 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                 if (!old) return undefined;
                 return {
                     ...old,
-                    pages: old.pages.map(page => page.filter(m => m.id !== payload.messageId))
+                    pages: old.pages.map(page => page.map(m => {
+                        if (m.id === payload.messageId) {
+                            return {
+                                ...m,
+                                text: "This message is deleted for you",
+                                is_deleted_for_me: true
+                            };
+                        }
+                        return m;
+                    }))
                 };
             });
             // Also update conversation list logic here if needed, but invalidation is safer
@@ -237,7 +254,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                     ...old,
                     pages: old.pages.map(page => page.map(m => {
                         if (m.id === payload.messageId) {
-                            return { ...m, text: "This message was deleted", is_deleted_for_everyone: true };
+                            return { ...m, text: "This message deleted for everyone", is_deleted_for_everyone: true };
                         }
                         return m;
                     }))
@@ -260,30 +277,36 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
             socket.off('message_deleted_for_everyone', handleMessageDeletedForEveryone);
             setActiveConversationId(null);
         };
-    }, [socket, groupId, queryClient, currentUser, setActiveConversationId]);
+    }, [socket, groupId, queryClient, currentUser.id, currentUser.user_id, setActiveConversationId]);
 
     const sendMessageMutation = useMutation({
-        mutationFn: async (text: string) => {
-            return await sendGroupMessage(groupId, text);
+        mutationFn: async ({ text, files }: { text: string, files: File[] }) => {
+            return await sendGroupMessage(groupId, text, 'text', files);
         },
-        onMutate: async (text: string) => {
+        onMutate: async ({ text, files }) => {
             // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
             await queryClient.cancelQueries({ queryKey: ['messages', groupId] });
 
             // Snapshot the previous value
             const previousMessages = queryClient.getQueryData<InfiniteData<Message[]>>(['messages', groupId]);
 
-            // Optimistically update to the new value
+            // Optimistic update to the new value
+            const tempMedia = files.map(file => ({
+                url: URL.createObjectURL(file),
+                type: file.type.startsWith('video/') ? 'video' : (file.type === 'application/pdf' ? 'document' : 'image') as 'image' | 'video' | 'document'
+            }));
+
             const optimisticMessage: Message = {
                 id: `temp-${Date.now()}`,
                 senderId: currentUser.id || currentUser.user_id,
                 sender: 'me',
                 senderName: activeGroup?.members.find(m => m.user_id === (currentUser.id || currentUser.user_id))?.full_name || "Me",
                 text: text,
-                time: new Date().toISOString(),
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 created_at: new Date().toISOString(),
                 type: 'text',
                 read_at: null,
+                media: tempMedia
             };
 
             queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
@@ -302,8 +325,8 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                     if (c.conversation_id === groupId || c.id === groupId) {
                         return {
                             ...c,
-                            last_message_text: text,
-                            lastMessage: text,
+                            last_message_text: text || "Sent an attachment",
+                            lastMessage: text || "Sent an attachment",
                             lastMessageAt: now,    // CRITICAL: Update timestamp for sorting
                             time: now,         // Update time for display
                             unread_count: 0
@@ -319,14 +342,14 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
             // Return a context object with the snapshotted value
             return { previousMessages, tempId: optimisticMessage.id };
         },
-        onError: (err: unknown, newTodo: string, context: { previousMessages: InfiniteData<Message[]> | undefined; tempId: string } | undefined) => {
+        onError: (err: unknown, newTodo, context: { previousMessages: InfiniteData<Message[]> | undefined; tempId: string } | undefined) => {
             queryClient.setQueryData(['messages', groupId], context?.previousMessages);
             // Revert conversations list if needed? It's tricky without previous state snapshot of conversations.
             // For now, just invalidate on error.
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
             console.error("Failed to send", err);
         },
-        onSuccess: (data: any, variables: string, context: { previousMessages: InfiniteData<Message[]> | undefined; tempId: string } | undefined) => {
+        onSuccess: (data: any, variables, context: { previousMessages: InfiniteData<Message[]> | undefined; tempId: string } | undefined) => {
             // Clear typing indicator immediately on send
             setTypingMap(new Map());
 
@@ -339,46 +362,49 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
     const displayMessages = messages.length > 0 ? messages : fetchedMessages;
 
     // Mark as read when opening conversation or when new messages arrive
+    // Mark as read when opening conversation or when new messages arrive
     useEffect(() => {
         if (!groupId) return;
 
-        const markRead = async () => {
+        const timer = setTimeout(async () => {
             try {
-                const { markGroupAsRead } = await import("../../../services/api/group-chat");
-                await markGroupAsRead(groupId);
+                // Only mark read if there are messages
+                if (displayMessages.length > 0) {
+                    const { markGroupAsRead } = await import("../../../services/api/group-chat");
+                    await markGroupAsRead(groupId);
 
-                // Optimistically update conversation unread count
-                queryClient.setQueryData(['conversations'], (oldData: any[]) => {
-                    if (!oldData) return oldData;
-                    return oldData.map(c => {
-                        if (c.conversation_id === groupId) {
-                            return { ...c, unread_count: 0 };
-                        }
-                        return c;
+                    // Optimistically update conversation unread count
+                    queryClient.setQueryData(['conversations'], (oldData: any[]) => {
+                        if (!oldData) return oldData;
+                        return oldData.map(c => {
+                            if (c.conversation_id === groupId) {
+                                return { ...c, unread_count: 0 };
+                            }
+                            return c;
+                        });
                     });
-                });
 
-                // Invalidate to be sure
-                queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                    queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                }
 
             } catch (error) {
                 console.error("Failed to mark as read", error);
             }
-        };
+        }, 1000); // Debounce for 1 second
 
-        markRead();
+        return () => clearTimeout(timer);
 
     }, [groupId, displayMessages.length, queryClient]); // Trigger when messages change too
 
-    const handleSendMessage = (text: string) => {
+    const handleSendMessage = React.useCallback((text: string, files: File[]) => {
         // Stop typing immediately when sending
         if (socket) {
             socket.emit('stopGroupTyping', { groupId: groupId });
         }
-        sendMessageMutation.mutate(text);
-    };
+        sendMessageMutation.mutate({ text, files });
+    }, [socket, groupId, sendMessageMutation]);
 
-    const handleTypingInput = () => {
+    const handleTypingInput = React.useCallback(() => {
         if (!socket) return;
 
         const now = Date.now();
@@ -392,7 +418,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
         typingTimeoutRef.current = setTimeout(() => {
             socket.emit('stopGroupTyping', { groupId: groupId });
         }, 3000);
-    }
+    }, [socket, groupId]);
 
     // Derived typing string for display
     let typingStatus: string | null = null;
@@ -404,7 +430,20 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
     }
 
     if (isLoading && !fetchedMessages.length) {
-        return <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-muted-foreground" /></div>;
+        return (
+            <div className="flex flex-col h-full bg-background relative">
+                <GroupHeader
+                    onOpenDetails={() => setIsDetailsOpen(true)}
+                    onAddMember={() => setIsAddMemberOpen(true)}
+                    onBack={onBack}
+                    typingStatus={typingStatus}
+                    selectedMessage={selectedMessage}
+                    onMessageAction={handleMessageAction}
+                    currentUserId={currentUser.id || currentUser.user_id || ""}
+                />
+                <ChatSkeleton />
+            </div>
+        );
     }
 
     if (!activeGroup) {
@@ -437,14 +476,17 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                     editingMessageId={editingMessageId}
                     onSaveEdit={handleSaveEdit}
                     onCancelEdit={() => setEditingMessageId(null)}
+                    onAction={handleMessageAction}
+                    onMediaClick={handleMediaClick}
                 />
             </div>
 
             {activeGroup?.members.some(m => m.user_id === (currentUser.id || currentUser.user_id)) ? (
-                <GroupMessageInput
+                <UnifiedMessageInput
                     onSendMessage={handleSendMessage}
                     onTyping={handleTypingInput}
                     isLoading={isLoading || isMessagesLoading}
+                    placeholder="Type a message to group..."
                 />
             ) : (
                 <div className="p-4 border-t border-border bg-card/50 backdrop-blur-sm text-center text-muted-foreground text-sm">
@@ -491,7 +533,16 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                             if (!old) return undefined;
                             return {
                                 ...old,
-                                pages: old.pages.map(page => page.filter(m => m.id !== msgId))
+                                pages: old.pages.map(page => page.map(m => {
+                                    if (m.id === msgId) {
+                                        return {
+                                            ...m,
+                                            text: "This message is deleted for you",
+                                            is_deleted_for_me: true
+                                        };
+                                    }
+                                    return m;
+                                }))
                             };
                         });
 
@@ -516,7 +567,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                                 ...old,
                                 pages: old.pages.map(page => page.map(m => {
                                     if (m.id === msgId) {
-                                        return { ...m, text: "This message was deleted", is_deleted_for_everyone: true };
+                                        return { ...m, text: "This message was deleted for everyone", is_deleted_for_everyone: true };
                                     }
                                     return m;
                                 }))
@@ -534,6 +585,16 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                         }
                     }}
                     isSender={!!(messageToDelete && (messageToDelete.sender === 'me' || (messageToDelete.senderId && String(messageToDelete.senderId) === String(currentUser.id || currentUser.user_id))))}
+                />
+            )}
+
+            {previewMedia && (
+                <MediaPreviewModal
+                    isOpen={!!previewMedia}
+                    onClose={() => setPreviewMedia(null)}
+                    mediaUrl={previewMedia.url}
+                    mediaType={previewMedia.type}
+                    fileName={previewMedia.name || "media"}
                 />
             )}
         </div>

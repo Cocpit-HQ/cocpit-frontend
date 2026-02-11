@@ -868,7 +868,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div
           className={`relative w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col ${isMobile
-            ? 'rounded-2xl bg-white/80 backdrop-blur-lg border border-white/30 shadow-2xl overflow-hidden'
+            ? 'rounded-2xl bg-zinc-900/95 backdrop-blur-lg border border-white/10 shadow-2xl overflow-hidden'
             : 'rounded-lg bg-card shadow-2xl overflow-visible'
             }`}
         >

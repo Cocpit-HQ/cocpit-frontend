@@ -30,6 +30,7 @@ export interface BackendMessage {
   target_id?: string;
   is_blocked?: boolean; // Blocked status from backend
   is_deleted_for_everyone?: boolean; // Deleted status from backend
+  is_deleted_for_me?: boolean;
   shared_post?: {
     post_id: string;
     content: string;
@@ -39,6 +40,7 @@ export interface BackendMessage {
     };
     media: { url: string; media_type: string }[];
   } | null;
+  media?: { url: string; media_type: string }[];
 }
 
 // Frontend entity types
@@ -89,4 +91,7 @@ export interface Message {
   } | null;
   is_deleted?: boolean;
   is_deleted_for_everyone?: boolean;
+  is_deleted_for_me?: boolean;
+  status?: 'sending' | 'sent' | 'delivered' | 'read';
+  media?: { url: string; type: 'image' | 'video' | 'document' }[];
 }

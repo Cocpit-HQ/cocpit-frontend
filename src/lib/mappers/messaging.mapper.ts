@@ -66,5 +66,8 @@ export const mapBackendMessageToMessage = (backendMessage: BackendMessage, curre
     isBlocked: backendMessage.is_blocked || false,
     read_at: backendMessage.read_at,
     is_deleted_for_everyone: backendMessage.is_deleted_for_everyone || false,
+    is_deleted_for_me: backendMessage.is_deleted_for_me || false,
+    status: backendMessage.read_at ? 'read' : 'sent',
+    media: backendMessage.media?.map(m => ({ url: m.url, type: m.media_type as 'image' | 'video' | 'document' })),
   };
 };

@@ -5,7 +5,7 @@ import { MoreHorizontal, Phone, Video } from "lucide-react"
 import { ChatThread, Message } from "@/types/messaging"
 import { avatarGradients } from "@/constants/messaging"
 import MessageList from "./MessageList"
-import ChatInput from "./ChatInput"
+import UnifiedMessageInput from "./UnifiedMessageInput"
 import MobileChatHeader from "./MobileChatHeader"
 import { useSocket } from "@/context/SocketContext"
 import { useSession } from "next-auth/react"
@@ -28,6 +28,8 @@ import {
 import { DeleteMessageModal } from "./DeleteMessageModal"
 import { deleteMessage } from "@/services/api/messaging"
 import { Trash2 } from "lucide-react"
+import MediaPreviewModal from "./MediaPreviewModal"
+import ChatSkeleton from "./ChatSkeleton"
 
 interface ChatWindowProps {
   chat: ChatThread
@@ -285,8 +287,20 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
         if (!old) return undefined;
 
         if (payload.deleteType === 'me') {
-          // Remove the message
-          const newPages = old.pages.map(page => page.filter(m => m.id !== payload.messageId));
+          // Update the message content for "Delete for me"
+          const newPages = old.pages.map(page => page.map(m => {
+            if (m.id === payload.messageId) {
+              return {
+                ...m,
+                text: "This message is deleted for you",
+                text_content: "This message is deleted for you",
+                sharedPost: null,
+                is_deleted: true,
+                is_deleted_for_me: true
+              };
+            }
+            return m;
+          }));
           return { ...old, pages: newPages };
         } else {
           // Update the message content
@@ -294,8 +308,8 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
             if (m.id === payload.messageId) {
               return {
                 ...m,
-                text: "🚫 This message was deleted",
-                text_content: "🚫 This message was deleted",
+                text: "This message deleted for everyone",
+                text_content: "This message deleted for everyone",
                 sharedPost: null,
                 is_deleted: true,
                 is_deleted_for_everyone: true
@@ -324,19 +338,24 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
   }, [socket, chat.id, chat.isGroup, session?.user?.id, queryClient]); // Depend only on chat.id, not the full chat object
 
   const sendMessageMutation = useMutation({
-    mutationFn: async (text: string) => {
+    mutationFn: async ({ text, files }: { text: string, files: File[] }) => {
       if (chat.isGroup) {
-        return sendGroupMessage(chat.id, text);
+        return sendGroupMessage(chat.id, text, 'text', files);
       }
 
       if (!chat.otherUserId) throw new Error("Target user ID missing");
-      return sendMessage(chat.otherUserId, text);
+      return sendMessage(chat.otherUserId, text, undefined, files);
     },
-    onMutate: async (text) => {
+    onMutate: async ({ text, files }) => {
       await queryClient.cancelQueries({ queryKey: ['messages', chat.id] });
       const previousMessages = queryClient.getQueryData(['messages', chat.id]);
 
       // Optimistic update
+      const tempMedia = files.map(file => ({
+        url: URL.createObjectURL(file),
+        type: file.type.startsWith('video/') ? 'video' : (file.type === 'application/pdf' ? 'document' : 'image') as 'image' | 'video' | 'document'
+      }));
+
       const newMessage: Message = {
         id: 'temp-' + Date.now(),
         sender: "me",
@@ -347,6 +366,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
         created_at: new Date().toISOString(),
         type: 'text',
         read_at: null,
+        media: tempMedia
       };
 
       queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
@@ -375,7 +395,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
       queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
         if (!old) return old;
 
-        const realMessage = mapBackendMessageToMessage(data.data, session?.user?.id);
+        const realMessage = mapBackendMessageToMessage(data.data || data, session?.user?.id);
 
         // Find and replace in the first page
         const newPages = [...old.pages];
@@ -387,7 +407,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
     },
   });
 
-  const handleSendMessage = (text: string) => {
+  const handleSendMessage = React.useCallback((text: string, files: File[]) => {
     // Basic validation
     if ((!chat.otherUserId && !chat.isGroup) || isBlockedByMe || isBlockedByOther) {
       return;
@@ -402,10 +422,10 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
       }
     }
 
-    sendMessageMutation.mutate(text);
-  }
+    sendMessageMutation.mutate({ text, files });
+  }, [chat.otherUserId, chat.isGroup, chat.id, isBlockedByMe, isBlockedByOther, socket, sendMessageMutation]);
 
-  const handleTypingInput = () => {
+  const handleTypingInput = React.useCallback(() => {
     if (!socket || !chat) return;
 
     const now = Date.now();
@@ -427,7 +447,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
         socket.emit('stopTyping', { conversationId: chat.id.toString() });
       }
     }, 3000);
-  }
+  }, [socket, chat.id, chat.isGroup]);
 
   // Derived typing string for display
   let typingDisplayString: string | null = null;
@@ -452,12 +472,34 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
 
   const handleDeleteForMe = async () => {
     if (!messageToDelete) return;
+    const msgId = messageToDelete.id;
     try {
-      await deleteMessage(messageToDelete.id, false);
-      // Optimistic update handled by socket or query invalidation
-      // For immediate feeling, we could update cache, but socket "message_deleted" for "me" should arrive fast.
+      // Optimistic/Immediate update since backend won't emit event for "me"
+      queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
+        if (!old) return undefined;
+        const newPages = old.pages.map(page => page.map(m => {
+          if (m.id === msgId) {
+            return {
+              ...m,
+              text: "This message deleted for you",
+              text_content: "This message deleted for you",
+              sharedPost: null,
+              is_deleted: true,
+              is_deleted_for_me: true
+            };
+          }
+          return m;
+        }));
+        return { ...old, pages: newPages };
+      });
+
+      await deleteMessage(msgId, false);
+      setIsDeleteModalOpen(false);
+      setMessageToDelete(null);
     } catch (error) {
       console.error("Failed to delete message", error);
+      // Revert or invalidate on error
+      queryClient.invalidateQueries({ queryKey: ['messages', chat.id] });
     }
   };
 
@@ -562,6 +604,12 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
     editMessageMutation.mutate({ messageId, text });
   };
 
+  const [previewMedia, setPreviewMedia] = useState<{ url: string, type: 'image' | 'video' | 'document', name?: string } | null>(null);
+
+  const handleMediaClick = (url: string, type: 'image' | 'video' | 'document', name?: string) => {
+    setPreviewMedia({ url, type, name });
+  };
+
   return (
     <div className={`flex flex-col h-full ${isMobile ? "h-dvh bg-background" : ""}`}>
       {isMobile ? (
@@ -616,7 +664,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
       )}
 
       {isLoading ? (
-        <div className="flex-1 flex items-center justify-center text-muted-foreground">Loading messages...</div>
+        <ChatSkeleton />
       ) : (
         <MessageList
           messages={messages}
@@ -629,6 +677,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
           onCancelEdit={() => setEditingMessageId(null)}
           selectedMessageId={selectedMessage?.id}
           onMessageClick={handleMessageClick}
+          onMediaClick={handleMediaClick}
         />
       )}
 
@@ -649,11 +698,12 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
           </button>
         </div>
       ) : (
-        <ChatInput
+        <UnifiedMessageInput
           onSendMessage={handleSendMessage}
           onTyping={handleTypingInput}
           disabled={(!chat.otherUserId && !chat.isGroup) || !!isBlockedByOther}
           disabledMessage={isBlockedByOther ? "User not found" : undefined}
+          placeholder="Type a message..."
         />
       )}
 
@@ -672,6 +722,16 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
           onDeleteForMe={handleDeleteForMe}
           onDeleteForEveryone={handleDeleteForEveryone}
           isSender={messageToDelete.sender === 'me' || messageToDelete.senderId === (session?.user?.id)}
+        />
+      )}
+
+      {previewMedia && (
+        <MediaPreviewModal
+          isOpen={!!previewMedia}
+          onClose={() => setPreviewMedia(null)}
+          mediaUrl={previewMedia.url}
+          mediaType={previewMedia.type}
+          fileName={previewMedia.name || "media"}
         />
       )}
     </div>

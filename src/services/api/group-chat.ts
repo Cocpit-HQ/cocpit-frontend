@@ -36,9 +36,24 @@ export const deleteGroup = async (groupId: string) => {
     return response.data;
 };
 
-export const sendMessage = async (groupId: string, content: string, type: 'text' | 'image' | 'system' = 'text') => {
-    const response = await api.post(`/groups/${groupId}/messages`, { content, type });
-    return response.data;
+export const sendMessage = async (groupId: string, content: string, type: 'text' | 'image' | 'system' = 'text', files?: File[]) => {
+    if (files && files.length > 0) {
+        const formData = new FormData();
+        formData.append("content", content || "");
+        formData.append("type", type);
+
+        files.forEach((file) => {
+            formData.append("images", file);
+        });
+
+        const response = await api.post(`/groups/${groupId}/messages`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+        return response.data;
+    } else {
+        const response = await api.post(`/groups/${groupId}/messages`, { content, type });
+        return response.data;
+    }
 };
 export const getGroupInvitations = async (groupId: string) => {
     const response = await api.get(`/groups/${groupId}/invitations`);

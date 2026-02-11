@@ -30,18 +30,17 @@ export function DeleteMessageModal({
 }: DeleteMessageModalProps) {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
-            <AlertDialogContent className="max-w-xs sm:max-w-sm rounded-xl">
+            <AlertDialogContent className="max-w-xs sm:max-w-sm rounded-xl bg-[#0f1117] border-white/10 text-white">
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Message?</AlertDialogTitle>
-                    <AlertDialogDescription>
+                    <AlertDialogTitle className="text-white">Delete Message?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-gray-400">
                         Choose how you want to delete this message.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="flex flex-col gap-2 py-2">
                     {isSender && (
                         <Button
-                            variant="destructive"
-                            className="w-full justify-start pl-4"
+                            className="w-full justify-start pl-4 bg-blue-600 hover:bg-blue-700 text-white border-none"
                             onClick={() => {
                                 onDeleteForEveryone?.()
                                 onOpenChange(false)
@@ -53,7 +52,7 @@ export function DeleteMessageModal({
                     )}
                     <Button
                         variant="outline"
-                        className="w-full justify-start pl-4 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
+                        className="w-full justify-start pl-4 border-blue-500/30 text-white hover:bg-blue-500/10 hover:text-white"
                         onClick={() => {
                             onDeleteForMe()
                             onOpenChange(false)
@@ -64,7 +63,10 @@ export function DeleteMessageModal({
                     </Button>
                 </div>
                 <AlertDialogFooter className="sm:justify-center">
-                    <AlertDialogCancel onClick={() => onOpenChange(false)} className="w-full mt-0">
+                    <AlertDialogCancel
+                        onClick={() => onOpenChange(false)}
+                        className="w-full mt-0 bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white"
+                    >
                         Cancel
                     </AlertDialogCancel>
                 </AlertDialogFooter>
