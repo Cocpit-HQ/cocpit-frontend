@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import { Ban } from "lucide-react";
 
 import SuggestionsPanel from "@/components/SuggestionsPanel";
-import PostCard from "./PostCard";
+import PostCard from "@/components/shared/PostCard";
 import FeedPost from "@/components/home/FeedPost";
 import { ViewAvatarModal } from "@/components/profile/ViewAvatarModal";
 import { SkillOverlap } from "@/components/profile/SkillOverlap";

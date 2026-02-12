@@ -18,6 +18,7 @@ import {
   Ban,
   Trash2,
   Building,
+  Bookmark,
 } from "lucide-react"
 
 import BlockedUsersPage from "@/app/(dashboard)/settings/blocked/page"
@@ -26,6 +27,7 @@ import { deleteAccount } from "@/services/api/user"
 import { toast } from "sonner"
 
 
+import { SavedPosts } from "./SavedPosts"
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import { AppShell } from "@/components/layout/AppShell"
 import { Button } from "@/components/ui/button"
@@ -41,7 +43,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { useIsMobile } from "@/hooks/use-mobile"
 import type { Page, Theme } from "@/types/common"
 
-type SettingsSection = "appearance" | "notifications" | "privacy" | "account" | "blocked" | "sessions" | "companies"
+type SettingsSection = "appearance" | "notifications" | "privacy" | "account" | "blocked" | "sessions" | "companies" | "saved"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -368,6 +370,13 @@ export default function SettingsPage() {
                   onClick={() => handleSectionClick("appearance")}
                 />
                 <SettingsNavCard
+                  icon={<Bookmark className="w-5 h-5" />}
+                  title="Saved Posts"
+                  description="View and manage your saved content"
+                  isActive={activeSection === "saved"}
+                  onClick={() => handleSectionClick("saved")}
+                />
+                <SettingsNavCard
                   icon={<Bell className="w-5 h-5" />}
                   title="Notifications"
                   description="Manage notification preferences"
@@ -415,6 +424,11 @@ export default function SettingsPage() {
 
           {showContent && (
             <div className="lg:col-span-6 animate-in fade-in slide-in-from-right-4 duration-300">
+              {activeSection === "saved" && (
+                <div className="space-y-6">
+                  <SavedPosts />
+                </div>
+              )}
               {activeSection === "appearance" && (
                 <div className="space-y-6">
                   <div>
