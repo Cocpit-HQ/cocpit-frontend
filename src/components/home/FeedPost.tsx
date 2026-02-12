@@ -5,6 +5,7 @@ import { PollAnalyticsModal } from './PollAnalyticsModal';
 import { ThumbsUp, MessageCircle, Share2, MoreHorizontal, EyeOff, Trash2, Edit2, Eye, BarChart2, ArrowUpRight, Link2, Bookmark, UserMinus, Flag, Info, Star } from 'lucide-react'
 import Image from "next/image"
 import dayjs from 'dayjs'
+import DOMPurify from 'dompurify'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
 // Extend dayjs with relativeTime plugin
@@ -20,6 +21,7 @@ import { SharePostModal } from './SharePostModal'
 import { PollCard } from './PollCard'
 import { CreatePostModal } from './CreatePostModal'
 import { updatePost, toggleLike, voteInPoll, removeVote, addComment, deleteComment, getComments, deletePost } from '@/services/api/posts'
+import { SaveButton } from './SaveButton'
 import { useFeed } from '@/context/FeedContext'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
@@ -46,6 +48,9 @@ interface FeedPostProps extends Omit<Post, 'commentData'> {
   priority?: boolean;
   authorSlug?: string;
   isCompanyPost?: boolean;
+  is_saved?: boolean;
+  onSaveChange?: (isSaved: boolean) => void;
+  isFullContent?: boolean;
 }
 
 export default function FeedPost({
@@ -77,7 +82,10 @@ export default function FeedPost({
   priority = false,
   category,
   authorSlug,
-  isCompanyPost
+  isCompanyPost,
+  is_saved,
+  onSaveChange,
+  isFullContent = false
 }: FeedPostProps) {
   const [isLiked, setIsLiked] = useState(initialIsLiked)
   const [likeCount, setLikeCount] = useState(typeof likes === 'string' ? parseInt(likes) : likes)
@@ -676,10 +684,10 @@ export default function FeedPost({
         {content && (
           <div className="px-4 md:px-6 mb-4">
             <div
-              className={`leading-relaxed text-sm md:text-base text-foreground whitespace-pre-wrap ${!isExpanded ? 'line-clamp-2' : ''}`}
-              dangerouslySetInnerHTML={{ __html: content }}
+              className={`leading-relaxed text-sm md:text-base text-foreground whitespace-pre-wrap ${!isFullContent && !isExpanded ? 'line-clamp-6' : ''}`}
+              dangerouslySetInnerHTML={{ __html: typeof window !== 'undefined' ? DOMPurify.sanitize(content) : content }}
             />
-            {(content.length > 100 || content.split('\n').length > 2) && (
+            {!isFullContent && (content.length > 300 || content.split('\n').length > 4) && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -922,14 +930,10 @@ export default function FeedPost({
             )}
           </button>
 
-          <button
-            onClick={() => {
-              console.log("Saving post", id);
-            }}
-            className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center py-2 rounded-lg hover:bg-muted/50 text-xs md:text-sm"
-          >
-            <Bookmark className="w-4 h-4 md:w-5 md:h-5" />
-          </button>
+          <SaveButton
+            postId={id.toString()}
+            initialIsSaved={is_saved}
+          />
         </div>
       </div>
 
