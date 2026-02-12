@@ -57,7 +57,7 @@ export default function ShowcaseContent() {
   const [loading, setLoading] = useState(true)
   const [groups, setGroups] = useState<StoryGroup[]>([])
   const [selectedStory, setSelectedStory] = useState<StoryDetail | null>(null)
-  const [mobileSelectedGroupId, setMobileSelectedGroupId] = useState<number | null>(null)
+  const [mobileSelectedGroupId, setMobileSelectedGroupId] = useState<string | number | null>(null)
   const [showCreateStory, setShowCreateStory] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 

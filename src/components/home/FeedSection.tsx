@@ -16,7 +16,7 @@ interface FeedSectionProps {
     groups: StoryGroup[];
     storyLoading: boolean;
     setShowCreateStory: (show: boolean) => void;
-    setMobileSelectedGroupId: (id: number) => void;
+    setMobileSelectedGroupId: (id: string | number) => void;
     activeTab: string;
     setActiveTab: (tab: string) => void;
 }

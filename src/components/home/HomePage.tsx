@@ -20,7 +20,7 @@ export default function HomePage() {
   const [groups, setGroups] = useState<StoryGroup[]>([])
   const [showCreateStory, setShowCreateStory] = useState(false)
   const [selectedStory, setSelectedStory] = useState<StoryDetail | null>(null)
-  const [mobileSelectedGroupId, setMobileSelectedGroupId] = useState<number | null>(null)
+  const [mobileSelectedGroupId, setMobileSelectedGroupId] = useState<string | number | null>(null)
 
   const { activeProfile } = useActiveProfile();
 

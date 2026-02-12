@@ -6,7 +6,7 @@ import { UserStorySlide } from "./UserStorySlide"
 
 type MobileStoryViewerProps = {
     groups: StoryGroup[]
-    initialGroupId: number
+    initialGroupId: string | number
     onClose: () => void
     isDark?: boolean
     onStoryUpdate?: (story: StoryDetail) => void

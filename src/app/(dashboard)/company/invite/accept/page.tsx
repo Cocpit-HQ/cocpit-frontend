@@ -7,7 +7,9 @@ import { useEffect, useState } from 'react';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import api from '@/lib/axios';
 
-export default function AcceptInvitePage() {
+import { Suspense } from 'react';
+
+function InviteContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const token = searchParams.get('token');
@@ -85,5 +87,17 @@ export default function AcceptInvitePage() {
                 </CardFooter>
             </Card>
         </div>
+    );
+}
+
+export default function AcceptInvitePage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        }>
+            <InviteContent />
+        </Suspense>
     );
 }

@@ -152,7 +152,7 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory }: Sto
                             {loading && <p className="text-center text-sm py-4">Loading views...</p>}
                             {!loading && currentViewers.map((viewer: StoryAuthor, idx: number) => (
                                 <div key={idx} className="flex items-center gap-3">
-                                    <img src={viewer.avatar} alt={viewer.name} className="w-10 h-10 rounded-full object-cover" />
+                                    <img src={viewer.avatar || '/assets/pngegg.png'} alt={viewer.name} className="w-10 h-10 rounded-full object-cover" />
                                     <span className="font-medium">{viewer.name}</span>
                                 </div>
                             ))}
@@ -167,7 +167,7 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory }: Sto
                             {loading && <p className="text-center text-sm py-4">Loading likes...</p>}
                             {!loading && currentLikers.map((liker: StoryAuthor, idx: number) => (
                                 <div key={idx} className="flex items-center gap-3">
-                                    <img src={liker.avatar} alt={liker.name} className="w-10 h-10 rounded-full object-cover" />
+                                    <img src={liker.avatar || '/assets/pngegg.png'} alt={liker.name} className="w-10 h-10 rounded-full object-cover" />
                                     <div className="flex-1">
                                         <span className="font-medium">{liker.name}</span>
                                     </div>
