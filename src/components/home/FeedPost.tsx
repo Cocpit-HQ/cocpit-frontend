@@ -24,6 +24,7 @@ import { useFeed } from '@/context/FeedContext'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useActiveProfile } from '@/context/ActiveProfileContext'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,6 +44,8 @@ interface FeedPostProps extends Omit<Post, 'commentData'> {
   isLiked?: boolean; // Add isLiked to props
   isProfileView?: boolean;
   priority?: boolean;
+  authorSlug?: string;
+  isCompanyPost?: boolean;
 }
 
 export default function FeedPost({
@@ -72,7 +75,9 @@ export default function FeedPost({
   isProfileView = false,
   shared_post,
   priority = false,
-  category
+  category,
+  authorSlug,
+  isCompanyPost
 }: FeedPostProps) {
   const [isLiked, setIsLiked] = useState(initialIsLiked)
   const [likeCount, setLikeCount] = useState(typeof likes === 'string' ? parseInt(likes) : likes)
@@ -103,6 +108,7 @@ export default function FeedPost({
 
   const { updatePostInFeed } = useFeed();
   const { data: session } = useSession();
+  const { isCompany, activeProfile } = useActiveProfile();
   const isMe = session?.user?.id === authorId || isOwnPost; // Fallback to isOwnPost if needed
 
   // Carousel State
@@ -215,7 +221,8 @@ export default function FeedPost({
   const fetchPostComments = useCallback(async () => {
     // Always fetch to get latest like states - removed commentsLoaded check
     try {
-      const data = await getComments(id);
+      const companyId = isCompany ? activeProfile?.id : undefined;
+      const data = await getComments(id, companyId);
       // Map properties to match CommentType
       // Backend: comment_id, content, created_at, author_id, full_name, avatar_url, headline, like_count, is_liked
       // Frontend: id, text, timeAgo, likes, author { name, avatar }, authorId
@@ -234,7 +241,9 @@ export default function FeedPost({
         author: {
           name: c.full_name || 'User',
           avatar: c.avatar_url || '/assets/pngegg.png',
-          account_name: c.account_name
+          account_name: c.account_name,
+          authorSlug: c.author_slug,
+          isCompanyPost: c.is_company_post
         }
       }));
       setPostComments(mappedComments);
@@ -272,7 +281,8 @@ export default function FeedPost({
     if (onLike) onLike();
 
     try {
-      const result = await toggleLike(id);
+      const companyId = isCompany ? activeProfile?.id : undefined;
+      const result = await toggleLike(id, companyId);
       // Sync with server response to be sure
       setIsLiked(result.liked);
       setLikeCount(result.likeCount);
@@ -310,10 +320,10 @@ export default function FeedPost({
 
     const tempComment: CommentType = {
       id: tempId,
-      authorId: session.user.id.toString(),
+      authorId: isCompany ? (activeProfile?.id || '') : session.user.id.toString(),
       author: {
-        name: session.user.name || 'You',
-        avatar: session.user.image || '/assets/pngegg.png',
+        name: isCompany ? (activeProfile?.name || 'Company') : (session.user.name || 'You'),
+        avatar: isCompany ? (activeProfile?.avatar_url || '/assets/pngegg.png') : (session.user.image || '/assets/pngegg.png'),
       },
       text: commentText,
       timeAgo: 'Just now',
@@ -327,7 +337,8 @@ export default function FeedPost({
     setPostComments([tempComment, ...postComments]);
 
     try {
-      const response = await addComment(id, commentText, replyToId);
+      const companyId = isCompany ? activeProfile?.id : undefined;
+      const response = await addComment(id, commentText, replyToId, companyId);
       const newComment = response.comment;
 
       // Update with real data, including the promoted parent_id
@@ -494,24 +505,30 @@ export default function FeedPost({
       <div className="px-4 md:px-6 pt-4 md:pt-6 pb-2">
         <div className="flex items-start justify-between mb-4">
           <div className="flex gap-3">
-            {isMe ? (
+            {isMe || (!isCompanyPost && !authorId) ? (
               <div className="block flex-shrink-0">
                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden cursor-default">
                   <img src={avatarSrc} alt={author} className="w-full h-full object-cover" />
                 </div>
               </div>
             ) : (
-              <Link href={`/profile/${authorId}`} className="block flex-shrink-0">
+              <Link
+                href={isCompanyPost ? `/company/${authorSlug}` : `/profile/${authorId}`}
+                className="block flex-shrink-0"
+              >
                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
                   <img src={avatarSrc} alt={author} className="w-full h-full object-cover" />
                 </div>
               </Link>
             )}
             <div>
-              {isMe ? (
+              {isMe || (!isCompanyPost && !authorId) ? (
                 <h3 className="text-foreground mb-0.5 text-sm md:text-base font-semibold cursor-default">{author}</h3>
               ) : (
-                <Link href={`/profile/${authorId}`} className="hover:underline block">
+                <Link
+                  href={isCompanyPost ? `/company/${authorSlug}` : `/profile/${authorId}`}
+                  className="hover:underline block"
+                >
                   <h3 className="text-foreground mb-0.5 text-sm md:text-base font-semibold">{author}</h3>
                 </Link>
               )}
@@ -658,9 +675,10 @@ export default function FeedPost({
       <div className="flex-1 flex flex-col justify-center w-full">
         {content && (
           <div className="px-4 md:px-6 mb-4">
-            <p className={`leading-relaxed text-sm md:text-base text-foreground whitespace-pre-wrap ${!isExpanded ? 'line-clamp-2' : ''}`}>
-              {content}
-            </p>
+            <div
+              className={`leading-relaxed text-sm md:text-base text-foreground whitespace-pre-wrap ${!isExpanded ? 'line-clamp-2' : ''}`}
+              dangerouslySetInnerHTML={{ __html: content }}
+            />
             {(content.length > 100 || content.split('\n').length > 2) && (
               <button
                 onClick={(e) => {

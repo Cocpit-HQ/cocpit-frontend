@@ -21,9 +21,10 @@ interface ChatListProps {
   isLoading: boolean;
   error: Error | null;
   onCreateGroup?: () => void;
+  isCompany?: boolean;
 }
 
-export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], isLoading, error, onCreateGroup }: ChatListProps) {
+export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], isLoading, error, onCreateGroup, isCompany = false }: ChatListProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const { socket, isUserOnline } = useSocket();
   const queryClient = useQueryClient();
@@ -82,9 +83,11 @@ export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-bold text-xl text-foreground">Messages</h2>
-          <Button variant="ghost" size="icon" onClick={onCreateGroup}>
-            <Plus className="w-5 h-5" />
-          </Button>
+          {!isCompany && (
+            <Button variant="ghost" size="icon" onClick={onCreateGroup}>
+              <Plus className="w-5 h-5" />
+            </Button>
+          )}
         </div>
 
         <div className="relative mb-3">
@@ -125,7 +128,7 @@ export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats
 
       <div className="flex-1 overflow-y-auto pb-24 md:pb-0 scrollbar-hide">
         {/* Invitations Section */}
-        {invitations.length > 0 && (
+        {!isCompany && invitations.length > 0 && (
           <div className="p-4 bg-muted/30 space-y-2 border-b border-border">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Invitations</h3>
             {invitations.map((inv: any) => (

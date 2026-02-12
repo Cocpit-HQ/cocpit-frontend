@@ -7,6 +7,7 @@ import { NotificationPopover } from '@/components/notifications/NotificationPopo
 import { useDebounce } from '@/hooks/use-debounce';
 import { searchUsers } from '@/services/api/user';
 import { SearchedUser } from '@/types/user';
+import { ProfileSwitcher } from '@/components/layout/ProfileSwitcher';
 
 export const HomeHeader = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -109,14 +110,14 @@ export const HomeHeader = () => {
                                 ) : searchResults.length > 0 ? (
                                     searchResults.map(user => (
                                         <Link
-                                            key={user.id}
-                                            href={`/profile/${user.id}`}
+                                            key={user.type === 'COMPANY' ? user.slug : user.id}
+                                            href={user.type === 'COMPANY' ? `/company/${user.slug}` : `/profile/${user.id}`}
                                             className="flex items-center gap-3 px-4 py-2 hover:bg-muted/50 transition-colors"
                                         >
-                                            <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
+                                            <img src={user.avatar_url || (user.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium text-foreground truncate">{user.full_name}</p>
-                                                <p className="text-xs text-muted-foreground truncate">{user.headline || ''}</p>
+                                                <p className="text-xs text-muted-foreground truncate">{user.headline || (user.type === 'COMPANY' ? 'Company' : '')}</p>
                                             </div>
                                         </Link>
                                     ))
@@ -136,6 +137,9 @@ export const HomeHeader = () => {
                         >
                             <MessageCircle className="w-6 h-6" />
                         </Link>
+                        <div className="ml-1">
+                            <ProfileSwitcher showArrow={true} />
+                        </div>
                     </div>
                 </div>
 
@@ -167,14 +171,14 @@ export const HomeHeader = () => {
                                 ) : searchResults.length > 0 ? (
                                     searchResults.map(user => (
                                         <Link
-                                            key={user.id}
-                                            href={`/profile/${user.id}`}
+                                            key={user.type === 'COMPANY' ? user.slug : user.id}
+                                            href={user.type === 'COMPANY' ? `/company/${user.slug}` : `/profile/${user.id}`}
                                             className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
                                         >
-                                            <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
+                                            <img src={user.avatar_url || (user.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium text-foreground truncate">{user.full_name}</p>
-                                                <p className="text-xs text-muted-foreground truncate">{user.headline || ''}</p>
+                                                <p className="text-xs text-muted-foreground truncate">{user.headline || (user.type === 'COMPANY' ? 'Company' : '')}</p>
                                             </div>
                                         </Link>
                                     ))

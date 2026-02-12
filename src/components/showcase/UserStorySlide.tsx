@@ -6,6 +6,7 @@ import { showcaseService } from "@/services/showcase.service"
 import { SharedPostCard } from "./SharedPostCard"
 import { StoryMetadata } from "@/types/story-editor"
 import { ViewerLayerItem } from "./ViewerLayerItem"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 
 type UserStorySlideProps = {
     group: StoryGroup
@@ -35,6 +36,7 @@ export const UserStorySlide = ({
     const [isMuted, setIsMuted] = useState(true)
     const [likeKey, setLikeKey] = useState(0)
     const [showMenu, setShowMenu] = useState(false)
+    const { activeProfile } = useActiveProfile();
 
     // Use ref to track progress for interval logic (avoids Strict Mode double-invocation bug)
     const progressRef = useRef(0)
@@ -99,7 +101,13 @@ export const UserStorySlide = ({
         setIsLiked(!!currentStory?.isLiked) // Update with current story state
         setLikeKey(0)
         setIsDescriptionExpanded(false)
-    }, [storyIndex, currentStory?.isLiked]) // Only reset when story index changes
+
+        // Record View
+        if (isActiveUser && currentStory && !currentStory.isAuthor) {
+            const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+            showcaseService.viewStory(currentStory.id, companyId).catch(err => console.error("View story failed", err));
+        }
+    }, [storyIndex, currentStory?.isLiked, isActiveUser, activeProfile]) // Only reset when story index changes
 
     // Sync progressRef with progress state
     useEffect(() => {
@@ -608,7 +616,8 @@ export const UserStorySlide = ({
                                             })
                                         }
 
-                                        showcaseService.reactToStory(currentStory.id, newLikedState).catch(err => {
+                                        const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+                                        showcaseService.reactToStory(currentStory.id, newLikedState, companyId).catch(err => {
                                             console.error("Failed to react to story", err)
                                             setIsLiked(!newLikedState) // Revert on error
                                         })

@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from "react"
+import Link from 'next/link'
 import { Eye, MessageCircle, Play, Share2, ThumbsUp, X, Send, Smile, Search, Check, MoreVertical, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
 import { StoryAuthor, StoryDetail } from "@/types/showcase"
 import { showcaseService } from "@/services/showcase.service"
 import { StoryMetadata, StoryLayer } from "@/types/story-editor"
 import { useRouter } from "next/navigation"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 
 type StoryModalProps = {
   story: StoryDetail
@@ -195,16 +197,19 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
   const menuRef = useRef<HTMLDivElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
 
+  const { activeProfile } = useActiveProfile();
+
   // View Story effect & Fetch Details if Author
   useEffect(() => {
-    showcaseService.viewStory(story.id).catch(err => console.error("View story failed", err));
+    const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+    showcaseService.viewStory(story.id, companyId).catch(err => console.error("View story failed", err));
 
     if (story.isAuthor) {
       showcaseService.getStoryDetails(story.id).then(data => {
         setDetails(data);
       }).catch(err => console.error("Failed to fetch details", err));
     }
-  }, [story.id, story.isAuthor]);
+  }, [story.id, story.isAuthor, activeProfile]);
 
   // Fetch comments
   useEffect(() => {
@@ -409,21 +414,24 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
         <div className="w-[400px] flex flex-col bg-card border-l border-border relative">
           {/* Sidebar Header */}
           <div className="p-4 border-b border-border flex items-center justify-between bg-card/50 backdrop-blur-xl">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-secondary overflow-hidden border border-border">
+            <Link
+              href={story.author?.is_company ? `/company/${story.author.id}` : `/profile/${story.author?.id}`}
+              className="flex items-center gap-3 group/author"
+            >
+              <div className="w-10 h-10 rounded-full bg-secondary overflow-hidden border border-border group-hover/author:border-primary transition-colors">
                 {story.author?.avatar ? (
                   <img src={story.author.avatar} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center font-bold text-muted-foreground">
+                  <div className="w-full h-full flex items-center justify-center font-bold text-muted-foreground group-hover/author:text-primary transition-colors">
                     {story.author?.name?.[0]}
                   </div>
                 )}
               </div>
               <div>
-                <div className="font-bold text-sm text-foreground">{story.author?.name}</div>
+                <div className="font-bold text-sm text-foreground group-hover/author:text-primary transition-colors">{story.author?.name}</div>
                 <div className="text-xs text-muted-foreground">{new Date(story.created_at || Date.now()).toLocaleDateString()}</div>
               </div>
-            </div>
+            </Link>
 
             {/* Menu/Close Actions */}
             <div className="flex items-center gap-1">

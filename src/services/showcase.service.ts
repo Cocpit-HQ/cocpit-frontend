@@ -9,24 +9,28 @@ export const showcaseService = {
         return data.map(mapStory);
     },
 
-    createStory: async (storyData: { title: string; description: string; media_url: string; media_type?: string; public_id?: string; media_status?: string; shared_post_id?: string; story_metadata?: any }) => {
-        const { data } = await api.post("/story", storyData);
+    createStory: async (storyData: { title: string; description: string; media_url: string; media_type?: string; public_id?: string; media_status?: string; shared_post_id?: string; story_metadata?: any }, companyId?: string) => {
+        const config = companyId ? { headers: { 'x-company-id': companyId } } : {};
+        const { data } = await api.post("/story", storyData, config);
         return data;
     },
 
-    uploadMedia: async (file: File) => {
+    uploadMedia: async (file: File, companyId?: string) => {
         const formData = new FormData();
         formData.append("file", file);
-        const { data } = await api.post("/upload/story", formData, {
+        const config = {
             headers: {
                 "Content-Type": "multipart/form-data",
+                ...(companyId ? { 'x-company-id': companyId } : {})
             },
-        });
+        };
+        const { data } = await api.post("/upload/story", formData, config);
         return data;
     },
 
-    getGroupedStories: async (): Promise<StoryGroup[]> => {
-        const { data } = await api.get("/stories/grouped");
+    getGroupedStories: async (companyId?: string): Promise<StoryGroup[]> => {
+        const config = companyId ? { headers: { 'x-company-id': companyId } } : {};
+        const { data } = await api.get("/stories/grouped", config);
         // Map backend response to match StoryGroup structure
         return data.map((group: any) => ({
             author: {
@@ -45,12 +49,14 @@ export const showcaseService = {
         return data;
     },
 
-    viewStory: async (id: number) => {
-        await api.post(`/stories/${id}/view`);
+    viewStory: async (id: number, companyId?: string) => {
+        const config = companyId ? { headers: { 'x-company-id': companyId } } : {};
+        await api.post(`/stories/${id}/view`, {}, config);
     },
 
-    reactToStory: async (id: number, reaction: boolean) => {
-        const { data } = await api.post(`/stories/${id}/react`, { reaction });
+    reactToStory: async (id: number, reaction: boolean, companyId?: string) => {
+        const config = companyId ? { headers: { 'x-company-id': companyId } } : {};
+        const { data } = await api.post(`/stories/${id}/react`, { reaction }, config);
         return data;
     },
 

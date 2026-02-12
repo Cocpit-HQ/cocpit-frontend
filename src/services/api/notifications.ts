@@ -1,8 +1,9 @@
 import api from "@/lib/axios";
 import { Notification } from "@/types/social";
 
-export const getNotifications = async (): Promise<Notification[]> => {
-    const response = await api.get("/notifications");
+export const getNotifications = async (companyId?: string): Promise<Notification[]> => {
+    const params = companyId ? { companyId } : {};
+    const response = await api.get("/notifications", { params });
     return response.data;
 };
 

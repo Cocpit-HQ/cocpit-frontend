@@ -43,6 +43,8 @@ export interface Comment {
     name: string;
     avatar: string;
     account_name?: string; // Added for mentions
+    authorSlug?: string;
+    isCompanyPost?: boolean;
   };
   text: string;
   timeAgo: string;
@@ -77,6 +79,8 @@ export interface Post {
   authorId: string;
   author: string;
   authorAvatar?: string;
+  authorSlug?: string;
+  isCompanyPost?: boolean;
   title?: string | null;
   timeAgo: string;
   content: string;

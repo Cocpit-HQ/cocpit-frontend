@@ -159,7 +159,9 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading }: St
                         className="w-full h-full rounded-full object-cover border-2 border-white"
                       />
                     ) : (
-                      <div className="w-full h-full rounded-full bg-gray-500 border-2 border-white" />
+                      <div className="w-full h-full rounded-full bg-gray-500 border-2 border-white flex items-center justify-center text-[10px] font-bold text-white uppercase">
+                        {group.author.name?.[0] || '?'}
+                      </div>
                     )}
                   </div>
                   <span className="text-white text-xs font-medium truncate w-full text-center shadow-black drop-shadow-md">

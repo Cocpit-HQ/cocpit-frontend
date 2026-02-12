@@ -10,6 +10,7 @@ import { StoryEditor } from "./editor/StoryEditor";
 import { StoryMetadata } from "@/types/story-editor";
 import { getGradientImage } from "@/lib/canvasUtils";
 import { EditorCanvas } from "./editor/EditorCanvas";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 type Props = {
   onCancel?: () => void
@@ -71,6 +72,9 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
     onCancel?.()
   }
 
+  const { activeProfile } = useActiveProfile();
+  const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+
   const handleCreate = async () => {
     if ((!selectedImage && !selectedVideo && !sharedPostId) || isSubmitting) return
 
@@ -92,18 +96,13 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
       let mediaData = { url: "", public_id: "", media_type: "image" };
 
       if (fileRef.current) {
-        const uploadRes = await showcaseService.uploadMedia(fileRef.current);
+        const uploadRes = await showcaseService.uploadMedia(fileRef.current, companyId);
         mediaData = {
           url: uploadRes.url,
           public_id: uploadRes.public_id,
           media_type: uploadRes.media_type
         };
       } else if (sharedPostId) {
-        // If no file uploaded but we have a background style, we might want to capture that? 
-        // For now, if no custom image is uploaded, we just send empty media_url (backend renders default black/gradient?)
-        // Or we could send the gradient class as description metadata? 
-        // Simpler: Backend defaults to black. If we want the gradient, we might need to implement "Text Story" support properly later.
-        // For now, let's just let it be.
         mediaData.media_type = 'image';
       }
 
@@ -130,7 +129,7 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
           backgroundStyle: !selectedImage ? backgroundStyle : undefined, // Only send gradient if no image upload
           scale: scale
         } : finalMetadata || undefined
-      });
+      }, companyId);
 
       if (onCreated) {
         onCreated(mapStory(createdStory))

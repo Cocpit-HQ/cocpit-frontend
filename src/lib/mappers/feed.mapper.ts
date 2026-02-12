@@ -144,6 +144,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         comments: (sp.comment_count || 0).toString(),
         shares: "0",
         poll: spPoll,
+        authorSlug: sp.author.author_slug,
+        isCompanyPost: sp.author.is_company_post,
         isAvailable: true
       } as Post & { isAvailable?: boolean };
     }
@@ -170,6 +172,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     category: (backendPost.category_name as any) || undefined,
     visibility: backendPost.visibility,
     poll: poll,
+    authorSlug: backendPost.author_slug,
+    isCompanyPost: backendPost.is_company_post,
     shared_post: sharedPost,
   };
 };

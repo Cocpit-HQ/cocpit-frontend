@@ -9,6 +9,7 @@ import { QuickApplyModal } from "@/components/jobs/QuickApplyModal"
 import { type Job } from "@/types/jobs"
 import { getRecruiterStats } from "@/services/api/jobs"
 import { TaskSubmissionModal } from "./dashboard/TaskSubmissionModal"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 
 
 interface JobDetailViewProps {
@@ -20,6 +21,7 @@ import { useRouter } from "next/navigation"
 export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
   const router = useRouter()
   const { jobs, saveJob } = useJobs()
+  const { isCompany } = useActiveProfile()
 
   // Try to find the job in the live context (which might have updated status)
   // If not found (e.g., direct link, not in feed yet), fallback to initialJob
@@ -159,6 +161,11 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                   <div className="flex-1 flex items-center justify-center gap-2 bg-muted text-muted-foreground rounded-lg py-2.5 font-medium cursor-not-allowed">
                     <CheckCircle className="w-5 h-5" />
                     Application Submitted
+                  </div>
+                ) : isCompany ? (
+                  <div className="flex-1 flex items-center justify-center gap-2 bg-muted text-muted-foreground rounded-lg py-2.5 font-medium cursor-not-allowed">
+                    <Building className="w-5 h-5" />
+                    Switch to Personal Profile to Apply
                   </div>
                 ) : (
                   <button

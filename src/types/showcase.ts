@@ -1,9 +1,10 @@
 import type { LoadingState } from "@/types/common";
 
 export interface StoryAuthor {
-  id?: number;
+  id?: string | number;
   name: string;
-  avatar: string;
+  avatar: string | null;
+  is_company?: boolean;
 }
 
 export interface StoryCard {

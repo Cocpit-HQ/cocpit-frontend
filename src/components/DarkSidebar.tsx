@@ -4,6 +4,8 @@ import React from 'react'
 import { Home, Users, Calendar, User, Settings, Briefcase, BarChart3, Crown } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { ProfileSwitcher } from './layout/ProfileSwitcher'
+import { useActiveProfile } from '@/context/ActiveProfileContext'
 
 interface DarkSidebarProps {
   className?: string
@@ -11,12 +13,13 @@ interface DarkSidebarProps {
 
 export function DarkSidebar({ className }: DarkSidebarProps) {
   const pathname = usePathname()
+  const { activeProfile } = useActiveProfile()
 
   const navItems = [
     { icon: Home, label: 'Feed', subtext: 'Latest updates', href: '/feed' },
     { icon: Users, label: 'Showcase', subtext: 'Professional stories', href: '/showcase' },
     { icon: Calendar, label: 'Events', subtext: 'Network & earn', href: '/events' },
-    { icon: User, label: 'Profile', subtext: 'Your presence', href: '/profile' },
+    { icon: User, label: 'Profile', subtext: 'Your presence', href: activeProfile?.type === 'COMPANY' && activeProfile.slug ? `/company/${activeProfile.slug}` : '/profile' },
     { icon: Settings, label: 'Settings', subtext: 'Preferences', href: '/settings' },
   ];
 
@@ -72,6 +75,15 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
                 </Link>
               )
             })}
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 mb-4">
+        <div className="flex items-center gap-2 p-2 rounded-lg bg-sidebar-accent/50 border border-sidebar-border/50">
+          <ProfileSwitcher showArrow={true} align="start" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-sidebar-foreground truncate">Switch Account</p>
           </div>
         </div>
       </div>

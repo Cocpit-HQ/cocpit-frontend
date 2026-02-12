@@ -16,6 +16,7 @@ import { MentionTextarea } from '@/components/ui/MentionTextarea';
 import { toast } from 'sonner';
 // Import Area type for onCropComplete
 import { Area } from 'react-easy-crop';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 export type PostType = 'text' | 'photo' | 'poll' | 'video' | 'article';
 
@@ -163,6 +164,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
   const isMobile = useIsMobile();
   const { addPost, currentUser } = useFeed();
   const { startUpload } = usePostUpload();
+  const { activeProfile, isCompany } = useActiveProfile();
   const [postType, setPostType] = useState<PostType>(initialPostType);
   const [description, setDescription] = useState('');
   const [photoCaption, setPhotoCaption] = useState('');
@@ -711,6 +713,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
         postType === 'article' ? 'article' :
           postType, // video, poll, text
       // shared_post_id: sharedPostId // handled below
+      companyId: isCompany && activeProfile ? activeProfile.id : undefined
     };
 
     if (sharedPostId) payload.shared_post_id = sharedPostId;

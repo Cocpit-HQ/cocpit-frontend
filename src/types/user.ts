@@ -133,4 +133,6 @@ export interface SearchedUser {
   headline: string | null;
   avatar_url: string | null;
   account_type: string;
+  type?: 'USER' | 'COMPANY';
+  slug?: string;
 }

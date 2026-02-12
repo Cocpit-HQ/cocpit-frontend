@@ -47,6 +47,7 @@ import { EditableExperienceItem } from "@/components/profile/parts/EditableExper
 import { EditableEducationItem } from "@/components/profile/parts/EditableEducationItem"
 import { ContactInfoModal } from "@/components/profile/ContactInfoModal"
 import { FollowListModal } from "@/components/profile/FollowListModal"
+import { ProfileSwitcher } from "@/components/layout/ProfileSwitcher"
 
 // New Hooks
 import { useMyProfile, useExperienceMutations, useEducationMutations, useSkillMutations, useAvatarMutations } from "@/hooks/use-my-profile"

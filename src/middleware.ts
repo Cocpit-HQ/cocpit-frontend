@@ -11,14 +11,14 @@ export default withAuth(
     // Check onboarding status
     // If authenticated (token exists) and onboarding is not complete
     if (token && !token.onboarding_complete && path !== "/onboarding") {
-       console.log("[Middleware] Redirecting to /onboarding");
-       return NextResponse.redirect(new URL("/onboarding", req.url));
+      console.log("[Middleware] Redirecting to /onboarding");
+      return NextResponse.redirect(new URL("/onboarding", req.url));
     }
 
     // If user is already onboarded and tries to access /onboarding, redirect them away
     if (token && token.onboarding_complete && path === "/onboarding") {
-        console.log("[Middleware] Redirecting to /profile");
-        return NextResponse.redirect(new URL("/profile", req.url));
+      console.log("[Middleware] Redirecting to /profile");
+      return NextResponse.redirect(new URL("/profile", req.url));
     }
   },
   {
@@ -40,6 +40,9 @@ export const config = {
     "/settings/:path*",
     "/showcase/:path*",
     "/notifications/:path*",
+    "/notifications/:path*",
     "/onboarding",
+    "/create-company",
+    "/company/:path*/settings",
   ]
 }

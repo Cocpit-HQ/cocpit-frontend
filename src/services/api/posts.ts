@@ -31,9 +31,10 @@ export const updatePost = async (postId: string, data: UpdatePostRequest): Promi
 };
 
 
-export const toggleLike = async (postId: string): Promise<{ postId: string; liked: boolean; likeCount: number }> => {
+export const toggleLike = async (postId: string, companyId?: string): Promise<{ postId: string; liked: boolean; likeCount: number }> => {
   const response = await api.post<{ postId: string; liked: boolean; likeCount: number }>(
-    `/post/${postId}/like`
+    `/post/${postId}/like`,
+    { companyId }
   );
   return response.data;
 };
@@ -54,8 +55,8 @@ export const getPollAnalytics = async (postId: string): Promise<any> => {
 };
 
 // Comments
-export const addComment = async (postId: string, content: string, parent_id?: string | number | null) => {
-  const response = await api.post(`/post/${postId}/comments`, { content, parent_id: parent_id || null });
+export const addComment = async (postId: string, content: string, parent_id?: string | number | null, companyId?: string) => {
+  const response = await api.post(`/post/${postId}/comments`, { content, parent_id: parent_id || null, companyId });
   return response.data;
 };
 
@@ -64,8 +65,8 @@ export const updateComment = async (commentId: string, content: string) => {
   return response.data;
 };
 
-export const getComments = async (postId: string) => {
-  const response = await api.get(`/post/${postId}/comments`);
+export const getComments = async (postId: string, companyId?: string) => {
+  const response = await api.get(`/post/${postId}/comments`, { params: { companyId } });
   return response.data;
 };
 
@@ -74,8 +75,8 @@ export const deleteComment = async (commentId: string) => {
   return response.data;
 };
 
-export const toggleCommentLike = async (commentId: string | number) => {
-  const response = await api.post(`/comments/${commentId}/like`);
+export const toggleCommentLike = async (commentId: string | number, companyId?: string) => {
+  const response = await api.post(`/comments/${commentId}/like`, { companyId });
   return response.data;
 };
 

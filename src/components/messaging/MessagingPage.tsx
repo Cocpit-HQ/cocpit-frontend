@@ -19,6 +19,7 @@ import { GroupChatProvider } from "./group-chat/groupChat.context"
 import CreateGroupModal from "./group-chat/CreateGroupModal"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -40,13 +41,20 @@ export default function MessagingPage() {
   const [selectedChat, setSelectedChat] = useState<ChatThread | null>(null)
   const processedUserIdRef = React.useRef<string | null>(null);
 
-  const { data: chats = [], isLoading, error } = useQuery({
+  const { activeProfile } = useActiveProfile();
+  const rawChatsQuery = useQuery({
     queryKey: ['conversations'],
     queryFn: async () => {
       const backendChats = await getConversations();
       return backendChats.map(mapBackendChatToChatThread);
     }
   });
+
+  // If acting as company, show empty list (until backend supports company chats)
+  // functionality: "company account is different entity" -> don't show user chats.
+  const chats = activeProfile?.type === 'COMPANY' ? [] : (rawChatsQuery.data || []);
+  const isLoading = rawChatsQuery.isLoading;
+  const error = rawChatsQuery.error;
 
   const { user } = useAuth();
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
@@ -242,13 +250,16 @@ export default function MessagingPage() {
                 isLoading={isLoading}
                 error={error}
                 onCreateGroup={() => setIsCreateGroupOpen(true)}
+                isCompany={activeProfile?.type === 'COMPANY'}
               />
-              <div className="p-4 border-t border-border">
-                <Button className="w-full" variant="outline" onClick={() => setIsCreateGroupOpen(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Group
-                </Button>
-              </div>
+              {activeProfile?.type !== 'COMPANY' && (
+                <div className="p-4 border-t border-border">
+                  <Button className="w-full" variant="outline" onClick={() => setIsCreateGroupOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Group
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Chat Window - on mobile, only shown if selectedChat */}
@@ -279,8 +290,15 @@ export default function MessagingPage() {
                     }}
                   />
                 )) : (
-                <div className="hidden md:flex items-center justify-center h-full text-muted-foreground">
-                  {isLoading ? "Loading..." : "Select a conversation to start messaging"}
+                <div className="hidden md:flex items-center justify-center h-full text-muted-foreground flex-col gap-2">
+                  {activeProfile?.type === 'COMPANY' ? (
+                    <>
+                      <p className="font-semibold">Company Messaging</p>
+                      <p className="text-sm">Messaging is not yet available for Company Profiles.</p>
+                    </>
+                  ) : (
+                    <p>{isLoading ? "Loading..." : "Select a conversation to start messaging"}</p>
+                  )}
                 </div>
               )}
             </div>

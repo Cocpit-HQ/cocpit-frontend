@@ -33,6 +33,8 @@ export interface Notification {
     type: 'connection_request' | 'connection_accepted' | 'like' | 'comment' | 'follow' | 'job_alert' | 'repost' | 'mention' | 'reply';
     actor_name: string;
     actor_avatar: string | null;
+    actor_slug?: string;
+    is_company_actor?: boolean;
     reference_id: string | null;
     text: string;
     is_read: boolean;

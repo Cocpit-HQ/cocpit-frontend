@@ -16,6 +16,8 @@ export interface BackendPost {
   author_id: string;
   author_name: string;
   author_avatar: string | null;
+  author_slug?: string;
+  is_company_post?: boolean;
   category_name: string | null;
   media: BackendMedia[];
   poll: BackendPoll | null;
@@ -34,6 +36,8 @@ export interface BackendPost {
       user_id: string;
       full_name: string;
       avatar_url: string | null;
+      author_slug?: string;
+      is_company_post?: boolean;
     };
     media?: BackendMedia[];
     like_count?: number;
@@ -76,6 +80,7 @@ export interface CreatePostRequest {
   poll_options?: string[];
   poll_duration?: string;
   shared_post_id?: string;
+  companyId?: string;
 }
 
 export interface CreatePostResponse {

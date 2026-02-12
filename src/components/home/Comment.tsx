@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { useSocial } from '@/context/SocialContext';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 interface CommentProps {
   comment: CommentType;
@@ -19,10 +20,10 @@ interface CommentProps {
   onReply?: (authorName: string, commentId: string | number, accountName?: string) => void;
   onDelete?: (commentId: string | number) => void;
   currentUserId?: string;
-  variant?: 'root' | 'reply'; 
+  variant?: 'root' | 'reply';
   isGrouped?: boolean;
   isPostOwner?: boolean;
-  postId?: string | number; 
+  postId?: string | number;
 }
 
 const formatCommentText = (text: string, postId?: string | number, currentCommentId?: string | number) => {
@@ -59,6 +60,7 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
   const [likes, setLikes] = useState(like_count);
   const [isPinned, setIsPinned] = useState(is_pinned || false);
   const { blockUser } = useSocial();
+  const { isCompany, activeProfile } = useActiveProfile();
 
   const handleBlock = async () => {
     try {
@@ -74,7 +76,7 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
     setIsLiked(is_liked);
     setLikes(like_count);
     setIsPinned(is_pinned || false);
-  }, [is_liked, like_count, is_pinned, id]); 
+  }, [is_liked, like_count, is_pinned, id]);
 
   const handleLike = async () => {
     const prevLiked = isLiked;
@@ -84,7 +86,8 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
     setLikes(isLiked ? likes - 1 : likes + 1);
 
     try {
-      const result = await toggleCommentLike(id);
+      const companyId = isCompany ? activeProfile?.id : undefined;
+      const result = await toggleCommentLike(id, companyId);
       setIsLiked(result.liked);
       setLikes(result.likeCount);
     } catch (error) {
@@ -126,7 +129,7 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
       {/* Avatar Column */}
       <div className="flex flex-col items-center flex-shrink-0">
         <Link
-          href={`/profile/${author.account_name || authorId}${postId ? `?openPost=${postId}&commentId=${id}` : ''}`}
+          href={author.isCompanyPost ? `/company/${author.authorSlug}` : `/profile/${author.authorSlug || authorId}${postId ? `?openPost=${postId}&commentId=${id}` : ''}`}
           className="block"
         >
           <div className={`${avatarSize} rounded-full bg-gradient-to-br from-gray-400 to-gray-500 overflow-hidden ring-1 ring-border/50`}>
@@ -140,7 +143,7 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
         <div className="bg-card/50 rounded-2xl px-3 py-2">
           <div className="flex items-center gap-2 mb-1">
             <Link
-              href={`/profile/${author.account_name || authorId}${postId ? `?openPost=${postId}&commentId=${id}` : ''}`}
+              href={author.isCompanyPost ? `/company/${author.authorSlug}` : `/profile/${author.authorSlug || authorId}${postId ? `?openPost=${postId}&commentId=${id}` : ''}`}
               className="hover:underline"
             >
               <span className={`${nameSize} font-semibold text-foreground`}>{author.name}</span>

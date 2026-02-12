@@ -13,10 +13,12 @@ import { ConnectionRequestList } from '@/components/notifications/ConnectionRequ
 import { getPendingRequests, getConnectionRequestHistory } from '@/services/api/social'
 import { format } from 'date-fns'
 import Avatar from '@/components/shared/Avatar'
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { ArrowLeft } from 'lucide-react'
 
 export default function NotificationsPage() {
   const router = useRouter()
+  const { activeProfile, isCompany } = useActiveProfile()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [pendingRequests, setPendingRequests] = useState<ConnectionRequest[]>([])
@@ -29,10 +31,13 @@ export default function NotificationsPage() {
     const fetchData = async () => {
       try {
         setLoading(true)
+        const companyId = (isCompany && activeProfile) ? activeProfile.id : undefined;
+
+        // Connections are currently user-only features
         const [notifsData, pendingData, historyData] = await Promise.all([
-          getNotifications(),
-          getPendingRequests(),
-          getConnectionRequestHistory()
+          getNotifications(companyId),
+          !isCompany ? getPendingRequests() : Promise.resolve([]),
+          !isCompany ? getConnectionRequestHistory() : Promise.resolve([])
         ])
         setNotifications(notifsData)
         setPendingRequests(pendingData)
@@ -47,7 +52,7 @@ export default function NotificationsPage() {
     if (user) {
       fetchData()
     }
-  }, [user])
+  }, [user, activeProfile, isCompany])
 
   const handleRead = (id: string) => {
     setNotifications(prev => prev.map(n =>
@@ -95,16 +100,18 @@ export default function NotificationsPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6 bg-muted/50 p-1">
+          <TabsList className={`grid w-full mb-6 bg-muted/50 p-1 ${isCompany ? 'grid-cols-2' : 'grid-cols-3'}`}>
             <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="requests" className="relative">
-              Requests
-              {pendingRequests.length > 0 && (
-                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px]">
-                  {pendingRequests.length}
-                </Badge>
-              )}
-            </TabsTrigger>
+            {!isCompany && (
+              <TabsTrigger value="requests" className="relative">
+                Requests
+                {pendingRequests.length > 0 && (
+                  <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px]">
+                    {pendingRequests.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            )}
             <TabsTrigger value="mentions">Mentions</TabsTrigger>
           </TabsList>
 

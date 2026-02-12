@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Bookmark, Briefcase, Clock, MapPin, DollarSign, Zap, CheckCircle, Mic, Video, X } from "lucide-react"
 import { type Job } from "@/types/jobs"
 import { useJobs } from "@/context/JobsContext"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 import { QuickApplyModal } from "./QuickApplyModal"
@@ -16,6 +17,7 @@ interface JobCardProps {
 
 export function JobCard({ job, mode = "view" }: JobCardProps) {
   const { saveJob, activeTab } = useJobs()
+  const { isCompany } = useActiveProfile()
   const [showQuickApply, setShowQuickApply] = useState(false)
   const [showTaskModal, setShowTaskModal] = useState(false)
 
@@ -177,12 +179,14 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
             {/* View Details / Applied Badge */}
             <div className="mt-2 flex items-center gap-2">
               <Link href={`/jobs/${job.id}`} className="text-sm font-medium hover:underline text-foreground">Details</Link>
-              {(job.status === 'applied' || job.hasApplied || job.status === 'shortlisted') && (
+              {(job.status === 'applied' || job.hasApplied || job.status === 'shortlisted') ? (
                 <div className="flex items-center gap-1 text-green-500 text-xs font-medium">
                   <CheckCircle className="w-3.5 h-3.5" />
                   Applied
                 </div>
-              )}
+              ) : isCompany ? (
+                <span className="text-xs text-muted-foreground italic">Switch to user to apply</span>
+              ) : null}
             </div>
           </div>
         </div>

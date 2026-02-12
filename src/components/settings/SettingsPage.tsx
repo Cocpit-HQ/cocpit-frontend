@@ -17,6 +17,7 @@ import {
   LogOut,
   Ban,
   Trash2,
+  Building,
 } from "lucide-react"
 
 import BlockedUsersPage from "@/app/(dashboard)/settings/blocked/page"
@@ -40,7 +41,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { useIsMobile } from "@/hooks/use-mobile"
 import type { Page, Theme } from "@/types/common"
 
-type SettingsSection = "appearance" | "notifications" | "privacy" | "account" | "blocked" | "sessions"
+type SettingsSection = "appearance" | "notifications" | "privacy" | "account" | "blocked" | "sessions" | "companies"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -189,6 +190,73 @@ function AccountSetting({ label, value }: { label: string; value: string }) {
   )
 }
 
+import { useUserCompanies } from "@/hooks/useCompany"
+import Link from "next/link"
+import { Plus } from "lucide-react"
+
+function CompaniesSettings() {
+  const { data: companies, isLoading } = useUserCompanies()
+  const router = useRouter()
+
+  if (isLoading) return <div className="p-8 text-center">Loading companies...</div>
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="mb-2 text-foreground">Companies</h2>
+          <p className="text-sm text-muted-foreground">Manage the companies you own or belong to</p>
+        </div>
+        <Button onClick={() => router.push('/create-company')}>
+          <Plus className="w-4 h-4 mr-2" />
+          Create
+        </Button>
+      </div>
+
+      <div className="grid gap-4">
+        {companies && companies.length > 0 ? (
+          companies.map((company) => (
+            <div key={company.company_id} className="flex items-center justify-between p-4 rounded-xl bg-card border border-border">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center text-lg font-bold">
+                  {company.logo_url ? (
+                    <img src={company.logo_url} alt={company.name} className="w-full h-full object-cover rounded-lg" />
+                  ) : (
+                    company.name.slice(0, 2).toUpperCase()
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-medium text-foreground">{company.name}</h3>
+                  <p className="text-sm text-muted-foreground capitalize">{company.role?.toLowerCase() || 'Member'}</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/company/${company.slug}/settings`}>
+                    Settings
+                  </Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link href={`/company/${company.slug}`}>
+                    View Page
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-12 border border-dashed rounded-xl">
+            <p className="text-muted-foreground mb-4">You haven't created or joined any companies yet.</p>
+            <Button variant="outline" onClick={() => router.push('/create-company')}>
+              Create your first company
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function SettingsPage() {
   const router = useRouter()
   const { theme, resolvedTheme, setTheme } = useTheme()
@@ -319,6 +387,13 @@ export default function SettingsPage() {
                   description="Manage your account settings"
                   isActive={activeSection === "account"}
                   onClick={() => handleSectionClick("account")}
+                />
+                <SettingsNavCard
+                  icon={<Building className="w-5 h-5" />}
+                  title="Companies"
+                  description="Manage your company pages"
+                  isActive={activeSection === "companies"}
+                  onClick={() => handleSectionClick("companies")}
                 />
                 <SettingsNavCard
                   icon={<Ban className="w-5 h-5" />}
@@ -482,6 +557,9 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
+              )}
+              {activeSection === "companies" && (
+                <CompaniesSettings />
               )}
               {activeSection === "blocked" && (
                 <div className="space-y-6">

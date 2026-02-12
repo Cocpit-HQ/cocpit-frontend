@@ -9,6 +9,7 @@ import { CreateStoryForm } from '@/components/showcase/CreateStoryForm'
 import { X } from 'lucide-react'
 import { HomeHeader } from './HomeHeader'
 import { FeedSection } from './FeedSection'
+import { useActiveProfile } from '@/context/ActiveProfileContext'
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false)
@@ -21,12 +22,15 @@ export default function HomePage() {
   const [selectedStory, setSelectedStory] = useState<StoryDetail | null>(null)
   const [mobileSelectedGroupId, setMobileSelectedGroupId] = useState<number | null>(null)
 
+  const { activeProfile } = useActiveProfile();
+
   useEffect(() => {
     setMounted(true)
     const fetchStories = async () => {
       try {
         const { showcaseService } = await import('@/services/showcase.service');
-        const data = await showcaseService.getGroupedStories()
+        const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+        const data = await showcaseService.getGroupedStories(companyId)
         setGroups(data)
       } catch (error) {
         console.error("Failed to fetch stories", error)
@@ -35,7 +39,7 @@ export default function HomePage() {
       }
     }
     fetchStories()
-  }, [])
+  }, [activeProfile?.id, activeProfile?.type])
 
   const handleCreateStory = (newStory: StoryDetail) => {
     // Optimistic update

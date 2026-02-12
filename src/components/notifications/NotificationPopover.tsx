@@ -15,6 +15,7 @@ import { useSession } from "next-auth/react"
 import { formatDistanceToNow } from "date-fns"
 import { useSocket } from "@/context/SocketContext"
 import Avatar from "@/components/shared/Avatar"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 
 export function NotificationPopover() {
   const router = useRouter()
@@ -24,11 +25,13 @@ export function NotificationPopover() {
   const user = session?.user
 
   const { socket } = useSocket()
+  const { activeProfile, isCompany } = useActiveProfile()
 
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const data = await getNotifications()
+        const companyId = (isCompany && activeProfile) ? activeProfile.id : undefined;
+        const data = await getNotifications(companyId)
         // Take only first 5 for the popover
         setNotifications(data.slice(0, 5))
       } catch (error) {
@@ -39,7 +42,7 @@ export function NotificationPopover() {
     if (user) {
       fetchNotifications()
     }
-  }, [isOpen, user])
+  }, [isOpen, user, activeProfile, isCompany])
 
   // Listen for real-time notifications
   useEffect(() => {
@@ -114,14 +117,20 @@ export function NotificationPopover() {
                   router.push(`/post/${notification.reference_id}`)
                   setIsOpen(false)
                 } else if (notification.type === 'follow' && notification.reference_id) {
-                  router.push(`/profile/${notification.reference_id}`)
-                  setIsOpen(false)
+                  const url = notification.is_company_actor
+                    ? `/company/${notification.actor_slug}`
+                    : `/profile/${notification.reference_id}`;
+                  router.push(url);
+                  setIsOpen(false);
                 } else if (notification.type === 'repost' && notification.reference_id) {
                   router.push(`/post/${notification.reference_id}`)
                   setIsOpen(false)
                 } else if ((notification.type === 'connection_accepted' || notification.type === 'connection_request') && notification.reference_id) {
-                  router.push(`/profile/${notification.reference_id}`)
-                  setIsOpen(false)
+                  const url = notification.is_company_actor
+                    ? `/company/${notification.actor_slug}`
+                    : `/profile/${notification.reference_id}`;
+                  router.push(url);
+                  setIsOpen(false);
                 } else if ((notification.type === 'comment' || notification.type === 'mention' || notification.type === 'reply') && notification.reference_id) {
                   // Extract comment_id from metadata if available (it might be stringified)
                   let commentId;
@@ -154,7 +163,7 @@ export function NotificationPopover() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-popover-foreground">
-                  <span className="font-bold">{notification.actor_name}</span> {notification.text.replace(notification.actor_name || '', '').trim()}
+                  <span className="font-bold">{notification.actor_name}</span> {notification.text ? notification.text.replace(notification.actor_name || '', '').trim() : ''}
                 </p>
                 <p className="text-xs mt-1 text-muted-foreground">
                   {(() => {

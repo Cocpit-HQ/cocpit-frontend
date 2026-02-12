@@ -14,7 +14,8 @@ export const mapStory = (story: any): StoryDetail => ({
     author: {
         name: story.author_name,
         avatar: story.author_avatar,
-        id: story.author_id
+        id: story.author_id,
+        is_company: story.is_company
     },
     isAuthor: story.is_author,
     isLiked: story.has_liked,
