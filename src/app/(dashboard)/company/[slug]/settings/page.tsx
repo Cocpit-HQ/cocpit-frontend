@@ -11,6 +11,8 @@ import { MembersTab } from "@/components/companies/settings/members-tab";
 import { VerificationTab } from "@/components/companies/settings/verification-tab";
 import { CompanyHeader } from "@/components/companies/company-header";
 import { GeneralTab } from "@/components/companies/settings/general-tab";
+import { AuditTab } from "@/components/companies/settings/audit-tab";
+import { useCompanyPermissions } from "@/hooks/useCompany";
 
 export default function CompanySettingsPage() {
     const params = useParams();
@@ -20,6 +22,8 @@ export default function CompanySettingsPage() {
         queryKey: ["company", slug],
         queryFn: () => companyService.getCompany(slug),
     });
+
+    const perms = useCompanyPermissions(company);
 
     if (isLoading) {
         return <div className="container py-6"><Skeleton className="h-96 w-full" /></div>;
@@ -40,6 +44,9 @@ export default function CompanySettingsPage() {
                         <TabsTrigger value="general">General</TabsTrigger>
                         <TabsTrigger value="members">Members</TabsTrigger>
                         <TabsTrigger value="verification">Verification</TabsTrigger>
+                        {(perms.isOwner || perms.isAdmin) && (
+                            <TabsTrigger value="audit">Audit Logs</TabsTrigger>
+                        )}
                     </TabsList>
 
                     <TabsContent value="general">
@@ -53,6 +60,12 @@ export default function CompanySettingsPage() {
                     <TabsContent value="verification">
                         <VerificationTab company={company} />
                     </TabsContent>
+
+                    {(perms.isOwner || perms.isAdmin) && (
+                        <TabsContent value="audit">
+                            <AuditTab company={company} />
+                        </TabsContent>
+                    )}
                 </Tabs>
             </div>
         </div>

@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Upload, X } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { ImageUpload } from "./image-upload";
+import { DangerZone } from "./danger-zone";
 
 // --- Schema ---
 const companyFormSchema = z.object({
@@ -96,201 +97,208 @@ export function GeneralTab({ company }: GeneralTabProps) {
     // Let's stick to standard Inputs for URLs for MVP speed, maybe with a nice preview.
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>General Information</CardTitle>
-                <CardDescription>Update your company's public profile details.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <>
+            <Card>
+                <CardHeader>
+                    <CardTitle>General Information</CardTitle>
+                    <CardDescription>Update your company's public profile details.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 
-                        {/* Images Section */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {/* Logo */}
-                            <div className="space-y-4">
-                                <FormLabel>Company Logo</FormLabel>
-                                <div className="flex items-center gap-4">
+                            {/* Images Section */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* Logo */}
+                                <div className="space-y-4">
+                                    <FormLabel>Company Logo</FormLabel>
+                                    <div className="flex items-center gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="logo_url"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <ImageUpload
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            className="h-24 w-24 border-2 border-border"
+                                                            aspectRatio="square"
+                                                            placeholder={<span className="text-2xl font-bold">{form.watch("name")?.slice(0, 2).toUpperCase()}</span>}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <div className="flex-1 space-y-1">
+                                            <p className="text-sm font-medium">Company Logo</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Recommended size: 400x400px. <br />
+                                                Formats: JPG, PNG. Max 5MB.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Cover */}
+                                <div className="space-y-4">
+                                    <FormLabel>Cover Image</FormLabel>
+                                    <div className="relative h-32 w-full bg-muted rounded-md overflow-hidden border border-border">
+                                        {form.watch("cover_url") ? (
+                                            <img
+                                                src={form.watch("cover_url")}
+                                                alt="Cover"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                                                No cover image
+                                            </div>
+                                        )}
+                                    </div>
                                     <FormField
                                         control={form.control}
-                                        name="logo_url"
+                                        name="cover_url"
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <ImageUpload
-                                                        value={field.value}
-                                                        onChange={field.onChange}
-                                                        className="h-24 w-24 border-2 border-border"
-                                                        aspectRatio="square"
-                                                        placeholder={<span className="text-2xl font-bold">{form.watch("name")?.slice(0, 2).toUpperCase()}</span>}
-                                                    />
+                                                    <Input placeholder="https://..." {...field} />
                                                 </FormControl>
+                                                <FormDescription className="text-xs">
+                                                    URL to your cover image (1200x300 recommended).
+                                                </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
-                                    <div className="flex-1 space-y-1">
-                                        <p className="text-sm font-medium">Company Logo</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            Recommended size: 400x400px. <br />
-                                            Formats: JPG, PNG. Max 5MB.
-                                        </p>
-                                    </div>
                                 </div>
                             </div>
 
-                            {/* Cover */}
-                            <div className="space-y-4">
-                                <FormLabel>Cover Image</FormLabel>
-                                <div className="relative h-32 w-full bg-muted rounded-md overflow-hidden border border-border">
-                                    {form.watch("cover_url") ? (
-                                        <img
-                                            src={form.watch("cover_url")}
-                                            alt="Cover"
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                                            No cover image
-                                        </div>
-                                    )}
-                                </div>
+                            <Separator />
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <FormField
                                     control={form.control}
-                                    name="cover_url"
+                                    name="name"
                                     render={({ field }) => (
                                         <FormItem>
+                                            <FormLabel>Company Name</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="https://..." {...field} />
+                                                <Input placeholder="Acme Inc." {...field} />
                                             </FormControl>
-                                            <FormDescription className="text-xs">
-                                                URL to your cover image (1200x300 recommended).
-                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="slogan"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Tagline / Slogan</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Building the future..." {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="industry"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Industry</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="e.g. Technology" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="size"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Company Size</FormLabel>
+                                            <FormControl>
+                                                {/* Could be a Select, using Input for flexibility now */}
+                                                <Input placeholder="e.g. 10-50 employees" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="website"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Website</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="https://acme.com" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="location"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Headquarters</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="San Francisco, CA" {...field} />
+                                            </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                             </div>
-                        </div>
 
-                        <Separator />
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormField
                                 control={form.control}
-                                name="name"
+                                name="description"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Company Name</FormLabel>
+                                        <FormLabel>About</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Acme Inc." {...field} />
+                                            <Textarea
+                                                placeholder="Tell us about your company..."
+                                                className="min-h-[120px]"
+                                                {...field}
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
 
-                            <FormField
-                                control={form.control}
-                                name="slogan"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Tagline / Slogan</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Building the future..." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <div className="flex justify-end">
+                                <Button type="submit" disabled={updateMutation.isPending}>
+                                    {updateMutation.isPending && (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    )}
+                                    Save Changes
+                                </Button>
+                            </div>
+                        </form>
+                    </Form>
+                </CardContent>
+            </Card>
 
-                            <FormField
-                                control={form.control}
-                                name="industry"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Industry</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="e.g. Technology" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="size"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Company Size</FormLabel>
-                                        <FormControl>
-                                            {/* Could be a Select, using Input for flexibility now */}
-                                            <Input placeholder="e.g. 10-50 employees" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="website"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Website</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="https://acme.com" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="location"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Headquarters</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="San Francisco, CA" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        <FormField
-                            control={form.control}
-                            name="description"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>About</FormLabel>
-                                    <FormControl>
-                                        <Textarea
-                                            placeholder="Tell us about your company..."
-                                            className="min-h-[120px]"
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <div className="flex justify-end">
-                            <Button type="submit" disabled={updateMutation.isPending}>
-                                {updateMutation.isPending && (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                )}
-                                Save Changes
-                            </Button>
-                        </div>
-                    </form>
-                </Form>
-            </CardContent>
-        </Card>
+            {/* Danger Zone */}
+            <div className="mt-8">
+                <DangerZone company={company} />
+            </div>
+        </>
     );
 }

@@ -112,8 +112,8 @@ export function useVerifyDomain() {
 export function useTransferOwnership() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ companyId, newOwnerId }: { companyId: string; newOwnerId: string }) =>
-            companyService.transferOwnership(companyId, newOwnerId),
+        mutationFn: ({ companyId, newOwnerId, password }: { companyId: string; newOwnerId: string; password?: string }) =>
+            companyService.transferOwnership(companyId, newOwnerId, password),
         onSuccess: (_, { companyId }) => {
             toast.success("Ownership transferred");
             queryClient.invalidateQueries({ queryKey: COMP_KEYS.all });
@@ -126,7 +126,8 @@ export function useDeleteCompany() {
     const router = useRouter();
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ companyId }: { companyId: string }) => companyService.deleteCompany(companyId),
+        mutationFn: ({ companyId, password }: { companyId: string; password?: string }) =>
+            companyService.deleteCompany(companyId, password),
         onSuccess: () => {
             toast.success("Company deleted");
             queryClient.invalidateQueries({ queryKey: COMP_KEYS.all });
@@ -172,14 +173,51 @@ export function useCompanyPermissions(company?: Company | null) {
     const isOwner = role === 'OWNER';
     const isAdmin = role === 'ADMIN';
     const isEditor = role === 'EDITOR';
+    const isRecruiter = role === 'RECRUITER';
+    const isAnalyst = role === 'ANALYST';
 
     return {
         isOwner,
         isAdmin,
         isEditor,
-        canEdit: isOwner || isAdmin,
+        isRecruiter,
+        isAnalyst,
+        canEdit: isOwner || isAdmin || isEditor, // Company Profile Editing
         canManageMembers: isOwner || isAdmin,
         canVerify: isOwner,
         canDelete: isOwner,
+        // Add more specific permissions for Recruiter later if needed (e.g. canPostJobs)
     };
+}
+
+export function useAnalyticsOverview(companyId: string) {
+    return useQuery({
+        queryKey: [...COMP_KEYS.detail(companyId), 'analytics', 'overview'],
+        queryFn: () => companyService.getAnalyticsOverview(companyId),
+        enabled: !!companyId,
+    });
+}
+
+export function useAnalyticsEngagement(companyId: string) {
+    return useQuery({
+        queryKey: [...COMP_KEYS.detail(companyId), 'analytics', 'engagement'],
+        queryFn: () => companyService.getAnalyticsEngagement(companyId),
+        enabled: !!companyId,
+    });
+}
+
+export function useAnalyticsJobs(companyId: string) {
+    return useQuery({
+        queryKey: [...COMP_KEYS.detail(companyId), 'analytics', 'jobs'],
+        queryFn: () => companyService.getAnalyticsJobs(companyId),
+        enabled: !!companyId,
+    });
+}
+
+export function useAuditLogs(companyId: string, params: { page?: number, limit?: number, action?: string, actorId?: string }) {
+    return useQuery({
+        queryKey: [...COMP_KEYS.detail(companyId), 'audit-logs', params],
+        queryFn: () => companyService.getAuditLogs(companyId, params),
+        enabled: !!companyId,
+    });
 }

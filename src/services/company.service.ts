@@ -20,7 +20,7 @@ export interface Company {
     verification_status: 'UNVERIFIED' | 'DOMAIN_PENDING' | 'DOMAIN_VERIFIED' | 'REJECTED';
     is_deleted: boolean;
     created_at: string;
-    viewer_role?: 'OWNER' | 'ADMIN' | 'EDITOR' | null; // Populated by backend if authenticated
+    viewer_role?: 'OWNER' | 'ADMIN' | 'EDITOR' | 'RECRUITER' | 'ANALYST' | null; // Populated by backend if authenticated
 }
 
 export interface CompanyMember {
@@ -87,13 +87,13 @@ export const companyService = {
         return res.data;
     },
 
-    async transferOwnership(companyId: string, newOwnerId: string) {
-        const res = await api.post(`/companies/${companyId}/transfer-ownership`, { newOwnerId });
+    async transferOwnership(companyId: string, newOwnerId: string, password?: string) {
+        const res = await api.post(`/companies/${companyId}/transfer-ownership`, { newOwnerId, password });
         return res.data;
     },
 
-    async deleteCompany(companyId: string) {
-        const res = await api.delete(`/companies/${companyId}`);
+    async deleteCompany(companyId: string, password?: string) {
+        const res = await api.delete(`/companies/${companyId}`, { data: { password } });
         return res.data;
     },
 
@@ -114,6 +114,27 @@ export const companyService = {
 
     async getRelationship(companyId: string): Promise<{ isFollowing: boolean; followerCount: number }> {
         const res = await api.get(`/companies/${companyId}/relationship`);
+        return res.data;
+    },
+
+    // Analytics
+    async getAnalyticsOverview(companyId: string) {
+        const res = await api.get(`/companies/${companyId}/analytics/overview`);
+        return res.data;
+    },
+
+    async getAnalyticsEngagement(companyId: string) {
+        const res = await api.get(`/companies/${companyId}/analytics/engagement`);
+        return res.data;
+    },
+
+    async getAnalyticsJobs(companyId: string) {
+        const res = await api.get(`/companies/${companyId}/analytics/jobs`);
+        return res.data;
+    },
+
+    async getAuditLogs(companyId: string, params: { page?: number, limit?: number, action?: string, actorId?: string }) {
+        const res = await api.get(`/companies/${companyId}/audit-logs`, { params });
         return res.data;
     },
 

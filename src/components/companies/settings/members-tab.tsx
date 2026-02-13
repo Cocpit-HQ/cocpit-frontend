@@ -118,6 +118,8 @@ export function MembersTab({ company }: MembersTabProps) {
                                             <SelectContent>
                                                 <SelectItem value="ADMIN">Admin</SelectItem>
                                                 <SelectItem value="EDITOR">Editor</SelectItem>
+                                                <SelectItem value="RECRUITER">Recruiter</SelectItem>
+                                                <SelectItem value="ANALYST">Analyst</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>

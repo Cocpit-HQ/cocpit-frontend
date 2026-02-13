@@ -16,20 +16,23 @@ interface DangerZoneProps {
 
 export function DangerZone({ company }: DangerZoneProps) {
     const [confirmDelete, setConfirmDelete] = useState("");
-    const [transferUserId, setTransferUserId] = useState(""); // In real app, this would be a user search/select
+    const [transferUserId, setTransferUserId] = useState("");
+    const [deletePassword, setDeletePassword] = useState("");
+    const [transferPassword, setTransferPassword] = useState("");
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [isTransferOpen, setIsTransferOpen] = useState(false);
 
     const deleteMutation = useDeleteCompany();
     const transferMutation = useTransferOwnership();
 
     const handleDelete = () => {
         if (confirmDelete !== company.slug) return;
-        deleteMutation.mutate({ companyId: company.company_id });
+        deleteMutation.mutate({ companyId: company.company_id, password: deletePassword });
     };
 
     const handleTransfer = () => {
-        if (!transferUserId) return;
-        transferMutation.mutate({ companyId: company.company_id, newOwnerId: transferUserId });
+        if (!transferUserId || !transferPassword) return;
+        transferMutation.mutate({ companyId: company.company_id, newOwnerId: transferUserId, password: transferPassword });
     };
 
     return (
@@ -47,7 +50,7 @@ export function DangerZone({ company }: DangerZoneProps) {
                             <h4 className="font-semibold">Transfer Ownership</h4>
                             <p className="text-sm text-muted-foreground">Transfer this company to another user. You will be demoted to Admin.</p>
                         </div>
-                        <Dialog>
+                        <Dialog open={isTransferOpen} onOpenChange={setIsTransferOpen}>
                             <DialogTrigger asChild>
                                 <Button variant="outline">Transfer</Button>
                             </DialogTrigger>
@@ -55,19 +58,30 @@ export function DangerZone({ company }: DangerZoneProps) {
                                 <DialogHeader>
                                     <DialogTitle>Transfer Ownership</DialogTitle>
                                     <DialogDescription>
-                                        Enter the User ID of the new owner. (In production, this would be a member picker).
+                                        Enter the User ID of the new owner and your password to confirm.
                                     </DialogDescription>
                                 </DialogHeader>
-                                <div className="py-4">
-                                    <Label>New Owner ID</Label>
-                                    <Input
-                                        value={transferUserId}
-                                        onChange={(e) => setTransferUserId(e.target.value)}
-                                        placeholder="UUID"
-                                    />
+                                <div className="py-4 space-y-4">
+                                    <div className="space-y-2">
+                                        <Label>New Owner ID</Label>
+                                        <Input
+                                            value={transferUserId}
+                                            onChange={(e) => setTransferUserId(e.target.value)}
+                                            placeholder="UUID"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Current Password</Label>
+                                        <Input
+                                            type="password"
+                                            value={transferPassword}
+                                            onChange={(e) => setTransferPassword(e.target.value)}
+                                            placeholder="Enter your password"
+                                        />
+                                    </div>
                                 </div>
                                 <DialogFooter>
-                                    <Button onClick={handleTransfer} disabled={transferMutation.isPending}>
+                                    <Button onClick={handleTransfer} disabled={transferMutation.isPending || !transferUserId || !transferPassword}>
                                         {transferMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         Transfer
                                     </Button>
@@ -95,19 +109,30 @@ export function DangerZone({ company }: DangerZoneProps) {
                                         This action cannot be undone. This will permanently delete <strong>{company.name}</strong>.
                                     </DialogDescription>
                                 </DialogHeader>
-                                <div className="py-4 space-y-3">
-                                    <Label>Type <strong>{company.slug}</strong> to confirm</Label>
-                                    <Input
-                                        value={confirmDelete}
-                                        onChange={(e) => setConfirmDelete(e.target.value)}
-                                        placeholder={company.slug}
-                                    />
+                                <div className="py-4 space-y-4">
+                                    <div className="space-y-2">
+                                        <Label>Type <strong>{company.slug}</strong> to confirm</Label>
+                                        <Input
+                                            value={confirmDelete}
+                                            onChange={(e) => setConfirmDelete(e.target.value)}
+                                            placeholder={company.slug}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Current Password</Label>
+                                        <Input
+                                            type="password"
+                                            value={deletePassword}
+                                            onChange={(e) => setDeletePassword(e.target.value)}
+                                            placeholder="Enter your password"
+                                        />
+                                    </div>
                                 </div>
                                 <DialogFooter>
                                     <Button
                                         variant="destructive"
                                         onClick={handleDelete}
-                                        disabled={confirmDelete !== company.slug || deleteMutation.isPending}
+                                        disabled={confirmDelete !== company.slug || !deletePassword || deleteMutation.isPending}
                                     >
                                         {deleteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                         Confirm Delete
