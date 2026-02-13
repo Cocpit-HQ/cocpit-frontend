@@ -20,6 +20,7 @@ interface GroupChatContextType {
     promoteToAdmin: (userId: string) => Promise<void>;
     updateGroupAvatar: (file: File) => Promise<void>;
     refreshGroup: () => void;
+    isInactive: boolean;
 }
 
 interface ApiError {
@@ -36,10 +37,11 @@ const GroupChatContext = createContext<GroupChatContextType | undefined>(undefin
 export const GroupChatProvider: React.FC<{ groupId?: string; children: React.ReactNode }> = ({ groupId, children }) => {
     const queryClient = useQueryClient();
 
-    const { data: activeGroup, isLoading, refetch } = useQuery({
+    const { data: activeGroup, isLoading, refetch, error: queryError } = useQuery({
         queryKey: ['group-details', groupId],
         queryFn: () => groupId ? getGroupDetails(groupId) : null,
-        enabled: !!groupId
+        enabled: !!groupId,
+        retry: false // Avoid background retries on 403s
     });
 
     const { user } = useAuth();
@@ -114,10 +116,8 @@ export const GroupChatProvider: React.FC<{ groupId?: string; children: React.Rea
 
         socket.on('removed_from_group', (payload: any) => {
             if (payload.groupId === groupId) {
-                // Determine behavior? 
-                // Refetch to update "members" list (so user sees they are gone)
-                refetch();
                 queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                // No redirect, stay to show history
             }
         });
 
@@ -160,8 +160,7 @@ export const GroupChatProvider: React.FC<{ groupId?: string; children: React.Rea
         mutationFn: leaveGroup,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
-            queryClient.invalidateQueries({ queryKey: ['group-details', groupId] }); // Refresh details to show read-only
-            // No redirect, stay to show "You left" status
+            // No redirect, stay to show history
         }
     });
 
@@ -185,12 +184,15 @@ export const GroupChatProvider: React.FC<{ groupId?: string; children: React.Rea
         }
     });
 
+    const isInactive = !!activeGroup?.is_inactive;
+
     return (
         <GroupChatContext.Provider value={{
             activeGroup: activeGroup || null,
             isLoading,
-            error: null, // Basic error handling
+            error: (queryError as any) || null,
             sentInvitations,
+            isInactive,
             createGroup: async (data) => { await createGroupMutation.mutateAsync(data); },
             inviteMember: async (receiverId) => {
                 const targetGroupId = activeGroup?.conversation_id || groupId;

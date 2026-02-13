@@ -20,12 +20,12 @@ interface GroupDetailsProps {
 }
 
 export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMember }: GroupDetailsProps) {
-    const { activeGroup, leaveGroup, deleteGroup, sentInvitations, removeMember, promoteToAdmin } = useGroupChat();
+    const { activeGroup, leaveGroup, deleteGroup, sentInvitations, removeMember, promoteToAdmin, isInactive } = useGroupChat();
     const { isUserOnline } = useSocket();
 
     if (!activeGroup) return null;
 
-    const isAdmin = activeGroup.admin_id === currentUserId || activeGroup.members.find(m => m.user_id === currentUserId)?.role === 'admin';
+    const isAdmin = (activeGroup.admin_id === currentUserId || activeGroup.members.find(m => m.user_id === currentUserId)?.role === 'admin') && !isInactive;
     const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
     const handleAvatarUpload = async (file: File) => {
@@ -89,7 +89,9 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                             )}
                         </div>
                         <h2 className="text-xl font-bold">{activeGroup.conversation_name}</h2>
-                        <p className="text-muted-foreground text-sm mt-1">{activeGroup.members.length} members</p>
+                        <p className="text-muted-foreground text-sm mt-1">
+                            {activeGroup.members.length} {activeGroup.members.length === 1 ? 'member' : 'members'}
+                        </p>
                         {activeGroup.description && (
                             <p className="text-sm mt-2 text-center text-muted-foreground">{activeGroup.description}</p>
                         )}
@@ -178,8 +180,8 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                     )}
 
                     <div className="space-y-3 pb-6">
-                        {/* Show Leave Group only if user is a member */}
-                        {activeGroup.members.some(m => m.user_id === currentUserId) && (
+                        {/* Show Leave Group only if user is an active member */}
+                        {!isInactive && activeGroup.members.some(m => m.user_id === currentUserId) && (
                             <Button
                                 variant="destructive"
                                 className="w-full bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-500 border-none justify-start"

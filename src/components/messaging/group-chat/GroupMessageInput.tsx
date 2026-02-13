@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Paperclip, Send, Smile, Mic, X, FileText, Film, Image as ImageIcon } from "lucide-react";
+import { useGroupChat } from "./groupChat.context";
 
 interface GroupMessageInputProps {
     onSendMessage: (text: string, files: File[]) => void;
@@ -97,6 +98,18 @@ export default function GroupMessageInput({ onSendMessage, onTyping, isLoading }
         if (file.type.startsWith('video/')) return <Film className="w-4 h-4" />;
         return <FileText className="w-4 h-4" />;
     };
+
+    const { isInactive } = useGroupChat();
+
+    if (isInactive) {
+        return (
+            <div className="p-4 border-t w-full bg-muted/50 border-border shrink-0 flex items-center justify-center">
+                <p className="text-sm font-medium text-muted-foreground bg-background px-4 py-2 rounded-full border border-border shadow-sm">
+                    You left this group. You can no longer send messages.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="p-3 md:p-4 border-t w-full bg-background border-border shrink-0">

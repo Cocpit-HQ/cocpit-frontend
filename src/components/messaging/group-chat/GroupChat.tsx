@@ -19,6 +19,7 @@ import MessageInfoModal from "../MessageInfoModal";
 import { DeleteMessageModal } from "../ui/DeleteMessageModal";
 import MediaPreviewModal from "../ui/MediaPreviewModal";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 import ChatSkeleton from "../ui/ChatSkeleton";
 
 interface GroupChatProps {
@@ -29,7 +30,7 @@ interface GroupChatProps {
 }
 
 export default function GroupChat({ groupId, currentUser, messages = [], onBack }: GroupChatProps) {
-    const { activeGroup, isLoading, inviteMember } = useGroupChat();
+    const { activeGroup, isLoading, error, inviteMember, isInactive } = useGroupChat();
     const { toast } = useToast();
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -369,8 +370,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
         const timer = setTimeout(async () => {
             try {
                 // Check if user is still a member before marking as read
-                const isMember = activeGroup?.members.some(m => m.user_id === (currentUser.id || currentUser.user_id));
-                if (!isMember) return;
+                if (isInactive) return;
 
                 // Only mark read if there are messages
                 if (displayMessages.length > 0) {
@@ -433,6 +433,16 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
         typingStatus = `${typingUsers.join(", ")} are typing...`;
     }
 
+    // Simplified error handling (optional, but keep it for real API errors, just don't redirect away)
+    if (error && (error as any).response?.status !== 403) {
+        return (
+            <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-4">
+                <p>Failed to load group details</p>
+                <Button variant="outline" onClick={onBack}>Go Back</Button>
+            </div>
+        );
+    }
+
     if (isLoading && !fetchedMessages.length) {
         return (
             <div className="flex flex-col h-full bg-background relative">
@@ -451,8 +461,14 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
     }
 
     if (!activeGroup) {
-        return <div className="h-full flex items-center justify-center text-muted-foreground">Group not found</div>;
+        return (
+            <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-4">
+                <p>Group not found</p>
+                <Button variant="outline" onClick={onBack}>Go Back</Button>
+            </div>
+        );
     }
+
 
 
 
@@ -485,7 +501,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                 />
             </div>
 
-            {activeGroup?.members.some(m => m.user_id === (currentUser.id || currentUser.user_id)) ? (
+            {!isInactive ? (
                 <UnifiedMessageInput
                     onSendMessage={handleSendMessage}
                     onTyping={handleTypingInput}
@@ -493,8 +509,9 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                     placeholder="Type a message to group..."
                 />
             ) : (
-                <div className="p-4 border-t border-border bg-card/50 backdrop-blur-sm text-center text-muted-foreground text-sm">
-                    You left this group. <span className="text-xs opacity-70 block mt-1">You can delete this chat from your list in group info.</span>
+                <div className="p-4 border-t border-border bg-card/50 backdrop-blur-sm text-center text-muted-foreground text-sm flex flex-col items-center gap-1">
+                    <p className="font-medium text-foreground">You left this group</p>
+                    <p className="text-xs opacity-70">You can delete this chat from your list in group info.</p>
                 </div>
             )}
 
