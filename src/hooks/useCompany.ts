@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { companyService, Company } from '../services/company.service';
+import { companyService, Company, CompanyTechStack, CompanyGalleryItem } from '../services/company.service';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
@@ -7,6 +7,8 @@ export const COMP_KEYS = {
     all: ['companies'] as const,
     detail: (slug: string) => [...COMP_KEYS.all, slug] as const,
     members: (id: string) => [...COMP_KEYS.all, id, 'members'] as const,
+    techStack: (slug: string) => [...COMP_KEYS.detail(slug), 'tech-stack'] as const,
+    gallery: (slug: string) => [...COMP_KEYS.detail(slug), 'gallery'] as const,
 };
 
 export function useCompany(slug: string) {
@@ -214,10 +216,119 @@ export function useAnalyticsJobs(companyId: string) {
     });
 }
 
-export function useAuditLogs(companyId: string, params: { page?: number, limit?: number, action?: string, actorId?: string }) {
+export function useAuditLogs(companyId: string, params: any = {}) {
     return useQuery({
         queryKey: [...COMP_KEYS.detail(companyId), 'audit-logs', params],
         queryFn: () => companyService.getAuditLogs(companyId, params),
         enabled: !!companyId,
     });
 }
+
+
+
+// --- Tech Stack Hooks ---
+
+export function useTechStack(slug: string) {
+    return useQuery({
+        queryKey: COMP_KEYS.techStack(slug),
+        queryFn: () => companyService.getTechStack(slug),
+        enabled: !!slug,
+    });
+}
+
+export function useAddTechStack() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ companyId, name, category }: { companyId: string; name: string; category?: string }) =>
+            companyService.addTechStack(companyId, name, category),
+        onSuccess: (_, { companyId }) => {
+            toast.success("Technology added");
+            // Since we use slug for QueryKey, and we only have ID here... tricky?
+            // Usually we might want invalidate all tech stacks or find slug.
+            // But wait, the key is based on SLUG. Ideally we should invalidate based on slug.
+            // But addTechStack uses ID.
+            // Simple fix: Invalidate 'companies' generally or refresh relevant part if we can.
+            // Or assume the parent component will handle refetch if needed.
+            // Actually, best practice: invalidate detail(slug) -> tech-stack.
+            // But we don't have slug here easily unless passed.
+            // For now, let's just invalidate all companies queries is too broad.
+            // Let's assume we can pass slug to onSuccess or context.
+            // Actually, we can just invalidate `['companies']` which is acceptable for now or use `queryClient.invalidateQueries`.
+            queryClient.invalidateQueries({ queryKey: COMP_KEYS.all });
+        },
+        onError: (err) => toast.error(companyService.normalizeError(err))
+    });
+}
+
+export function useRemoveTechStack() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ companyId, stackId }: { companyId: string; stackId: string }) =>
+            companyService.removeTechStack(companyId, stackId),
+        onSuccess: () => {
+            toast.success("Technology removed");
+            queryClient.invalidateQueries({ queryKey: COMP_KEYS.all });
+        },
+        onError: (err) => toast.error(companyService.normalizeError(err))
+    });
+}
+
+// --- Gallery Hooks ---
+
+export function useGallery(slug: string) {
+    return useQuery({
+        queryKey: COMP_KEYS.gallery(slug),
+        queryFn: () => companyService.getGallery(slug),
+        enabled: !!slug,
+    });
+}
+
+export function useAddToGallery() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ companyId, url, type, caption }: { companyId: string; url: string; type: 'image' | 'video'; caption?: string }) =>
+            companyService.addToGallery(companyId, url, type, caption),
+        onSuccess: () => {
+            toast.success("Added to gallery");
+            queryClient.invalidateQueries({ queryKey: COMP_KEYS.all });
+        },
+        onError: (err) => toast.error(companyService.normalizeError(err))
+    });
+}
+
+export function useRemoveFromGallery() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ companyId, galleryId }: { companyId: string; galleryId: string }) =>
+            companyService.removeFromGallery(companyId, galleryId),
+        onSuccess: () => {
+            toast.success("Removed from gallery");
+            queryClient.invalidateQueries({ queryKey: COMP_KEYS.all });
+        },
+        onError: (err) => toast.error(companyService.normalizeError(err))
+    });
+}
+
+// --- Advocacy Hooks ---
+
+export function useNotifyEmployees() {
+    return useMutation({
+        mutationFn: ({ companyId, postId }: { companyId: string; postId: string }) =>
+            companyService.notifyEmployees(companyId, postId),
+        onSuccess: (data) => {
+            toast.success(data.message || "Employees notified successfully");
+        },
+        onError: (err) => toast.error(companyService.normalizeError(err))
+    });
+}
+
+export function useCompanyPosts(companyId: string) {
+    return useInfiniteQuery({
+        queryKey: ['company-posts', companyId],
+        queryFn: ({ pageParam }) => companyService.getCompanyPosts(companyId, pageParam),
+        getNextPageParam: (lastPage) => lastPage.nextCursor ? lastPage.nextCursor : undefined,
+        initialPageParam: undefined,
+        enabled: !!companyId,
+    });
+}
+

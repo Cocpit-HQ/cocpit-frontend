@@ -15,8 +15,11 @@ interface CreateJobModalProps {
   initialData?: Job
 }
 
+import { useActiveProfile } from "@/context/ActiveProfileContext"
+
 export function CreateJobModal({ open, onOpenChange, trigger, initialData }: CreateJobModalProps) {
   const { addJob } = useJobs()
+  const { activeProfile, isCompany } = useActiveProfile()
   const [internalOpen, setInternalOpen] = useState(false)
   const isControlled = open !== undefined
 
@@ -119,7 +122,7 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
         aboutCompany: formData.aboutCompany,
         activelyHiring: formData.activelyHiring,
         easyApply: formData.easyApply,
-
+        companyId: isCompany && activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined,
       }
 
       if (initialData?.id) {

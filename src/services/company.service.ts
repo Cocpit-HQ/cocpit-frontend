@@ -31,6 +31,34 @@ export interface CompanyMember {
     joined_at: string;
 }
 
+export interface CompanyTechStack {
+    stack_id: string;
+    name: string;
+    category?: string;
+}
+
+export interface CompanyGalleryItem {
+    gallery_id: string;
+    url: string;
+    type: 'image' | 'video';
+    caption?: string;
+    created_at: string;
+}
+
+export interface CompanyTechStack {
+    stack_id: string;
+    name: string;
+    category?: string;
+}
+
+export interface CompanyGalleryItem {
+    gallery_id: string;
+    url: string;
+    type: 'image' | 'video';
+    caption?: string;
+    created_at: string;
+}
+
 export const companyService = {
     async checkSlug(slug: string): Promise<boolean> {
         const res = await api.get(`/companies/check-slug`, { params: { slug } });
@@ -135,6 +163,52 @@ export const companyService = {
 
     async getAuditLogs(companyId: string, params: { page?: number, limit?: number, action?: string, actorId?: string }) {
         const res = await api.get(`/companies/${companyId}/audit-logs`, { params });
+        return res.data;
+    },
+
+    // --- Tech Stack ---
+    async getTechStack(slug: string): Promise<CompanyTechStack[]> {
+        const res = await api.get(`/companies/${slug}/tech-stack`);
+        return res.data;
+    },
+    async addTechStack(companyId: string, name: string, category?: string) {
+        const res = await api.post(`/companies/${companyId}/tech-stack`, { name, category });
+        return res.data;
+    },
+    async removeTechStack(companyId: string, stackId: string) {
+        const res = await api.delete(`/companies/${companyId}/tech-stack/${stackId}`);
+        return res.data;
+    },
+
+    // --- Gallery ---
+    async getGallery(slug: string): Promise<CompanyGalleryItem[]> {
+        const res = await api.get(`/companies/${slug}/gallery`);
+        return res.data;
+    },
+    async addToGallery(companyId: string, url: string, type: 'image' | 'video', caption?: string) {
+        const res = await api.post(`/companies/${companyId}/gallery`, { url, type, caption });
+        return res.data;
+    },
+    async removeFromGallery(companyId: string, galleryId: string) {
+        const res = await api.delete(`/companies/${companyId}/gallery/${galleryId}`);
+        return res.data;
+    },
+
+    // --- Advocacy ---
+
+
+    async getCompanyPosts(companyId: string, pageParam?: any) {
+        const params: any = { limit: 10 };
+        if (pageParam) {
+            params.cursorCreatedAt = pageParam.cursorCreatedAt;
+            params.cursorPostId = pageParam.cursorPostId;
+        }
+        const res = await api.get(`/companies/${companyId}/posts`, { params });
+        return res.data;
+    },
+
+    async notifyEmployees(companyId: string, postId: string | number) {
+        const res = await api.post(`/companies/${companyId}/posts/${postId}/notify`);
         return res.data;
     },
 

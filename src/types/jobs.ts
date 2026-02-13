@@ -26,6 +26,9 @@ export interface Job {
   applicants: number;
   salary: string;
   logo: string;
+  companyLogo?: string;
+  companySlug?: string;
+  companyId?: string;
   isOffer?: boolean;
   status?: JobStatus;
   isSaved?: boolean;
@@ -81,6 +84,7 @@ export interface JobFormData {
   aboutCompany: string;
   activelyHiring: boolean;
   easyApply: boolean;
+  companyId?: string;
 
 }
 

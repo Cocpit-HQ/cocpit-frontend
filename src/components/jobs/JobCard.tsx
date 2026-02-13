@@ -103,9 +103,15 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
         <div className="flex items-start justify-between gap-4">
           {/* Logo & Info */}
           <Link href={`/jobs/${job.id}`} className="flex items-start gap-4 flex-1">
-            <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br ${job.logo} flex items-center justify-center text-white font-bold text-xl shadow-inner shrink-0`}>
-              {job.company.charAt(0)}
-            </div>
+            {job.companyLogo ? (
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border border-border shadow-inner shrink-0 relative">
+                <img src={job.companyLogo} alt={job.company} className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br ${job.logo} flex items-center justify-center text-white font-bold text-xl shadow-inner shrink-0`}>
+                {job.company.charAt(0)}
+              </div>
+            )}
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1 flex-wrap">

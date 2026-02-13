@@ -1,14 +1,15 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Image, Video, Plus, Trash2, Camera, Smile, FileText, Sparkles, Bold, Italic, Heading2, Heading3, List, ListOrdered, Link as LinkIcon, Unlink, Loader2, Eye, EyeOff } from 'lucide-react';
+import { X, Image, Video, Plus, Trash2, Camera, Smile, FileText, Sparkles, Bold, Italic, Heading2, Heading3, List, ListOrdered, Link as LinkIcon, Unlink, Loader2, Eye, EyeOff, Type, BarChart2, Edit2 } from 'lucide-react';
 import { useFeed } from '@/context/FeedContext';
 import { usePostUpload } from '@/context/PostUploadContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { createPost, CreatePostRequest } from '@/services/api/feed';
 import { getPostById, updatePost, UpdatePostRequest } from '@/services/api/posts';
 import { uploadMedia } from '@/services/api/media';
-import { Post } from '@/types/entities';
+import { Post, PostVisibility } from '@/types/entities';
 import { MediaCropper } from './MediaCropper';
 import getCroppedImg, { getPaddedImg } from '@/lib/canvasUtils';
 import { PostPreview } from './PostPreview';
@@ -17,6 +18,9 @@ import { toast } from 'sonner';
 // Import Area type for onCropComplete
 import { Area } from 'react-easy-crop';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { companyService } from '@/services/company.service';
+import { useCompany } from '@/hooks/useCompany';
+import { useSession } from 'next-auth/react';
 
 export type PostType = 'text' | 'photo' | 'poll' | 'video' | 'article';
 
@@ -27,6 +31,11 @@ export interface CreatePostModalProps {
   editPostId?: string;
   onUpdate?: (post: Partial<Post>) => void;
   sharedPostId?: string;
+  companyId?: string;
+  companyName?: string;
+  companyLogo?: string;
+  onPostCreated?: () => void;
+  initialSharedPost?: any; // Renamed to avoid collision with state
 }
 
 interface MediaItem {
@@ -148,24 +157,36 @@ const RichTextEditor = ({ content, onChange }: { content: string, onChange: (htm
         className="prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[300px] px-6 py-4"
         style={{ outline: 'none' }}
       />
-      <style jsx global>{`
-        .prose ul { list-style-type: disc; padding-left: 1.5em; }
-        .prose ol { list-style-type: decimal; padding-left: 1.5em; }
-        .prose h2 { font-size: 1.5em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
-        .prose h3 { font-size: 1.25em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
-        .prose p { margin-bottom: 0.75em; line-height: 1.6; }
-        .prose a { color: #3b82f6; text-decoration: underline; cursor: pointer; }
-      `}</style>
+
     </div>
   );
 };
 
-export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', editPostId, onUpdate, sharedPostId }: CreatePostModalProps) {
+export function CreatePostModal({
+  isOpen,
+  onClose,
+  initialPostType = 'text',
+  editPostId,
+  onUpdate,
+  sharedPostId,
+  companyId: propCompanyId,
+  companyName,
+  companyLogo,
+  onPostCreated,
+  initialSharedPost
+}: CreatePostModalProps) {
   const isMobile = useIsMobile();
-  const { addPost, currentUser } = useFeed();
+  const { addPost } = useFeed();
+  const { data: session } = useSession();
+  const currentUser = session?.user;
+
+  // We rely on passed props for company info since searching by ID via useCompany(slug) is not supported 
+  // without a specific getCompanyById endpoint.
+  const company = propCompanyId ? { name: companyName || 'Company', logo_url: companyLogo || '' } : null;
   const { startUpload } = usePostUpload();
   const { activeProfile, isCompany } = useActiveProfile();
   const [postType, setPostType] = useState<PostType>(initialPostType);
+  const [notifyEmployees, setNotifyEmployees] = useState(false);
   const [description, setDescription] = useState('');
   const [photoCaption, setPhotoCaption] = useState('');
   const [videoCaption, setVideoCaption] = useState('');
@@ -204,7 +225,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
   const [aspectRatio, setAspectRatio] = useState(4 / 5);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [previewMediaUrls, setPreviewMediaUrls] = useState<string[]>([]);
-  const [sharedPost, setSharedPost] = useState<Post | null>(null);
+  const [sharedPost, setSharedPost] = useState<Post | null>(initialSharedPost || null);
 
   // Refs to track media for cleanup without triggering effects
   const uploadedImagesRef = useRef<MediaItem[]>([]);
@@ -362,6 +383,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
       setIsLoadingPost(false);
       setOriginalPost(null);
       setSharedPost(null);
+      setNotifyEmployees(false); // Reset notifyEmployees
 
       // Reset Cropper/Preview State
       setActiveImageIndex(0);
@@ -380,7 +402,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
 
   // Helper function to create a MediaItem
   const createMediaItem = (file: File): MediaItem => ({
-    id: `${Date.now()}-${Math.random()}`,
+    id: `${Date.now()} -${Math.random()} `,
     url: URL.createObjectURL(file),
     file,
     type: file.type.startsWith('image/') ? 'image' : 'video',
@@ -661,7 +683,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
   const renderEmojiPicker = (isDesktop: boolean) => (
     <div className={isDesktop ? "absolute top-full right-0 mt-2 rounded-lg shadow-xl w-[240px] bg-card border border-border z-[60]" : "mt-2 bg-background border rounded-lg shadow-lg"}>
       <div className="p-2">
-        <div className={`grid ${isDesktop ? 'grid-cols-5' : 'grid-cols-8'} gap-1 overflow-y-auto max-h-[200px]`}>
+        <div className={`grid ${isDesktop ? 'grid-cols-5' : 'grid-cols-8'} gap - 1 overflow - y - auto max - h - [200px]`}>
           {emojiList.map((emoji) => (
             <button
               key={emoji}
@@ -703,7 +725,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
   const handlePost = async () => {
     const { text: finalContent } = getActiveState();
 
-    // Prepare content for background upload
+    // Prepare content
     const payload: CreatePostRequest = {
       title: postType === 'article' ? articleTitle : '',
       content: finalContent,
@@ -712,8 +734,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
       post_type: postType === 'photo' ? 'image' :
         postType === 'article' ? 'article' :
           postType, // video, poll, text
-      // shared_post_id: sharedPostId // handled below
-      companyId: isCompany && activeProfile ? activeProfile.id : undefined
+      companyId: propCompanyId
     };
 
     if (sharedPostId) payload.shared_post_id = sharedPostId;
@@ -738,7 +759,6 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
           // Handle 'Fit' (Contain) Mode
           if (item.fitMode === 'contain') {
             try {
-              // Use global aspectRatio because that's what the UI preview shows
               const blob = await getPaddedImg(item.url, aspectRatio);
               if (blob) {
                 return new File([blob], item.file.name, { type: 'image/jpeg' });
@@ -761,7 +781,6 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
             }
           }
 
-          // Fallback to original
           return item.file;
         }
         return undefined;
@@ -774,34 +793,10 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
       filesToUpload.push(articleCoverImage.file);
     }
 
-    // For edit mode, we still use the old blocking flow because "editing in background" is complex (optimistic updates on existing posts)
+    // EDIT MODE
     if (editPostId) {
       setIsSubmitting(true);
       try {
-        // ... (Keep existing Edit logic or replicate minimal parts? 
-        // The instruction said "Update to use background upload". 
-        // But usually Edit is distinct. Let's keep Edit blocking for safety as per plan "New posts")
-
-        // For now, let's just delegate NEW posts to background.
-        // ... Re-implementing existing Edit logic here would be verbose. 
-        // Ideally we should have split Edit and Create.
-        // I will assume for this step we focused on CREATE.
-        // But I must not break Edit.
-
-        // Re-using the prompt logic: "Remove loading state logic for submission" implies we replace it.
-        // But if I replace handlePost entirely, I lose the Edit logic which was inside it in the Previous File Content.
-
-        // I will re-implement the Edit logic briefly here to be safe, or just throw an error if I can't read it all.
-        // Actually, I should probably just handle the CREATE case and fall back for EDIT.
-
-        // ... (Existing Edit Logic from previous file view) ...
-        // Since I can't see the exact Edit logic in the prompt's context window easily (it was cut off or mixed), 
-        // I will try to implement the "Create" part using startUpload and keep "Edit" as a TODO or try to preserve it if I can see it.
-
-        // REVIEW: The previous file view (Step 88) shows handlePost has both Edit (via if editPostId) and Create.
-        // I will preserve the Edit logic from Step 88.
-
-        // --- EDIT LOGIC PRESERVED ---
         const updatePayload: UpdatePostRequest = {};
         if (originalPost) {
           if (originalPost.content !== finalContent) updatePayload.content = finalContent;
@@ -816,7 +811,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
 
         if (Object.keys(updatePayload).length > 0) {
           await updatePost(editPostId, updatePayload);
-          if (onUpdate) onUpdate({ ...originalPost, ...updatePayload } as Post); // Simplified mapping
+          if (onUpdate) onUpdate({ ...originalPost, ...updatePayload } as Post);
           toast.success("Post updated");
         }
         onClose();
@@ -829,10 +824,63 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
       return;
     }
 
-    // --- CREATE FLOW (Background) ---
-    startUpload(payload, filesToUpload);
-    onClose();
-    // No toast here, the global indicator handles it.
+    // CREATE FLOW
+    if (propCompanyId) {
+      // COMPANY POST - Foreground Upload to allow Notification
+      setIsSubmitting(true);
+      try {
+        // 1. Upload Media
+        let mediaUrls: string[] = [];
+        if (filesToUpload.length > 0) {
+          const uploaded = await uploadMedia(filesToUpload);
+          mediaUrls = uploaded.map(m => m.url);
+        }
+        payload.media_urls = mediaUrls;
+
+        // 2. Create Post
+        const response = await createPost(payload);
+
+        // 3. Notify
+        if (notifyEmployees) {
+          await companyService.notifyEmployees(propCompanyId, response.postId);
+          toast.success("Post created and employees notified!");
+        } else {
+          toast.success("Post published!");
+        }
+
+        if (onPostCreated) onPostCreated();
+
+        // Reset and Close
+        setDescription('');
+        setUploadedImages([]);
+        setUploadedVideos([]);
+        onClose();
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to create company post");
+      } finally {
+        setIsSubmitting(false);
+        setNotifyEmployees(false);
+      }
+    } else {
+      // USER POST - Background Upload
+      startUpload(payload, filesToUpload);
+      onClose();
+
+      if (onPostCreated) onPostCreated();
+      // Reset form
+      setDescription('');
+      setUploadedImages([]);
+      setUploadedVideos([]);
+      setPhotoCaption('');
+      setVideoCaption('');
+      setArticleTitle('');
+      setArticleContent('');
+      setArticleCoverImage(null);
+      setPollQuestion('');
+      setPollOptions([{ id: '1', text: '' }, { id: '2', text: '' }]);
+      setPollDuration('1 week');
+    }
   };
 
   const isPostDisabled = () => {
@@ -873,12 +921,12 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
           className={`relative w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col ${isMobile
             ? 'rounded-2xl bg-zinc-900/95 backdrop-blur-lg border border-white/10 shadow-2xl overflow-hidden'
             : 'rounded-lg bg-card shadow-2xl overflow-visible'
-            }`}
+            } `}
         >
           {/* Header */}
           <div
             className={`flex items-center justify-between px-6 py-4 border-b border-border ${isMobile ? '' : 'bg-card'
-              }`}
+              } `}
           >
             <h2 className="text-xl font-semibold text-foreground">
               {editPostId ? 'Edit Post' : (isPreviewMode ? 'Preview Post' : 'Create a post')}
@@ -903,7 +951,13 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                   content={postType === 'photo' ? photoCaption : postType === 'video' ? videoCaption : description}
                   mediaUrls={previewMediaUrls}
                   postType={postType === 'photo' ? 'image' : 'video'} // Only photo/video use preview really
-                  currentUser={currentUser}
+                  currentUser={propCompanyId ? {
+                    name: companyName || company?.name || 'Company',
+                    avatar: companyLogo || company?.logo_url || undefined
+                  } : {
+                    name: currentUser?.name || 'User',
+                    avatar: currentUser?.image || undefined
+                  }}
                   aspectRatio={aspectRatio}
                 />
               </div>
@@ -972,7 +1026,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                                     key={img.id}
                                     onClick={() => setActiveImageIndex(idx)}
                                     className={`relative w-16 h-16 rounded-md overflow-hidden border-2 flex-shrink-0 ${idx === activeImageIndex ? 'border-primary' : 'border-transparent opacity-70'
-                                      }`}
+                                      } `}
                                     type="button"
                                   >
                                     <img src={img.url} className="w-full h-full object-cover" alt="Thumbnail" />
@@ -1001,7 +1055,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                             <div className="flex justify-end mt-1">
                               <button
                                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                className={`p-2 rounded-full transition-colors ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'}`}
+                                className={`p-2 rounded-full transition-colors ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'} `}
                               >
                                 <Smile className="w-5 h-5" />
                               </button>
@@ -1061,7 +1115,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                             <div className="flex justify-end mt-1">
                               <button
                                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                className={`p-2 rounded-full transition-colors ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'}`}
+                                className={`p - 2 rounded - full transition - colors ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'} `}
                               >
                                 <Smile className="w-5 h-5" />
                               </button>
@@ -1083,7 +1137,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                             <div className="p-2 border-t bg-muted/10 flex items-center justify-between">
                               <button
                                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                className={`p-2 rounded-full transition-colors ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'}`}
+                                className={`p - 2 rounded - full transition - colors ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'} `}
                               >
                                 <Smile className="w-6 h-6" />
                               </button>
@@ -1115,7 +1169,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                                   type="text"
                                   value={option.text}
                                   onChange={(e) => updatePollOption(option.id, e.target.value)}
-                                  placeholder={`Option ${index + 1}`}
+                                  placeholder={`Option ${index + 1} `}
                                   className="flex-grow px-4 py-2.5 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                 />
                                 {!editPostId && pollOptions.length > 2 && (
@@ -1156,21 +1210,53 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                 ) : (
                   // ORIGINAL POST UI (Desktop)
                   <>
+                    {/* Post Type Tabs - Only Desktop */}
+                    {!editPostId && !sharedPost && (
+                      <div className="px-6 pt-4 flex items-center gap-1 border-b border-border bg-muted/10">
+                        {(['text', 'photo', 'video', 'article', 'poll'] as const).map((t) => (
+                          <button
+                            key={t}
+                            onClick={() => setPostType(t)}
+                            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${postType === t
+                              ? 'border-primary text-primary'
+                              : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                              } `}
+                          >
+                            {t === 'text' && <Type className="w-4 h-4" />}
+                            {t === 'photo' && <Image className="w-4 h-4" />}
+                            {t === 'video' && <Video className="w-4 h-4" />}
+                            {t === 'article' && <FileText className="w-4 h-4" />}
+                            {t === 'poll' && <BarChart2 className="w-4 h-4" />}
+                            <span className="capitalize">{t}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     {/* Profile Section - Only show in Editor Mode */}
                     <div className="px-6 pt-6 pb-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
-                          <img
-                            src="/assets/pngegg.png"
-                            alt="Your profile"
-                            className="w-full h-full object-cover"
-                          />
+                          {propCompanyId ? (
+                            <img
+                              src={company?.logo_url || '/assets/pngegg.png'}
+                              alt={company?.name || 'Company'}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <img
+                              src={currentUser?.image || '/assets/pngegg.png'}
+                              alt="Your profile"
+                              className="w-full h-full object-cover"
+                            />
+                          )}
                         </div>
                         <div>
-                          <h3 className="text-foreground">{currentUser?.name || 'Sally Liang'}</h3>
+                          <h3 className="text-foreground">
+                            {propCompanyId ? (company?.name || 'Company') : (currentUser?.name || 'Sally Liang')}
+                          </h3>
                           <div className="flex items-center gap-2">
                             <p className="text-sm text-muted-foreground">Post to Anyone</p>
-                            {/* Visibility Toggle (only if editing, or could be new feature too) */}
+                            {/* Visibility Toggle */}
                             {editPostId && (
                               <button
                                 onClick={() => setVisibility(visibility === 'public' ? 'private' : 'public')}
@@ -1191,7 +1277,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                             className={`px-3 py-1 text-sm rounded-full transition-colors ${postCategory === category
                               ? 'bg-primary text-primary-foreground'
                               : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                              }`}
+                              } `}
                           >
                             {category}
                           </button>
@@ -1216,7 +1302,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                               <button
                                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                                 type="button"
-                                className={`p-2 rounded-md transition-colors flex items-center gap-1 ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+                                className={`p-2 rounded-md transition-colors flex items-center gap-1 ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'} `}
                                 title="Add emoji"
                               >
                                 <Smile className="w-5 h-5" />
@@ -1310,7 +1396,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                                   className={`relative group aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-300 animate-in fade-in zoom-in-95 slide-in-from-bottom-2 ${idx === activeImageIndex
                                     ? 'border-primary ring-2 ring-primary/20 scale-95 shadow-md'
                                     : 'border-transparent hover:border-border/50 hover:shadow-sm hover:scale-[1.02]'
-                                    }`}
+                                    } `}
                                   onClick={() => setActiveImageIndex(idx)}
                                 >
                                   <img
@@ -1361,7 +1447,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                                   <button
                                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                                     type="button"
-                                    className={`p-2 rounded-md transition-colors flex items-center gap-1 ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+                                    className={`p - 2 rounded - md transition - colors flex items - center gap - 1 ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'} `}
                                     title="Add emoji"
                                   >
                                     <Smile className="w-5 h-5" />
@@ -1430,7 +1516,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                                     <button
                                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                                       type="button"
-                                      className={`p-2 rounded-md transition-colors flex items-center gap-1 ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+                                      className={`p-2 rounded-md transition-colors flex items-center gap-1 ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'} `}
                                       title="Add emoji"
                                     >
                                       <Smile className="w-5 h-5" />
@@ -1532,7 +1618,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                                     type="text"
                                     value={option.text}
                                     onChange={(e) => updatePollOption(option.id, e.target.value)}
-                                    placeholder={`Option ${index + 1}`}
+                                    placeholder={`Option ${index + 1} `}
                                     className="flex-grow px-4 py-2.5 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                   />
                                   {!editPostId && pollOptions.length > 2 && (
@@ -1578,7 +1664,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
 
 
           {/* Footer Actions */}
-          <div className={`flex items-center justify-end gap-3 px-6 py-4 border-t border-border ${isMobile ? '' : 'bg-card'}`}>
+          <div className={`flex items-center justify-end gap-3 px-6 py-4 border-t border-border ${isMobile ? '' : 'bg-card'} `}>
             {isPreviewMode ? (
               // Preview Mode Buttons
               <button
@@ -1600,6 +1686,22 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
                     Preview
                   </button>
                 )}
+
+                {/* Notify Employees Checkbox */}
+                {propCompanyId && !editPostId && (
+                  <div className="flex items-center gap-2 mr-auto">
+                    <input
+                      type="checkbox"
+                      id="notifyEmployees"
+                      checked={notifyEmployees}
+                      onChange={(e) => setNotifyEmployees(e.target.checked)}
+                      className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                    />
+                    <label htmlFor="notifyEmployees" className="text-sm text-foreground cursor-pointer select-none">
+                      Notify Members
+                    </label>
+                  </div>
+                )}
                 <button
                   onClick={onClose}
                   className={`px-6 py-2.5 ${isMobile ? 'rounded-md' : 'rounded-lg'} transition-colors font-semibold text-muted-foreground hover:bg-muted`}
@@ -1615,7 +1717,7 @@ export function CreatePostModal({ isOpen, onClose, initialPostType = 'text', edi
               className={`px-8 py-2.5 font-semibold ${isMobile ? 'rounded-md' : 'rounded-lg'} transition-all ${isPostDisabled()
                 ? 'bg-muted text-muted-foreground cursor-not-allowed'
                 : 'bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white hover:opacity-90'
-                }`}
+                } `}
             >
               {isSubmitting ? 'Saving...' : (editPostId ? 'Save' : 'Post')}
             </button>

@@ -42,6 +42,9 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
         } else if (notification.type === 'comment' && notification.reference_id) {
             // Handle comment links (extract post ID if possible, or just go to post)
             // Ideally reference_id for comment is post_id, and we can pass commentId via query param if we had it
+        } else if (notification.type === 'comment' && notification.reference_id) {
+            router.push(`/post/${notification.reference_id}`)
+        } else if (notification.type === 'advocacy' && notification.reference_id) {
             router.push(`/post/${notification.reference_id}`)
         }
     }
@@ -64,9 +67,15 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
             <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-start">
                     <p className="text-sm text-foreground">
-                        <span className="font-semibold">{notification.actor_name}</span>{" "}
+                        {notification.type !== 'advocacy' && (
+                            <span className="font-semibold">{notification.actor_name}</span>
+                        )}
+                        {" "}
                         <span className="text-muted-foreground">
-                            {notification.text.replace(notification.actor_name || '', '').trim()}
+                            {notification.type === 'advocacy'
+                                ? notification.text
+                                : notification.text.replace(notification.actor_name || '', '').trim()
+                            }
                         </span>
                     </p>
                     <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">

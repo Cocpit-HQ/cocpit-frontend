@@ -48,6 +48,9 @@ function transformJob(backendJob: any): Job {
         applicants: backendJob.applicants || backendJob.applicants_count || 0,
         salary: formatSalary(backendJob.salary_min, backendJob.salary_max),
         logo: `gradient-${(parseInt(backendJob.job_id.slice(0, 8), 16) % 6) + 1}`,
+        companyLogo: backendJob.company_logo,
+        companySlug: backendJob.company_slug,
+        companyId: backendJob.company_id,
         isOffer: backendJob.is_offer,
         isSaved: backendJob.isSaved,
         createdAt: backendJob.created_at,
@@ -265,6 +268,7 @@ export const createJob = async (data: JobFormData): Promise<void> => {
         easy_apply: data.easyApply,
         minSalary: data.minSalary,
         maxSalary: data.maxSalary,
+        company_id: data.companyId,
 
         skills: data.skills.split(",").map(s => s.trim()).filter(Boolean)
     };

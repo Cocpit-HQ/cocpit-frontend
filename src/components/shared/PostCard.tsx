@@ -6,14 +6,16 @@ import { Post } from '@/types/entities';
 import { PostOptionsMenu } from '@/components/home/PostOptionsMenu';
 import DOMPurify from 'dompurify';
 
+
 interface PostCardProps {
     post: any; // Using any to handle both Entity Post and Backend Saved Post
     href?: string;
     onDelete?: (id: string) => void;
     isOwnPost?: boolean;
+    companyId?: string;
 }
 
-export default function PostCard({ post, href, onDelete, isOwnPost }: PostCardProps) {
+export default function PostCard({ post, href, onDelete, isOwnPost, companyId }: PostCardProps) {
     // Support both backend (post_id, image_url, media[]) and frontend (id, imageSrc, images[])
     const id = post.post_id || post.id;
     const content = post.content || '';
@@ -84,6 +86,7 @@ export default function PostCard({ post, href, onDelete, isOwnPost }: PostCardPr
                         className="bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60"
                         postType={post.poll ? 'poll' : (displayImage ? 'image' : 'text')}
                         visibility={post.visibility || 'public'}
+                        companyId={companyId}
                     />
                 </div>
             )}

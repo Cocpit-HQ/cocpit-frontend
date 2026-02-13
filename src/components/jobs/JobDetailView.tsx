@@ -116,17 +116,30 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
         {/* Job Header Card */}
         <div className="bg-card border border-border rounded-xl p-6 mb-6">
           <div className="flex flex-col md:flex-row md:items-start gap-6">
-            <div className={`w-20 h-20 rounded-xl bg-gradient-to-br ${job.logo} flex items-center justify-center text-white font-bold text-3xl shadow-inner shrink-0`}>
-              {job.company.charAt(0)}
-            </div>
+            {job.companyLogo ? (
+              <div className="w-20 h-20 rounded-xl overflow-hidden border border-border shadow-inner shrink-0 relative">
+                <img src={job.companyLogo} alt={job.company} className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <div className={`w-20 h-20 rounded-xl bg-gradient-to-br ${job.logo} flex items-center justify-center text-white font-bold text-3xl shadow-inner shrink-0`}>
+                {job.company.charAt(0)}
+              </div>
+            )}
 
             <div className="flex-1">
               <h1 className="text-2xl font-bold mb-2">{job.title}</h1>
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
-                <span className="font-medium text-foreground flex items-center gap-1.5">
-                  <Building className="w-4 h-4" />
-                  {job.company}
-                </span>
+                {job.companySlug ? (
+                  <Link href={`/company/${job.companySlug}`} className="font-medium text-foreground flex items-center gap-1.5 hover:underline">
+                    <Building className="w-4 h-4" />
+                    {job.company}
+                  </Link>
+                ) : (
+                  <span className="font-medium text-foreground flex items-center gap-1.5">
+                    <Building className="w-4 h-4" />
+                    {job.company}
+                  </span>
+                )}
                 <span className="flex items-center gap-1.5">
                   <MapPin className="w-4 h-4" />
                   {job.location}

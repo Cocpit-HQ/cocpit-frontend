@@ -8,6 +8,10 @@ import { CompanyHeader } from "@/components/companies/company-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CompanyTechStack } from "@/components/companies/company-tech-stack";
+import { CompanyGallery } from "@/components/companies/company-gallery";
+import { CompanyPosts } from "@/components/companies/company-posts";
+import { CreatePostButton } from "@/components/companies/CreatePostCompanyButton";
 
 export default function CompanyPage() {
     const params = useParams();
@@ -29,35 +33,41 @@ export default function CompanyPage() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-background">
+        <div className="flex flex-col min-h-screen bg-background pb-12">
             <CompanyHeader company={company} isLoading={isLoading} />
 
-            <div className="container px-4 md:px-6">
+            <div className="container max-w-6xl px-4 md:px-6 mx-auto">
                 <Tabs defaultValue="home" className="w-full">
-                    <TabsList className="w-full justify-start h-auto p-0 bg-transparent border-b rounded-none mb-6">
+                    <TabsList className="w-full justify-start h-auto p-1 bg-muted/40 rounded-lg mb-8 overflow-x-auto flex-nowrap">
                         <TabsTrigger
                             value="home"
-                            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3"
+                            className="rounded-md px-4 py-2 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
                         >
                             Home
                         </TabsTrigger>
                         <TabsTrigger
                             value="about"
-                            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3"
+                            className="rounded-md px-4 py-2 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
                         >
                             About
                         </TabsTrigger>
                         <TabsTrigger
                             value="jobs"
-                            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3"
+                            className="rounded-md px-4 py-2 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
                         >
                             Jobs
                         </TabsTrigger>
                         <TabsTrigger
                             value="posts"
-                            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3"
+                            className="rounded-md px-4 py-2 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
                         >
                             Posts
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="tech-stack"
+                            className="rounded-md px-4 py-2 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                        >
+                            Tech Stack
                         </TabsTrigger>
                     </TabsList>
 
@@ -123,6 +133,10 @@ export default function CompanyPage() {
                                         </div>
                                     )}
                                 </div>
+
+                                <div className="pt-6 border-t">
+                                    {company ? <CompanyGallery company={company} /> : <Skeleton className="h-40 w-full" />}
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -133,10 +147,32 @@ export default function CompanyPage() {
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="posts">
-                        <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-lg">
-                            No posts yet.
+                    <TabsContent value="posts" className="mt-6">
+                        <div className="flex justify-end mb-6">
+                            <CreatePostButton
+                                companyId={company?.company_id}
+                                companyName={company?.name}
+                                companyLogo={company?.logo_url}
+                            />
                         </div>
+                        {company ? (
+                            <CompanyPosts companyId={company.company_id} />
+                        ) : (
+                            <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-lg">
+                                Loading posts...
+                            </div>
+                        )}
+                    </TabsContent>
+
+                    <TabsContent value="tech-stack">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Technology Stack</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {company ? <CompanyTechStack company={company} /> : <div className="space-y-2"><Skeleton className="h-8 w-full" /><Skeleton className="h-8 w-2/3" /></div>}
+                            </CardContent>
+                        </Card>
                     </TabsContent>
                 </Tabs>
             </div>

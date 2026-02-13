@@ -10,7 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Notification } from "@/types/social"
-import { getNotifications, markNotificationAsRead } from "@/services/api/notifications"
+import { getNotifications, markNotificationAsRead, markAllNotificationsRead } from "@/services/api/notifications"
 import { useSession } from "next-auth/react"
 import { formatDistanceToNow } from "date-fns"
 import { useSocket } from "@/context/SocketContext"
@@ -72,10 +72,12 @@ export function NotificationPopover() {
   }
 
   const markAllAsRead = async () => {
-    // TODO: Implement bulk mark as read in API
-    const unread = notifications.filter(n => !n.is_read)
-    for (const n of unread) {
-      await handleMarkAsRead(n.notification_id)
+    try {
+      const companyId = (isCompany && activeProfile) ? activeProfile.id : undefined;
+      await markAllNotificationsRead(companyId);
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch (error) {
+      console.error("Failed to mark all as read:", error);
     }
   }
 

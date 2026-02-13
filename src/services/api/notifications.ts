@@ -12,10 +12,7 @@ export const markNotificationAsRead = async (id: string) => {
     return response.data;
 };
 
-export const markAllNotificationsRead = async () => {
-    // Not implemented in backend yet based on routes, but documented in plan.
-    // Uncomment when backend supports it
-    // const response = await api.patch("/notifications/read-all");
-    // return response.data;
-    return Promise.resolve();
+export const markAllNotificationsRead = async (companyId?: string) => {
+    const response = await api.patch("/notifications/read-all", { companyId });
+    return response.data;
 };

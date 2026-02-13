@@ -74,6 +74,8 @@ export interface Poll {
   is_active?: boolean; // backend calculated status
 }
 
+export type PostVisibility = 'public' | 'private';
+
 export interface Post {
   id: string;
   authorId: string;
@@ -94,7 +96,7 @@ export interface Post {
   shares: string;
   commentData?: Comment[];
   category?: 'Personal' | 'Professional' | 'Achievement';
-  visibility?: 'public' | 'private';
+  visibility?: PostVisibility;
   poll?: Poll | null;
   shared_post?: Post | null;
   isAvailable?: boolean;

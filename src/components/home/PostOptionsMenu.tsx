@@ -29,7 +29,11 @@ interface PostOptionsMenuProps {
   onToggleVisibility?: (id: string) => void; // Keep for compatibility if needed
   postType?: string; // Need post type to check for poll
   visibility?: 'public' | 'private';
+  companyId?: string;
 }
+
+import { useNotifyEmployees } from '@/hooks/useCompany';
+import { Megaphone } from 'lucide-react';
 
 export function PostOptionsMenu({
   postId,
@@ -43,26 +47,27 @@ export function PostOptionsMenu({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { updatePostInFeed } = useFeed();
+  const { mutate: notifyEmployees } = useNotifyEmployees();
 
   if (!isOwnPost) return null;
 
   const isPoll = postType === 'poll';
 
   const handleToggleVisibility = async (e: React.MouseEvent) => {
-      e.stopPropagation();
-      const newVisibility = visibility === 'public' ? 'private' : 'public';
+    e.stopPropagation();
+    const newVisibility = visibility === 'public' ? 'private' : 'public';
 
-      // Optimistic update
-      updatePostInFeed(postId, { visibility: newVisibility });
-      if (onToggleVisibility) onToggleVisibility(postId);
+    // Optimistic update
+    updatePostInFeed(postId, { visibility: newVisibility });
+    if (onToggleVisibility) onToggleVisibility(postId);
 
-      try {
-          await updatePost(postId, { visibility: newVisibility });
-      } catch (err) {
-          console.error("Failed to toggle visibility", err);
-          // Revert
-          updatePostInFeed(postId, { visibility: visibility });
-      }
+    try {
+      await updatePost(postId, { visibility: newVisibility });
+    } catch (err) {
+      console.error("Failed to toggle visibility", err);
+      // Revert
+      updatePostInFeed(postId, { visibility: visibility });
+    }
   };
 
   return (
@@ -78,26 +83,26 @@ export function PostOptionsMenu({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 bg-card border-border">
             {!isPoll && (
-                <>
-                    <DropdownMenuItem
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setIsEditModalOpen(true);
-                        }}
-                        className="cursor-pointer"
-                    >
-                        <Edit2 className="w-4 h-4 mr-2" />
-                        <span>Edit Post</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                        onClick={handleToggleVisibility}
-                        className="cursor-pointer"
-                    >
-                        {visibility === 'private' ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
-                        <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                </>
+              <>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditModalOpen(true);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <Edit2 className="w-4 h-4 mr-2" />
+                  <span>Edit Post</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleToggleVisibility}
+                  className="cursor-pointer"
+                >
+                  {visibility === 'private' ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+                  <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
             )}
             <DropdownMenuItem
               onClick={(e) => {
