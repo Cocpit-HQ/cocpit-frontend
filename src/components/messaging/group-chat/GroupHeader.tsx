@@ -24,10 +24,10 @@ interface GroupHeaderProps {
 }
 
 export default function GroupHeader({ onOpenDetails, onAddMember, onBack, typingStatus, selectedMessage, onMessageAction, currentUserId }: GroupHeaderProps) {
-    const { activeGroup } = useGroupChat();
+    const { activeGroup, isInactive } = useGroupChat();
     const isMobile = useIsMobile();
     const { user } = useAuth();
-    const isAdmin = activeGroup?.admin_id === (user?.id || (user as { user_id?: string } | null)?.user_id);
+    const isAdmin = activeGroup?.admin_id === (user?.id || (user as { user_id?: string } | null)?.user_id) && !isInactive;
 
     const isMyMessage = selectedMessage && (selectedMessage.sender === 'me' || (selectedMessage.senderId && String(selectedMessage.senderId) === String(currentUserId)));
 
@@ -65,14 +65,20 @@ export default function GroupHeader({ onOpenDetails, onAddMember, onBack, typing
                             )}
                         </div>
                         <div>
-                            <h2 className="font-semibold text-foreground">{activeGroup.conversation_name}</h2>
-                            <p className="text-xs text-muted-foreground">
-                                {typingStatus ? (
+                            {typingStatus ? (
+                                <p className="text-xs text-muted-foreground">
                                     <span className="text-primary italic font-medium animate-pulse">{typingStatus}</span>
-                                ) : (
-                                    `${activeGroup.members?.length || 0} members`
-                                )}
-                            </p>
+                                </p>
+                            ) : (
+                                <div className="flex flex-col">
+                                    <h2 className="font-semibold text-sm leading-none flex items-center gap-2">
+                                        {activeGroup.conversation_name}
+                                    </h2>
+                                    <p className="text-muted-foreground text-xs">
+                                        {activeGroup.members.length} {activeGroup.members.length === 1 ? 'member' : 'members'}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 ) : (
@@ -116,14 +122,16 @@ export default function GroupHeader({ onOpenDetails, onAddMember, onBack, typing
                     </div>
                 ) : (
                     <>
-                        {isAdmin && (
+                        {!isInactive && isAdmin && (
                             <Button variant="ghost" size="icon" onClick={onAddMember} title="Add Member">
                                 <Plus className="h-5 w-5" />
                             </Button>
                         )}
-                        <Button variant="ghost" size="icon" onClick={onOpenDetails} title="Group Info">
-                            <Info className="h-5 w-5" />
-                        </Button>
+                        {!isInactive && (
+                            <Button variant="ghost" size="icon" onClick={onOpenDetails} title="Group Info">
+                                <Info className="h-5 w-5" />
+                            </Button>
+                        )}
                     </>
                 )}
             </div>

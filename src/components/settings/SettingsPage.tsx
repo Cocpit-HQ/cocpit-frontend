@@ -307,17 +307,20 @@ export default function SettingsPage() {
       return
     }
 
+    if (!deletePassword) {
+      toast.error("Please enter your password to confirm")
+      return
+    }
+
     try {
       setIsDeleting(true)
-      // Existing backend logic call - User asked NOT to implement backend deletion logic yet, 
-      // but since it exists, I will just keep it but note it's wired to the new modal.
-      // Actually, I'll just simulate a success for now to follow "Do NOT implement backend" literally.
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      toast.success("Account deleted successfully (Simulated)")
+      await deleteAccount(deletePassword)
+      toast.success("Account deleted successfully")
       await logout()
       router.push("/")
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to delete account")
+      const errorMessage = err.response?.data?.message || "Failed to delete account"
+      toast.error(errorMessage)
       setIsDeleting(false)
     }
   }
@@ -628,9 +631,11 @@ export default function SettingsPage() {
               <Trash2 className="w-5 h-5" />
               Delete Account?
             </DialogTitle>
-            <DialogDescription className="text-left space-y-2 pt-2">
-              <p>This action is <span className="font-bold text-destructive">permanent and irreversible</span>.</p>
-              <p>All your profile data, connections, and settings will be removed from Cocpit permanently. Your messages will be anonymized but not removed.</p>
+            <DialogDescription asChild>
+              <div className="text-left space-y-2 pt-2">
+                <p>This action is <span className="font-bold text-destructive">permanent and irreversible</span>.</p>
+                <p>All your profile data, connections, and settings will be removed from Cocpit permanently. Your messages will be anonymized but not removed.</p>
+              </div>
             </DialogDescription>
           </DialogHeader>
 
@@ -646,6 +651,19 @@ export default function SettingsPage() {
                 autoFocus
                 value={deleteConfirmationText}
                 onChange={(e) => setDeleteConfirmationText(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-foreground">
+                Enter your password:
+              </label>
+              <input
+                type="password"
+                className="w-full p-2.5 rounded-lg border border-border bg-muted/30 focus:outline-none focus:ring-2 focus:ring-destructive/20 focus:border-destructive transition-all"
+                placeholder="Your password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
               />
             </div>
           </div>
