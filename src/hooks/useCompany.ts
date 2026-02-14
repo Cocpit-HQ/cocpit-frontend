@@ -158,37 +158,42 @@ export function useCreateCompany() {
 
 // Simplified permissions hook
 // Allows components to easily check if the current user can perform actions
-export function useCompanyPermissions(company?: Company | null) {
-    if (!company || !company.viewer_role) {
+export function useCompanyPermissions(company?: any | null) {
+    if (!company || !company.viewer_role_data) {
         return {
             isOwner: false,
             isAdmin: false,
-            isEditor: false,
             canEdit: false,
             canManageMembers: false,
             canVerify: false,
             canDelete: false,
+            checkPermission: (perm: string) => false
         };
     }
 
-    const role = company.viewer_role;
-    const isOwner = role === 'OWNER';
-    const isAdmin = role === 'ADMIN';
-    const isEditor = role === 'EDITOR';
-    const isRecruiter = role === 'RECRUITER';
-    const isAnalyst = role === 'ANALYST';
+    const { name, permissions, priority } = company.viewer_role_data;
+    const roleName = name.toUpperCase();
+
+    const isOwner = roleName === 'OWNER';
+    const isAdmin = roleName === 'ADMIN';
+
+    // Helper to check specific permission
+    const checkPermission = (perm: string) => {
+        if (permissions.includes('*')) return true;
+        return permissions.includes(perm);
+    };
 
     return {
+        role: roleName,
+        priority,
         isOwner,
         isAdmin,
-        isEditor,
-        isRecruiter,
-        isAnalyst,
-        canEdit: isOwner || isAdmin || isEditor, // Company Profile Editing
-        canManageMembers: isOwner || isAdmin,
-        canVerify: isOwner,
+        // Pre-computed common checks for UI convenience
+        canEdit: checkPermission('MANAGE_COMPANY_DETAILS'),
+        canManageMembers: checkPermission('MANAGE_MEMBERS') || checkPermission('INVITE_MEMBERS') || checkPermission('REMOVE_MEMBERS'),
+        canVerify: isOwner, // Strict
         canDelete: isOwner,
-        // Add more specific permissions for Recruiter later if needed (e.g. canPostJobs)
+        checkPermission
     };
 }
 

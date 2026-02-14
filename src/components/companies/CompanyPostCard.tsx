@@ -19,10 +19,11 @@ interface CompanyPostCardProps {
     post: Post;
     onLike?: () => void;
     onDelete?: (id: string) => void;
+    onEdit?: (post: Post) => void;
     isOwner?: boolean;
 }
 
-export function CompanyPostCard({ post, onLike, onDelete, isOwner }: CompanyPostCardProps) {
+export function CompanyPostCard({ post, onLike, onDelete, onEdit, isOwner }: CompanyPostCardProps) {
     const firstImage = post.images?.[0];
     const hasMedia = !!firstImage;
     const mediaUrl = firstImage || post.videoSrc || null;
@@ -89,6 +90,9 @@ export function CompanyPostCard({ post, onLike, onDelete, isOwner }: CompanyPost
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => onEdit?.(post)}>
+                                        Edit Post
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem className="text-red-500 focus:text-red-500" onClick={() => onDelete?.(post.id)}>
                                         Delete Post
                                     </DropdownMenuItem>

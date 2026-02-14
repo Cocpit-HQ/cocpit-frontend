@@ -49,11 +49,15 @@ export function VerificationTab({ company }: VerificationTabProps) {
 
     if (company.verification_status === 'DOMAIN_VERIFIED') {
         return (
-            <div className="flex flex-col items-center justify-center p-8 space-y-4 text-center border rounded-lg bg-green-50/10 border-green-200">
-                <CheckCircle2 className="h-16 w-16 text-green-500" />
-                <h3 className="text-xl font-semibold">Domain Verified</h3>
-                <p className="text-muted-foreground">This company is verified for <strong>{company.website || 'your domain'}</strong>.</p>
-            </div>
+            <Card className="border-green-500/20 bg-green-50/50 dark:bg-green-950/20">
+                <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+                    <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
+                    <h3 className="text-xl font-semibold text-green-700 dark:text-green-400">Domain Verified</h3>
+                    <p className="text-green-600/80 dark:text-green-300/80 mt-2">
+                        This company is verified for <strong>{company.website || 'your domain'}</strong>.
+                    </p>
+                </CardContent>
+            </Card>
         );
     }
 

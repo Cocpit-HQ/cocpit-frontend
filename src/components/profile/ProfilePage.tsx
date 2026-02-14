@@ -3,11 +3,12 @@
 
 import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Menu, LogOut, Edit2, CheckCircle, GraduationCap, Briefcase, Pencil, Plus } from "lucide-react"
+import { Menu, LogOut, Edit2, CheckCircle, GraduationCap, Briefcase, Pencil, Plus, Building2 } from "lucide-react"
 import Link from "next/link"
 
 import SuggestionsPanel from "@/components/SuggestionsPanel"
 import type { Page } from "@/types/common"
+import { CompanyRoleModal } from "@/components/profile/parts/CompanyRoleModal"
 import {
   Dialog,
   DialogContent,
@@ -86,16 +87,30 @@ export default function ProfilePage() {
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
 
+  const [selectedRole, setSelectedRole] = useState<import("@/types/user").CompanyRole | null>(null);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+
+  const handleRoleClick = (role: import("@/types/user").CompanyRole) => {
+    setSelectedRole(role);
+    setIsRoleModalOpen(true);
+  };
+
   const { togglePostVisibility } = useFeed();
   const [previewPosts, setPreviewPosts] = useState<Post[]>([]);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const { logout } = useAuth();
 
-  const user = profileData?.user;
   const experiences = profileData?.experiences || [];
   const educations = profileData?.educations || [];
   const skills = profileData?.skills || [];
+
+  // Merge company_roles into user object for ProfileHeader
+  const user = profileData?.user ? {
+    ...profileData.user,
+    company_roles: profileData.company_roles || [],
+    // Ensure compatibility with User interface if needed, though ProfileHeader only uses specific fields
+  } : undefined;
 
   // Update cover image when profile loads
   useEffect(() => {
@@ -366,6 +381,22 @@ export default function ProfilePage() {
                         <span className="text-sm text-muted-foreground">· 2nd</span>
                       </div>
 
+                      {/* Company Roles */}
+                      {user?.company_roles && user.company_roles.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {user.company_roles.map((role) => (
+                            <button
+                              key={role.company_id}
+                              onClick={() => handleRoleClick(role)}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20"
+                            >
+                              <Building2 className="w-3 h-3" />
+                              <span>{role.role} at {role.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
                       <p className="text-base mb-2 text-foreground">
                         {user?.headline}
                       </p>
@@ -609,6 +640,13 @@ export default function ProfilePage() {
         isOpen={isContactInfoModalOpen}
         onClose={() => setIsContactInfoModalOpen(false)}
         user={user}
+      />
+
+      <CompanyRoleModal
+        isOpen={isRoleModalOpen}
+        onClose={() => setIsRoleModalOpen(false)}
+        role={selectedRole}
+        isOwnProfile={true}
       />
     </div>
   )

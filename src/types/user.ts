@@ -20,6 +20,19 @@ export interface User {
   connection_request_status?: 'pending' | 'rejected' | 'blocked' | null;
   connection_request_id?: string | null;
   connection_request_sender?: 'me' | 'them' | null;
+
+  company_roles?: CompanyRole[];
+}
+
+export interface CompanyRole {
+  company_id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  role: string;
+  is_primary_display: boolean;
+  is_role_visible?: boolean;
+  priority?: number;
 }
 
 export interface UserProfile {
@@ -27,6 +40,7 @@ export interface UserProfile {
   experiences: Experience[];
   educations: Education[];
   skills: SkillResponse[];
+  company_roles?: CompanyRole[];
   profile_views_count?: number;
   search_appearances_count?: number;
   resume?: {

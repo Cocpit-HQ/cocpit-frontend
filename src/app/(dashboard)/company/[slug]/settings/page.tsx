@@ -11,7 +11,7 @@ import { MembersTab } from "@/components/companies/settings/members-tab";
 import { VerificationTab } from "@/components/companies/settings/verification-tab";
 import { CompanyHeader } from "@/components/companies/company-header";
 import { GeneralTab } from "@/components/companies/settings/general-tab";
-import { AuditTab } from "@/components/companies/settings/audit-tab";
+import { AuditLogsViewer } from "@/components/companies/AuditLogsViewer";
 import { useCompanyPermissions } from "@/hooks/useCompany";
 
 export default function CompanySettingsPage() {
@@ -63,7 +63,7 @@ export default function CompanySettingsPage() {
 
                     {(perms.isOwner || perms.isAdmin) && (
                         <TabsContent value="audit">
-                            <AuditTab company={company} />
+                            <AuditLogsViewer company={company} />
                         </TabsContent>
                     )}
                 </Tabs>

@@ -13,6 +13,7 @@ import { CompanyGallery } from "@/components/companies/company-gallery";
 import { CompanyPosts } from "@/components/companies/company-posts";
 import { CreatePostButton } from "@/components/companies/CreatePostCompanyButton";
 
+
 export default function CompanyPage() {
     const params = useParams();
     const slug = params.slug as string;
@@ -32,9 +33,13 @@ export default function CompanyPage() {
         );
     }
 
+    const isMember = !!company?.viewer_role_data;
+
     return (
         <div className="flex flex-col min-h-screen bg-background pb-12">
             <CompanyHeader company={company} isLoading={isLoading} />
+
+
 
             <div className="container max-w-6xl px-4 md:px-6 mx-auto">
                 <Tabs defaultValue="home" className="w-full">
@@ -156,7 +161,7 @@ export default function CompanyPage() {
                             />
                         </div>
                         {company ? (
-                            <CompanyPosts companyId={company.company_id} />
+                            <CompanyPosts companyId={company.company_id} company={company} />
                         ) : (
                             <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-lg">
                                 Loading posts...
@@ -174,6 +179,7 @@ export default function CompanyPage() {
                             </CardContent>
                         </Card>
                     </TabsContent>
+
                 </Tabs>
             </div>
         </div>

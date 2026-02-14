@@ -1,17 +1,40 @@
-import React, { useEffect, useMemo } from 'react';
-import { useCompanyPosts } from '@/hooks/useCompany';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useCompanyPosts, useCompanyPermissions } from '@/hooks/useCompany';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInView } from 'react-intersection-observer';
 import { Loader2 } from 'lucide-react';
 import { CompanyPostCard } from './CompanyPostCard';
-import { Post, Comment } from '@/types/entities';
+import { Post } from '@/types/entities';
 import { formatTimeAgo } from '@/lib/utils/timeFormatter';
+import { toast } from 'sonner';
+import api from '@/lib/axios';
+import { useQueryClient } from '@tanstack/react-query';
+import { Company } from '@/services/company.service';
+import { CreatePostModal } from '@/components/home/CreatePostModal';
 
 interface CompanyPostsProps {
     companyId: string;
+    company?: Company;
 }
 
-export function CompanyPosts({ companyId }: CompanyPostsProps) {
+export function CompanyPosts({ companyId, company }: CompanyPostsProps) {
+    const { canDelete, canEdit } = useCompanyPermissions(company);
+    const queryClient = useQueryClient();
+    const [editingPostId, setEditingPostId] = useState<string | null>(null);
+
+    const handleDelete = async (postId: string) => {
+        try {
+            await api.delete(`/post/${postId}`);
+            toast.success("Post deleted");
+            queryClient.invalidateQueries({ queryKey: ['company-posts', companyId] });
+        } catch (error) {
+            toast.error("Failed to delete post");
+        }
+    };
+
+    const handleEdit = (post: Post) => {
+        setEditingPostId(post.id);
+    };
     const {
         data,
         fetchNextPage,
@@ -65,8 +88,9 @@ export function CompanyPosts({ companyId }: CompanyPostsProps) {
                 <CompanyPostCard
                     key={post.id}
                     post={post}
-                    isOwner={false} // TODO: Permission check
-                // onDelete={...} // TODO: Implement delete
+                    isOwner={canDelete || canEdit}
+                    onDelete={handleDelete}
+                    onEdit={handleEdit}
                 />
             ))}
 
@@ -79,6 +103,21 @@ export function CompanyPosts({ companyId }: CompanyPostsProps) {
 
             {/* Infinite Scroll Trigger */}
             <div ref={ref} className="h-2 w-full col-span-full" />
+
+            {editingPostId && (
+                <CreatePostModal
+                    isOpen={!!editingPostId}
+                    onClose={() => setEditingPostId(null)}
+                    editPostId={editingPostId}
+                    companyId={companyId}
+                    companyName={company?.name}
+                    companyLogo={company?.logo_url}
+                    onPostCreated={() => {
+                        queryClient.invalidateQueries({ queryKey: ['company-posts', companyId] });
+                        setEditingPostId(null);
+                    }}
+                />
+            )}
         </div>
     );
 }

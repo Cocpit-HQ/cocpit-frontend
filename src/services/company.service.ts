@@ -20,7 +20,8 @@ export interface Company {
     verification_status: 'UNVERIFIED' | 'DOMAIN_PENDING' | 'DOMAIN_VERIFIED' | 'REJECTED';
     is_deleted: boolean;
     created_at: string;
-    viewer_role?: 'OWNER' | 'ADMIN' | 'EDITOR' | 'RECRUITER' | 'ANALYST' | null; // Populated by backend if authenticated
+    viewer_role_data?: { name: string; permissions: string[]; priority: number } | null; // Populated by backend if authenticated
+    member_count?: number;
 }
 
 export interface CompanyMember {

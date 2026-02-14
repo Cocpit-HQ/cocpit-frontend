@@ -4,8 +4,11 @@
 import React from "react";
 import { MessageCircle, UserPlus, UserCheck, CheckCircle } from "lucide-react";
 import { ProfileIdentityChips } from "@/components/profile/ProfileIdentityChips";
+import { CompanyRoleModal } from "./CompanyRoleModal";
+import { Building2 } from "lucide-react";
 import { User } from "@/types/user";
 import { ConnectionButton } from "@/components/profile/ConnectionButton";
+import { CompanyRolesList } from "./CompanyRolesList";
 
 interface ProfileHeaderProps {
     user: User;
@@ -39,6 +42,7 @@ import { useState } from "react";
 
 // ... existing component props ...
 
+// HMR Trigger 2
 export function ProfileHeader({
     user,
     isOwnProfile,
@@ -60,6 +64,14 @@ export function ProfileHeader({
         // For now, allow Optimistic UI to take effect (clears following) and Toast to show.
         // A reload will show 404.
         window.location.reload();
+    };
+
+    const [selectedRole, setSelectedRole] = useState<import("@/types/user").CompanyRole | null>(null);
+    const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+
+    const handleRoleClick = (role: import("@/types/user").CompanyRole) => {
+        setSelectedRole(role);
+        setIsRoleModalOpen(true);
     };
 
     return (
@@ -163,6 +175,17 @@ export function ProfileHeader({
                         )}
                     </div>
 
+                    {/* Company Roles */}
+                    {user.company_roles && user.company_roles.length > 0 && (
+                        <div className="mb-3">
+                            <CompanyRolesList
+                                roles={user.company_roles}
+                                isOwnProfile={isOwnProfile}
+                                onRoleClick={handleRoleClick}
+                            />
+                        </div>
+                    )}
+
                     <p className="text-base mb-2 text-foreground">{user.headline}</p>
 
                     <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
@@ -179,6 +202,14 @@ export function ProfileHeader({
                     )}
                 </div>
             </div>
-        </div>
+
+
+            <CompanyRoleModal
+                isOpen={isRoleModalOpen}
+                onClose={() => setIsRoleModalOpen(false)}
+                role={selectedRole}
+                isOwnProfile={isOwnProfile}
+            />
+        </div >
     );
 }

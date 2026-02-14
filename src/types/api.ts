@@ -87,4 +87,19 @@ export interface PublicUserProfileResponse {
   educations: ApiEducation[];
   skills: { skill_id: string; name: string }[];
   resume: { originalName: string; url: string } | null;
+  is_following: boolean;
+  is_followed_by?: boolean;
+  connection_request_status?: 'pending' | 'rejected' | 'blocked' | null;
+  connection_request_id?: string | null;
+  connection_request_sender?: 'me' | 'them' | null;
+  company_roles?: {
+    company_id: string;
+    name: string;
+    slug: string;
+    logo_url: string | null;
+    role: string;
+    is_primary_display: boolean;
+    is_role_visible?: boolean; // Optional as public profile filters hidden ones
+    priority?: number;
+  }[];
 }

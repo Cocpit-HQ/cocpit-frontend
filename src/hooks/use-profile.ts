@@ -88,6 +88,7 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
         connection_request_status: user.connection_request_status,
         connection_request_id: user.connection_request_id,
         connection_request_sender: user.connection_request_sender,
+        company_roles: data.company_roles || [],
     };
 };
 

@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Company, companyService } from "@/services/company.service";
-import { BadgeCheck, MapPin, Globe, Users, PenBox, UserPlus, UserMinus, Loader2 } from "lucide-react";
+import { BadgeCheck, MapPin, Globe, Users, PenBox, UserPlus, UserMinus, Loader2, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { useCompanyPermissions } from "@/hooks/useCompany";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -16,7 +16,7 @@ interface CompanyHeaderProps {
 }
 
 export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
-    const { canEdit, isOwner, isAdmin, isEditor } = useCompanyPermissions(company);
+    const { isOwner, isAdmin, checkPermission } = useCompanyPermissions(company);
     const queryClient = useQueryClient();
 
     const { data: relationship, isLoading: isRelationshipLoading } = useQuery({
@@ -81,38 +81,48 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
 
     if (!company) return null;
 
-    const ActionButtons = ({ className }: { className?: string }) => (
-        <div className={`flex gap-2 ${className}`}>
-            {canEdit ? (
-                <Button asChild variant="outline" size="sm" className="w-full md:w-auto">
-                    <Link href={`/company/${company?.slug}/settings`}>
-                        <PenBox className="mr-2 h-4 w-4" />
-                        Edit Page
-                    </Link>
-                </Button>
-            ) : (
-                <Button
-                    onClick={() => isFollowing ? unfollowMutation.mutate() : followMutation.mutate()}
-                    variant={isFollowing ? "outline" : "default"}
-                    disabled={isActionLoading || isRelationshipLoading}
-                    className="w-full md:w-auto min-w-[120px]"
-                    size="sm"
-                >
-                    {isActionLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : isFollowing ? (
-                        <UserMinus className="mr-2 h-4 w-4" />
-                    ) : (
-                        <UserPlus className="mr-2 h-4 w-4" />
-                    )}
-                    {isFollowing ? "Unfollow" : "Follow"}
-                </Button>
-            )}
-        </div>
-    );
+    const ActionButtons = ({ className }: { className?: string }) => {
+        const canAccessDashboard = isOwner ||
+            checkPermission("MANAGE_COMPANY") ||
+            checkPermission("MANAGE_ROLES") ||
+            checkPermission("VIEW_MEMBERS") ||
+            checkPermission("MANAGE_MEMBERS");
+
+        return (
+            <div className={`flex gap-2 ${className}`}>
+                {canAccessDashboard ? (
+                    <>
+                        <Button asChild variant="outline" size="sm" className="w-full md:w-full">
+                            <Link href={`/company/${company?.slug}/dashboard`}>
+                                <LayoutDashboard className="mr-2 h-4 w-4" />
+                                Dashboard
+                            </Link>
+                        </Button>
+                    </>
+                ) : (
+                    <Button
+                        onClick={() => isFollowing ? unfollowMutation.mutate() : followMutation.mutate()}
+                        variant={isFollowing ? "outline" : "default"}
+                        disabled={isActionLoading || isRelationshipLoading}
+                        className="w-full md:w-auto min-w-[120px]"
+                        size="sm"
+                    >
+                        {isActionLoading ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : isFollowing ? (
+                            <UserMinus className="mr-2 h-4 w-4" />
+                        ) : (
+                            <UserPlus className="mr-2 h-4 w-4" />
+                        )}
+                        {isFollowing ? "Unfollow" : "Follow"}
+                    </Button>
+                )}
+            </div>
+        );
+    };
 
     return (
-        <div className="space-y-6 pb-6">
+        <div className="space-y-6 pb-6 container max-w-6xl mx-auto px-0">
             {/* Cover Image */}
             <div className="h-48 md:h-64 w-full bg-muted relative rounded-b-xl overflow-hidden shadow-sm">
                 {company?.cover_url ? (
@@ -122,7 +132,7 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
                 )}
             </div>
 
-            <div className="container px-4 md:px-6">
+            <div className="px-4 md:px-6">
                 <div className="flex flex-col md:flex-row gap-6 items-start">
                     {/* Logo & Mobile Actions - Row on mobile */}
                     <div className="-mt-16 md:-mt-20 w-full md:w-auto flex justify-between items-end relative z-10">
