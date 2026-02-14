@@ -17,6 +17,11 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
     const [isSaved, setIsSaved] = useState(initialIsSaved)
     const [isLoading, setIsLoading] = useState(false)
 
+    // Sync state with props
+    React.useEffect(() => {
+        setIsSaved(initialIsSaved)
+    }, [initialIsSaved])
+
     const handleToggleSave = async (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
@@ -56,8 +61,8 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
             disabled={isLoading}
             aria-label={isSaved ? "Remove from saved" : "Save post"}
             className={cn(
-                "flex flex-col items-center gap-1 transition-all duration-200 flex-1 justify-center py-2 rounded-lg hover:bg-muted/50 text-xs md:text-sm active:scale-95 group",
-                isSaved ? "text-blue-500" : "text-muted-foreground hover:text-white",
+                "flex flex-col items-center justify-center gap-0.5 transition-all duration-200 flex-1 py-1.5 rounded-xl hover:bg-muted/50 active:scale-95 group",
+                isSaved ? "text-blue-500" : "text-muted-foreground hover:text-primary",
                 className
             )}
         >

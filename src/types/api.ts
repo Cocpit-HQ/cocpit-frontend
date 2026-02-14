@@ -59,23 +59,32 @@ export interface ApiEducation {
 }
 
 export interface PublicUserProfileResponse {
-  id: string;
-  full_name: string;
-  headline: string | null;
-  avatar_url: string | null;
-  location: string | null;
-  about_text: string | null;
-  created_at: string;
-  account_type: string;
-  open_to: string[] | null;
-  availability: string | null;
-  work_preference: string | null;
+  user: {
+    id: string;
+    name: string;
+    headline: string | null;
+    avatar: string | null;
+    cover_image: string | null;
+    location: string | null;
+    about: string | null;
+    email: string;
+    mobile_number: string | null;
+    followers_count: number;
+    following_count: number;
+    connections_count: number;
+    open_to: string[] | null;
+    availability: string | null;
+    work_preference: string | null;
+    latest_education: { school: string; degree: string } | null;
+    is_following: boolean;
+    is_followed_by?: boolean;
+    connection_request_status?: 'pending' | 'rejected' | 'blocked' | null;
+    connection_request_id?: string | null;
+    connection_request_sender?: 'me' | 'them' | null;
+    created_at: string;
+  };
   experiences: ApiExperience[];
   educations: ApiEducation[];
-  skills: string[];
-  is_following: boolean;
-  is_followed_by?: boolean;
-  connection_request_status?: 'pending' | 'rejected' | 'blocked' | null;
-  connection_request_id?: string | null;
-  connection_request_sender?: 'me' | 'them' | null;
+  skills: { skill_id: string; name: string }[];
+  resume: { originalName: string; url: string } | null;
 }

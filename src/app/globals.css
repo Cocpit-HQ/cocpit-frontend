@@ -232,6 +232,48 @@
   .bg-onboard {
     background: linear-gradient(180deg, #5A2DD8 0%, #8B63F5 100%);
   }
+
+  /* Stories UI Enhancements for Mobile */
+  @media (max-width: 768px) {
+    .stories-scroll-container {
+      position: relative;
+    }
+
+    .stories-scroll-container::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 40px;
+      height: 100%;
+      background: linear-gradient(to left, var(--background), transparent);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .stories-scroll-container::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 40px;
+      height: 100%;
+      background: linear-gradient(to right, var(--background), transparent);
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .text-post-fade {
+      mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
+    }
+
+    .soft-post-shadow {
+      box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.4);
+    }
+  }
 }
 
 @layer utilities {
