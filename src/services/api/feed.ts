@@ -26,6 +26,8 @@ export interface BackendPost {
   like_count: number;
   comment_count: number;
   is_liked: boolean;
+  is_commented: boolean;
+  is_saved: boolean;
   shared_post?: {
     is_accessible: boolean;
     reason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
@@ -43,6 +45,8 @@ export interface BackendPost {
     like_count?: number;
     comment_count?: number;
     is_liked?: boolean;
+    is_commented?: boolean;
+    is_saved?: boolean;
     poll?: BackendPoll | null;
   } | null;
 }

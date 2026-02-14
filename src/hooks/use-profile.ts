@@ -62,13 +62,15 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
         }
     });
 
+    const { user } = data;
+
     return {
-        id: data.id,
-        name: data.full_name,
-        headline: data.headline || '',
-        avatar: data.avatar_url || '/assets/pngegg.png',
-        location: data.location || '',
-        about: data.about_text || '',
+        id: user.id,
+        name: user.name,
+        headline: user.headline || '',
+        avatar: user.avatar || '/assets/pngegg.png',
+        location: user.location || '',
+        about: user.about || '',
         skills: Array.isArray(data.skills)
             ? data.skills.map((s: any) => typeof s === 'string' ? s : s.name)
             : [],
@@ -77,15 +79,15 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
         connectionStatus: 'none',
         mutualConnections: 0,
         identity: {
-            openTo: (Array.isArray(data.open_to) ? data.open_to[0] : data.open_to) as any || 'Full-time',
-            availability: data.availability as any || 'Casual Networking',
-            workPreference: data.work_preference as any || 'Onsite',
+            openTo: (Array.isArray(user.open_to) ? user.open_to[0] : user.open_to) as any || 'Full-time',
+            availability: user.availability as any || 'Casual Networking',
+            workPreference: user.work_preference as any || 'Onsite',
         },
-        is_following: data.is_following,
-        is_followed_by: data.is_followed_by,
-        connection_request_status: data.connection_request_status,
-        connection_request_id: data.connection_request_id,
-        connection_request_sender: data.connection_request_sender,
+        is_following: user.is_following,
+        is_followed_by: user.is_followed_by,
+        connection_request_status: user.connection_request_status,
+        connection_request_id: user.connection_request_id,
+        connection_request_sender: user.connection_request_sender,
     };
 };
 
@@ -96,8 +98,8 @@ export function useProfile(userId: string) {
         queryKey: ["profile", userId],
         queryFn: async () => {
             const userData = await getUserById(userId);
-            if (userData.is_following !== undefined) {
-                syncFollowStatus(userData.id, userData.is_following);
+            if (userData.user.is_following !== undefined) {
+                syncFollowStatus(userData.user.id, userData.user.is_following);
             }
             return transformUserData(userData);
         },

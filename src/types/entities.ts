@@ -92,6 +92,8 @@ export interface Post {
   aspectRatio?: string;
   likes: number;
   isLiked?: boolean;
+  is_commented?: boolean;
+  is_saved?: boolean;
   comments: string;
   shares: string;
   commentData?: Comment[];

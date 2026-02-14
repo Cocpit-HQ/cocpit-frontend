@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Filter, Plus, Search, Loader2 } from "lucide-react"
 import { useInView } from "react-intersection-observer"
@@ -90,6 +90,41 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [showCreateJob, setShowCreateJob] = useState(false)
 
+  // Scroll behavior for mobile header
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement | Document;
+      let currentScrollY = window.scrollY;
+
+      if (target instanceof HTMLElement) {
+        if (target.scrollHeight < window.innerHeight) return;
+        currentScrollY = target.scrollTop;
+      }
+
+      if (currentScrollY <= 60) {
+        setIsHeaderVisible(true);
+        lastScrollY.current = currentScrollY;
+        return;
+      }
+
+      if (Math.abs(lastScrollY.current - currentScrollY) <= 5) return;
+
+      if (currentScrollY > lastScrollY.current) {
+        setIsHeaderVisible(false);
+      } else {
+        setIsHeaderVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    return () => window.removeEventListener('scroll', handleScroll, { capture: true });
+  }, []);
+
   // Handlers
   const handleAddSearchLocation = () => { }
   const handleRemoveSearchLocation = () => { }
@@ -149,7 +184,8 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 pb-20 md:pb-12">
-        <div className="sticky top-0 z-30 bg-background pt-6 pb-4 -mt-6 md:-mt-8 shadow-sm md:shadow-none -mx-4 md:-mx-8 px-4 md:px-8">
+        <div className={`sticky top-0 z-30 bg-background pt-6 pb-4 -mt-6 md:-mt-8 shadow-sm md:shadow-none -mx-4 md:-mx-8 px-4 md:px-8 transition-transform duration-300 ease-in-out ${!isHeaderVisible ? '-translate-y-full' : 'translate-y-0'
+          } md:translate-y-0`}>
           <div className="mb-2 md:mb-4">
             <h1 className="text-3xl font-bold text-foreground">Jobs</h1>
           </div>

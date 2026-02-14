@@ -50,9 +50,8 @@ export default function MessagingPage() {
     }
   });
 
-  // If acting as company, show empty list (until backend supports company chats)
-  // functionality: "company account is different entity" -> don't show user chats.
-  const chats = activeProfile?.type === 'COMPANY' ? [] : (rawChatsQuery.data || []);
+  // No longer blocking company chats on the frontend
+  const chats = rawChatsQuery.data || [];
   const isLoading = rawChatsQuery.isLoading;
   const error = rawChatsQuery.error;
 
@@ -93,13 +92,14 @@ export default function MessagingPage() {
         const fetchUserAndCreateDraft = async () => {
           if (!userId || userId === 'null' || userId === 'undefined') return;
           try {
-            const user = await getUserById(userId);
+            const response = await getUserById(userId);
+            const user = response.user;
             const newChat: ChatThread = {
               id: 'new',
               otherUserId: user.id,
-              name: user.full_name,
+              name: user.name,
               role: user.headline || "",
-              avatar: user.avatar_url || "gradient-1",
+              avatar: user.avatar || "gradient-1",
               lastMessage: "",
               time: new Date().toISOString(),
               lastMessageAt: new Date().toISOString(),

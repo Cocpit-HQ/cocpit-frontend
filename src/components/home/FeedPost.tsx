@@ -49,6 +49,7 @@ interface FeedPostProps extends Omit<Post, 'commentData'> {
   authorSlug?: string;
   isCompanyPost?: boolean;
   is_saved?: boolean;
+  is_commented?: boolean;
   onSaveChange?: (isSaved: boolean) => void;
   isFullContent?: boolean;
 }
@@ -84,17 +85,22 @@ export default function FeedPost({
   authorSlug,
   isCompanyPost,
   is_saved,
+  is_commented: initialIsCommented = false,
   onSaveChange,
   isFullContent = false
 }: FeedPostProps) {
   const [isLiked, setIsLiked] = useState(initialIsLiked)
+  const [isCommented, setIsCommented] = useState(initialIsCommented)
+  const [isSaved, setIsSaved] = useState(is_saved)
   const [likeCount, setLikeCount] = useState(typeof likes === 'string' ? parseInt(likes) : likes)
   const [isExpanded, setIsExpanded] = useState(false)
 
   // Sync state with props
   useEffect(() => {
     setIsLiked(initialIsLiked);
-  }, [initialIsLiked]);
+    setIsCommented(initialIsCommented);
+    setIsSaved(is_saved);
+  }, [initialIsLiked, initialIsCommented, is_saved]);
 
   useEffect(() => {
     setLikeCount(typeof likes === 'string' ? parseInt(likes) : likes);
@@ -200,6 +206,8 @@ export default function FeedPost({
   const contentImgSrc = validImageSrc || (validImages.length > 0 ? validImages[0] : null) || '/assets/pngegg.png'
   const avatarSrc = authorAvatar || '/assets/pngegg.png'
   const hasMultipleImages = validImages.length > 1
+
+  const isTextOnlyPost = !validImageSrc && validImages.length === 0 && !videoSrc && !pollData && !shared_post;
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return
@@ -343,6 +351,7 @@ export default function FeedPost({
 
     // Optimistic update
     setPostComments([tempComment, ...postComments]);
+    setIsCommented(true);
 
     try {
       const companyId = isCompany ? activeProfile?.id : undefined;
@@ -682,23 +691,25 @@ export default function FeedPost({
 
       <div className="flex-1 flex flex-col justify-center w-full">
         {content && (
-          <div className="px-4 md:px-6 mb-4">
-            <div
-              className={`leading-relaxed text-sm md:text-base text-foreground whitespace-pre-wrap ${!isFullContent && !isExpanded ? 'line-clamp-6' : ''}`}
-              dangerouslySetInnerHTML={{ __html: typeof window !== 'undefined' ? DOMPurify.sanitize(content) : content }}
-            />
-            {!isFullContent && (content.length > 300 || content.split('\n').length > 4) && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  setIsExpanded(!isExpanded);
-                }}
-                className="text-sm text-muted-foreground hover:text-foreground mt-1 font-medium focus:outline-none"
-              >
-                {isExpanded ? 'Show less' : 'Read more'}
-              </button>
-            )}
+          <div className={`px-4 md:px-6 mb-4 ${isTextOnlyPost ? 'md:px-8' : ''}`}>
+            <div className={`${isTextOnlyPost ? 'bg-muted/30 border border-white/5 rounded-[1.25rem] p-5 sm:p-7 shadow-sm soft-post-shadow mb-2' : ''}`}>
+              <div
+                className={`leading-[1.75] text-[0.95rem] md:text-base text-foreground/90 whitespace-pre-wrap ${!isFullContent && !isExpanded ? 'line-clamp-6 text-post-fade' : ''}`}
+                dangerouslySetInnerHTML={{ __html: typeof window !== 'undefined' ? DOMPurify.sanitize(content) : content }}
+              />
+              {!isFullContent && (content.length > 300 || content.split('\n').length > 4) && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setIsExpanded(!isExpanded);
+                  }}
+                  className="text-sm text-primary hover:text-primary/80 mt-2 font-semibold focus:outline-none transition-colors"
+                >
+                  {isExpanded ? 'Show less' : 'Read more'}
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -897,23 +908,23 @@ export default function FeedPost({
 
       </div>
 
-      <div className="px-4 md:px-6 py-2 md:py-3 border-t border-border mt-auto">
-        <div className="flex items-center justify-between">
+      <div className="px-4 md:px-6 py-1.5 md:py-2 border-t border-border/40 mt-auto">
+        <div className="flex items-center justify-between gap-1">
           <button
             onClick={handleLike}
-            className={`flex flex-col items-center gap-1 ${isLiked ? 'text-primary' : 'text-muted-foreground hover:text-primary'} transition-colors flex-1 justify-center py-2 rounded-lg hover:bg-muted/50 text-xs md:text-sm`}
+            className={`flex flex-col items-center justify-center gap-0.5 ${isLiked ? 'text-red-500' : 'text-muted-foreground hover:text-red-500'} transition-all duration-200 flex-1 py-1.5 rounded-xl hover:bg-muted/50`}
           >
-            <ThumbsUp className={`w-4 h-4 md:w-5 md:h-5 ${isLiked ? 'fill-current' : ''}`} />
-            {likeCount > 0 && <span className="font-medium leading-none">{likeCount}</span>}
+            <ThumbsUp className="w-4 h-4 md:w-5 md:h-5" fill="none" />
+            {likeCount > 0 && <span className="text-[10px] md:text-[11px] font-medium text-muted-foreground/70">{likeCount}</span>}
           </button>
 
           <button
             onClick={handleToggleCommentSection}
-            className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center py-2 rounded-lg hover:bg-muted/50 text-xs md:text-sm"
+            className={`flex flex-col items-center justify-center gap-0.5 ${isCommentSectionOpen || isMobileDrawerOpen || isCommented ? 'text-green-500' : 'text-muted-foreground hover:text-primary'} transition-all duration-200 flex-1 py-1.5 rounded-xl hover:bg-muted/50`}
           >
-            <MessageCircle className="w-4 h-4 md:w-5 md:h-5" />
+            <MessageCircle className="w-4 h-4 md:w-5 md:h-5" fill="none" />
             {(typeof commentsCount === 'number' ? commentsCount : parseInt(commentsCount || '0')) > 0 && (
-              <span className="font-medium leading-none">{commentsCount}</span>
+              <span className="text-[10px] md:text-[11px] font-medium text-muted-foreground/70">{commentsCount}</span>
             )}
           </button>
 
@@ -922,17 +933,18 @@ export default function FeedPost({
               if (onShare) onShare()
               setIsShareModalOpen(true)
             }}
-            className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors flex-1 justify-center py-2 rounded-lg hover:bg-muted/50 text-xs md:text-sm"
+            className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-all duration-200 flex-1 py-1.5 rounded-xl hover:bg-muted/50"
           >
             <Share2 className="w-4 h-4 md:w-5 md:h-5" />
             {(typeof shares === 'number' ? shares : parseInt(shares || '0')) > 0 && (
-              <span className="font-medium leading-none">{shares}</span>
+              <span className="text-[10px] md:text-[11px] font-medium text-muted-foreground/70">{shares}</span>
             )}
           </button>
 
           <SaveButton
             postId={id.toString()}
-            initialIsSaved={is_saved}
+            initialIsSaved={isSaved}
+            onSaveChange={(val) => setIsSaved(val)}
           />
         </div>
       </div>

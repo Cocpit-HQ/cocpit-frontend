@@ -10,6 +10,7 @@ import { getConversations } from "@/services/api/messaging"
 import { getPendingInvitations, respondInvitation } from "@/services/api/group-chat"
 import { mapBackendChatToChatThread } from "@/lib/mappers/messaging.mapper"
 import { useSocket } from "@/context/SocketContext"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { Button } from "@/components/ui/button"
 import InvitationCard from "../group-chat/InvitationCard"
 
@@ -27,6 +28,7 @@ interface ChatListProps {
 export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], isLoading, error, onCreateGroup, isCompany = false }: ChatListProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const { socket, isUserOnline } = useSocket();
+  const { activeProfile } = useActiveProfile();
   const queryClient = useQueryClient();
 
   const { data: session } = useSession();
@@ -36,9 +38,16 @@ export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats
   });
 
   useEffect(() => {
-    console.log("ChatList Rendered. Current User ID:", session?.user?.id);
-    console.log("Invitations Data:", invitations);
-  }, [session, invitations]);
+    console.log("ChatList Rendered:", {
+      currentUserId: session?.user?.id,
+      activeProfile: activeProfile?.type,
+      activeProfileId: activeProfile?.id,
+      chatsCount: chats?.length,
+      isLoading,
+      hasError: !!error,
+      invitationsCount: invitations?.length
+    });
+  }, [session, activeProfile, chats, isLoading, error, invitations]);
 
 
   const handleRespond = async (invitationId: string, action: 'accept' | 'reject') => {

@@ -14,3 +14,8 @@ export const searchUsers = async (query: string): Promise<UserMention[]> => {
     const response = await api.get(`/users/search?q=${encodeURIComponent(query)}`);
     return response.data;
 };
+
+export const getSuggestedUsers = async (): Promise<UserMention[]> => {
+    const response = await api.get('/users/suggested');
+    return response.data;
+};

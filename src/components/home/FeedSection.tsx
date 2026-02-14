@@ -8,9 +8,11 @@ import { useFeed } from '@/context/FeedContext';
 import { useInView } from '@/hooks/use-in-view';
 import { useActionModal } from '@/context/ActionModalContext';
 import { StoryRail } from './StoryRail';
+import { SuggestedPeopleRail } from './SuggestedPeopleRail';
 import { FeedSortDropdown } from './FeedSortDropdown';
 import { PostType } from './CreatePostModal';
 import { StoryGroup, StoryDetail } from '@/types/showcase';
+import { getUserById } from '@/services/api/user';
 
 interface FeedSectionProps {
     groups: StoryGroup[];
@@ -31,6 +33,7 @@ export const FeedSection = ({
 }: FeedSectionProps) => {
     const { posts, currentUser, deletePost, togglePostVisibility, loadMorePosts, hasMore, loading: feedLoading } = useFeed();
     const { openModal } = useActionModal();
+    const [userMetadata, setUserMetadata] = React.useState<{ created_at: string; following_count: number } | null>(null);
 
     const { ref: loadMoreRef, inView } = useInView({
         threshold: 0,
@@ -38,10 +41,39 @@ export const FeedSection = ({
     });
 
     useEffect(() => {
+        const fetchUserMetadata = async () => {
+            if (!currentUser.id) return;
+            try {
+                const profile = await getUserById(currentUser.id);
+                setUserMetadata({
+                    created_at: profile.user.created_at,
+                    following_count: profile.user.following_count
+                });
+            } catch (error) {
+                console.error("Failed to fetch user metadata for suggested people logic", error);
+            }
+        };
+        fetchUserMetadata();
+    }, [currentUser.id]);
+
+    useEffect(() => {
         if (inView && hasMore && !feedLoading) {
             loadMorePosts();
         }
     }, [inView, hasMore, feedLoading, loadMorePosts]);
+
+    const showSuggested = React.useMemo(() => {
+        if (storyLoading || !userMetadata) return false;
+
+        const followingCount = userMetadata.following_count;
+        const storiesExist = groups.length > 0 && groups.some(g => g.stories.length > 0);
+
+        // Rule 1 & 2: No following OR following but no stories
+        if (followingCount === 0 || !storiesExist) return true;
+
+        // Rule 3: Stories exist
+        return false;
+    }, [groups, storyLoading, userMetadata]);
 
     const sortedPosts = useMemo(() => {
         const sorted = [...posts];
@@ -53,19 +85,33 @@ export const FeedSection = ({
 
     return (
         <section className="lg:col-span-8">
-            {/* Mobile Story Rail */}
-            <div className="md:hidden border-b border-border">
-                <StoryRail
-                    groups={groups}
-                    isLoading={storyLoading}
-                    onCreateClick={() => setShowCreateStory(true)}
-                    onStoryClick={(story) => {
-                        const group = groups.find(g => g.stories.some(s => s.id === story.id));
-                        if (group) {
-                            setMobileSelectedGroupId(group.author.id || 0);
-                        }
-                    }}
-                />
+            {/* Mobile Story/Suggested Rail */}
+            <div className="md:hidden border-b border-border min-h-[120px] transition-all duration-500 overflow-hidden">
+                {!showSuggested ? (
+                    <div className="animate-in fade-in duration-500">
+                        <StoryRail
+                            groups={groups}
+                            isLoading={storyLoading}
+                            onCreateClick={() => setShowCreateStory(true)}
+                            onStoryClick={(story) => {
+                                const group = groups.find(g => g.stories.some(s => s.id === story.id));
+                                if (group) {
+                                    setMobileSelectedGroupId(group.author.id || 0);
+                                }
+                            }}
+                        />
+                    </div>
+                ) : (
+                    <div className="animate-in fade-in duration-500">
+                        <SuggestedPeopleRail
+                            onFollowSuccess={() => {
+                                // Re-fetch metadata or simply toggle back if following_count updates
+                                // For now, we rely on the next refresh or we could optimistically update
+                                setUserMetadata(prev => prev ? { ...prev, following_count: prev.following_count + 1 } : null);
+                            }}
+                        />
+                    </div>
+                )}
             </div>
 
             {/* Create Post */}

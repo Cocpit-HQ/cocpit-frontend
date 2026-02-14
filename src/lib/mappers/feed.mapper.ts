@@ -141,6 +141,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         videoSrc: spVideoSrc,
         likes: sp.like_count || 0,
         isLiked: (sp as any).is_liked, // New field from backend
+        is_commented: (sp as any).is_commented,
+        is_saved: (sp as any).is_saved,
         comments: (sp.comment_count || 0).toString(),
         shares: "0",
         poll: spPoll,
@@ -166,6 +168,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     // Backend doesn't return likes/comments/shares counts in the list view provided
     likes: backendPost.like_count,
     isLiked: backendPost.is_liked,
+    is_commented: backendPost.is_commented,
+    is_saved: backendPost.is_saved,
     comments: (backendPost.comment_count || 0).toString(),
     shares: "0",
     commentData: [], // Backend doesn't provide comments in feed list
