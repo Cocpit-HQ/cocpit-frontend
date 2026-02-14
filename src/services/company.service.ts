@@ -231,5 +231,25 @@ export const companyService = {
             return data?.message || error.message || "An unexpected error occurred";
         }
         return (error as Error).message || "An unexpected error occurred";
+    },
+
+    async uploadLogo(companyId: string, formData: FormData) {
+        const res = await api.post(`/companies/${companyId}/logo`, formData);
+        return res.data;
+    },
+
+    async deleteLogo(companyId: string) {
+        const res = await api.delete(`/companies/${companyId}/logo`);
+        return res.data;
+    },
+
+    async uploadCover(companyId: string, formData: FormData) {
+        const res = await api.post(`/companies/${companyId}/cover`, formData);
+        return res.data;
+    },
+
+    async deleteCover(companyId: string) {
+        const res = await api.delete(`/companies/${companyId}/cover`);
+        return res.data;
     }
 };

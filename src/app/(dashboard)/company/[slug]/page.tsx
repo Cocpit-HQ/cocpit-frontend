@@ -154,11 +154,13 @@ export default function CompanyPage() {
 
                     <TabsContent value="posts" className="mt-6">
                         <div className="flex justify-end mb-6">
-                            <CreatePostButton
-                                companyId={company?.company_id}
-                                companyName={company?.name}
-                                companyLogo={company?.logo_url}
-                            />
+                            {(isMember) && (
+                                <CreatePostButton
+                                    companyId={company?.company_id}
+                                    companyName={company?.name}
+                                    companyLogo={company?.logo_url}
+                                />
+                            )}
                         </div>
                         {company ? (
                             <CompanyPosts companyId={company.company_id} company={company} />

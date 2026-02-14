@@ -2,6 +2,9 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import React, { useState } from "react";
+import EditCoverPhoto from "@/components/profile/EditCoverPhoto";
+import { EditAvatarModal } from "@/components/profile/EditAvatarModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Company, companyService } from "@/services/company.service";
 import { BadgeCheck, MapPin, Globe, Users, PenBox, UserPlus, UserMinus, Loader2, LayoutDashboard } from "lucide-react";
@@ -18,6 +21,10 @@ interface CompanyHeaderProps {
 export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
     const { isOwner, isAdmin, checkPermission } = useCompanyPermissions(company);
     const queryClient = useQueryClient();
+    const [isEditAvatarOpen, setIsEditAvatarOpen] = useState(false);
+
+    // Permission check for editing
+    const canManageCompany = isOwner || checkPermission("MANAGE_SETTINGS");
 
     const { data: relationship, isLoading: isRelationshipLoading } = useQuery({
         queryKey: ["company_relationship", company?.company_id],
@@ -81,6 +88,31 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
 
     if (!company) return null;
 
+    const handleLogoUpload = async (file: File) => {
+        const formData = new FormData();
+        formData.append("avatar", file); // Backend expects 'avatar' field for uploadAvatar middleware
+        await companyService.uploadLogo(company.company_id, formData);
+        queryClient.invalidateQueries({ queryKey: ["company_relationship", company.company_id] });
+        // Also invalidate company details to refresh logo
+        queryClient.invalidateQueries({ queryKey: ["company", company.slug] });
+    };
+
+    const handleLogoDelete = async () => {
+        await companyService.deleteLogo(company.company_id);
+        queryClient.invalidateQueries({ queryKey: ["company", company.slug] });
+    };
+
+    const handleCoverUpload = async (formData: FormData) => {
+        const res = await companyService.uploadCover(company.company_id, formData);
+        queryClient.invalidateQueries({ queryKey: ["company", company.slug] });
+        return { coverUrl: res.url };
+    };
+
+    const handleCoverDelete = async () => {
+        await companyService.deleteCover(company.company_id);
+        queryClient.invalidateQueries({ queryKey: ["company", company.slug] });
+    };
+
     const ActionButtons = ({ className }: { className?: string }) => {
         const canAccessDashboard = isOwner ||
             checkPermission("MANAGE_COMPANY") ||
@@ -124,11 +156,35 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
     return (
         <div className="space-y-6 pb-6 container max-w-6xl mx-auto px-0">
             {/* Cover Image */}
-            <div className="h-48 md:h-64 w-full bg-muted relative rounded-b-xl overflow-hidden shadow-sm">
-                {company?.cover_url ? (
-                    <img src={company.cover_url} alt="Cover" className="w-full h-full object-cover" />
+            <div className="rounded-b-xl overflow-hidden shadow-sm relative group">
+                {canManageCompany ? (
+                    <EditCoverPhoto
+                        coverImage={company?.cover_url || null}
+                        setCoverImage={() => { }} // State handled by query invalidation
+                        onUpload={handleCoverUpload}
+                        onDelete={handleCoverDelete}
+                    >
+                        <div className="h-48 md:h-64 w-full bg-muted relative">
+                            {/* EditCoverPhoto renders the image, but we need to match the height/style */}
+                            {/* Wait, EditCoverPhoto renders a div with h-48 md:h-64. 
+                               So we don't need to pass children for the image itself.
+                               BUT EditCoverPhoto renders the image using `coverImage` prop.
+                               We need to make sure styling matches.
+                               EditCoverPhoto has `rounded-t-lg`. We want `rounded-b-xl`.
+                               We can't change EditCoverPhoto styles easily.
+                               Maybe we accept the style change or wrap it?
+                               If EditCoverPhoto renders the image, we just use it.
+                           */}
+                        </div>
+                    </EditCoverPhoto>
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-blue-500/10 to-purple-500/10" />
+                    <div className="h-48 md:h-64 w-full bg-muted relative">
+                        {company?.cover_url ? (
+                            <img src={company.cover_url} alt="Cover" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full bg-gradient-to-r from-blue-500/10 to-purple-500/10" />
+                        )}
+                    </div>
                 )}
             </div>
 
@@ -136,12 +192,27 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
                 <div className="flex flex-col md:flex-row gap-6 items-start">
                     {/* Logo & Mobile Actions - Row on mobile */}
                     <div className="-mt-16 md:-mt-20 w-full md:w-auto flex justify-between items-end relative z-10">
-                        <Avatar className="h-32 w-32 md:h-40 md:w-40 rounded-xl border-4 border-background bg-background shadow-md">
-                            <AvatarImage src={company?.logo_url} className="object-cover" />
-                            <AvatarFallback className="text-4xl font-bold rounded-xl text-primary/70 bg-muted">
-                                {company?.name?.slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                        </Avatar>
+                        <div className="relative group">
+                            <Avatar className="h-32 w-32 md:h-40 md:w-40 rounded-xl border-4 border-background bg-background shadow-md cursor-pointer" onClick={() => canManageCompany && setIsEditAvatarOpen(true)}>
+                                <AvatarImage src={company?.logo_url} className="object-cover" />
+                                <AvatarFallback className="text-4xl font-bold rounded-xl text-primary/70 bg-muted">
+                                    {company?.name?.slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                            </Avatar>
+
+                            {canManageCompany && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsEditAvatarOpen(true);
+                                    }}
+                                    className="absolute bottom-1 right-1 p-2 bg-background border border-border rounded-full text-muted-foreground hover:text-foreground shadow-sm opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                                    aria-label="Edit Logo"
+                                >
+                                    <PenBox className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
 
                         {/* Mobile Actions - Visible on mobile, hidden on desktop */}
                         <ActionButtons className="md:hidden mb-1" />
@@ -193,6 +264,16 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
                     </div>
                 </div>
             </div>
+
+            {canManageCompany && (
+                <EditAvatarModal
+                    isOpen={isEditAvatarOpen}
+                    onClose={() => setIsEditAvatarOpen(false)}
+                    currentAvatarUrl={company.logo_url || null}
+                    onUpload={handleLogoUpload}
+                    onDelete={handleLogoDelete}
+                />
+            )}
         </div>
     );
 }

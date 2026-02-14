@@ -66,10 +66,17 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
     refetchOnWindowFocus: false, // Prevent overwhelming refetches
   });
 
-  const posts = React.useMemo(() =>
-    data?.pages.flatMap(page => page.posts) || [],
-    [data?.pages]
-  );
+  const posts = React.useMemo(() => {
+    if (!data?.pages) return [];
+    const allPosts = data.pages.flatMap(page => page.posts);
+    // Deduplicate by ID to prevent key collisions
+    const seen = new Set();
+    return allPosts.filter(post => {
+      if (seen.has(post.id)) return false;
+      seen.add(post.id);
+      return true;
+    });
+  }, [data?.pages]);
 
   // Combine initial loading and pagination loading for simpler consumer logic,
   // or expose them separately if needed. Here we follow previous interface.

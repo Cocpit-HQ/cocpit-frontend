@@ -163,6 +163,9 @@ export function useCompanyPermissions(company?: any | null) {
         return {
             isOwner: false,
             isAdmin: false,
+            isAnalyst: false,
+            isRecruiter: false,
+            isEditor: false,
             canEdit: false,
             canManageMembers: false,
             canVerify: false,
@@ -183,11 +186,18 @@ export function useCompanyPermissions(company?: any | null) {
         return permissions.includes(perm);
     };
 
+    const isAnalyst = roleName === 'ANALYST';
+    const isRecruiter = roleName === 'RECRUITER';
+    const isEditor = roleName === 'EDITOR'; // or 'MEMBER'? likely EDITOR based on usage
+
     return {
         role: roleName,
         priority,
         isOwner,
         isAdmin,
+        isAnalyst,
+        isRecruiter,
+        isEditor,
         // Pre-computed common checks for UI convenience
         canEdit: checkPermission('MANAGE_COMPANY_DETAILS'),
         canManageMembers: checkPermission('MANAGE_MEMBERS') || checkPermission('INVITE_MEMBERS') || checkPermission('REMOVE_MEMBERS'),
