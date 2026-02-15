@@ -13,6 +13,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 interface EventDashboardProps {
     navigateTo: (page: Page) => void;
@@ -58,6 +59,7 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
     // but better to use the theme variables. 
     // The screenshot shows a very specific dark theme. 
     // We'll use the card/background classes which map to the theme variables.
+    const { activeProfile } = useActiveProfile(); // Get active profile context
 
     const [events, setEvents] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -81,7 +83,8 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
             setIsLoading(true);
             try {
                 const { getMyCreatedEvents } = await import('@/services/api/event');
-                const data = await getMyCreatedEvents();
+                const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+                const data = await getMyCreatedEvents(companyId);
                 // backend returns BackendEvent[], we map to what dashboard needs if necessary
                 // or just use it directly. EventCardSimple expects basic fields.
                 // We need to ensure we can calculate analytics from it if possible, or mock analytics for now.

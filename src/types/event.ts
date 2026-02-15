@@ -25,6 +25,16 @@ export interface BackendEvent {
         email: string;
         avatar?: string;
     };
+
+    // Company Event Fields
+    company_id?: string;
+    company_name?: string;
+    company_logo?: string;
+
+    // User Organizer Fields (if needed distinct from company)
+    user_name?: string;
+    user_avatar?: string;
+
     registered_count?: number;
 
     max_attendees?: number;
@@ -127,4 +137,9 @@ export interface EventCard {
         provider?: string;
     };
     type?: 'Free' | 'Premium' | 'Paid';
+    company?: {
+        id: string;
+        name: string;
+        logo: string;
+    };
 }

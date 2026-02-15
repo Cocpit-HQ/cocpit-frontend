@@ -31,6 +31,11 @@ export function mapBackendEventToEventCard(e: BackendEvent): EventCard {
         registrationDeadline: e.registration_deadline,
         priceType: e.price_type,
         price: e.price,
-        tags: e.tags
+        tags: e.tags,
+        company: e.company_id ? {
+            id: e.company_id,
+            name: e.company_name || "Company",
+            logo: e.company_logo || ""
+        } : undefined
     };
 }

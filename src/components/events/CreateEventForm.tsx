@@ -12,6 +12,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
+import { useUserCompanies, useCompanyPermissions } from "@/hooks/useCompany"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const createEventSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -35,6 +38,7 @@ const createEventSchema = z.object({
   quantity: z.string().optional(),
   paymentProvider: z.string().optional(),
   tags: z.string().optional(),
+  companyId: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.eventType === "Online" && !data.virtualLink) {
     ctx.addIssue({
@@ -182,6 +186,39 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
     },
   })
 
+  // Company Selection Logic
+  const { data: companies } = useUserCompanies();
+
+  const allowedCompanies = React.useMemo(() => {
+    if (!companies) return [];
+    // Only allow companies where user can post events (Permission: CREATE_CONTENT or MANAGE_COMPANY)
+    return companies.filter(company => {
+      // useCompanyPermissions expects viewer_role_data structure
+      // But getUserCompanies returns `viewer_role_data`.
+      // If it returns role string (legacy), we handle it differently or rely on backend.
+      // Assuming getUserCompanies returns viewer_role_data as updated.
+      const perms = useCompanyPermissions(company); // This works because useCompanyPermissions is a pure helper function exported
+      return perms.checkPermission('CREATE_CONTENT') || perms.checkPermission('POST_JOBS') || perms.isAdmin || perms.isOwner;
+    });
+  }, [companies]);
+
+  const selectedCompanyId = form.watch("companyId");
+  const selectedCompany = allowedCompanies.find(c => c.company_id === selectedCompanyId);
+
+  // Auto-fill organizer info if company selected
+  React.useEffect(() => {
+    if (selectedCompany) {
+      form.setValue("organizerName", selectedCompany.name);
+      if (selectedCompany.email) form.setValue("organizerEmail", selectedCompany.email);
+      // Maybe lock inputs? Or just prefill.
+    } else {
+      // Reset to "Me" if switching back? Or user's name?
+      // We lack user's name here easily without fetching profile or passing prop.
+      // initialData?.organizer_name || "Me" was default.
+      if (initialData?.organizer_name) form.setValue("organizerName", initialData.organizer_name);
+    }
+  }, [selectedCompany, form, initialData]);
+
   // Watch values for conditional rendering
   const eventType = form.watch("eventType")
   const priceType = form.watch("priceType")
@@ -251,6 +288,10 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
         data.append("banner", imageFile);
       }
 
+      if (values.companyId) {
+        data.append("companyId", values.companyId);
+      }
+
       if (initialData) {
         await updateEvent(initialData.event_id, data);
         alert("Event updated successfully!");
@@ -283,6 +324,46 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
 
       <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
         <form id="create-event-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+          {/* Post As Selector */}
+          {allowedCompanies.length > 0 && (
+            <section className="space-y-4">
+              <Label className="mb-2 block">Post As</Label>
+              <Select
+                value={selectedCompanyId || "me"}
+                onValueChange={(val) => {
+                  if (val === "me") {
+                    form.setValue("companyId", undefined);
+                  } else {
+                    form.setValue("companyId", val);
+                  }
+                }}
+              >
+                <SelectTrigger className={`w-full px-4 py-3 h-auto rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5' : 'bg-white/5 border-white/10'} text-foreground`}>
+                  <SelectValue placeholder="Select profile" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="me">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      <span>Myself</span>
+                    </div>
+                  </SelectItem>
+                  {allowedCompanies.map((company) => (
+                    <SelectItem key={company.company_id} value={company.company_id}>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-5 h-5">
+                          <AvatarImage src={company.logo_url} />
+                          <AvatarFallback>{company.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <span>{company.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </section>
+          )}
 
           {/* Core Details */}
           <section className="space-y-4">

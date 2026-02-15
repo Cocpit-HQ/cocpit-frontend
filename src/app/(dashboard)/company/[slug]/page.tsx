@@ -12,6 +12,7 @@ import { CompanyTechStack } from "@/components/companies/company-tech-stack";
 import { CompanyGallery } from "@/components/companies/company-gallery";
 import { CompanyPosts } from "@/components/companies/company-posts";
 import { CreatePostButton } from "@/components/companies/CreatePostCompanyButton";
+import { CompanyEvents } from "@/components/companies/CompanyEvents";
 
 
 export default function CompanyPage() {
@@ -67,6 +68,12 @@ export default function CompanyPage() {
                             className="rounded-md px-4 py-2 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
                         >
                             Posts
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="events"
+                            className="rounded-md px-4 py-2 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                        >
+                            Events
                         </TabsTrigger>
                         <TabsTrigger
                             value="tech-stack"
@@ -167,6 +174,17 @@ export default function CompanyPage() {
                         ) : (
                             <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-lg">
                                 Loading posts...
+                            </div>
+                        )}
+                    </TabsContent>
+
+                    <TabsContent value="events" className="mt-6">
+                        {/* Optional: Add Create Event button here specific to company if needed contextually */}
+                        {company ? (
+                            <CompanyEvents companyId={company.company_id} company={company} />
+                        ) : (
+                            <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-lg">
+                                Loading events...
                             </div>
                         )}
                     </TabsContent>

@@ -46,12 +46,17 @@ export function useEventFeed(filters: any) {
 }
 
 // --- My Created Events ---
+import { useActiveProfile } from "@/context/ActiveProfileContext";
+
 export function useMyEvents() {
     const { status } = useSession();
+    const { activeProfile } = useActiveProfile();
+    const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+
     return useQuery({
-        queryKey: eventKeys.myEvents,
+        queryKey: [...eventKeys.myEvents, companyId], // Add companyId to key
         queryFn: async () => {
-            const data = await getMyCreatedEvents();
+            const data = await getMyCreatedEvents(companyId);
             return data.map(mapBackendEventToEventCard);
         },
         enabled: status === "authenticated",

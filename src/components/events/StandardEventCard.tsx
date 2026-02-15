@@ -2,6 +2,7 @@ import React from "react"
 import Image from "next/image"
 import { MapPin, Users, Calendar } from "lucide-react"
 import type { EventCard } from "@/types/event"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface StandardEventCardProps {
   event: EventCard
@@ -57,6 +58,19 @@ export function StandardEventCard({ event, onClick, className = "", isRegistered
             <p className="text-sm text-muted-foreground line-clamp-1">
               {event.description}
             </p>
+            <div className="flex items-center gap-2 mt-2">
+              {event.company ? (
+                <>
+                  <Avatar className="w-5 h-5">
+                    <AvatarImage src={event.company.logo} />
+                    <AvatarFallback>{event.company.name[0]}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs font-medium text-muted-foreground">{event.company.name}</span>
+                </>
+              ) : (
+                <span className="text-xs text-muted-foreground">Hosted by {event.organizer?.name || event.organizerName || "Organizer"}</span>
+              )}
+            </div>
           </div>
         </div>
 

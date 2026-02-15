@@ -129,6 +129,7 @@ export function AuditLogsViewer({ company }: { company: Company }) {
                                             <SelectItem value="UPDATE">Update Profile</SelectItem>
                                             <SelectItem value="CREATE_POST">Create Post</SelectItem>
                                             <SelectItem value="POST_JOB">Post Job</SelectItem>
+                                            <SelectItem value="CREATE_EVENT">Create Event</SelectItem>
                                             {/* Add more specific actions as they appear in DB */}
                                             <SelectItem value="INVITE_MEMBER">Invite Member</SelectItem>
                                             <SelectItem value="REMOVE_MEMBER">Remove Member</SelectItem>
