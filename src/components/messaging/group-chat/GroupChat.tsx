@@ -398,7 +398,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
 
         return () => clearTimeout(timer);
 
-    }, [groupId, displayMessages.length, queryClient]); // Trigger when messages change too
+    }, [groupId, displayMessages.length, queryClient, isInactive]); // Trigger when messages change too
 
     const handleSendMessage = React.useCallback((text: string, files: File[]) => {
         // Stop typing immediately when sending

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getGroupDetails, createGroup, inviteMember, leaveGroup, deleteGroup, getGroupInvitations, removeMember, promoteToAdmin } from "../../../services/api/group-chat";
+import { getGroupDetails, createGroup, inviteMember, leaveGroup, deleteGroup, getGroupInvitations, removeMember, promoteToAdmin, updateMemberRole } from "../../../services/api/group-chat";
 import { GroupDetails, GroupInvitation, CreateGroupPayload } from "../../../types/group-chat";
 import { toast } from "sonner";
 import { useSocket } from "@/context/SocketContext";
@@ -17,6 +17,7 @@ interface GroupChatContextType {
     leaveGroup: (groupId: string) => Promise<void>;
     deleteGroup: (groupId: string) => Promise<void>;
     removeMember: (userId: string) => Promise<void>;
+    updateMemberRole: (userId: string, newRole: 'admin' | 'member') => Promise<void>;
     promoteToAdmin: (userId: string) => Promise<void>;
     updateGroupAvatar: (file: File) => Promise<void>;
     refreshGroup: () => void;
@@ -75,6 +76,23 @@ export const GroupChatProvider: React.FC<{ groupId?: string; children: React.Rea
         await promoteToAdminMutation.mutateAsync({ gid: groupId, uid: userId });
     };
 
+    const updateMemberRoleMutation = useMutation({
+        mutationFn: ({ gid, uid, role }: { gid: string, uid: string, role: 'admin' | 'member' }) => updateMemberRole(gid, uid, role),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['group-details', groupId] });
+            toast.success("Role updated successfully!");
+        },
+        onError: (err: unknown) => {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Failed to update role");
+        }
+    });
+
+    const updateMemberRoleHandler = async (userId: string, newRole: 'admin' | 'member') => {
+        if (!groupId) return;
+        await updateMemberRoleMutation.mutateAsync({ gid: groupId, uid: userId, role: newRole });
+    };
+
     useEffect(() => {
         if (!socket || !groupId) return;
 
@@ -121,13 +139,35 @@ export const GroupChatProvider: React.FC<{ groupId?: string; children: React.Rea
             }
         });
 
+        socket.on('memberLeft', (payload: any) => {
+            if (payload.groupId === groupId) {
+                // 1. Update Group Details Cache (Immediate UI update for others)
+                queryClient.setQueryData(['group-details', groupId], (oldData: GroupDetails | undefined) => {
+                    if (!oldData) return oldData;
+                    return {
+                        ...oldData,
+                        members: oldData.members.filter(m => m.user_id !== payload.userId)
+                    };
+                });
+
+                // 2. Refresh lists
+                queryClient.invalidateQueries({ queryKey: ['group-details', groupId] });
+                refetch();
+
+                // If I left, refresh conversation list too
+                if (payload.userId === user?.id) {
+                    queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                }
+            }
+        });
+
         return () => {
             socket.off('group_updated', handleGroupUpdate);
             socket.off('invitation_update', handleInvitationUpdate);
             socket.off('group_role_update', handleRoleUpdate);
-            socket.off('group_role_update', handleRoleUpdate);
             socket.off('messages_read', handleMessagesRead);
             socket.off('removed_from_group');
+            socket.off('memberLeft');
         };
     }, [socket, groupId, refetch, queryClient]);
 
@@ -158,9 +198,15 @@ export const GroupChatProvider: React.FC<{ groupId?: string; children: React.Rea
 
     const leaveMutation = useMutation({
         mutationFn: leaveGroup,
-        onSuccess: () => {
+        onSuccess: (_data, variables) => {
+            const gid = variables;
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
-            // No redirect, stay to show history
+            queryClient.invalidateQueries({ queryKey: ['group-details', gid] });
+            toast.success("You left the group");
+        },
+        onError: (err) => {
+            toast.error("Failed to leave group");
+            console.error(err);
         }
     });
 
@@ -215,6 +261,7 @@ export const GroupChatProvider: React.FC<{ groupId?: string; children: React.Rea
                 }
             },
             promoteToAdmin: promoteToAdminHandler,
+            updateMemberRole: updateMemberRoleHandler,
             updateGroupAvatar: async (file) => {
                 // Placeholder - implemented in component
             },

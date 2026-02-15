@@ -75,7 +75,7 @@ export default function GroupHeader({ onOpenDetails, onAddMember, onBack, typing
                                         {activeGroup.conversation_name}
                                     </h2>
                                     <p className="text-muted-foreground text-xs">
-                                        {activeGroup.members.length} {activeGroup.members.length === 1 ? 'member' : 'members'}
+                                        {activeGroup.members.filter(m => !isInactive || m.user_id !== currentUserId).length} {activeGroup.members.filter(m => !isInactive || m.user_id !== currentUserId).length === 1 ? 'member' : 'members'}
                                     </p>
                                 </div>
                             )}
