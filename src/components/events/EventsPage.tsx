@@ -199,7 +199,7 @@ export function EventsPage() {
           <EventDashboard navigateTo={navigateTo} theme={mounted ? (theme || 'dark') as Theme : 'dark'} />
         ) : (
           // Other Tabs
-          <UserEventsList type={activeTab as 'my_events' | 'registered' | 'saved'} />
+          <UserEventsList key={activeTab} type={activeTab as 'my_events' | 'registered' | 'saved'} />
         )}
 
       </div>
