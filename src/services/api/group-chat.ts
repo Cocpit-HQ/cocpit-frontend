@@ -70,6 +70,11 @@ export const promoteToAdmin = async (groupId: string, userId: string) => {
     return response.data;
 };
 
+export const updateMemberRole = async (groupId: string, userId: string, newRole: 'admin' | 'member') => {
+    const response = await api.patch(`/groups/${groupId}/role`, { targetUserId: userId, newRole });
+    return response.data;
+};
+
 export const updateGroupAvatar = async (groupId: string, avatarUrl: string | null) => {
     const response = await api.put(`/groups/${groupId}/avatar`, { avatarUrl });
     return response.data;

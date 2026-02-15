@@ -1,15 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { useGroupChat } from "./groupChat.context";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import SharedAvatar from "@/components/shared/Avatar";
 import { Button } from "@/components/ui/button";
-import { LogOut, Trash2, UserPlus, Camera, Crown, MoreVertical } from "lucide-react";
+import { LogOut, Trash2, UserPlus, Camera, Crown, MoreVertical, ShieldOff } from "lucide-react";
+import { useSocket } from "@/context/SocketContext";
 import { GroupAvatarUploadModal } from "./GroupAvatarUploadModal";
 import { updateGroupAvatar } from "@/services/api/group-chat";
 import { uploadMedia } from "@/services/api/upload";
-import { useState } from "react";
-import { useSocket } from "@/context/SocketContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface GroupDetailsProps {
@@ -20,8 +19,22 @@ interface GroupDetailsProps {
 }
 
 export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMember }: GroupDetailsProps) {
-    const { activeGroup, leaveGroup, deleteGroup, sentInvitations, removeMember, promoteToAdmin, isInactive } = useGroupChat();
-    const { isUserOnline } = useSocket();
+    const { activeGroup, leaveGroup, deleteGroup, sentInvitations, removeMember, promoteToAdmin, updateMemberRole, isInactive } = useGroupChat();
+    const { isUserOnline, socket } = useSocket();
+
+    // Listen for memberLeft to close panel if it's the current user
+    React.useEffect(() => {
+        if (!socket) return;
+        const handleMemberLeft = (payload: any) => {
+            if (payload.groupId === activeGroup?.conversation_id && payload.userId === currentUserId) {
+                onClose();
+            }
+        };
+        socket.on('memberLeft', handleMemberLeft);
+        return () => {
+            socket.off('memberLeft', handleMemberLeft);
+        };
+    }, [socket, activeGroup?.conversation_id, currentUserId, onClose]);
 
     if (!activeGroup) return null;
 
@@ -50,6 +63,12 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
         }
     };
 
+    const handleDismissAdmin = async (userId: string) => {
+        if (confirm("Dismiss this member as Group Admin?")) {
+            await updateMemberRole(userId, 'member');
+        }
+    };
+
     const handlePromoteToAdmin = async (userId: string) => {
         if (confirm("Promote this member to Group Admin?")) {
             await promoteToAdmin(userId);
@@ -61,6 +80,8 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
             await removeMember(userId);
         }
     };
+
+    const visibleMembers = activeGroup.members.filter(m => !isInactive || m.user_id !== currentUserId);
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
@@ -90,7 +111,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                         </div>
                         <h2 className="text-xl font-bold">{activeGroup.conversation_name}</h2>
                         <p className="text-muted-foreground text-sm mt-1">
-                            {activeGroup.members.length} {activeGroup.members.length === 1 ? 'member' : 'members'}
+                            {visibleMembers.length} {visibleMembers.length === 1 ? 'member' : 'members'}
                         </p>
                         {activeGroup.description && (
                             <p className="text-sm mt-2 text-center text-muted-foreground">{activeGroup.description}</p>
@@ -109,7 +130,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
 
                     <div className="border rounded-md p-4 mb-6">
                         <div className="space-y-4">
-                            {activeGroup.members.map((member) => (
+                            {visibleMembers.map((member) => (
                                 <div key={member.user_id} className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <SharedAvatar
@@ -140,6 +161,12 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                                                     <DropdownMenuItem onClick={() => handlePromoteToAdmin(member.user_id)}>
                                                         <Crown className="w-4 h-4 mr-2" />
                                                         Make Group Admin
+                                                    </DropdownMenuItem>
+                                                )}
+                                                {member.role === 'admin' && (
+                                                    <DropdownMenuItem onClick={() => handleDismissAdmin(member.user_id)}>
+                                                        <ShieldOff className="w-4 h-4 mr-2" />
+                                                        Dismiss as Admin
                                                     </DropdownMenuItem>
                                                 )}
                                                 <DropdownMenuItem onClick={() => handleRemoveMember(member.user_id)} className="text-destructive focus:text-destructive">
