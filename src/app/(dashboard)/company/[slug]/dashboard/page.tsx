@@ -15,6 +15,7 @@ import { EditCompanyForm } from "@/components/companies/EditCompanyForm";
 import { CompanySettings } from "@/components/companies/CompanySettings";
 import { AuditLogsViewer } from "@/components/companies/AuditLogsViewer";
 import { Separator } from "@/components/ui/separator";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import { useCompany, useCompanyPermissions } from "@/hooks/useCompany";
 
@@ -24,6 +25,23 @@ export default function CompanyDashboardPage() {
     const searchParams = useSearchParams();
     const slug = params.slug as string;
     const activeTab = searchParams.get("tab") || "overview";
+
+    const isMobile = useIsMobile();
+    const [currentTab, setCurrentTab] = useState(activeTab);
+    // On mobile, we start in 'menu' unless a specific tab (other than overview?) is requested... 
+    // actually, let's start in 'menu' normally, unless deep linking? 
+    // For now simple: default to menu if isMobile.
+    const [mobileView, setMobileView] = useState<"menu" | "detail">("menu");
+
+    // Sync tab with URL
+    React.useEffect(() => {
+        setCurrentTab(activeTab);
+        // If we land on a specific unique tab on mobile via URL, maybe show detail?
+        // But 'overview' is default. Let's say if it's NOT overview, maybe show detail.
+        if (activeTab !== 'overview' && isMobile) {
+            setMobileView("detail");
+        }
+    }, [activeTab, isMobile]);
 
     const { data: company, isLoading, error } = useCompany(slug);
     const { checkPermission, isOwner } = useCompanyPermissions(company);
@@ -57,80 +75,107 @@ export default function CompanyDashboardPage() {
     const canManageRoles = isOwner || checkPermission("MANAGE_ROLES");
     const canViewSettings = isOwner || checkPermission("MANAGE_COMPANY");
 
-    // "Intern" Protection: If user has minimal permissions, they might only see Overview
-    // or NOTHING if we decide Interns shouldn't access dashboard at all.
-    // Assuming "Overview" is safe for all members.
+    const handleTabChange = (value: string) => {
+        setCurrentTab(value);
+        if (isMobile) {
+            setMobileView("detail");
+        }
+        // Optional: Update URL without full reload? 
+        // router.push(`?tab=${value}`, { scroll: false }); 
+        // usage: router.replace or shallow update if feasible, but local state is fine for now.
+    };
+
+    const handleBackToMenu = () => {
+        setMobileView("menu");
+    };
 
     return (
         <div className="container max-w-7xl mx-auto py-8 px-4">
-            <div className="flex items-center gap-4 mb-8">
-                <Button variant="ghost" size="icon" onClick={() => router.push(`/company/${slug}`)}>
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">{company.name} Dashboard</h1>
-                    <p className="text-muted-foreground">Manage your company settings, team, and roles.</p>
+            {/* Header - Visible in Menu view (Mobile) or Always (Desktop) */}
+            {(!isMobile || mobileView === "menu") && (
+                <div className="flex items-center gap-4 mb-8">
+                    <Button variant="ghost" size="icon" onClick={() => router.push(`/company/${slug}`)}>
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">{company.name} Dashboard</h1>
+                        <p className="text-muted-foreground">Manage your company settings, team, and roles.</p>
+                    </div>
                 </div>
-            </div>
+            )}
 
-            <Tabs defaultValue={activeTab} className="flex flex-col md:flex-row gap-8">
-                <aside className="w-full md:w-64 flex-shrink-0">
+            <Tabs value={currentTab} onValueChange={handleTabChange} className="flex flex-col md:flex-row gap-8">
+                {/* Sidebar / Menu List */}
+                <aside className={`w-full md:w-64 flex-shrink-0 ${isMobile && mobileView === "detail" ? "hidden" : "block"}`}>
                     <TabsList className="flex flex-col h-auto w-full space-y-2 bg-transparent p-0 justify-start">
                         <TabsTrigger
                             value="overview"
-                            className="w-full justify-start px-4 py-2 data-[state=active]:bg-muted hover:bg-muted/50 transition-colors"
+                            className="w-full justify-start px-4 py-3 md:py-2 text-base md:text-sm data-[state=active]:bg-muted hover:bg-muted/50 transition-colors border rounded-lg md:border-0 md:rounded-sm mb-2 md:mb-0"
                         >
-                            <LayoutDashboard className="mr-3 h-4 w-4" /> Overview
+                            <LayoutDashboard className="mr-3 h-5 w-5 md:h-4 md:w-4" /> Overview
                         </TabsTrigger>
 
                         {canEditCompany && (
                             <TabsTrigger
                                 value="edit"
-                                className="w-full justify-start px-4 py-2 data-[state=active]:bg-muted hover:bg-muted/50 transition-colors"
+                                className="w-full justify-start px-4 py-3 md:py-2 text-base md:text-sm data-[state=active]:bg-muted hover:bg-muted/50 transition-colors border rounded-lg md:border-0 md:rounded-sm mb-2 md:mb-0"
                             >
-                                <Edit className="mr-3 h-4 w-4" /> Edit Details
+                                <Edit className="mr-3 h-5 w-5 md:h-4 md:w-4" /> Edit Details
                             </TabsTrigger>
                         )}
 
                         {canViewMembers && (
                             <TabsTrigger
                                 value="members"
-                                className="w-full justify-start px-4 py-2 data-[state=active]:bg-muted hover:bg-muted/50 transition-colors"
+                                className="w-full justify-start px-4 py-3 md:py-2 text-base md:text-sm data-[state=active]:bg-muted hover:bg-muted/50 transition-colors border rounded-lg md:border-0 md:rounded-sm mb-2 md:mb-0"
+
                             >
-                                <Users className="mr-3 h-4 w-4" /> Members
+                                <Users className="mr-3 h-5 w-5 md:h-4 md:w-4" /> Members
                             </TabsTrigger>
                         )}
 
                         {canManageRoles && (
                             <TabsTrigger
                                 value="roles"
-                                className="w-full justify-start px-4 py-2 data-[state=active]:bg-muted hover:bg-muted/50 transition-colors"
+                                className="w-full justify-start px-4 py-3 md:py-2 text-base md:text-sm data-[state=active]:bg-muted hover:bg-muted/50 transition-colors border rounded-lg md:border-0 md:rounded-sm mb-2 md:mb-0"
                             >
-                                <Shield className="mr-3 h-4 w-4" /> Roles
+                                <Shield className="mr-3 h-5 w-5 md:h-4 md:w-4" /> Roles
                             </TabsTrigger>
                         )}
 
                         {canViewSettings && (
                             <TabsTrigger
                                 value="settings"
-                                className="w-full justify-start px-4 py-2 data-[state=active]:bg-muted hover:bg-muted/50 transition-colors"
+                                className="w-full justify-start px-4 py-3 md:py-2 text-base md:text-sm data-[state=active]:bg-muted hover:bg-muted/50 transition-colors border rounded-lg md:border-0 md:rounded-sm mb-2 md:mb-0"
                             >
-                                <Settings className="mr-3 h-4 w-4" /> Settings
+                                <Settings className="mr-3 h-5 w-5 md:h-4 md:w-4" /> Settings
                             </TabsTrigger>
                         )}
 
                         {canViewSettings && (
                             <TabsTrigger
                                 value="logs"
-                                className="w-full justify-start px-4 py-2 data-[state=active]:bg-muted hover:bg-muted/50 transition-colors"
+                                className="w-full justify-start px-4 py-3 md:py-2 text-base md:text-sm data-[state=active]:bg-muted hover:bg-muted/50 transition-colors border rounded-lg md:border-0 md:rounded-sm mb-2 md:mb-0"
                             >
-                                <Shield className="mr-3 h-4 w-4" /> Logs
+                                <Shield className="mr-3 h-5 w-5 md:h-4 md:w-4" /> Logs
                             </TabsTrigger>
                         )}
                     </TabsList>
                 </aside>
 
-                <div className="flex-1 min-w-0">
+                {/* Main Content / Detail View */}
+                <div className={`flex-1 min-w-0 ${isMobile && mobileView === "menu" ? "hidden" : "block"}`}>
+
+                    {/* Mobile Back Button */}
+                    {isMobile && (
+                        <div className="mb-4 flex items-center gap-2">
+                            <Button variant="ghost" size="sm" className="pl-0 hover:bg-transparent" onClick={handleBackToMenu}>
+                                <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                            </Button>
+                            {/* Optionally show current tab title here? */}
+                        </div>
+                    )}
+
                     <TabsContent value="overview" className="mt-0">
                         <Card>
                             <CardHeader>
@@ -147,7 +192,6 @@ export default function CompanyDashboardPage() {
                                             <div className="text-2xl font-bold">{company.member_count}</div>
                                         </CardContent>
                                     </Card>
-                                    {/* Add more metrics here later (e.g. Active Jobs, Post Views) */}
                                 </div>
                             </CardContent>
                         </Card>

@@ -97,7 +97,7 @@ export interface Post {
   comments: string;
   shares: string;
   commentData?: Comment[];
-  category?: 'Personal' | 'Professional' | 'Achievement';
+  category?: 'Personal' | 'Professional' | 'Achievement' | 'Update' | 'Hiring' | 'Milestone' | 'Insight' | 'Article';
   visibility?: PostVisibility;
   poll?: Poll | null;
   shared_post?: Post | null;

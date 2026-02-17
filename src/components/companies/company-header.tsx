@@ -154,9 +154,9 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
     };
 
     return (
-        <div className="space-y-6 pb-6 container max-w-6xl mx-auto px-0">
+        <div className="bg-card border-b md:border border-border shadow-sm rounded-none md:rounded-xl mt-0 md:mt-6 mb-6 w-full relative group">
             {/* Cover Image */}
-            <div className="rounded-b-xl overflow-hidden shadow-sm relative group">
+            <div className="h-48 md:h-64 w-full relative bg-muted group/cover rounded-none md:rounded-t-xl overflow-hidden">
                 {canManageCompany ? (
                     <EditCoverPhoto
                         coverImage={company?.cover_url || null}
@@ -165,16 +165,6 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
                         onDelete={handleCoverDelete}
                     >
                         <div className="h-48 md:h-64 w-full bg-muted relative">
-                            {/* EditCoverPhoto renders the image, but we need to match the height/style */}
-                            {/* Wait, EditCoverPhoto renders a div with h-48 md:h-64. 
-                               So we don't need to pass children for the image itself.
-                               BUT EditCoverPhoto renders the image using `coverImage` prop.
-                               We need to make sure styling matches.
-                               EditCoverPhoto has `rounded-t-lg`. We want `rounded-b-xl`.
-                               We can't change EditCoverPhoto styles easily.
-                               Maybe we accept the style change or wrap it?
-                               If EditCoverPhoto renders the image, we just use it.
-                           */}
                         </div>
                     </EditCoverPhoto>
                 ) : (
@@ -219,7 +209,7 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
                     </div>
 
                     {/* Info */}
-                    <div className="flex-1 space-y-2 pt-2">
+                    <div className="flex-1 space-y-2 pt-2 pb-6">
                         <div className="flex flex-col md:flex-row items-start md:justify-between gap-4">
                             <div>
                                 <div className="flex items-center gap-2">

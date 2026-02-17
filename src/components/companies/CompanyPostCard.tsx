@@ -31,18 +31,43 @@ export function CompanyPostCard({ post, onLike, onDelete, onEdit, isOwner }: Com
 
     const router = useRouter();
 
+    const stripHtml = (html: string) => {
+        if (!html) return "";
+        return html.replace(/<[^>]*>?/gm, '');
+    };
+
     const handleCardClick = (e: React.MouseEvent) => {
         // Prevent navigation if selecting text
         if (window.getSelection()?.toString()) return;
         router.push(`/post/${post.id}`);
     };
 
+    const getCategoryColor = (category: string) => {
+        switch (category) {
+            case 'Update': return 'bg-blue-500/90 text-white';
+            case 'Hiring': return 'bg-green-500/90 text-white';
+            case 'Milestone': return 'bg-purple-500/90 text-white';
+            case 'Insight': return 'bg-amber-500/90 text-white';
+            case 'Article': return 'bg-indigo-500/90 text-white';
+            default: return 'bg-primary/90 text-primary-foreground';
+        }
+    };
+
+    const cleanContent = stripHtml(post.content);
+
     return (
         <div
             onClick={handleCardClick}
-            className="group bg-card border border-border rounded-xl overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col h-full cursor-pointer"
+            className="group bg-card border border-border rounded-xl overflow-hidden hover:shadow-lg hover:border-primary/50 transition-all duration-300 flex flex-col h-full cursor-pointer relative"
         >
-            {/* Media Cover */}
+            {/* Hover "View Details" Overlay - Visible only on hover */}
+            <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none flex items-center justify-center">
+                <div className="bg-background/90 text-foreground px-4 py-2 rounded-full font-medium text-sm shadow-sm transform translate-y-4 group-hover:translate-y-0 transition-transform">
+                    View Details
+                </div>
+            </div>
+
+            {/* Media Cover - 16:9 Aspect Ratio */}
             <div className="relative aspect-video bg-muted overflow-hidden">
                 {mediaUrl ? (
                     isVideo ? (
@@ -55,38 +80,38 @@ export function CompanyPostCard({ post, onLike, onDelete, onEdit, isOwner }: Com
                         <img
                             src={mediaUrl}
                             alt="Post content"
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                     )
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-muted/50 text-muted-foreground p-4 text-center text-sm">
-                        {post.content ? (
-                            <p className="line-clamp-4">{post.content}</p>
-                        ) : (
-                            <span className="italic">No content</span>
-                        )}
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-muted/30 text-muted-foreground p-6 text-center">
+                        <div className="p-3 rounded-full bg-muted/50 mb-3">
+                            <MessageCircle className="w-6 h-6 opacity-50" />
+                        </div>
                     </div>
                 )}
 
-                {/* Overlay Gradient for text readability if needed, or just type badge */}
+                {/* Category Badge */}
                 {post.category && (
-                    <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-medium">
+                    <div className={`absolute top-3 right-3 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold shadow-sm z-20 ${getCategoryColor(post.category)}`}>
                         {post.category}
                     </div>
                 )}
             </div>
 
-            {/* Content */}
-            <div className="p-4 flex flex-col flex-1">
-                <div className="flex items-start justify-between mb-2">
-                    <span className="text-xs text-muted-foreground">{post.timeAgo} ago</span>
+            {/* Content Body */}
+            <div className="p-5 flex flex-col flex-1 relative z-20 bg-card">
+                <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                        {post.timeAgo} ago
+                    </span>
 
                     {isOwner && (
                         <div onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-muted">
-                                        <MoreHorizontal className="h-3 w-3" />
+                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-muted rounded-full">
+                                        <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -102,42 +127,41 @@ export function CompanyPostCard({ post, onLike, onDelete, onEdit, isOwner }: Com
                     )}
                 </div>
 
-                {/* Text Content (if media exists, clamp tightly; if no media, it was shown in cover area mostly, but show snippet here too) */}
-                {mediaUrl && post.content && (
-                    <p className="text-sm text-foreground/90 line-clamp-3 mb-4 flex-1">
-                        {post.content}
-                    </p>
-                )}
-                {!mediaUrl && (
-                    <div className="flex-1"></div> // Spacer if content was in header
-                )}
+                {/* Text Content */}
+                <div className="mb-4 flex-1">
+                    {cleanContent ? (
+                        <>
+                            <p className="text-sm text-foreground/90 line-clamp-3 leading-relaxed">
+                                {cleanContent}
+                            </p>
+                            {cleanContent.length > 100 && (
+                                <span className="text-xs text-primary font-medium mt-1 inline-block hover:underline">
+                                    Read more
+                                </span>
+                            )}
+                        </>
+                    ) : (
+                        <p className="text-sm italic text-muted-foreground">No description</p>
+                    )}
+                </div>
 
                 {/* Interactions Footer */}
-                <div className="mt-auto pt-3 border-t border-border flex items-center justify-between text-muted-foreground">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onLike?.(); }}
-                        className="flex items-center gap-1.5 hover:text-primary transition-colors text-xs"
-                    >
-                        <ThumbsUp className="w-3.5 h-3.5" />
+                <div className="pt-3 border-t border-border/50 flex items-center gap-4 text-muted-foreground">
+                    <div className="flex items-center gap-1.5 text-xs font-medium">
+                        <ThumbsUp className={`w-3.5 h-3.5 ${post.isLiked ? 'fill-primary text-primary' : ''}`} />
                         <span>{post.likes}</span>
-                    </button>
+                    </div>
 
-                    <Link
-                        href={`/post/${post.id}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-1.5 hover:text-primary transition-colors text-xs"
-                    >
+                    <div className="flex items-center gap-1.5 text-xs font-medium">
                         <MessageCircle className="w-3.5 h-3.5" />
                         <span>{post.comments}</span>
-                    </Link>
+                    </div>
 
-                    <button
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-1.5 hover:text-primary transition-colors text-xs ml-auto"
-                    >
-                        <Share2 className="w-3.5 h-3.5" />
-                        {/* Share count often not available, or just icon */}
-                    </button>
+                    <div className="flex items-center gap-1.5 text-xs font-medium ml-auto">
+                        <span className="text-[10px] uppercase tracking-wide opacity-70">
+                            {post.visibility || 'Public'}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>

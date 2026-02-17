@@ -131,13 +131,31 @@ const EditorToolbar = ({ onFormat }: { onFormat: (command: string, value?: strin
   );
 };
 
-const RichTextEditor = ({ content, onChange }: { content: string, onChange: (html: string) => void }) => {
+const RichTextEditor = ({
+  content,
+  onChange,
+  className = "",
+  editorClassName = "",
+  placeholder
+}: {
+  content: string,
+  onChange: (html: string) => void,
+  className?: string,
+  editorClassName?: string,
+  placeholder?: string
+}) => {
   const editorRef = useRef<HTMLDivElement>(null);
 
   // Sync content updates (e.g. from AI)
   useEffect(() => {
     if (editorRef.current && content !== editorRef.current.innerHTML) {
-      editorRef.current.innerHTML = content;
+      // Only update if significantly different to avoid cursor jumps, 
+      // but here we just do simple check. 
+      // For contentEditable, this is tricky. We'll trust the parent not to blast updates 
+      // unless it's a reset.
+      if (editorRef.current.innerHTML !== content) {
+        editorRef.current.innerHTML = content;
+      }
     }
   }, [content]);
 
@@ -148,16 +166,24 @@ const RichTextEditor = ({ content, onChange }: { content: string, onChange: (htm
   };
 
   return (
-    <div className="flex flex-col border rounded-lg overflow-hidden bg-card/50 border-border mx-6 mb-6">
+    <div className={`flex flex-col border rounded-lg overflow-hidden border-border ${className}`}>
       <EditorToolbar onFormat={handleFormat} />
       <div
         ref={editorRef}
         contentEditable
         onInput={(e) => onChange(e.currentTarget.innerHTML)}
-        className="prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[300px] px-6 py-4"
+        className={`prose prose-sm dark:prose-invert max-w-none focus:outline-none px-4 py-3 ${editorClassName}`}
         style={{ outline: 'none' }}
+        data-placeholder={placeholder}
       />
-
+      <style jsx>{`
+        [contenteditable]:empty:before {
+          content: attr(data-placeholder);
+          color: #9ca3af;
+          pointer-events: none;
+          display: block; /* For Firefox */
+        }
+      `}</style>
     </div>
   );
 };
@@ -182,9 +208,28 @@ export function CreatePostModal({
 
   // We rely on passed props for company info since searching by ID via useCompany(slug) is not supported 
   // without a specific getCompanyById endpoint.
-  const company = propCompanyId ? { name: companyName || 'Company', logo_url: companyLogo || '' } : null;
+  // const company = propCompanyId ? { name: companyName || 'Company', logo_url: companyLogo || '' } : null; // Removed in favor of context
+
   const { startUpload } = usePostUpload();
-  const { activeProfile, isCompany } = useActiveProfile();
+  const { activeProfile, switchProfile, userCompanies } = useActiveProfile(); // Added switchProfile, userCompanies
+
+  // Local state for "Post As" context (User vs Company)
+  // Initialize from props OR active profile
+  const [postAsCompanyId, setPostAsCompanyId] = useState<string | null>(propCompanyId || (activeProfile?.type === 'COMPANY' ? activeProfile.id : null));
+
+  // Sync with active profile if props aren't forcing a specific company
+  useEffect(() => {
+    if (!propCompanyId && isOpen) {
+      setPostAsCompanyId(activeProfile?.type === 'COMPANY' ? activeProfile.id : null);
+    }
+  }, [isOpen, activeProfile, propCompanyId]);
+
+  // Derived state for current poster identity
+  const currentPoster = postAsCompanyId
+    ? userCompanies.find(c => c.company_id === postAsCompanyId)
+    : currentUser;
+
+  const isCompanyPost = !!postAsCompanyId;
   const [postType, setPostType] = useState<PostType>(initialPostType);
   const [notifyEmployees, setNotifyEmployees] = useState(false);
   const [description, setDescription] = useState('');
@@ -196,8 +241,38 @@ export function CreatePostModal({
     { id: '1', text: '' },
     { id: '2', text: '' },
   ]);
-  const [postCategory, setPostCategory] = useState<'Personal' | 'Professional' | 'Achievement'>('Professional');
+
+  // Dynamic Category Type
+  type CategoryType = 'Personal' | 'Professional' | 'Achievement' | 'Update' | 'Hiring' | 'Milestone' | 'Insight' | 'Article';
+  const [postCategory, setPostCategory] = useState<CategoryType>('Professional');
+
+  // Load last used category on context switch
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const storageKey = isCompanyPost ? `lastCategory_Company_${postAsCompanyId}` : `lastCategory_User_${currentUser?.id}`;
+    const savedCategory = localStorage.getItem(storageKey) as CategoryType | null;
+
+    if (savedCategory) {
+      setPostCategory(savedCategory);
+    } else {
+      // Defaults
+      setPostCategory(isCompanyPost ? 'Update' : 'Professional');
+    }
+  }, [isCompanyPost, postAsCompanyId, currentUser, isOpen]);
+
+  // Persist category change
+  const handleSetPostCategory = (category: CategoryType) => {
+    setPostCategory(category);
+    const storageKey = isCompanyPost ? `lastCategory_Company_${postAsCompanyId}` : `lastCategory_User_${currentUser?.id}`;
+    localStorage.setItem(storageKey, category);
+  };
+
   const [uploadedVideos, setUploadedVideos] = useState<MediaItem[]>([]);
+
+  // --- Context Switch Warning ---
+  const [showContextWarning, setShowContextWarning] = useState(false);
+  const [pendingContextId, setPendingContextId] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [emojiList, setEmojiList] = useState<string[]>(["😀", "😂", "😍", "🥺", "🔥", "👍", "👎", "🎉", "❤️", "💼", "🚀", "💯", "👏", "🤔", "👀", "✨", "✅", "❌", "🙌", "😎"]);
   const [customEmoji, setCustomEmoji] = useState('');
@@ -294,7 +369,10 @@ export function CreatePostModal({
             if (post.title && !post.media.length && !post.poll) type = 'article'; // Heuristic
 
             setPostType(type);
-            setPostCategory(post.category_name as any || 'Professional');
+            if (post.title && !post.media.length && !post.poll) type = 'article'; // Heuristic
+
+            setPostType(type);
+            setPostCategory(post.category_name as any || ((post as any).author_company_id ? 'Update' : 'Professional'));
             setVisibility(post.visibility);
 
             // Populate Content
@@ -355,7 +433,7 @@ export function CreatePostModal({
             };
             setSharedPost(mapped);
             // Auto-inherit settings
-            setPostCategory(post.category_name as any || 'Professional');
+            setPostCategory(post.category_name as any || ((post as any).author_company_id ? 'Update' : 'Professional'));
             setVisibility(post.visibility as any || 'public');
           })
         }
@@ -373,8 +451,9 @@ export function CreatePostModal({
       setUploadedImages([]);
       setUploadedVideos([]);
       setPollQuestion('');
+      setPollQuestion('');
       setPollOptions([{ id: '1', text: '' }, { id: '2', text: '' }]);
-      setPostCategory('Professional');
+      // setPostCategory('Professional'); // Handled by effect
       setShowEmojiPicker(false);
       setArticleTitle('');
       setArticleContent('');
@@ -585,8 +664,29 @@ export function CreatePostModal({
     }
   };
 
-  const handleSetPostCategory = (category: 'Personal' | 'Professional' | 'Achievement') => {
-    setPostCategory(category);
+  // const handleSetPostCategory... Moved up for persistence
+
+  // --- Context Switch Warning ---
+
+
+  const requestContextSwitch = (companyId: string | null) => {
+    // Check if content exists
+    const hasContent = description.trim() || photoCaption.trim() || videoCaption.trim() || uploadedImages.length > 0 || uploadedVideos.length > 0 || pollQuestion.trim();
+
+    if (hasContent) {
+      setPendingContextId(companyId);
+      setShowContextWarning(true);
+    } else {
+      setPostAsCompanyId(companyId);
+    }
+  };
+
+  const confirmContextSwitch = () => {
+    setPostAsCompanyId(pendingContextId);
+    setShowContextWarning(false);
+    setPendingContextId(null);
+    // Optional: Clear content? For now we keep it but warn.
+    // If categories are incompatible, they will auto-switch via effect
   };
 
   // --- CROPPER LOGIC ---
@@ -734,7 +834,7 @@ export function CreatePostModal({
       post_type: postType === 'photo' ? 'image' :
         postType === 'article' ? 'article' :
           postType, // video, poll, text
-      companyId: propCompanyId
+      companyId: isCompanyPost ? postAsCompanyId || undefined : undefined // Use local state
     };
 
     if (sharedPostId) payload.shared_post_id = sharedPostId;
@@ -952,8 +1052,8 @@ export function CreatePostModal({
                   mediaUrls={previewMediaUrls}
                   postType={postType === 'photo' ? 'image' : 'video'} // Only photo/video use preview really
                   currentUser={propCompanyId ? {
-                    name: companyName || company?.name || 'Company',
-                    avatar: companyLogo || company?.logo_url || undefined
+                    name: (currentPoster as any)?.name || 'Company',
+                    avatar: (currentPoster as any)?.logo_url || undefined
                   } : {
                     name: currentUser?.name || 'User',
                     avatar: currentUser?.image || undefined
@@ -1238,8 +1338,8 @@ export function CreatePostModal({
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
                           {propCompanyId ? (
                             <img
-                              src={company?.logo_url || '/assets/pngegg.png'}
-                              alt={company?.name || 'Company'}
+                              src={(currentPoster as any)?.logo_url || '/assets/pngegg.png'}
+                              alt={(currentPoster as any)?.name || 'Company'}
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -1252,7 +1352,7 @@ export function CreatePostModal({
                         </div>
                         <div>
                           <h3 className="text-foreground">
-                            {propCompanyId ? (company?.name || 'Company') : (currentUser?.name || 'Sally Liang')}
+                            {propCompanyId ? ((currentPoster as any)?.name || 'Company') : (currentUser?.name || 'Sally Liang')}
                           </h3>
                           <div className="flex items-center gap-2">
                             <p className="text-sm text-muted-foreground">Post to Anyone</p>
@@ -1270,10 +1370,13 @@ export function CreatePostModal({
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mt-3">
-                        {(['Personal', 'Professional', 'Achievement'] as const).map((category) => (
+                        {(isCompanyPost
+                          ? ['Update', 'Hiring', 'Milestone', 'Insight', 'Article']
+                          : ['Professional', 'Personal', 'Achievement', 'Article']
+                        ).map((category) => (
                           <button
                             key={category}
-                            onClick={() => setPostCategory(category)}
+                            onClick={() => handleSetPostCategory(category as any)}
                             className={`px-3 py-1 text-sm rounded-full transition-colors ${postCategory === category
                               ? 'bg-primary text-primary-foreground'
                               : 'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -1370,7 +1473,7 @@ export function CreatePostModal({
                             )}
                           </div>
                         ) : (
-                          <div className="border rounded-lg p-4 space-y-4" style={{ border: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
+                          <div className="border rounded-lg p-4 space-y-4 bg-background border-border">
                             {/* CROPPER AREA - DESKTOP */}
                             <div className="w-full">
                               <MediaCropper
@@ -1433,29 +1536,13 @@ export function CreatePostModal({
                               )}
                             </div>
 
-                            <div className="relative">
-                              <textarea
-                                ref={photoCaptionRef}
-                                value={photoCaption}
-                                onChange={(e) => setPhotoCaption(e.target.value)}
-                                placeholder="Add a caption..."
-                                className="w-full min-h-[80px] text-lg resize-none border-none focus:ring-0 p-0 pr-10 bg-transparent focus:outline-none"
-                                style={{ color: '#000000' }}
-                              />
-                              {!isMobile && (
-                                <div className="absolute top-0 right-0 z-20">
-                                  <button
-                                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                    type="button"
-                                    className={`p - 2 rounded - md transition - colors flex items - center gap - 1 ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'} `}
-                                    title="Add emoji"
-                                  >
-                                    <Smile className="w-5 h-5" />
-                                  </button>
-                                  {showEmojiPicker && renderEmojiPicker(true)}
-                                </div>
-                              )}
-                            </div>
+                            <RichTextEditor
+                              content={photoCaption}
+                              onChange={setPhotoCaption}
+                              className="bg-transparent border-none min-h-[100px]"
+                              editorClassName="min-h-[100px]"
+                              placeholder="Add a caption..."
+                            />
                           </div>
                         )
                       )}
@@ -1478,7 +1565,7 @@ export function CreatePostModal({
                               )}
                             </div>
                           ) : (
-                            <div className="border rounded-lg p-4 space-y-4" style={{ border: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
+                            <div className="border rounded-lg p-4 space-y-4 bg-background border-border">
                               <div className="flex gap-2 overflow-x-auto pb-2">
                                 {uploadedVideos.map((video) => (
                                   <div key={video.id} className="relative flex-shrink-0 w-48 h-32 bg-black rounded-md overflow-hidden border border-border group">
@@ -1502,29 +1589,13 @@ export function CreatePostModal({
                                   </button>
                                 )}
                               </div>
-                              <div className="relative">
-                                <textarea
-                                  ref={videoCaptionRef}
-                                  value={videoCaption}
-                                  onChange={(e) => setVideoCaption(e.target.value)}
-                                  placeholder="Add a caption..."
-                                  className="w-full min-h-[80px] text-lg resize-none border-none focus:ring-0 p-0 pr-10 bg-transparent focus:outline-none"
-                                  style={{ color: '#000000' }}
-                                />
-                                {!isMobile && (
-                                  <div className="absolute top-0 right-0 z-20">
-                                    <button
-                                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                      type="button"
-                                      className={`p-2 rounded-md transition-colors flex items-center gap-1 ${showEmojiPicker ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'} `}
-                                      title="Add emoji"
-                                    >
-                                      <Smile className="w-5 h-5" />
-                                    </button>
-                                    {showEmojiPicker && renderEmojiPicker(true)}
-                                  </div>
-                                )}
-                              </div>
+                              <RichTextEditor
+                                content={videoCaption}
+                                onChange={setVideoCaption}
+                                className="bg-transparent border-none min-h-[100px]"
+                                editorClassName="min-h-[100px]"
+                                placeholder="Add a caption..."
+                              />
                             </div>
                           )
                         )
@@ -1588,8 +1659,14 @@ export function CreatePostModal({
                             />
 
                             {/* Article Content Editor */}
-                            <div className="relative px-6 flex-grow">
-                              <RichTextEditor content={articleContent} onChange={setArticleContent} />
+                            <div className="relative flex-grow">
+                              <RichTextEditor
+                                content={articleContent}
+                                onChange={setArticleContent}
+                                className="mx-6 mb-6 bg-card/50 min-h-[300px]"
+                                editorClassName="min-h-[300px] px-6 py-4"
+                                placeholder="Write your article here..."
+                              />
                             </div>
                           </div>
                         )

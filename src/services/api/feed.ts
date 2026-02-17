@@ -17,8 +17,9 @@ export interface BackendPost {
   author_name: string;
   author_avatar: string | null;
   author_slug?: string;
+  author_company_id?: string;
   is_company_post?: boolean;
-  category_name: string | null;
+  category_name: 'Personal' | 'Professional' | 'Achievement' | 'Update' | 'Hiring' | 'Milestone' | 'Insight' | 'Article' | null;
   media: BackendMedia[];
   poll: BackendPoll | null;
   title?: string;

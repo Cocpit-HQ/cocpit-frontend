@@ -57,6 +57,36 @@ export function CompanyPosts({ companyId, company }: CompanyPostsProps) {
         return data.pages.flatMap(page => page.posts).map(p => mapBackendPostToPost(p));
     }, [data]);
 
+    // --- Feed State Restoration ---
+    const scrollKey = `company_feed_scroll_${companyId}`;
+
+    // Restore scroll on mount
+    useEffect(() => {
+        const savedPosition = sessionStorage.getItem(scrollKey);
+        if (savedPosition && posts.length > 0) {
+            // Small timeout to ensure layout is stable
+            setTimeout(() => {
+                window.scrollTo(0, parseInt(savedPosition, 10));
+            }, 50); // 50ms is usually enough for React to commit the list
+        }
+    }, [companyId, posts.length]); // Re-run if posts load from cache
+
+    // Save scroll on unmount (or navigate away)
+    useEffect(() => {
+        const handleScroll = () => {
+            // Debounce could be added, but simple for now
+            sessionStorage.setItem(scrollKey, window.scrollY.toString());
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            // Save one last time on unmount to be sure
+            sessionStorage.setItem(scrollKey, window.scrollY.toString());
+        };
+    }, [companyId, scrollKey]);
+    // ------------------------------
+
     if (isLoading) {
         return (
             <div className="space-y-4">

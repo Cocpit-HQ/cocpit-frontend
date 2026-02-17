@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { companyService } from "@/services/company.service";
 import { CompanyHeader } from "@/components/companies/company-header";
@@ -18,6 +18,17 @@ import { CompanyEvents } from "@/components/companies/CompanyEvents";
 export default function CompanyPage() {
     const params = useParams();
     const slug = params.slug as string;
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    const currentTab = searchParams.get("tab") || "home";
+
+    const handleTabChange = (value: string) => {
+        const newParams = new URLSearchParams(searchParams.toString());
+        newParams.set("tab", value);
+        router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
+    };
 
     const { data: company, isLoading, error } = useQuery({
         queryKey: ["company", slug],
@@ -38,12 +49,10 @@ export default function CompanyPage() {
 
     return (
         <div className="flex flex-col min-h-screen bg-background pb-12">
-            <CompanyHeader company={company} isLoading={isLoading} />
+            <div className="container max-w-6xl px-0 md:px-6 mx-auto">
+                <CompanyHeader company={company} isLoading={isLoading} />
 
-
-
-            <div className="container max-w-6xl px-4 md:px-6 mx-auto">
-                <Tabs defaultValue="home" className="w-full">
+                <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
                     <TabsList className="w-full justify-start h-auto p-1 bg-muted/40 rounded-lg mb-8 overflow-x-auto flex-nowrap">
                         <TabsTrigger
                             value="home"
