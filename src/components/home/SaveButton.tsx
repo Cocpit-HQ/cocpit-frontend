@@ -11,9 +11,10 @@ interface SaveButtonProps {
     initialIsSaved?: boolean
     className?: string
     onSaveChange?: (isSaved: boolean) => void
+    onToggle?: () => void
 }
 
-export function SaveButton({ postId, initialIsSaved = false, className, onSaveChange }: SaveButtonProps) {
+export function SaveButton({ postId, initialIsSaved = false, className, onSaveChange, onToggle }: SaveButtonProps) {
     const [isSaved, setIsSaved] = useState(initialIsSaved)
     const [isLoading, setIsLoading] = useState(false)
 
@@ -27,6 +28,11 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
         e.stopPropagation()
 
         if (isLoading) return
+
+        if (onToggle) {
+            onToggle()
+            return
+        }
 
         // Optimistic Update
         const previousState = isSaved

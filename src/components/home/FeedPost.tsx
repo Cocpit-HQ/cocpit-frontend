@@ -2,7 +2,32 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { PollAnalyticsModal } from './PollAnalyticsModal';
-import { ThumbsUp, MessageCircle, Share2, MoreHorizontal, EyeOff, Trash2, Edit2, Eye, BarChart2, ArrowUpRight, Link2, Bookmark, UserMinus, Flag, Info, Star } from 'lucide-react'
+import {
+  ThumbsUp,
+  MessageCircle,
+  Share2,
+  MoreHorizontal,
+  EyeOff,
+  Trash2,
+  Edit2,
+  Eye,
+  BarChart2,
+  Link2,
+  Bookmark,
+  Flag,
+  Star,
+  Globe,
+  Loader2,
+  Plus,
+  ArrowLeft,
+  Grid,
+  LayoutGrid,
+  Folder,
+  Image as ImageIcon,
+  Video,
+  FileText,
+  BarChart3
+} from 'lucide-react'
 import Image from "next/image"
 import dayjs from 'dayjs'
 import DOMPurify from 'dompurify'
@@ -22,6 +47,7 @@ import { PollCard } from './PollCard'
 import { CreatePostModal } from './CreatePostModal'
 import { updatePost, toggleLike, voteInPoll, removeVote, addComment, deleteComment, getComments, deletePost } from '@/services/api/posts'
 import { SaveButton } from './SaveButton'
+import { SavePostModal } from '@/components/settings/SavePostModal'
 import { useFeed } from '@/context/FeedContext'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
@@ -108,6 +134,7 @@ export default function FeedPost({
   const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false)
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false)
 
   const [postComments, setPostComments] = useState<CommentType[]>(initialComments)
   const [commentsLoaded, setCommentsLoaded] = useState(false);
@@ -518,13 +545,13 @@ export default function FeedPost({
   const commentsCount = commentsLoaded ? postComments.length : (typeof initialCommentsCount === 'string' ? parseInt(initialCommentsCount) : initialCommentsCount);
 
   return (
-    <div id={`post-${id}`} className="bg-card border-border md:rounded-xl md:border overflow-hidden flex flex-col h-full">
-      <div className="px-4 md:px-6 pt-4 md:pt-6 pb-2">
-        <div className="flex items-start justify-between mb-4">
+    <div id={`post-${id}`} className="bg-card border-border md:rounded-lg md:border overflow-hidden flex flex-col h-full shadow-sm mb-2">
+      <div className="p-4 pb-2">
+        <div className="flex items-start justify-between mb-2">
           <div className="flex gap-3">
             {isMe || (!isCompanyPost && !authorId) ? (
               <div className="block flex-shrink-0">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden cursor-default">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden cursor-default">
                   <img src={avatarSrc} alt={author} className="w-full h-full object-cover" />
                 </div>
               </div>
@@ -533,33 +560,42 @@ export default function FeedPost({
                 href={isCompanyPost ? `/company/${authorSlug}` : `/profile/${authorId}`}
                 className="block flex-shrink-0"
               >
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
                   <img src={avatarSrc} alt={author} className="w-full h-full object-cover" />
                 </div>
               </Link>
             )}
             <div>
               {isMe || (!isCompanyPost && !authorId) ? (
-                <h3 className="text-foreground mb-0.5 text-sm md:text-base font-semibold cursor-default">{author}</h3>
+                <h3 className="text-foreground text-sm font-semibold cursor-default leading-tight">{author}</h3>
               ) : (
                 <Link
                   href={isCompanyPost ? `/company/${authorSlug}` : `/profile/${authorId}`}
                   className="hover:underline block"
                 >
-                  <h3 className="text-foreground mb-0.5 text-sm md:text-base font-semibold">{author}</h3>
+                  <h3 className="text-foreground text-sm font-semibold leading-tight">{author}</h3>
                 </Link>
               )}
-              <div className="flex flex-col gap-0.5">
-                {/* Only show "Edited" or time if relevant. Current design shows time. */}
+              <div className="flex flex-col">
                 {title && (
-                  <p className="text-xs md:text-sm leading-tight text-muted-foreground">
+                  <p className="text-[12px] leading-tight text-muted-foreground line-clamp-1">
                     {title}
                   </p>
                 )}
+                <div className="flex items-center gap-1">
+                  <p className="text-[11px] leading-tight text-muted-foreground">
+                    {timeAgo} •
+                  </p>
+                  {visibility === 'private' ? (
+                    <EyeOff className="w-3 h-3 text-muted-foreground" />
+                  ) : (
+                    <Globe className="w-3 h-3 text-muted-foreground" />
+                  )}
+                </div>
               </div>
             </div>
           </div>
-          <div className="flex flex-col items-end">
+          <div className="flex items-center">
             <div className="relative">
               <button
                 onClick={() => setShowOptions(!showOptions)}
@@ -585,7 +621,7 @@ export default function FeedPost({
                             console.log("Add to favorites", id);
                             setShowOptions(false);
                           }}
-                          className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                          className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
                         >
                           <Star className="w-4 h-4" />
                           <span>Add to favorites</span>
@@ -600,7 +636,7 @@ export default function FeedPost({
                             }
                             setShowOptions(false);
                           }}
-                          className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                          className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
                         >
                           <Link2 className="w-4 h-4" />
                           <span>Copy link</span>
@@ -612,7 +648,7 @@ export default function FeedPost({
                             toast.success("Report submitted");
                             setShowOptions(false);
                           }}
-                          className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                          className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
                         >
                           <Flag className="w-4 h-4" />
                           <span>Report</span>
@@ -629,7 +665,7 @@ export default function FeedPost({
                               setIsEditModalOpen(true);
                               setShowOptions(false);
                             }}
-                            className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                            className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
                           >
                             <Edit2 className="w-4 h-4" />
                             <span>Edit Post</span>
@@ -642,7 +678,7 @@ export default function FeedPost({
                               setIsAnalyticsModalOpen(true);
                               setShowOptions(false);
                             }}
-                            className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                            className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
                           >
                             <BarChart2 className="w-4 h-4" />
                             <span>View Poll Analytics</span>
@@ -652,7 +688,7 @@ export default function FeedPost({
                         <button
                           onClick={handleToggleVisibility}
                           disabled={!!(shared_post && (shared_post as any).isAvailable === false && visibility === 'private')}
-                          className={`w-full text-left flex items-center gap-3 px-4 py-3 text-sm transition-colors border-b border-border ${shared_post && (shared_post as any).isAvailable === false && visibility === 'private'
+                          className={`w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm transition-colors border-b border-border ${shared_post && (shared_post as any).isAvailable === false && visibility === 'private'
                             ? 'text-muted-foreground cursor-not-allowed opacity-50'
                             : 'text-foreground hover:bg-muted'
                             }`}
@@ -666,7 +702,7 @@ export default function FeedPost({
                             onDelete?.(id)
                             setShowOptions(false)
                           }}
-                          className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                          className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                           <span>Delete</span>
@@ -677,24 +713,16 @@ export default function FeedPost({
                 </>
               )}
             </div>
-            <div className="flex items-center gap-2 -mt-1">
-              <p className="text-xs leading-tight text-muted-foreground">
-                {timeAgo} ago
-              </p>
-              {visibility === 'private' && (
-                <EyeOff className="w-3 h-3 text-muted-foreground" />
-              )}
-            </div>
           </div >
         </div >
       </div >
 
       <div className="flex-1 flex flex-col justify-center w-full">
         {content && (
-          <div className={`px-4 md:px-6 mb-4 ${isTextOnlyPost ? 'md:px-8' : ''}`}>
-            <div className={`${isTextOnlyPost ? 'bg-muted/30 border border-white/5 rounded-[1.25rem] p-5 sm:p-7 shadow-sm soft-post-shadow mb-2' : ''}`}>
+          <div className="px-4 mb-3">
+            <div>
               <div
-                className={`leading-[1.75] text-[0.95rem] md:text-base text-foreground/90 whitespace-pre-wrap ${!isFullContent && !isExpanded ? 'line-clamp-6 text-post-fade' : ''}`}
+                className={`leading-normal text-sm text-foreground/90 whitespace-pre-wrap ${!isFullContent && !isExpanded ? 'line-clamp-5' : ''}`}
                 dangerouslySetInnerHTML={{ __html: typeof window !== 'undefined' ? DOMPurify.sanitize(content) : content }}
               />
               {!isFullContent && (content.length > 300 || content.split('\n').length > 4) && (
@@ -704,9 +732,9 @@ export default function FeedPost({
                     e.preventDefault();
                     setIsExpanded(!isExpanded);
                   }}
-                  className="text-sm text-primary hover:text-primary/80 mt-2 font-semibold focus:outline-none transition-colors"
+                  className="text-xs text-primary hover:text-primary/80 mt-1 font-semibold focus:outline-none transition-colors"
                 >
-                  {isExpanded ? 'Show less' : 'Read more'}
+                  {isExpanded ? '...show less' : '...see more'}
                 </button>
               )}
             </div>
@@ -747,34 +775,34 @@ export default function FeedPost({
                 <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:shadow-lg dark:hover:shadow-primary/5">
 
                   {/* Shared Post Header */}
-                  <div className={`${isProfileView ? 'p-2' : 'p-4'} flex items-center gap-2 md:gap-3 border-b border-white/5`}>
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden ring-2 ring-white/10">
+                  <div className="p-3 flex items-center gap-2 md:gap-3 border-b border-white/5">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden ring-2 ring-white/10">
                       <img src={shared_post.authorAvatar || '/assets/pngegg.png'} alt={shared_post.author} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold text-foreground flex items-center gap-2">
                         {shared_post.author}
-                        <span className="text-xs font-normal text-muted-foreground">• Original Post</span>
+                        <span className="text-[10px] font-normal text-muted-foreground">• Original</span>
                       </span>
-                      <span className="text-xs text-muted-foreground">{shared_post.timeAgo || 'Recently'}</span>
+                      <span className="text-[10px] text-muted-foreground">{shared_post.timeAgo || 'Recently'}</span>
                     </div>
 
                     {/* Original Post Stats */}
-                    <div className="ml-auto flex items-center gap-3">
+                    <div className="ml-auto flex items-center gap-2">
                       <div className={`flex items-center gap-1 ${shared_post.isLiked ? 'text-blue-500' : 'text-muted-foreground'}`}>
-                        <ThumbsUp className={`w-3.5 h-3.5 ${shared_post.isLiked ? 'fill-current' : ''}`} />
-                        <span className="text-xs font-medium">{shared_post.likes}</span>
+                        <ThumbsUp className={`w-3 h-3 ${shared_post.isLiked ? 'fill-current' : ''}`} />
+                        <span className="text-[10px] font-medium">{shared_post.likes}</span>
                       </div>
                       <div className="flex items-center gap-1 text-muted-foreground">
-                        <MessageCircle className="w-3.5 h-3.5" />
-                        <span className="text-xs font-medium">{shared_post.comments}</span>
+                        <MessageCircle className="w-3 h-3" />
+                        <span className="text-[10px] font-medium">{shared_post.comments}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className={`${isProfileView ? 'p-2' : 'p-4'}`}>
+                  <div className="p-3">
                     {shared_post.content && (
-                      <p className={`text-sm ${isProfileView ? 'text-xs' : 'md:text-base'} text-foreground/90 leading-relaxed mb-3 line-clamp-6`}>
+                      <p className="text-sm text-foreground/90 leading-tight mb-2 line-clamp-4">
                         {shared_post.content}
                       </p>
                     )}
@@ -908,24 +936,22 @@ export default function FeedPost({
 
       </div>
 
-      <div className="px-4 md:px-6 py-1.5 md:py-2 border-t border-border/40 mt-auto">
+      <div className="px-4 py-1 border-t border-border/40 mt-auto">
         <div className="flex items-center justify-between gap-1">
           <button
             onClick={handleLike}
-            className={`flex flex-col items-center justify-center gap-0.5 ${isLiked ? 'text-red-500' : 'text-muted-foreground hover:text-red-500'} transition-all duration-200 flex-1 py-1.5 rounded-xl hover:bg-muted/50`}
+            className={`flex items-center justify-center gap-2 ${isLiked ? 'text-primary' : 'text-muted-foreground hover:bg-muted/50'} transition-all duration-200 flex-1 py-1.5 rounded-md`}
           >
-            <ThumbsUp className="w-4 h-4 md:w-5 md:h-5" fill="none" />
-            {likeCount > 0 && <span className="text-[10px] md:text-[11px] font-medium text-muted-foreground/70">{likeCount}</span>}
+            <ThumbsUp className="w-4 h-4" fill={isLiked ? "currentColor" : "none"} />
+            <span className="text-xs font-medium">{likeCount > 0 ? likeCount : 'Like'}</span>
           </button>
 
           <button
             onClick={handleToggleCommentSection}
-            className={`flex flex-col items-center justify-center gap-0.5 ${isCommentSectionOpen || isMobileDrawerOpen || isCommented ? 'text-green-500' : 'text-muted-foreground hover:text-primary'} transition-all duration-200 flex-1 py-1.5 rounded-xl hover:bg-muted/50`}
+            className={`flex items-center justify-center gap-2 ${isCommentSectionOpen || isMobileDrawerOpen || isCommented ? 'text-primary' : 'text-muted-foreground hover:bg-muted/50'} transition-all duration-200 flex-1 py-1.5 rounded-md`}
           >
-            <MessageCircle className="w-4 h-4 md:w-5 md:h-5" fill="none" />
-            {(typeof commentsCount === 'number' ? commentsCount : parseInt(commentsCount || '0')) > 0 && (
-              <span className="text-[10px] md:text-[11px] font-medium text-muted-foreground/70">{commentsCount}</span>
-            )}
+            <MessageCircle className="w-4 h-4" fill={isCommented ? "currentColor" : "none"} />
+            <span className="text-xs font-medium">{(typeof commentsCount === 'number' ? commentsCount : parseInt(commentsCount || '0')) > 0 ? commentsCount : 'Comment'}</span>
           </button>
 
           <button
@@ -933,18 +959,17 @@ export default function FeedPost({
               if (onShare) onShare()
               setIsShareModalOpen(true)
             }}
-            className="flex flex-col items-center justify-center gap-0.5 text-muted-foreground hover:text-primary transition-all duration-200 flex-1 py-1.5 rounded-xl hover:bg-muted/50"
+            className="flex items-center justify-center gap-2 text-muted-foreground hover:bg-muted/50 transition-all duration-200 flex-1 py-1.5 rounded-md"
           >
-            <Share2 className="w-4 h-4 md:w-5 md:h-5" />
-            {(typeof shares === 'number' ? shares : parseInt(shares || '0')) > 0 && (
-              <span className="text-[10px] md:text-[11px] font-medium text-muted-foreground/70">{shares}</span>
-            )}
+            <Share2 className="w-4 h-4" />
+            <span className="text-xs font-medium">Share</span>
           </button>
 
           <SaveButton
             postId={id.toString()}
             initialIsSaved={isSaved}
             onSaveChange={(val) => setIsSaved(val)}
+            onToggle={() => setIsSaveModalOpen(true)}
           />
         </div>
       </div>
@@ -991,6 +1016,16 @@ export default function FeedPost({
         isOpen={isAnalyticsModalOpen}
         onClose={() => setIsAnalyticsModalOpen(false)}
         postId={id}
+      />
+
+      <SavePostModal
+        isOpen={isSaveModalOpen}
+        onClose={() => setIsSaveModalOpen(false)}
+        postId={id.toString()}
+        onSaved={(newSavedState) => {
+          setIsSaved(newSavedState);
+          if (onSaveChange) onSaveChange(newSavedState);
+        }}
       />
     </div >
   )

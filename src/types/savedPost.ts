@@ -15,4 +15,5 @@ export interface Post {
 export interface SavedPostsResponse {
     success: boolean;
     posts: Post[];
+    hasMore?: boolean;
 }

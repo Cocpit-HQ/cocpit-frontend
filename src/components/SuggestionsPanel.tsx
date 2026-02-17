@@ -12,14 +12,23 @@ type Suggestion = {
   verified: boolean;
 };
 
-interface SuggestionsPanelProps {}
+interface SuggestionsPanelProps { }
 
-export function SuggestionsPanel({}: SuggestionsPanelProps) {
+import { usePathname } from "next/navigation";
+
+export function SuggestionsPanel({ }: SuggestionsPanelProps) {
   const [isMounted, setIsMounted] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const HIDDEN_ROUTES = ['/showcase', '/profile', '/settings'];
+  // Ensure pathname is valid before checking
+  const shouldHide = pathname && HIDDEN_ROUTES.some(route => pathname.startsWith(route));
+
+  if (shouldHide) return null;
 
   const suggestions: Suggestion[] = [
     {

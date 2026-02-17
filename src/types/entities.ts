@@ -76,6 +76,14 @@ export interface Poll {
 
 export type PostVisibility = 'public' | 'private';
 
+export interface SavedFolder {
+  folder_id: string;
+  user_id: string;
+  name: string;
+  post_count: number;
+  created_at: string;
+}
+
 export interface Post {
   id: string;
   authorId: string;
