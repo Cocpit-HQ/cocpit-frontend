@@ -277,7 +277,7 @@ export default function CommentInput({
                     <button
                         onClick={() => handleSubmit()}
                         disabled={!text.trim()}
-                        className="p-2 text-primary hover:text-primary/80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                        className="p-2 text-green-500 hover:text-green-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                     >
                         <Send className="w-5 h-5" />
                     </button>
