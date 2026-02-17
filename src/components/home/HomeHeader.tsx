@@ -75,10 +75,10 @@ export const HomeHeader = () => {
 
     return (
         <header
-            className={`sticky top-0 z-20 border-b px-4 py-3 md:py-4 bg-background border-border transition-transform duration-300 ease-in-out ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
+            className={`sticky top-0 z-20 border-b p-3 md:py-2 bg-background border-border transition-transform duration-300 ease-in-out ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
                 } md:translate-y-0`}
         >
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-5xl mx-auto px-1 md:px-0">
                 {/* --- Desktop Header (Visible from md screens up) --- */}
                 <div className="hidden md:flex items-center gap-4">
                     {/* Desktop Search Bar */}

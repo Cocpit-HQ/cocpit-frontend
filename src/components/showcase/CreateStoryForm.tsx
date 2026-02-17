@@ -140,21 +140,45 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
     }
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      setEditingFile(file);
-      // Reset input so same file can be selected again if cancelled
-      e.target.value = "";
-    }
-  }
+    if (!file) return
 
-  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setEditingFile(file);
-      e.target.value = "";
+    // Limit video duration
+    if (file.type.startsWith('video/')) {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.src = URL.createObjectURL(file);
+
+      await new Promise((resolve) => {
+        video.onloadedmetadata = () => resolve(true);
+      });
+
+      window.URL.revokeObjectURL(video.src);
+
+      if (video.duration > 30) {
+        alert("Video must be 30 seconds or less.");
+        e.target.value = "";
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedVideo(reader.result as string);
+        setSelectedImage(null);
+      };
+      reader.readAsDataURL(file);
+    } else if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string);
+        setSelectedVideo(null);
+      };
+      reader.readAsDataURL(file);
     }
+
+    setEditingFile(file);
+    e.target.value = "";
   }
 
   const handleEditorSave = (file: File | Blob | string, metadata: StoryMetadata) => {
@@ -275,63 +299,35 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
           {mode === 'media' ? (
             // Media Upload Mode
             <div className="space-y-6">
-              {/* Upload Image Section */}
+              {/* Unified Media Upload Section */}
               <div>
-                <label className="block text-sm mb-2 text-muted-foreground">Upload Image</label>
+                <label className="block text-sm mb-2 text-muted-foreground">Upload Media</label>
                 <div
                   onClick={() => imageInputRef.current?.click()}
                   className={`
-                                    w-full h-48 border-2 border-dashed rounded-xl flex items-center justify-center cursor-pointer transition-colors relative overflow-hidden
-                                    ${selectedImage ? "border-primary bg-primary/10" : "border-border hover:border-primary/50 hover:bg-muted/50"}
+                                    w-full h-64 border-2 border-dashed rounded-xl flex items-center justify-center cursor-pointer transition-colors relative overflow-hidden
+                                    ${selectedImage || selectedVideo ? "border-primary bg-primary/10" : "border-border hover:border-primary/50 hover:bg-muted/50"}
                                 `}
                 >
                   {selectedImage ? (
-                    <img src={selectedImage} alt="Selected" className="absolute inset-0 w-full h-full object-cover" />
+                    <img src={selectedImage} alt="Selected" className="absolute inset-0 w-full h-full object-contain bg-black/5" />
+                  ) : selectedVideo ? (
+                    <video src={selectedVideo} className="absolute inset-0 w-full h-full object-contain bg-black/5" />
                   ) : (
-                    <div className="text-center p-4">
-                      <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-3">
-                        <Image className="w-6 h-6 text-blue-500" />
+                    <div className="text-center p-6">
+                      <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
+                        <Image className="w-8 h-8 text-blue-500" />
                       </div>
-                      <span className="text-sm font-medium text-blue-500">Upload Image</span>
-                      <p className="text-xs text-muted-foreground mt-1">JPG or PNG (rec: 9:16)</p>
+                      <span className="text-lg font-medium text-blue-500">Upload Photo or Video</span>
+                      <p className="text-sm text-muted-foreground mt-2">JPG, PNG, MP4, MOV</p>
+                      <p className="text-xs text-muted-foreground mt-1">(Video max 30s)</p>
                     </div>
                   )}
                   <input
                     ref={imageInputRef}
                     type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                </div>
-              </div>
-
-              {/* Upload Video Section */}
-              <div>
-                <label className="block text-sm mb-2 text-muted-foreground">Upload Video</label>
-                <div
-                  onClick={() => videoInputRef.current?.click()}
-                  className={`
-                                    w-full h-48 border-2 border-dashed rounded-xl flex items-center justify-center cursor-pointer transition-colors relative overflow-hidden
-                                    ${selectedVideo ? "border-primary bg-primary/10" : "border-border hover:border-primary/50 hover:bg-muted/50"}
-                                `}
-                >
-                  {selectedVideo ? (
-                    <video src={selectedVideo} className="absolute inset-0 w-full h-full object-cover" />
-                  ) : (
-                    <div className="text-center p-4">
-                      <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-3">
-                        <Video className="w-6 h-6 text-purple-500" />
-                      </div>
-                      <span className="text-sm font-medium text-purple-500">Upload Video</span>
-                      <p className="text-xs text-muted-foreground mt-1">MP4 or MOV (max 30s)</p>
-                    </div>
-                  )}
-                  <input
-                    ref={videoInputRef}
-                    type="file"
-                    accept="video/*"
-                    onChange={handleVideoUpload}
+                    accept="image/*,video/*"
+                    onChange={handleMediaUpload}
                     className="hidden"
                   />
                 </div>
@@ -463,7 +459,7 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
                   ref={imageInputRef} // Reuse image input ref for background
                   type="file"
                   accept="image/*"
-                  onChange={handleImageUpload}
+                  onChange={handleMediaUpload}
                   className="hidden"
                 />
 

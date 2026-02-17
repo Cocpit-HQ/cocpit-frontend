@@ -24,10 +24,10 @@ function PostButton({ icon, label, onClick }: { icon: React.ReactNode; label: st
 export function CreatePost({ onOpenModal }: CreatePostProps) {
   return (
     <div
-      className="rounded-xl border p-6 mb-3 bg-card border-border shadow-sm"
+      className="rounded-lg border p-4 mb-3 bg-card border-border shadow-sm"
     >
-      <div className="flex gap-3 mb-4">
-        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex-shrink-0 overflow-hidden">
+      <div className="flex gap-3 mb-3 items-center">
+        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex-shrink-0 overflow-hidden">
           <img
             src="/assets/pngegg.png"
             alt="profile"
@@ -38,28 +38,28 @@ export function CreatePost({ onOpenModal }: CreatePostProps) {
           type="text"
           placeholder="Start a post"
           onClick={() => onOpenModal('text')}
-          className="flex-1 px-4 py-3 border rounded-full hover:bg-muted cursor-pointer focus:outline-none transition-colors bg-muted/50 text-foreground placeholder-muted-foreground border-border hover:border-primary"
+          className="flex-1 h-10 px-4 border rounded-full hover:bg-muted cursor-pointer focus:outline-none transition-colors bg-muted/50 text-foreground placeholder-muted-foreground border-border hover:border-primary text-sm"
         />
       </div>
 
-      <div className="flex items-center justify-around">
+      <div className="flex items-center justify-between px-2">
         <PostButton
-          icon={<Image className="w-5 h-5 text-primary" />}
+          icon={<Image className="w-4 h-4 text-primary" />}
           label="Photo"
           onClick={() => onOpenModal('photo')}
         />
         <PostButton
-          icon={<Video className="w-5 h-5 text-green-600" />}
+          icon={<Video className="w-4 h-4 text-green-600" />}
           label="Video"
           onClick={() => onOpenModal('video')}
         />
         <PostButton
-          icon={<FileText className="w-5 h-5 text-orange-600" />}
+          icon={<FileText className="w-4 h-4 text-orange-600" />}
           label="Article"
           onClick={() => onOpenModal('article')}
         />
         <PostButton
-          icon={<BarChart3 className="w-5 h-5 text-purple-600" />}
+          icon={<BarChart3 className="w-4 h-4 text-purple-600" />}
           label="Poll"
           onClick={() => onOpenModal('poll')}
         />
