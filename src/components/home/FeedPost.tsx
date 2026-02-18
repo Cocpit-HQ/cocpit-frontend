@@ -789,11 +789,11 @@ export default function FeedPost({
 
                     {/* Original Post Stats */}
                     <div className="ml-auto flex items-center gap-2">
-                      <div className={`flex items-center gap-1 ${shared_post.isLiked ? 'text-blue-500' : 'text-muted-foreground'}`}>
+                      <div className={`flex items-center gap-1 ${shared_post.isLiked ? 'text-red-500' : 'text-muted-foreground'}`}>
                         <ThumbsUp className={`w-3 h-3 ${shared_post.isLiked ? 'fill-current' : ''}`} />
                         <span className="text-[10px] font-medium">{shared_post.likes}</span>
                       </div>
-                      <div className="flex items-center gap-1 text-muted-foreground">
+                      <div className="flex items-center gap-1 text-green-500">
                         <MessageCircle className="w-3 h-3" />
                         <span className="text-[10px] font-medium">{shared_post.comments}</span>
                       </div>
@@ -940,18 +940,20 @@ export default function FeedPost({
         <div className="flex items-center justify-between gap-1">
           <button
             onClick={handleLike}
-            className={`flex items-center justify-center gap-2 ${isLiked ? 'text-primary' : 'text-muted-foreground hover:bg-muted/50'} transition-all duration-200 flex-1 py-1.5 rounded-md`}
+            className={`flex items-center justify-center gap-2 ${isLiked ? 'text-red-500' : 'text-muted-foreground hover:bg-muted/50'} transition-all duration-200 flex-1 py-1.5 rounded-md`}
           >
             <ThumbsUp className="w-4 h-4" fill={isLiked ? "currentColor" : "none"} />
-            <span className="text-xs font-medium">{likeCount > 0 ? likeCount : 'Like'}</span>
+            {likeCount > 0 && <span className="text-xs font-medium">{likeCount}</span>}
           </button>
 
           <button
             onClick={handleToggleCommentSection}
-            className={`flex items-center justify-center gap-2 ${isCommentSectionOpen || isMobileDrawerOpen || isCommented ? 'text-primary' : 'text-muted-foreground hover:bg-muted/50'} transition-all duration-200 flex-1 py-1.5 rounded-md`}
+            className={`flex items-center justify-center gap-2 ${isCommentSectionOpen || isMobileDrawerOpen || isCommented ? 'text-green-500' : 'text-muted-foreground hover:bg-muted/50'} transition-all duration-200 flex-1 py-1.5 rounded-md`}
           >
             <MessageCircle className="w-4 h-4" fill={isCommented ? "currentColor" : "none"} />
-            <span className="text-xs font-medium">{(typeof commentsCount === 'number' ? commentsCount : parseInt(commentsCount || '0')) > 0 ? commentsCount : 'Comment'}</span>
+            {(typeof commentsCount === 'number' ? commentsCount : parseInt(commentsCount || '0')) > 0 && (
+              <span className="text-xs font-medium">{commentsCount}</span>
+            )}
           </button>
 
           <button
@@ -962,7 +964,7 @@ export default function FeedPost({
             className="flex items-center justify-center gap-2 text-muted-foreground hover:bg-muted/50 transition-all duration-200 flex-1 py-1.5 rounded-md"
           >
             <Share2 className="w-4 h-4" />
-            <span className="text-xs font-medium">Share</span>
+            {parseInt(shares || '0') > 0 && <span className="text-xs font-medium">{shares}</span>}
           </button>
 
           <SaveButton

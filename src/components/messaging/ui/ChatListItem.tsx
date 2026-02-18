@@ -17,7 +17,7 @@ interface ChatListItemProps {
   isMobile: boolean
 }
 
-export default function ChatListItem({ chat, isSelected, isMobile }: ChatListItemProps) {
+export function ChatListItem({ chat, isSelected, isMobile }: ChatListItemProps) {
   const content = (
     <div
       className={`p-4 cursor-pointer transition-colors border-b border-border hover:bg-muted/50 ${!isMobile && isSelected ? "bg-muted" : ""
@@ -66,3 +66,22 @@ export default function ChatListItem({ chat, isSelected, isMobile }: ChatListIte
 
   return content
 }
+
+function arePropsEqual(prevProps: ChatListItemProps, nextProps: ChatListItemProps) {
+  return (
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.isMobile === nextProps.isMobile &&
+    prevProps.chat.id === nextProps.chat.id &&
+    prevProps.chat.lastMessage === nextProps.chat.lastMessage &&
+    prevProps.chat.time === nextProps.chat.time &&
+    prevProps.chat.unread === nextProps.chat.unread &&
+    prevProps.chat.online === nextProps.chat.online &&
+    prevProps.chat.name === nextProps.chat.name &&
+    prevProps.chat.avatar === nextProps.chat.avatar &&
+    prevProps.chat.role === nextProps.chat.role
+  );
+}
+
+const MemoizedChatListItem = React.memo(ChatListItem, arePropsEqual);
+
+export default MemoizedChatListItem;

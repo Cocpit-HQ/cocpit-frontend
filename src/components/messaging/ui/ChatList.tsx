@@ -25,7 +25,7 @@ interface ChatListProps {
   isCompany?: boolean;
 }
 
-export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], isLoading, error, onCreateGroup, isCompany = false }: ChatListProps) {
+export function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], isLoading, error, onCreateGroup, isCompany = false }: ChatListProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const { socket, isUserOnline } = useSocket();
   const { activeProfile } = useActiveProfile();
@@ -74,18 +74,18 @@ export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats
   const [activeTab, setActiveTab] = useState<'all' | 'groups'>('all');
 
   // Merge online status into chats
-  const chatsWithStatus = chats.map(chat => ({
+  const chatsWithStatus = React.useMemo(() => chats.map(chat => ({
     ...chat,
     online: chat.otherUserId ? isUserOnline(chat.otherUserId) : false
-  }));
+  })), [chats, isUserOnline]);
 
-  const filteredChats = chatsWithStatus.filter((chat) => {
+  const filteredChats = React.useMemo(() => chatsWithStatus.filter((chat) => {
     // 1. Filter by Tab
     if (activeTab === 'groups' && !chat.isGroup) return false;
 
     // 2. Filter by Search
     return (chat.name || "").toLowerCase().includes(searchTerm.toLowerCase());
-  })
+  }), [chatsWithStatus, activeTab, searchTerm]);
 
   return (
     <div className="flex flex-col h-full">
@@ -175,3 +175,5 @@ export default function ChatList({ selectedChatId, onSelectChat, isMobile, chats
     </div>
   )
 }
+
+export default React.memo(ChatList);

@@ -14,6 +14,7 @@ export interface BackendChat {
   is_blocked_by_me?: boolean;
   is_blocked_by_other?: boolean;
   last_message_at?: string; // Added
+  is_deleted_user?: boolean; // Added for deleted user handling
 }
 
 export interface BackendMessage {
@@ -59,6 +60,7 @@ export interface ChatThread {
   isBlockedByMe?: boolean;
   isBlockedByOther?: boolean;
   lastMessageAt: string; // ISO string for sorting (was timestamp)
+  isDeleted?: boolean; // Frontend flag to filter out
 }
 
 export interface Message {

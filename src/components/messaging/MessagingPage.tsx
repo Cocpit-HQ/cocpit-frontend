@@ -11,7 +11,7 @@ import { ChatThread } from "../../types/messaging"
 import { useQuery, useQueryClient } from "@tanstack/react-query" // Restored import
 import { getConversations } from "../../services/api/messaging"
 import { getUserById } from "../../services/api/user"
-import { mapBackendChatToChatThread } from "../../lib/mappers/messaging.mapper"
+import { mapBackendChatToChatThread, formatTimeAgo } from "../../lib/mappers/messaging.mapper"
 import { useSocket } from "../../context/SocketContext"
 import { useAuth } from "../../hooks/use-auth"
 import GroupChat from "./group-chat/GroupChat"
@@ -47,11 +47,16 @@ export default function MessagingPage() {
     queryFn: async () => {
       const backendChats = await getConversations();
       return backendChats.map(mapBackendChatToChatThread);
-    }
+    },
+    staleTime: Infinity, // Prevent refetch on mounting/updates unless explicit invalidation
+    refetchOnWindowFocus: false,
   });
 
   // No longer blocking company chats on the frontend
-  const chats = rawChatsQuery.data || [];
+  const chats = React.useMemo(() => {
+    const all = rawChatsQuery.data || [];
+    return all.filter(c => !c.isDeleted);
+  }, [rawChatsQuery.data]);
   const isLoading = rawChatsQuery.isLoading;
   const error = rawChatsQuery.error;
 
@@ -144,17 +149,34 @@ export default function MessagingPage() {
         const updatedList = oldData.map(c => {
           // Check match by ID (group/conv ID) OR by otherUserId (for 1-on-1 if conversion_id not present in list yet)
           // Also handle simplified match if message.conversation_id matches c.id
-          const isMatch = c.id === message.conversation_id ||
-            c.id === message.group_id ||
-            (!c.isGroup && c.otherUserId === message.sender_id) || // Incoming 1-on-1
-            (!c.isGroup && c.otherUserId === message.target_id);   // Outgoing 1-on-1 (if not optimistic)
+
+          // Fix: Strict separation of Group vs 1-on-1 updates
+          // If message is for a group (has conversation_id/group_id AND isGroup flag or id matches a group), 
+          // it MUST NOT fallback to matching by user ID.
+
+          const messageGroupId = (message as any).isGroup ? (message.conversation_id || message.group_id) : undefined;
+
+          let isMatch = false;
+
+          if (messageGroupId) {
+            // It's a group message. Only match if this chat IS that group.
+            isMatch = c.id === messageGroupId;
+          } else {
+            // It's a 1-on-1 or unspecified message
+            if (message.conversation_id && c.id === message.conversation_id) {
+              isMatch = true;
+            } else if (!c.isGroup && !message.isGroup) {
+              // Fallback: match by user ID ONLY if it's not a group message and chat is not a group
+              isMatch = c.otherUserId === message.sender_id || c.otherUserId === message.target_id;
+            }
+          }
 
           if (isMatch) {
             conversationExists = true;
             return {
               ...c,
               lastMessage: message.text_content || (message.shared_post ? "Shared a post" : "Attachment"), // Handle non-text
-              time: message.created_at || new Date().toISOString(),
+              time: formatTimeAgo(message.created_at || new Date().toISOString()),
               lastMessageAt: new Date().toISOString(), // FORCE update to now to ensure it jumps to top
               unread: (c.id === selectedChat?.id || (selectedChat?.isGroup && selectedChat.id === c.id)) ? 0 : (c.unread + 1)
             };
@@ -173,10 +195,13 @@ export default function MessagingPage() {
     };
 
     const handleNotification = (payload: any) => {
-      if (payload.type !== 'message') {
-        // handle other notifications
+      // Only invalidate if absolutely necessary.
+      // For messages, we handle via 'new_message' manually.
+      // For other types, maybe we don't need to invalidate conversations?
+      // If it's a new conversation start, 'new_message' should handle it (by checking existence).
+      if (payload.type === 'message') {
+        // Do nothing, handled by new_message
       }
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     };
 
     const handleGroupUpdate = (updatedGroup: any) => {
@@ -197,7 +222,11 @@ export default function MessagingPage() {
 
     const handleConversationUpdated = (payload: any) => {
       // Trigger refetch to get the accurate last message (handling delete-for-me/everyone)
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      // queryClient.invalidateQueries({ queryKey: ['conversations'] }); // Avoid full refetch, rely on socket events updating specific message state?
+      // Actually, for delete-for-me/everyone, we might receive separate events in GroupChat.
+      // If we need to update the last message plain text in the sidebar:
+      // We should ideally update cache manually if payload contains data.
+      // For now, disabling to meet requirement of NO REFETCH on message send/update.
     };
 
     socket.on('new_message', handleNewMessage);
@@ -236,7 +265,7 @@ export default function MessagingPage() {
             >
               <ChatList
                 selectedChatId={selectedChat?.id}
-                onSelectChat={(chat) => {
+                onSelectChat={React.useCallback((chat: ChatThread) => {
                   if (isMobile) {
                     // On mobile, navigate via URL to keep "Back" button working
                     // Use groupId (conversationId) for all existing chats to handle Deleted Users (who have no otherUserId)
@@ -244,7 +273,7 @@ export default function MessagingPage() {
                   } else {
                     setSelectedChat(chat);
                   }
-                }}
+                }, [isMobile, router])}
                 isMobile={!!isMobile}
                 chats={chats}
                 isLoading={isLoading}

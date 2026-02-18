@@ -12,6 +12,7 @@ import { useQueryClient, useQuery, useMutation, useInfiniteQuery, InfiniteData }
 import { sendMessage as sendGroupMessage } from "../../../services/api/group-chat";
 import { editMessage, deleteMessage } from "../../../services/api/messaging";
 import { Message } from "../../../types/messaging";
+import { formatTimeAgo } from "../../../lib/mappers/messaging.mapper";
 import { useSocket } from "../../../context/SocketContext";
 import { TypingPayload } from "../../../types/socket";
 import { useRef } from "react";
@@ -195,7 +196,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
 
             // Update last message in specific conversation without refetching all conversation lists? 
             // Or just invalidate to be safe.
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            // queryClient.invalidateQueries({ queryKey: ['conversations'] }); // Handled by MessagingPage via socket or manual update
 
             // We could also mark as read if focused, just like ChatWindow
         };
@@ -329,7 +330,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                             last_message_text: text || "Sent an attachment",
                             lastMessage: text || "Sent an attachment",
                             lastMessageAt: now,    // CRITICAL: Update timestamp for sorting
-                            time: now,         // Update time for display
+                            time: formatTimeAgo(now),         // Update time for display
                             unread_count: 0
                         };
                     }
@@ -356,7 +357,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
 
             // Invalidate to fetch the true state
             queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            // queryClient.invalidateQueries({ queryKey: ['conversations'] }); // Optimistic update is enough, avoid sidebar re-render
         },
     });
 
@@ -365,40 +366,38 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
     // Mark as read when opening conversation or when new messages arrive
     // Mark as read when opening conversation or when new messages arrive
     useEffect(() => {
-        if (!groupId) return;
+        if (!groupId || isInactive) return;
 
-        const timer = setTimeout(async () => {
-            try {
-                // Check if user is still a member before marking as read
-                if (isInactive) return;
-
-                // Only mark read if there are messages
-                if (displayMessages.length > 0) {
+        const markRead = async () => {
+            if (displayMessages.length > 0) {
+                try {
                     const { markGroupAsRead } = await import("../../../services/api/group-chat");
-                    await markGroupAsRead(groupId);
+                    // Fire and forget - don't wait for it to block UI
+                    markGroupAsRead(groupId).catch(console.error);
 
                     // Optimistically update conversation unread count
                     queryClient.setQueryData(['conversations'], (oldData: any[]) => {
                         if (!oldData) return oldData;
+                        // Avoid update if already 0 to prevent reference change
+                        const target = oldData.find(c => c.conversation_id === groupId || c.id === groupId);
+                        if (target && target.unread_count === 0 && target.unread === 0) return oldData;
+
                         return oldData.map(c => {
-                            if (c.conversation_id === groupId) {
-                                return { ...c, unread_count: 0 };
+                            if (c.conversation_id === groupId || c.id === groupId) {
+                                return { ...c, unread_count: 0, unread: 0 };
                             }
                             return c;
                         });
                     });
-
-                    queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                } catch (error) {
+                    console.error("Failed to mark as read", error);
                 }
-
-            } catch (error) {
-                console.error("Failed to mark as read", error);
             }
-        }, 1000); // Debounce for 1 second
+        };
 
-        return () => clearTimeout(timer);
+        markRead();
 
-    }, [groupId, displayMessages.length, queryClient, isInactive]); // Trigger when messages change too
+    }, [groupId, displayMessages.length, queryClient, isInactive]);
 
     const handleSendMessage = React.useCallback((text: string, files: File[]) => {
         // Stop typing immediately when sending
