@@ -2,13 +2,13 @@ import { BackendChat, BackendMessage, ChatThread, Message } from "@/types/messag
 import { UserStatusPayload } from "@/types/socket"; // We might need this later if we map status
 
 // Helper to format time (simplified)
-const formatTime = (isoString: string): string => {
+export const formatTime = (isoString: string): string => {
   const date = new Date(isoString);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
 // Helper to calculate relative time (simplified)
-const formatTimeAgo = (isoString: string): string => {
+export const formatTimeAgo = (isoString: string): string => {
   const date = new Date(isoString);
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -38,6 +38,7 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     isBlockedByMe: backendChat.is_blocked_by_me || false,
     isBlockedByOther: backendChat.is_blocked_by_other || false,
     lastMessageAt: backendChat.last_message_at || backendChat.updated_at || new Date().toISOString(),
+    isDeleted: backendChat.is_deleted_user || false,
   };
 };
 

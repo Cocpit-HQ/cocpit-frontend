@@ -196,8 +196,19 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [session?.user?.accessToken, toast, router]);
 
+  const isUserOnlineMemo = React.useCallback((userId: string) => onlineUsers.has(userId), [onlineUsers]);
+
+  const contextValue = React.useMemo(() => ({
+    socket,
+    isConnected,
+    onlineUsers,
+    isUserOnline: isUserOnlineMemo,
+    activeConversationId,
+    setActiveConversationId
+  }), [socket, isConnected, onlineUsers, isUserOnlineMemo, activeConversationId]);
+
   return (
-    <SocketContext.Provider value={{ socket, isConnected, onlineUsers, isUserOnline, activeConversationId, setActiveConversationId }}>
+    <SocketContext.Provider value={contextValue}>
       {children}
     </SocketContext.Provider>
   );
