@@ -42,8 +42,9 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
   };
 };
 
-export const mapBackendMessageToMessage = (backendMessage: BackendMessage, currentUserId?: string): Message => {
-  const isMe = currentUserId && String(backendMessage.sender_id) === String(currentUserId);
+export const mapBackendMessageToMessage = (backendMessage: BackendMessage, currentUserId?: string, currentCompanyId?: string): Message => {
+  const isMe = (currentUserId && String(backendMessage.sender_id) === String(currentUserId)) ||
+    (currentCompanyId && backendMessage.author_company_id === currentCompanyId);
   const isDeletedUser = backendMessage.sender_id === null;
 
   return {

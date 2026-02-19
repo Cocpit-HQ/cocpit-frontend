@@ -127,16 +127,28 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
+        // Suppress cross-profile notifications: don't show user-targeted
+        // notifications when on company profile and vice versa
+        const currentProfileType = localStorage.getItem('activeProfileType') || 'USER';
+        const currentProfileId = localStorage.getItem('activeProfileId');
+        if ((payload as any).targetProfileType) {
+          const targetType = (payload as any).targetProfileType;
+          if (targetType === 'COMPANY' && (currentProfileType !== 'COMPANY' || currentProfileId !== (payload as any).targetCompanyId)) {
+            return; // Company-targeted notification, but not viewing that company
+          }
+          if (targetType === 'USER' && currentProfileType !== 'USER') {
+            return; // User-targeted notification, but viewing as company
+          }
+        }
+
         toast({
           title: "New Message",
           description: (
             <div
               className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => {
-                if (payload.isGroup) {
-                  router.push(`/messaging?groupId=${payload.conversationId}`);
-                } else if (payload.from) {
-                  router.push(`/messaging?userId=${payload.from}`);
+                if (payload.conversationId) {
+                  router.push(`/messaging?conversationId=${payload.conversationId}`);
                 }
               }}
             >

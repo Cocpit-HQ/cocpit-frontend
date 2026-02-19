@@ -167,6 +167,17 @@ export const companyService = {
         return res.data;
     },
 
+    // Chat Audit
+    async getChatSessionHistory(companyId: string, params: any) {
+        const res = await api.get(`/company-chat-sessions/history`, { params: { companyId, ...params } });
+        return res.data;
+    },
+
+    async getSessionMessages(sessionId: string) {
+        const res = await api.get(`/company-chat-sessions/${sessionId}/messages`);
+        return res.data;
+    },
+
     // --- Tech Stack ---
     async getTechStack(slug: string): Promise<CompanyTechStack[]> {
         const res = await api.get(`/companies/${slug}/tech-stack`);

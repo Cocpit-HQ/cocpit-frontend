@@ -19,6 +19,8 @@ import { useSocial } from "@/context/SocialContext"
 import MessageInfoModal from "../MessageInfoModal"
 import { Button } from "@/components/ui/button"
 import { X, Copy, Pencil, Info as InfoIcon, MoreVertical } from "lucide-react"
+import { Plus } from "lucide-react"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +32,8 @@ import { deleteMessage } from "@/services/api/messaging"
 import { Trash2 } from "lucide-react"
 import MediaPreviewModal from "./MediaPreviewModal"
 import ChatSkeleton from "./ChatSkeleton"
+import { useChatSession } from "@/hooks/useChatSession"
+import { SessionBanner } from "./SessionBanner"
 
 interface ChatWindowProps {
   chat: ChatThread
@@ -87,6 +91,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
   const { socket, isUserOnline, setActiveConversationId } = useSocket();
   const { unblockUser, isBlocked } = useSocial();
   const { data: session } = useSession();
+  const { activeProfile } = useActiveProfile();
   const [typingUser, setTypingUser] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -94,6 +99,13 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
 
   const isBlockedByMe = initialChat.otherUserId ? isBlocked(initialChat.otherUserId) : false;
   const isBlockedByOther = initialChat.isBlockedByOther;
+
+  // Company chat session management
+  const chatSession = useChatSession(
+    activeProfile?.type === 'COMPANY' ? initialChat.id : undefined
+  );
+  const isCompanyMode = activeProfile?.type === 'COMPANY';
+  const sessionDisabled = isCompanyMode && initialChat.id !== 'new' && chatSession.featureEnabled && !chatSession.isMySession;
 
   const chat = {
     ...initialChat,
@@ -119,8 +131,9 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
   } = useInfiniteQuery({
     queryKey: ['messages', chat.id],
     queryFn: async ({ pageParam }) => {
-      const backendMessages = await getMessages(chat.id, 50, pageParam);
-      return backendMessages.map(m => mapBackendMessageToMessage(m, session?.user?.id));
+      const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+      const backendMessages = await getMessages(chat.id, 50, pageParam, companyId);
+      return backendMessages.map(m => mapBackendMessageToMessage(m, session?.user?.id, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined));
     },
     getNextPageParam: (lastPage) => {
       if (lastPage.length < 50) return undefined;
@@ -145,12 +158,14 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
 
     // Reset typing state when chat changes
     setTypingUser(null);
+    chatSession.clearSessionLost();
     setTypingMap(new Map());
 
     if (chat.id && chat.unread > 0) {
-      markAsRead(chat.id).then(() => {
+      const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+      markAsRead(chat.id, companyId).then(() => {
         // Optimistically update conversation unread count
-        queryClient.setQueryData(['conversations'], (oldChats: ChatThread[] | undefined) => {
+        queryClient.setQueryData(['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'], (oldChats: ChatThread[] | undefined) => {
           if (!oldChats) return [];
           return oldChats.map(c => c.id === chat.id ? { ...c, unread: 0 } : c);
         });
@@ -190,7 +205,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
       }
 
       // Map socket message to frontend entity using valid mapper
-      const uiMessage = mapBackendMessageToMessage(msg as any, session?.user?.id);
+      const uiMessage = mapBackendMessageToMessage(msg as any, session?.user?.id, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined);
 
       queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
         if (!old) return undefined; // Should we create structure? Maybe not if not loaded yet.
@@ -344,7 +359,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
       }
 
       if (!chat.otherUserId) throw new Error("Target user ID missing");
-      return sendMessage(chat.otherUserId, text, undefined, files);
+      return sendMessage(chat.otherUserId, text, undefined, files, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined);
     },
     onMutate: async ({ text, files }) => {
       await queryClient.cancelQueries({ queryKey: ['messages', chat.id] });
@@ -383,8 +398,17 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
 
       return { previousMessages, tempId: newMessage.id };
     },
-    onError: (err, newTodo, context) => {
+    onError: (err: any, newTodo, context) => {
       queryClient.setQueryData(['messages', chat.id], context?.previousMessages);
+      // Handle session lost (403 from backend)
+      if (err?.response?.status === 403 && isCompanyMode) {
+        chatSession.clearSessionLost();
+        chatSession.refetchSession();
+        // Small delay then set sessionLost
+        setTimeout(() => {
+          // The refetch above will update session state, and if session is gone the banner will show
+        }, 100);
+      }
       console.error("Failed to send message", err);
     },
     onSuccess: (data, variables, context) => {
@@ -395,7 +419,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
       queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
         if (!old) return old;
 
-        const realMessage = mapBackendMessageToMessage(data.data || data, session?.user?.id);
+        const realMessage = mapBackendMessageToMessage(data.data || data, session?.user?.id, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined);
 
         // Find and replace in the first page
         const newPages = [...old.pages];
@@ -403,7 +427,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
 
         return { ...old, pages: newPages };
       });
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'] });
     },
   });
 
@@ -459,7 +483,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
       typingDisplayString = `${users.join(", ")} are typing...`;
     }
   } else {
-    typingDisplayString = typingUser ? `${typingUser} is typing...` : null;
+    typingDisplayString = typingUser ? "typing..." : null;
   }
 
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -657,6 +681,22 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
         </div>
       )}
 
+      {/* Session Banner (company mode only) */}
+      {isCompanyMode && (
+        <SessionBanner
+          session={chatSession.session}
+          featureEnabled={chatSession.featureEnabled}
+          isMySession={chatSession.isMySession}
+          isActionLoading={chatSession.isActionLoading}
+          actionError={chatSession.actionError}
+          sessionLost={chatSession.sessionLost}
+          onClaim={chatSession.claim}
+          onRelease={chatSession.release}
+          onTakeover={chatSession.takeover}
+          onClearSessionLost={chatSession.clearSessionLost}
+        />
+      )}
+
       {chat.pinnedContext && (
         <div className="px-4 py-2 text-xs text-center font-medium bg-primary/20 text-primary">
           Context: {chat.pinnedContext}
@@ -687,6 +727,12 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
         </div>
       )}
 
+      {activeProfile?.type === 'COMPANY' && !isBlockedByMe && !isBlockedByOther && (
+        <div className="px-4 py-1 text-xs text-center bg-muted/50 text-muted-foreground border-t border-border">
+          Replying as <span className="font-medium text-foreground">{activeProfile.name}</span>
+        </div>
+      )}
+
       {isBlockedByMe ? (
         <div className="p-4 border-t bg-muted/30 flex flex-col items-center justify-center gap-2 text-center mt-auto shrink-0">
           <p className="text-sm text-muted-foreground">You have blocked this user</p>
@@ -701,9 +747,14 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
         <UnifiedMessageInput
           onSendMessage={handleSendMessage}
           onTyping={handleTypingInput}
-          disabled={(!chat.otherUserId && !chat.isGroup) || !!isBlockedByOther}
-          disabledMessage={isBlockedByOther ? "User not found" : undefined}
-          placeholder="Type a message..."
+          disabled={(!chat.otherUserId && !chat.isGroup) || !!isBlockedByOther || sessionDisabled}
+          disabledMessage={
+            isBlockedByOther ? "User not found" :
+              sessionDisabled && chatSession.session ? `Handled by ${chatSession.session.handler_name_snapshot}` :
+                sessionDisabled ? "Claim this conversation to reply" :
+                  undefined
+          }
+          placeholder={sessionDisabled ? "Claim to start typing..." : "Type a message..."}
         />
       )}
 

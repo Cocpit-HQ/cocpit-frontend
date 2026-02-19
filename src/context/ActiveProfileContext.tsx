@@ -87,11 +87,9 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
         if (activeProfile?.type === 'COMPANY') {
             api.defaults.headers.common['x-company-id'] = activeProfile.id;
             publicApi.defaults.headers.common['x-company-id'] = activeProfile.id;
-            console.log(`[Context] Switched to Company: ${activeProfile.name} (${activeProfile.id})`);
         } else {
             delete api.defaults.headers.common['x-company-id'];
             delete publicApi.defaults.headers.common['x-company-id'];
-            console.log(`[Context] Switched to User Profile`);
         }
     }, [activeProfile]);
 

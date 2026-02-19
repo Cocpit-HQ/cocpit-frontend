@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { VerificationTab } from "@/components/companies/settings/verification-tab";
 
+
 import { Company } from "@/services/company.service"; // Import Company interface
 
 interface CompanySettingsProps {
@@ -43,6 +44,8 @@ export function CompanySettings({ company }: CompanySettingsProps) {
             {isOwner && (
                 <TransferOwnership companyId={company.company_id} members={members} />
             )}
+
+
 
             <DangerZone companyId={company.company_id} isOwner={isOwner} />
         </div>

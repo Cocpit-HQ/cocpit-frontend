@@ -25,6 +25,7 @@ export interface SocketMessage {
   text_content: string;
   created_at: string; // ISO Date string
   read_at: string | null;
+  author_company_id?: string | null; // Added
   shared_post?: {
     post_id: string;
     content: string;

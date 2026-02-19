@@ -20,7 +20,7 @@ export function StandardEventCard({ event, onClick, className = "", isRegistered
   return (
     <div
       onClick={onClick}
-      className={`rounded-2xl overflow-hidden border group cursor-pointer hover:-translate-y-1 transition-all duration-300 bg-card border-border hover:border-primary/50 hover:shadow-lg relative ${className}`}
+      className={`rounded-2xl overflow-hidden border group cursor-pointer hover:-translate-y-1 transition-all duration-300 bg-card border-border hover:border-primary/50 hover:shadow-lg relative h-full flex flex-col ${className}`}
     >
       <div className="relative h-48 overflow-hidden">
         {/* ... (existing image code) ... */}
@@ -45,7 +45,7 @@ export function StandardEventCard({ event, onClick, className = "", isRegistered
         )}
       </div>
 
-      <div className="p-5">
+      <div className="p-5 flex-1 flex flex-col">
         <div className="flex gap-3 mb-3">
           <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary border border-primary/20">
             <span className="text-xs font-bold uppercase">{event.date.includes('-') ? new Date(event.date).toLocaleString('default', { month: 'short' }) : event.date.split(' ')[0]}</span>
@@ -85,7 +85,7 @@ export function StandardEventCard({ event, onClick, className = "", isRegistered
           </div>
         </div>
 
-        <div className="pt-4 border-t border-border flex items-center justify-between">
+        <div className="pt-4 border-t border-border flex items-center justify-between mt-auto">
           <div className="flex -space-x-2">
             {[1, 2, 3].map((i) => (
               <div key={i} className="w-8 h-8 rounded-full border-2 border-card bg-muted" />

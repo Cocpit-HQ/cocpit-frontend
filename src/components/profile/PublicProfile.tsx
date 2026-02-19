@@ -27,6 +27,7 @@ import { useProfilePosts } from "@/hooks/use-profile-posts";
 import { useSocial } from "@/context/SocialContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { initialSkills as currentUserSkills } from "@/lib/data/profile";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 interface PublicProfileProps {
   userId: string;
@@ -36,6 +37,7 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const { isFollowing, followUser, unfollowUser, startChat, isFollowLoading } = useSocial();
+  const { activeProfile } = useActiveProfile();
   const isMobile = useIsMobile();
   const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
 
@@ -57,7 +59,8 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
 
   const handleMessage = () => {
     if (!user) return;
-    startChat(user.id);
+    const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+    startChat(user.id, companyId);
   };
 
   if (isUserLoading) {

@@ -24,6 +24,7 @@ export interface BackendMessage {
   text_content: string;
   created_at: string;
   read_at: string | null;
+  author_company_id?: string | null; // Added for company messaging
   sender_name?: string;
   sender_avatar?: string;
   message_type?: string;
@@ -61,6 +62,9 @@ export interface ChatThread {
   isBlockedByOther?: boolean;
   lastMessageAt: string; // ISO string for sorting (was timestamp)
   isDeleted?: boolean; // Frontend flag to filter out
+  // Session indicator fields (company mode)
+  sessionStatus?: 'mine' | 'other' | 'unclaimed' | null
+  sessionHandlerName?: string
 }
 
 export interface Message {

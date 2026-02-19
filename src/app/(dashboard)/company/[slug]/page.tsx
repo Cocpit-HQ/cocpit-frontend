@@ -13,6 +13,9 @@ import { CompanyGallery } from "@/components/companies/company-gallery";
 import { CompanyPosts } from "@/components/companies/company-posts";
 import { CreatePostButton } from "@/components/companies/CreatePostCompanyButton";
 import { CompanyEvents } from "@/components/companies/CompanyEvents";
+import { HomeRecentPosts } from "@/components/companies/home-tab/HomeRecentPosts";
+import { HomeUpcomingEvents } from "@/components/companies/home-tab/HomeUpcomingEvents";
+import { HomeGalleryPreview } from "@/components/companies/home-tab/HomeGalleryPreview";
 
 
 export default function CompanyPage() {
@@ -93,6 +96,7 @@ export default function CompanyPage() {
                     </TabsList>
 
                     <TabsContent value="home" className="space-y-6">
+                        {/* Overview Card */}
                         <Card>
                             <CardHeader>
                                 <CardTitle>Overview</CardTitle>
@@ -105,12 +109,36 @@ export default function CompanyPage() {
                                         <Skeleton className="h-4 w-4/6" />
                                     </div>
                                 ) : (
-                                    <p className="text-muted-foreground">
+                                    <p className="text-muted-foreground whitespace-pre-wrap">
                                         {company?.description || "No description provided."}
                                     </p>
                                 )}
                             </CardContent>
                         </Card>
+
+                        {/* Recent Posts Section */}
+                        {company && (
+                            <HomeRecentPosts
+                                companyId={company.company_id}
+                                onViewAll={() => handleTabChange("posts")}
+                            />
+                        )}
+
+                        {/* Upcoming Events Section */}
+                        {company && (
+                            <HomeUpcomingEvents
+                                companyId={company.company_id}
+                                onViewAll={() => handleTabChange("events")}
+                            />
+                        )}
+
+                        {/* Gallery Preview Section */}
+                        {company && (
+                            <HomeGalleryPreview
+                                company={company}
+                                onViewAll={() => handleTabChange("about")} // Gallery is usually in About tab or own tab? Based on code it is in About tab.
+                            />
+                        )}
                     </TabsContent>
 
                     <TabsContent value="about">

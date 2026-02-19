@@ -11,7 +11,7 @@ interface SocialContextType {
   followUser: (id: string) => void;
   unfollowUser: (id: string) => void;
   isFollowing: (id: string) => boolean;
-  startChat: (userId: string) => void;
+  startChat: (userId: string, companyId?: string) => void;
   isFollowLoading: (id: string) => boolean;
   syncFollowStatus: (userId: string, isFollowing: boolean) => void;
 
@@ -119,8 +119,12 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     return followingIds.includes(id);
   };
 
-  const startChat = (userId: string) => {
-    router.push(`/messaging?userId=${userId}`);
+  const startChat = (userId: string, companyId?: string) => {
+    if (companyId) {
+      router.push(`/messaging?userId=${userId}&companyId=${companyId}`);
+    } else {
+      router.push(`/messaging?userId=${userId}`);
+    }
   };
 
   const syncFollowStatus = (userId: string, isFollowing: boolean) => {

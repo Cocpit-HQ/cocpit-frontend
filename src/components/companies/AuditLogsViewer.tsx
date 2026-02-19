@@ -4,6 +4,9 @@ import { useAuditLogs } from "@/hooks/useCompany";
 import { Company } from "@/services/company.service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { companyService } from "@/services/company.service";
+import { ChatAuditTab } from "@/components/companies/settings/ChatAuditTab";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -36,7 +39,15 @@ import { Eye, FileText, Briefcase, Calendar } from "lucide-react";
 export function AuditLogsViewer({ company }: { company: Company }) {
     const [page, setPage] = useState(1);
     const [actionFilter, setActionFilter] = useState<string>("ALL");
-    const [activeTab, setActiveTab] = useState<"audit" | "activity">("audit");
+    const [activeTab, setActiveTab] = useState<"audit" | "activity" | "chat-audit">("audit");
+
+    // Fetch members for ChatAuditTab filter
+    const { data: membersData } = useQuery({
+        queryKey: ["companyMembers", company.company_id],
+        queryFn: () => companyService.getMembers(company.company_id),
+        enabled: activeTab === "chat-audit", // Only fetch if chat audit tab is active
+    });
+    const members = membersData?.data || [];
 
     // Using query key based params for auto-refetch
     const { data, isLoading, isError } = useAuditLogs(company.company_id, {
@@ -114,6 +125,7 @@ export function AuditLogsViewer({ company }: { company: Company }) {
                     <TabsList>
                         <TabsTrigger value="audit">Audit Logs</TabsTrigger>
                         <TabsTrigger value="activity">Page Activity</TabsTrigger>
+                        <TabsTrigger value="chat-audit">Chat Sessions</TabsTrigger>
                     </TabsList>
 
                     <div className="my-4 flex gap-4 items-center">
@@ -162,6 +174,12 @@ export function AuditLogsViewer({ company }: { company: Company }) {
                             formatAction={formatAction}
                             renderDetails={renderDetails}
                         />
+                    </TabsContent>
+
+                    <TabsContent value="chat-audit" className="space-y-4">
+                        <div className="mt-4">
+                            <ChatAuditTab companyId={company.company_id} members={members} />
+                        </div>
                     </TabsContent>
                 </Tabs>
 

@@ -106,7 +106,7 @@ export default function CompanyDashboardPage() {
 
             <Tabs value={currentTab} onValueChange={handleTabChange} className="flex flex-col md:flex-row gap-8">
                 {/* Sidebar / Menu List */}
-                <aside className={`w-full md:w-64 flex-shrink-0 ${isMobile && mobileView === "detail" ? "hidden" : "block"}`}>
+                <aside className={`w-full md:w-64 flex-shrink-0 md:sticky md:top-8 md:self-start ${isMobile && mobileView === "detail" ? "hidden" : "block"}`}>
                     <TabsList className="flex flex-col h-auto w-full space-y-2 bg-transparent p-0 justify-start">
                         <TabsTrigger
                             value="overview"

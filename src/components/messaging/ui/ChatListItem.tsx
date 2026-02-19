@@ -34,6 +34,16 @@ export function ChatListItem({ chat, isSelected, isMobile }: ChatListItemProps) 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2 min-w-0 overflow-hidden flex-1">
+              {/* Session indicator */}
+              {chat.sessionStatus === 'mine' && (
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="You are handling" />
+              )}
+              {chat.sessionStatus === 'other' && (
+                <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" title={`Handled by ${chat.sessionHandlerName || 'another member'}`} />
+              )}
+              {chat.sessionStatus === 'unclaimed' && (
+                <span className="w-2 h-2 rounded-full bg-muted-foreground/30 shrink-0" title="Unclaimed" />
+              )}
               <h3 className="font-semibold truncate text-foreground min-w-0">
                 {chat.name}
               </h3>
@@ -78,7 +88,9 @@ function arePropsEqual(prevProps: ChatListItemProps, nextProps: ChatListItemProp
     prevProps.chat.online === nextProps.chat.online &&
     prevProps.chat.name === nextProps.chat.name &&
     prevProps.chat.avatar === nextProps.chat.avatar &&
-    prevProps.chat.role === nextProps.chat.role
+    prevProps.chat.role === nextProps.chat.role &&
+    prevProps.chat.sessionStatus === nextProps.chat.sessionStatus &&
+    prevProps.chat.sessionHandlerName === nextProps.chat.sessionHandlerName
   );
 }
 
