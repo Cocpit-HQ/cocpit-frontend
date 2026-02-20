@@ -2,6 +2,7 @@ import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { useSession } from "next-auth/react";
 import * as api from "@/services/api/jobs";
 import { JobFilters, MyJobsTab } from "@/types/jobs";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 // Helper to convert frontend filters to API params
 const getSearchParams = (filters: JobFilters, searchKeywords: string): api.JobSearchParams => {
@@ -16,7 +17,7 @@ export const JOB_KEYS = {
     feed: (filters: JobFilters, search: string) => [...JOB_KEYS.all, "feed", filters, search] as const,
     offers: (filters: JobFilters, search: string) => [...JOB_KEYS.all, "offers", filters, search] as const,
     myJobs: (tab: MyJobsTab, filters: JobFilters, search: string) => [...JOB_KEYS.all, "myJobs", tab, filters, search] as const,
-    dashboard: (filters: JobFilters, search: string) => [...JOB_KEYS.all, "dashboard", filters, search] as const,
+    dashboard: (companyId: string | undefined | null, filters: JobFilters, search: string) => [...JOB_KEYS.all, "dashboard", companyId, filters, search] as const,
 };
 
 export function useInfiniteJobs(
@@ -27,6 +28,7 @@ export function useInfiniteJobs(
 ) {
     const { status } = useSession();
     const isAuthenticated = status === "authenticated";
+    const { activeProfile } = useActiveProfile();
 
     return useInfiniteQuery({
         queryKey: activeTab === "my-jobs"
@@ -34,7 +36,7 @@ export function useInfiniteJobs(
             : activeTab === "offers"
                 ? JOB_KEYS.offers(filters, searchKeywords)
                 : activeTab === "dashboard"
-                    ? JOB_KEYS.dashboard(filters, searchKeywords)
+                    ? JOB_KEYS.dashboard(activeProfile?.id, filters, searchKeywords)
                     : JOB_KEYS.feed(filters, searchKeywords),
 
         queryFn: async ({ pageParam }) => {
@@ -55,6 +57,9 @@ export function useInfiniteJobs(
                     return api.getMyApplications(myJobsTab, params);
                 }
             } else if (activeTab === "dashboard") {
+                if (activeProfile?.type === 'COMPANY' && activeProfile.id) {
+                    return api.getCompanyJobs(activeProfile.id, params);
+                }
                 return api.getMyCreatedJobs(params);
             }
             return [];

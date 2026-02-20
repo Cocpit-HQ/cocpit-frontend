@@ -39,16 +39,16 @@ export default function RootLayout({
         <Providers>
           <FeedProvider>
             <PostUploadProvider>
-              <JobsProvider>
-                <ActiveProfileProvider>
+              <ActiveProfileProvider>
+                <JobsProvider>
                   <ActionModalProvider>
                     {children}
                     <GlobalUploadProgress />
                     <Toaster />
                     <Sonner />
                   </ActionModalProvider>
-                </ActiveProfileProvider>
-              </JobsProvider>
+                </JobsProvider>
+              </ActiveProfileProvider>
             </PostUploadProvider>
           </FeedProvider>
         </Providers>

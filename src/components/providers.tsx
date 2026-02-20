@@ -1,7 +1,6 @@
 "use client";
 
 import { EventsProvider } from "@/context/EventsContext";
-import { JobsProvider } from "@/context/JobsContext";
 import { SocialProvider } from "@/context/SocialContext";
 import { SocketProvider } from "@/context/SocketContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,13 +18,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <EventsProvider>
-              <JobsProvider>
-                <SocialProvider>
-                  <SocketProvider>
-                    {children}
-                  </SocketProvider>
-                </SocialProvider>
-              </JobsProvider>
+              <SocialProvider>
+                <SocketProvider>
+                  {children}
+                </SocketProvider>
+              </SocialProvider>
             </EventsProvider>
           </TooltipProvider>
         </QueryClientProvider>

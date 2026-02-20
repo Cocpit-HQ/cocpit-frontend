@@ -13,6 +13,7 @@ import { CompanyGallery } from "@/components/companies/company-gallery";
 import { CompanyPosts } from "@/components/companies/company-posts";
 import { CreatePostButton } from "@/components/companies/CreatePostCompanyButton";
 import { CompanyEvents } from "@/components/companies/CompanyEvents";
+import { CompanyPublicJobs } from "@/components/companies/CompanyPublicJobs";
 import { HomeRecentPosts } from "@/components/companies/home-tab/HomeRecentPosts";
 import { HomeUpcomingEvents } from "@/components/companies/home-tab/HomeUpcomingEvents";
 import { HomeGalleryPreview } from "@/components/companies/home-tab/HomeGalleryPreview";
@@ -190,10 +191,14 @@ export default function CompanyPage() {
                         </Card>
                     </TabsContent>
 
-                    <TabsContent value="jobs">
-                        <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-lg">
-                            No active job listings.
-                        </div>
+                    <TabsContent value="jobs" className="mt-6">
+                        {company ? (
+                            <CompanyPublicJobs companyId={company.company_id} />
+                        ) : (
+                            <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-lg">
+                                Loading jobs...
+                            </div>
+                        )}
                     </TabsContent>
 
                     <TabsContent value="posts" className="mt-6">

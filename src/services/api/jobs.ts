@@ -298,6 +298,28 @@ export const getJobApplicants = async (jobId: string) => {
     return response.data;
 };
 
+export const getCompanyJobs = async (companyId: string, filters?: JobSearchParams): Promise<Job[]> => {
+    const params = new URLSearchParams();
+    if (filters) {
+        if (filters.limit) params.append("limit", filters.limit.toString());
+        if (filters.cursor) params.append("cursor", filters.cursor);
+        if (filters.search) params.append("title", filters.search);
+        // Add other filters as needed
+    }
+    const response = await api.get(`/companies/${companyId}/jobs?${params.toString()}`);
+    return response.data.map(transformJob);
+};
+
+export const getCompanyDashboardStats = async (companyId: string) => {
+    const response = await api.get(`/companies/${companyId}/analytics/jobs`);
+    const overview = response.data?.overview || {};
+    return {
+        totalJobs: parseInt(overview.total_jobs || '0'),
+        activeJobs: parseInt(overview.active_jobs || '0'),
+        totalApplicants: parseInt(overview.total_applications || '0')
+    };
+};
+
 export const getMyCreatedJobs = async (filters?: JobSearchParams): Promise<Job[]> => {
     const params = new URLSearchParams();
     if (filters) {

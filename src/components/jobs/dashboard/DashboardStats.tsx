@@ -23,8 +23,10 @@ function StatCard({ title, value, icon: Icon, colorClass }: StatCardProps) {
 
 import { useEffect, useState } from "react"
 import * as api from "@/services/api/jobs"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 
 export function DashboardStats() {
+    const { activeProfile } = useActiveProfile()
     const [stats, setStats] = useState({
         totalJobs: 0,
         activeJobs: 0,
@@ -35,7 +37,12 @@ export function DashboardStats() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const data = await api.getDashboardStats()
+                let data;
+                if (activeProfile?.type === 'COMPANY' && activeProfile.id) {
+                    data = await api.getCompanyDashboardStats(activeProfile.id)
+                } else {
+                    data = await api.getDashboardStats()
+                }
                 setStats(data)
             } catch (error) {
                 console.error("Failed to fetch dashboard stats:", error)
@@ -44,7 +51,7 @@ export function DashboardStats() {
             }
         }
         fetchStats()
-    }, [])
+    }, [activeProfile?.id, activeProfile?.type])
 
     if (loading) {
         return (
