@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { Eye, MessageCircle, Play, Share2, ThumbsUp, X, Send, Smile, Search, Check, MoreVertical, Trash2, ChevronLeft, ChevronRight } from "lucide-react"
 import { StoryAuthor, StoryDetail } from "@/types/showcase"
 import { showcaseService } from "@/services/showcase.service"
-import { StoryMetadata, StoryLayer } from "@/types/story-editor"
-import { useRouter } from "next/navigation"
+import { StoryMetadata } from "@/types/story-editor"
+import { VirtualLayerCanvas } from "./ViewerLayerItem"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 
 type StoryModalProps = {
@@ -37,142 +37,6 @@ const SHARE_USERS = [
   { id: 4, name: "David Green", role: "UX Researcher" },
   { id: 5, name: "Eva White", role: "Marketing Lead" },
 ]
-
-
-
-const ViewerLayerItem = ({ layer, fallbackMedia }: { layer: StoryLayer, fallbackMedia?: string }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const router = useRouter();
-
-  // Handle video playback
-  useEffect(() => {
-    if (layer.type === 'video' && videoRef.current) {
-      const vid = videoRef.current;
-
-      if (layer.trim) {
-        vid.currentTime = layer.trim.start;
-      }
-
-      vid.play().catch(err => {
-        if (err.name !== 'AbortError') {
-          console.error('Video play failed:', err);
-        }
-      });
-    }
-  }, [layer]);
-
-  const getSource = () => {
-    if (layer.type === 'text' || layer.type === 'post') return '';
-    // @ts-ignore - we know other types have src
-    const src = layer.src;
-    if (src && src.startsWith('blob:') && fallbackMedia) {
-      return fallbackMedia;
-    }
-    return src || '';
-  };
-
-  const handlePostClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (layer.type === 'post' && layer.post_data.id) {
-      router.push(`/post/${layer.post_data.id}`);
-    }
-  };
-
-  return (
-    <div
-      className={`absolute origin-center ${layer.type === 'post' ? 'pointer-events-auto cursor-pointer' : 'pointer-events-none'}`}
-      style={{
-        left: `${layer.x}%`,
-        top: `${layer.y}%`,
-        width: layer.type === 'text' ? 'auto' : `${layer.width}%`,
-        height: layer.type === 'text' ? 'auto' : `${layer.height}%`,
-        transform: `translate(-50%, -50%) rotate(${layer.rotation}deg) scale(${layer.scale})`,
-        zIndex: layer.zIndex + 10,
-      }}
-      onClick={layer.type === 'post' ? handlePostClick : undefined}
-    >
-      {layer.type === 'text' ? (
-        <p style={{
-          color: layer.style.color,
-          fontSize: `${layer.style.fontSize}px`,
-          fontWeight: layer.style.fontWeight,
-          fontFamily: layer.style.fontFamily,
-          textAlign: layer.style.textAlign,
-          whiteSpace: 'nowrap',
-          textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-          padding: '4px'
-        }}>
-          {layer.content}
-        </p>
-      ) : layer.type === 'video' && getSource() ? (
-        <video
-          ref={videoRef}
-          src={getSource()}
-          className="w-full h-full object-contain"
-          muted={layer.isMuted}
-          autoPlay
-          loop
-          playsInline
-          crossOrigin="anonymous"
-          onTimeUpdate={(e) => {
-            if (layer.trim) {
-              const vid = e.currentTarget;
-              if (vid.currentTime < layer.trim.start || vid.currentTime >= layer.trim.end) {
-                vid.currentTime = layer.trim.start;
-              }
-            }
-          }}
-          onLoadedMetadata={(e) => {
-            if (layer.trim) {
-              e.currentTarget.currentTime = layer.trim.start;
-            }
-          }}
-        />
-      ) : layer.type === 'sticker' && getSource() ? (
-        <img src={getSource()} className="w-full h-full object-contain" />
-      ) : layer.type === 'image' && getSource() ? (
-        <img src={getSource()} className="w-full h-full object-contain" />
-      ) : layer.type === 'post' ? (
-        <div className="w-full h-full bg-white dark:bg-card rounded-xl p-4 shadow-lg border border-border flex flex-col gap-3 overflow-hidden hover:bg-gray-50 dark:hover:bg-muted/50 transition-colors">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-secondary overflow-hidden shrink-0">
-              {layer.post_data.author?.avatar ? (
-                <img src={layer.post_data.author.avatar} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center font-bold text-xs text-muted-foreground">
-                  {layer.post_data.author?.name?.[0]}
-                </div>
-              )}
-            </div>
-            <div className="text-xs font-bold text-gray-900 dark:text-foreground">{layer.post_data.author?.name}</div>
-          </div>
-          {layer.post_data.content && (
-            <p className="text-xs text-gray-800 dark:text-foreground line-clamp-3 leading-relaxed">
-              {layer.post_data.content}
-            </p>
-          )}
-          {layer.post_data.media?.[0]?.url && (
-            <div className="relative flex-1 min-h-0 w-full rounded-lg overflow-hidden bg-gray-100 dark:bg-muted">
-              {layer.post_data.media[0].media_type === 'video' ? (
-                <video
-                  src={layer.post_data.media[0].url}
-                  className="w-full h-full object-cover"
-                  controls
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                />
-              ) : (
-                <img src={layer.post_data.media[0].url} alt="Post media" className="w-full h-full object-cover" />
-              )}
-            </div>
-          )}
-        </div>
-      ) : null}
-    </div>
-  );
-};
 
 export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasNext, hasPrev }: StoryModalProps) {
   const [isLiked, setIsLiked] = useState(!!story.isLiked)
@@ -396,9 +260,11 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
 
           {/* Story Content (Layers) */}
           <div className="aspect-[9/16] h-full relative overflow-hidden bg-[#1a1a1a]">
-            {metadata.layers.map(layer => (
-              <ViewerLayerItem key={layer.id} layer={layer} />
-            ))}
+            <VirtualLayerCanvas
+              layers={metadata.layers}
+              isActive
+              background={metadata.background}
+            />
             {metadata.layers.length === 0 && (
               <div className="flex items-center justify-center h-full text-white/50 flex-col gap-2">
                 <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
@@ -413,56 +279,10 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
         {/* Right Side: Sidebar */}
         <div className="w-[400px] flex flex-col bg-card border-l border-border relative">
           {/* Sidebar Header */}
-          <div className="p-4 border-b border-border flex items-center justify-between bg-card/50 backdrop-blur-xl">
-            <Link
-              href={story.author?.is_company ? `/company/${story.author.id}` : `/profile/${story.author?.id}`}
-              className="flex items-center gap-3 group/author"
-            >
-              <div className="w-10 h-10 rounded-full bg-secondary overflow-hidden border border-border group-hover/author:border-primary transition-colors">
-                {story.author?.avatar ? (
-                  <img src={story.author.avatar} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center font-bold text-muted-foreground group-hover/author:text-primary transition-colors">
-                    {story.author?.name?.[0]}
-                  </div>
-                )}
-              </div>
-              <div>
-                <div className="font-bold text-sm text-foreground group-hover/author:text-primary transition-colors">{story.author?.name}</div>
-                <div className="text-xs text-muted-foreground">{new Date(story.created_at || Date.now()).toLocaleDateString()}</div>
-              </div>
-            </Link>
-
-            {/* Menu/Close Actions */}
+          {/* Sidebar Header - Removed as requested */}
+          <div className="p-4 flex items-center justify-between bg-card/50 backdrop-blur-xl">
+            {/* Profile and menu actions removed for clean UI */}
             <div className="flex items-center gap-1">
-              {story.isAuthor && (
-                <div className="relative" ref={menuRef}>
-                  <button
-                    ref={menuButtonRef}
-                    onClick={() => setShowMenu(!showMenu)}
-                    className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground"
-                  >
-                    <MoreVertical className="w-5 h-5" />
-                  </button>
-                  {showMenu && (
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-xl shadow-xl py-1 z-20 animate-in fade-in zoom-in-95 duration-200">
-                      <button
-                        onClick={handleDeleteStory}
-                        className="w-full text-left px-4 py-2.5 text-red-500 hover:bg-red-500/10 flex items-center gap-2 text-sm transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete Story
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-full transition-colors text-muted-foreground"
-              >
-                <X className="w-5 h-5" />
-              </button>
             </div>
           </div>
 

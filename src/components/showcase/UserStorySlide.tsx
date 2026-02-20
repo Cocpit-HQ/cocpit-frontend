@@ -5,7 +5,7 @@ import { StoryInteractionPanel } from "./StoryInteractionPanel"
 import { showcaseService } from "@/services/showcase.service"
 import { SharedPostCard } from "./SharedPostCard"
 import { StoryMetadata } from "@/types/story-editor"
-import { ViewerLayerItem } from "./ViewerLayerItem"
+import { VirtualLayerCanvas } from "./ViewerLayerItem"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 
 type UserStorySlideProps = {
@@ -16,6 +16,7 @@ type UserStorySlideProps = {
     onClose: () => void
     isDark?: boolean
     onStoryUpdate?: (story: StoryDetail) => void
+    disableMediaBackgroundFallback?: boolean
 }
 
 // Individual User Story Viewer
@@ -26,7 +27,8 @@ export const UserStorySlide = ({
     onPrevUser,
     onClose,
     isDark,
-    onStoryUpdate
+    onStoryUpdate,
+    disableMediaBackgroundFallback = false
 }: UserStorySlideProps) => {
     const [storyIndex, setStoryIndex] = useState(0)
     const [progress, setProgress] = useState(0)
@@ -317,7 +319,7 @@ export const UserStorySlide = ({
 
             {/* Header / Progress */}
             <div className="absolute top-0 left-0 right-0 z-20 p-4 pt-12 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
-                <div className="flex gap-1 mb-3">
+                <div className="flex gap-1">
                     {sortedStories.map((s, idx) => (
                         <div key={s.id} className="h-1 flex-1 bg-white/30 rounded-full overflow-hidden">
                             <div
@@ -330,310 +332,229 @@ export const UserStorySlide = ({
                     ))}
                 </div>
 
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full border border-white/50 overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                            {group.author.avatar ? (
-                                <img
-                                    src={group.author.avatar}
-                                    alt={group.author.name}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                        // Hide image on error and show initials instead
-                                        e.currentTarget.style.display = 'none';
-                                    }}
-                                />
-                            ) : null}
-                            {!group.author.avatar && (
-                                <span className="text-white font-bold text-xs">
-                                    {group.author.name?.charAt(0).toUpperCase() || 'U'}
-                                </span>
-                            )}
-                        </div>
-                        <div>
-                            <p className="text-white font-semibold text-sm flex items-center gap-2">
-                                {group.author.name}
-                                <span className="text-white/60 font-normal text-xs">{currentStory.timeAgo}</span>
-                            </p>
-                        </div>
-                    </div>
+                {/* Profile and header elements removed as requested */}
 
-                    <div className="flex items-center gap-4 pointer-events-auto">
-                        {isMyStory && (
-                            <div className="relative">
-                                <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu) }} onTouchEnd={(e) => e.stopPropagation()} className="text-white">
-                                    <MoreVertical className="w-5 h-5" />
-                                </button>
-                                {showMenu && (
-                                    <div className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden">
-                                        <button
-                                            onClick={async (e) => {
-                                                e.stopPropagation();
-                                                if (confirm("Delete this story?")) {
-                                                    await showcaseService.deleteStory(currentStory.id);
-                                                    onClose();
-                                                    window.location.reload();
-                                                }
-                                            }}
-                                            onTouchEnd={(e) => e.stopPropagation()}
-                                            className="flex items-center gap-2 w-full px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors text-left"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                            Delete Story
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                        <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="text-white">
-                            <X className="w-6 h-6" />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Mute Toggle (Bottom Right or Custom Location, checking Video Type) */}
-                {currentStory.media_type === 'video' && isActiveUser && (
-                    <div className="absolute top-28 right-4 z-30 pointer-events-auto">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setIsMuted(!isMuted);
-                            }}
-                            onTouchEnd={(e) => e.stopPropagation()}
-                            className="bg-black/40 p-2 rounded-full backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
-                        >
-                            {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                        </button>
-                    </div>
-                )}
+                {/* Mute toggle removed as requested */}
             </div>
 
-            {/* Content */}
-            <div className="w-full h-full flex items-center justify-center bg-black relative">
+            {/* Full-screen black background (letterbox padding) */}
+            <div className="absolute inset-0 bg-black" />
 
-                {/* Shared Post Overlay */}
-                {currentStory.shared_post && (
-                    <div className={`absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-8 ${currentStory.story_metadata?.backgroundStyle || ''}`}>
-                        {/* Fallback Background if no style but also no media (text mode) */}
-                        {!currentStory.media_url && !currentStory.story_metadata?.backgroundStyle && (
-                            <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black z-[-1]" />
-                        )}
+            {/* 9:16 Story Frame — media is always contained within this box */}
+            <div
+                className="absolute inset-0 flex items-center justify-center"
+                style={{ pointerEvents: 'none' }}
+            >
+                <div
+                    className="relative overflow-hidden bg-black"
+                    style={{
+                        // Enforce 9:16: take full height, cap width at 9/16 * height
+                        height: '100%',
+                        width: 'min(100%, calc(100vh * 9 / 16))',
+                        maxHeight: 'calc(100vw * 16 / 9)',
+                    }}
+                >
 
-                        <div style={{ transform: `scale(${currentStory.story_metadata?.scale || 0.9})` }} className="transition-transform duration-200">
-                            <SharedPostCard sharedPost={currentStory.shared_post} />
-                        </div>
-                    </div>
-                )}
-
-                {/* 1. Video Player (HLS) */}
-                {/* Only render if there's no video layer in metadata (legacy support) */}
-                {currentStory.media_type === 'video' && isActiveUser && !metadata.layers?.some(l => l.type === 'video') ? (
-                    currentStory.media_status === 'processing' ? (
-                        /* Processing State */
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-10">
-                            <img src={currentStory.thumbnail_url || currentStory.image} className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm" alt="thumbnail" />
-                            <div className="z-20 flex flex-col items-center">
-                                <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin mb-3"></div>
-                                <span className="text-white font-medium text-sm">Processing Video...</span>
-                            </div>
-                        </div>
-                    ) : currentStory.media_status === 'failed' ? (
-                        /* Failed State */
-                        <div className="absolute inset-0 flex items-center justify-center bg-gray-900 text-white">
-                            <p>Video failed to load</p>
-                        </div>
-                    ) : (
-                        /* Ready State - Native Video (Safer & Faster) */
-                        <video
-                            ref={videoRef}
-                            src={(() => {
-                                let url = currentStory.media_url;
-                                // Force MP4 for Cloudinary to ensure Chrome compatibility (fixes .mov black screen)
-                                if (url && url.includes('cloudinary') && !url.endsWith('.mp4')) {
-                                    // Replace extension with .mp4
-                                    url = url.replace(/\.[^/.]+$/, ".mp4");
-                                }
-                                return url;
-                            })()}
-                            className="w-full h-full object-contain"
-                            playsInline
-                            autoPlay
-                            muted={isMuted}
-                            onEnded={handleNext}
-                            // Video Trim Logic
-                            onTimeUpdate={(e) => {
-                                const vid = e.currentTarget;
-                                const trim = metadata.trim;
-
-                                // Enforce Trim Loop
-                                if (trim && vid.currentTime >= trim.end) {
-                                    vid.currentTime = trim.start;
-                                    handleNext();
-                                }
-
-                                if (!isPaused && !showInteraction) {
-                                    if (vid.duration) {
-                                        const duration = trim ? (trim.end - trim.start) : vid.duration;
-                                        const current = trim ? (vid.currentTime - trim.start) : vid.currentTime;
-                                        const percent = Math.max(0, Math.min(100, (current / duration) * 100));
-                                        setProgress(percent);
-                                    }
-                                }
-                            }}
-                            onLoadedMetadata={(e) => {
-                                const vid = e.currentTarget;
-                                if (metadata.trim) {
-                                    vid.currentTime = metadata.trim.start;
-                                }
-                            }}
-                            onError={(e) => console.error("Video Playback Error:", e.currentTarget.error)}
-                        />
-                    )
-                ) : currentStory.image ? (
-                    <>
-                        {/* 2. Image Render (Standard - Instagram Style) */}
-                        {/* Background: Blurred Cover */}
-                        {/* Background: Custom or Blurred Cover */}
-                        <div
-                            className={`absolute inset-0 z-0 overflow-hidden ${(metadata.background?.startsWith('bg-') || metadata.background?.startsWith('from-')) ? metadata.background : 'bg-black'}`}
-                            style={(!metadata.background?.startsWith('bg-') && !metadata.background?.startsWith('from-')) ? { background: metadata.background } : {}}
-                        >
-                            {!metadata.background && (
-                                <>
-                                    <img
-                                        src={currentStory.image}
-                                        alt=""
-                                        className="w-full h-full object-cover blur-2xl scale-110 opacity-50"
-                                    />
-                                    <div className="absolute inset-0 bg-black/30" />
-                                </>
+                    {/* Shared Post Overlay */}
+                    {currentStory.shared_post && (
+                        <div className={`absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-8 ${currentStory.story_metadata?.backgroundStyle || ''}`}>
+                            {/* Fallback Background if no style but also no media (text mode) */}
+                            {!currentStory.media_url && !currentStory.story_metadata?.backgroundStyle && (
+                                <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black z-[-1]" />
                             )}
+
+                            <div style={{ transform: `scale(${currentStory.story_metadata?.scale || 0.9})` }} className="transition-transform duration-200">
+                                <SharedPostCard sharedPost={currentStory.shared_post} />
+                            </div>
                         </div>
+                    )}
 
-                        {/* Foreground: Contained Image (Only if NO Image Layers exist in metadata) */}
-                        {!metadata.layers?.some(l => l.type === 'image') && (
-                            <div className="relative z-1 w-full h-full flex items-center justify-center">
-                                <img
-                                    src={currentStory.image}
-                                    alt={currentStory.title}
-                                    className="w-full h-full object-contain drop-shadow-2xl"
-                                />
-                            </div>
-                        )}
-                    </>
-                ) : null}
-
-                {/* Metadata Layers Overlay (Text/Stickers/Images/Videos) */}
-                {metadata.layers?.map(layer => (
-                    <ViewerLayerItem
-                        key={layer.id}
-                        layer={layer}
-                        isActive={isActiveUser}
-                        onVideoEnd={layer.type === 'video' ? handleNext : undefined}
-                        fallbackVideoUrl={currentStory.media_url}
-                        onVideoProgress={layer.type === 'video' ? setProgress : undefined}
-                    />
-                ))}
-
-                {!showInteraction && (
-                    <>
-                        {/* Description Overlay */}
-                        {currentStory.description && (
-                            <div
-                                className={`absolute transition-all duration-300 z-30 pointer-events-auto
-                                    ${isDescriptionExpanded
-                                        ? "left-4 right-4 bottom-4 bg-black/80 rounded-xl p-6 max-h-[50vh] overflow-y-auto"
-                                        : "left-4 right-16 bottom-10"
-                                    }
-                                `}
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    // Toggle expansion
-                                    setIsDescriptionExpanded(!isDescriptionExpanded)
-                                }}
-                                onTouchStart={(e) => e.stopPropagation()}
-                                onTouchEnd={(e) => e.stopPropagation()}
-                            >
-                                <p className={`text-white text-sm leading-relaxed drop-shadow-md transition-opacity duration-300 ${isDescriptionExpanded ? 'opacity-100' : 'opacity-90'}`}>
-                                    {isDescriptionExpanded ? (
-                                        currentStory.description
-                                    ) : (
-                                        <>
-                                            {(() => {
-                                                const limit = 100;
-                                                if (currentStory.description.length <= limit) return currentStory.description;
-                                                // Truncate at the last space before the limit
-                                                const truncated = currentStory.description.slice(0, limit);
-                                                const lastSpace = truncated.lastIndexOf(' ');
-                                                return truncated.slice(0, lastSpace > 0 ? lastSpace : limit);
-                                            })()}
-                                            {currentStory.description.length > 100 && (
-                                                <>
-                                                    ... <span className="font-semibold underline ml-1 text-white/90">Read more</span>
-                                                </>
-                                            )}
-                                        </>
-                                    )}
-                                </p>
-                            </div>
-                        )}
-
-                        {!isDescriptionExpanded && (
-                            <div className="absolute bottom-24 left-0 right-0 text-center pointer-events-none">
-                                <div className="flex flex-col items-center gap-1 opacity-60 animate-bounce">
-                                    <div className="w-6 h-1 bg-white/50 rounded-full" />
-                                    <p className="text-white text-xs font-medium drop-shadow-md">Swipe up for details</p>
+                    {/* 1. Video Player (HLS) */}
+                    {/* Only render if there's no video layer in metadata (legacy support) */}
+                    {currentStory.media_type === 'video' && isActiveUser && !metadata.layers?.some(l => l.type === 'video') ? (
+                        currentStory.media_status === 'processing' ? (
+                            /* Processing State */
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-10">
+                                {(currentStory.thumbnail_url || currentStory.image) && (
+                                    <img
+                                        src={currentStory.thumbnail_url || currentStory.image}
+                                        className="absolute inset-0 w-full h-full object-cover opacity-50 blur-sm"
+                                        alt="thumbnail"
+                                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                    />
+                                )}
+                                <div className="z-20 flex flex-col items-center">
+                                    <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin mb-3"></div>
+                                    <span className="text-white font-medium text-sm">Processing Video...</span>
                                 </div>
                             </div>
-                        )}
-
-                        {/* Like Button (Only for others) */}
-                        {!isMyStory && (
-                            <div
-                                className="absolute bottom-6 right-4 pointer-events-auto z-50"
-                                onTouchStart={(e) => e.stopPropagation()}
-                                onTouchEnd={(e) => e.stopPropagation()}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                onMouseUp={(e) => e.stopPropagation()}
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        const newLikedState = !isLiked
-                                        setIsLiked(newLikedState)
-                                        setLikeKey(prev => prev + 1)
-
-                                        // Update parent
-                                        const baseCount = (currentStory.likes || 0) - (currentStory.isLiked ? 1 : 0);
-                                        const newCount = baseCount + (newLikedState ? 1 : 0);
-
-                                        if (onStoryUpdate) {
-                                            onStoryUpdate({
-                                                ...currentStory,
-                                                isLiked: newLikedState,
-                                                likes: newCount
-                                            })
-                                        }
-
-                                        const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
-                                        showcaseService.reactToStory(currentStory.id, newLikedState, companyId).catch(err => {
-                                            console.error("Failed to react to story", err)
-                                            setIsLiked(!newLikedState) // Revert on error
-                                        })
-                                    }}
-                                    className="p-3 rounded-full active:scale-95 transition-transform"
-                                >
-                                    <Heart
-                                        key={likeKey}
-                                        className={`w-8 h-8 ${isLiked ? "fill-red-500 text-red-500" : "text-white"} ${likeKey > 0 ? 'animate-wiggle' : ''}`}
-                                    />
-                                </button>
+                        ) : currentStory.media_status === 'failed' ? (
+                            /* Failed State */
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-900 text-white">
+                                <p>Video failed to load</p>
                             </div>
-                        )}
-                    </>
-                )}
-            </div>
+                        ) : (
+                            /* Ready State - Native Video (Safer & Faster) */
+                            <video
+                                ref={videoRef}
+                                src={(() => {
+                                    // Prefer pre-rendered final URL if ready
+                                    if (currentStory.render_status === 'ready' && currentStory.final_url) {
+                                        return currentStory.final_url;
+                                    }
+
+                                    let url = currentStory.media_url;
+                                    // Force MP4 for Cloudinary to ensure Chrome compatibility (fixes .mov black screen)
+                                    if (url && url.includes('cloudinary') && !url.endsWith('.mp4')) {
+                                        // Replace extension with .mp4
+                                        url = url.replace(/\.[^/.]+$/, ".mp4");
+                                    }
+                                    return url;
+                                })()}
+                                className="w-full h-full object-contain"
+                                playsInline
+                                autoPlay
+                                muted={isMuted}
+                                onEnded={handleNext}
+                                // Video Trim Logic
+                                onTimeUpdate={(e) => {
+                                    const vid = e.currentTarget;
+                                    const trim = metadata.trim;
+
+                                    // Enforce Trim Loop
+                                    if (trim && vid.currentTime >= trim.end) {
+                                        vid.currentTime = trim.start;
+                                        handleNext();
+                                    }
+
+                                    if (!isPaused && !showInteraction) {
+                                        if (vid.duration) {
+                                            const duration = trim ? (trim.end - trim.start) : vid.duration;
+                                            const current = trim ? (vid.currentTime - trim.start) : vid.currentTime;
+                                            const percent = Math.max(0, Math.min(100, (current / duration) * 100));
+                                            setProgress(percent);
+                                        }
+                                    }
+                                }}
+                                onLoadedMetadata={(e) => {
+                                    const vid = e.currentTarget;
+                                    if (metadata.trim) {
+                                        vid.currentTime = metadata.trim.start;
+                                    }
+                                }}
+                                onError={(e) => console.error("Video Playback Error:", e.currentTarget.error)}
+                            />
+                        )
+                    ) : currentStory.image ? (
+                        <>
+                            {/* Background: solid/gradient or blurred version of the image */}
+                            <div
+                                className={`absolute inset-0 z-0 overflow-hidden ${(metadata.background?.startsWith('bg-') || metadata.background?.startsWith('from-'))
+                                    ? metadata.background
+                                    : 'bg-black'
+                                    }`}
+                                style={(!metadata.background?.startsWith('bg-') && !metadata.background?.startsWith('from-'))
+                                    ? { background: metadata.background }
+                                    : {}}
+                            >
+                                {/* Only show blurred backdrop when no custom background is set AND fallback is enabled */}
+                                {!metadata.background && !disableMediaBackgroundFallback && (
+                                    <>
+                                        <img
+                                            src={(currentStory.render_status === 'ready' && currentStory.final_url) ? currentStory.final_url : currentStory.image}
+                                            alt=""
+                                            className="w-full h-full object-cover blur-2xl scale-110 opacity-40"
+                                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                        />
+                                        <div className="absolute inset-0 bg-black/40" />
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Foreground: main image, always object-contain inside the 9:16 frame */}
+                            {(!metadata.layers?.some(l => l.type === 'image') || (currentStory.render_status === 'ready' && currentStory.final_url)) && (
+                                <div className="relative z-1 w-full h-full flex items-center justify-center">
+                                    <img
+                                        src={(currentStory.render_status === 'ready' && currentStory.final_url) ? currentStory.final_url : currentStory.image}
+                                        alt={currentStory.title}
+                                        className="w-full h-full object-contain"
+                                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                    />
+                                </div>
+                            )}
+                        </>
+                    ) : null}
+
+                    {/* Metadata Layers Overlay — rendered inside a fixed virtual canvas */}
+                    {/* Only show layers if NOT using a pre-rendered final URL */}
+                    {(!currentStory.render_status || currentStory.render_status !== 'ready' || !currentStory.final_url) && metadata.layers?.length > 0 && (
+                        <VirtualLayerCanvas
+                            layers={metadata.layers}
+                            fallbackVideoUrl={currentStory.media_url}
+                            isActive={isActiveUser}
+                            onVideoEnd={handleNext}
+                            onVideoProgress={setProgress}
+                            background={metadata.background}
+                        />
+                    )}
+
+                </div> {/* end 9:16 story frame */}
+            </div> {/* end letterbox centering wrapper */}
+            {!showInteraction && (
+                <>
+                    {/* Description Overlay */}
+                    {currentStory.description && (
+                        <div
+                            className={`absolute transition-all duration-300 z-30 pointer-events-auto
+                                    ${isDescriptionExpanded
+                                    ? "left-4 right-4 bottom-4 bg-black/80 rounded-xl p-6 max-h-[50vh] overflow-y-auto"
+                                    : "left-4 right-16 bottom-10"
+                                }
+                                `}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                // Toggle expansion
+                                setIsDescriptionExpanded(!isDescriptionExpanded)
+                            }}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            onTouchEnd={(e) => e.stopPropagation()}
+                        >
+                            <p className={`text-white text-sm leading-relaxed drop-shadow-md transition-opacity duration-300 ${isDescriptionExpanded ? 'opacity-100' : 'opacity-90'}`}>
+                                {isDescriptionExpanded ? (
+                                    currentStory.description
+                                ) : (
+                                    <>
+                                        {(() => {
+                                            const limit = 100;
+                                            if (currentStory.description.length <= limit) return currentStory.description;
+                                            // Truncate at the last space before the limit
+                                            const truncated = currentStory.description.slice(0, limit);
+                                            const lastSpace = truncated.lastIndexOf(' ');
+                                            return truncated.slice(0, lastSpace > 0 ? lastSpace : limit);
+                                        })()}
+                                        {currentStory.description.length > 100 && (
+                                            <>
+                                                ... <span className="font-semibold underline ml-1 text-white/90">Read more</span>
+                                            </>
+                                        )}
+                                    </>
+                                )}
+                            </p>
+                        </div>
+                    )}
+
+                    {!isDescriptionExpanded && (
+                        <div className="absolute bottom-24 left-0 right-0 text-center pointer-events-none">
+                            <div className="flex flex-col items-center gap-1 opacity-60 animate-bounce">
+                                <p className="text-white text-xs font-medium drop-shadow-md">Swipe up for details</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Like button removed as requested */}
+                </>
+            )
+            }
         </div >
     )
 }

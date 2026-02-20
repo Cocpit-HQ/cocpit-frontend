@@ -21,9 +21,13 @@ export const mapStory = (story: any): StoryDetail => ({
     isLiked: story.has_liked,
     has_viewed: story.has_viewed,
     media_status: story.media_status,
+    render_status: story.render_status || story.media_status, // Use backend render_status if available
+
+    original_url: story.original_url, // Map original_url from backend
+    final_url: story.final_url || story.media_url, // Use final_url from backend or fallback to media_url
     media_type: story.media_type,
     media_url: story.media_url,
-    thumbnail_url: story.thumbnail_url || story.image,
+    thumbnail_url: story.thumbnail_url || (story.story_metadata && typeof story.story_metadata === 'object' ? story.story_metadata.thumbnail_url : null) || story.media_url,
     shared_post: story.shared_post,
     story_metadata: story.story_metadata // Pass through metadata
 });

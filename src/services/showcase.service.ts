@@ -9,7 +9,7 @@ export const showcaseService = {
         return data.map(mapStory);
     },
 
-    createStory: async (storyData: { title: string; description: string; media_url: string; media_type?: string; public_id?: string; media_status?: string; shared_post_id?: string; story_metadata?: any }, companyId?: string) => {
+    createStory: async (storyData: { title: string; description: string; media_url: string; media_type?: string; public_id?: string; media_status?: string; shared_post_id?: string; story_metadata?: any; original_url?: string; final_url?: string }, companyId?: string) => {
         const config = companyId ? { headers: { 'x-company-id': companyId } } : {};
         const { data } = await api.post("/story", storyData, config);
         return data;

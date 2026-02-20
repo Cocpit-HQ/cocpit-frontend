@@ -85,6 +85,7 @@ export function MobileStoryViewer({ groups, initialGroupId, onClose, isDark, onS
                                     onClose={onClose}
                                     isDark={isDark}
                                     onStoryUpdate={onStoryUpdate}
+                                    disableMediaBackgroundFallback={true}
                                 />
                             ) : (
                                 /* Reduced placeholder for off-screen slides to maintain Embla layout */
