@@ -46,6 +46,7 @@ export function StoryCard({ group, onClick }: StoryCardProps) {
                                 loading="lazy"
                                 decoding="async"
                                 className="w-full h-full object-cover"
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
                             />
                         ) : (
                             <div className={`w-full h-full ${latestStory.story_metadata?.backgroundStyle || 'bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500'}`} />

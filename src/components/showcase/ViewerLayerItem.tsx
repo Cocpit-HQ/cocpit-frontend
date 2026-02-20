@@ -1,138 +1,295 @@
-import React, { useEffect, useRef } from "react"
-import { StoryLayer } from "@/types/story-editor"
+"use client";
 
-type ViewerLayerItemProps = {
+import React, { useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { StoryLayer } from "@/types/story-editor";
+
+// The canonical reference canvas dimensions (9:16 aspect ratio)
+export const CANVAS_W = 390;
+export const CANVAS_H = 693;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ViewerLayerItem
+// Renders a single story layer inside a fixed CANVAS_W × CANVAS_H coordinate
+// space. The parent must be the virtual canvas container (position: relative,
+// width: CANVAS_W, height: CANVAS_H) so that percentage positions are stable.
+// ─────────────────────────────────────────────────────────────────────────────
+export function ViewerLayerItem({
+    layer,
+    fallbackMedia,
+    isActive,
+    onVideoEnd,
+    onVideoProgress,
+}: {
     layer: StoryLayer;
-    isActive: boolean;
+    fallbackMedia?: string;
+    isActive?: boolean;
     onVideoEnd?: () => void;
-    fallbackVideoUrl?: string;
-    onVideoProgress?: (progress: number) => void;
-}
-
-export const ViewerLayerItem = ({ layer, isActive, onVideoEnd, fallbackVideoUrl, onVideoProgress }: ViewerLayerItemProps) => {
+    onVideoProgress?: (pct: number) => void;
+}) {
     const videoRef = useRef<HTMLVideoElement>(null);
-    const hasTriggeredEnd = useRef(false);
+    const router = useRouter();
 
-    // Handle video layer trim logic
+    // Auto-play video layers when active
     useEffect(() => {
-        if (layer.type === 'video' && videoRef.current && isActive) {
-            const vid = videoRef.current;
-            hasTriggeredEnd.current = false; // Reset on new video
-
-            // Start at trim start
-            if (layer.trim) {
-                vid.currentTime = layer.trim.start;
-            }
-
-            // Wait for video to be ready before playing
-            const playVideo = () => {
-                if (vid.readyState >= 2) { // HAVE_CURRENT_DATA or better
-                    vid.play().catch(err => {
-                        // Ignore AbortError (happens when video is interrupted by new load)
-                        if (err.name !== 'AbortError') {
-                            console.error('Video play failed:', err);
-                        }
-                    });
-                } else {
-                    // Wait for loadeddata event
-                    vid.addEventListener('loadeddata', () => {
-                        vid.play().catch(err => {
-                            if (err.name !== 'AbortError') {
-                                console.error('Video play failed:', err);
-                            }
-                        });
-                    }, { once: true });
-                }
-            };
-
-            playVideo();
+        if (layer.type !== "video" || !videoRef.current) return;
+        const vid = videoRef.current;
+        if (layer.trim) vid.currentTime = layer.trim.start;
+        if (isActive !== false) {
+            vid.play().catch((err) => {
+                if (err.name !== "AbortError") console.error("Video play failed:", err);
+            });
+        } else {
+            vid.pause();
         }
     }, [layer, isActive]);
 
-    // Determine video source (fallback to Cloudinary URL if blob)
-    const getVideoSrc = () => {
-        if (layer.type === 'video') {
-            // If src is a blob URL, use fallback
-            if (layer.src.startsWith('blob:')) {
-                return fallbackVideoUrl || layer.src;
-            }
-            return layer.src;
-        }
-        return '';
+    const getSource = (): string => {
+        if (layer.type === "text" || layer.type === "post") return "";
+        // @ts-ignore – all non-text/post layers have .src
+        const src: string = layer.src || "";
+        if (src.startsWith("blob:") && fallbackMedia) return fallbackMedia;
+        return src;
     };
+
+    const handlePostClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (layer.type === "post" && layer.post_data.id) {
+            router.push(`/post/${layer.post_data.id}`);
+        }
+    };
+
+    const isEmoji = layer.type === "sticker" && !getSource().includes("/");
 
     return (
         <div
-            className="absolute origin-center pointer-events-none"
+            className={`absolute origin-center ${layer.type === "post" ? "pointer-events-auto cursor-pointer" : "pointer-events-none"
+                }`}
             style={{
                 left: `${layer.x}%`,
                 top: `${layer.y}%`,
-                width: layer.type === 'text' ? 'auto' : `${layer.width}%`,
-                height: layer.type === 'text' ? 'auto' : `${layer.height}%`,
+                // Text layers are auto-width; others use the stored % width
+                width: layer.type === "text" ? "auto" : isEmoji ? "auto" : `${layer.width}%`,
+                height: layer.type === "text" ? "auto" : isEmoji ? "auto" : `${layer.height}%`,
                 transform: `translate(-50%, -50%) rotate(${layer.rotation}deg) scale(${layer.scale})`,
-                zIndex: layer.zIndex + 10, // Ensure above background
+                zIndex: layer.zIndex + 10,
             }}
+            onClick={layer.type === "post" ? handlePostClick : undefined}
         >
-            {layer.type === 'text' ? (
-                <p style={{
-                    color: layer.style.color,
-                    fontSize: `${layer.style.fontSize}px`, // This might need viewport scaling adjustment
-                    fontWeight: layer.style.fontWeight,
-                    fontFamily: layer.style.fontFamily,
-                    textAlign: layer.style.textAlign,
-                    whiteSpace: 'nowrap',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                    padding: '4px'
-                }}>
+            {layer.type === "text" ? (
+                <p
+                    style={{
+                        color: layer.style.color,
+                        // fontSize stored as px relative to the 390px reference canvas.
+                        // Because we render inside the exact same 390px-wide canvas (scaled by CSS),
+                        // no conversion is needed.
+                        fontSize: `${layer.style.fontSize}px`,
+                        fontWeight: layer.style.fontWeight,
+                        fontFamily: layer.style.fontFamily,
+                        textAlign: layer.style.textAlign,
+                        fontStyle: layer.style.fontStyle,
+                        whiteSpace: "nowrap",
+                        textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+                        padding: "4px",
+                        minWidth: "50px",
+                    }}
+                >
                     {layer.content}
                 </p>
-            ) : layer.type === 'sticker' ? (
-                <img src={layer.src} className="w-full h-full object-contain" alt="sticker" />
-            ) : layer.type === 'image' ? (
-                /* Image Layer - movable/scalable */
-                <img src={layer.src} className="w-full h-full object-contain pointer-events-none" alt="layer" />
-            ) : layer.type === 'video' ? (
+            ) : layer.type === "video" && getSource() ? (
                 <video
                     ref={videoRef}
-                    src={getVideoSrc()}
-                    className="w-full h-full object-contain pointer-events-none"
+                    src={getSource()}
+                    className="w-full h-full object-contain"
                     muted={layer.isMuted}
+                    autoPlay
+                    loop={!onVideoEnd}
                     playsInline
+                    crossOrigin="anonymous"
                     onTimeUpdate={(e) => {
                         const vid = e.currentTarget;
                         if (layer.trim) {
-                            const trimDuration = layer.trim.end - layer.trim.start;
-                            const currentTime = vid.currentTime - layer.trim.start;
-
-                            // Update progress
-                            if (onVideoProgress && trimDuration > 0) {
-                                const percent = Math.min(100, (currentTime / trimDuration) * 100);
-                                onVideoProgress(percent);
-                            }
-
-                            // Check if we've reached the end of trim
-                            if (vid.currentTime >= layer.trim.end && !hasTriggeredEnd.current) {
-                                hasTriggeredEnd.current = true;
-                                vid.pause();
-                                if (onVideoEnd) onVideoEnd();
-                            }
-                        } else {
-                            // No trim, use full duration
-                            if (onVideoProgress && vid.duration) {
-                                const percent = (vid.currentTime / vid.duration) * 100;
-                                onVideoProgress(percent);
+                            if (
+                                vid.currentTime < layer.trim.start ||
+                                vid.currentTime >= layer.trim.end
+                            ) {
+                                vid.currentTime = layer.trim.start;
                             }
                         }
-                    }}
-                    onEnded={(e) => {
-                        // Natural end (no trim)
-                        if (!layer.trim && !hasTriggeredEnd.current) {
-                            hasTriggeredEnd.current = true;
-                            if (onVideoEnd) onVideoEnd();
+                        if (onVideoProgress && vid.duration) {
+                            const trim = layer.trim;
+                            const dur = trim ? trim.end - trim.start : vid.duration;
+                            const cur = trim
+                                ? vid.currentTime - trim.start
+                                : vid.currentTime;
+                            onVideoProgress(Math.max(0, Math.min(100, (cur / dur) * 100)));
                         }
                     }}
+                    onLoadedMetadata={(e) => {
+                        if (layer.trim) e.currentTarget.currentTime = layer.trim.start;
+                    }}
+                    onEnded={() => onVideoEnd?.()}
                 />
+            ) : layer.type === "sticker" && isEmoji ? (
+                // Emoji stickers: use a font-size relative to the reference canvas width
+                // so they scale identically in editor and viewer.
+                <span
+                    style={{
+                        fontSize: `${CANVAS_W * 0.185}px`, // ≈ 72px at reference width
+                        lineHeight: 1,
+                        display: "block",
+                        userSelect: "none",
+                        fontFamily:
+                            "Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif",
+                    }}
+                >
+                    {getSource()}
+                </span>
+            ) : (layer.type === "sticker" || layer.type === "image") && getSource() ? (
+                <img
+                    src={getSource()}
+                    draggable={false}
+                    className="w-full h-full object-contain select-none"
+                    alt=""
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+            ) : layer.type === "post" ? (
+                <div
+                    className="w-full h-full bg-white dark:bg-card rounded-xl p-4 shadow-lg border border-border flex flex-col gap-3 overflow-hidden hover:bg-gray-50 dark:hover:bg-muted/50 transition-colors"
+                    onClick={handlePostClick}
+                >
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-secondary overflow-hidden shrink-0">
+                            {layer.post_data.author?.avatar ? (
+                                <img
+                                    src={layer.post_data.author.avatar}
+                                    alt=""
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center font-bold text-xs text-muted-foreground">
+                                    {layer.post_data.author?.name?.[0]}
+                                </div>
+                            )}
+                        </div>
+                        <div className="text-xs font-bold text-gray-900 dark:text-foreground">
+                            {layer.post_data.author?.name}
+                        </div>
+                    </div>
+                    {layer.post_data.content && (
+                        <p className="text-xs text-gray-800 dark:text-foreground line-clamp-3 leading-relaxed">
+                            {layer.post_data.content}
+                        </p>
+                    )}
+                    {layer.post_data.media?.[0]?.url && (
+                        <div className="relative flex-1 min-h-0 w-full rounded-lg overflow-hidden bg-gray-100 dark:bg-muted">
+                            {layer.post_data.media[0].media_type === "video" ? (
+                                <video
+                                    src={layer.post_data.media[0].url}
+                                    className="w-full h-full object-cover"
+                                    controls
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                />
+                            ) : (
+                                <img
+                                    src={layer.post_data.media[0].url}
+                                    alt="Post media"
+                                    className="w-full h-full object-cover"
+                                />
+                            )}
+                        </div>
+                    )}
+                </div>
             ) : null}
         </div>
     );
-};
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VirtualLayerCanvas
+// A container that renders a CANVAS_W × CANVAS_H inner div scaled to fill
+// the available space. Drop ViewerLayerItems inside it.
+// ─────────────────────────────────────────────────────────────────────────────
+export function VirtualLayerCanvas({
+    layers,
+    fallbackVideoUrl,
+    isActive,
+    onVideoEnd,
+    onVideoProgress,
+    background,
+}: {
+    layers: StoryLayer[];
+    fallbackVideoUrl?: string;
+    isActive?: boolean;
+    onVideoEnd?: () => void;
+    onVideoProgress?: (pct: number) => void;
+    background?: string;
+}) {
+    const wrapperRef = useRef<HTMLDivElement>(null);
+    const [scale, setScale] = React.useState(1);
+
+    useEffect(() => {
+        const el = wrapperRef.current;
+        if (!el) return;
+
+        const update = () => {
+            const { width, height } = el.getBoundingClientRect();
+            setScale(Math.min(width / CANVAS_W, height / CANVAS_H));
+        };
+
+        update();
+        const ro = new ResizeObserver(update);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
+
+    const isTailwindBg =
+        background?.startsWith("bg-") || background?.startsWith("from-");
+
+    return (
+        // Outer: fills parent, centres the virtual canvas
+        <div
+            ref={wrapperRef}
+            style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                pointerEvents: "none",
+                overflow: "hidden",
+            }}
+        >
+            {/* Virtual fixed-size canvas – same logical size as the editor */}
+            <div
+                style={{
+                    width: CANVAS_W,
+                    height: CANVAS_H,
+                    transform: `scale(${scale})`,
+                    transformOrigin: "center center",
+                    flexShrink: 0,
+                    position: "relative",
+                    overflow: "hidden",
+                    background: !isTailwindBg ? background || undefined : undefined,
+                }}
+                className={isTailwindBg ? background : ""}
+            >
+                {layers.map((layer) => (
+                    <ViewerLayerItem
+                        key={layer.id}
+                        layer={layer}
+                        fallbackMedia={fallbackVideoUrl}
+                        isActive={isActive}
+                        onVideoEnd={layer.type === "video" ? onVideoEnd : undefined}
+                        onVideoProgress={
+                            layer.type === "video" ? onVideoProgress : undefined
+                        }
+                    />
+                ))}
+            </div>
+        </div>
+    );
+}

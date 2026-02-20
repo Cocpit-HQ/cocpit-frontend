@@ -1,12 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Check, Undo, Redo, Type, Smile, Crop, Sliders, Image as ImageIcon, Palette, Volume2, VolumeX } from 'lucide-react';
+import { X, Undo, Type, Smile, Crop, Palette, Volume2, VolumeX } from 'lucide-react';
 import { StoryMetadata, StoryLayer } from '@/types/story-editor';
 import { useStoryHistory } from '@/hooks/useStoryHistory';
 import { EditorCanvas } from '@/components/showcase/editor/EditorCanvas';
+import { StickerPicker } from '@/components/showcase/editor/StickerPicker';
+import type { StickerSelection } from '@/components/showcase/editor/StickerPicker';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '@/lib/canvasUtils';
+import { CANVAS_W, CANVAS_H } from '@/components/showcase/ViewerLayerItem';
 
 // Helper to deep copy layers to avoid mutation issues
 const clone = (obj: any) => JSON.parse(JSON.stringify(obj));
@@ -16,19 +19,38 @@ type StoryEditorProps = {
     initialMetadata?: StoryMetadata;
     onSave: (file: File | Blob | string, metadata: StoryMetadata) => void;
     onCancel: () => void;
+    disableBackgroundFallback?: boolean;
 };
 
-export function StoryEditor({ file, initialMetadata, onSave, onCancel }: StoryEditorProps) {
+export function StoryEditor({ file, initialMetadata, onSave, onCancel, disableBackgroundFallback = false }: StoryEditorProps) {
     const defaultMetadata: StoryMetadata = {
         version: "1.0",
         layers: [],
     };
 
-    const { layers, undo, redo, pushState, replaceState, canUndo, canRedo } = useStoryHistory(initialMetadata?.layers || []);
+    const { layers, undo, pushState, replaceState, canUndo } = useStoryHistory(initialMetadata?.layers || []);
     const [metadata, setMetadata] = useState<StoryMetadata>(initialMetadata || defaultMetadata);
     const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
     const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
     const [activeTool, setActiveTool] = useState<'none' | 'text' | 'sticker' | 'crop' | 'filter' | 'background'>('none');
+    const [showStickerPicker, setShowStickerPicker] = useState(false);
+
+    // Fixed virtual canvas scaling
+    const canvasWrapperRef = useRef<HTMLDivElement>(null);
+    const [canvasScale, setCanvasScale] = useState(1);
+
+    useEffect(() => {
+        const el = canvasWrapperRef.current;
+        if (!el) return;
+        const update = () => {
+            const { width, height } = el.getBoundingClientRect();
+            setCanvasScale(Math.min(width / CANVAS_W, height / CANVAS_H));
+        };
+        update();
+        const ro = new ResizeObserver(update);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
 
     // Media State
     const [mediaSrc, setMediaSrc] = useState<string>("");
@@ -144,6 +166,28 @@ export function StoryEditor({ file, initialMetadata, onSave, onCancel }: StoryEd
         }
     };
 
+    /** Called when user picks an emoji or image sticker from the StickerPicker sheet */
+    const handleStickerSelect = (sticker: StickerSelection) => {
+        const id = crypto.randomUUID();
+        const isEmoji = sticker.type === 'emoji';
+        const newLayer: StoryLayer = {
+            id,
+            type: 'sticker',
+            x: 50, y: 50,
+            // Emojis self-size via font-size; image stickers fill the percentage box
+            width: isEmoji ? 20 : 30,
+            height: isEmoji ? 20 : 30,
+            rotation: 0,
+            scale: 1,
+            zIndex: layers.length + 1,
+            src: sticker.src,
+        };
+        const newLayers = [...layers, newLayer];
+        pushState(newLayers);
+        setActiveLayerId(newLayer.id);
+        setShowStickerPicker(false);
+    };
+
     const handleLayerInteractionStart = () => {
         pushState(layers);
     };
@@ -153,20 +197,85 @@ export function StoryEditor({ file, initialMetadata, onSave, onCancel }: StoryEd
         replaceState(newLayers);
     };
 
-    const handleSave = () => {
-        const finalMetadata: StoryMetadata = {
-            ...metadata,
-            layers: layers,
-        };
-        if (currentMediaBlob) {
-            onSave(currentMediaBlob, finalMetadata);
-        } else {
-            onSave(file, finalMetadata);
+    const handleSave = async () => {
+        try {
+            // The inner fixed canvas element (not the outer wrapper)
+            const element = document.getElementById('story-editor-canvas');
+
+            if (!element) {
+                console.error("Canvas element not found");
+                return;
+            }
+
+            // Temporarily hide UI controls
+            setActiveLayerId(null);
+            setEditingLayerId(null);
+            setActiveTool('none');
+
+            // Wait for React to render the deselection state
+            await new Promise(resolve => setTimeout(resolve, 120));
+
+            // html2canvas captures the element at its natural (logical) dimensions.
+            // Since the virtual canvas is 390×693 in DOM size (CSS-scaled, but natural
+            // dimensions are fixed), we capture at 2× for high resolution output.
+            const canvas = await (await import('html2canvas')).default(element, {
+                useCORS: true,
+                scale: 2,
+                backgroundColor: null,
+                // Prevent html2canvas from reading the CSS transform scale of parent
+                width: CANVAS_W,
+                height: CANVAS_H,
+            });
+
+            // Generate Snapshot Blob (JPEG)
+            const snapshotBlob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+
+            if (!snapshotBlob) {
+                console.error("Failed to generate blob");
+                return;
+            }
+
+            const compositeFile = new File([snapshotBlob], "story-composite.jpg", { type: "image/jpeg" });
+
+            // Prepare base file (Video or Image)
+            const baseFile = currentMediaBlob || (file instanceof File ? file : null);
+
+            if (mediaType === 'video' && baseFile) {
+                // Return VIDEO as main file, but attach Snapshot as _compositeFile
+                const finalMetadata: StoryMetadata = {
+                    ...metadata,
+                    layers: layers,
+                    // @ts-ignore
+                    _baseFile: baseFile,
+                    // @ts-ignore
+                    _compositeFile: compositeFile
+                };
+                onSave(baseFile, finalMetadata);
+            } else {
+                // Check if we have a base file, if not use composite
+                const finalFile = mediaType === 'image' ? compositeFile : (baseFile || compositeFile);
+
+                // If it is an image, usually we just save the composite as the result
+                // But if we want to preserve original, we should pass it.
+                // For now, keep existing behavior for images (Composite is the result)
+
+                const finalMetadata: StoryMetadata = {
+                    ...metadata,
+                    layers: layers,
+                    // @ts-ignore
+                    _baseFile: baseFile || compositeFile
+                };
+
+                onSave(compositeFile, finalMetadata);
+            }
+
+        } catch (error) {
+            console.error("Failed to save story", error);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-black flex flex-col items-stretch">
             {/* Top Bar */}
             <div className="w-full h-16 px-4 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent absolute top-0 z-20">
                 <button onClick={onCancel} className="p-2 rounded-full bg-black/20 text-white backdrop-blur-md">
@@ -186,41 +295,62 @@ export function StoryEditor({ file, initialMetadata, onSave, onCancel }: StoryEd
                 </button>
             </div>
 
-            {/* Canvas Area */}
-            <div className="relative w-full h-full max-w-md aspect-[9/16] bg-gray-900 overflow-hidden shadow-2xl">
-                {mediaSrc && activeTool !== 'crop' && (
-                    <EditorCanvas
-                        mediaSrc={mediaSrc}
-                        mediaType={mediaType}
-                        layers={layers}
-                        activeLayerId={activeLayerId}
-                        onLayerSelect={(id) => {
-                            setActiveLayerId(id);
-                            if (id !== editingLayerId) setEditingLayerId(null);
-                        }}
-                        editingLayerId={editingLayerId}
-                        onSetEditingLayer={setEditingLayerId}
-                        onLayerUpdate={handleUpdateLayer}
-                        onLayerInteractionStart={handleLayerInteractionStart}
-                        background={metadata.background}
-                    />
-                )}
-
-                {mediaSrc && activeTool === 'crop' && (
-                    <div className="absolute inset-0 z-30 bg-black">
-                        <Cropper
-                            image={mediaSrc}
-                            crop={crop}
-                            zoom={zoom}
-                            rotation={rotation}
-                            aspect={aspectRatio}
-                            onCropChange={setCrop}
-                            onCropComplete={onCropComplete}
-                            onZoomChange={setZoom}
-                            onRotationChange={setRotation}
+            {/* Canvas Wrapper — fills the space between top bar and bottom toolbar */}
+            <div
+                ref={canvasWrapperRef}
+                className="flex-1 flex items-center justify-center overflow-hidden"
+                style={{ paddingTop: '64px', paddingBottom: '96px' }}
+            >
+                {/* Fixed virtual canvas: always 390×693, CSS-scaled to fit wrapper */}
+                <div
+                    id="story-editor-canvas"
+                    style={{
+                        width: CANVAS_W,
+                        height: CANVAS_H,
+                        transform: `scale(${canvasScale})`,
+                        transformOrigin: 'center center',
+                        flexShrink: 0,
+                        position: 'relative',
+                        overflow: 'hidden',
+                        backgroundColor: '#111827',
+                        boxShadow: '0 25px 50px rgba(0,0,0,0.8)',
+                    }}
+                >
+                    {mediaSrc && activeTool !== 'crop' && (
+                        <EditorCanvas
+                            mediaSrc={mediaSrc}
+                            mediaType={mediaType}
+                            layers={layers}
+                            activeLayerId={activeLayerId}
+                            onLayerSelect={(id) => {
+                                setActiveLayerId(id);
+                                if (id !== editingLayerId) setEditingLayerId(null);
+                            }}
+                            editingLayerId={editingLayerId}
+                            onSetEditingLayer={setEditingLayerId}
+                            onLayerUpdate={handleUpdateLayer}
+                            onLayerInteractionStart={handleLayerInteractionStart}
+                            background={metadata.background}
+                            disableBackgroundFallback={disableBackgroundFallback}
                         />
-                    </div>
-                )}
+                    )}
+
+                    {mediaSrc && activeTool === 'crop' && (
+                        <div className="absolute inset-0 z-30 bg-black">
+                            <Cropper
+                                image={mediaSrc}
+                                crop={crop}
+                                zoom={zoom}
+                                rotation={rotation}
+                                aspect={aspectRatio}
+                                onCropChange={setCrop}
+                                onCropComplete={onCropComplete}
+                                onZoomChange={setZoom}
+                                onRotationChange={setRotation}
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Bottom Toolbar */}
@@ -359,26 +489,26 @@ export function StoryEditor({ file, initialMetadata, onSave, onCancel }: StoryEd
                     <div className="flex gap-4 overflow-x-auto w-full pb-2 scrollbar-hide">
                         <button onClick={() => setMetadata({ ...metadata, background: undefined })} className="w-12 h-12 rounded-full border-2 border-white/20 flex-shrink-0 flex items-center justify-center bg-gray-800 text-white text-[10px]">None</button>
                         <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 flex-shrink-0">
-                            <input type="color" className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer p-0 border-0" onChange={(e) => setMetadata({ ...metadata, background: e.target.value })} value={!metadata.background?.startsWith('bg-') ? metadata.background || "#000000" : "#000000"} />
+                            <input type="color" className="absolute -top-2 -left-2 w-16 h-16 cursor-pointer p-0 border-0" onChange={(e) => setMetadata({ ...metadata, background: e.target.value })} value={metadata.background?.startsWith('#') ? metadata.background : "#000000"} />
                             <div className="absolute inset-0 pointer-events-none flex items-center justify-center pointer-events-none"><span className="text-[10px] font-bold text-white drop-shadow-md">Pick</span></div>
                         </div>
                         {[
-                            "bg-gradient-to-tr from-purple-500 to-pink-500",
-                            "bg-gradient-to-tr from-blue-500 to-teal-500",
-                            "bg-gradient-to-tr from-orange-500 to-red-500",
-                            "bg-gradient-to-t from-gray-900 via-purple-900 to-violet-600",
-                            "bg-black",
-                            "bg-white",
-                            "bg-[#FF5733]",
-                            "bg-[#33FF57]",
-                            "bg-[#3357FF]",
-                            "bg-[#FF33A8]",
+                            "linear-gradient(to top right, #a855f7, #ec4899)",
+                            "linear-gradient(to top right, #3b82f6, #14b8a6)",
+                            "linear-gradient(to top right, #f97316, #ef4444)",
+                            "linear-gradient(to top, #111827, #581c87, #7c3aed)",
+                            "#000000",
+                            "#ffffff",
+                            "#FF5733",
+                            "#33FF57",
+                            "#3357FF",
+                            "#FF33A8",
                         ].map((bg, i) => (
                             <button
                                 key={i}
                                 onClick={() => setMetadata({ ...metadata, background: bg })}
-                                className={`w-12 h-12 rounded-full border-2 flex-shrink-0 ${bg.startsWith('bg-[') ? '' : bg} ${metadata.background === bg ? 'border-white' : 'border-transparent'}`}
-                                style={bg.startsWith('bg-[') ? { background: bg.match(/bg-\[(.*)\]/)?.[1] } : {}}
+                                className={`w-12 h-12 rounded-full border-2 flex-shrink-0 ${metadata.background === bg ? 'border-white' : 'border-transparent'}`}
+                                style={{ background: bg }}
                             />
                         ))}
                     </div>
@@ -402,7 +532,7 @@ export function StoryEditor({ file, initialMetadata, onSave, onCancel }: StoryEd
                         </div>
                         <span className="text-xs font-medium">Text</span>
                     </button>
-                    <button onClick={() => handleAddLayer('sticker')} className="flex flex-col items-center gap-1 text-white opacity-80 hover:opacity-100 transition">
+                    <button onClick={() => setShowStickerPicker(true)} className="flex flex-col items-center gap-1 text-white opacity-80 hover:opacity-100 transition">
                         <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-sm">
                             <Smile className="w-5 h-5" />
                         </div>
@@ -415,6 +545,14 @@ export function StoryEditor({ file, initialMetadata, onSave, onCancel }: StoryEd
                         <span className="text-xs font-medium">Background</span>
                     </button>
                 </div>
+            )}
+
+            {/* Sticker / Emoji Picker Sheet */}
+            {showStickerPicker && (
+                <StickerPicker
+                    onSelect={handleStickerSelect}
+                    onClose={() => setShowStickerPicker(false)}
+                />
             )}
         </div>
     );
