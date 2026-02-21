@@ -12,7 +12,7 @@ import { TaskSubmissionModal } from "./dashboard/TaskSubmissionModal"
 
 interface JobCardProps {
   job: Job
-  mode?: "view" | "my-jobs" | "offers"
+  mode?: "view" | "my-jobs" | "offers" | "dashboard"
 }
 
 export function JobCard({ job, mode = "view" }: JobCardProps) {

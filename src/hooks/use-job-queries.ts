@@ -15,7 +15,7 @@ const getSearchParams = (filters: JobFilters, searchKeywords: string): api.JobSe
 export const JOB_KEYS = {
     all: ["jobs"] as const,
     feed: (filters: JobFilters, search: string) => [...JOB_KEYS.all, "feed", filters, search] as const,
-    offers: (filters: JobFilters, search: string) => [...JOB_KEYS.all, "offers", filters, search] as const,
+    offers: (filters: JobFilters, search: string, companyId?: string) => [...JOB_KEYS.all, "offers", companyId, filters, search] as const,
     myJobs: (tab: MyJobsTab, filters: JobFilters, search: string) => [...JOB_KEYS.all, "myJobs", tab, filters, search] as const,
     dashboard: (companyId: string | undefined | null, filters: JobFilters, search: string) => [...JOB_KEYS.all, "dashboard", companyId, filters, search] as const,
 };
@@ -34,7 +34,7 @@ export function useInfiniteJobs(
         queryKey: activeTab === "my-jobs"
             ? JOB_KEYS.myJobs(myJobsTab, filters, searchKeywords)
             : activeTab === "offers"
-                ? JOB_KEYS.offers(filters, searchKeywords)
+                ? JOB_KEYS.offers(filters, searchKeywords, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined)
                 : activeTab === "dashboard"
                     ? JOB_KEYS.dashboard(activeProfile?.id, filters, searchKeywords)
                     : JOB_KEYS.feed(filters, searchKeywords),
@@ -49,8 +49,14 @@ export function useInfiniteJobs(
             if (activeTab === "view") {
                 return api.getAllJobs(params);
             } else if (activeTab === "offers") {
+                if (activeProfile?.type === 'COMPANY' && activeProfile.id) {
+                    return api.getCompanyJobs(activeProfile.id, params);
+                }
                 return api.getJobOffers(params);
             } else if (activeTab === "my-jobs") {
+                if (activeProfile?.type === 'COMPANY' && activeProfile.id) {
+                    return api.getCompanyJobs(activeProfile.id, params);
+                }
                 if (myJobsTab === "saved") {
                     return api.getMySavedJobs(params);
                 } else {
@@ -71,6 +77,7 @@ export function useInfiniteJobs(
 
             // Determine cursor
             if (activeTab === "my-jobs") {
+                if (activeProfile?.type === 'COMPANY') return lastItem.createdAt;
                 if (myJobsTab === "saved") return lastItem.savedAt;
                 return lastItem.appliedAt;
             }

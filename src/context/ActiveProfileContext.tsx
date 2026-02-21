@@ -6,6 +6,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { useUserCompanies } from "@/hooks/useCompany";
 import { Company } from "@/services/company.service";
 import { User } from "next-auth";
+import { useQueryClient } from "@tanstack/react-query";
+import { JOB_KEYS } from "@/hooks/use-job-queries";
 
 type ProfileType = "USER" | "COMPANY";
 
@@ -34,6 +36,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     const router = useRouter();
     const pathname = usePathname();
     const [isInitialized, setIsInitialized] = useState(false);
+    const queryClient = useQueryClient();
 
     // Initialize profile from LocalStorage or Session
     useEffect(() => {
@@ -94,6 +97,9 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     }, [activeProfile]);
 
     const switchProfile = (type: ProfileType, id: string) => {
+        // Clear jobs cache when switching profile to prevent data leakage between contexts
+        queryClient.invalidateQueries({ queryKey: JOB_KEYS.all });
+
         if (type === "USER" && session?.user) {
             const userProfile: ActiveProfile = {
                 type: "USER",
