@@ -64,26 +64,16 @@ export function ViewerLayerItem({
     };
 
     const isEmoji = layer.type === "sticker" && !getSource().includes("/");
-    const isBaseMediaLayer =
-        (layer.type === "image" || layer.type === "video") && layer.zIndex === 0;
 
-    const layerStyle: React.CSSProperties = isBaseMediaLayer
-        ? {
-            left: "50%",
-            top: "50%",
-            width: "100%",
-            height: "100%",
-            transform: "translate(-50%, -50%)",
-            zIndex: layer.zIndex + 10,
-        }
-        : {
-            left: `${layer.x}%`,
-            top: `${layer.y}%`,
-            width: layer.type === "text" ? "auto" : isEmoji ? "auto" : `${layer.width}%`,
-            height: layer.type === "text" ? "auto" : isEmoji ? "auto" : `${layer.height}%`,
-            transform: `translate(-50%, -50%) rotate(${layer.rotation}deg) scale(${layer.scale})`,
-            zIndex: layer.zIndex + 10,
-        };
+
+    const layerStyle: React.CSSProperties = {
+        left: `${layer.x}%`,
+        top: `${layer.y}%`,
+        width: layer.type === "text" ? "auto" : isEmoji ? "auto" : `${layer.width}%`,
+        height: layer.type === "text" ? "auto" : isEmoji ? "auto" : `${layer.height}%`,
+        transform: `translate(-50%, -50%) rotate(${layer.rotation}deg) scale(${layer.scale})`,
+        zIndex: layer.zIndex + 10,
+    };
 
     return (
         <div
@@ -116,7 +106,7 @@ export function ViewerLayerItem({
                 <video
                     ref={videoRef}
                     src={getSource()}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain pointer-events-none"
                     muted={layer.isMuted}
                     autoPlay
                     playsInline
@@ -267,10 +257,17 @@ export function VirtualLayerCanvas({
     const wrapperRef = useRef<HTMLDivElement>(null);
     const [scale, setScale] = React.useState(1);
 
-    const mediaLayersCount = layers.filter(l => l.type === "video" || l.type === "image" || l.type === "sticker").length;
+    const isTailwindBg = background?.startsWith('bg-') || background?.startsWith('from-');
+
+    const mediaLayersCount = layers.filter(l => l.type === "video" || l.type === "image" || (l.type === "sticker" && l.src && l.src.includes("/"))).length;
     const [readyCount, setReadyCount] = React.useState(0);
 
     const isReady = mediaLayersCount === 0 || readyCount >= mediaLayersCount;
+
+    // Reset when layers change to prevent infinite loaders
+    useEffect(() => {
+        setReadyCount(0);
+    }, [layers]);
 
     useEffect(() => {
         if (isReady) {
@@ -309,6 +306,7 @@ export function VirtualLayerCanvas({
         >
             {/* Virtual fixed-size canvas – same logical size as the editor */}
             <div
+                className={isTailwindBg ? background : undefined}
                 style={{
                     width: CANVAS_W,
                     height: CANVAS_H,
@@ -319,7 +317,7 @@ export function VirtualLayerCanvas({
                     overflow: "hidden",
                     opacity: isReady ? 1 : 0,
                     transition: "opacity 200ms ease-in-out",
-                    background: "transparent",
+                    background: !isTailwindBg ? (background || "transparent") : undefined,
                 }}
             >
                 {layers.map((layer) => (

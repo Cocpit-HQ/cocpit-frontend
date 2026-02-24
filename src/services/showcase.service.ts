@@ -61,8 +61,9 @@ export const showcaseService = {
         return data;
     },
 
-    getStoryDetails: async (id: number) => {
-        const { data } = await api.get(`/stories/${id}`);
+    getStoryDetails: async (id: number, companyId?: string) => {
+        const config = companyId ? { headers: { 'x-company-id': companyId } } : {};
+        const { data } = await api.get(`/stories/${id}`, config);
         // Transform backend response to match StoryDetail structure for viewers/likers
         const viewers = data.viewers.map((v: any) => ({
             id: v.user_id,
@@ -83,8 +84,9 @@ export const showcaseService = {
         };
     },
 
-    addStoryComment: async (storyId: number, content: string) => {
-        const { data } = await api.post(`/stories/${storyId}/comments`, { content });
+    addStoryComment: async (storyId: number, content: string, companyId?: string) => {
+        const config = companyId ? { headers: { 'x-company-id': companyId } } : {};
+        const { data } = await api.post(`/stories/${storyId}/comments`, { content }, config);
         return data;
     },
 

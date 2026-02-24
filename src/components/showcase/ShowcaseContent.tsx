@@ -14,6 +14,7 @@ import { StoryModal } from "@/components/showcase/StoryModal"
 import { MobileStoryViewer } from "@/components/showcase/MobileStoryViewer"
 import { StoryCard } from "@/components/showcase/StoryCard"
 import { showcaseService } from "@/services/showcase.service"
+import { useStoryGroups } from "@/hooks/use-story-groups"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -55,9 +56,16 @@ export default function ShowcaseContent() {
   }
 
   const [loading, setLoading] = useState(true)
-  const [groups, setGroups] = useState<StoryGroup[]>([])
-  const [selectedStory, setSelectedStory] = useState<StoryDetail | null>(null)
   const [mobileSelectedGroupId, setMobileSelectedGroupId] = useState<string | number | null>(null)
+
+  const {
+    groups,
+    setGroups,
+    selectedStory,
+    setSelectedStory,
+    handleCreateStory,
+    handleStoryUpdate
+  } = useStoryGroups();
   const [showCreateStory, setShowCreateStory] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -110,52 +118,7 @@ export default function ShowcaseContent() {
 
   // formatCompactNumber moved to utils
 
-  const handleCreateStory = (newStory: StoryDetail) => {
-    setGroups(prevGroups => {
-      const myGroupIndex = prevGroups.findIndex(g => g.is_current_user);
-      if (myGroupIndex !== -1) {
-        // Correctly handle immutability
-        const newGroups = [...prevGroups];
-        const existingGroup = newGroups[myGroupIndex];
 
-        // Check duplication
-        const exists = existingGroup.stories.some(s => s.id === newStory.id);
-        if (!exists) {
-          // immutably update the specific group and its stories array
-          newGroups[myGroupIndex] = {
-            ...existingGroup,
-            stories: [...existingGroup.stories, newStory]
-          };
-        }
-        return newGroups;
-      } else {
-        const newGroup: StoryGroup = {
-          author: newStory.author,
-          is_current_user: true,
-          latest_story_at: newStory.created_at || new Date().toISOString(),
-          stories: [newStory]
-        };
-        return [newGroup, ...prevGroups];
-      }
-    });
-    setShowCreateStory(false);
-    setSelectedStory(newStory);
-  }
-
-  const handleStoryUpdate = (updatedStory: StoryDetail) => {
-    setGroups(prevGroups => prevGroups.map(group => {
-      const storyIndex = group.stories.findIndex(s => s.id === updatedStory.id)
-      if (storyIndex !== -1) {
-        const newStories = [...group.stories]
-        newStories[storyIndex] = updatedStory
-        return { ...group, stories: newStories }
-      }
-      return group
-    }))
-    if (selectedStory?.id === updatedStory.id) {
-      setSelectedStory(updatedStory)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -295,7 +258,13 @@ export default function ShowcaseContent() {
             </div>
 
             <div className="p-6">
-              <CreateStoryForm onCancel={() => setShowCreateStory(false)} onCreated={() => setShowCreateStory(false)} />
+              <CreateStoryForm
+                onCancel={() => setShowCreateStory(false)}
+                onCreated={(newStory) => {
+                  handleCreateStory(newStory);
+                  setShowCreateStory(false);
+                }}
+              />
             </div>
           </div>
         </div>

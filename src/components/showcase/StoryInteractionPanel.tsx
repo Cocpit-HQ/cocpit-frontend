@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react"
 import { Eye, Heart, MessageCircle, Send } from "lucide-react"
 import { StoryDetail, StoryAuthor } from "@/types/showcase"
 import { showcaseService } from "@/services/showcase.service"
+import { useStorySync } from "@/hooks/use-story-sync"
 
 interface StoryAnalytics {
     viewerCount: number;
@@ -24,6 +25,16 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory }: Sto
     const [details, setDetails] = useState<StoryAnalytics | null>(null)
     const [loading, setLoading] = useState(false)
     const [loadingComments, setLoadingComments] = useState(false)
+
+    // Real-time synchronization
+    useStorySync(isOpen ? story.id : undefined, {
+        onCommentAdded: (newComment) => {
+            setComments(prev => {
+                if (prev.some(c => c.comment_id === newComment.comment_id)) return prev;
+                return [...prev, newComment];
+            });
+        }
+    });
 
     // Reset details when story changes
     useEffect(() => {

@@ -10,6 +10,7 @@ import { X } from 'lucide-react'
 import { HomeHeader } from './HomeHeader'
 import { FeedSection } from './FeedSection'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
+import { useStoryGroups } from '@/hooks/use-story-groups'
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false)
@@ -17,10 +18,17 @@ export default function HomePage() {
 
   // Story State
   const [storyLoading, setStoryLoading] = useState(true)
-  const [groups, setGroups] = useState<StoryGroup[]>([])
   const [showCreateStory, setShowCreateStory] = useState(false)
-  const [selectedStory, setSelectedStory] = useState<StoryDetail | null>(null)
   const [mobileSelectedGroupId, setMobileSelectedGroupId] = useState<string | number | null>(null)
+
+  const {
+    groups,
+    setGroups,
+    selectedStory,
+    setSelectedStory,
+    handleCreateStory,
+    handleStoryUpdate
+  } = useStoryGroups()
 
   const { activeProfile } = useActiveProfile();
 
@@ -41,30 +49,7 @@ export default function HomePage() {
     fetchStories()
   }, [activeProfile?.id, activeProfile?.type])
 
-  const handleCreateStory = (newStory: StoryDetail) => {
-    // Optimistic update
-    setGroups(prev => {
-      const newGroups = [...prev];
-      if (newGroups.length > 0 && newGroups[0].is_current_user) {
-        newGroups[0].stories.push(newStory);
-      }
-      return newGroups;
-    })
-    setShowCreateStory(false)
-    setSelectedStory(newStory);
-  }
 
-  const handleStoryUpdate = (updatedStory: StoryDetail) => {
-    setGroups(prevGroups => prevGroups.map(group => {
-      const storyIndex = group.stories.findIndex(s => s.id === updatedStory.id)
-      if (storyIndex !== -1) {
-        const newStories = [...group.stories]
-        newStories[storyIndex] = updatedStory
-        return { ...group, stories: newStories }
-      }
-      return group
-    }))
-  }
 
   if (!mounted) {
     return null
@@ -134,7 +119,10 @@ export default function HomePage() {
             <div className="p-6">
               <CreateStoryForm
                 onCancel={() => setShowCreateStory(false)}
-                onCreated={handleCreateStory}
+                onCreated={(newStory) => {
+                  handleCreateStory(newStory);
+                  setShowCreateStory(false);
+                }}
               />
             </div>
           </div>

@@ -11,6 +11,7 @@ import { StoryMetadata } from "@/types/story-editor";
 import { getGradientImage } from "@/lib/canvasUtils";
 import { EditorCanvas } from "./editor/EditorCanvas";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { VirtualLayerCanvas } from "./ViewerLayerItem";
 
 type Props = {
   onCancel?: () => void
@@ -341,22 +342,33 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
 
           {/* Preview Canvas */}
           <div className="relative w-full h-full max-w-md aspect-[9/16] bg-gray-900 shadow-2xl overflow-hidden rounded-lg my-4">
-            {selectedImage && (
-              <img
-                src={selectedImage}
-                alt="Preview"
-                className="w-full h-full object-cover"
+            {editorMetadata?.layers && editorMetadata.layers.length > 0 && selectedVideo ? (
+              <VirtualLayerCanvas
+                layers={editorMetadata.layers}
+                isActive={true}
+                fallbackVideoUrl={selectedVideo || undefined}
+                background={editorMetadata.background}
               />
-            )}
-            {selectedVideo && (
-              <video
-                src={selectedVideo}
-                className="w-full h-full object-cover"
-                autoPlay
-                loop
-                muted
-                playsInline
-              />
+            ) : (
+              <>
+                {selectedImage && (
+                  <img
+                    src={selectedImage}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                )}
+                {selectedVideo && (
+                  <video
+                    src={selectedVideo}
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                  />
+                )}
+              </>
             )}
           </div>
 

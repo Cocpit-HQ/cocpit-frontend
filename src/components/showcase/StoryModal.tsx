@@ -6,6 +6,7 @@ import { showcaseService } from "@/services/showcase.service"
 import { StoryMetadata } from "@/types/story-editor"
 import { VirtualLayerCanvas } from "./ViewerLayerItem"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
+import { useStorySync } from "@/hooks/use-story-sync"
 
 type StoryModalProps = {
   story: StoryDetail
@@ -69,7 +70,7 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
     showcaseService.viewStory(story.id, companyId).catch(err => console.error("View story failed", err));
 
     if (story.isAuthor) {
-      showcaseService.getStoryDetails(story.id).then(data => {
+      showcaseService.getStoryDetails(story.id, companyId).then(data => {
         setDetails(data);
       }).catch(err => console.error("Failed to fetch details", err));
     }
@@ -83,6 +84,21 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
       .catch(err => console.error("Failed to fetch comments", err))
       .finally(() => setLoadingComments(false))
   }, [story.id])
+
+  // Real-time synchronization
+  useStorySync(story.id, {
+    onCommentAdded: (newComment) => {
+      setRealComments(prev => {
+        if (prev.some(c => c.comment_id === newComment.comment_id)) return prev;
+        return [...prev, newComment];
+      });
+    },
+    onReactionUpdated: ({ likeCount }) => {
+      if (onStoryUpdate) {
+        onStoryUpdate({ ...story, likes: likeCount });
+      }
+    }
+  });
 
   const currentViewCount = details?.viewerCount ?? story.views;
   const currentLikeCount = details ? details.likers.length : (story.likes ?? 0);
@@ -194,7 +210,8 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
   const handleAddComment = async () => {
     if (comment.trim()) {
       try {
-        const newComment = await showcaseService.addStoryComment(story.id, comment);
+        const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+        const newComment = await showcaseService.addStoryComment(story.id, comment, companyId);
         setRealComments(prev => [...prev, {
           ...newComment.comment,
           full_name: "You",
@@ -488,7 +505,8 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
                   if (onStoryUpdate) {
                     onStoryUpdate({ ...story, isLiked: newLiked, likes: newCount });
                   }
-                  showcaseService.reactToStory(story.id, newLiked).catch(err => {
+                  const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+                  showcaseService.reactToStory(story.id, newLiked, companyId).catch(err => {
                     console.error("React failed", err);
                     setIsLiked(!newLiked);
                   });

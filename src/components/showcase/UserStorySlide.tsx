@@ -7,6 +7,7 @@ import { SharedPostCard } from "./SharedPostCard"
 import { StoryMetadata } from "@/types/story-editor"
 import { VirtualLayerCanvas } from "./ViewerLayerItem"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
+import { useStorySync } from "@/hooks/use-story-sync"
 
 type UserStorySlideProps = {
     group: StoryGroup
@@ -117,12 +118,13 @@ export const UserStorySlide = ({
         }
     }, []);
 
-    const currentIsLegacyVideo = currentStory?.media_type === "video" && !storyHasVideoLayer(currentStory);
-    const nextIsLegacyVideo = nextStory?.media_type === "video" && !storyHasVideoLayer(nextStory);
+    const currentIsLegacyVideo = currentStory?.media_type === "video" && (!storyHasVideoLayer(currentStory) || currentStory.render_status === "ready");
+    const nextIsLegacyVideo = nextStory?.media_type === "video" && (!storyHasVideoLayer(nextStory) || nextStory.render_status === "ready");
     const currentLegacySrc = getLegacyVideoSrc(currentStory);
     const nextLegacySrc = getLegacyVideoSrc(nextStory);
     const hasValidCurrentLegacySrc = isValidMediaUrl(currentLegacySrc);
-    const currentImageSrc = (currentStory?.render_status === "ready" && currentStory.final_url) ? currentStory.final_url : currentStory?.image;
+    // Only assign final_url to image source if it's somehow NOT a video (which shouldn't happen, but safe fallback)
+    const currentImageSrc = (currentStory?.media_type !== "video" && currentStory?.render_status === "ready" && currentStory.final_url) ? currentStory.final_url : currentStory?.image;
     const hasValidCurrentImageSrc = isValidMediaUrl(currentImageSrc);
     const getStoryPosterSrc = useCallback((story?: StoryLike): string => {
         if (!story) return "";
@@ -159,7 +161,7 @@ export const UserStorySlide = ({
         return (meta as unknown as StoryMetadata) || { layers: [] };
     }, [currentStory]);
 
-    const isLayeredStory = (!currentStory?.render_status || currentStory.render_status !== 'ready' || !currentStory.final_url) && (metadata?.layers?.length || 0) > 0;
+    const isLayeredStory = (metadata?.layers?.length || 0) > 0;
     const isMediaReady = mediaLoadFailed || (isLayeredStory ? isVirtualLayerReady : (currentStory?.media_type === "video" ? videoSlotReady[activeVideoSlot] : isImageReady));
 
     // Track if this is the first time becoming active
@@ -190,13 +192,25 @@ export const UserStorySlide = ({
         setIsImageReady(false)
         setIsVirtualLayerReady(false)
         setMediaLoadFailed(false)
+    }, [currentStory?.id]) // ONLY reset when the actual story changes
 
-        // Record View
+    // Record View separately when becoming active
+    useEffect(() => {
         if (isActiveUser && currentStory && !currentStory.isAuthor) {
             const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
             showcaseService.viewStory(currentStory.id, companyId).catch(err => console.error("View story failed", err));
         }
-    }, [storyIndex, currentStory?.isLiked, isActiveUser, activeProfile]) // Only reset when story index changes
+    }, [currentStory?.id, currentStory?.isAuthor, isActiveUser, activeProfile?.id, activeProfile?.type])
+
+    // Real-time synchronization
+    useStorySync(isActiveUser ? currentStory?.id : undefined, {
+        onReactionUpdated: ({ likeCount }) => {
+            if (currentStory && onStoryUpdate) {
+                // Map API "like_count" to UI "likes" string/number
+                onStoryUpdate({ ...currentStory, likes: likeCount });
+            }
+        }
+    });
 
     // Poll for status if processing
     useEffect(() => {
@@ -972,7 +986,7 @@ export const UserStorySlide = ({
                     ) : hasValidCurrentImageSrc ? (
                         <>
                             {/* Media is the base visual layer: no gradient/color container background */}
-                            {(!metadata.layers?.some(l => l.type === 'image') || (currentStory.render_status === 'ready' && currentStory.final_url)) && (
+                            {(!metadata.layers?.some(l => l.type === 'image') || (currentStory.media_type !== "video" && currentStory.render_status === 'ready' && currentStory.final_url)) && (
                                 <div className="absolute inset-0 z-0">
                                     <img
                                         src={currentImageSrc}
@@ -1055,18 +1069,21 @@ export const UserStorySlide = ({
                                 </div>
                             )}
 
-                            <div className="absolute right-4 bottom-6 z-30 pointer-events-auto">
-                                <button
-                                    type="button"
-                                    className="w-12 h-12 rounded-full bg-black/55 backdrop-blur text-white border border-white/35 flex items-center justify-center"
-                                    onClick={handleToggleLike}
-                                    onTouchStart={(e) => e.stopPropagation()}
-                                    onTouchEnd={(e) => e.stopPropagation()}
-                                    aria-label={isLiked ? "Unlike story" : "Like story"}
-                                >
-                                    <Heart className={`w-5 h-5 transition-colors ${isLiked ? "fill-red-500 text-red-500" : "text-white"}`} />
-                                </button>
-                            </div>
+                            {/* Like Button - Hidden for own stories */}
+                            {!currentStory?.isAuthor && (
+                                <div className="absolute right-4 bottom-6 z-30 pointer-events-auto">
+                                    <button
+                                        type="button"
+                                        className="w-12 h-12 rounded-full bg-black/55 backdrop-blur text-white border border-white/35 flex items-center justify-center"
+                                        onClick={handleToggleLike}
+                                        onTouchStart={(e) => e.stopPropagation()}
+                                        onTouchEnd={(e) => e.stopPropagation()}
+                                        aria-label={isLiked ? "Unlike story" : "Like story"}
+                                    >
+                                        <Heart className={`w-5 h-5 transition-colors ${isLiked ? "fill-red-500 text-red-500" : "text-white"}`} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 
