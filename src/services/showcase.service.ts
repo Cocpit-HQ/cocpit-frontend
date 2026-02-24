@@ -44,8 +44,9 @@ export const showcaseService = {
         }));
     },
 
-    deleteStory: async (id: number) => {
-        const { data } = await api.delete(`/stories/${id}`);
+    deleteStory: async (id: number, companyId?: string) => {
+        const config = companyId ? { headers: { 'x-company-id': companyId } } : {};
+        const { data } = await api.delete(`/stories/${id}`, config);
         return data;
     },
 

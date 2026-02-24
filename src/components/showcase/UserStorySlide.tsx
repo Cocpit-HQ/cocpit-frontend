@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
-import { MoreVertical, Heart, Trash2, Volume2, VolumeX, X } from "lucide-react"
+import { Heart, Trash2, Volume2, VolumeX, X } from "lucide-react"
 import { StoryDetail, StoryGroup } from "@/types/showcase"
 import { StoryInteractionPanel } from "./StoryInteractionPanel"
 import { showcaseService } from "@/services/showcase.service"
@@ -28,21 +28,25 @@ export const UserStorySlide = ({
     onClose,
     isDark,
     onStoryUpdate,
-    disableMediaBackgroundFallback = false
+    disableMediaBackgroundFallback: _disableMediaBackgroundFallback = false
 }: UserStorySlideProps) => {
+    type StoryLike = StoryDetail;
     const [storyIndex, setStoryIndex] = useState(0)
     const [progress, setProgress] = useState(0)
     const [showInteraction, setShowInteraction] = useState(false)
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
-    const [isPaused, setIsPaused] = useState(false)
+    const [isPaused] = useState(false)
     const [isMuted, setIsMuted] = useState(true)
-    const [likeKey, setLikeKey] = useState(0)
-    const [showMenu, setShowMenu] = useState(false)
     const { activeProfile } = useActiveProfile();
 
-    // Use ref to track progress for interval logic (avoids Strict Mode double-invocation bug)
-    const progressRef = useRef(0)
-    const videoRef = useRef<HTMLVideoElement>(null)
+    const videoSlotRef0 = useRef<HTMLVideoElement>(null)
+    const videoSlotRef1 = useRef<HTMLVideoElement>(null)
+    const videoEndTriggeredRef = useRef(false)
+    const preloadCacheRef = useRef<Map<number, Promise<void>>>(new Map())
+    const [activeVideoSlot, setActiveVideoSlot] = useState<0 | 1>(0)
+    const [videoSlotStories, setVideoSlotStories] = useState<[number | null, number | null]>([null, null])
+    const [videoSlotSrcs, setVideoSlotSrcs] = useState<[string, string]>(["", ""])
+    const [videoSlotReady, setVideoSlotReady] = useState<[boolean, boolean]>([false, false])
 
     // Stories are already sorted by backend (Oldest -> Newest)
     // Deduplicate stories to prevent "same key" errors
@@ -57,10 +61,89 @@ export const UserStorySlide = ({
     // Ensure storyIndex is within bounds
     const safeStoryIndex = Math.min(storyIndex, sortedStories.length - 1);
     const currentStory = sortedStories[safeStoryIndex >= 0 ? safeStoryIndex : 0]
+    const nextStory = sortedStories[storyIndex + 1]
     const isMyStory = group.is_current_user
+
+    const storyById = useMemo(() => {
+        const map = new Map<number, StoryLike>();
+        sortedStories.forEach((s) => map.set(s.id, s));
+        return map;
+    }, [sortedStories]);
+
+    const storyHasVideoLayer = useCallback((story?: StoryLike) => {
+        if (!story) return false;
+        let meta = story.story_metadata as any;
+        if (typeof meta === "string") {
+            try {
+                meta = JSON.parse(meta);
+            } catch {
+                meta = null;
+            }
+        }
+        const layers = meta?.layers;
+        return Array.isArray(layers) && layers.some((l: any) => l?.type === "video");
+    }, []);
+
+    const getLegacyVideoSrc = useCallback((story?: StoryLike): string => {
+        if (!story || story.media_type !== "video") return "";
+        if (story.render_status === "ready" && story.final_url) return story.final_url;
+
+        let url = story.media_url || "";
+        if (url && url.includes("cloudinary") && !url.endsWith(".mp4")) {
+            url = url.replace(/\.[^/.]+$/, ".mp4");
+        }
+        return url;
+    }, []);
+
+    const isValidMediaUrl = useCallback((url?: string | null): boolean => {
+        const candidate = (url || "").trim();
+        if (!candidate) return false;
+
+        if (
+            candidate.startsWith("blob:") ||
+            candidate.startsWith("data:") ||
+            candidate.startsWith("/") ||
+            candidate.startsWith("./") ||
+            candidate.startsWith("../")
+        ) {
+            return true;
+        }
+
+        try {
+            const parsed = new URL(candidate);
+            return parsed.protocol === "http:" || parsed.protocol === "https:";
+        } catch {
+            return false;
+        }
+    }, []);
+
+    const currentIsLegacyVideo = currentStory?.media_type === "video" && !storyHasVideoLayer(currentStory);
+    const nextIsLegacyVideo = nextStory?.media_type === "video" && !storyHasVideoLayer(nextStory);
+    const currentLegacySrc = getLegacyVideoSrc(currentStory);
+    const nextLegacySrc = getLegacyVideoSrc(nextStory);
+    const hasValidCurrentLegacySrc = isValidMediaUrl(currentLegacySrc);
+    const currentImageSrc = (currentStory?.render_status === "ready" && currentStory.final_url) ? currentStory.final_url : currentStory?.image;
+    const hasValidCurrentImageSrc = isValidMediaUrl(currentImageSrc);
+    const getStoryPosterSrc = useCallback((story?: StoryLike): string => {
+        if (!story) return "";
+        const candidate = story.thumbnail_url || story.image || "";
+        return isValidMediaUrl(candidate) ? candidate : "";
+    }, [isValidMediaUrl]);
+    const getVideoSlotRef = useCallback((slot: 0 | 1) => (slot === 0 ? videoSlotRef0 : videoSlotRef1), []);
+    const markVideoSlotReady = useCallback((slot: 0 | 1, ready: boolean) => {
+        setVideoSlotReady((prev) => {
+            if (prev[slot] === ready) return prev;
+            const next: [boolean, boolean] = [...prev];
+            next[slot] = ready;
+            return next;
+        });
+    }, []);
 
     // Initialize isLiked state - must be after all other useState hooks
     const [isLiked, setIsLiked] = useState(!!currentStory?.isLiked)
+    const [isImageReady, setIsImageReady] = useState(false)
+    const [isVirtualLayerReady, setIsVirtualLayerReady] = useState(false)
+    const [mediaLoadFailed, setMediaLoadFailed] = useState(false)
 
     // Parse Metadata safely
     const metadata = useMemo(() => {
@@ -76,6 +159,9 @@ export const UserStorySlide = ({
         return (meta as unknown as StoryMetadata) || { layers: [] };
     }, [currentStory]);
 
+    const isLayeredStory = (!currentStory?.render_status || currentStory.render_status !== 'ready' || !currentStory.final_url) && (metadata?.layers?.length || 0) > 0;
+    const isMediaReady = mediaLoadFailed || (isLayeredStory ? isVirtualLayerReady : (currentStory?.media_type === "video" ? videoSlotReady[activeVideoSlot] : isImageReady));
+
     // Track if this is the first time becoming active
     const wasActiveRef = useRef(false)
 
@@ -89,7 +175,6 @@ export const UserStorySlide = ({
                 setProgress(0)
                 const firstStory = sortedStories[0];
                 setIsLiked(!!firstStory?.isLiked)
-                setLikeKey(0)
                 setIsDescriptionExpanded(false)
             }
         } else if (!isActiveUser) {
@@ -101,8 +186,10 @@ export const UserStorySlide = ({
     // Reset like/description when story changes
     useEffect(() => {
         setIsLiked(!!currentStory?.isLiked) // Update with current story state
-        setLikeKey(0)
         setIsDescriptionExpanded(false)
+        setIsImageReady(false)
+        setIsVirtualLayerReady(false)
+        setMediaLoadFailed(false)
 
         // Record View
         if (isActiveUser && currentStory && !currentStory.isAuthor) {
@@ -110,11 +197,6 @@ export const UserStorySlide = ({
             showcaseService.viewStory(currentStory.id, companyId).catch(err => console.error("View story failed", err));
         }
     }, [storyIndex, currentStory?.isLiked, isActiveUser, activeProfile]) // Only reset when story index changes
-
-    // Sync progressRef with progress state
-    useEffect(() => {
-        progressRef.current = progress
-    }, [progress])
 
     // Poll for status if processing
     useEffect(() => {
@@ -136,6 +218,30 @@ export const UserStorySlide = ({
         }
     }, [isActiveUser, currentStory]);
 
+    useEffect(() => {
+        if (!currentStory || isLayeredStory) return;
+
+        if (currentStory.media_type === "video") {
+            if (!hasValidCurrentLegacySrc) {
+                setMediaLoadFailed(true);
+                markVideoSlotReady(activeVideoSlot, true);
+            }
+            return;
+        }
+
+        if (!hasValidCurrentImageSrc) {
+            setMediaLoadFailed(true);
+            setIsImageReady(true);
+        }
+    }, [
+        currentStory,
+        isLayeredStory,
+        hasValidCurrentLegacySrc,
+        hasValidCurrentImageSrc,
+        activeVideoSlot,
+        markVideoSlotReady,
+    ]);
+
     const isNavigatingRef = useRef(false)
 
     // Reset navigation lock when active user changes or story index changes
@@ -145,7 +251,63 @@ export const UserStorySlide = ({
         }
     }, [isActiveUser, storyIndex])
 
-    const handleNext = useCallback(() => {
+    const preloadStoryMedia = useCallback((story?: StoryLike): Promise<void> => {
+        if (!story || !story.id) return Promise.resolve();
+        const cached = preloadCacheRef.current.get(story.id);
+        if (cached) return cached;
+
+        const preloadPromise = new Promise<void>((resolve) => {
+            if (story.media_type === "video") {
+                const videoSrc = story.final_url || story.media_url || story.image || "";
+                if (!isValidMediaUrl(videoSrc)) {
+                    resolve();
+                    return;
+                }
+
+                const v = document.createElement("video");
+                v.preload = "metadata";
+                const done = () => resolve();
+                v.onloadedmetadata = done;
+                v.oncanplay = done;
+                v.onerror = done;
+                v.src = videoSrc;
+                v.load();
+
+                // Also preload poster image if available to avoid black flash.
+                if (story.thumbnail_url || story.image) {
+                    const posterSrc = story.thumbnail_url || story.image || "";
+                    const img = new Image();
+                    img.onload = () => { };
+                    img.onerror = () => { };
+                    if (isValidMediaUrl(posterSrc)) {
+                        img.src = posterSrc;
+                    }
+                }
+                return;
+            }
+
+            const imageSrc = story.final_url || story.image || story.thumbnail_url || "";
+            if (!isValidMediaUrl(imageSrc)) {
+                resolve();
+                return;
+            }
+
+            const img = new Image();
+            img.onload = () => resolve();
+            img.onerror = () => resolve();
+            img.src = imageSrc;
+        });
+
+        preloadCacheRef.current.set(story.id, preloadPromise);
+        return preloadPromise;
+    }, [isValidMediaUrl]);
+
+    // Allow onEnded/onTimeUpdate completion to fire exactly once per story.
+    useEffect(() => {
+        videoEndTriggeredRef.current = false;
+    }, [currentStory?.id, storyIndex]);
+
+    const advanceToNext = useCallback((waitForReady: boolean) => {
         // Safety check: ensure we have stories
         if (!sortedStories || sortedStories.length === 0) {
             if (!isNavigatingRef.current) {
@@ -158,31 +320,230 @@ export const UserStorySlide = ({
         if (isNavigatingRef.current) return;
 
         if (storyIndex < sortedStories.length - 1) {
-            isNavigatingRef.current = true; // Will be reset by useEffect when storyIndex changes
-            setStoryIndex(prev => prev + 1)
-            setProgress(0)
+            isNavigatingRef.current = true;
+            const targetIndex = storyIndex + 1;
+            const targetStory = sortedStories[targetIndex];
+            const go = () => {
+                setStoryIndex(targetIndex);
+                setProgress(0);
+            };
+
+            const isLegacyToLegacy =
+                !!targetStory &&
+                currentIsLegacyVideo &&
+                targetStory.media_type === "video" &&
+                !storyHasVideoLayer(targetStory);
+
+            if (isLegacyToLegacy && targetStory) {
+                const nextSlot: 0 | 1 = activeVideoSlot === 0 ? 1 : 0;
+                const nextSrc = getLegacyVideoSrc(targetStory);
+                const slotMatches =
+                    videoSlotStories[nextSlot] === targetStory.id &&
+                    videoSlotSrcs[nextSlot] === nextSrc;
+
+                if (!slotMatches) {
+                    setVideoSlotStories((prev) => {
+                        const next: [number | null, number | null] = [...prev];
+                        next[nextSlot] = targetStory.id;
+                        return next;
+                    });
+                    setVideoSlotSrcs((prev) => {
+                        const next: [string, string] = [...prev];
+                        next[nextSlot] = nextSrc;
+                        return next;
+                    });
+                    markVideoSlotReady(nextSlot, false);
+                }
+
+                const switchWhenReady = () => {
+                    setActiveVideoSlot(nextSlot);
+                    go();
+                };
+
+                const preloadElement = getVideoSlotRef(nextSlot).current;
+                const alreadyReady =
+                    (slotMatches && videoSlotReady[nextSlot]) ||
+                    (!!preloadElement && preloadElement.readyState >= 3);
+
+                if (alreadyReady) {
+                    markVideoSlotReady(nextSlot, true);
+                    switchWhenReady();
+                    return;
+                }
+
+                if (waitForReady) {
+                    let resolved = false;
+                    const resolveOnce = () => {
+                        if (resolved) return;
+                        resolved = true;
+                        switchWhenReady();
+                    };
+
+                    window.setTimeout(() => {
+                        const el = getVideoSlotRef(nextSlot).current;
+                        if (!el) {
+                            void preloadStoryMedia(targetStory).finally(resolveOnce);
+                            return;
+                        }
+
+                        const onCanPlay = () => {
+                            markVideoSlotReady(nextSlot, true);
+                            cleanup();
+                            resolveOnce();
+                        };
+                        const onError = () => {
+                            cleanup();
+                            resolveOnce();
+                        };
+                        const cleanup = () => {
+                            el.removeEventListener("canplay", onCanPlay);
+                            el.removeEventListener("error", onError);
+                        };
+
+                        if (el.readyState >= 3) {
+                            markVideoSlotReady(nextSlot, true);
+                            resolveOnce();
+                            return;
+                        }
+
+                        el.addEventListener("canplay", onCanPlay);
+                        el.addEventListener("error", onError);
+                        window.setTimeout(() => {
+                            cleanup();
+                            void preloadStoryMedia(targetStory).finally(resolveOnce);
+                        }, 220);
+                    }, 0);
+                    return;
+                }
+
+                switchWhenReady();
+                return;
+            }
+
+            if (waitForReady) {
+                void preloadStoryMedia(targetStory).finally(go);
+            } else {
+                go();
+            }
         } else {
             isNavigatingRef.current = true;
             // Defer to next tick to avoid state update during render
             setTimeout(() => onNextUser(), 0)
         }
-    }, [sortedStories, storyIndex, onNextUser])
+    }, [
+        sortedStories,
+        storyIndex,
+        onNextUser,
+        preloadStoryMedia,
+        currentIsLegacyVideo,
+        storyHasVideoLayer,
+        activeVideoSlot,
+        getLegacyVideoSrc,
+        videoSlotStories,
+        videoSlotSrcs,
+        videoSlotReady,
+        getVideoSlotRef,
+        markVideoSlotReady,
+    ])
 
-    // Control Video Playback based on Interaction State
+    const handleNext = useCallback(() => {
+        advanceToNext(true);
+    }, [advanceToNext]);
+
+    const handleAutoNext = useCallback(() => {
+        advanceToNext(true);
+    }, [advanceToNext]);
+
+    // Keep two mounted video elements for seamless legacy video transitions.
     useEffect(() => {
-        if (!currentStory || currentStory.media_type !== 'video' || !videoRef.current) return;
+        if (!currentIsLegacyVideo || !currentStory) return;
+
+        const visibleSlot = activeVideoSlot;
+        const preloadSlot: 0 | 1 = visibleSlot === 0 ? 1 : 0;
+
+        if (
+            videoSlotStories[visibleSlot] !== currentStory.id ||
+            videoSlotSrcs[visibleSlot] !== currentLegacySrc
+        ) {
+            setVideoSlotStories((prev) => {
+                const next: [number | null, number | null] = [...prev];
+                next[visibleSlot] = currentStory.id;
+                return next;
+            });
+            setVideoSlotSrcs((prev) => {
+                const next: [string, string] = [...prev];
+                next[visibleSlot] = currentLegacySrc;
+                return next;
+            });
+            setVideoSlotReady((prev) => {
+                const next: [boolean, boolean] = [...prev];
+                next[visibleSlot] = false;
+                return next;
+            });
+        }
+
+        if (nextIsLegacyVideo && nextStory && nextLegacySrc) {
+            if (
+                videoSlotStories[preloadSlot] !== nextStory.id ||
+                videoSlotSrcs[preloadSlot] !== nextLegacySrc
+            ) {
+                setVideoSlotStories((prev) => {
+                    const next: [number | null, number | null] = [...prev];
+                    next[preloadSlot] = nextStory.id;
+                    return next;
+                });
+                setVideoSlotSrcs((prev) => {
+                    const next: [string, string] = [...prev];
+                    next[preloadSlot] = nextLegacySrc;
+                    return next;
+                });
+                setVideoSlotReady((prev) => {
+                    const next: [boolean, boolean] = [...prev];
+                    next[preloadSlot] = false;
+                    return next;
+                });
+            }
+        }
+    }, [
+        currentIsLegacyVideo,
+        currentStory,
+        currentLegacySrc,
+        nextIsLegacyVideo,
+        nextStory,
+        nextLegacySrc,
+        activeVideoSlot,
+        videoSlotStories,
+        videoSlotSrcs,
+    ]);
+
+    // Control legacy video playback based on interaction state.
+    useEffect(() => {
+        if (!currentStory || currentStory.media_type !== 'video' || !currentIsLegacyVideo) return;
+
+        const activeVideo = getVideoSlotRef(activeVideoSlot).current;
+        if (!activeVideo) return;
 
         const shouldPlay = isActiveUser && !isPaused && !showInteraction && !isDescriptionExpanded;
 
         if (shouldPlay) {
-            videoRef.current.play().catch(e => {
+            activeVideo.play().catch(e => {
                 // Ignore AbortError if we pause immediately after
                 if (e.name !== 'AbortError') console.warn("Play failed", e);
             });
         } else {
-            videoRef.current.pause();
+            activeVideo.pause();
         }
-    }, [isActiveUser, isPaused, showInteraction, isDescriptionExpanded, currentStory, storyIndex]);
+    }, [
+        isActiveUser,
+        isPaused,
+        showInteraction,
+        isDescriptionExpanded,
+        currentStory,
+        storyIndex,
+        currentIsLegacyVideo,
+        activeVideoSlot,
+        getVideoSlotRef,
+    ]);
 
     // Progress timer for IMAGES
     useEffect(() => {
@@ -203,12 +564,19 @@ export const UserStorySlide = ({
         return () => clearInterval(timer);
     }, [isActiveUser, isPaused, showInteraction, isDescriptionExpanded, currentStory]);
 
+    // Keep next story warm in memory so auto-advance is instant.
+    useEffect(() => {
+        if (!sortedStories.length) return;
+        void preloadStoryMedia(currentStory);
+        void preloadStoryMedia(sortedStories[storyIndex + 1]);
+    }, [sortedStories, storyIndex, currentStory, preloadStoryMedia]);
+
     // Trigger next story when progress reaches 100
     useEffect(() => {
         if (progress >= 100) {
-            handleNext();
+            handleAutoNext();
         }
-    }, [progress, handleNext]);
+    }, [progress, handleAutoNext]);
 
     const handlePrev = () => {
         // Safety check: ensure we have stories
@@ -298,6 +666,66 @@ export const UserStorySlide = ({
         return null;
     }
 
+    const handleVideoCompleted = () => {
+        if (videoEndTriggeredRef.current) return;
+        videoEndTriggeredRef.current = true;
+        setProgress(100);
+        handleAutoNext();
+    };
+
+    const formatStoryTimestamp = (createdAt?: string, fallback?: string) => {
+        if (!createdAt) return fallback || "";
+        const created = new Date(createdAt);
+        if (Number.isNaN(created.getTime())) return fallback || "";
+        return created.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    };
+
+    const uploader = currentStory.author || group.author;
+    const uploaderName = uploader?.name || "Unknown";
+    const uploaderAvatar = uploader?.avatar || "/assets/pngegg.png";
+    const storyTimestamp = formatStoryTimestamp(currentStory.created_at, currentStory.timeAgo);
+    const displayedLikeCount =
+        (currentStory.likes || 0) -
+        (currentStory.isLiked ? 1 : 0) +
+        (isLiked ? 1 : 0);
+
+    const handleToggleLike = async (e: React.MouseEvent | React.TouchEvent) => {
+        e.stopPropagation();
+        const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
+        const nextLiked = !isLiked;
+
+        setIsLiked(nextLiked);
+        try {
+            await showcaseService.reactToStory(currentStory.id, nextLiked, companyId);
+            onStoryUpdate?.({
+                ...currentStory,
+                isLiked: nextLiked,
+                likes: Math.max(0, (currentStory.likes || 0) + (nextLiked ? 1 : -1)),
+            });
+        } catch (error) {
+            console.error("Failed to react to story", error);
+            setIsLiked(!nextLiked);
+        }
+    };
+
+    const handleDeleteStory = async (e: React.MouseEvent | React.TouchEvent) => {
+        e.stopPropagation();
+        if (!currentStory.isAuthor) return;
+
+        if (!window.confirm("Are you sure you want to delete this story?")) {
+            return;
+        }
+
+        try {
+            const companyId = activeProfile?.type === "COMPANY" ? activeProfile.id : undefined;
+            await showcaseService.deleteStory(currentStory.id, companyId);
+            onClose();
+        } catch (error) {
+            console.error("Failed to delete story", error);
+            window.alert("Failed to delete story");
+        }
+    };
+
     return (
         <div
             className="w-full h-full relative flex-shrink-0 overflow-hidden"
@@ -310,35 +738,15 @@ export const UserStorySlide = ({
                 onClose={() => setShowInteraction(false)}
                 story={{
                     ...currentStory,
-                    likes: (currentStory.likes || 0) - (currentStory.isLiked ? 1 : 0) + (isLiked ? 1 : 0),
+                    likes: displayedLikeCount,
                     isLiked: isLiked
                 }}
                 isMyStory={isMyStory}
                 isDark={!!isDark}
             />
 
-            {/* Header / Progress */}
-            <div className="absolute top-0 left-0 right-0 z-20 p-4 pt-12 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
-                <div className="flex gap-1">
-                    {sortedStories.map((s, idx) => (
-                        <div key={s.id} className="h-1 flex-1 bg-white/30 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-white transition-all duration-100 ease-linear"
-                                style={{
-                                    width: idx < storyIndex ? '100%' : idx === storyIndex ? `${progress}%` : '0%'
-                                }}
-                            />
-                        </div>
-                    ))}
-                </div>
-
-                {/* Profile and header elements removed as requested */}
-
-                {/* Mute toggle removed as requested */}
-            </div>
-
             {/* Full-screen black background (letterbox padding) */}
-            <div className="absolute inset-0 bg-black" />
+            <div className="absolute inset-0 bg-transparent" />
 
             {/* 9:16 Story Frame — media is always contained within this box */}
             <div
@@ -346,35 +754,120 @@ export const UserStorySlide = ({
                 style={{ pointerEvents: 'none' }}
             >
                 <div
-                    className="relative overflow-hidden bg-black"
-                    style={{
-                        // Enforce 9:16: take full height, cap width at 9/16 * height
-                        height: '100%',
-                        width: 'min(100%, calc(100vh * 9 / 16))',
-                        maxHeight: 'calc(100vw * 16 / 9)',
-                    }}
+                    className="relative overflow-hidden bg-transparent w-[calc(100dvh*9/16)] h-[100dvh] md:w-[min(100vw,calc(100dvh*9/16))] md:h-[min(100dvh,calc(100vw*16/9))]"
                 >
+
+                    {/* Global Loader until media is ready */}
+                    {!isMediaReady && (
+                        <div className="absolute inset-0 flex items-center justify-center p-4 z-50 pointer-events-none">
+                            <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        </div>
+                    )}
+
+                    {/* Header / Progress */}
+                    <div className={`absolute top-0 left-0 right-0 z-20 pointer-events-none transition-opacity duration-200 ease-in ${isMediaReady ? 'opacity-100' : 'opacity-0'}`}>
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-transparent" />
+                        <div className="relative z-10 w-full">
+                            <div
+                                className="flex gap-1 px-1"
+                                style={{ paddingTop: "max(env(safe-area-inset-top), 12px)" }}
+                            >
+                                {sortedStories.map((s, idx) => (
+                                    <div key={s.id} className="h-1 flex-1 bg-white/30 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-white transition-all duration-100 ease-linear"
+                                            style={{
+                                                width: idx < storyIndex ? '100%' : idx === storyIndex ? `${progress}%` : '0%'
+                                            }}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-1 px-3 pb-1.5 flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <div className="w-8 h-8 rounded-full overflow-hidden bg-white/20 border border-white/30 shrink-0">
+                                        <img
+                                            src={uploaderAvatar}
+                                            alt={uploaderName}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.currentTarget.src = "/assets/pngegg.png";
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="min-w-0 flex items-center gap-2">
+                                        <p className="text-white text-sm font-semibold truncate">{uploaderName}</p>
+                                        {storyTimestamp && (
+                                            <p className="text-white/75 text-xs whitespace-nowrap">{storyTimestamp}</p>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 pointer-events-auto">
+                                    {currentStory.media_type === "video" && (
+                                        <button
+                                            type="button"
+                                            className="w-8 h-8 rounded-full bg-black/45 text-white flex items-center justify-center"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setIsMuted((prev) => !prev);
+                                            }}
+                                            onTouchStart={(e) => e.stopPropagation()}
+                                            onTouchEnd={(e) => e.stopPropagation()}
+                                            aria-label={isMuted ? "Unmute story" : "Mute story"}
+                                        >
+                                            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                                        </button>
+                                    )}
+                                    {currentStory.isAuthor && (
+                                        <button
+                                            type="button"
+                                            className="w-8 h-8 rounded-full bg-black/45 text-white flex items-center justify-center"
+                                            onClick={handleDeleteStory}
+                                            onTouchStart={(e) => e.stopPropagation()}
+                                            onTouchEnd={(e) => e.stopPropagation()}
+                                            aria-label="Delete story"
+                                            title="Delete story"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        className="w-8 h-8 rounded-full bg-black/45 text-white flex items-center justify-center"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onClose();
+                                        }}
+                                        onTouchStart={(e) => e.stopPropagation()}
+                                        onTouchEnd={(e) => e.stopPropagation()}
+                                        aria-label="Close story"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     {/* Shared Post Overlay */}
                     {currentStory.shared_post && (
-                        <div className={`absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-8 ${currentStory.story_metadata?.backgroundStyle || ''}`}>
-                            {/* Fallback Background if no style but also no media (text mode) */}
-                            {!currentStory.media_url && !currentStory.story_metadata?.backgroundStyle && (
-                                <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black z-[-1]" />
-                            )}
-
+                        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-8">
                             <div style={{ transform: `scale(${currentStory.story_metadata?.scale || 0.9})` }} className="transition-transform duration-200">
                                 <SharedPostCard sharedPost={currentStory.shared_post} />
                             </div>
                         </div>
                     )}
-
                     {/* 1. Video Player (HLS) */}
-                    {/* Only render if there's no video layer in metadata (legacy support) */}
-                    {currentStory.media_type === 'video' && isActiveUser && !metadata.layers?.some(l => l.type === 'video') ? (
+                    {/* Render if it's a legacy video OR a user-edited video that finished rendering */}
+                    {mediaLoadFailed && !isLayeredStory ? (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 text-white z-10">
+                            <p className="text-sm font-medium">Media unavailable</p>
+                        </div>
+                    ) : currentStory.media_type === 'video' && isActiveUser && !isLayeredStory ? (
                         currentStory.media_status === 'processing' ? (
                             /* Processing State */
-                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-10">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-transparent z-10">
                                 {(currentStory.thumbnail_url || currentStory.image) && (
                                     <img
                                         src={currentStory.thumbnail_url || currentStory.image}
@@ -390,95 +883,107 @@ export const UserStorySlide = ({
                             </div>
                         ) : currentStory.media_status === 'failed' ? (
                             /* Failed State */
-                            <div className="absolute inset-0 flex items-center justify-center bg-gray-900 text-white">
+                            <div className="absolute inset-0 flex items-center justify-center bg-transparent text-white">
                                 <p>Video failed to load</p>
                             </div>
                         ) : (
-                            /* Ready State - Native Video (Safer & Faster) */
-                            <video
-                                ref={videoRef}
-                                src={(() => {
-                                    // Prefer pre-rendered final URL if ready
-                                    if (currentStory.render_status === 'ready' && currentStory.final_url) {
-                                        return currentStory.final_url;
-                                    }
+                            /* Ready State - double buffered native video (no black transition) */
+                            <div className="absolute inset-0">
+                                {[0, 1].map((slot) => {
+                                    const slotKey = slot as 0 | 1;
+                                    const slotStoryId = videoSlotStories[slotKey];
+                                    const slotStory = slotStoryId ? storyById.get(slotStoryId) : undefined;
+                                    const slotSrc = videoSlotSrcs[slotKey];
+                                    const resolvedSrc =
+                                        slotSrc || (slotKey === activeVideoSlot ? currentLegacySrc : "");
+                                    const safeResolvedSrc = isValidMediaUrl(resolvedSrc) ? resolvedSrc : "";
+                                    const posterSrc = getStoryPosterSrc(slotStory) || getStoryPosterSrc(currentStory);
+                                    const isSlotCurrentStory =
+                                        slotStoryId === currentStory.id &&
+                                        resolvedSrc === currentLegacySrc;
+                                    const isSlotActive = slotKey === activeVideoSlot;
+                                    const isActiveCurrentStorySlot = isSlotActive && isSlotCurrentStory;
 
-                                    let url = currentStory.media_url;
-                                    // Force MP4 for Cloudinary to ensure Chrome compatibility (fixes .mov black screen)
-                                    if (url && url.includes('cloudinary') && !url.endsWith('.mp4')) {
-                                        // Replace extension with .mp4
-                                        url = url.replace(/\.[^/.]+$/, ".mp4");
-                                    }
-                                    return url;
-                                })()}
-                                className="w-full h-full object-contain"
-                                playsInline
-                                autoPlay
-                                muted={isMuted}
-                                onEnded={handleNext}
-                                // Video Trim Logic
-                                onTimeUpdate={(e) => {
-                                    const vid = e.currentTarget;
-                                    const trim = metadata.trim;
+                                    const isReady = videoSlotReady[slotKey];
 
-                                    // Enforce Trim Loop
-                                    if (trim && vid.currentTime >= trim.end) {
-                                        vid.currentTime = trim.start;
-                                        handleNext();
-                                    }
+                                    return (
+                                        <div
+                                            key={`legacy-slot-${slot}`}
+                                            className={`absolute inset-0 w-full h-full transition-opacity duration-150 ${isSlotActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"}`}
+                                        >
 
-                                    if (!isPaused && !showInteraction) {
-                                        if (vid.duration) {
-                                            const duration = trim ? (trim.end - trim.start) : vid.duration;
-                                            const current = trim ? (vid.currentTime - trim.start) : vid.currentTime;
-                                            const percent = Math.max(0, Math.min(100, (current / duration) * 100));
-                                            setProgress(percent);
-                                        }
-                                    }
-                                }}
-                                onLoadedMetadata={(e) => {
-                                    const vid = e.currentTarget;
-                                    if (metadata.trim) {
-                                        vid.currentTime = metadata.trim.start;
-                                    }
-                                }}
-                                onError={(e) => console.error("Video Playback Error:", e.currentTarget.error)}
-                            />
-                        )
-                    ) : currentStory.image ? (
-                        <>
-                            {/* Background: solid/gradient or blurred version of the image */}
-                            <div
-                                className={`absolute inset-0 z-0 overflow-hidden ${(metadata.background?.startsWith('bg-') || metadata.background?.startsWith('from-'))
-                                    ? metadata.background
-                                    : 'bg-black'
-                                    }`}
-                                style={(!metadata.background?.startsWith('bg-') && !metadata.background?.startsWith('from-'))
-                                    ? { background: metadata.background }
-                                    : {}}
-                            >
-                                {/* Only show blurred backdrop when no custom background is set AND fallback is enabled */}
-                                {!metadata.background && !disableMediaBackgroundFallback && (
-                                    <>
-                                        <img
-                                            src={(currentStory.render_status === 'ready' && currentStory.final_url) ? currentStory.final_url : currentStory.image}
-                                            alt=""
-                                            className="w-full h-full object-cover blur-2xl scale-110 opacity-40"
-                                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                                        />
-                                        <div className="absolute inset-0 bg-black/40" />
-                                    </>
-                                )}
+
+                                            <video
+                                                ref={slotKey === 0 ? videoSlotRef0 : videoSlotRef1}
+                                                src={safeResolvedSrc || undefined}
+                                                poster={posterSrc || undefined}
+                                                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ease-in ${isReady ? "opacity-100" : "opacity-0"}`}
+                                                playsInline
+                                                preload="auto"
+                                                muted={isMuted}
+                                                autoPlay={isSlotActive && isActiveUser && !isPaused && !showInteraction && !isDescriptionExpanded}
+                                                onCanPlay={() => markVideoSlotReady(slotKey, true)}
+                                                onLoadedData={() => {
+                                                    markVideoSlotReady(slotKey, true);
+                                                    if (isActiveCurrentStorySlot) {
+                                                        setMediaLoadFailed(false);
+                                                    }
+                                                }}
+                                                onEnded={isActiveCurrentStorySlot ? handleVideoCompleted : undefined}
+                                                onTimeUpdate={isActiveCurrentStorySlot ? (e) => {
+                                                    const vid = e.currentTarget;
+                                                    const trim = metadata.trim;
+
+                                                    // End at trim boundary and progress to next story once.
+                                                    if (trim && vid.currentTime >= trim.end) {
+                                                        vid.currentTime = trim.end;
+                                                        vid.pause();
+                                                        handleVideoCompleted();
+                                                        return;
+                                                    }
+
+                                                    if (!isPaused && !showInteraction && vid.duration) {
+                                                        const duration = trim ? (trim.end - trim.start) : vid.duration;
+                                                        const current = trim ? (vid.currentTime - trim.start) : vid.currentTime;
+                                                        const percent = Math.max(0, Math.min(100, (current / duration) * 100));
+                                                        setProgress(percent);
+                                                    }
+                                                } : undefined}
+                                                onLoadedMetadata={isActiveCurrentStorySlot ? (e) => {
+                                                    const vid = e.currentTarget;
+                                                    videoEndTriggeredRef.current = false;
+                                                    if (metadata.trim) {
+                                                        vid.currentTime = metadata.trim.start;
+                                                    }
+                                                } : undefined}
+                                                onError={(e) => {
+                                                    markVideoSlotReady(slotKey, true);
+                                                    if (isActiveCurrentStorySlot) {
+                                                        setMediaLoadFailed(true);
+                                                    }
+                                                    console.error("Video Playback Error:", e.currentTarget.error);
+                                                }}
+                                            />
+                                        </div>
+                                    );
+                                })}
                             </div>
-
-                            {/* Foreground: main image, always object-contain inside the 9:16 frame */}
+                        )
+                    ) : hasValidCurrentImageSrc ? (
+                        <>
+                            {/* Media is the base visual layer: no gradient/color container background */}
                             {(!metadata.layers?.some(l => l.type === 'image') || (currentStory.render_status === 'ready' && currentStory.final_url)) && (
-                                <div className="relative z-1 w-full h-full flex items-center justify-center">
+                                <div className="absolute inset-0 z-0">
                                     <img
-                                        src={(currentStory.render_status === 'ready' && currentStory.final_url) ? currentStory.final_url : currentStory.image}
+                                        src={currentImageSrc}
                                         alt={currentStory.title}
-                                        className="w-full h-full object-contain"
-                                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                        className={`w-full h-full object-cover transition-opacity duration-300 ease-in ${isImageReady ? 'opacity-100' : 'opacity-0'}`}
+                                        onLoad={() => setIsImageReady(true)}
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                            setMediaLoadFailed(true);
+                                            setIsImageReady(true);
+                                        }}
                                     />
                                 </div>
                             )}
@@ -487,74 +992,86 @@ export const UserStorySlide = ({
 
                     {/* Metadata Layers Overlay — rendered inside a fixed virtual canvas */}
                     {/* Only show layers if NOT using a pre-rendered final URL */}
-                    {(!currentStory.render_status || currentStory.render_status !== 'ready' || !currentStory.final_url) && metadata.layers?.length > 0 && (
-                        <VirtualLayerCanvas
-                            layers={metadata.layers}
-                            fallbackVideoUrl={currentStory.media_url}
-                            isActive={isActiveUser}
-                            onVideoEnd={handleNext}
-                            onVideoProgress={setProgress}
-                            background={metadata.background}
-                        />
-                    )}
-
-                </div> {/* end 9:16 story frame */}
-            </div> {/* end letterbox centering wrapper */}
-            {!showInteraction && (
-                <>
-                    {/* Description Overlay */}
-                    {currentStory.description && (
-                        <div
-                            className={`absolute transition-all duration-300 z-30 pointer-events-auto
-                                    ${isDescriptionExpanded
-                                    ? "left-4 right-4 bottom-4 bg-black/80 rounded-xl p-6 max-h-[50vh] overflow-y-auto"
-                                    : "left-4 right-16 bottom-10"
-                                }
-                                `}
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                // Toggle expansion
-                                setIsDescriptionExpanded(!isDescriptionExpanded)
-                            }}
-                            onTouchStart={(e) => e.stopPropagation()}
-                            onTouchEnd={(e) => e.stopPropagation()}
-                        >
-                            <p className={`text-white text-sm leading-relaxed drop-shadow-md transition-opacity duration-300 ${isDescriptionExpanded ? 'opacity-100' : 'opacity-90'}`}>
-                                {isDescriptionExpanded ? (
-                                    currentStory.description
-                                ) : (
-                                    <>
-                                        {(() => {
-                                            const limit = 100;
-                                            if (currentStory.description.length <= limit) return currentStory.description;
-                                            // Truncate at the last space before the limit
-                                            const truncated = currentStory.description.slice(0, limit);
-                                            const lastSpace = truncated.lastIndexOf(' ');
-                                            return truncated.slice(0, lastSpace > 0 ? lastSpace : limit);
-                                        })()}
-                                        {currentStory.description.length > 100 && (
-                                            <>
-                                                ... <span className="font-semibold underline ml-1 text-white/90">Read more</span>
-                                            </>
-                                        )}
-                                    </>
-                                )}
-                            </p>
+                    {isLayeredStory && (
+                        <div className={`absolute inset-0 transition-opacity duration-200 ease-in ${isVirtualLayerReady ? 'opacity-100' : 'opacity-0'}`}>
+                            <VirtualLayerCanvas
+                                layers={metadata.layers}
+                                fallbackVideoUrl={currentStory.media_url}
+                                isActive={isActiveUser}
+                                onVideoEnd={handleAutoNext}
+                                onVideoProgress={setProgress}
+                                background={metadata.background}
+                                onReady={() => setIsVirtualLayerReady(true)}
+                            />
                         </div>
                     )}
 
-                    {!isDescriptionExpanded && (
-                        <div className="absolute bottom-24 left-0 right-0 text-center pointer-events-none">
-                            <div className="flex flex-col items-center gap-1 opacity-60 animate-bounce">
-                                <p className="text-white text-xs font-medium drop-shadow-md">Swipe up for details</p>
+                    {!showInteraction && (
+                        <div className={`absolute inset-0 pointer-events-none transition-opacity duration-200 ease-in ${isMediaReady ? 'opacity-100' : 'opacity-0'}`}>
+                            {/* Description Overlay */}
+                            {currentStory.description && (
+                                <div
+                                    className={`absolute transition-all duration-300 z-30 pointer-events-auto
+                                    ${isDescriptionExpanded
+                                            ? "left-4 right-4 bottom-4 bg-black/80 rounded-xl p-6 max-h-[50vh] overflow-y-auto"
+                                            : "left-4 right-16 bottom-10"
+                                        }
+                                `}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsDescriptionExpanded(!isDescriptionExpanded);
+                                    }}
+                                    onTouchStart={(e) => e.stopPropagation()}
+                                    onTouchEnd={(e) => e.stopPropagation()}
+                                >
+                                    <p className={`text-white text-sm leading-relaxed drop-shadow-md transition-opacity duration-300 ${isDescriptionExpanded ? 'opacity-100' : 'opacity-90'}`}>
+                                        {isDescriptionExpanded ? (
+                                            currentStory.description
+                                        ) : (
+                                            <>
+                                                {(() => {
+                                                    const limit = 100;
+                                                    if (currentStory.description.length <= limit) return currentStory.description;
+                                                    const truncated = currentStory.description.slice(0, limit);
+                                                    const lastSpace = truncated.lastIndexOf(' ');
+                                                    return truncated.slice(0, lastSpace > 0 ? lastSpace : limit);
+                                                })()}
+                                                {currentStory.description.length > 100 && (
+                                                    <>
+                                                        ... <span className="font-semibold underline ml-1 text-white/90">Read more</span>
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
+                                    </p>
+                                </div>
+                            )}
+
+                            {!isDescriptionExpanded && (
+                                <div className="absolute bottom-24 left-0 right-0 text-center pointer-events-none">
+                                    <div className="flex flex-col items-center gap-1 opacity-60 animate-bounce">
+                                        <p className="text-white text-xs font-medium drop-shadow-md">Swipe up for details</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="absolute right-4 bottom-6 z-30 pointer-events-auto">
+                                <button
+                                    type="button"
+                                    className="w-12 h-12 rounded-full bg-black/55 backdrop-blur text-white border border-white/35 flex items-center justify-center"
+                                    onClick={handleToggleLike}
+                                    onTouchStart={(e) => e.stopPropagation()}
+                                    onTouchEnd={(e) => e.stopPropagation()}
+                                    aria-label={isLiked ? "Unlike story" : "Like story"}
+                                >
+                                    <Heart className={`w-5 h-5 transition-colors ${isLiked ? "fill-red-500 text-red-500" : "text-white"}`} />
+                                </button>
                             </div>
                         </div>
                     )}
 
-                    {/* Like button removed as requested */}
-                </>
-            )
-            }
+                </div> {/* end 9:16 story frame */}
+            </div> {/* end letterbox centering wrapper */}
         </div >
     )
 }
