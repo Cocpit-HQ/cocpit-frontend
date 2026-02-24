@@ -86,6 +86,17 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
 
   const currentViewCount = details?.viewerCount ?? story.views;
   const currentLikeCount = details ? details.likers.length : (story.likes ?? 0);
+  const uploader = story.author;
+
+  const storyTimestamp = React.useMemo(() => {
+    if (story.created_at) {
+      const created = new Date(story.created_at);
+      if (!Number.isNaN(created.getTime())) {
+        return created.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      }
+    }
+    return story.timeAgo || "";
+  }, [story.created_at, story.timeAgo]);
 
   const metadata = React.useMemo(() => {
     const meta = (story.story_metadata as unknown as StoryMetadata) || { layers: [] };
@@ -137,7 +148,8 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
   const handleDeleteStory = async () => {
     if (confirm("Are you sure you want to delete this story?")) {
       try {
-        await showcaseService.deleteStory(story.id);
+        const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+        await showcaseService.deleteStory(story.id, companyId);
         onClose();
         window.location.reload();
       } catch (error) {
@@ -259,7 +271,61 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
           )}
 
           {/* Story Content (Layers) */}
-          <div className="aspect-[9/16] h-full relative overflow-hidden bg-[#1a1a1a]">
+          <div className="aspect-[9/16] h-full relative overflow-hidden bg-transparent">
+            <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/70 via-black/30 to-transparent pointer-events-none">
+              <div
+                className="px-3 pb-1.5 pt-3 flex items-center justify-between gap-3"
+                style={{ paddingTop: "max(env(safe-area-inset-top), 12px)" }}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-white/20 border border-white/30 shrink-0">
+                    <img
+                      src={uploader?.avatar || "/assets/pngegg.png"}
+                      alt={uploader?.name || "Story uploader"}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "/assets/pngegg.png";
+                      }}
+                    />
+                  </div>
+                  <div className="min-w-0 flex items-center gap-2">
+                    <p className="text-white text-sm font-semibold truncate">{uploader?.name || "Unknown"}</p>
+                    {storyTimestamp && (
+                      <p className="text-white/75 text-xs whitespace-nowrap">{storyTimestamp}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pointer-events-auto">
+                  {story.isAuthor && (
+                    <button
+                      type="button"
+                      className="w-8 h-8 rounded-full bg-black/45 text-white flex items-center justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteStory();
+                      }}
+                      aria-label="Delete story"
+                      title="Delete story"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="w-8 h-8 rounded-full bg-black/45 text-white flex items-center justify-center"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClose();
+                    }}
+                    aria-label="Close story"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <VirtualLayerCanvas
               layers={metadata.layers}
               isActive

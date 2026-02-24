@@ -20,19 +20,23 @@ export function ViewerLayerItem({
     isActive,
     onVideoEnd,
     onVideoProgress,
+    onReady,
 }: {
     layer: StoryLayer;
     fallbackMedia?: string;
     isActive?: boolean;
     onVideoEnd?: () => void;
     onVideoProgress?: (pct: number) => void;
+    onReady?: () => void;
 }) {
     const videoRef = useRef<HTMLVideoElement>(null);
+    const videoEndTriggeredRef = useRef(false);
     const router = useRouter();
 
     // Auto-play video layers when active
     useEffect(() => {
         if (layer.type !== "video" || !videoRef.current) return;
+        videoEndTriggeredRef.current = false;
         const vid = videoRef.current;
         if (layer.trim) vid.currentTime = layer.trim.start;
         if (isActive !== false) {
@@ -60,20 +64,32 @@ export function ViewerLayerItem({
     };
 
     const isEmoji = layer.type === "sticker" && !getSource().includes("/");
+    const isBaseMediaLayer =
+        (layer.type === "image" || layer.type === "video") && layer.zIndex === 0;
+
+    const layerStyle: React.CSSProperties = isBaseMediaLayer
+        ? {
+            left: "50%",
+            top: "50%",
+            width: "100%",
+            height: "100%",
+            transform: "translate(-50%, -50%)",
+            zIndex: layer.zIndex + 10,
+        }
+        : {
+            left: `${layer.x}%`,
+            top: `${layer.y}%`,
+            width: layer.type === "text" ? "auto" : isEmoji ? "auto" : `${layer.width}%`,
+            height: layer.type === "text" ? "auto" : isEmoji ? "auto" : `${layer.height}%`,
+            transform: `translate(-50%, -50%) rotate(${layer.rotation}deg) scale(${layer.scale})`,
+            zIndex: layer.zIndex + 10,
+        };
 
     return (
         <div
             className={`absolute origin-center ${layer.type === "post" ? "pointer-events-auto cursor-pointer" : "pointer-events-none"
                 }`}
-            style={{
-                left: `${layer.x}%`,
-                top: `${layer.y}%`,
-                // Text layers are auto-width; others use the stored % width
-                width: layer.type === "text" ? "auto" : isEmoji ? "auto" : `${layer.width}%`,
-                height: layer.type === "text" ? "auto" : isEmoji ? "auto" : `${layer.height}%`,
-                transform: `translate(-50%, -50%) rotate(${layer.rotation}deg) scale(${layer.scale})`,
-                zIndex: layer.zIndex + 10,
-            }}
+            style={layerStyle}
             onClick={layer.type === "post" ? handlePostClick : undefined}
         >
             {layer.type === "text" ? (
@@ -100,19 +116,29 @@ export function ViewerLayerItem({
                 <video
                     ref={videoRef}
                     src={getSource()}
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-cover"
                     muted={layer.isMuted}
                     autoPlay
-                    loop={!onVideoEnd}
                     playsInline
                     crossOrigin="anonymous"
                     onTimeUpdate={(e) => {
                         const vid = e.currentTarget;
                         if (layer.trim) {
-                            if (
-                                vid.currentTime < layer.trim.start ||
-                                vid.currentTime >= layer.trim.end
-                            ) {
+                            if (vid.currentTime < layer.trim.start) {
+                                vid.currentTime = layer.trim.start;
+                            }
+                            if (vid.currentTime >= layer.trim.end) {
+                                if (onVideoEnd) {
+                                    vid.currentTime = layer.trim.end;
+                                    vid.pause();
+                                    if (!videoEndTriggeredRef.current) {
+                                        videoEndTriggeredRef.current = true;
+                                        onVideoProgress?.(100);
+                                        onVideoEnd();
+                                    }
+                                    return;
+                                }
+                                // Fallback (no navigation callback): keep prior looping behavior.
                                 vid.currentTime = layer.trim.start;
                             }
                         }
@@ -126,9 +152,16 @@ export function ViewerLayerItem({
                         }
                     }}
                     onLoadedMetadata={(e) => {
+                        videoEndTriggeredRef.current = false;
                         if (layer.trim) e.currentTarget.currentTime = layer.trim.start;
                     }}
-                    onEnded={() => onVideoEnd?.()}
+                    onLoadedData={() => onReady?.()}
+                    onEnded={() => {
+                        if (videoEndTriggeredRef.current) return;
+                        videoEndTriggeredRef.current = true;
+                        onVideoProgress?.(100);
+                        onVideoEnd?.();
+                    }}
                 />
             ) : layer.type === "sticker" && isEmoji ? (
                 // Emoji stickers: use a font-size relative to the reference canvas width
@@ -149,9 +182,10 @@ export function ViewerLayerItem({
                 <img
                     src={getSource()}
                     draggable={false}
-                    className="w-full h-full object-contain select-none"
+                    className={`w-full h-full select-none ${layer.type === "image" ? "object-cover" : "object-contain"}`}
                     alt=""
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    onLoad={() => onReady?.()}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; onReady?.(); }}
                 />
             ) : layer.type === "post" ? (
                 <div
@@ -220,6 +254,7 @@ export function VirtualLayerCanvas({
     onVideoEnd,
     onVideoProgress,
     background,
+    onReady,
 }: {
     layers: StoryLayer[];
     fallbackVideoUrl?: string;
@@ -227,9 +262,21 @@ export function VirtualLayerCanvas({
     onVideoEnd?: () => void;
     onVideoProgress?: (pct: number) => void;
     background?: string;
+    onReady?: () => void;
 }) {
     const wrapperRef = useRef<HTMLDivElement>(null);
     const [scale, setScale] = React.useState(1);
+
+    const mediaLayersCount = layers.filter(l => l.type === "video" || l.type === "image" || l.type === "sticker").length;
+    const [readyCount, setReadyCount] = React.useState(0);
+
+    const isReady = mediaLayersCount === 0 || readyCount >= mediaLayersCount;
+
+    useEffect(() => {
+        if (isReady) {
+            onReady?.();
+        }
+    }, [isReady, onReady]);
 
     useEffect(() => {
         const el = wrapperRef.current;
@@ -245,9 +292,6 @@ export function VirtualLayerCanvas({
         ro.observe(el);
         return () => ro.disconnect();
     }, []);
-
-    const isTailwindBg =
-        background?.startsWith("bg-") || background?.startsWith("from-");
 
     return (
         // Outer: fills parent, centres the virtual canvas
@@ -273,9 +317,10 @@ export function VirtualLayerCanvas({
                     flexShrink: 0,
                     position: "relative",
                     overflow: "hidden",
-                    background: !isTailwindBg ? background || undefined : undefined,
+                    opacity: isReady ? 1 : 0,
+                    transition: "opacity 200ms ease-in-out",
+                    background: "transparent",
                 }}
-                className={isTailwindBg ? background : ""}
             >
                 {layers.map((layer) => (
                     <ViewerLayerItem
@@ -287,6 +332,7 @@ export function VirtualLayerCanvas({
                         onVideoProgress={
                             layer.type === "video" ? onVideoProgress : undefined
                         }
+                        onReady={() => setReadyCount(c => c + 1)}
                     />
                 ))}
             </div>

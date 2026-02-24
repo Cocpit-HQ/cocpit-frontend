@@ -229,12 +229,6 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, curr
                         </div>
                       )}
 
-                      {group.stories.length > 1 && (
-                        <div className="absolute top-1 left-1 md:top-2 md:left-2 bg-white/20 backdrop-blur-sm rounded px-1 py-0.5 md:px-1.5 md:py-0.5">
-                          <span className="text-[8px] md:text-[10px] text-white font-medium">{group.stories.length}</span>
-                        </div>
-                      )}
-
                       <div className="absolute bottom-2 left-2 right-2 hidden md:flex flex-col items-center">
                         <div className={`w-8 h-8 rounded-full p-0.5 bg-gradient-to-br from-blue-400 to-purple-500 mb-1 ${hasUnviewed ? 'animate-pulse' : ''}`}>
                           {group.author.avatar ? (
