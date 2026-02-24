@@ -35,7 +35,7 @@ interface ConnectionButtonProps {
     // Initial data props
     isFollowing?: boolean;
     isFollowedBy?: boolean;
-    connectionRequestStatus?: 'pending' | 'rejected' | 'blocked' | null;
+    connectionRequestStatus?: 'connected' | 'pending' | 'rejected' | 'blocked' | null;
     connectionRequestId?: string | null;
     connectionRequestSender?: 'me' | 'them' | null;
 }

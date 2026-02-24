@@ -78,7 +78,7 @@ export interface PublicUserProfileResponse {
     latest_education: { school: string; degree: string } | null;
     is_following: boolean;
     is_followed_by?: boolean;
-    connection_request_status?: 'pending' | 'rejected' | 'blocked' | null;
+    connection_request_status?: 'connected' | 'pending' | 'rejected' | 'blocked' | null;
     connection_request_id?: string | null;
     connection_request_sender?: 'me' | 'them' | null;
     created_at: string;
@@ -89,7 +89,7 @@ export interface PublicUserProfileResponse {
   resume: { originalName: string; url: string } | null;
   is_following: boolean;
   is_followed_by?: boolean;
-  connection_request_status?: 'pending' | 'rejected' | 'blocked' | null;
+  connection_request_status?: 'connected' | 'pending' | 'rejected' | 'blocked' | null;
   connection_request_id?: string | null;
   connection_request_sender?: 'me' | 'them' | null;
   company_roles?: {

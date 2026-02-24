@@ -39,6 +39,7 @@ import {
 import { MoreVertical, Ban } from "lucide-react";
 import { useSocial } from "@/context/SocialContext";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 // ... existing component props ...
 
@@ -54,6 +55,16 @@ export function ProfileHeader({
 }: ProfileHeaderProps) {
     const { blockUser } = useSocial();
     const [showBlockDialog, setShowBlockDialog] = useState(false);
+
+    // Read connection status directly from the same cache as ConnectionButton
+    const { data: relationship } = useQuery<any>({
+        queryKey: ['relationship', user.id],
+        queryFn: () => null, // Dummy function since enabled is false
+        enabled: false, // We only want to read from cache, not fetch it again here to avoid duplicate requests
+    });
+
+    // Determine effective connection status
+    const isActuallyConnected = relationship?.status === 'connected' || user.connectionStatus === 'connected';
 
     const handleBlock = async () => {
         await blockUser(user.id);
@@ -125,26 +136,28 @@ export function ProfileHeader({
                                 connectionRequestId={user.connection_request_id}
                                 connectionRequestSender={user.connection_request_sender}
                             />
-                            <button
-                                onClick={onFollowToggle}
-                                disabled={isFollowLoading}
-                                className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${isUserFollowing
-                                    ? "bg-muted text-foreground hover:bg-muted/80"
-                                    : "bg-primary text-primary-foreground hover:opacity-90"
-                                    } ${isFollowLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-                            >
-                                {isUserFollowing ? (
-                                    <>
-                                        <UserCheck className="w-4 h-4" />
-                                        Following
-                                    </>
-                                ) : (
-                                    <>
-                                        <UserPlus className="w-4 h-4" />
-                                        Follow
-                                    </>
-                                )}
-                            </button>
+                            {!isActuallyConnected && (
+                                <button
+                                    onClick={onFollowToggle}
+                                    disabled={isFollowLoading}
+                                    className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${isUserFollowing
+                                        ? "bg-muted text-foreground hover:bg-muted/80"
+                                        : "bg-primary text-primary-foreground hover:opacity-90"
+                                        } ${isFollowLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                                >
+                                    {isUserFollowing ? (
+                                        <>
+                                            <UserCheck className="w-4 h-4" />
+                                            Following
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UserPlus className="w-4 h-4" />
+                                            Follow
+                                        </>
+                                    )}
+                                </button>
+                            )}
 
                             {/* Dropdown Menu for More Actions */}
                             <DropdownMenu>

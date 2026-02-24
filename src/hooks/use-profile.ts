@@ -76,7 +76,7 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
             : [],
         experiences: experiences as any,
         educations: educations as any,
-        connectionStatus: 'none',
+        connectionStatus: (user.connection_request_status === 'connected' ? 'connected' : (user.connection_request_status === 'pending' ? 'pending' : 'none')),
         mutualConnections: 0,
         identity: {
             openTo: (Array.isArray(user.open_to) ? user.open_to[0] : user.open_to) as any || 'Full-time',

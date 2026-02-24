@@ -17,7 +17,7 @@ export interface User {
   identity?: ProfileIdentity;
   is_following?: boolean;
   is_followed_by?: boolean;
-  connection_request_status?: 'pending' | 'rejected' | 'blocked' | null;
+  connection_request_status?: 'connected' | 'pending' | 'rejected' | 'blocked' | null;
   connection_request_id?: string | null;
   connection_request_sender?: 'me' | 'them' | null;
 
@@ -76,7 +76,7 @@ export interface UserData {
   about_text?: string;
   is_following?: boolean;
   is_followed_by?: boolean;
-  connection_request_status?: 'pending' | 'rejected' | 'blocked' | null;
+  connection_request_status?: 'connected' | 'pending' | 'rejected' | 'blocked' | null;
   connection_request_id?: string | null;
   connection_request_sender?: 'me' | 'them' | null;
 }
