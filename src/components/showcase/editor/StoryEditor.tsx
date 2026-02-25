@@ -102,14 +102,24 @@ export function StoryEditor({ file, initialMetadata, onSave, onCancel, disableBa
             const url = URL.createObjectURL(file);
             setMediaSrc(url);
             setMediaType(file.type.startsWith('video') ? 'video' : 'image');
-            return () => URL.revokeObjectURL(url);
+            // NOTE: Do NOT revoke this URL on cleanup — initialMetadata.layers
+            // may reference it, and layers are initialized synchronously (useStoryHistory)
+            // before any effect can refresh the src. The URL is auto-collected on page nav.
         }
     }, [file]);
 
     useEffect(() => {
         if (mediaSrc && layers.length === 0) {
             if (initialMetadata && initialMetadata.layers.length > 0) {
-                // If editing existing metadata, use it
+                // Re-editing: restore layers but refresh main image/video src
+                // (the old blob URL was revoked when StoryEditor unmounted)
+                const refreshedLayers = initialMetadata.layers.map(layer => {
+                    if ((layer.id === 'main-image' || layer.id === 'main-video') && 'src' in layer) {
+                        return { ...layer, src: mediaSrc };
+                    }
+                    return layer;
+                });
+                pushState(refreshedLayers);
             } else {
                 const mainLayer: StoryLayer = mediaType === 'video' ? {
                     id: 'main-video',
@@ -216,16 +226,28 @@ export function StoryEditor({ file, initialMetadata, onSave, onCancel, disableBa
             await new Promise(resolve => setTimeout(resolve, 120));
 
             // html2canvas captures the element at its natural (logical) dimensions.
-            // Since the virtual canvas is 390×693 in DOM size (CSS-scaled, but natural
-            // dimensions are fixed), we capture at 2× for high resolution output.
+            // IMPORTANT: Reset CSS transform and wait for reflow to prevent html2canvas
+            // from misinterpreting element positions due to the viewport scale + scroll.
+            const prevTransform = element.style.transform;
+            element.style.transform = 'none';
+
+            // Wait for browser to fully reflow after transform change
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
             const canvas = await (await import('html2canvas')).default(element, {
                 useCORS: true,
                 scale: 2,
                 backgroundColor: null,
-                // Prevent html2canvas from reading the CSS transform scale of parent
                 width: CANVAS_W,
                 height: CANVAS_H,
+                scrollX: 0,
+                scrollY: 0,
+                x: 0,
+                y: 0,
             });
+
+            // Restore the CSS transform
+            element.style.transform = prevTransform;
 
             // Generate Snapshot Blob (JPEG)
             const snapshotBlob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));

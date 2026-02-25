@@ -94,22 +94,20 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
 
     setIsSubmitting(true)
     try {
-      // 1. Prepare Uploads
-      let mediaData = { url: "", public_id: "", media_type: "image" }; // Composite / Final
-      let originalData = { url: "", public_id: "", media_type: "image" }; // Original (Video/Image before editing)
-      let thumbnailData = { url: '' };
-
-      const baseFile = (editorMetadata as any)?._baseFile || editingFile;
+      // 1. Determine the file to upload (baked snapshot for images, raw video for videos)
       const snapshotFile = (editorMetadata as any)?._compositeFile;
+      const baseFile = (editorMetadata as any)?._baseFile || editingFile;
 
-      // fileRef.current = composite image OR video from editor
+      // For images: upload the composite snapshot (baked by html2canvas)
+      // For videos: upload the video file directly
       const mainFileToUpload: File | Blob | null =
         fileRef.current ||
         (editingFile instanceof File ? editingFile : null) ||
         (baseFile instanceof File || baseFile instanceof Blob ? baseFile : null);
 
+      let mediaData = { url: "", public_id: "", media_type: "image" };
+
       if (mainFileToUpload) {
-        // Upload Main File (composite image or video from editor)
         const uploadRes = await showcaseService.uploadMedia(
           mainFileToUpload instanceof File
             ? mainFileToUpload
@@ -126,107 +124,42 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
           public_id: uploadRes.public_id,
           media_type: uploadRes.media_type
         };
-
-        // If Video and we have a snapshot, upload it as thumbnail
-        if (mediaData.media_type === 'video' && snapshotFile) {
-          const thumbRes = await showcaseService.uploadMedia(
-            snapshotFile instanceof File
-              ? snapshotFile
-              : new File([snapshotFile], "story-thumbnail.jpg", { type: "image/jpeg" }),
-            companyId
-          );
-          if (thumbRes.url && !thumbRes.url.startsWith('blob:')) {
-            thumbnailData.url = thumbRes.url;
-          }
-        }
-
       } else if (sharedPostId) {
         mediaData.media_type = 'image';
       } else {
         throw new Error("No media file available to upload");
       }
 
-      // Add thumbnail to metadata if exists
-      const finalMetadataObj = {
-        ...editorMetadata,
-        ...(thumbnailData.url ? { thumbnail_url: thumbnailData.url } : {})
-      };
-
-      // Clean up internal props from metadata before sending
+      // 2. Prepare clean metadata (remove internal editor props)
+      const finalMetadataObj = { ...editorMetadata };
       // @ts-ignore
       delete finalMetadataObj._baseFile;
       // @ts-ignore
       delete finalMetadataObj._compositeFile;
-
-      // Upload Original (_baseFile from metadata OR editingFile) — only if different from mainFileToUpload
-      // Logic: If mainFileToUpload is a composite image, baseFile is original.
-      // If mainFileToUpload IS the video (baseFile), then no need to upload again.
-      const originalFile = baseFile instanceof File || baseFile instanceof Blob ? baseFile : null;
-
-      const isOriginalDifferent = originalFile && originalFile !== mainFileToUpload;
-
-      if (isOriginalDifferent) {
-        const fileToUpload = originalFile instanceof File
-          ? originalFile
-          : new File([originalFile], "original-media", { type: originalFile.type || 'application/octet-stream' });
-
-        const originalRes = await showcaseService.uploadMedia(fileToUpload, companyId);
-        if (!originalRes.url || originalRes.url.startsWith('blob:')) {
-          console.warn("Original upload failed or returned blob URL, falling back to composite");
-          originalData = { ...mediaData }; // Fallback to composite if original upload fails
-        } else {
-          originalData = {
-            url: originalRes.url,
-            public_id: originalRes.public_id,
-            media_type: originalRes.media_type
-          };
-        }
-      } else {
-        // If original is same as main (e.g. video), use main data
-        originalData = { ...mediaData };
-      }
-
-      const storyData = {
-        title: description || "New Story",
-        description: description,
-        media_url: mediaData.url,
-        media_type: mediaData.media_type,
-        public_id: mediaData.public_id,
-        media_status: (mediaData.media_type === 'video') ? 'processing' : 'ready',
-        shared_post_id: sharedPostId,
-        story_metadata: JSON.stringify(finalMetadataObj),
-        original_url: originalData.url,
-        final_url: mediaData.url,
-        // Attempt to send thumbnail_url if supported
-        ...(thumbnailData.url ? { thumbnail_url: thumbnailData.url } : {})
-      };
-
-      // If metadata has layers and mediaData.url is set, update layer src for main image/video
-      if (finalMetadataObj && finalMetadataObj.layers && mediaData.url) {
-        finalMetadataObj.layers = finalMetadataObj.layers.map(layer => {
-          if (layer.type === 'image' || layer.type === 'video') {
-            if (originalData.url && (layer.id === 'main-image' || layer.id === 'main-video')) {
-              return { ...layer, src: originalData.url };
-            }
-          }
-          return layer;
-        });
-      }
 
       // Final guard: ensure we have a real URL before calling the API
       if (!mediaData.url || mediaData.url.startsWith('blob:')) {
         throw new Error("Upload failed: media URL is invalid or not yet uploaded");
       }
 
+      // For video stories: patch the main video layer's src to the Cloudinary URL
+      // (it currently holds a blob URL from the editor)
+      if (finalMetadataObj?.layers && mediaData.url) {
+        finalMetadataObj.layers = finalMetadataObj.layers.map((layer: any) => {
+          if ((layer.id === 'main-image' || layer.id === 'main-video') && layer.src) {
+            return { ...layer, src: mediaData.url };
+          }
+          return layer;
+        });
+      }
+
+      // 3. Create story — single snapshot URL, no dual upload
       const createdStory = await showcaseService.createStory({
         title: "",
         description,
         media_url: mediaData.url,
-        original_url: originalData.url || mediaData.url,
-        final_url: mediaData.url,
-        media_type: originalData.media_type || mediaData.media_type,
+        media_type: mediaData.media_type,
         public_id: mediaData.public_id,
-        media_status: (originalData.media_type === 'video') ? 'processing' : 'ready',
         shared_post_id: sharedPostId || undefined,
         story_metadata: sharedPostId ? {
           backgroundStyle: !selectedImage ? backgroundStyle : undefined,
@@ -322,15 +255,32 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
   return (
     <div className="w-full flex flex-col h-full overflow-y-auto pb-20 scrollbar-hide">
 
-      {editingFile && !isPreviewing && (
-        <StoryEditor
-          file={editingFile}
-          initialMetadata={editorMetadata || undefined}
-          onSave={handleEditorSave}
-          onCancel={handleEditorCancel}
-          disableBackgroundFallback={true}
-        />
-      )}
+      {editingFile && !isPreviewing && (() => {
+        // When re-editing, refresh blob URLs in layer metadata since the old ones
+        // may have been revoked when StoryEditor unmounted previously
+        let patchedMetadata = editorMetadata || undefined;
+        if (patchedMetadata?.layers && editingFile instanceof File) {
+          const freshUrl = URL.createObjectURL(editingFile);
+          patchedMetadata = {
+            ...patchedMetadata,
+            layers: patchedMetadata.layers.map(layer => {
+              if ((layer.id === 'main-image' || layer.id === 'main-video') && 'src' in layer) {
+                return { ...layer, src: freshUrl };
+              }
+              return layer;
+            })
+          };
+        }
+        return (
+          <StoryEditor
+            file={editingFile}
+            initialMetadata={patchedMetadata}
+            onSave={handleEditorSave}
+            onCancel={handleEditorCancel}
+            disableBackgroundFallback={true}
+          />
+        );
+      })()}
 
       {/* Preview Modal */}
       {isPreviewing && editingFile && (
@@ -355,7 +305,7 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
                   <img
                     src={selectedImage}
                     alt="Preview"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 )}
                 {selectedVideo && (

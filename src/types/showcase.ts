@@ -38,10 +38,6 @@ export interface StoryDetail extends StoryCard {
   isLiked?: boolean;
   has_viewed?: boolean;
   created_at?: string;
-  media_status?: 'processing' | 'ready' | 'failed';
-  render_status?: 'queued' | 'rendering' | 'ready' | 'failed';
-  original_url?: string;
-  final_url?: string;
   media_type?: 'image' | 'video';
   media_url?: string;
   thumbnail_url?: string;

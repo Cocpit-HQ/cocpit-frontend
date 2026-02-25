@@ -343,12 +343,21 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
               </div>
             </div>
 
-            <VirtualLayerCanvas
-              layers={metadata.layers}
-              isActive
-              background={metadata.background}
-            />
-            {metadata.layers.length === 0 && (
+            {/* Snapshot-based for images, VirtualLayerCanvas for videos (needs layer overlays) */}
+            {story.media_type === 'video' ? (
+              <VirtualLayerCanvas
+                layers={metadata.layers}
+                isActive
+                background={metadata.background}
+              />
+            ) : (
+              <img
+                src={story.media_url || story.image || ''}
+                alt={story.title || 'Story'}
+                className="w-full h-full object-contain"
+              />
+            )}
+            {story.media_type !== 'video' && !(story.media_url || story.image) && (
               <div className="flex items-center justify-center h-full text-white/50 flex-col gap-2">
                 <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
                   <Play className="w-6 h-6 fill-current" />

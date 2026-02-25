@@ -214,9 +214,9 @@ export function EditorCanvas({ mediaSrc, mediaType, layers, activeLayerId, editi
                 />
             ))}
 
-            {/* Safe Area Guides */}
-            <div className="absolute inset-x-0 top-[12.5%] border-t border-dashed pointer-events-none" style={{ borderColor: 'rgba(255, 255, 255, 0.2)' }} />
-            <div className="absolute inset-x-0 bottom-[12.5%] border-b border-dashed pointer-events-none" style={{ borderColor: 'rgba(255, 255, 255, 0.2)' }} />
+            {/* Safe Area Guides — excluded from html2canvas snapshot */}
+            <div data-html2canvas-ignore="true" className="absolute inset-x-0 top-[12.5%] border-t border-dashed pointer-events-none" style={{ borderColor: 'rgba(255, 255, 255, 0.2)' }} />
+            <div data-html2canvas-ignore="true" className="absolute inset-x-0 bottom-[12.5%] border-b border-dashed pointer-events-none" style={{ borderColor: 'rgba(255, 255, 255, 0.2)' }} />
         </div>
     );
 }
