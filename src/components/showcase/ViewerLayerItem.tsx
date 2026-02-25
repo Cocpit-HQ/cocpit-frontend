@@ -270,10 +270,10 @@ export function VirtualLayerCanvas({
     }, [layers]);
 
     useEffect(() => {
-        if (isReady) {
+        if (mediaLayersCount === 0 || readyCount >= mediaLayersCount) {
             onReady?.();
         }
-    }, [isReady, onReady]);
+    }, [readyCount, mediaLayersCount, onReady]);
 
     useEffect(() => {
         const el = wrapperRef.current;
@@ -289,6 +289,9 @@ export function VirtualLayerCanvas({
         ro.observe(el);
         return () => ro.disconnect();
     }, []);
+
+    const isTailwindBg =
+        background?.startsWith("bg-") || background?.startsWith("from-");
 
     return (
         // Outer: fills parent, centres the virtual canvas
@@ -319,6 +322,7 @@ export function VirtualLayerCanvas({
                     transition: "opacity 200ms ease-in-out",
                     background: !isTailwindBg ? (background || "transparent") : undefined,
                 }}
+                className={isTailwindBg ? background : ""}
             >
                 {layers.map((layer) => (
                     <ViewerLayerItem

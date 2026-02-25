@@ -7,7 +7,6 @@ import { SharedPostCard } from "./SharedPostCard"
 import { StoryMetadata } from "@/types/story-editor"
 import { VirtualLayerCanvas } from "./ViewerLayerItem"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
-import { useStorySync } from "@/hooks/use-story-sync"
 
 type UserStorySlideProps = {
     group: StoryGroup
@@ -29,7 +28,7 @@ export const UserStorySlide = ({
     onClose,
     isDark,
     onStoryUpdate,
-    disableMediaBackgroundFallback: _disableMediaBackgroundFallback = false
+    disableMediaBackgroundFallback = false
 }: UserStorySlideProps) => {
     type StoryLike = StoryDetail;
     const [storyIndex, setStoryIndex] = useState(0)
@@ -96,41 +95,10 @@ export const UserStorySlide = ({
         return url;
     }, []);
 
-    const isValidMediaUrl = useCallback((url?: string | null): boolean => {
-        const candidate = (url || "").trim();
-        if (!candidate) return false;
-
-        if (
-            candidate.startsWith("blob:") ||
-            candidate.startsWith("data:") ||
-            candidate.startsWith("/") ||
-            candidate.startsWith("./") ||
-            candidate.startsWith("../")
-        ) {
-            return true;
-        }
-
-        try {
-            const parsed = new URL(candidate);
-            return parsed.protocol === "http:" || parsed.protocol === "https:";
-        } catch {
-            return false;
-        }
-    }, []);
-
-    const currentIsLegacyVideo = currentStory?.media_type === "video" && (!storyHasVideoLayer(currentStory) || currentStory.render_status === "ready");
-    const nextIsLegacyVideo = nextStory?.media_type === "video" && (!storyHasVideoLayer(nextStory) || nextStory.render_status === "ready");
+    const currentIsLegacyVideo = currentStory?.media_type === "video" && !storyHasVideoLayer(currentStory);
+    const nextIsLegacyVideo = nextStory?.media_type === "video" && !storyHasVideoLayer(nextStory);
     const currentLegacySrc = getLegacyVideoSrc(currentStory);
     const nextLegacySrc = getLegacyVideoSrc(nextStory);
-    const hasValidCurrentLegacySrc = isValidMediaUrl(currentLegacySrc);
-    // Only assign final_url to image source if it's somehow NOT a video (which shouldn't happen, but safe fallback)
-    const currentImageSrc = (currentStory?.media_type !== "video" && currentStory?.render_status === "ready" && currentStory.final_url) ? currentStory.final_url : currentStory?.image;
-    const hasValidCurrentImageSrc = isValidMediaUrl(currentImageSrc);
-    const getStoryPosterSrc = useCallback((story?: StoryLike): string => {
-        if (!story) return "";
-        const candidate = story.thumbnail_url || story.image || "";
-        return isValidMediaUrl(candidate) ? candidate : "";
-    }, [isValidMediaUrl]);
     const getVideoSlotRef = useCallback((slot: 0 | 1) => (slot === 0 ? videoSlotRef0 : videoSlotRef1), []);
     const markVideoSlotReady = useCallback((slot: 0 | 1, ready: boolean) => {
         setVideoSlotReady((prev) => {
@@ -145,7 +113,6 @@ export const UserStorySlide = ({
     const [isLiked, setIsLiked] = useState(!!currentStory?.isLiked)
     const [isImageReady, setIsImageReady] = useState(false)
     const [isVirtualLayerReady, setIsVirtualLayerReady] = useState(false)
-    const [mediaLoadFailed, setMediaLoadFailed] = useState(false)
 
     // Parse Metadata safely
     const metadata = useMemo(() => {
@@ -161,8 +128,8 @@ export const UserStorySlide = ({
         return (meta as unknown as StoryMetadata) || { layers: [] };
     }, [currentStory]);
 
-    const isLayeredStory = (metadata?.layers?.length || 0) > 0;
-    const isMediaReady = mediaLoadFailed || (isLayeredStory ? isVirtualLayerReady : (currentStory?.media_type === "video" ? videoSlotReady[activeVideoSlot] : isImageReady));
+    const isLayeredStory = (!currentStory?.render_status || currentStory.render_status !== 'ready' || !currentStory.final_url) && (metadata?.layers?.length || 0) > 0;
+    const isMediaReady = isLayeredStory ? isVirtualLayerReady : (currentStory?.media_type === "video" ? videoSlotReady[activeVideoSlot] : isImageReady);
 
     // Track if this is the first time becoming active
     const wasActiveRef = useRef(false)
@@ -191,26 +158,13 @@ export const UserStorySlide = ({
         setIsDescriptionExpanded(false)
         setIsImageReady(false)
         setIsVirtualLayerReady(false)
-        setMediaLoadFailed(false)
-    }, [currentStory?.id]) // ONLY reset when the actual story changes
 
-    // Record View separately when becoming active
-    useEffect(() => {
+        // Record View
         if (isActiveUser && currentStory && !currentStory.isAuthor) {
             const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
             showcaseService.viewStory(currentStory.id, companyId).catch(err => console.error("View story failed", err));
         }
-    }, [currentStory?.id, currentStory?.isAuthor, isActiveUser, activeProfile?.id, activeProfile?.type])
-
-    // Real-time synchronization
-    useStorySync(isActiveUser ? currentStory?.id : undefined, {
-        onReactionUpdated: ({ likeCount }) => {
-            if (currentStory && onStoryUpdate) {
-                // Map API "like_count" to UI "likes" string/number
-                onStoryUpdate({ ...currentStory, likes: likeCount });
-            }
-        }
-    });
+    }, [storyIndex, currentStory?.isLiked, isActiveUser, activeProfile]) // Only reset when story index changes
 
     // Poll for status if processing
     useEffect(() => {
@@ -232,30 +186,6 @@ export const UserStorySlide = ({
         }
     }, [isActiveUser, currentStory]);
 
-    useEffect(() => {
-        if (!currentStory || isLayeredStory) return;
-
-        if (currentStory.media_type === "video") {
-            if (!hasValidCurrentLegacySrc) {
-                setMediaLoadFailed(true);
-                markVideoSlotReady(activeVideoSlot, true);
-            }
-            return;
-        }
-
-        if (!hasValidCurrentImageSrc) {
-            setMediaLoadFailed(true);
-            setIsImageReady(true);
-        }
-    }, [
-        currentStory,
-        isLayeredStory,
-        hasValidCurrentLegacySrc,
-        hasValidCurrentImageSrc,
-        activeVideoSlot,
-        markVideoSlotReady,
-    ]);
-
     const isNavigatingRef = useRef(false)
 
     // Reset navigation lock when active user changes or story index changes
@@ -272,49 +202,34 @@ export const UserStorySlide = ({
 
         const preloadPromise = new Promise<void>((resolve) => {
             if (story.media_type === "video") {
-                const videoSrc = story.final_url || story.media_url || story.image || "";
-                if (!isValidMediaUrl(videoSrc)) {
-                    resolve();
-                    return;
-                }
-
                 const v = document.createElement("video");
                 v.preload = "metadata";
                 const done = () => resolve();
                 v.onloadedmetadata = done;
                 v.oncanplay = done;
                 v.onerror = done;
-                v.src = videoSrc;
+                v.src = story.final_url || story.media_url || story.image || "";
                 v.load();
 
                 // Also preload poster image if available to avoid black flash.
                 if (story.thumbnail_url || story.image) {
-                    const posterSrc = story.thumbnail_url || story.image || "";
                     const img = new Image();
                     img.onload = () => { };
                     img.onerror = () => { };
-                    if (isValidMediaUrl(posterSrc)) {
-                        img.src = posterSrc;
-                    }
+                    img.src = story.thumbnail_url || story.image || "";
                 }
-                return;
-            }
-
-            const imageSrc = story.final_url || story.image || story.thumbnail_url || "";
-            if (!isValidMediaUrl(imageSrc)) {
-                resolve();
                 return;
             }
 
             const img = new Image();
             img.onload = () => resolve();
             img.onerror = () => resolve();
-            img.src = imageSrc;
+            img.src = story.final_url || story.image || story.thumbnail_url || "";
         });
 
         preloadCacheRef.current.set(story.id, preloadPromise);
         return preloadPromise;
-    }, [isValidMediaUrl]);
+    }, []);
 
     // Allow onEnded/onTimeUpdate completion to fire exactly once per story.
     useEffect(() => {
@@ -760,7 +675,7 @@ export const UserStorySlide = ({
             />
 
             {/* Full-screen black background (letterbox padding) */}
-            <div className="absolute inset-0 bg-transparent" />
+            <div className="absolute inset-0 bg-black" />
 
             {/* 9:16 Story Frame — media is always contained within this box */}
             <div
@@ -768,19 +683,12 @@ export const UserStorySlide = ({
                 style={{ pointerEvents: 'none' }}
             >
                 <div
-                    className="relative overflow-hidden bg-transparent w-[calc(100dvh*9/16)] h-[100dvh] md:w-[min(100vw,calc(100dvh*9/16))] md:h-[min(100dvh,calc(100vw*16/9))]"
+                    className="relative overflow-hidden bg-black w-[calc(100dvh*9/16)] h-[100dvh] md:w-[min(100vw,calc(100dvh*9/16))] md:h-[min(100dvh,calc(100vw*16/9))]"
                 >
 
-                    {/* Global Loader until media is ready */}
-                    {!isMediaReady && (
-                        <div className="absolute inset-0 flex items-center justify-center p-4 z-50 pointer-events-none">
-                            <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        </div>
-                    )}
-
                     {/* Header / Progress */}
-                    <div className={`absolute top-0 left-0 right-0 z-20 pointer-events-none transition-opacity duration-200 ease-in ${isMediaReady ? 'opacity-100' : 'opacity-0'}`}>
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-transparent" />
+                    <div className="absolute top-0 left-0 right-0 z-20 pointer-events-none">
+                        <div className={`absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-transparent transition-opacity duration-300 ease-in ${isMediaReady ? 'opacity-100' : 'opacity-0'}`} />
                         <div className="relative z-10 w-full">
                             <div
                                 className="flex gap-1 px-1"
@@ -866,7 +774,12 @@ export const UserStorySlide = ({
 
                     {/* Shared Post Overlay */}
                     {currentStory.shared_post && (
-                        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-8">
+                        <div className={`absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-8 ${currentStory.story_metadata?.backgroundStyle || ''}`}>
+                            {/* Fallback Background if no style but also no media (text mode) */}
+                            {!currentStory.media_url && !currentStory.story_metadata?.backgroundStyle && (
+                                <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black z-[-1]" />
+                            )}
+
                             <div style={{ transform: `scale(${currentStory.story_metadata?.scale || 0.9})` }} className="transition-transform duration-200">
                                 <SharedPostCard sharedPost={currentStory.shared_post} />
                             </div>
@@ -874,14 +787,10 @@ export const UserStorySlide = ({
                     )}
                     {/* 1. Video Player (HLS) */}
                     {/* Render if it's a legacy video OR a user-edited video that finished rendering */}
-                    {mediaLoadFailed && !isLayeredStory ? (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 text-white z-10">
-                            <p className="text-sm font-medium">Media unavailable</p>
-                        </div>
-                    ) : currentStory.media_type === 'video' && isActiveUser && !isLayeredStory ? (
+                    {currentStory.media_type === 'video' && isActiveUser && !isLayeredStory ? (
                         currentStory.media_status === 'processing' ? (
                             /* Processing State */
-                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-transparent z-10">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black z-10">
                                 {(currentStory.thumbnail_url || currentStory.image) && (
                                     <img
                                         src={currentStory.thumbnail_url || currentStory.image}
@@ -897,7 +806,7 @@ export const UserStorySlide = ({
                             </div>
                         ) : currentStory.media_status === 'failed' ? (
                             /* Failed State */
-                            <div className="absolute inset-0 flex items-center justify-center bg-transparent text-white">
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-900 text-white">
                                 <p>Video failed to load</p>
                             </div>
                         ) : (
@@ -906,12 +815,9 @@ export const UserStorySlide = ({
                                 {[0, 1].map((slot) => {
                                     const slotKey = slot as 0 | 1;
                                     const slotStoryId = videoSlotStories[slotKey];
-                                    const slotStory = slotStoryId ? storyById.get(slotStoryId) : undefined;
                                     const slotSrc = videoSlotSrcs[slotKey];
                                     const resolvedSrc =
                                         slotSrc || (slotKey === activeVideoSlot ? currentLegacySrc : "");
-                                    const safeResolvedSrc = isValidMediaUrl(resolvedSrc) ? resolvedSrc : "";
-                                    const posterSrc = getStoryPosterSrc(slotStory) || getStoryPosterSrc(currentStory);
                                     const isSlotCurrentStory =
                                         slotStoryId === currentStory.id &&
                                         resolvedSrc === currentLegacySrc;
@@ -929,20 +835,14 @@ export const UserStorySlide = ({
 
                                             <video
                                                 ref={slotKey === 0 ? videoSlotRef0 : videoSlotRef1}
-                                                src={safeResolvedSrc || undefined}
-                                                poster={posterSrc || undefined}
+                                                src={resolvedSrc || undefined}
                                                 className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ease-in ${isReady ? "opacity-100" : "opacity-0"}`}
                                                 playsInline
                                                 preload="auto"
                                                 muted={isMuted}
                                                 autoPlay={isSlotActive && isActiveUser && !isPaused && !showInteraction && !isDescriptionExpanded}
                                                 onCanPlay={() => markVideoSlotReady(slotKey, true)}
-                                                onLoadedData={() => {
-                                                    markVideoSlotReady(slotKey, true);
-                                                    if (isActiveCurrentStorySlot) {
-                                                        setMediaLoadFailed(false);
-                                                    }
-                                                }}
+                                                onLoadedData={() => markVideoSlotReady(slotKey, true)}
                                                 onEnded={isActiveCurrentStorySlot ? handleVideoCompleted : undefined}
                                                 onTimeUpdate={isActiveCurrentStorySlot ? (e) => {
                                                     const vid = e.currentTarget;
@@ -970,34 +870,48 @@ export const UserStorySlide = ({
                                                         vid.currentTime = metadata.trim.start;
                                                     }
                                                 } : undefined}
-                                                onError={(e) => {
-                                                    markVideoSlotReady(slotKey, true);
-                                                    if (isActiveCurrentStorySlot) {
-                                                        setMediaLoadFailed(true);
-                                                    }
-                                                    console.error("Video Playback Error:", e.currentTarget.error);
-                                                }}
+                                                onError={(e) => console.error("Video Playback Error:", e.currentTarget.error)}
                                             />
                                         </div>
                                     );
                                 })}
                             </div>
                         )
-                    ) : hasValidCurrentImageSrc ? (
+                    ) : currentStory.image ? (
                         <>
-                            {/* Media is the base visual layer: no gradient/color container background */}
-                            {(!metadata.layers?.some(l => l.type === 'image') || (currentStory.media_type !== "video" && currentStory.render_status === 'ready' && currentStory.final_url)) && (
-                                <div className="absolute inset-0 z-0">
+                            {/* Background: solid/gradient or blurred version of the image */}
+                            <div
+                                className={`absolute inset-0 z-0 overflow-hidden ${(metadata.background?.startsWith('bg-') || metadata.background?.startsWith('from-'))
+                                    ? metadata.background
+                                    : 'bg-black'
+                                    } transition-opacity duration-300 ease-in ${isImageReady ? 'opacity-100' : 'opacity-0'}`}
+                                style={(!metadata.background?.startsWith('bg-') && !metadata.background?.startsWith('from-'))
+                                    ? { background: metadata.background }
+                                    : {}}
+                            >
+                                {/* Only show blurred backdrop when no custom background is set AND fallback is enabled */}
+                                {!metadata.background && !disableMediaBackgroundFallback && (
+                                    <>
+                                        <img
+                                            src={(currentStory.render_status === 'ready' && currentStory.final_url) ? currentStory.final_url : currentStory.image}
+                                            alt=""
+                                            className="w-full h-full object-cover blur-2xl scale-110 opacity-40"
+                                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                        />
+                                        <div className="absolute inset-0 bg-black/40" />
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Foreground: main image fills the 9:16 frame */}
+                            {(!metadata.layers?.some(l => l.type === 'image') || (currentStory.render_status === 'ready' && currentStory.final_url)) && (
+                                <div className="relative z-1 w-full h-full flex items-center justify-center">
                                     <img
-                                        src={currentImageSrc}
+                                        src={(currentStory.render_status === 'ready' && currentStory.final_url) ? currentStory.final_url : currentStory.image}
                                         alt={currentStory.title}
                                         className={`w-full h-full object-cover transition-opacity duration-300 ease-in ${isImageReady ? 'opacity-100' : 'opacity-0'}`}
                                         onLoad={() => setIsImageReady(true)}
-                                        onError={(e) => {
-                                            e.currentTarget.style.display = 'none';
-                                            setMediaLoadFailed(true);
-                                            setIsImageReady(true);
-                                        }}
+                                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
                                     />
                                 </div>
                             )}
@@ -1007,7 +921,7 @@ export const UserStorySlide = ({
                     {/* Metadata Layers Overlay — rendered inside a fixed virtual canvas */}
                     {/* Only show layers if NOT using a pre-rendered final URL */}
                     {isLayeredStory && (
-                        <div className={`absolute inset-0 transition-opacity duration-200 ease-in ${isVirtualLayerReady ? 'opacity-100' : 'opacity-0'}`}>
+                        <div className={`absolute inset-0 transition-opacity duration-300 ease-in ${isVirtualLayerReady ? 'opacity-100' : 'opacity-0'}`}>
                             <VirtualLayerCanvas
                                 layers={metadata.layers}
                                 fallbackVideoUrl={currentStory.media_url}
@@ -1021,7 +935,7 @@ export const UserStorySlide = ({
                     )}
 
                     {!showInteraction && (
-                        <div className={`absolute inset-0 pointer-events-none transition-opacity duration-200 ease-in ${isMediaReady ? 'opacity-100' : 'opacity-0'}`}>
+                        <div className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ease-in ${isMediaReady ? 'opacity-100' : 'opacity-0'}`}>
                             {/* Description Overlay */}
                             {currentStory.description && (
                                 <div
@@ -1069,21 +983,18 @@ export const UserStorySlide = ({
                                 </div>
                             )}
 
-                            {/* Like Button - Hidden for own stories */}
-                            {!currentStory?.isAuthor && (
-                                <div className="absolute right-4 bottom-6 z-30 pointer-events-auto">
-                                    <button
-                                        type="button"
-                                        className="w-12 h-12 rounded-full bg-black/55 backdrop-blur text-white border border-white/35 flex items-center justify-center"
-                                        onClick={handleToggleLike}
-                                        onTouchStart={(e) => e.stopPropagation()}
-                                        onTouchEnd={(e) => e.stopPropagation()}
-                                        aria-label={isLiked ? "Unlike story" : "Like story"}
-                                    >
-                                        <Heart className={`w-5 h-5 transition-colors ${isLiked ? "fill-red-500 text-red-500" : "text-white"}`} />
-                                    </button>
-                                </div>
-                            )}
+                            <div className="absolute right-4 bottom-6 z-30 pointer-events-auto">
+                                <button
+                                    type="button"
+                                    className="w-12 h-12 rounded-full bg-black/55 backdrop-blur text-white border border-white/35 flex items-center justify-center"
+                                    onClick={handleToggleLike}
+                                    onTouchStart={(e) => e.stopPropagation()}
+                                    onTouchEnd={(e) => e.stopPropagation()}
+                                    aria-label={isLiked ? "Unlike story" : "Like story"}
+                                >
+                                    <Heart className={`w-5 h-5 transition-colors ${isLiked ? "fill-red-500 text-red-500" : "text-white"}`} />
+                                </button>
+                            </div>
                         </div>
                     )}
 
