@@ -9,7 +9,6 @@ import { FeedProvider } from "@/context/FeedContext";
 import { JobsProvider } from "@/context/JobsContext";
 import { PostUploadProvider } from "@/context/PostUploadContext";
 import { GlobalUploadProgress } from "@/components/ui/GlobalUploadProgress";
-import { ActiveProfileProvider } from "@/context/ActiveProfileContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,16 +38,14 @@ export default function RootLayout({
         <Providers>
           <FeedProvider>
             <PostUploadProvider>
-              <ActiveProfileProvider>
-                <JobsProvider>
-                  <ActionModalProvider>
-                    {children}
-                    <GlobalUploadProgress />
-                    <Toaster />
-                    <Sonner />
-                  </ActionModalProvider>
-                </JobsProvider>
-              </ActiveProfileProvider>
+              <JobsProvider>
+                <ActionModalProvider>
+                  {children}
+                  <GlobalUploadProgress />
+                  <Toaster />
+                  <Sonner />
+                </ActionModalProvider>
+              </JobsProvider>
             </PostUploadProvider>
           </FeedProvider>
         </Providers>
@@ -56,3 +53,4 @@ export default function RootLayout({
     </html>
   );
 }
+

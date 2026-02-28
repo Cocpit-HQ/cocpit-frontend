@@ -34,6 +34,7 @@ export function MembersManagement({ company }: MembersManagementProps) {
     const canInvite = checkPermission("INVITE_MEMBERS");
 
     const [isInviteOpen, setIsInviteOpen] = useState(false);
+    const [lastInviteLink, setLastInviteLink] = useState<string | null>(null);
 
     // Fetch Roles for mapping
     const { data: roles } = useQuery({
@@ -48,9 +49,16 @@ export function MembersManagement({ company }: MembersManagementProps) {
 
     const inviteMutation = useMutation({
         mutationFn: (data: { email: string; role: string }) => companyService.inviteMember(companyId, data.email, data.role),
-        onSuccess: () => {
+        onSuccess: (data: any) => {
             setIsInviteOpen(false);
-            toast.success("Invitation sent successfully");
+            if (data.userFound) {
+                toast.success("Invitation sent to user's notifications");
+            } else {
+                // User not on platform — show copyable link
+                const fullLink = `${window.location.origin}${data.inviteLink}`;
+                setLastInviteLink(fullLink);
+                toast.info("User not on Cocpit. Share the invite link.");
+            }
         },
         onError: (err: any) => toast.error(err.response?.data?.message || "Failed to send invitation"),
     });
@@ -94,6 +102,32 @@ export function MembersManagement({ company }: MembersManagementProps) {
                     </Button>
                 )}
             </div>
+
+            {lastInviteLink && (
+                <div className="p-4 bg-muted/50 border border-border rounded-lg flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground">Invite link (user not on Cocpit)</p>
+                        <p className="text-xs text-muted-foreground truncate">{lastInviteLink}</p>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                            navigator.clipboard.writeText(lastInviteLink);
+                            toast.success("Link copied!");
+                        }}
+                    >
+                        Copy
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setLastInviteLink(null)}
+                    >
+                        ✕
+                    </Button>
+                </div>
+            )}
 
             <div className="grid gap-4">
                 {members.map((member: any) => {
@@ -239,7 +273,7 @@ function InviteDialog({ open, onOpenChange, roles, onSubmit, isLoading }: any) {
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button type="submit" disabled={isLoading}>{isLoading ? "Send Invite" : "Send Invite"}</Button>
+                        <Button type="submit" disabled={isLoading}>{isLoading ? "Sending..." : "Send Invite"}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

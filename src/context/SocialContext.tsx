@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from 'next-auth/react';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 interface SocialContextType {
   followingIds: string[];
@@ -38,6 +39,7 @@ interface SocialProviderProps {
 export const SocialProvider = ({ children }: SocialProviderProps) => {
   const router = useRouter();
   const { toast } = useToast();
+  const { activeProfile, isCompany } = useActiveProfile();
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [followingLoading, setFollowingLoading] = useState<Set<string>>(new Set());
 
@@ -46,6 +48,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   };
 
   const followUser = async (id: string) => {
+    if (isCompany) return; // Follow is a user-only action
     setFollowingLoading((prev) => {
       const next = new Set(prev);
       next.add(id);
@@ -80,6 +83,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   };
 
   const unfollowUser = async (id: string) => {
+    if (isCompany) return; // Unfollow is a user-only action
     setFollowingLoading((prev) => {
       const next = new Set(prev);
       next.add(id);
@@ -120,8 +124,10 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   };
 
   const startChat = (userId: string, companyId?: string) => {
-    if (companyId) {
-      router.push(`/messaging?userId=${userId}&companyId=${companyId}`);
+    // Auto-include companyId when acting as a company profile
+    const effectiveCompanyId = companyId || (isCompany ? activeProfile?.id : undefined);
+    if (effectiveCompanyId) {
+      router.push(`/messaging?userId=${userId}&companyId=${effectiveCompanyId}`);
     } else {
       router.push(`/messaging?userId=${userId}`);
     }
@@ -144,6 +150,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   const isBlocked = (id: string) => blockedIds.includes(id);
 
   const blockUser = async (id: string) => {
+    if (isCompany) return; // Block is a user-only action
     setBlockedIds(prev => [...prev, id]);
 
     setFollowingIds(prev => prev.filter(uid => uid !== id));
@@ -159,6 +166,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   };
 
   const unblockUser = async (id: string) => {
+    if (isCompany) return; // Unblock is a user-only action
     setBlockedIds(prev => prev.filter(uid => uid !== id));
     try {
       await api.delete(`/users/${id}/unblock`);

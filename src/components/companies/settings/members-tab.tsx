@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Loader2, UserPlus, LogOut, Trash2 } from "lucide-react";
 
 interface MembersTabProps {
@@ -27,7 +28,7 @@ export function MembersTab({ company }: MembersTabProps) {
     } = useCompanyMembers(company.company_id);
 
     const members = data?.pages.flatMap((page: any) => page.data) || [];
-    const { canManageMembers, isOwner, isAdmin } = useCompanyPermissions(company);
+    const { canManageMembers, isOwner, isAdmin, priority: myPriority } = useCompanyPermissions(company);
 
     // Invite State
     const [inviteEmail, setInviteEmail] = useState("");
@@ -39,6 +40,9 @@ export function MembersTab({ company }: MembersTabProps) {
     const leaveMutation = useLeaveCompany();
 
     const [lastInviteLink, setLastInviteLink] = useState<string | null>(null);
+
+    const { data: session } = useSession();
+    const currentUserId = session?.user?.id;
 
     const handleInvite = async () => {
         try {
@@ -157,37 +161,44 @@ export function MembersTab({ company }: MembersTabProps) {
             </div>
 
             <div className="border rounded-lg divide-y">
-                {members.map((member: any) => (
-                    <div key={member.user_id} className="p-4 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <Avatar>
-                                <AvatarImage src={member.avatar_url} />
-                                <AvatarFallback>{member.full_name?.slice(0, 2).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-medium">{member.full_name} {member.role === 'OWNER' && "(Owner)"}</p>
-                                <p className="text-sm text-muted-foreground">{member.email}</p>
+                {members.map((member: any) => {
+                    const memberPriority = member.priority || 0;
+                    const isSelf = member.user_id === currentUserId;
+                    // Allow owners to edit anyone except self; others can edit strictly lower priority
+                    const canEditMember = !isSelf && (isOwner || (myPriority || 0) > memberPriority);
+
+                    return (
+                        <div key={member.user_id} className="p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <Avatar>
+                                    <AvatarImage src={member.avatar_url} />
+                                    <AvatarFallback>{member.full_name?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-medium">{member.full_name} {member.role === 'OWNER' && "(Owner)"}</p>
+                                    <p className="text-sm text-muted-foreground">{member.email}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="text-sm text-muted-foreground capitalize">{member.role.toLowerCase()}</div>
+                                {canManageMembers && canEditMember && member.role !== 'OWNER' && (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-muted-foreground hover:text-destructive"
+                                        onClick={() => {
+                                            if (confirm(`Remove ${member.full_name}?`)) {
+                                                removeMutation.mutate({ companyId: company.company_id, userId: member.user_id });
+                                            }
+                                        }}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                )}
                             </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="text-sm text-muted-foreground capitalize">{member.role.toLowerCase()}</div>
-                            {canManageMembers && member.role !== 'OWNER' && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="text-muted-foreground hover:text-destructive"
-                                    onClick={() => {
-                                        if (confirm(`Remove ${member.full_name}?`)) {
-                                            removeMutation.mutate({ companyId: company.company_id, userId: member.user_id });
-                                        }
-                                    }}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
                 {members.length === 0 && (
                     <div className="p-8 text-center text-muted-foreground">
                         No members found.

@@ -97,8 +97,12 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     }, [activeProfile]);
 
     const switchProfile = (type: ProfileType, id: string) => {
-        // Clear jobs cache when switching profile to prevent data leakage between contexts
+        // Clear ALL profile-sensitive caches to prevent data leakage between contexts
         queryClient.invalidateQueries({ queryKey: JOB_KEYS.all });
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        queryClient.invalidateQueries({ queryKey: ['connection-requests'] });
 
         if (type === "USER" && session?.user) {
             const userProfile: ActiveProfile = {

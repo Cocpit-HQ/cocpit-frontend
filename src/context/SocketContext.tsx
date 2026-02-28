@@ -45,10 +45,28 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const socketRef = useRef<Socket | null>(null);
   // Ref for active conversation to access in event handler without dependency issues
   const activeConversationRef = useRef<string | null>(null);
+  // Ref for active profile to access in notification handler without stale closures
+  const activeProfileRef = useRef<{ type: string; id: string } | null>(null);
 
   useEffect(() => {
     activeConversationRef.current = activeConversationId;
   }, [activeConversationId]);
+
+  useEffect(() => {
+    const storedType = localStorage.getItem('activeProfileType');
+    const storedId = localStorage.getItem('activeProfileId');
+    if (storedType && storedId) {
+      activeProfileRef.current = { type: storedType, id: storedId };
+    }
+    // Re-sync on storage changes from other tabs/components
+    const handleStorage = () => {
+      const t = localStorage.getItem('activeProfileType');
+      const i = localStorage.getItem('activeProfileId');
+      if (t && i) activeProfileRef.current = { type: t, id: i };
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   useEffect(() => {
     // Check for auth error in session
@@ -129,8 +147,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
         // Suppress cross-profile notifications: don't show user-targeted
         // notifications when on company profile and vice versa
-        const currentProfileType = localStorage.getItem('activeProfileType') || 'USER';
-        const currentProfileId = localStorage.getItem('activeProfileId');
+        const currentProfile = activeProfileRef.current;
+        const currentProfileType = currentProfile?.type || 'USER';
+        const currentProfileId = currentProfile?.id;
         if ((payload as any).targetProfileType) {
           const targetType = (payload as any).targetProfileType;
           if (targetType === 'COMPANY' && (currentProfileType !== 'COMPANY' || currentProfileId !== (payload as any).targetCompanyId)) {

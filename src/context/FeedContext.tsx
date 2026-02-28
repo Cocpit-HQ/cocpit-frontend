@@ -8,6 +8,7 @@ import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 
 import { useSession } from "next-auth/react";
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 interface FeedContextType {
   posts: Post[];
@@ -38,12 +39,16 @@ interface FeedProviderProps {
 export const FeedProvider = ({ children }: FeedProviderProps) => {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
+  const { activeProfile } = useActiveProfile();
 
   const currentUser = {
     id: session?.user?.id || '',
     name: session?.user?.name || '',
     image: session?.user?.image,
   };
+
+  // Include activeProfile.type in query key to separate user vs company feed caches
+  const feedQueryKey = ['feed', activeProfile?.type ?? 'USER', currentUser.id];
 
   const {
     data,
@@ -53,7 +58,7 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
     isFetchingNextPage,
     isLoading
   } = useInfiniteQuery({
-    queryKey: ['feed', currentUser.id],
+    queryKey: feedQueryKey,
     queryFn: async ({ pageParam }) => {
       const response = await getFeed(pageParam?.cursorCreatedAt, pageParam?.cursorPostId);
       return {
@@ -89,7 +94,7 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const addPost = useCallback((post: Post) => {
-    queryClient.setQueryData(['feed', currentUser.id], (oldData: any) => {
+    queryClient.setQueryData(feedQueryKey, (oldData: any) => {
       if (!oldData) return oldData;
 
       // Add to the first page
@@ -110,7 +115,7 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
 
   const deletePost = useCallback(async (id: string) => {
     // Optimistic update
-    queryClient.setQueryData(['feed', currentUser.id], (oldData: any) => {
+    queryClient.setQueryData(feedQueryKey, (oldData: any) => {
       if (!oldData) return oldData;
       return {
         ...oldData,
@@ -126,12 +131,12 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
     } catch (error) {
       console.error('Failed to delete post:', error);
       // Revert is complex with infinite query, simplified: invalidate to refetch
-      queryClient.invalidateQueries({ queryKey: ['feed', currentUser.id] });
+      queryClient.invalidateQueries({ queryKey: feedQueryKey });
     }
   }, [queryClient, currentUser.id]);
 
   const togglePostVisibility = useCallback((id: string) => {
-    queryClient.setQueryData(['feed', currentUser.id], (oldData: any) => {
+    queryClient.setQueryData(feedQueryKey, (oldData: any) => {
       if (!oldData) return oldData;
       return {
         ...oldData,
@@ -148,7 +153,7 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
   }, [queryClient]);
 
   const updatePostInFeed = useCallback((id: string, updates: Partial<Post>) => {
-    queryClient.setQueryData(['feed', currentUser.id], (oldData: any) => {
+    queryClient.setQueryData(feedQueryKey, (oldData: any) => {
       if (!oldData) return oldData;
       return {
         ...oldData,

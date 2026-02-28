@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { Home, Briefcase, Plus, Calendar } from "lucide-react"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
-import { useAuth } from "@/hooks/use-auth" // Assuming useAuth provides user avatar fallback if needed
+import { useAuth } from "@/hooks/use-auth"
 import { ProfileSwitcher } from "@/components/layout/ProfileSwitcher"
 
 interface MobileBottomNavProps {

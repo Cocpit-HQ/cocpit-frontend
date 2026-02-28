@@ -32,7 +32,7 @@ export interface Notification {
     notification_id: string;
     user_id: string; // recipient
     sender_id: string; // actor
-    type: 'connection_request' | 'connection_accepted' | 'like' | 'comment' | 'follow' | 'job_alert' | 'repost' | 'mention' | 'reply' | 'advocacy';
+    type: 'connection_request' | 'connection_accepted' | 'like' | 'comment' | 'follow' | 'job_alert' | 'repost' | 'mention' | 'reply' | 'advocacy' | 'company_invite';
     actor_name: string;
     actor_avatar: string | null;
     actor_slug?: string;

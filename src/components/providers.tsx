@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { useState } from "react";
 import { SessionProvider } from "next-auth/react";
+import { ActiveProfileProvider } from "@/context/ActiveProfileContext";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -16,15 +17,17 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <ThemeProvider attribute="data-theme" defaultTheme="navy" enableSystem={false} themes={['light', 'dark', 'navy']}>
         <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <EventsProvider>
-              <SocialProvider>
-                <SocketProvider>
-                  {children}
-                </SocketProvider>
-              </SocialProvider>
-            </EventsProvider>
-          </TooltipProvider>
+          <ActiveProfileProvider>
+            <TooltipProvider>
+              <EventsProvider>
+                <SocialProvider>
+                  <SocketProvider>
+                    {children}
+                  </SocketProvider>
+                </SocialProvider>
+              </EventsProvider>
+            </TooltipProvider>
+          </ActiveProfileProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </SessionProvider>

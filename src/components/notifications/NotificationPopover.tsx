@@ -49,6 +49,15 @@ export function NotificationPopover() {
     if (!socket) return;
 
     const handleNewNotification = (newNotification: Notification) => {
+      // Filter: only show notifications relevant to the current active profile
+      const notif = newNotification as any;
+      if (notif.recipient_company_id) {
+        // This notification is for a company — only show if we're viewing that company
+        if (!isCompany || activeProfile?.id !== notif.recipient_company_id) return;
+      } else {
+        // This notification is for the user — only show if we're in user mode
+        if (isCompany) return;
+      }
       setNotifications(prev => [newNotification, ...prev].slice(0, 5));
     };
 
@@ -56,7 +65,7 @@ export function NotificationPopover() {
     return () => {
       socket.off("notification", handleNewNotification);
     }
-  }, [socket]);
+  }, [socket, isCompany, activeProfile?.id]);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length
 
@@ -151,6 +160,17 @@ export function NotificationPopover() {
                     : `/post/${notification.reference_id}`;
 
                   router.push(url);
+                  setIsOpen(false);
+                } else if (notification.type === 'company_invite') {
+                  // Navigate to invite accept page
+                  let inviteLink = '/';
+                  try {
+                    const meta = typeof notification.metadata === 'string'
+                      ? JSON.parse(notification.metadata)
+                      : notification.metadata;
+                    inviteLink = meta?.inviteLink || '/';
+                  } catch (e) { console.error("Error parsing invite metadata", e); }
+                  router.push(inviteLink);
                   setIsOpen(false);
                 }
               }}
