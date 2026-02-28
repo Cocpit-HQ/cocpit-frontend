@@ -78,6 +78,9 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
         educations: educations as any,
         connectionStatus: (user.connection_request_status === 'connected' ? 'connected' : (user.connection_request_status === 'pending' ? 'pending' : 'none')),
         mutualConnections: 0,
+        followers_count: user.followers_count || 0,
+        following_count: user.following_count || 0,
+        connections_count: user.connections_count || 0,
         identity: {
             openTo: (Array.isArray(user.open_to) ? user.open_to[0] : user.open_to) as any || 'Full-time',
             availability: user.availability as any || 'Casual Networking',

@@ -102,7 +102,7 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
       <div className="job-card group bg-card border border-border rounded-xl p-4 sm:p-6 transition-all shadow-sm hover:shadow-md">
         <div className="flex items-start justify-between gap-4">
           {/* Logo & Info */}
-          <Link href={`/jobs/${job.id}`} className="flex items-start gap-4 flex-1">
+          <Link href={`/jobs/${job.jobId || job.id}`} className="flex items-start gap-4 flex-1">
             {job.companyLogo ? (
               <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border border-border shadow-inner shrink-0 relative">
                 <img src={job.companyLogo} alt={job.company} className="w-full h-full object-cover" />
@@ -158,8 +158,19 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
                 </div>
               </div>
 
-              <div className="mt-3 text-xs text-muted-foreground">
-                {job.applicants} applicants applied
+              <div className="mt-3 text-xs text-muted-foreground flex items-center gap-2">
+                {job.isOffer && job.offerStatus ? (
+                  <span className={cn(
+                    "px-2 py-0.5 rounded-full font-medium",
+                    job.offerStatus === 'pending' ? "bg-yellow-500/10 text-yellow-500" :
+                      job.offerStatus === 'accepted' ? "bg-green-500/10 text-green-500" :
+                        "bg-red-500/10 text-red-500"
+                  )}>
+                    Status: {job.offerStatus.charAt(0).toUpperCase() + job.offerStatus.slice(1)}
+                  </span>
+                ) : (
+                  <span>{job.applicants} applicants applied</span>
+                )}
               </div>
 
             </div>
@@ -170,7 +181,7 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                saveJob(job.id)
+                saveJob(job.jobId || job.id)
               }}
               className={cn(
                 "p-2 rounded-full transition-colors",

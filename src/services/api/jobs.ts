@@ -38,13 +38,14 @@ function formatSalary(min?: number | string, max?: number | string): string {
 
 function transformJob(backendJob: any): Job {
     return {
-        id: backendJob.job_id, // UUID string
+        id: (backendJob.is_offer && backendJob.offer_id) ? backendJob.offer_id : backendJob.job_id, // Use offer_id for individual offers, job_id for grouped
+        jobId: backendJob.job_id, // Always store the original job_id for navigation
         recruiterId: backendJob.recruiter_id,
         title: backendJob.title,
-        company: backendJob.company_name || backendJob.recruiter_name || "Unknown Company",
+        company: backendJob.company_display_name || backendJob.company_name || backendJob.recruiter_name || "Unknown Company",
         location: backendJob.location,
         type: backendJob.job_type,
-        postedTime: backendJob.created_at ? formatTimeAgo(backendJob.created_at) : "Recently",
+        postedTime: (backendJob.latest_offer_at || backendJob.created_at) ? formatTimeAgo(backendJob.latest_offer_at || backendJob.created_at) : "Recently",
         applicants: backendJob.applicants || backendJob.applicants_count || 0,
         salary: formatSalary(backendJob.salary_min, backendJob.salary_max),
         logo: `gradient-${(parseInt(backendJob.job_id.slice(0, 8), 16) % 6) + 1}`,
@@ -53,7 +54,7 @@ function transformJob(backendJob: any): Job {
         companyId: backendJob.company_id,
         isOffer: backendJob.is_offer,
         isSaved: backendJob.isSaved,
-        createdAt: backendJob.created_at,
+        createdAt: backendJob.latest_offer_at || backendJob.created_at,
         savedAt: backendJob.saved_at,
         appliedAt: backendJob.applied_at || backendJob.appliedAt, // Handle inconsistent naming if any
 
@@ -69,6 +70,18 @@ function transformJob(backendJob: any): Job {
         aboutCompany: backendJob.about_company,
         hasApplied: backendJob.hasApplied,
         applicationStatus: backendJob.applicationStatus,
+        recipientName: backendJob.recipient_name,
+        recipientAvatar: backendJob.recipient_avatar,
+        recipientHeadline: backendJob.recipient_headline,
+        offerStatus: backendJob.offerStatus || (backendJob.is_offer ? backendJob.status : undefined),
+        offerId: backendJob.offer_id || backendJob.offerId,
+
+        // Aggregated offer counts (for company grouped view)
+        totalOffers: backendJob.total_offers,
+        pendingOffers: backendJob.pending_count,
+        acceptedOffers: backendJob.accepted_count,
+        declinedOffers: backendJob.declined_count,
+        withdrawnOffers: backendJob.withdrawn_count,
 
         // Mapping Status from applications
         status: backendJob.applicationStatus
@@ -213,7 +226,18 @@ export const getJobOffers = async (filters?: JobSearchParams): Promise<Job[]> =>
         if (filters.cursor) params.append("cursor", filters.cursor);
     }
 
-    const response = await api.get(`/jobs/offers?${params.toString()}`);
+    const response = await api.get(`/jobs/offers/me?${params.toString()}`);
+    return response.data.map(transformJob);
+};
+
+export const getCompanySentOffers = async (companyId: string, filters?: any): Promise<Job[]> => {
+    const params = new URLSearchParams();
+    if (filters) {
+        if (filters.limit) params.append("limit", filters.limit.toString());
+        if (filters.cursor) params.append("cursor", filters.cursor);
+    }
+
+    const response = await api.get(`/jobs/companies/${companyId}/offers/sent?${params.toString()}`);
     return response.data.map(transformJob);
 };
 

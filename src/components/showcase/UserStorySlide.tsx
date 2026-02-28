@@ -113,6 +113,7 @@ export const UserStorySlide = ({
     const [isLiked, setIsLiked] = useState(!!currentStory?.isLiked)
     const [isImageReady, setIsImageReady] = useState(false)
     const [isVirtualLayerReady, setIsVirtualLayerReady] = useState(false)
+    const [mediaLoadFailed, setMediaLoadFailed] = useState(false)
 
     // Parse Metadata safely
     const metadata = useMemo(() => {
@@ -129,7 +130,7 @@ export const UserStorySlide = ({
     }, [currentStory]);
 
     const isLayeredStory = (!currentStory?.render_status || currentStory.render_status !== 'ready' || !currentStory.final_url) && (metadata?.layers?.length || 0) > 0;
-    const isMediaReady = isLayeredStory ? isVirtualLayerReady : (currentStory?.media_type === "video" ? videoSlotReady[activeVideoSlot] : isImageReady);
+    const isMediaReady = mediaLoadFailed || (isLayeredStory ? isVirtualLayerReady : (currentStory?.media_type === "video" ? videoSlotReady[activeVideoSlot] : isImageReady));
 
     // Track if this is the first time becoming active
     const wasActiveRef = useRef(false)
@@ -158,6 +159,7 @@ export const UserStorySlide = ({
         setIsDescriptionExpanded(false)
         setIsImageReady(false)
         setIsVirtualLayerReady(false)
+        setMediaLoadFailed(false)
 
         // Record View
         if (isActiveUser && currentStory && !currentStory.isAuthor) {
@@ -870,7 +872,11 @@ export const UserStorySlide = ({
                                                         vid.currentTime = metadata.trim.start;
                                                     }
                                                 } : undefined}
-                                                onError={(e) => console.error("Video Playback Error:", e.currentTarget.error)}
+                                                onError={(e) => {
+                                                    console.error("Video Playback Error:", e.currentTarget.error);
+                                                    setMediaLoadFailed(true);
+                                                }}
+
                                             />
                                         </div>
                                     );
@@ -896,7 +902,10 @@ export const UserStorySlide = ({
                                             src={(currentStory.render_status === 'ready' && currentStory.final_url) ? currentStory.final_url : currentStory.image}
                                             alt=""
                                             className="w-full h-full object-cover blur-2xl scale-110 opacity-40"
-                                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                                setMediaLoadFailed(true);
+                                            }}
                                         />
                                         <div className="absolute inset-0 bg-black/40" />
                                     </>
@@ -911,7 +920,11 @@ export const UserStorySlide = ({
                                         alt={currentStory.title}
                                         className={`w-full h-full object-cover transition-opacity duration-300 ease-in ${isImageReady ? 'opacity-100' : 'opacity-0'}`}
                                         onLoad={() => setIsImageReady(true)}
-                                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                            setMediaLoadFailed(true);
+                                        }}
+
                                     />
                                 </div>
                             )}

@@ -6,6 +6,7 @@ import { Filter, Plus, Search, Loader2 } from "lucide-react"
 import { useInView } from "react-intersection-observer"
 
 import { JobCard } from "@/components/jobs/JobCard"
+import { GroupedOfferCard } from "@/components/jobs/company/GroupedOfferCard"
 import { JobFiltersSidebar } from "@/components/jobs/JobFiltersSidebar"
 import { JobSearchBar } from "@/components/jobs/JobSearchBar"
 import { MobileJobSearch } from "@/components/jobs/MobileJobSearch"
@@ -252,7 +253,11 @@ export default function CompanyJobsPage({ companyId, searchParams }: { companyId
                                                 {jobsToRender.length > 0 ? (
                                                     <>
                                                         {jobsToRender.map((job) => (
-                                                            <JobCard key={job.id} job={job} mode={"dashboard"} /> // 'dashboard' mode hides Apply button inside JobCard usually
+                                                            activeTab === "offers" ? (
+                                                                <GroupedOfferCard key={job.id} job={job} />
+                                                            ) : (
+                                                                <JobCard key={job.id} job={job} mode={"dashboard"} />
+                                                            )
                                                         ))}
 
                                                         {/* Infinite Scroll Trigger */}

@@ -13,6 +13,9 @@ export interface User {
   educations: Education[];
   connectionStatus: 'connected' | 'pending' | 'none';
   mutualConnections: number; // Mock count
+  followers_count?: number;
+  following_count?: number;
+  connections_count?: number;
   isCurrentUser?: boolean;
   identity?: ProfileIdentity;
   is_following?: boolean;

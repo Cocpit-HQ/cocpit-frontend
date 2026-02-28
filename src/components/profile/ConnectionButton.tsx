@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     UserPlus,
@@ -8,7 +7,6 @@ import {
     Clock,
     Check,
     X,
-    MoreHorizontal,
     Loader2
 } from 'lucide-react';
 import {
@@ -24,212 +22,214 @@ import {
     removeConnection,
     getRelationshipStatus
 } from '@/services/api/social';
+import { companyService } from '@/services/company.service';
 import { toast } from 'sonner';
-import { RelationshipStatus } from '@/types/social';
-
 import { useSocket } from '@/context/SocketContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 interface ConnectionButtonProps {
     userId: string;
     className?: string;
-    // Initial data props
     isFollowing?: boolean;
     isFollowedBy?: boolean;
     connectionRequestStatus?: 'connected' | 'pending' | 'rejected' | 'blocked' | null;
     connectionRequestId?: string | null;
     connectionRequestSender?: 'me' | 'them' | null;
+    asMenuItem?: boolean;
 }
+
+type RelationshipState = 'none' | 'pending_sent' | 'pending_received' | 'connected' | 'cooldown' | 'blocked' | 'me';
 
 export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
     userId,
     className,
-    isFollowing,
-    isFollowedBy,
-    connectionRequestStatus,
+    asMenuItem,
 }) => {
-    const queryClient = useQueryClient();
     const { socket } = useSocket();
+    const queryClient = useQueryClient();
+    const { activeProfile, isCompany } = useActiveProfile();
 
-    // Fetch detailed relationship status
-    const { data: relationship, isLoading: isQueryLoading } = useQuery({
-        queryKey: ['relationship', userId],
-        queryFn: () => getRelationshipStatus(userId),
-        staleTime: 1000 * 60, // 1 minute
-    });
+    // ─── Core state ───
+    const [relationship, setRelationship] = useState<RelationshipState>('none');
+    const [requestId, setRequestId] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState(false);
 
-    const [isMutating, setIsMutating] = useState(false);
+    // ─── Fetch relationship on mount ───
+    const fetchRelationship = useCallback(async () => {
+        try {
+            if (isCompany && activeProfile) {
+                const data = await companyService.getConnectionStatus(activeProfile.id, userId);
+                setRelationship(data.status as RelationshipState);
+                // Note: company_connection_requests doesn't return a requestId yet in status, 
+                // but we can use relationship state for actions since company level actions 
+                // often use companyId/userId instead of requestId.
+                setRequestId('COMPANY_REQ'); // Placeholder to satisfy checks
+            } else {
+                const data = await getRelationshipStatus(userId);
+                setRelationship(data.status as RelationshipState);
+                setRequestId(data.request_id || null);
+            }
+        } catch (err) {
+            console.error('Failed to fetch relationship:', err);
+            setRelationship('none');
+        } finally {
+            setLoading(false);
+        }
+    }, [userId, isCompany, activeProfile]);
 
-    // Derived state from query (prioritized) or props (fallback)
-    const status = relationship?.status ?? connectionRequestStatus;
-    const requestId = relationship?.request_id;
-    // If query is loaded, use query data for connection status. Fallback to props.
-    // Note: relationship.status 'connected' implies following/followed_by check in backend.
+    useEffect(() => {
+        fetchRelationship();
+    }, [fetchRelationship]);
 
-    // However, if we don't have relationship data yet, we rely on props?
-    // But getRelationshipStatus returns all we need.
-    // Let's use relationship data if available, otherwise check props.
-
-    // Strict priority: Relationship Query > Props
-
-    // Determine effective status
-    let effectiveStatus = status;
-    if (isQueryLoading && connectionRequestStatus) {
-        effectiveStatus = connectionRequestStatus;
-    }
-
-    // If query says 'none' but props say 'pending', rely on query (it's fresher).
-    // Unless query is loading.
-
-    const invalidateQueries = () => {
-        queryClient.invalidateQueries({ queryKey: ['relationship', userId] });
-        queryClient.invalidateQueries({ queryKey: ['profile', userId] });
-        queryClient.invalidateQueries({ queryKey: ['followers', userId] });
-        queryClient.invalidateQueries({ queryKey: ['following', userId] });
-        queryClient.invalidateQueries({ queryKey: ['connections', userId] });
-    };
-
-    // Socket Listener for Real-time Updates
+    // ─── Socket listener for real-time updates ───
     useEffect(() => {
         if (!socket) return;
 
-        const handleRelationshipUpdate = (payload: { userId: string, status: string }) => {
-            // payload.userId is the OTHER person. 
-            // If I am viewing Alice (userId prop), and I get update { userId: Alice.id }, refresh.
-            if (payload.userId === userId) {
-                invalidateQueries();
+        const handleUpdate = (payload: { userId: string; status: string; type?: string }) => {
+            // Check if matches userId OR if it's a company update
+            const isMatch = isCompany
+                ? (payload.userId === userId && (payload.type === 'company' || payload.type === 'company_connection'))
+                : (payload.userId === userId && !payload.type);
+
+            if (isMatch) {
+                setRelationship(payload.status as RelationshipState);
+                // Also invalidate profile stats so counts update
+                invalidateCounts();
             }
         };
 
-        socket.on('relationshipUpdated', handleRelationshipUpdate);
+        socket.on('relationshipUpdated', handleUpdate);
+        return () => { socket.off('relationshipUpdated', handleUpdate); };
+    }, [socket, userId, isCompany]);
 
-        return () => {
-            socket.off('relationshipUpdated', handleRelationshipUpdate);
-        };
-    }, [socket, userId, queryClient]);
+    // ─── Invalidate count caches ───
+    const invalidateCounts = () => {
+        queryClient.invalidateQueries({ queryKey: ['profileStats', userId] });
+        queryClient.invalidateQueries({ queryKey: ['connectionCount', userId] });
+        queryClient.invalidateQueries({ queryKey: ['followersCount', userId] });
+        queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+        queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+        // Add company specific invalidations
+        if (activeProfile?.id) {
+            queryClient.invalidateQueries({ queryKey: ['company-connection-status', activeProfile.id, userId] });
+            queryClient.invalidateQueries({ queryKey: ['company-relationship', activeProfile.id] });
+        }
+    };
 
+    // ─── Actions ───
 
-    // --- Mutations ---
+    const handleConnect = async () => {
+        if (isCompany && activeProfile?.id === userId) return; // Cannot connect to self even as company?
 
-    const sendRequestMutation = useMutation({
-        mutationFn: () => sendConnectionRequest(userId),
-        onMutate: async () => {
-            setIsMutating(true);
-            await queryClient.cancelQueries({ queryKey: ['relationship', userId] });
-            const previoushelper = queryClient.getQueryData(['relationship', userId]);
-            // Optimistic update
-            queryClient.setQueryData(['relationship', userId], (old: RelationshipStatus | undefined) => ({
-                ...old,
-                status: 'pending_sent',
-                request_id: 'temp-id'
-            }));
-            return { previoushelper };
-        },
-        onSuccess: () => {
-            toast.success("Connection request sent");
-            invalidateQueries();
-        },
-        onError: (error: any, _, context) => {
-            const errorMessage = error.response?.data?.message || "Failed to send request";
-            toast.error(errorMessage);
-            if (context?.previoushelper) {
-                queryClient.setQueryData(['relationship', userId], context.previoushelper);
-            }
-            invalidateQueries();
-        },
-        onSettled: () => setIsMutating(false),
-    });
+        setActionLoading(true);
+        setRelationship('pending_sent');
 
-    const cancelRequestMutation = useMutation({
-        mutationFn: () => cancelConnectionRequest(requestId!),
-        onMutate: async () => {
-            setIsMutating(true);
-            await queryClient.cancelQueries({ queryKey: ['relationship', userId] });
-            const previous = queryClient.getQueryData(['relationship', userId]);
-            queryClient.setQueryData(['relationship', userId], (old: RelationshipStatus | undefined) => ({
-                ...old,
-                status: 'none',
-                request_id: null
-            }));
-            return { previous };
-        },
-        onSuccess: () => {
-            toast.success("Request cancelled");
-            invalidateQueries();
-        },
-        onError: (err, _, context) => {
-            toast.error("Failed to cancel request");
-            if (context?.previous) {
-                queryClient.setQueryData(['relationship', userId], context.previous);
-            }
-        },
-        onSettled: () => setIsMutating(false),
-    });
-
-    const handleRequestMutation = useMutation({
-        mutationFn: ({ action }: { action: 'connected' | 'rejected' }) =>
-            handleConnectionRequest(requestId!, action),
-        onMutate: async ({ action }) => {
-            setIsMutating(true);
-            await queryClient.cancelQueries({ queryKey: ['relationship', userId] });
-            const previous = queryClient.getQueryData(['relationship', userId]);
-
-            if (action === 'connected') {
-                queryClient.setQueryData(['relationship', userId], (old: RelationshipStatus | undefined) => ({
-                    ...old,
-                    status: 'connected',
-                    is_following: true,
-                    is_followed_by: true
-                }));
+        try {
+            if (isCompany && activeProfile) {
+                const res = await companyService.sendConnectionRequest(activeProfile.id, userId);
+                if (res.status) setRelationship(res.status as RelationshipState);
+                toast.success(res.message || 'Connection request sent');
             } else {
-                queryClient.setQueryData(['relationship', userId], (old: RelationshipStatus | undefined) => ({
-                    ...old,
-                    status: 'none',
-                    request_id: null
-                }));
+                const res = await sendConnectionRequest(userId);
+                if (res.relationship) setRelationship(res.relationship as RelationshipState);
+                if (res.connected) setRelationship('connected');
+                toast.success(res.message || 'Connection request sent');
             }
-            return { previous };
-        },
-        onSuccess: (_, variables) => {
-            toast.success(variables.action === 'connected' ? "Connected!" : "Request rejected");
-            invalidateQueries();
-        },
-        onError: (err, _, context) => {
-            toast.error("Failed to update request");
-            if (context?.previous) {
-                queryClient.setQueryData(['relationship', userId], context.previous);
-            }
-        },
-        onSettled: () => setIsMutating(false),
-    });
+            invalidateCounts();
+        } catch (err: any) {
+            setRelationship('none');
+            const msg = err?.response?.data?.message || 'Failed to send request';
+            toast.error(msg);
+        } finally {
+            setActionLoading(false);
+        }
+    };
 
-    const removeConnectionMutation = useMutation({
-        mutationFn: () => removeConnection(userId),
-        onMutate: async () => {
-            setIsMutating(true);
-            await queryClient.cancelQueries({ queryKey: ['relationship', userId] });
-            const previous = queryClient.getQueryData(['relationship', userId]);
-            queryClient.setQueryData(['relationship', userId], (old: RelationshipStatus | undefined) => ({
-                ...old,
-                status: 'none',
-                is_following: false,
-                is_followed_by: false
-            }));
-            return { previous };
-        },
-        onSuccess: () => {
-            toast.success("Connection removed");
-            invalidateQueries();
-        },
-        onError: (err, _, context) => {
-            toast.error("Failed to remove connection");
-            if (context?.previous) {
-                queryClient.setQueryData(['relationship', userId], context.previous);
-            }
-        },
-        onSettled: () => setIsMutating(false),
-    });
+    const handleCancel = async () => {
+        setActionLoading(true);
+        setRelationship('none');
 
-    if (isQueryLoading && !effectiveStatus && !isFollowing) {
+        try {
+            if (isCompany && activeProfile) {
+                await companyService.cancelConnectionRequest(activeProfile.id, userId);
+            } else {
+                if (!requestId) return;
+                await cancelConnectionRequest(requestId);
+            }
+            setRequestId(null);
+            toast.success('Request cancelled');
+            invalidateCounts();
+        } catch (err) {
+            await fetchRelationship();
+            toast.error('Failed to cancel request');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleAcceptOrReject = async (action: 'connected' | 'rejected') => {
+        setActionLoading(true);
+        setRelationship(action === 'connected' ? 'connected' : 'none');
+
+        try {
+            if (isCompany && activeProfile) {
+                // Technically users handle incoming requests from companies,
+                // and companies handle incoming requests from users?
+                // The backend route: PATCH /companies/:companyId/connect/handle (used by user)
+                // Wait, if I'm viewing as a COMPANY, am I handling a request FROM a user?
+                // The current schema only allows company -> user requests.
+                // So if viewing as company, I probably don't have "pending_received" yet
+                // unless we implement user -> company connections?
+                // For now, company only handles requests if they are the receiver.
+                await companyService.handleConnectionRequest(activeProfile.id, action === 'connected' ? 'accepted' : 'rejected');
+            } else {
+                if (!requestId) return;
+                await handleConnectionRequest(requestId, action);
+            }
+            toast.success(action === 'connected' ? 'Connected!' : 'Request rejected');
+            invalidateCounts();
+        } catch (err) {
+            await fetchRelationship();
+            toast.error('Failed to process request');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleRemove = async () => {
+        setActionLoading(true);
+        setRelationship('none');
+
+        try {
+            if (isCompany && activeProfile) {
+                await companyService.removeConnection(activeProfile.id, userId);
+            } else {
+                await removeConnection(userId);
+            }
+            setRequestId(null);
+            toast.success('Connection removed');
+            invalidateCounts();
+        } catch (err) {
+            await fetchRelationship();
+            toast.error('Failed to remove connection');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    // ─── Render ───
+
+    if (loading) {
+        if (asMenuItem) {
+            return (
+                <DropdownMenuItem disabled className="gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading...
+                </DropdownMenuItem>
+            );
+        }
         return (
             <Button variant="ghost" disabled size="icon" className={className}>
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -237,16 +237,27 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
         );
     }
 
-    // Safety check for self
-    if (effectiveStatus === 'me') return null;
+    if (relationship === 'me' || (isCompany && activeProfile?.id === userId)) return null;
 
-    // --- CONNECTED ---
-    if (effectiveStatus === 'connected' || (isQueryLoading && isFollowing && isFollowedBy)) {
+    // CONNECTED
+    if (relationship === 'connected') {
+        if (asMenuItem) {
+            return (
+                <DropdownMenuItem
+                    className="text-red-600 focus:text-red-600 cursor-pointer"
+                    onClick={handleRemove}
+                    disabled={actionLoading}
+                >
+                    <UserX className="w-4 h-4 mr-2" />
+                    Remove Connection
+                </DropdownMenuItem>
+            );
+        }
         return (
             <div className={className}>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="gap-2" disabled={isMutating}>
+                        <Button variant="outline" className="gap-2" disabled={actionLoading}>
                             <UserCheck className="w-4 h-4" />
                             Connected
                         </Button>
@@ -254,7 +265,7 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem
                             className="text-red-600 focus:text-red-600 cursor-pointer"
-                            onClick={() => removeConnectionMutation.mutate()}
+                            onClick={handleRemove}
                         >
                             <UserX className="w-4 h-4 mr-2" />
                             Remove Connection
@@ -265,31 +276,64 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
         );
     }
 
-    // --- PENDING SENT (I sent it) ---
-    if (effectiveStatus === 'pending_sent') {
+    // PENDING SENT
+    if (relationship === 'pending_sent') {
+        if (asMenuItem) {
+            return (
+                <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={handleCancel}
+                    disabled={actionLoading}
+                >
+                    <Clock className="w-4 h-4 mr-2" />
+                    Cancel Request
+                </DropdownMenuItem>
+            );
+        }
         return (
             <Button
                 variant="secondary"
                 className={`gap-2 ${className}`}
-                onClick={() => cancelRequestMutation.mutate()}
-                disabled={isMutating}
+                onClick={handleCancel}
+                disabled={actionLoading}
             >
                 <Clock className="w-4 h-4" />
                 Pending
-                <span className="sr-only">Cancel Request</span>
             </Button>
         );
     }
 
-    // --- PENDING RECEIVED (They sent it) ---
-    if (effectiveStatus === 'pending_received') {
+    // PENDING RECEIVED
+    if (relationship === 'pending_received') {
+        if (asMenuItem) {
+            return (
+                <>
+                    <DropdownMenuItem
+                        className="text-blue-600 focus:text-blue-600 cursor-pointer"
+                        onClick={() => handleAcceptOrReject('connected')}
+                        disabled={actionLoading}
+                    >
+                        <Check className="w-4 h-4 mr-2" />
+                        Accept Request
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        className="text-red-600 focus:text-red-600 cursor-pointer"
+                        onClick={() => handleAcceptOrReject('rejected')}
+                        disabled={actionLoading}
+                    >
+                        <X className="w-4 h-4 mr-2" />
+                        Reject Request
+                    </DropdownMenuItem>
+                </>
+            );
+        }
         return (
             <div className={`flex gap-2 ${className}`}>
                 <Button
                     variant="default"
                     className="gap-1 bg-blue-600 hover:bg-blue-700 text-white"
-                    onClick={() => handleRequestMutation.mutate({ action: 'connected' })}
-                    disabled={isMutating}
+                    onClick={() => handleAcceptOrReject('connected')}
+                    disabled={actionLoading}
                 >
                     <Check className="w-4 h-4" />
                     Accept
@@ -297,18 +341,17 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
                 <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => handleRequestMutation.mutate({ action: 'rejected' })}
-                    disabled={isMutating}
+                    onClick={() => handleAcceptOrReject('rejected')}
+                    disabled={actionLoading}
                 >
                     <X className="w-4 h-4" />
-                    <span className="sr-only">Reject</span>
                 </Button>
             </div>
         );
     }
 
-    // --- COOLDOWN ---
-    if (effectiveStatus === 'cooldown') {
+    // COOLDOWN
+    if (relationship === 'cooldown') {
         return (
             <Button variant="secondary" disabled className={`gap-2 ${className}`}>
                 <Clock className="w-4 h-4" />
@@ -317,23 +360,26 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
         );
     }
 
-    // --- BLOCKED ---
-    if (effectiveStatus === 'blocked') {
+    // NONE — Connect
+    if (asMenuItem) {
         return (
-            <Button variant="secondary" disabled className={`gap-2 ${className}`}>
-                <UserX className="w-4 h-4" />
-                Blocked
-            </Button>
+            <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={handleConnect}
+                disabled={actionLoading}
+            >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Connect
+            </DropdownMenuItem>
         );
     }
 
-    // --- NONE (Default: Connect) ---
     return (
         <Button
             variant="default"
             className={`gap-2 ${className}`}
-            onClick={() => sendRequestMutation.mutate()}
-            disabled={isMutating}
+            onClick={handleConnect}
+            disabled={actionLoading}
         >
             <UserPlus className="w-4 h-4" />
             Connect

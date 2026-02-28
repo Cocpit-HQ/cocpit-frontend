@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useCompanyPermissions } from "@/hooks/useCompany";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { CompanyFollowersModal } from "@/components/companies/CompanyFollowersModal";
 
 interface CompanyHeaderProps {
     company?: Company;
@@ -22,6 +23,7 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
     const { isOwner, isAdmin, checkPermission } = useCompanyPermissions(company);
     const queryClient = useQueryClient();
     const [isEditAvatarOpen, setIsEditAvatarOpen] = useState(false);
+    const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
 
     // Permission check for editing
     const canManageCompany = isOwner || checkPermission("MANAGE_SETTINGS");
@@ -39,6 +41,9 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["company_relationship", company?.company_id] });
+            queryClient.invalidateQueries({ queryKey: ["company_followers", company?.company_id] });
+            queryClient.invalidateQueries({ queryKey: ["profileStats"] });
+            queryClient.invalidateQueries({ queryKey: ["following"] });
             toast.success(`Followed ${company?.name}`);
         },
         onError: (err: any) => {
@@ -53,6 +58,9 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["company_relationship", company?.company_id] });
+            queryClient.invalidateQueries({ queryKey: ["company_followers", company?.company_id] });
+            queryClient.invalidateQueries({ queryKey: ["profileStats"] });
+            queryClient.invalidateQueries({ queryKey: ["following"] });
             toast.success(`Unfollowed ${company?.name}`);
         },
         onError: (err: any) => {
@@ -242,7 +250,10 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
                                     </a>
                                 </div>
                             )}
-                            <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-md">
+                            <div
+                                className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-md cursor-pointer hover:bg-muted transition-colors"
+                                onClick={() => setIsFollowersModalOpen(true)}
+                            >
                                 <Users className="h-4 w-4 text-muted-foreground" />
                                 {isRelationshipLoading ? (
                                     <Skeleton className="h-4 w-12" />
@@ -264,6 +275,14 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
                     onDelete={handleLogoDelete}
                 />
             )}
+
+            <CompanyFollowersModal
+                isOpen={isFollowersModalOpen}
+                onClose={() => setIsFollowersModalOpen(false)}
+                companyId={company.company_id}
+                companyName={company.name}
+                canManage={canManageCompany}
+            />
         </div>
     );
 }

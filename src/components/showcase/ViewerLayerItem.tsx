@@ -290,9 +290,6 @@ export function VirtualLayerCanvas({
         return () => ro.disconnect();
     }, []);
 
-    const isTailwindBg =
-        background?.startsWith("bg-") || background?.startsWith("from-");
-
     return (
         // Outer: fills parent, centres the virtual canvas
         <div
@@ -322,7 +319,6 @@ export function VirtualLayerCanvas({
                     transition: "opacity 200ms ease-in-out",
                     background: !isTailwindBg ? (background || "transparent") : undefined,
                 }}
-                className={isTailwindBg ? background : ""}
             >
                 {layers.map((layer) => (
                     <ViewerLayerItem

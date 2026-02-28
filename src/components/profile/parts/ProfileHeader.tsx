@@ -9,6 +9,7 @@ import { Building2 } from "lucide-react";
 import { User } from "@/types/user";
 import { ConnectionButton } from "@/components/profile/ConnectionButton";
 import { CompanyRolesList } from "./CompanyRolesList";
+import { SendOfferDialog } from "./SendOfferDialog";
 
 interface ProfileHeaderProps {
     user: User;
@@ -128,36 +129,27 @@ export function ProfileHeader({
                                 <MessageCircle className="w-4 h-4" />
                                 Message
                             </button>
-                            <ConnectionButton
-                                userId={user.id}
-                                isFollowing={user.is_following || false}
-                                isFollowedBy={user.is_followed_by || false}
-                                connectionRequestStatus={user.connection_request_status}
-                                connectionRequestId={user.connection_request_id}
-                                connectionRequestSender={user.connection_request_sender}
-                            />
-                            {!isActuallyConnected && (
-                                <button
-                                    onClick={onFollowToggle}
-                                    disabled={isFollowLoading}
-                                    className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${isUserFollowing
-                                        ? "bg-muted text-foreground hover:bg-muted/80"
-                                        : "bg-primary text-primary-foreground hover:opacity-90"
-                                        } ${isFollowLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-                                >
-                                    {isUserFollowing ? (
-                                        <>
-                                            <UserCheck className="w-4 h-4" />
-                                            Following
-                                        </>
-                                    ) : (
-                                        <>
-                                            <UserPlus className="w-4 h-4" />
-                                            Follow
-                                        </>
-                                    )}
-                                </button>
-                            )}
+                            <SendOfferDialog targetUserId={user.id} targetUserName={user.name} />
+                            <button
+                                onClick={onFollowToggle}
+                                disabled={isFollowLoading}
+                                className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${isUserFollowing
+                                    ? "bg-muted text-foreground hover:bg-muted/80"
+                                    : "bg-primary text-primary-foreground hover:opacity-90"
+                                    } ${isFollowLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                            >
+                                {isUserFollowing ? (
+                                    <>
+                                        <UserCheck className="w-4 h-4" />
+                                        Following
+                                    </>
+                                ) : (
+                                    <>
+                                        <UserPlus className="w-4 h-4" />
+                                        Follow
+                                    </>
+                                )}
+                            </button>
 
                             {/* Dropdown Menu for More Actions */}
                             <DropdownMenu>
@@ -167,6 +159,15 @@ export function ProfileHeader({
                                     </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
+                                    <ConnectionButton
+                                        asMenuItem
+                                        userId={user.id}
+                                        isFollowing={user.is_following || false}
+                                        isFollowedBy={user.is_followed_by || false}
+                                        connectionRequestStatus={user.connection_request_status}
+                                        connectionRequestId={user.connection_request_id}
+                                        connectionRequestSender={user.connection_request_sender}
+                                    />
                                     <DropdownMenuItem onClick={() => setShowBlockDialog(true)} className="text-destructive focus:text-destructive cursor-pointer">
                                         <Ban className="w-4 h-4 mr-2" />
                                         Block User
