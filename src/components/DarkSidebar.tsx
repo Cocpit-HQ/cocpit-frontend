@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { Home, Users, Calendar, User, Settings, Briefcase, BarChart3, Crown } from 'lucide-react'
+import { Home, Users, Calendar, User, Settings, Briefcase, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ProfileSwitcher } from './layout/ProfileSwitcher'
@@ -77,27 +77,17 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
             })}
           </div>
         </div>
-      </div>
 
-      <div className="px-4 mb-4">
-        <div className="flex items-center gap-2 p-2 rounded-lg bg-sidebar-accent/50 border border-sidebar-border/50">
-          <ProfileSwitcher showArrow={true} align="start" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">Switch Account</p>
+        <div className="mt-6 px-3">
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-sidebar-accent/50 border border-sidebar-border/50">
+            <ProfileSwitcher showArrow={true} align="start" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-sidebar-foreground truncate">Switch Account</p>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="p-4 mb-6">
-        <div className="bg-gradient-to-br from-yellow-400 via-orange-400 to-orange-500 rounded-xl p-5 text-white">
-          <div className="flex items-center gap-2 mb-3">
-            <Crown className="w-6 h-6" />
-            <h3>Go Premium</h3>
-          </div>
-          <p className="text-sm mb-4 text-white/90">Unlock advanced features and analytics</p>
-          <button className="w-full bg-white text-orange-600 py-2.5 rounded-lg hover:bg-gray-100 transition-all">Upgrade Now</button>
-        </div>
-      </div>
     </aside>
   )
 }
