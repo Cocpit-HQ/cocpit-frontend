@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import Avatar from '@/components/shared/Avatar'
 import { Button } from '@/components/ui/button'
 import { handleConnectionRequest } from '@/services/api/social'
+import { companyService } from '@/services/company.service'
 import { toast } from 'sonner'
 import { ConnectionRequest } from '@/types/social'
 import { cn } from '@/lib/utils'
@@ -14,13 +16,31 @@ interface ConnectionRequestCardProps {
 
 export const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({ request, onAction }) => {
     const router = useRouter()
+    const queryClient = useQueryClient()
     const [loading, setLoading] = useState(false)
 
     const handleAction = async (action: 'connected' | 'rejected') => {
         setLoading(true)
         try {
-            await handleConnectionRequest(request.id, action)
+            if (request.isCompanyRequest) {
+                // For company requests, sender_id is the company_id
+                await companyService.handleConnectionRequest(request.sender_id, action === 'connected' ? 'accepted' : 'rejected')
+            } else {
+                await handleConnectionRequest(request.id, action)
+            }
+
             toast.success(action === 'connected' ? "Connection accepted" : "Connection rejected")
+
+            // Invalidate caches so button state + counts update immediately
+            queryClient.invalidateQueries({ queryKey: ['relationship', request.sender_id] })
+            queryClient.invalidateQueries({ queryKey: ['company_relationship', request.sender_id] })
+            queryClient.invalidateQueries({ queryKey: ['profile', request.sender_id] })
+            queryClient.invalidateQueries({ queryKey: ['connectionCount', request.sender_id] })
+            queryClient.invalidateQueries({ queryKey: ['followersCount', request.sender_id] })
+            queryClient.invalidateQueries({ queryKey: ['profileStats', request.sender_id] })
+            queryClient.invalidateQueries({ queryKey: ['myProfile'] })
+            queryClient.invalidateQueries({ queryKey: ['pendingRequests'] })
+
             onAction?.(request.id, action)
         } catch (err) {
             console.error("Failed to handle request:", err)
@@ -31,7 +51,13 @@ export const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({ re
     }
 
     const navigateToProfile = () => {
-        router.push(`/profile/${request.sender_id}`)
+        if (request.isCompanyRequest && request.sender.slug) {
+            router.push(`/company/${request.sender.slug}`)
+        } else if (request.isCompanyRequest) {
+            router.push(`/company/${request.sender_id}`) // Fallback if slug missing
+        } else {
+            router.push(`/profile/${request.sender_id}`)
+        }
     }
 
     return (

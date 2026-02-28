@@ -4,6 +4,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
 import { Ban } from "lucide-react";
 
 import SuggestionsPanel from "@/components/SuggestionsPanel";
@@ -20,6 +21,7 @@ import { ProfileAbout } from "@/components/profile/parts/ProfileAbout";
 import { ProfileExperience, FormattedExperience } from "@/components/profile/parts/ProfileExperience";
 import { ProfileEducation, FormattedEducation } from "@/components/profile/parts/ProfileEducation";
 import { ProfileSkills } from "@/components/profile/parts/ProfileSkills";
+import { OffersTab } from "@/components/profile/parts/OffersTab";
 
 // Optimized Hooks
 import { useProfile } from "@/hooks/use-profile";
@@ -28,6 +30,7 @@ import { useSocial } from "@/context/SocialContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { initialSkills as currentUserSkills } from "@/lib/data/profile";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { getProfileStats } from "@/services/api/social";
 
 interface PublicProfileProps {
   userId: string;
@@ -44,6 +47,12 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
   // TanStack Query Hooks
   const { data: user, isLoading: isUserLoading, error: userError } = useProfile(userId);
   const { data: publicPosts, isLoading: isPostsLoading } = useProfilePosts(userId);
+  const { data: profileStats } = useQuery({
+    queryKey: ['profileStats', userId],
+    queryFn: () => getProfileStats(userId),
+    enabled: !!userId,
+    staleTime: 1000 * 30, // 30 seconds
+  });
 
   const isOwnProfile = session?.user?.id === userId;
   const isUserFollowing = user ? isFollowing(user.id) : false;
@@ -106,10 +115,12 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
             />
 
             <ProfileStats
-              connectionsCount={user.id === session?.user?.id ? 501 : 500} // Mock logic from original
+              connectionsCount={profileStats?.connections_count ?? user.connections_count ?? 0}
               profileViewsCount="--"
               postsCount={publicPosts?.length || 0}
               isUserFollowing={isUserFollowing}
+              followersCount={profileStats?.followers_count ?? user.followers_count ?? 0}
+              followingCount={profileStats?.following_count ?? user.following_count ?? 0}
             />
 
             {/* Skill Overlap */}
@@ -118,6 +129,9 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
             <ProfileAbout aboutText={user.about} />
 
             <ProfileExperience experiences={user.experiences as unknown as FormattedExperience[]} />
+
+            {/* Direct Job Offers (own profile only) */}
+            <OffersTab isOwnProfile={isOwnProfile} />
 
             <ProfileSkills
               skills={user.skills}

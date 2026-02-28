@@ -48,6 +48,8 @@ import { EditableExperienceItem } from "@/components/profile/parts/EditableExper
 import { EditableEducationItem } from "@/components/profile/parts/EditableEducationItem"
 import { ContactInfoModal } from "@/components/profile/ContactInfoModal"
 import { FollowListModal } from "@/components/profile/FollowListModal"
+import { getProfileStats } from "@/services/api/social"
+import { useQuery } from "@tanstack/react-query"
 import { ProfileSwitcher } from "@/components/layout/ProfileSwitcher"
 
 // New Hooks
@@ -74,6 +76,14 @@ export default function ProfilePage() {
   const eduMutations = useEducationMutations();
   const skillMutations = useSkillMutations();
   const avatarMutations = useAvatarMutations();
+
+  // Live profile stats (includes company follows in following_count)
+  const { data: profileStats } = useQuery({
+    queryKey: ['profileStats', profileData?.user?.id],
+    queryFn: () => getProfileStats(profileData!.user.id),
+    enabled: !!profileData?.user?.id,
+    staleTime: 1000 * 30,
+  });
 
   const [isAddSkillModalOpen, setIsAddSkillModalOpen] = useState(false);
   const [isAddExperienceModalOpen, setIsAddExperienceModalOpen] = useState(false);
@@ -445,15 +455,15 @@ export default function ProfilePage() {
               <div className="rounded-xl border p-4 mb-6 bg-card border-border">
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors" onClick={() => openFollowList("followers")}>
-                    <p className="text-xl font-semibold mb-1 text-foreground">{user?.followers_count || 0}</p>
+                    <p className="text-xl font-semibold mb-1 text-foreground">{profileStats?.followers_count ?? user?.followers_count ?? 0}</p>
                     <p className="text-xs text-muted-foreground">Followers</p>
                   </div>
                   <div className="text-center border-l border-r border-border cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors" onClick={() => openFollowList("following")}>
-                    <p className="text-xl font-semibold mb-1 text-foreground">{user?.following_count || 0}</p>
+                    <p className="text-xl font-semibold mb-1 text-foreground">{profileStats?.following_count ?? user?.following_count ?? 0}</p>
                     <p className="text-xs text-muted-foreground">Following</p>
                   </div>
                   <div className="text-center cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors" onClick={() => openFollowList("connections")}>
-                    <p className="text-xl font-semibold mb-1 text-foreground">{user?.connections_count || 0}</p>
+                    <p className="text-xl font-semibold mb-1 text-foreground">{profileStats?.connections_count ?? user?.connections_count ?? 0}</p>
                     <p className="text-xs text-muted-foreground">Connections</p>
                   </div>
                 </div>

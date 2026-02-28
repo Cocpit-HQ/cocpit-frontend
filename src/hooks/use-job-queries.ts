@@ -50,7 +50,7 @@ export function useInfiniteJobs(
                 return api.getAllJobs(params);
             } else if (activeTab === "offers") {
                 if (activeProfile?.type === 'COMPANY' && activeProfile.id) {
-                    return api.getCompanyJobs(activeProfile.id, params);
+                    return api.getCompanySentOffers(activeProfile.id, params);
                 }
                 return api.getJobOffers(params);
             } else if (activeTab === "my-jobs") {

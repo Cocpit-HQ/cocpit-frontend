@@ -1,0 +1,228 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { Briefcase, Loader2, Send, CheckCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { sendJobOffer } from "@/services/api/offers";
+import api from "@/lib/axios";
+import { toast } from "sonner";
+
+interface SendOfferDialogProps {
+    targetUserId: string;
+    targetUserName: string;
+}
+
+interface CompanyJob {
+    job_id: string;
+    title: string;
+    location: string;
+    job_type: string;
+}
+
+export function SendOfferDialog({ targetUserId, targetUserName }: SendOfferDialogProps) {
+    const { activeProfile, isCompany } = useActiveProfile();
+    const [open, setOpen] = useState(false);
+    const [jobs, setJobs] = useState<CompanyJob[]>([]);
+    const [selectedJobId, setSelectedJobId] = useState("");
+    const [message, setMessage] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [offeredJobIds, setOfferedJobIds] = useState<string[]>([]);
+    const [offerLoading, setOfferLoading] = useState(false);
+    const [fetchingJobs, setFetchingJobs] = useState(false);
+
+    const loadDialogData = async () => {
+        setFetchingJobs(true);
+        setOfferLoading(true);
+
+        // Fetch both independently so one failure doesn't block the other
+        let fetchedJobs: CompanyJob[] = [];
+        let fetchedOfferedIds: string[] = [];
+
+        try {
+            const jobsRes = await api.get("/jobs", {
+                params: { company_id: activeProfile!.id, status: "ACTIVE" },
+            });
+            fetchedJobs = jobsRes.data?.jobs || jobsRes.data || [];
+            console.log("[SendOfferDialog] Fetched jobs:", fetchedJobs.map(j => ({ job_id: j.job_id, title: j.title })));
+        } catch (err) {
+            console.error("[SendOfferDialog] Error fetching jobs:", err);
+        }
+
+        try {
+            const offersRes = await api.get(`/jobs/companies/${activeProfile!.id}/offers/check/${targetUserId}`);
+            fetchedOfferedIds = offersRes.data.jobIds || [];
+            console.log("[SendOfferDialog] Already offered job IDs:", fetchedOfferedIds);
+        } catch (err) {
+            console.error("[SendOfferDialog] Error checking offers:", err);
+        }
+
+        setJobs(fetchedJobs);
+        setOfferedJobIds(fetchedOfferedIds);
+
+        // Debug: log the filter result
+        const available = fetchedJobs.filter(j => {
+            const id = j.job_id || (j as any).id;
+            return !fetchedOfferedIds.includes(id);
+        });
+        console.log("[SendOfferDialog] Available (after filter):", available.map(j => ({ job_id: j.job_id, title: j.title })));
+
+        setFetchingJobs(false);
+        setOfferLoading(false);
+    };
+
+
+
+    const handleOpen = (isOpen: boolean) => {
+        setOpen(isOpen);
+        if (isOpen) {
+            loadDialogData(); // Fetch both jobs AND offer status together
+            setSelectedJobId("");
+            setMessage("");
+        }
+    };
+
+    // Filter out jobs that already have a pending offer
+    const availableJobs = jobs.filter(j => {
+        const id = j.job_id || (j as any).id;
+        return !offeredJobIds.includes(id);
+    });
+    const allOffered = jobs.length > 0 && availableJobs.length === 0;
+
+    const handleSend = async () => {
+        if (!selectedJobId) {
+            toast.error("Please select a job position");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            await sendJobOffer(activeProfile!.id, selectedJobId, targetUserId, message || undefined);
+            toast.success(`Offer sent to ${targetUserName}!`);
+            setOfferedJobIds(prev => [...prev, selectedJobId]);
+            setOpen(false);
+        } catch (err: any) {
+            const msg = err?.response?.data?.message || "Failed to send offer";
+            toast.error(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!isCompany || !activeProfile) return null;
+
+    return (
+        <Dialog open={open} onOpenChange={handleOpen}>
+            <DialogTrigger asChild>
+                <button
+                    disabled={offerLoading}
+                    className={cn(
+                        "px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium",
+                        allOffered && jobs.length > 0
+                            ? "bg-emerald-600/10 text-emerald-600 border border-emerald-600/20 cursor-default"
+                            : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    )}
+                >
+                    {offerLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (allOffered && jobs.length > 0) ? (
+                        <CheckCircle className="w-4 h-4" />
+                    ) : (
+                        <Briefcase className="w-4 h-4" />
+                    )}
+                    {(allOffered && jobs.length > 0) ? "Offer Sent" : "Send Offer"}
+                </button>
+            </DialogTrigger>
+
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <Briefcase className="w-5 h-5 text-emerald-500" />
+                        Send Job Offer
+                    </DialogTitle>
+                    <DialogDescription>
+                        Send a direct job offer to <strong>{targetUserName}</strong> from{" "}
+                        <strong>{activeProfile.name || "your company"}</strong>
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4 py-2">
+                    {/* Job Selector */}
+                    <div className="space-y-2">
+                        <Label htmlFor="job-select">Select Job Position *</Label>
+                        {fetchingJobs ? (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 border rounded-lg">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Loading jobs...
+                            </div>
+                        ) : availableJobs.length === 0 ? (
+                            <div className="text-sm text-muted-foreground p-3 border border-dashed rounded-lg text-center">
+                                All your active jobs already have pending offers for this user.
+                            </div>
+                        ) : (
+                            <select
+                                id="job-select"
+                                value={selectedJobId}
+                                onChange={(e) => setSelectedJobId(e.target.value)}
+                                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                            >
+                                <option value="">-- Select a job --</option>
+                                {availableJobs.map((job) => {
+                                    const id = job.job_id || (job as any).id;
+                                    return (
+                                        <option key={id} value={id}>
+                                            {job.title} {job.location ? `(${job.location})` : ""} {job.job_type ? `• ${job.job_type}` : ""}
+                                        </option>
+                                    );
+                                })}
+                            </select>
+                        )}
+                    </div>
+
+                    {/* Personal Message */}
+                    <div className="space-y-2">
+                        <Label htmlFor="offer-message">Personal Message (optional)</Label>
+                        <Textarea
+                            id="offer-message"
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            placeholder="Add a personal note about why you'd be a great fit..."
+                            rows={3}
+                            className="resize-none"
+                        />
+                    </div>
+                </div>
+
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleSend}
+                        disabled={loading || !selectedJobId}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                        {loading ? (
+                            <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                        ) : (
+                            <Send className="w-4 h-4 mr-1" />
+                        )}
+                        Send Offer
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}

@@ -36,8 +36,8 @@ export default function NotificationsPage() {
         // Connections are currently user-only features
         const [notifsData, pendingData, historyData] = await Promise.all([
           getNotifications(companyId),
-          !isCompany ? getPendingRequests() : Promise.resolve([]),
-          !isCompany ? getConnectionRequestHistory() : Promise.resolve([])
+          getPendingRequests(),
+          getConnectionRequestHistory()
         ])
         setNotifications(notifsData)
         setPendingRequests(pendingData)
@@ -100,18 +100,16 @@ export default function NotificationsPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className={`grid w-full mb-6 bg-muted/50 p-1 ${isCompany ? 'grid-cols-2' : 'grid-cols-3'}`}>
+          <TabsList className="grid w-full mb-6 bg-muted/50 p-1 grid-cols-3">
             <TabsTrigger value="all">All</TabsTrigger>
-            {!isCompany && (
-              <TabsTrigger value="requests" className="relative">
-                Requests
-                {pendingRequests.length > 0 && (
-                  <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px]">
-                    {pendingRequests.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            )}
+            <TabsTrigger value="requests" className="relative">
+              Requests
+              {pendingRequests.length > 0 && (
+                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px]">
+                  {pendingRequests.length}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="mentions">Mentions</TabsTrigger>
           </TabsList>
 

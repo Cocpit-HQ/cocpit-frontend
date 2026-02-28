@@ -270,10 +270,10 @@ export function VirtualLayerCanvas({
     }, [layers]);
 
     useEffect(() => {
-        if (isReady) {
+        if (mediaLayersCount === 0 || readyCount >= mediaLayersCount) {
             onReady?.();
         }
-    }, [isReady, onReady]);
+    }, [readyCount, mediaLayersCount, onReady]);
 
     useEffect(() => {
         const el = wrapperRef.current;

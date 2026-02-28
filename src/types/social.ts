@@ -6,6 +6,7 @@ export interface ConnectionRequest {
     updated_at?: string;
     status: 'pending' | 'accepted' | 'rejected' | 'connected' | 'blocked';
     direction?: 'incoming' | 'outgoing';
+    isCompanyRequest?: boolean;
     otherUser?: {
         name: string;
         avatar: string | null;
@@ -15,6 +16,7 @@ export interface ConnectionRequest {
         name: string;
         avatar: string | null;
         headline?: string | null;
+        slug?: string | null;
     };
 }
 

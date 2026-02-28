@@ -77,3 +77,8 @@ export const getConnectionCount = async (userId: string): Promise<{ count: numbe
     const response = await api.get(`/users/${userId}/connections/count`);
     return response.data;
 };
+
+export const getProfileStats = async (userId: string): Promise<{ followers_count: number; following_count: number; connections_count: number }> => {
+    const response = await api.get(`/users/${userId}/stats`);
+    return response.data;
+};

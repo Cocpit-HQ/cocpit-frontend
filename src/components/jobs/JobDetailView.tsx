@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, MapPin, Briefcase, Clock, DollarSign, Building, Globe, Zap, CheckCircle, Bookmark, Share2, X } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { ArrowLeft, MapPin, Briefcase, Clock, DollarSign, Building, Globe, Zap, CheckCircle, Bookmark, Share2, X, CheckCircle2, XCircle, Loader2 } from "lucide-react"
 import { useJobs } from "@/context/JobsContext"
 import { cn } from "@/lib/utils"
 import { QuickApplyModal } from "@/components/jobs/QuickApplyModal"
@@ -10,13 +11,13 @@ import { type Job } from "@/types/jobs"
 import { getRecruiterStats } from "@/services/api/jobs"
 import { TaskSubmissionModal } from "./dashboard/TaskSubmissionModal"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
+import { respondToOffer } from "@/services/api/offers"
+import { toast } from "sonner"
 
 
 interface JobDetailViewProps {
   job: Job
 }
-
-import { useRouter } from "next/navigation"
 
 export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
   const router = useRouter()
@@ -180,6 +181,41 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                     <Building className="w-5 h-5" />
                     Switch to Personal Profile to Apply
                   </div>
+                ) : job.isOffer && job.offerStatus === 'pending' ? (
+                  <div className="flex-1 flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={async () => {
+                        if (!job.offerId) return;
+                        try {
+                          await respondToOffer(job.offerId, "accepted");
+                          toast.success("Offer accepted!");
+                          router.refresh(); // Refresh to update status
+                        } catch (err) {
+                          toast.error("Failed to accept offer");
+                        }
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-lg py-2.5 font-medium transition-colors"
+                    >
+                      <CheckCircle2 className="w-5 h-5" />
+                      Accept Offer
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!job.offerId) return;
+                        try {
+                          await respondToOffer(job.offerId, "declined");
+                          toast.success("Offer declined");
+                          router.refresh();
+                        } catch (err) {
+                          toast.error("Failed to decline offer");
+                        }
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 bg-background border border-red-200 text-red-600 hover:bg-red-50 rounded-lg py-2.5 font-medium transition-colors"
+                    >
+                      <XCircle className="w-5 h-5" />
+                      Decline
+                    </button>
+                  </div>
                 ) : (
                   <button
                     onClick={() => setShowQuickApply(true)}
@@ -191,7 +227,7 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                 )}
 
                 <button
-                  onClick={() => saveJob(job.id)}
+                  onClick={() => saveJob(job.jobId || job.id)}
                   className={cn(
                     "px-6 py-2.5 rounded-lg border font-medium flex items-center justify-center gap-2 transition-colors",
                     job.isSaved

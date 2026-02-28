@@ -13,7 +13,8 @@ export interface TimelineEvent {
 }
 
 export interface Job {
-  id: string; // UUID from backend
+  id: string; // UUID: offer_id for offers, job_id for regular jobs
+  jobId?: string; // Original job_id (always set, used for navigation)
   recruiterId: string;
   title: string;
   company: string;
@@ -51,7 +52,17 @@ export interface Job {
   recruiterInsight?: string;
   applicationTimeline?: TimelineEvent[];
   aboutCompany?: string;
-
+  recipientName?: string;
+  recipientAvatar?: string;
+  recipientHeadline?: string;
+  offerStatus?: string;
+  offerId?: string;
+  // Aggregated offer counts (for company grouped view)
+  totalOffers?: number;
+  pendingOffers?: number;
+  acceptedOffers?: number;
+  declinedOffers?: number;
+  withdrawnOffers?: number;
 }
 
 export interface JobFilters {

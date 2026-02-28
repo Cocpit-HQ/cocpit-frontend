@@ -288,7 +288,7 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
           )}
 
           {/* Story Content (Layers) */}
-          <div className="aspect-[9/16] h-full relative overflow-hidden bg-transparent">
+          <div className="aspect-[9/16] h-full relative overflow-hidden bg-[#1a1a1a]">
             <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/70 via-black/30 to-transparent pointer-events-none">
               <div
                 className="px-3 pb-1.5 pt-3 flex items-center justify-between gap-3"

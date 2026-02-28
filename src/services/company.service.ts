@@ -146,6 +146,17 @@ export const companyService = {
         return res.data;
     },
 
+    async getCompanyFollowers(companyId: string, search?: string): Promise<{ user_id: string; full_name: string; headline: string | null; avatar_url: string | null }[]> {
+        const params = search ? { search } : {};
+        const res = await api.get(`/companies/${companyId}/followers`, { params });
+        return res.data;
+    },
+
+    async removeCompanyFollower(companyId: string, followerId: string) {
+        const res = await api.delete(`/companies/${companyId}/followers/${followerId}`);
+        return res.data;
+    },
+
     // Analytics
     async getAnalyticsOverview(companyId: string) {
         const res = await api.get(`/companies/${companyId}/analytics/overview`);
@@ -221,6 +232,32 @@ export const companyService = {
 
     async notifyEmployees(companyId: string, postId: string | number) {
         const res = await api.post(`/companies/${companyId}/posts/${postId}/notify`);
+        return res.data;
+    },
+
+    // --- Connections (Company Level) ---
+    async sendConnectionRequest(companyId: string, userId: string, message?: string) {
+        const res = await api.post(`/companies/${companyId}/connect/${userId}`, { message });
+        return res.data;
+    },
+
+    async handleConnectionRequest(companyId: string, action: 'accepted' | 'rejected') {
+        const res = await api.patch(`/companies/${companyId}/connect/handle`, { status: action });
+        return res.data;
+    },
+
+    async cancelConnectionRequest(companyId: string, userId: string) {
+        const res = await api.delete(`/companies/${companyId}/connect/${userId}/cancel`);
+        return res.data;
+    },
+
+    async removeConnection(companyId: string, userId: string) {
+        const res = await api.delete(`/companies/${companyId}/connections/${userId}`);
+        return res.data;
+    },
+
+    async getConnectionStatus(companyId: string, userId: string): Promise<{ status: 'none' | 'pending_sent' | 'pending_received' | 'connected' | 'rejected' | 'blocked' }> {
+        const res = await api.get(`/companies/${companyId}/connection-status/${userId}`);
         return res.data;
     },
 

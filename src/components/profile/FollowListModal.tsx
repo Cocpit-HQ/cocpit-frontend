@@ -4,9 +4,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Search, UserMinus, UserPlus, X } from "lucide-react";
+import { Search, UserMinus, UserPlus, X, Building2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getFollowers, getFollowing, getMyConnections, followUser, unfollowUser, removeConnection } from "@/services/api/social";
+import { companyService } from "@/services/company.service";
 import { Follower, Following, Connection } from "@/types/social";
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
@@ -64,8 +65,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     const followMutation = useMutation({
         mutationFn: followUser,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["followers"] });
             queryClient.invalidateQueries({ queryKey: ["following"] });
+            queryClient.invalidateQueries({ queryKey: ["profileStats"] });
             toast({ title: "Followed successfully" });
         },
     });
@@ -73,16 +74,34 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     const unfollowMutation = useMutation({
         mutationFn: unfollowUser,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["followers"] });
             queryClient.invalidateQueries({ queryKey: ["following"] });
+            queryClient.invalidateQueries({ queryKey: ["profileStats"] });
             toast({ title: "Unfollowed successfully" });
         },
     });
 
+    const unfollowCompanyMutation = useMutation({
+        mutationFn: (companyId: string) => companyService.unfollowCompany(companyId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["following"] });
+            queryClient.invalidateQueries({ queryKey: ["company_relationship"] });
+            queryClient.invalidateQueries({ queryKey: ["company_followers"] });
+            queryClient.invalidateQueries({ queryKey: ["profileStats"] });
+            toast({ title: "Unfollowed company" });
+        },
+    });
+
     const removeConnectionMutation = useMutation({
-        mutationFn: removeConnection,
+        mutationFn: (data: { id: string, type?: string }) => {
+            if (data.type === 'company') {
+                return companyService.removeConnection(data.id, userId);
+            }
+            return removeConnection(data.id);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["connections"] });
+            queryClient.invalidateQueries({ queryKey: ["following"] });
+            queryClient.invalidateQueries({ queryKey: ["profileStats"] });
             toast({ title: "Connection removed" });
         }
     })
@@ -91,12 +110,16 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         followMutation.mutate(id);
     };
 
-    const handleUnfollow = (id: string) => {
-        unfollowMutation.mutate(id);
+    const handleUnfollow = (id: string, type?: string) => {
+        if (type === 'company') {
+            unfollowCompanyMutation.mutate(id);
+        } else {
+            unfollowMutation.mutate(id);
+        }
     };
 
-    const handleRemoveConnection = (id: string) => {
-        removeConnectionMutation.mutate(id);
+    const handleRemoveConnection = (id: string, type?: string) => {
+        removeConnectionMutation.mutate({ id, type });
     }
 
     const renderUserList = (users: any[], type: "followers" | "following" | "connections") => {
@@ -108,29 +131,43 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
             <div className="space-y-4 mt-4 max-h-[60vh] overflow-y-auto pr-2">
                 {users.map((user) => {
                     const id = user.user_id || user.follower_id || user.following_id;
-                    // Determine if we are following this user (for followers list when viewing own profile)
-                    // For simplicity, we might need extra data from backend `is_following`. 
-                    // For now, in "following" list, we are obviously following them.
-                    // In "followers", we might not be following them back.
+                    const isCompany = user.type === 'company';
+                    const linkHref = isCompany ? `/company/${user.slug}` : `/profile/${id}`;
 
                     return (
-                        <div key={id} className="flex items-center justify-between">
-                            <Link href={`/profile/${id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity" onClick={onClose}>
-                                <Avatar>
-                                    <AvatarImage src={user.avatar_url || user.avatar} />
-                                    <AvatarFallback>{user.full_name?.[0]}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-medium text-sm text-foreground">{user.full_name}</p>
+                        <div key={`${user.type || 'user'}-${id}`} className="flex items-center justify-between">
+                            <Link href={linkHref} className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0 flex-1" onClick={onClose}>
+                                <div className="relative">
+                                    <Avatar>
+                                        <AvatarImage src={user.avatar_url || user.avatar} />
+                                        <AvatarFallback>{user.full_name?.[0]}</AvatarFallback>
+                                    </Avatar>
+                                    {isCompany && (
+                                        <div className="absolute -bottom-0.5 -right-0.5 bg-primary text-primary-foreground rounded-full p-0.5">
+                                            <Building2 className="h-2.5 w-2.5" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="font-medium text-sm text-foreground truncate">{user.full_name}</p>
                                     <p className="text-xs text-muted-foreground line-clamp-1">{user.headline}</p>
                                 </div>
                             </Link>
 
                             {isOwnProfile && (
-                                <div>
+                                <div className="flex-shrink-0 ml-2">
                                     {type === 'following' && (
-                                        <Button variant="outline" size="sm" onClick={() => handleUnfollow(id)}>
-                                            Following
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="group hover:bg-destructive hover:text-destructive-foreground hover:border-destructive w-24"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handleUnfollow(id, user.type);
+                                            }}
+                                        >
+                                            <span className="group-hover:hidden">Following</span>
+                                            <span className="hidden group-hover:inline">Unfollow</span>
                                         </Button>
                                     )}
                                     {type === 'followers' && (
@@ -146,7 +183,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                                         </Button>
                                     )}
                                     {type === 'connections' && (
-                                        <Button variant="ghost" size="icon" onClick={() => handleRemoveConnection(id)}>
+                                        <Button variant="ghost" size="icon" onClick={() => handleRemoveConnection(id, user.type)}>
                                             <X className="h-4 w-4" />
                                         </Button>
                                     )}
@@ -184,9 +221,15 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full h-full flex flex-col">
                         <div className="px-4 pt-4">
                             <TabsList className="w-full grid grid-cols-3">
-                                <TabsTrigger value="followers">Followers</TabsTrigger>
-                                <TabsTrigger value="following">Following</TabsTrigger>
-                                <TabsTrigger value="connections">Connections</TabsTrigger>
+                                <TabsTrigger value="followers">
+                                    Followers {followers ? `(${followers.length})` : ""}
+                                </TabsTrigger>
+                                <TabsTrigger value="following">
+                                    Following {following ? `(${following.length})` : ""}
+                                </TabsTrigger>
+                                <TabsTrigger value="connections">
+                                    Connections {connections ? `(${connections.length})` : ""}
+                                </TabsTrigger>
                             </TabsList>
                         </div>
 
