@@ -5,8 +5,8 @@ import React, { useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, MapPin } from "lucide-react";
 import { StandardEventCard } from "@/components/events/StandardEventCard";
-import { useEventFeed } from "@/hooks/use-event-queries";
-import { useEventActions } from "@/hooks/use-event-mutations";
+import { useEventFeed } from "@/components/events/hooks/use-event-queries";
+import { useEventActions } from "@/components/events/hooks/use-event-mutations";
 import { useEvents } from "@/context/EventsContext"; // Fallback for some shared state if needed, or replace
 import { Skeleton } from "@/components/ui/skeleton";
 

@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Download, FileText, X, ExternalLink } from "lucide-react"
-import { downloadFile } from "@/utils/download"
+import { downloadFile } from "@/lib/download"
 import { useTheme } from "next-themes"
 
 interface ResumePreviewModalProps {

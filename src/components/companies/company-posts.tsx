@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useCompanyPosts, useCompanyPermissions } from '@/hooks/useCompany';
+import { useCompanyPosts, useCompanyPermissions } from '@/components/companies/hooks/use-company';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInView } from 'react-intersection-observer';
 import { Loader2 } from 'lucide-react';
 import { CompanyPostCard } from './CompanyPostCard';
 import { Post } from '@/types/entities';
-import { formatTimeAgo } from '@/lib/utils/timeFormatter';
+import { formatTimeAgo } from '@/lib/timeFormatter';
 import { toast } from 'sonner';
 import api from '@/lib/axios';
 import { useQueryClient } from '@tanstack/react-query';

@@ -12,7 +12,7 @@ import { useTheme } from "next-themes"
 import { Theme, Page } from "@/types/common"
 import { EventFeed } from "@/components/events/EventFeed"
 import { UserEventsList } from "@/components/events/UserEventsList"
-import { useEventFeed } from "@/hooks/use-event-queries"
+import { useEventFeed } from "@/components/events/hooks/use-event-queries"
 
 const routes: Record<string, string> = {
   home: "/feed",

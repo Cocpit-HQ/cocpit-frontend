@@ -1,7 +1,7 @@
 "use client";
 
-import { useCompany } from "@/hooks/useCompany";
-import { useCompanyPermissions } from "@/hooks/useCompany";
+import { useCompany } from "@/components/companies/hooks/use-company";
+import { useCompanyPermissions } from "@/components/companies/hooks/use-company";
 import { Loader2, ShieldAlert, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

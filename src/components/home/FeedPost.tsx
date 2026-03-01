@@ -39,7 +39,7 @@ dayjs.extend(relativeTime)
 import useEmblaCarousel from 'embla-carousel-react'
 import { toast } from 'sonner'
 import { Comment as CommentType, Post, PollOption } from '@/types/entities'
-import { formatTimeAgo } from '@/lib/utils/timeFormatter'
+import { formatTimeAgo } from '@/lib/timeFormatter'
 import CommentSection from './CommentSection'
 import MobileCommentDrawer from './MobileCommentDrawer'
 import { SharePostModal } from './SharePostModal'

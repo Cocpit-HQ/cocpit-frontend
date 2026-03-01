@@ -29,6 +29,7 @@ import { avatarGradients } from "@/constants/messaging"
 import { CreatePostModal } from "@/components/home/CreatePostModal"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 
 interface SharePostModalProps {
   isOpen: boolean
@@ -53,12 +54,14 @@ export function SharePostModal({ isOpen, onClose, postId, postCategory }: ShareP
 
   const router = useRouter()
   const { toast } = useToast()
+  const { activeProfile } = useActiveProfile()
 
   // Fetch users from conversations for sharing
   const { data: users = [] } = useQuery({
-    queryKey: ['conversations'],
+    queryKey: ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'],
     queryFn: async () => {
-      const backendChats = await getConversations();
+      const params = activeProfile?.type === 'COMPANY' ? { companyId: activeProfile.id } : {};
+      const backendChats = await getConversations(params);
       return backendChats.map(mapBackendChatToChatThread);
     }
   });

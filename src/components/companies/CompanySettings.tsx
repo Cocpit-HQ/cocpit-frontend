@@ -23,7 +23,7 @@ interface CompanySettingsProps {
     members?: any[]; // Pass members for transfer ownership
 }
 
-import { useCompanyPermissions } from "@/hooks/useCompany";
+import { useCompanyPermissions } from "@/components/companies/hooks/use-company";
 
 export function CompanySettings({ company }: CompanySettingsProps) {
     const { isOwner, role } = useCompanyPermissions(company);

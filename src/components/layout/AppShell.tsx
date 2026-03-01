@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { DarkSidebar } from "@/components/DarkSidebar";
+import { DarkSidebar } from "@/components/layout/DarkSidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useActionModal } from "@/context/ActionModalContext";
 // import { usePathname } from "next/navigation";

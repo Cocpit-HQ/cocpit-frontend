@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Eye, MessageCircle, Play, Share2, ThumbsUp, X, Plus, Search, Layers } from "lucide-react"
 
-import SuggestionsPanel from "@/components/SuggestionsPanel"
+import SuggestionsPanel from "@/components/home/SuggestionsPanel"
 import { AppShell } from "@/components/layout/AppShell"
 import type { Page } from "@/types/common"
 import type { StoryDetail, StoryGroup } from "@/types/showcase"
@@ -14,7 +14,7 @@ import { StoryModal } from "@/components/showcase/StoryModal"
 import { MobileStoryViewer } from "@/components/showcase/MobileStoryViewer"
 import { StoryCard } from "@/components/showcase/StoryCard"
 import { showcaseService } from "@/services/showcase.service"
-import { useStoryGroups } from "@/hooks/use-story-groups"
+import { useStoryGroups } from "@/components/showcase/hooks/use-story-groups"
 
 const routes: Record<string, string> = {
   home: "/feed",

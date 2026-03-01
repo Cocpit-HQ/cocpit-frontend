@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { companyRolesService, CompanyRole, PERMISSIONS_LIST } from "@/services/company.roles.service";
 import { Company } from "@/services/company.service";
-import { useCompanyPermissions } from "@/hooks/useCompany";
+import { useCompanyPermissions } from "@/components/companies/hooks/use-company";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

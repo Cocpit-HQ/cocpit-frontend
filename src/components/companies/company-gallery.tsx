@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, X, Image as ImageIcon, Trash2 } from "lucide-react";
-import { useGallery, useAddToGallery, useRemoveFromGallery, useCompanyPermissions } from "@/hooks/useCompany";
+import { useGallery, useAddToGallery, useRemoveFromGallery, useCompanyPermissions } from "@/components/companies/hooks/use-company";
 import { Company } from "@/services/company.service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";

@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import { Area } from 'react-easy-crop';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { companyService } from '@/services/company.service';
-import { useCompany } from '@/hooks/useCompany';
+import { useCompany } from '@/components/companies/hooks/use-company';
 import { useSession } from 'next-auth/react';
 
 export type PostType = 'text' | 'photo' | 'poll' | 'video' | 'article';

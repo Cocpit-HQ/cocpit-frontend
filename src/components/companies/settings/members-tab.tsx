@@ -1,8 +1,8 @@
 "use client";
 
-import { useCompanyMembers, useInviteMember, useRemoveMember, useLeaveCompany } from "@/hooks/useCompany";
+import { useCompanyMembers, useInviteMember, useRemoveMember, useLeaveCompany } from "@/components/companies/hooks/use-company";
 import { Company } from "@/services/company.service";
-import { useCompanyPermissions } from "@/hooks/useCompany";
+import { useCompanyPermissions } from "@/components/companies/hooks/use-company";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";

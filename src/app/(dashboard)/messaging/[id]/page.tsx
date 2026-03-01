@@ -9,6 +9,7 @@ import ChatList from '@/components/messaging/ui/ChatList';
 import { useQuery } from '@tanstack/react-query';
 import { getConversations } from '@/services/api/messaging';
 import { mapBackendChatToChatThread } from '@/lib/mappers/messaging.mapper';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 const routes: Record<string, string> = {
     home: "/feed",
@@ -25,13 +26,15 @@ export default function ConversationPage() {
     const params = useParams();
     const router = useRouter()
     const isMobile = useIsMobile();
+    const { activeProfile } = useActiveProfile();
 
     const chatId = params.id as string;
 
     const { data: chats = [], isLoading, error } = useQuery({
-        queryKey: ['conversations'],
+        queryKey: ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'],
         queryFn: async () => {
-            const backendChats = await getConversations();
+            const params = activeProfile?.type === 'COMPANY' ? { companyId: activeProfile.id } : {};
+            const backendChats = await getConversations(params);
             return backendChats.map(mapBackendChatToChatThread);
         }
     });

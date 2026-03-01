@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Post } from '@/types/entities';
-import { formatTimeAgo } from '@/lib/utils/timeFormatter';
+import { formatTimeAgo } from '@/lib/timeFormatter';
 import { ThumbsUp, MessageCircle, Share2, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {

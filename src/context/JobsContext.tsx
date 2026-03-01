@@ -8,7 +8,7 @@ import type {
   MyJobsTab,
   JobListMode
 } from "@/types/jobs";
-import { useInfiniteJobs, useJobMutations, JOB_KEYS } from "@/hooks/use-job-queries";
+import { useInfiniteJobs, useJobMutations, JOB_KEYS } from "@/components/jobs/hooks/use-job-queries";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useQueryClient } from "@tanstack/react-query";
 

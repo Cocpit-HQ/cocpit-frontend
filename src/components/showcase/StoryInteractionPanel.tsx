@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react"
 import { Eye, Heart, MessageCircle, Send } from "lucide-react"
 import { StoryDetail, StoryAuthor } from "@/types/showcase"
 import { showcaseService } from "@/services/showcase.service"
-import { useStorySync } from "@/hooks/use-story-sync"
+import { useStorySync } from "@/components/showcase/hooks/use-story-sync"
 
 interface StoryAnalytics {
     viewerCount: number;

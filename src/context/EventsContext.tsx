@@ -4,8 +4,8 @@
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import type { EventCard, RegisterEventPayload } from '@/types/event';
-import { useRegisteredEvents, useSavedEvents } from '@/hooks/use-event-queries';
-import { useEventActions } from '@/hooks/use-event-mutations';
+import { useRegisteredEvents, useSavedEvents } from '@/components/events/hooks/use-event-queries';
+import { useEventActions } from '@/components/events/hooks/use-event-mutations';
 
 interface EventsContextType {
   // Public events are no longer stored here. Use useEventFeed() in components.

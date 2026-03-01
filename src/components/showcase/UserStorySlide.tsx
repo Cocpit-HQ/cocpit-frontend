@@ -7,7 +7,7 @@ import { SharedPostCard } from "./SharedPostCard"
 import { StoryMetadata } from "@/types/story-editor"
 import { VirtualLayerCanvas } from "./ViewerLayerItem"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
-import { useStorySync } from "@/hooks/use-story-sync"
+import { useStorySync } from "@/components/showcase/hooks/use-story-sync"
 
 type UserStorySlideProps = {
     group: StoryGroup

@@ -28,7 +28,7 @@ import { toast } from "sonner"
 
 
 import { SavedPosts } from "./SavedPosts"
-import SuggestionsPanel from "@/components/SuggestionsPanel"
+import SuggestionsPanel from "@/components/home/SuggestionsPanel"
 import { AppShell } from "@/components/layout/AppShell"
 import { Button } from "@/components/ui/button"
 import {
@@ -192,7 +192,7 @@ function AccountSetting({ label, value }: { label: string; value: string }) {
   )
 }
 
-import { useUserCompanies } from "@/hooks/useCompany"
+import { useUserCompanies } from "@/components/companies/hooks/use-company"
 import Link from "next/link"
 import { Plus } from "lucide-react"
 

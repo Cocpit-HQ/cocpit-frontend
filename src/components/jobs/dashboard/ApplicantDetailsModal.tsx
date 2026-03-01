@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { MapPin, FileText, Download, X, Check } from "lucide-react"
-import { downloadFile } from "@/utils/download"
+import { downloadFile } from "@/lib/download"
 import { useTheme } from "next-themes"
 import { type Applicant } from "@/types/jobs"
 

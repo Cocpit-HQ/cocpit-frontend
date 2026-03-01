@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, X, Laptop } from "lucide-react";
-import { useTechStack, useAddTechStack, useRemoveTechStack, useCompanyPermissions } from "@/hooks/useCompany";
+import { useTechStack, useAddTechStack, useRemoveTechStack, useCompanyPermissions } from "@/components/companies/hooks/use-company";
 import { Company } from "@/services/company.service";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";

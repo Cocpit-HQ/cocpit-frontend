@@ -4,7 +4,7 @@ import React from 'react'
 import { Home, Users, Calendar, User, Settings, Briefcase, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ProfileSwitcher } from './layout/ProfileSwitcher'
+import { ProfileSwitcher } from './ProfileSwitcher'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 
 interface DarkSidebarProps {

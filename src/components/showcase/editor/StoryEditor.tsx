@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Undo, Type, Smile, Crop, Palette, Volume2, VolumeX } from 'lucide-react';
 import { StoryMetadata, StoryLayer } from '@/types/story-editor';
-import { useStoryHistory } from '@/hooks/useStoryHistory';
+import { useStoryHistory } from '@/components/showcase/hooks/use-story-history';
 import { EditorCanvas } from '@/components/showcase/editor/EditorCanvas';
 import { StickerPicker } from '@/components/showcase/editor/StickerPicker';
+import { v4 as uuidv4 } from "uuid";
 import type { StickerSelection } from '@/components/showcase/editor/StickerPicker';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '@/lib/canvasUtils';
@@ -144,7 +145,7 @@ export function StoryEditor({ file, initialMetadata, onSave, onCancel, disableBa
     }, [mediaSrc, mediaType]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleAddLayer = (type: 'text' | 'sticker') => {
-        const id = crypto.randomUUID();
+        const id = uuidv4();
         const newLayer: StoryLayer = type === 'text' ? {
             id,
             type: 'text',
@@ -178,7 +179,7 @@ export function StoryEditor({ file, initialMetadata, onSave, onCancel, disableBa
 
     /** Called when user picks an emoji or image sticker from the StickerPicker sheet */
     const handleStickerSelect = (sticker: StickerSelection) => {
-        const id = crypto.randomUUID();
+        const id = uuidv4();
         const isEmoji = sticker.type === 'emoji';
         const newLayer: StoryLayer = {
             id,

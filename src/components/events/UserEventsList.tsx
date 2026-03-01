@@ -4,8 +4,8 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { StandardEventCard } from "@/components/events/StandardEventCard";
-import { useMyEvents, useRegisteredEvents, useSavedEvents } from "@/hooks/use-event-queries";
-import { useEventActions } from "@/hooks/use-event-mutations";
+import { useMyEvents, useRegisteredEvents, useSavedEvents } from "@/components/events/hooks/use-event-queries";
+import { useEventActions } from "@/components/events/hooks/use-event-mutations";
 import { useEvents } from "@/context/EventsContext";
 import { Loader2 } from "lucide-react";
 

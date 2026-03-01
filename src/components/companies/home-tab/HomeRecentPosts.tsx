@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { useCompanyPosts } from '@/hooks/useCompany';
+import { useCompanyPosts } from '@/components/companies/hooks/use-company';
 import { CompanyPostCard } from '../CompanyPostCard';
 import { Post } from '@/types/entities';
-import { formatTimeAgo } from '@/lib/utils/timeFormatter';
+import { formatTimeAgo } from '@/lib/timeFormatter';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';

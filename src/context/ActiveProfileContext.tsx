@@ -3,11 +3,11 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
-import { useUserCompanies } from "@/hooks/useCompany";
+import { useUserCompanies } from "@/components/companies/hooks/use-company";
 import { Company } from "@/services/company.service";
 import { User } from "next-auth";
 import { useQueryClient } from "@tanstack/react-query";
-import { JOB_KEYS } from "@/hooks/use-job-queries";
+import { JOB_KEYS } from "@/components/jobs/hooks/use-job-queries";
 
 type ProfileType = "USER" | "COMPANY";
 
