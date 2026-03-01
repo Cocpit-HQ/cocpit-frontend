@@ -3,6 +3,7 @@ import { ProfileIdentity } from './profile';
 
 export interface User {
   id: string;
+  account_name?: string;
   name: string;
   headline: string;
   avatar: string; // URL or path
@@ -54,6 +55,7 @@ export interface UserProfile {
 
 export interface UserData {
   id: string;
+  account_name?: string;
   name: string;
   headline: string | null;
   avatar: string | null;
@@ -94,6 +96,7 @@ export interface UpdateProfilePayload {
   location: string;
   about_text: string;
   mobile_number?: string;
+  account_name?: string;
 }
 
 export interface Skill {
@@ -147,9 +150,11 @@ export interface AddEducationResponse {
 export interface SearchedUser {
   id: string;
   full_name: string;
+  account_name?: string;
   headline: string | null;
   avatar_url: string | null;
   account_type: string;
   type?: 'USER' | 'COMPANY';
   slug?: string;
+  industry?: string | null;
 }

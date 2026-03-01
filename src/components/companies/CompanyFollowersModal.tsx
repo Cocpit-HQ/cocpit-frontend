@@ -90,7 +90,7 @@ export function CompanyFollowersModal({
                                 {followers.map((user) => (
                                     <div key={user.user_id} className="flex items-center justify-between">
                                         <Link
-                                            href={`/profile/${user.user_id}`}
+                                            href={`/profile/${(user as any).account_name || user.user_id}`}
                                             className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0 flex-1"
                                             onClick={onClose}
                                         >

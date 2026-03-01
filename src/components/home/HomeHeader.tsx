@@ -111,13 +111,24 @@ export const HomeHeader = () => {
                                     searchResults.map(user => (
                                         <Link
                                             key={user.type === 'COMPANY' ? user.slug : user.id}
-                                            href={user.type === 'COMPANY' ? `/company/${user.slug}` : `/profile/${user.id}`}
-                                            className="flex items-center gap-3 px-4 py-2 hover:bg-muted/50 transition-colors"
+                                            href={user.type === 'COMPANY' ? `/company/${user.slug}` : `/profile/${user.account_name || user.id}`}
+                                            className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors"
                                         >
-                                            <img src={user.avatar_url || (user.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
+                                            <img src={user.avatar_url || (user.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')} alt={user.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-foreground truncate">{user.full_name}</p>
-                                                <p className="text-xs text-muted-foreground truncate">{user.headline || (user.type === 'COMPANY' ? 'Company' : '')}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-semibold text-foreground truncate">{user.full_name}</p>
+                                                    {user.type === 'COMPANY' && (
+                                                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">Company</span>
+                                                    )}
+                                                </div>
+                                                {(user.headline || (user.type === 'COMPANY' && user.industry)) && (
+                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground truncate font-normal mt-0.5">
+                                                        {user.headline && <span className="truncate">{user.headline}</span>}
+                                                        {user.headline && user.type === 'COMPANY' && user.industry && <span className="flex-shrink-0">·</span>}
+                                                        {user.type === 'COMPANY' && user.industry && <span className="truncate">{user.industry}</span>}
+                                                    </div>
+                                                )}
                                             </div>
                                         </Link>
                                     ))
@@ -172,13 +183,24 @@ export const HomeHeader = () => {
                                     searchResults.map(user => (
                                         <Link
                                             key={user.type === 'COMPANY' ? user.slug : user.id}
-                                            href={user.type === 'COMPANY' ? `/company/${user.slug}` : `/profile/${user.id}`}
-                                            className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+                                            href={user.type === 'COMPANY' ? `/company/${user.slug}` : `/profile/${user.account_name || user.id}`}
+                                            className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors"
                                         >
-                                            <img src={user.avatar_url || (user.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')} alt={user.full_name} className="w-8 h-8 rounded-full object-cover" />
+                                            <img src={user.avatar_url || (user.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')} alt={user.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-foreground truncate">{user.full_name}</p>
-                                                <p className="text-xs text-muted-foreground truncate">{user.headline || (user.type === 'COMPANY' ? 'Company' : '')}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-semibold text-foreground truncate">{user.full_name}</p>
+                                                    {user.type === 'COMPANY' && (
+                                                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">Company</span>
+                                                    )}
+                                                </div>
+                                                {(user.headline || (user.type === 'COMPANY' && user.industry)) && (
+                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground truncate font-normal mt-0.5">
+                                                        {user.headline && <span className="truncate">{user.headline}</span>}
+                                                        {user.headline && user.type === 'COMPANY' && user.industry && <span className="flex-shrink-0">·</span>}
+                                                        {user.type === 'COMPANY' && user.industry && <span className="truncate">{user.industry}</span>}
+                                                    </div>
+                                                )}
                                             </div>
                                         </Link>
                                     ))

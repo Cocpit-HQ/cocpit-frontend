@@ -132,7 +132,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                 {users.map((user) => {
                     const id = user.user_id || user.follower_id || user.following_id;
                     const isCompany = user.type === 'company';
-                    const linkHref = isCompany ? `/company/${user.slug}` : `/profile/${id}`;
+                    const linkHref = isCompany ? `/company/${user.slug}` : `/profile/${user.account_name || id}`;
 
                     return (
                         <div key={`${user.type || 'user'}-${id}`} className="flex items-center justify-between">

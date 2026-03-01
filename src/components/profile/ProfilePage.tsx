@@ -119,7 +119,6 @@ export default function ProfilePage() {
   const user = profileData?.user ? {
     ...profileData.user,
     company_roles: profileData.company_roles || [],
-    // Ensure compatibility with User interface if needed, though ProfileHeader only uses specific fields
   } : undefined;
 
   // Update cover image when profile loads
@@ -336,7 +335,6 @@ export default function ProfilePage() {
                       View Analytics
                     </button>
                     <button onClick={() => router.push('/profile/edit')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
-                      <Edit2 className="w-4 h-4" />
                       Edit Profile
                     </button>
                   </div>
@@ -650,6 +648,7 @@ export default function ProfilePage() {
         isOpen={isContactInfoModalOpen}
         onClose={() => setIsContactInfoModalOpen(false)}
         user={user}
+        isOwnProfile={true}
       />
 
       <CompanyRoleModal

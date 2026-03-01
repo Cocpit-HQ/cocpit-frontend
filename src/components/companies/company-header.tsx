@@ -227,8 +227,13 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
                                     )}
                                 </div>
                                 <p className="text-muted-foreground text-lg mt-1">
-                                    {company?.industry} • {company?.size} employees
+                                    {company?.headline ? `${company.headline} • ` : ''}{company?.industry} • {company?.size} employees
                                 </p>
+                                {company?.slogan && (
+                                    <p className="text-muted-foreground/80 text-sm italic mt-1">
+                                        &ldquo;{company.slogan}&rdquo;
+                                    </p>
+                                )}
                             </div>
 
                             {/* Desktop Actions - Hidden on mobile, visible on desktop */}

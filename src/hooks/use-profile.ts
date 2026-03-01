@@ -66,6 +66,7 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
 
     return {
         id: user.id,
+        account_name: user.account_name,
         name: user.name,
         headline: user.headline || '',
         avatar: user.avatar || '/assets/pngegg.png',
