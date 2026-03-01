@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuditLogs } from "@/hooks/useCompany";
+import { useAuditLogs } from "@/components/companies/hooks/use-company";
 import { Company } from "@/services/company.service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

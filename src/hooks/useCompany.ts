@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { companyService, Company, CompanyTechStack, CompanyGalleryItem } from '../services/company.service';
+import { companyService, Company, CompanyTechStack, CompanyGalleryItem } from '@/services/company.service';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 

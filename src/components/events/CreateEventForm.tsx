@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
-import { useUserCompanies, useCompanyPermissions } from "@/hooks/useCompany"
+import { useUserCompanies, useCompanyPermissions } from "@/components/companies/hooks/use-company"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 

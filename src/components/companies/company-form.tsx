@@ -1,6 +1,6 @@
 "use client";
 
-import { useCreateCompany } from "@/hooks/useCompany";
+import { useCreateCompany } from "@/components/companies/hooks/use-company";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

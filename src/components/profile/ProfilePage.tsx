@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Menu, LogOut, Edit2, CheckCircle, GraduationCap, Briefcase, Pencil, Plus, Building2 } from "lucide-react"
 import Link from "next/link"
 
-import SuggestionsPanel from "@/components/SuggestionsPanel"
+import SuggestionsPanel from "@/components/home/SuggestionsPanel"
 import type { Page } from "@/types/common"
 import { CompanyRoleModal } from "@/components/profile/parts/CompanyRoleModal"
 import {
@@ -53,7 +53,7 @@ import { useQuery } from "@tanstack/react-query"
 import { ProfileSwitcher } from "@/components/layout/ProfileSwitcher"
 
 // New Hooks
-import { useMyProfile, useExperienceMutations, useEducationMutations, useSkillMutations, useAvatarMutations } from "@/hooks/use-my-profile"
+import { useMyProfile, useExperienceMutations, useEducationMutations, useSkillMutations, useAvatarMutations } from "@/components/profile/hooks/use-my-profile"
 
 const routes: Record<string, string> = {
   home: "/feed",

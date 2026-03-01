@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { Ban } from "lucide-react";
 
-import SuggestionsPanel from "@/components/SuggestionsPanel";
+import SuggestionsPanel from "@/components/home/SuggestionsPanel";
 import PostCard from "@/components/shared/PostCard";
 import FeedPost from "@/components/home/FeedPost";
 import { ViewAvatarModal } from "@/components/profile/ViewAvatarModal";
@@ -24,8 +24,8 @@ import { ProfileSkills } from "@/components/profile/parts/ProfileSkills";
 import { OffersTab } from "@/components/profile/parts/OffersTab";
 
 // Optimized Hooks
-import { useProfile } from "@/hooks/use-profile";
-import { useProfilePosts } from "@/hooks/use-profile-posts";
+import { useProfile } from "@/components/profile/hooks/use-profile";
+import { useProfilePosts } from "@/components/profile/hooks/use-profile-posts";
 import { useSocial } from "@/context/SocialContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { initialSkills as currentUserSkills } from "@/lib/data/profile";

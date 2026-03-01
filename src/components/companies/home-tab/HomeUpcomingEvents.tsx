@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useEventFeed } from '@/hooks/use-event-queries';
+import { useEventFeed } from '@/components/events/hooks/use-event-queries';
 import { StandardEventCard } from '@/components/events/StandardEventCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';

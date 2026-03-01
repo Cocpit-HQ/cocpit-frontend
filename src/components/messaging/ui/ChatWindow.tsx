@@ -32,7 +32,7 @@ import { deleteMessage } from "@/services/api/messaging"
 import { Trash2 } from "lucide-react"
 import MediaPreviewModal from "./MediaPreviewModal"
 import ChatSkeleton from "./ChatSkeleton"
-import { useChatSession } from "@/hooks/useChatSession"
+import { useChatSession } from "@/components/messaging/hooks/use-chat-session"
 import { SessionBanner } from "./SessionBanner"
 
 interface ChatWindowProps {
@@ -141,7 +141,6 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
     },
     initialPageParam: null as string | null,
     enabled: !!chat.id && chat.id !== 'new' && !!session?.user?.id,
-    staleTime: Infinity, // Keep messages fresh since we handle updates via socket
   });
 
   // Flatten and reverse pages to show oldest to newest

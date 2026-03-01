@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Company, companyService } from "@/services/company.service";
 import { BadgeCheck, MapPin, Globe, Users, PenBox, UserPlus, UserMinus, Loader2, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
-import { useCompanyPermissions } from "@/hooks/useCompany";
+import { useCompanyPermissions } from "@/components/companies/hooks/use-company";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CompanyFollowersModal } from "@/components/companies/CompanyFollowersModal";

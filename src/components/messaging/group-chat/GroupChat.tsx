@@ -22,6 +22,7 @@ import MediaPreviewModal from "../ui/MediaPreviewModal";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import ChatSkeleton from "../ui/ChatSkeleton";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 interface GroupChatProps {
     groupId: string;
@@ -32,6 +33,7 @@ interface GroupChatProps {
 
 export default function GroupChat({ groupId, currentUser, messages = [], onBack }: GroupChatProps) {
     const { activeGroup, isLoading, error, inviteMember, isInactive } = useGroupChat();
+    const { activeProfile } = useActiveProfile();
     const { toast } = useToast();
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -123,7 +125,6 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
         },
         initialPageParam: null as string | null,
         enabled: !!groupId,
-        staleTime: Infinity,
     });
 
     const fetchedMessages = React.useMemo(() => {
@@ -196,7 +197,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
 
             // Update last message in specific conversation without refetching all conversation lists? 
             // Or just invalidate to be safe.
-            // queryClient.invalidateQueries({ queryKey: ['conversations'] }); // Handled by MessagingPage via socket or manual update
+            // queryClient.invalidateQueries({ queryKey: ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'] }); // Handled by MessagingPage via socket or manual update
 
             // We could also mark as read if focused, just like ChatWindow
         };
@@ -244,7 +245,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                 };
             });
             // Also update conversation list logic here if needed, but invalidation is safer
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            queryClient.invalidateQueries({ queryKey: ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'] });
         };
 
         const handleMessageDeletedForEveryone = (payload: { messageId: string, conversationId: string }) => {
@@ -262,7 +263,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                     }))
                 };
             });
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            queryClient.invalidateQueries({ queryKey: ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'] });
         };
 
         socket.on('new_message', handleNewMessage);
@@ -319,7 +320,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                 return { ...old, pages: newPages };
             });
 
-            queryClient.setQueryData(['conversations'], (oldData: any[]) => {
+            queryClient.setQueryData(['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'], (oldData: any[]) => {
                 if (!oldData) return oldData;
 
                 const now = new Date().toISOString();
@@ -357,7 +358,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
 
             // Invalidate to fetch the true state
             queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
-            // queryClient.invalidateQueries({ queryKey: ['conversations'] }); // Optimistic update is enough, avoid sidebar re-render
+            // queryClient.invalidateQueries({ queryKey: ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'] }); // Optimistic update is enough, avoid sidebar re-render
         },
     });
 
@@ -376,7 +377,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                     markGroupAsRead(groupId).catch(console.error);
 
                     // Optimistically update conversation unread count
-                    queryClient.setQueryData(['conversations'], (oldData: any[]) => {
+                    queryClient.setQueryData(['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'], (oldData: any[]) => {
                         if (!oldData) return oldData;
                         // Avoid update if already 0 to prevent reference change
                         const target = oldData.find(c => c.conversation_id === groupId || c.id === groupId);

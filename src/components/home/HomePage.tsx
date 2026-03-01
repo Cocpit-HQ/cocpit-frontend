@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import SuggestionsPanel from '@/components/SuggestionsPanel'
+import SuggestionsPanel from '@/components/home/SuggestionsPanel'
 import { StoryDetail, StoryGroup } from '@/types/showcase'
 import { MobileStoryViewer } from '@/components/showcase/MobileStoryViewer'
 import { StoryModal } from '@/components/showcase/StoryModal'
@@ -10,7 +10,7 @@ import { X } from 'lucide-react'
 import { HomeHeader } from './HomeHeader'
 import { FeedSection } from './FeedSection'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
-import { useStoryGroups } from '@/hooks/use-story-groups'
+import { useStoryGroups } from '@/components/showcase/hooks/use-story-groups'
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false)

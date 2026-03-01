@@ -1,6 +1,6 @@
 "use client";
 
-import { useVerifyDomain } from "@/hooks/useCompany";
+import { useVerifyDomain } from "@/components/companies/hooks/use-company";
 import { Company } from "@/services/company.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

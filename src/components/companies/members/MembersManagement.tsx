@@ -16,7 +16,7 @@ import { Loader2, UserPlus, MoreVertical, ShieldAlert, Trash2, Clock, AlertCircl
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useCompanyPermissions } from "@/hooks/useCompany";
+import { useCompanyPermissions } from "@/components/companies/hooks/use-company";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MembersManagementProps {

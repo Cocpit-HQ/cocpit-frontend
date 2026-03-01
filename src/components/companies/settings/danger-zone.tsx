@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeleteCompany, useTransferOwnership } from "@/hooks/useCompany";
+import { useDeleteCompany, useTransferOwnership } from "@/components/companies/hooks/use-company";
 import { Company } from "@/services/company.service";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

@@ -4,8 +4,8 @@ import { useInfiniteQuery } from '@tanstack/react-query'; // Using direct query 
 import { StandardEventCard } from '@/components/events/StandardEventCard';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { useCompanyPermissions } from '@/hooks/useCompany';
-import { useEventFeed } from '@/hooks/use-event-queries';
+import { useCompanyPermissions } from '@/components/companies/hooks/use-company';
+import { useEventFeed } from '@/components/events/hooks/use-event-queries';
 import { EventCard } from '@/types/event';
 
 interface CompanyEventsProps {

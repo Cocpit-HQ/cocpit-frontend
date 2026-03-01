@@ -12,6 +12,7 @@ import { getGradientImage } from "@/lib/canvasUtils";
 import { EditorCanvas } from "./editor/EditorCanvas";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { VirtualLayerCanvas } from "./ViewerLayerItem";
+import { v4 as uuidv4 } from "uuid";
 
 type Props = {
   onCancel?: () => void
@@ -460,14 +461,14 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
 
                     if (template === 'quote') {
                       meta.layers.push({
-                        id: crypto.randomUUID(), type: 'text',
+                        id: uuidv4(), type: 'text',
                         x: 50, y: 50, width: 80, height: 20, rotation: 0, scale: 1, zIndex: 1,
                         content: '"Your Quote Here"',
                         style: { color: '#ffffff', fontSize: 32, fontFamily: 'serif', fontWeight: 'normal', textAlign: 'center', fontStyle: 'italic' }
                       });
                     } else if (template === 'announcement') {
                       meta.layers.push({
-                        id: crypto.randomUUID(), type: 'text',
+                        id: uuidv4(), type: 'text',
                         x: 50, y: 30, width: 90, height: 15, rotation: 0, scale: 1, zIndex: 1,
                         content: 'BIG NEWS',
                         style: { color: '#ffffff', fontSize: 48, fontFamily: 'Inter', fontWeight: '900', textAlign: 'center' }

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useGallery } from '@/hooks/useCompany';
+import { useGallery } from '@/components/companies/hooks/use-company';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Image as ImageIcon } from 'lucide-react';
