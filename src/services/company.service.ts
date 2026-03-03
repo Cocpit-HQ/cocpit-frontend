@@ -17,6 +17,7 @@ export interface Company {
     cover_url?: string;
     description?: string;
     slogan?: string;
+    headline?: string;
     verification_status: 'UNVERIFIED' | 'DOMAIN_PENDING' | 'DOMAIN_VERIFIED' | 'REJECTED';
     is_deleted: boolean;
     created_at: string;

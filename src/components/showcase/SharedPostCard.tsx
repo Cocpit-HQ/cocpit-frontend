@@ -32,7 +32,7 @@ export const SharedPostCard: React.FC<SharedPostCardProps> = ({ sharedPost, onCl
             if (sharedPost.post_id) {
                 router.push(`/post/${sharedPost.post_id}`);
             } else if (sharedPost.author?.user_id) {
-                router.push(`/profile/${sharedPost.author.user_id}`);
+                router.push(`/profile/${(sharedPost.author as any).account_name || sharedPost.author.user_id}`);
             }
         }
     };

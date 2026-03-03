@@ -557,7 +557,7 @@ export default function FeedPost({
               </div>
             ) : (
               <Link
-                href={isCompanyPost ? `/company/${authorSlug}` : `/profile/${authorId}`}
+                href={isCompanyPost ? `/company/${authorSlug}` : `/profile/${authorSlug || authorId}`}
                 className="block flex-shrink-0"
               >
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
@@ -570,7 +570,7 @@ export default function FeedPost({
                 <h3 className="text-foreground text-sm font-semibold cursor-default leading-tight">{author}</h3>
               ) : (
                 <Link
-                  href={isCompanyPost ? `/company/${authorSlug}` : `/profile/${authorId}`}
+                  href={isCompanyPost ? `/company/${authorSlug}` : `/profile/${authorSlug || authorId}`}
                   className="hover:underline block"
                 >
                   <h3 className="text-foreground text-sm font-semibold leading-tight">{author}</h3>
@@ -765,7 +765,7 @@ export default function FeedPost({
                 )}
 
                 {(shared_post as any).author && (shared_post as any).author !== 'Unknown' && (
-                  <Link href={`/profile/${(shared_post as any).authorId}`} className="text-sm text-primary hover:underline mt-2">
+                  <Link href={`/profile/${(shared_post as any).authorSlug || (shared_post as any).authorId}`} className="text-sm text-primary hover:underline mt-2">
                     View {(shared_post as any).author}&apos;s Profile
                   </Link>
                 )}

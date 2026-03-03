@@ -155,6 +155,20 @@ export default function CompanyPage() {
                                     </div>
                                 )}
 
+                                {company?.headline && (
+                                    <div>
+                                        <h4 className="font-medium mb-1">Headline</h4>
+                                        <p className="text-muted-foreground">{company.headline}</p>
+                                    </div>
+                                )}
+
+                                {company?.slogan && (
+                                    <div>
+                                        <h4 className="font-medium mb-1">Slogan / Catchphrase</h4>
+                                        <p className="text-muted-foreground italic">&ldquo;{company.slogan}&rdquo;</p>
+                                    </div>
+                                )}
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {company?.industry && (
                                         <div>

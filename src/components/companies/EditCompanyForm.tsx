@@ -17,6 +17,7 @@ import { Loader2 } from "lucide-react";
 // Schema matching backend requirements
 const companyFormSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
+    headline: z.string().min(1, "Headline is required").max(120, "Headline must be 120 characters or less"),
     industry: z.string().optional(),
     size: z.string().optional(),
     website: z.string().url("Invalid URL").optional().or(z.literal("")),
@@ -38,6 +39,7 @@ export function EditCompanyForm({ company }: EditCompanyFormProps) {
         resolver: zodResolver(companyFormSchema),
         defaultValues: {
             name: company.name || "",
+            headline: company.headline || "",
             industry: company.industry || "",
             size: company.size || "1-10",
             website: company.website || "",
@@ -80,7 +82,29 @@ export function EditCompanyForm({ company }: EditCompanyFormProps) {
                             </FormItem>
                         )}
                     />
+                </div>
 
+                <FormField
+                    control={form.control}
+                    name="headline"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Headline *</FormLabel>
+                            <FormControl>
+                                <Input placeholder="A short one-liner about your company" maxLength={120} {...field} />
+                            </FormControl>
+                            <div className="flex items-center justify-between">
+                                <FormDescription>A short one-line description (max 120 chars).</FormDescription>
+                                <span className={`text-xs ${(field.value?.length || 0) > 120 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                    {field.value?.length || 0}/120
+                                </span>
+                            </div>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                         control={form.control}
                         name="website"
@@ -89,6 +113,20 @@ export function EditCompanyForm({ company }: EditCompanyFormProps) {
                                 <FormLabel>Website</FormLabel>
                                 <FormControl>
                                     <Input placeholder="https://example.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="location"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Headquarters Location</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="San Francisco, CA" {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -148,20 +186,6 @@ export function EditCompanyForm({ company }: EditCompanyFormProps) {
                         )}
                     />
                 </div>
-
-                <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Headquarters Location</FormLabel>
-                            <FormControl>
-                                <Input placeholder="San Francisco, CA" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
 
                 <FormField
                     control={form.control}

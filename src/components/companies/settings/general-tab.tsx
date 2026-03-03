@@ -29,7 +29,7 @@ import { DangerZone } from "./danger-zone";
 // --- Schema ---
 const companyFormSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters."),
-    // slug: z.string().min(2).regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers, hyphens only."), // Slug updates disabled for MVP stability
+    headline: z.string().min(1, "Headline is required.").max(120, "Headline must be 120 characters or less."),
     slogan: z.string().optional(),
     industry: z.string().optional(),
     size: z.string().optional(),
@@ -56,6 +56,7 @@ export function GeneralTab({ company }: GeneralTabProps) {
         resolver: zodResolver(companyFormSchema),
         defaultValues: {
             name: company.name || "",
+            headline: company.headline || "",
             slogan: company.slogan || "",
             industry: company.industry || "",
             size: company.size || "",
@@ -191,7 +192,29 @@ export function GeneralTab({ company }: GeneralTabProps) {
                                         </FormItem>
                                     )}
                                 />
+                            </div>
 
+                            <FormField
+                                control={form.control}
+                                name="headline"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Headline *</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="A short one-liner about your company" maxLength={120} {...field} />
+                                        </FormControl>
+                                        <div className="flex items-center justify-between">
+                                            <FormDescription>Short one-line description (max 120 chars).</FormDescription>
+                                            <span className={`text-xs ${(field.value?.length || 0) > 120 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                                {field.value?.length || 0}/120
+                                            </span>
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <FormField
                                     control={form.control}
                                     name="slogan"

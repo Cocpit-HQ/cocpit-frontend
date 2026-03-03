@@ -61,6 +61,7 @@ export interface ApiEducation {
 export interface PublicUserProfileResponse {
   user: {
     id: string;
+    account_name?: string;
     name: string;
     headline: string | null;
     avatar: string | null;

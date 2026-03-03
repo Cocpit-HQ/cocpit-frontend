@@ -56,6 +56,8 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
 
   const isOwnProfile = session?.user?.id === userId;
   const isUserFollowing = user ? isFollowing(user.id) : false;
+  // Use account_name (username) for profile URLs, fall back to userId
+  const profileSlug = user?.account_name || userId;
 
   const handleFollowToggle = () => {
     if (!user) return;
@@ -146,7 +148,7 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl text-foreground font-semibold">Posts</h2>
                 <button
-                  onClick={() => router.push(`/profile/${userId}/posts`)}
+                  onClick={() => router.push(`/profile/${profileSlug}/posts`)}
                   className="text-sm text-primary hover:underline font-medium"
                 >
                   See all posts
@@ -165,7 +167,7 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
                         <PostCard
                           key={post.id}
                           post={post}
-                          href={`/profile/${userId}/posts?focusPostId=${post.id}`}
+                          href={`/profile/${profileSlug}/posts?focusPostId=${post.id}`}
                         />
                       ))}
                     </div>
