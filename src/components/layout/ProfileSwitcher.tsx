@@ -24,7 +24,7 @@ interface ProfileSwitcherProps {
 }
 
 export function ProfileSwitcher({ showArrow = false, customTrigger, align = "end" }: ProfileSwitcherProps) {
-    const { activeProfile, switchProfile, userCompanies, isCompany } = useActiveProfile();
+    const { activeProfile, switchProfile, switchableCompanies, isCompany } = useActiveProfile();
     const { logout, user } = useAuth();
     const router = useRouter();
 
@@ -72,8 +72,8 @@ export function ProfileSwitcher({ showArrow = false, customTrigger, align = "end
 
                 <DropdownMenuGroup>
                     <DropdownMenuLabel className="text-xs text-muted-foreground">Company Accounts</DropdownMenuLabel>
-                    {userCompanies.length > 0 ? (
-                        userCompanies.map((company) => (
+                    {switchableCompanies.length > 0 ? (
+                        switchableCompanies.map((company: any) => (
                             <DropdownMenuItem
                                 key={company.company_id}
                                 onClick={() => switchProfile("COMPANY", company.company_id)}

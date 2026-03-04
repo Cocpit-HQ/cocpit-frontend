@@ -182,8 +182,12 @@ export function useCompanyPermissions(company?: any | null) {
 
     // Helper to check specific permission
     const checkPermission = (perm: string) => {
+        if (isOwner || isAdmin) return true;
         if (permissions.includes('*')) return true;
-        return permissions.includes(perm);
+        if (permissions.includes(perm)) return true;
+        // Hierarchy: MANAGE_X implies VIEW_X
+        if (perm.startsWith("VIEW_") && permissions.includes(perm.replace("VIEW_", "MANAGE_"))) return true;
+        return false;
     };
 
     const isAnalyst = roleName === 'ANALYST';
@@ -201,6 +205,10 @@ export function useCompanyPermissions(company?: any | null) {
         // Pre-computed common checks for UI convenience
         canEdit: checkPermission('MANAGE_COMPANY_DETAILS'),
         canManageMembers: checkPermission('MANAGE_MEMBERS') || checkPermission('INVITE_MEMBERS') || checkPermission('REMOVE_MEMBERS'),
+        canPostJobs: checkPermission('POST_JOBS'),
+        canCreateContent: checkPermission('CREATE_CONTENT'),
+        canViewAnalytics: checkPermission('VIEW_ANALYTICS'),
+        canManageRoles: checkPermission('MANAGE_ROLES'),
         canVerify: isOwner, // Strict
         canDelete: isOwner,
         checkPermission

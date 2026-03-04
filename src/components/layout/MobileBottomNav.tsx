@@ -7,6 +7,7 @@ import { Home, Briefcase, Plus, Calendar } from "lucide-react"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useAuth } from "@/hooks/use-auth"
 import { ProfileSwitcher } from "@/components/layout/ProfileSwitcher"
+import { useCompanyPermissions } from "@/components/companies/hooks/use-company"
 
 interface MobileBottomNavProps {
   onAdd?: () => void
@@ -21,8 +22,12 @@ const NAV_ROUTES: Record<string, string> = {
 
 export function MobileBottomNav({ onAdd }: MobileBottomNavProps) {
   const pathname = usePathname()
-  const { activeProfile } = useActiveProfile()
+  const { activeProfile, isCompany } = useActiveProfile()
   const { user } = useAuth()
+  const { canPostJobs, canCreateContent, checkPermission } = useCompanyPermissions(activeProfile)
+
+  const showJobs = !isCompany || canPostJobs || checkPermission('VIEW_APPLICANTS')
+  const showCreate = !isCompany || canPostJobs || canCreateContent
 
   const isActive = (route: string) => {
     if (route === "/feed" && pathname === "/") return true
@@ -50,32 +55,36 @@ export function MobileBottomNav({ onAdd }: MobileBottomNavProps) {
           </span>
         </Link>
 
-        <Link
-          href="/jobs"
-          className="flex flex-col items-center gap-1 flex-1"
-        >
-          <Briefcase
-            className={`w-5 h-5 ${isActive("/jobs") ? "text-primary" : "text-muted-foreground"
-              }`}
-          />
-          <span
-            className={`text-xs ${isActive("/jobs") ? "text-primary" : "text-muted-foreground"
-              }`}
+        {showJobs && (
+          <Link
+            href="/jobs"
+            className="flex flex-col items-center gap-1 flex-1"
           >
-            Jobs
-          </span>
-        </Link>
+            <Briefcase
+              className={`w-5 h-5 ${isActive("/jobs") ? "text-primary" : "text-muted-foreground"
+                }`}
+            />
+            <span
+              className={`text-xs ${isActive("/jobs") ? "text-primary" : "text-muted-foreground"
+                }`}
+            >
+              Jobs
+            </span>
+          </Link>
+        )}
 
-        <button
-          type="button"
-          onClick={onAdd}
-          className="flex items-center justify-center -mt-6"
-          aria-label="Create"
-        >
-          <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/40">
-            <Plus className="w-6 h-6 text-primary-foreground" />
-          </div>
-        </button>
+        {showCreate && (
+          <button
+            type="button"
+            onClick={onAdd}
+            className="flex items-center justify-center -mt-6"
+            aria-label="Create"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/40">
+              <Plus className="w-6 h-6 text-primary-foreground" />
+            </div>
+          </button>
+        )}
 
         <Link
           href="/events"

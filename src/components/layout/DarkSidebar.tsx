@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ProfileSwitcher } from './ProfileSwitcher'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
+import { useCompanyPermissions } from '@/components/companies/hooks/use-company'
 
 interface DarkSidebarProps {
   className?: string
@@ -13,20 +14,25 @@ interface DarkSidebarProps {
 
 export function DarkSidebar({ className }: DarkSidebarProps) {
   const pathname = usePathname()
-  const { activeProfile } = useActiveProfile()
+  const { activeProfile, isCompany } = useActiveProfile()
+  const { canPostJobs, canViewAnalytics, canEdit, checkPermission } = useCompanyPermissions(activeProfile)
 
-  const navItems = [
-    { icon: Home, label: 'Feed', subtext: 'Latest updates', href: '/feed' },
-    { icon: Users, label: 'Showcase', subtext: 'Professional stories', href: '/showcase' },
-    { icon: Calendar, label: 'Events', subtext: 'Network & earn', href: '/events' },
-    { icon: User, label: 'Profile', subtext: 'Your presence', href: activeProfile?.type === 'COMPANY' && activeProfile.slug ? `/company/${activeProfile.slug}` : '/profile' },
-    { icon: Settings, label: 'Settings', subtext: 'Preferences', href: '/settings' },
+  const allNavItems = [
+    { icon: Home, label: 'Feed', subtext: 'Latest updates', href: '/feed', show: true },
+    { icon: Users, label: 'Showcase', subtext: 'Professional stories', href: '/showcase', show: true },
+    { icon: Calendar, label: 'Events', subtext: 'Network & earn', href: '/events', show: true },
+    { icon: User, label: 'Profile', subtext: 'Your presence', href: activeProfile?.type === 'COMPANY' && activeProfile.slug ? `/company/${activeProfile.slug}` : '/profile', show: true },
+    { icon: Settings, label: 'Settings', subtext: 'Preferences', href: '/settings', show: !isCompany || canEdit || checkPermission('MANAGE_SETTINGS') },
   ];
 
-  const quickActions = [
-    { icon: Briefcase, label: 'Jobs', badge: '12 new', href: '/jobs' },
-    { icon: BarChart3, label: 'Analytics', badge: 'Insights', href: '/analytics' },
+  const navItems = allNavItems.filter(item => item.show);
+
+  const allQuickActions = [
+    { icon: Briefcase, label: 'Jobs', badge: '12 new', href: '/jobs', show: !isCompany || canPostJobs || checkPermission('VIEW_APPLICANTS') },
+    { icon: BarChart3, label: 'Analytics', badge: 'Insights', href: '/analytics', show: !isCompany || canViewAnalytics },
   ];
+
+  const quickActions = allQuickActions.filter(item => item.show);
 
   const isActive = (href: string) => {
     if (href === '/feed' && pathname === '/') return true
@@ -59,24 +65,26 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
           })}
         </div>
 
-        <div className="mt-8 px-3">
-          <h3 className="text-xs text-muted-foreground px-3 mb-2">QUICK ACTIONS</h3>
-          <div className="space-y-1">
-            {quickActions.map((item) => {
-              const Icon = item.icon
-              const active = isActive(item.href)
-              return (
-                <Link key={item.label} href={item.href} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${active ? 'bg-primary/10 text-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}>
-                  <Icon className="w-5 h-5" />
-                  <div className="flex-1 text-left">
-                    <div className="text-sidebar-foreground">{item.label}</div>
-                    <div className="text-xs text-muted-foreground">{item.badge}</div>
-                  </div>
-                </Link>
-              )
-            })}
+        {quickActions.length > 0 && (
+          <div className="mt-8 px-3">
+            <h3 className="text-xs text-muted-foreground px-3 mb-2">QUICK ACTIONS</h3>
+            <div className="space-y-1">
+              {quickActions.map((item) => {
+                const Icon = item.icon
+                const active = isActive(item.href)
+                return (
+                  <Link key={item.label} href={item.href} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${active ? 'bg-primary/10 text-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}>
+                    <Icon className="w-5 h-5" />
+                    <div className="flex-1 text-left">
+                      <div className="text-sidebar-foreground">{item.label}</div>
+                      <div className="text-xs text-muted-foreground">{item.badge}</div>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="mt-6 px-3">
           <div className="flex items-center gap-2 p-2 rounded-lg bg-sidebar-accent/50 border border-sidebar-border/50">

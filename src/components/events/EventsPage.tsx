@@ -13,6 +13,8 @@ import { Theme, Page } from "@/types/common"
 import { EventFeed } from "@/components/events/EventFeed"
 import { UserEventsList } from "@/components/events/UserEventsList"
 import { useEventFeed } from "@/components/events/hooks/use-event-queries"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
+import { useCompanyPermissions } from "@/hooks/use-company"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -34,6 +36,12 @@ export function EventsPage() {
   const [filters, setFilters] = useState<FilterState>(initialFilterState)
   const [showCreateEvent, setShowCreateEvent] = useState(false)
   const [activeTab, setActiveTabState] = useState(searchParams.get('tab') || "upcoming")
+
+  const { activeProfile, isCompany } = useActiveProfile()
+  const { canCreateContent } = useCompanyPermissions(activeProfile)
+
+  // Determine if user can create event (always true for normal users, gated for companies)
+  const canCreateEvent = !isCompany || canCreateContent
 
   // URL Sync
   const setActiveTab = (tab: string) => {
@@ -83,13 +91,15 @@ export function EventsPage() {
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">Events</h1>
           </div>
-          <button
-            onClick={() => setShowCreateEvent(true)}
-            className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-6 py-3 rounded-xl hover:opacity-90 transition-all font-medium shadow-lg shadow-purple-500/20"
-          >
-            <Plus className="w-5 h-5" />
-            Create Event
-          </button>
+          {canCreateEvent && (
+            <button
+              onClick={() => setShowCreateEvent(true)}
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#5B7CFF] to-[#7B5CFF] text-white px-6 py-3 rounded-xl hover:opacity-90 transition-all font-medium shadow-lg shadow-purple-500/20"
+            >
+              <Plus className="w-5 h-5" />
+              Create Event
+            </button>
+          )}
         </div>
 
         {/* Search and Filter Row */}
@@ -155,7 +165,7 @@ export function EventsPage() {
 
         {/* Tabs */}
         <div className="flex gap-3 md:gap-4 mb-8 overflow-x-auto scrollbar-hide py-1">
-          {["upcoming", "registered", "saved", "my_events", "dashboard"].map((tab) => (
+          {["upcoming", "registered", "saved", ...(canCreateEvent ? ["my_events", "dashboard"] : [])].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
