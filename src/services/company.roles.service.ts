@@ -38,6 +38,7 @@ export const companyRolesService = {
 };
 
 export const PERMISSIONS_LIST = [
+    { id: 'SWITCH_TO_COMPANY', label: 'Switch to Company Profile' },
     { id: 'MANAGE_COMPANY_DETAILS', label: 'Edit Company Details (Name, Logo, Info)' },
     { id: 'MANAGE_SETTINGS', label: 'Manage Settings (Billing, Domain)' },
     { id: 'VIEW_MEMBERS', label: 'View Team Members' },
@@ -50,4 +51,7 @@ export const PERMISSIONS_LIST = [
     { id: 'CREATE_CONTENT', label: 'Create Posts & Stories' },
     { id: 'MANAGE_COMMENTS', label: 'Moderate Comments' },
     { id: 'VIEW_ANALYTICS', label: 'View Analytics Dashboard' },
+    { id: 'MANAGE_COMPANY_CHATS', label: 'Manage Company Chat Sessions' },
+    { id: 'VIEW_COMPANY_CHATS', label: 'View Company Chat Sessions' },
+    { id: 'MANAGE_CONNECTIONS', label: 'Manage Company Connections' },
 ];

@@ -14,8 +14,8 @@ interface CompanyEventsProps {
 }
 
 export function CompanyEvents({ companyId, company }: CompanyEventsProps) {
-    const { canDelete, checkPermission } = useCompanyPermissions(company);
-    const canPost = checkPermission('CREATE_CONTENT') || checkPermission('POST_JOBS'); // Adjust permissions as needed
+    const { canDelete, checkPermission, canCreateContent } = useCompanyPermissions(company);
+    const canPost = canCreateContent;
 
     const {
         data,

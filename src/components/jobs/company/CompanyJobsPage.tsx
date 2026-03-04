@@ -16,6 +16,7 @@ import { CreateJobModal } from "@/components/jobs/CreateJobModal"
 import { JobPostsDashboard } from "@/components/jobs/dashboard/JobPostsDashboard"
 import { useJobs } from "@/context/JobsContext"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
+import { useCompanyPermissions } from "@/hooks/use-company"
 import type { Page } from "@/types/common"
 
 const routes: Record<string, string> = {
@@ -45,6 +46,9 @@ export default function CompanyJobsPage({ companyId, searchParams }: { companyId
         jobs, // `jobs` array from JobsContext now fetches based on `activeTab` and `isCompany` logic
         myJobs // `myJobs` array from JobsContext
     } = useJobs()
+
+    const { activeProfile } = useActiveProfile()
+    const { canPostJobs } = useCompanyPermissions(activeProfile)
 
     const { ref, inView } = useInView()
 
@@ -174,12 +178,14 @@ export default function CompanyJobsPage({ companyId, searchParams }: { companyId
                                 </span>
                             </button>
 
-                            <button
-                                onClick={() => setShowCreateJob(true)}
-                                className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-sm"
-                            >
-                                <Plus className="w-5 h-5" />
-                            </button>
+                            {canPostJobs && (
+                                <button
+                                    onClick={() => setShowCreateJob(true)}
+                                    className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-sm"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                </button>
+                            )}
                         </div>
 
                         <div className="flex items-center justify-between gap-4">
@@ -204,15 +210,17 @@ export default function CompanyJobsPage({ companyId, searchParams }: { companyId
                             </div>
 
                             {/* Desktop Post Job Button */}
-                            <div className="hidden md:block">
-                                <button
-                                    onClick={() => setShowCreateJob(true)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-medium hover:opacity-90 transition-opacity"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    Post a Job
-                                </button>
-                            </div>
+                            {canPostJobs && (
+                                <div className="hidden md:block">
+                                    <button
+                                        onClick={() => setShowCreateJob(true)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-medium hover:opacity-90 transition-opacity"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        Post a Job
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

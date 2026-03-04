@@ -17,6 +17,7 @@ interface ActiveProfile {
     name: string;
     slug?: string;
     avatar_url?: string;
+    viewer_role_data?: { name: string; permissions: string[]; priority: number } | null;
 }
 
 interface ActiveProfileContextType {
@@ -25,6 +26,7 @@ interface ActiveProfileContextType {
     switchProfile: (type: ProfileType, id: string) => void;
     isCompany: boolean;
     userCompanies: (Company & { role: string })[];
+    switchableCompanies: (Company & { role: string })[];
 }
 
 const ActiveProfileContext = createContext<ActiveProfileContextType | undefined>(undefined);
@@ -37,6 +39,15 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     const pathname = usePathname();
     const [isInitialized, setIsInitialized] = useState(false);
     const queryClient = useQueryClient();
+
+    // Helper: check if a company's role has SWITCH_TO_COMPANY permission
+    const canSwitchToCompany = (company: any) => {
+        const perms = company?.viewer_role_data?.permissions || [];
+        return perms.includes('*') || perms.includes('SWITCH_TO_COMPANY');
+    };
+
+    // Compute switchable companies (only those with SWITCH_TO_COMPANY permission)
+    const switchableCompanies = companies.filter(canSwitchToCompany);
 
     // Initialize profile from LocalStorage or Session
     useEffect(() => {
@@ -61,17 +72,22 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
             avatar_url: session.user.image || undefined,
         };
 
-        // If stored profile is COMPANY and user is a member, switch to it
+        // If stored profile is COMPANY and user is a member with SWITCH_TO_COMPANY, switch to it
         if (storedProfileType === "COMPANY" && storedProfileId) {
             const targetCompany = companies.find((c) => c.company_id === storedProfileId);
-            if (targetCompany) {
+            if (targetCompany && canSwitchToCompany(targetCompany)) {
                 initialProfile = {
                     type: "COMPANY",
                     id: targetCompany.company_id,
                     name: targetCompany.name,
                     slug: targetCompany.slug,
                     avatar_url: targetCompany.logo_url,
+                    viewer_role_data: (targetCompany as any).viewer_role_data || null,
                 };
+            } else if (targetCompany && !canSwitchToCompany(targetCompany)) {
+                // Role was downgraded — clear stale company profile from localStorage
+                localStorage.removeItem("activeProfileId");
+                localStorage.removeItem("activeProfileType");
             }
         }
 
@@ -120,13 +136,14 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
 
         } else if (type === "COMPANY") {
             const targetCompany = companies.find((c) => c.company_id === id);
-            if (targetCompany) {
+            if (targetCompany && canSwitchToCompany(targetCompany)) {
                 const companyProfile: ActiveProfile = {
                     type: "COMPANY",
                     id: targetCompany.company_id,
                     name: targetCompany.name,
                     slug: targetCompany.slug,
                     avatar_url: targetCompany.logo_url,
+                    viewer_role_data: (targetCompany as any).viewer_role_data || null,
                 };
                 setActiveProfile(companyProfile);
                 localStorage.setItem("activeProfileType", "COMPANY");
@@ -144,6 +161,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
         switchProfile,
         isCompany: activeProfile?.type === "COMPANY",
         userCompanies: companies,
+        switchableCompanies,
     };
 
     return (
