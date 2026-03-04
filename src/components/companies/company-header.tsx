@@ -13,6 +13,15 @@ import { useCompanyPermissions } from "@/components/companies/hooks/use-company"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { CompanyFollowersModal } from "@/components/companies/CompanyFollowersModal";
+import { CompanyNotificationBell } from "@/components/companies/CompanyNotificationBell";
+import { ShareProfileModal } from "@/components/messaging/ShareProfileModal";
+import { MoreHorizontal, Share2, Link as LinkIcon } from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CompanyHeaderProps {
     company?: Company;
@@ -24,6 +33,7 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
     const queryClient = useQueryClient();
     const [isEditAvatarOpen, setIsEditAvatarOpen] = useState(false);
     const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
     // Permission check for editing
     const canManageCompany = isOwner || checkPermission("MANAGE_SETTINGS");
@@ -131,31 +141,64 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
         return (
             <div className={`flex gap-2 ${className}`}>
                 {canAccessDashboard ? (
-                    <>
-                        <Button asChild variant="outline" size="sm" className="w-full md:w-full">
-                            <Link href={`/company/${company?.slug}/dashboard`}>
-                                <LayoutDashboard className="mr-2 h-4 w-4" />
-                                Dashboard
-                            </Link>
-                        </Button>
-                    </>
-                ) : (
-                    <Button
-                        onClick={() => isFollowing ? unfollowMutation.mutate() : followMutation.mutate()}
-                        variant={isFollowing ? "outline" : "default"}
-                        disabled={isActionLoading || isRelationshipLoading}
-                        className="w-full md:w-auto min-w-[120px]"
-                        size="sm"
-                    >
-                        {isActionLoading ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : isFollowing ? (
-                            <UserMinus className="mr-2 h-4 w-4" />
-                        ) : (
-                            <UserPlus className="mr-2 h-4 w-4" />
-                        )}
-                        {isFollowing ? "Unfollow" : "Follow"}
+                    <Button asChild variant="outline" size="sm" className="w-full md:w-auto">
+                        <Link href={`/company/${company?.slug}/dashboard`}>
+                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                            Dashboard
+                        </Link>
                     </Button>
+                ) : (
+                    <>
+                        <Button
+                            onClick={() => isFollowing ? unfollowMutation.mutate() : followMutation.mutate()}
+                            variant={isFollowing ? "outline" : "default"}
+                            disabled={isActionLoading || isRelationshipLoading}
+                            className="w-full md:w-auto min-w-[120px]"
+                            size="sm"
+                        >
+                            {isActionLoading ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : isFollowing ? (
+                                <UserMinus className="mr-2 h-4 w-4" />
+                            ) : (
+                                <UserPlus className="mr-2 h-4 w-4" />
+                            )}
+                            {isFollowing ? "Unfollow" : "Follow"}
+                        </Button>
+                        {isFollowing && company?.company_id && (
+                            <CompanyNotificationBell
+                                companyId={company.company_id}
+                                isFollowing={true}
+                            />
+                        )}
+                    </>
+                )}
+
+                {/* Common Action Menu (Share/Copy) */}
+                {canManageCompany && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-9 w-9 p-0 hover:bg-muted">
+                                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuItem onClick={() => setIsShareModalOpen(true)} className="cursor-pointer">
+                                <Share2 className="h-4 w-4 mr-2" />
+                                Share Company Profile
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => {
+                                    navigator.clipboard.writeText(window.location.href);
+                                    toast.success("Profile link copied");
+                                }}
+                                className="cursor-pointer"
+                            >
+                                <LinkIcon className="h-4 w-4 mr-2" />
+                                Copy Company URL
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 )}
             </div>
         );
@@ -287,6 +330,15 @@ export function CompanyHeader({ company, isLoading }: CompanyHeaderProps) {
                 companyId={company.company_id}
                 companyName={company.name}
                 canManage={canManageCompany}
+            />
+
+            <ShareProfileModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                profileId={company.company_id}
+                profileType="company"
+                profileName={company.name}
+                profileUrl={`/company/${company.slug}`}
             />
         </div>
     );

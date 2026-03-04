@@ -292,7 +292,7 @@ export default function MessagingPage() {
             conversationExists = true;
             return {
               ...c,
-              lastMessage: message.text_content || (message.shared_post ? "Shared a post" : "Attachment"),
+              lastMessage: message.text_content || (message.shared_post ? "Shared a post" : (message.shared_profile_id ? "Shared a profile" : "Attachment")),
               time: formatTimeAgo(message.created_at || new Date().toISOString()),
               lastMessageAt: new Date().toISOString(),
               unread: (c.id === selectedChat?.id || (selectedChat?.isGroup && selectedChat.id === c.id)) ? 0 : (c.unread + 1)

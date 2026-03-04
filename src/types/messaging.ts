@@ -42,6 +42,13 @@ export interface BackendMessage {
     };
     media: { url: string; media_type: string }[];
   } | null;
+  shared_profile?: {
+    name: string;
+    avatar: string | null;
+    headline?: string;
+  } | null;
+  shared_profile_id?: string;
+  shared_profile_type?: "user" | "company";
   media?: { url: string; media_type: string }[];
 }
 
@@ -95,6 +102,13 @@ export interface Message {
     authorAvatar: string;
     media?: { url: string; type: 'image' | 'video' }[];
   } | null;
+  sharedProfile?: {
+    name: string;
+    avatar: string | null;
+    headline?: string;
+  } | null;
+  sharedProfileId?: string;
+  sharedProfileType?: "user" | "company";
   is_deleted?: boolean;
   is_deleted_for_everyone?: boolean;
   is_deleted_for_me?: boolean;

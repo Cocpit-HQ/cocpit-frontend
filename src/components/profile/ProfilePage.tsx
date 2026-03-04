@@ -9,6 +9,9 @@ import Link from "next/link"
 import SuggestionsPanel from "@/components/home/SuggestionsPanel"
 import type { Page } from "@/types/common"
 import { CompanyRoleModal } from "@/components/profile/parts/CompanyRoleModal"
+import { ShareProfileModal } from "@/components/messaging/ShareProfileModal"
+import { MoreVertical, Share2, Link as LinkIcon } from "lucide-react"
+import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
@@ -99,6 +102,7 @@ export default function ProfilePage() {
 
   const [selectedRole, setSelectedRole] = useState<import("@/types/user").CompanyRole | null>(null);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const handleRoleClick = (role: import("@/types/user").CompanyRole) => {
     setSelectedRole(role);
@@ -337,6 +341,29 @@ export default function ProfilePage() {
                     <button onClick={() => router.push('/profile/edit')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
                       Edit Profile
                     </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="bg-white/20 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/30 transition-all border border-white/20 flex items-center justify-center">
+                          <MoreVertical className="w-5 h-5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setIsShareModalOpen(true)} className="cursor-pointer">
+                          <Share2 className="w-4 h-4 mr-2" />
+                          Share Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            navigator.clipboard.writeText(window.location.href);
+                            toast.success("Profile link copied");
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <LinkIcon className="w-4 h-4 mr-2" />
+                          Copy Profile Link
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </EditCoverPhoto>
 
@@ -365,10 +392,35 @@ export default function ProfilePage() {
                       </button>
                     </div>
 
-                    <button onClick={() => router.push('/profile/edit')} className="md:hidden mt-16 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center gap-2 text-sm">
-                      <Edit2 className="w-4 h-4" />
-                      Edit Profile
-                    </button>
+                    <div className="md:hidden mt-16 flex gap-2">
+                      <button onClick={() => router.push('/profile/edit')} className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center gap-2 text-sm">
+                        <Edit2 className="w-4 h-4" />
+                        Edit Profile
+                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="bg-background border border-border p-2 rounded-lg flex items-center justify-center">
+                            <MoreVertical className="w-5 h-5" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setIsShareModalOpen(true)} className="cursor-pointer">
+                            <Share2 className="w-4 h-4 mr-2" />
+                            Share Profile
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              navigator.clipboard.writeText(window.location.href);
+                              toast.success("Profile link copied");
+                            }}
+                            className="cursor-pointer"
+                          >
+                            <LinkIcon className="w-4 h-4 mr-2" />
+                            Copy Profile Link
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
 
                     <div className="hidden md:flex flex-col items-end mt-16">
                       <button
@@ -656,6 +708,15 @@ export default function ProfilePage() {
         onClose={() => setIsRoleModalOpen(false)}
         role={selectedRole}
         isOwnProfile={true}
+      />
+
+      <ShareProfileModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        profileId={user?.id || ""}
+        profileType="user"
+        profileName={user?.name || ""}
+        profileUrl={`/profile/${user?.account_name || user?.id}`}
       />
     </div>
   )

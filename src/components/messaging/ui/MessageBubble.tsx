@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import { ProfilePreviewCard } from "../ProfilePreviewCard"
 
 // --- Types ---
 interface MessageBubbleProps {
@@ -418,6 +419,15 @@ function MessageBubble(props: MessageBubbleProps) {
           ) : (
             <>
               <SharedPostCard message={message} onMediaLoad={onMediaLoad} />
+              {message.sharedProfile && message.sharedProfileId && message.sharedProfileType && (
+                <div className="mt-1 mb-2">
+                  <ProfilePreviewCard
+                    profile={message.sharedProfile}
+                    profileId={message.sharedProfileId}
+                    profileType={message.sharedProfileType}
+                  />
+                </div>
+              )}
               <MessageMedia
                 message={message}
                 isMediaOnly={isMediaOnly}

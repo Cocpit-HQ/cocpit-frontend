@@ -10,6 +10,9 @@ import { User } from "@/types/user";
 import { ConnectionButton } from "@/components/profile/ConnectionButton";
 import { CompanyRolesList } from "./CompanyRolesList";
 import { SendOfferDialog } from "./SendOfferDialog";
+import { ShareProfileModal } from "@/components/messaging/ShareProfileModal";
+import { Share2, Link as LinkIcon } from "lucide-react";
+import { toast } from "sonner";
 
 interface ProfileHeaderProps {
     user: User;
@@ -56,6 +59,7 @@ export function ProfileHeader({
 }: ProfileHeaderProps) {
     const { blockUser } = useSocial();
     const [showBlockDialog, setShowBlockDialog] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
     // Read connection status directly from the same cache as ConnectionButton
     const { data: relationship } = useQuery<any>({
@@ -120,45 +124,49 @@ export function ProfileHeader({
                             className="w-full h-full object-cover"
                         />
                     </div>
-                    {!isOwnProfile && (
-                        <div className="mt-16 flex gap-2">
-                            <button
-                                onClick={onMessage}
-                                className="bg-background hover:bg-muted text-foreground border border-input px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
-                            >
-                                <MessageCircle className="w-4 h-4" />
-                                Message
-                            </button>
-                            <SendOfferDialog targetUserId={user.id} targetUserName={user.name} />
-                            <button
-                                onClick={onFollowToggle}
-                                disabled={isFollowLoading}
-                                className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${isUserFollowing
-                                    ? "bg-muted text-foreground hover:bg-muted/80"
-                                    : "bg-primary text-primary-foreground hover:opacity-90"
-                                    } ${isFollowLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-                            >
-                                {isUserFollowing ? (
-                                    <>
-                                        <UserCheck className="w-4 h-4" />
-                                        Following
-                                    </>
-                                ) : (
-                                    <>
-                                        <UserPlus className="w-4 h-4" />
-                                        Follow
-                                    </>
-                                )}
-                            </button>
+                    <div className="mt-16 flex gap-2">
+                        {!isOwnProfile ? (
+                            <>
+                                <button
+                                    onClick={onMessage}
+                                    className="bg-background hover:bg-muted text-foreground border border-input px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                                >
+                                    <MessageCircle className="w-4 h-4" />
+                                    Message
+                                </button>
+                                <SendOfferDialog targetUserId={user.id} targetUserName={user.name} />
+                                <button
+                                    onClick={onFollowToggle}
+                                    disabled={isFollowLoading}
+                                    className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${isUserFollowing
+                                        ? "bg-muted text-foreground hover:bg-muted/80"
+                                        : "bg-primary text-primary-foreground hover:opacity-90"
+                                        } ${isFollowLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                                >
+                                    {isUserFollowing ? (
+                                        <>
+                                            <UserCheck className="w-4 h-4" />
+                                            Following
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UserPlus className="w-4 h-4" />
+                                            Follow
+                                        </>
+                                    )}
+                                </button>
+                            </>
+                        ) : null}
 
-                            {/* Dropdown Menu for More Actions */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <button className="bg-background hover:bg-muted text-foreground border border-input p-2 rounded-lg transition-colors flex items-center justify-center">
-                                        <MoreVertical className="w-5 h-5" />
-                                    </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
+                        {/* Dropdown Menu for More Actions */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button className="bg-background hover:bg-muted text-foreground border border-input p-2 rounded-lg transition-colors flex items-center justify-center">
+                                    <MoreVertical className="w-5 h-5" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                {!isOwnProfile && (
                                     <ConnectionButton
                                         asMenuItem
                                         userId={user.id}
@@ -168,14 +176,34 @@ export function ProfileHeader({
                                         connectionRequestId={user.connection_request_id}
                                         connectionRequestSender={user.connection_request_sender}
                                     />
+                                )}
+                                {isOwnProfile && (
+                                    <>
+                                        <DropdownMenuItem onClick={() => setIsShareModalOpen(true)} className="cursor-pointer">
+                                            <Share2 className="w-4 h-4 mr-2" />
+                                            Share Profile
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(window.location.href);
+                                                toast.success("Profile link copied");
+                                            }}
+                                            className="cursor-pointer"
+                                        >
+                                            <LinkIcon className="w-4 h-4 mr-2" />
+                                            Copy Profile Link
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
+                                {!isOwnProfile && (
                                     <DropdownMenuItem onClick={() => setShowBlockDialog(true)} className="text-destructive focus:text-destructive cursor-pointer">
                                         <Ban className="w-4 h-4 mr-2" />
                                         Block User
                                     </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-                    )}
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                 </div>
 
                 <div>
@@ -223,6 +251,15 @@ export function ProfileHeader({
                 onClose={() => setIsRoleModalOpen(false)}
                 role={selectedRole}
                 isOwnProfile={isOwnProfile}
+            />
+
+            <ShareProfileModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                profileId={user.id}
+                profileType="user"
+                profileName={user.name}
+                profileUrl={`/profile/${user.account_name || user.id}`}
             />
         </div >
     );
