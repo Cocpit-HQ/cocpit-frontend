@@ -6,9 +6,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function ProfileSkeleton() {
     return (
         <div className="min-h-screen bg-background">
-            <div className="max-w-7xl mx-auto py-6 md:py-8 pb-20 md:pb-12">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
-                    <div className="lg:col-span-8">
+            <div className="max-w-4xl mx-auto py-6 md:py-8 pb-20 md:pb-12 px-4 md:px-0">
+                <div className="flex flex-col gap-6 md:gap-8">
+                    <div className="w-full">
                         {/* Header Card Skeleton */}
                         <div className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border min-h-[300px]">
                             <Skeleton className="h-36 w-full" /> {/* Cover */}
@@ -64,14 +64,6 @@ export function ProfileSkeleton() {
                                     </div>
                                 </div>
                             ))}
-                        </div>
-                    </div>
-
-                    {/* Sidebar Skeleton */}
-                    <div className="lg:col-span-4 hidden lg:block">
-                        <div className="space-y-6">
-                            <Skeleton className="h-64 w-full rounded-xl" />
-                            <Skeleton className="h-40 w-full rounded-xl" />
                         </div>
                     </div>
                 </div>

@@ -29,7 +29,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
 
   const allQuickActions = [
     { icon: Briefcase, label: 'Jobs', badge: '12 new', href: '/jobs', show: !isCompany || canPostJobs || checkPermission('VIEW_APPLICANTS') },
-    { icon: BarChart3, label: 'Analytics', badge: 'Insights', href: '/analytics', show: !isCompany || canViewAnalytics },
+    { icon: BarChart3, label: 'Analytics', badge: 'Insights', href: activeProfile?.type === 'COMPANY' ? '/company-analytics' : '/analytics', show: !isCompany || canViewAnalytics },
   ];
 
   const quickActions = allQuickActions.filter(item => item.show);

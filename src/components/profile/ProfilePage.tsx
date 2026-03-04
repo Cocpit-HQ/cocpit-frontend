@@ -305,12 +305,12 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto pt-0 md:pt-8 pb-20 md:pb-12">
+      <div className="max-w-4xl mx-auto pt-0 md:pt-8 pb-20 md:pb-12 px-4 md:px-0">
         {isLoading ? (
           <ProfileSkeleton />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
-            <div className="lg:col-span-8">
+          <div className="flex flex-col gap-6 md:gap-8">
+            <div className="w-full">
               <div className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border">
                 <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage}>
                   <div className="absolute top-3 right-3 md:hidden z-10">
@@ -621,11 +621,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="lg:col-span-4">
-              <div className="sticky top-8 space-y-6">
-                <SuggestionsPanel />
-              </div>
-            </div>
           </div>
         )}
       </div>
