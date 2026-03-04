@@ -185,6 +185,38 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           ),
           duration: 5000,
         });
+      } else if (['company_job', 'company_event', 'company_post'].includes(payload.type)) {
+        // Company notification from followed companies
+        const companyName = (payload as any).actor_name || 'A company';
+        const companyAvatar = (payload as any).actor_avatar;
+        const notifText = (payload as any).text || 'New company update';
+        const referenceId = (payload as any).reference_id;
+        const actorSlug = (payload as any).actor_slug;
+
+        let navigateTo = '/notifications';
+        if (payload.type === 'company_job' && referenceId) navigateTo = `/jobs/${referenceId}`;
+        else if (payload.type === 'company_event' && referenceId) navigateTo = `/events/${referenceId}`;
+        else if (payload.type === 'company_post' && referenceId) navigateTo = `/post/${referenceId}`;
+
+        toast({
+          title: companyName,
+          description: (
+            <div
+              className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => router.push(navigateTo)}
+            >
+              {companyAvatar && (
+                <Avatar
+                  name={companyName}
+                  url={companyAvatar}
+                  size="sm"
+                />
+              )}
+              <span className="text-sm">{notifText}</span>
+            </div>
+          ),
+          duration: 5000,
+        });
       } else {
         toast({
           title: "New Notification",

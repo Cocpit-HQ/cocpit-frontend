@@ -32,7 +32,7 @@ export interface Notification {
     notification_id: string;
     user_id: string; // recipient
     sender_id: string; // actor
-    type: 'connection_request' | 'connection_accepted' | 'like' | 'comment' | 'follow' | 'job_alert' | 'repost' | 'mention' | 'reply' | 'advocacy' | 'company_invite';
+    type: 'connection_request' | 'connection_accepted' | 'like' | 'comment' | 'follow' | 'job_alert' | 'repost' | 'mention' | 'reply' | 'advocacy' | 'company_invite' | 'company_job' | 'company_event' | 'company_post' | 'profile_share';
     actor_name: string;
     actor_avatar: string | null;
     actor_slug?: string;
@@ -44,6 +44,14 @@ export interface Notification {
     metadata?: any; // For flexible payload like comment_id
     request_id?: string;
     request_status?: string;
+}
+
+export interface CompanyNotificationPreferences {
+    events_enabled: boolean;
+    jobs_enabled: boolean;
+    posts_enabled: boolean;
+    is_default?: boolean;
+    updated_at?: string;
 }
 
 

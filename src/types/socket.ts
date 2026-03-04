@@ -4,12 +4,18 @@ export interface UserStatusPayload {
 }
 
 export interface NotificationPayload {
-  type: 'message' | 'system';
+  type: 'message' | 'system' | 'company_job' | 'company_event' | 'company_post' | 'company_announcement';
   from?: string; // Sender User ID
   senderName?: string;
   senderAvatar?: string;
   conversationId?: string;
   isGroup?: boolean;
+  // Company notification fields
+  actor_name?: string;
+  actor_avatar?: string;
+  actor_slug?: string;
+  text?: string;
+  reference_id?: string;
 }
 
 export interface ErrorPayload {

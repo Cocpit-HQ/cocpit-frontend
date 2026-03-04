@@ -172,6 +172,38 @@ export function NotificationPopover() {
                   } catch (e) { console.error("Error parsing invite metadata", e); }
                   router.push(inviteLink);
                   setIsOpen(false);
+                } else if (notification.type === 'company_job' && notification.reference_id) {
+                  router.push(`/jobs/${notification.reference_id}`);
+                  setIsOpen(false);
+                } else if (notification.type === 'company_event' && notification.reference_id) {
+                  router.push(`/events/${notification.reference_id}`);
+                  setIsOpen(false);
+                } else if (notification.type === 'company_post' && notification.reference_id) {
+                  router.push(`/post/${notification.reference_id}`);
+                  setIsOpen(false);
+                } else if (notification.type === 'profile_share' && notification.reference_id) {
+                  let profileType = 'user';
+                  let slug: string | undefined;
+                  let accountName: string | undefined;
+                  try {
+                    const meta = typeof notification.metadata === 'string'
+                      ? JSON.parse(notification.metadata)
+                      : notification.metadata;
+                    profileType = meta?.profileType || 'user'; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+                    slug = meta?.slug;
+                    accountName = meta?.account_name;
+                  } catch (e) { console.error("Error parsing share metadata", e); }
+
+                  let url: string;
+                  if (profileType.toLowerCase() === 'company') {
+                    // Use slug for company navigation, fall back to reference_id
+                    url = `/company/${slug || notification.reference_id}`;
+                  } else {
+                    // Use account_name for user profile, fall back to reference_id
+                    url = `/profile/${accountName || notification.reference_id}`;
+                  }
+                  router.push(url);
+                  setIsOpen(false);
                 }
               }}
               className={`p-4 flex gap-3 hover:bg-muted/50 transition-colors cursor-pointer ${!notification.is_read ? "bg-muted/30" : ""}`}

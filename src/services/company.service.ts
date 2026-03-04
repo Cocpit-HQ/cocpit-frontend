@@ -300,5 +300,21 @@ export const companyService = {
     async deleteCover(companyId: string) {
         const res = await api.delete(`/companies/${companyId}/cover`);
         return res.data;
-    }
+    },
+
+    // --- Notification Preferences ---
+    async getNotificationPreferences(companyId: string) {
+        const res = await api.get(`/companies/${companyId}/notification-preferences`);
+        return res.data;
+    },
+
+    async updateNotificationPreferences(companyId: string, prefs: {
+        events_enabled?: boolean;
+        jobs_enabled?: boolean;
+        posts_enabled?: boolean;
+        announcements_enabled?: boolean;
+    }) {
+        const res = await api.put(`/companies/${companyId}/notification-preferences`, prefs);
+        return res.data;
+    },
 };
