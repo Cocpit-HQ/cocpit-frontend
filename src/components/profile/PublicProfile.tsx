@@ -102,9 +102,9 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto py-6 md:py-8 pb-20 md:pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
-          <div className="lg:col-span-8">
+      <div className="max-w-4xl mx-auto py-6 md:py-8 pb-20 md:pb-12 px-4 md:px-0">
+        <div className="flex flex-col gap-6 md:gap-8">
+          <div className="w-full">
 
             <ProfileHeader
               user={user}
@@ -156,44 +156,35 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
               </div>
               <div>
                 {isPostsLoading ? (
-                  <div className="space-y-4">
-                    {/* Simple Skeleton for posts if needed, or rely on main skeleton */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="h-40 bg-muted/20 animate-pulse rounded-xl" />
                     <div className="h-40 bg-muted/20 animate-pulse rounded-xl" />
                   </div>
                 ) : publicPosts && publicPosts.length > 0 ? (
-                  isMobile ? (
-                    <div className="grid grid-cols-2 gap-4">
-                      {publicPosts.slice(0, 4).map((post) => (
+                  <div className="grid grid-cols-2 gap-4">
+                    {publicPosts.slice(0, 4).map((post) => (
+                      isMobile ? (
                         <PostCard
                           key={post.id}
                           post={post}
                           href={`/profile/${profileSlug}/posts?focusPostId=${post.id}`}
                         />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {publicPosts.slice(0, 4).map((post) => (
+                      ) : (
                         <FeedPost
                           key={post.id}
                           {...post}
                           initialComments={post.commentData}
+                          isProfileView={true}
                         />
-                      ))}
-                    </div>
-                  )
+                      )
+                    ))}
+                  </div>
                 ) : (
                   <p className="text-muted-foreground text-sm">
                     No recent public activity to show.
                   </p>
                 )}
               </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-4">
-            <div className="sticky top-8 space-y-6">
-              <SuggestionsPanel />
             </div>
           </div>
         </div>
