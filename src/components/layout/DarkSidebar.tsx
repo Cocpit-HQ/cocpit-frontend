@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { Home, Users, Calendar, User, Settings, Briefcase, BarChart3 } from 'lucide-react'
+import { Home, Users, Calendar, User, Settings, Briefcase, BarChart3, Bot } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ProfileSwitcher } from './ProfileSwitcher'
@@ -20,6 +20,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
   const allNavItems = [
     { icon: Home, label: 'Feed', subtext: 'Latest updates', href: '/feed', show: true },
     { icon: Users, label: 'Showcase', subtext: 'Professional stories', href: '/showcase', show: true },
+    { icon: Bot, label: 'AI Assistant', subtext: 'Smart suggestions', href: '/ai-assistant', show: true },
     { icon: Calendar, label: 'Events', subtext: 'Network & earn', href: '/events', show: true },
     { icon: User, label: 'Profile', subtext: 'Your presence', href: activeProfile?.type === 'COMPANY' && activeProfile.slug ? `/company/${activeProfile.slug}` : '/profile', show: true },
     { icon: Settings, label: 'Settings', subtext: 'Preferences', href: '/settings', show: !isCompany || canEdit || checkPermission('MANAGE_SETTINGS') },
@@ -86,12 +87,13 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
           </div>
         )}
 
-        <div className="mt-6 px-3">
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-sidebar-accent/50 border border-sidebar-border/50">
-            <ProfileSwitcher showArrow={true} align="start" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">Switch Account</p>
-            </div>
+      </div>
+
+      <div className="p-4 border-t border-sidebar-border">
+        <div className="flex items-center gap-2 p-2 rounded-lg bg-sidebar-accent/50 border border-sidebar-border/50">
+          <ProfileSwitcher showArrow={true} align="start" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-sidebar-foreground truncate">Switch Account</p>
           </div>
         </div>
       </div>
