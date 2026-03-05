@@ -102,7 +102,8 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
     setIsPinned(!isPinned);
 
     try {
-      const result = await toggleCommentPin(id);
+      const companyId = isCompany ? activeProfile?.id : undefined;
+      const result = await toggleCommentPin(id, companyId);
       setIsPinned(result.pinned);
       toast.success(result.message);
     } catch (error: any) {
@@ -129,7 +130,7 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
       {/* Avatar Column */}
       <div className="flex flex-col items-center flex-shrink-0">
         <Link
-          href={author.isCompanyPost ? `/company/${author.authorSlug}` : `/profile/${author.authorSlug || authorId}${postId ? `?openPost=${postId}&commentId=${id}` : ''}`}
+          href={author.isCompanyPost ? `/organization/${author.authorSlug}` : `/profile/${author.authorSlug || authorId}${postId ? `?openPost=${postId}&commentId=${id}` : ''}`}
           className="block"
         >
           <div className={`${avatarSize} rounded-full bg-gradient-to-br from-gray-400 to-gray-500 overflow-hidden ring-1 ring-border/50`}>
@@ -143,7 +144,7 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
         <div className="bg-card/50 rounded-2xl px-3 py-2">
           <div className="flex items-center gap-2 mb-1">
             <Link
-              href={author.isCompanyPost ? `/company/${author.authorSlug}` : `/profile/${author.authorSlug || authorId}${postId ? `?openPost=${postId}&commentId=${id}` : ''}`}
+              href={author.isCompanyPost ? `/organization/${author.authorSlug}` : `/profile/${author.authorSlug || authorId}${postId ? `?openPost=${postId}&commentId=${id}` : ''}`}
               className="hover:underline"
             >
               <span className={`${nameSize} font-semibold text-foreground`}>{author.name}</span>

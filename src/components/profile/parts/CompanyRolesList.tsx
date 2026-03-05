@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Building2, ChevronDown, ChevronUp, Eye, EyeOff, Pin } from 'lucide-react';
 import { CompanyRole } from '@/types/user';
-import { updateMemberRoleSettings } from '@/services/api/company';
+import { updateMemberRoleSettings } from '@/services/api/organization';
 import { toast } from 'sonner';
 
 interface CompanyRolesListProps {

@@ -330,12 +330,12 @@ export const getCompanyJobs = async (companyId: string, filters?: JobSearchParam
         if (filters.search) params.append("title", filters.search);
         // Add other filters as needed
     }
-    const response = await api.get(`/companies/${companyId}/jobs?${params.toString()}`);
+    const response = await api.get(`/organizations/${companyId}/jobs?${params.toString()}`);
     return response.data.map(transformJob);
 };
 
 export const getCompanyDashboardStats = async (companyId: string) => {
-    const response = await api.get(`/companies/${companyId}/analytics/jobs`);
+    const response = await api.get(`/organizations/${companyId}/analytics/jobs`);
     const overview = response.data?.overview || {};
     return {
         totalJobs: parseInt(overview.total_jobs || '0'),

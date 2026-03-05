@@ -409,7 +409,8 @@ export default function FeedPost({
     setPostComments(prev => prev.filter(c => c.id !== commentId));
 
     try {
-      await deleteComment(commentId.toString());
+      const companyId = isCompany ? activeProfile?.id : undefined;
+      await deleteComment(commentId.toString(), companyId);
       toast.success("Comment deleted");
     } catch (err) {
       console.error("Failed to delete comment", err);
@@ -474,10 +475,11 @@ export default function FeedPost({
     });
 
     try {
+      const companyId = isCompany ? activeProfile?.id : undefined;
       if (pollData.user_vote === optionId) {
-        await removeVote(id);
+        await removeVote(id, companyId);
       } else {
-        await voteInPoll(id, optionId);
+        await voteInPoll(id, optionId, companyId);
       }
     } catch (error) {
       console.error("Vote failed", error);
@@ -528,10 +530,11 @@ export default function FeedPost({
     });
 
     try {
+      const companyId = isCompany ? activeProfile?.id : undefined;
       if (sharedPollData.user_vote === optionId) {
-        await removeVote(shared_post.id);
+        await removeVote(shared_post.id, companyId);
       } else {
-        await voteInPoll(shared_post.id, optionId);
+        await voteInPoll(shared_post.id, optionId, companyId);
       }
     } catch (error) {
       console.error("Shared vote failed", error);
@@ -557,7 +560,7 @@ export default function FeedPost({
               </div>
             ) : (
               <Link
-                href={isCompanyPost ? `/company/${authorSlug}` : `/profile/${authorSlug || authorId}`}
+                href={isCompanyPost ? `/organization/${authorSlug}` : `/profile/${authorSlug || authorId}`}
                 className="block flex-shrink-0"
               >
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
@@ -570,7 +573,7 @@ export default function FeedPost({
                 <h3 className="text-foreground text-sm font-semibold cursor-default leading-tight">{author}</h3>
               ) : (
                 <Link
-                  href={isCompanyPost ? `/company/${authorSlug}` : `/profile/${authorSlug || authorId}`}
+                  href={isCompanyPost ? `/organization/${authorSlug}` : `/profile/${authorSlug || authorId}`}
                   className="hover:underline block"
                 >
                   <h3 className="text-foreground text-sm font-semibold leading-tight">{author}</h3>

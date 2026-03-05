@@ -22,7 +22,7 @@ import {
     removeConnection,
     getRelationshipStatus
 } from '@/services/api/social';
-import { companyService } from '@/services/company.service';
+import { companyService } from '@/services/organization.service';
 import { toast } from 'sonner';
 import { useSocket } from '@/context/SocketContext';
 import { useQueryClient } from '@tanstack/react-query';

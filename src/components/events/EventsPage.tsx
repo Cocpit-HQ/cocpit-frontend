@@ -14,7 +14,7 @@ import { EventFeed } from "@/components/events/EventFeed"
 import { UserEventsList } from "@/components/events/UserEventsList"
 import { useEventFeed } from "@/components/events/hooks/use-event-queries"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
-import { useCompanyPermissions } from "@/hooks/use-company"
+import { useCompanyPermissions } from "@/hooks/use-organization"
 
 const routes: Record<string, string> = {
   home: "/feed",

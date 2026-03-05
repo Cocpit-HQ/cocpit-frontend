@@ -131,7 +131,7 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
               <h1 className="text-2xl font-bold mb-2">{job.title}</h1>
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
                 {job.companySlug ? (
-                  <Link href={`/company/${job.companySlug}`} className="font-medium text-foreground flex items-center gap-1.5 hover:underline">
+                  <Link href={`/organization/${job.companySlug}`} className="font-medium text-foreground flex items-center gap-1.5 hover:underline">
                     <Building className="w-4 h-4" />
                     {job.company}
                   </Link>

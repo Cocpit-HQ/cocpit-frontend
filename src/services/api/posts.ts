@@ -19,8 +19,8 @@ export const deletePost = async (postId: string): Promise<DeletePostResponse> =>
   return response.data;
 };
 
-export const getPostById = async (postId: string): Promise<BackendPost> => {
-  const response = await api.get<BackendPost>(`/post/${postId}`);
+export const getPostById = async (postId: string, companyId?: string): Promise<BackendPost> => {
+  const response = await api.get<BackendPost>(`/post/${postId}`, { params: { companyId } });
   return response.data;
 };
 
@@ -39,13 +39,13 @@ export const toggleLike = async (postId: string, companyId?: string): Promise<{ 
   return response.data;
 };
 
-export const voteInPoll = async (postId: string, optionId: string): Promise<{ message: string }> => {
-  const response = await api.post<{ message: string }>(`/post/${postId}/poll/vote`, { option_id: optionId });
+export const voteInPoll = async (postId: string, optionId: string, companyId?: string): Promise<{ message: string }> => {
+  const response = await api.post<{ message: string }>(`/post/${postId}/poll/vote`, { option_id: optionId, companyId });
   return response.data;
 };
 
-export const removeVote = async (postId: string): Promise<{ message: string }> => {
-  const response = await api.delete<{ message: string }>(`/post/${postId}/poll/vote`);
+export const removeVote = async (postId: string, companyId?: string): Promise<{ message: string }> => {
+  const response = await api.delete<{ message: string }>(`/post/${postId}/poll/vote`, { data: { companyId } });
   return response.data;
 };
 
@@ -60,8 +60,8 @@ export const addComment = async (postId: string, content: string, parent_id?: st
   return response.data;
 };
 
-export const updateComment = async (commentId: string, content: string) => {
-  const response = await api.put(`/comments/${commentId}`, { content });
+export const updateComment = async (commentId: string, content: string, companyId?: string) => {
+  const response = await api.put(`/comments/${commentId}`, { content, companyId });
   return response.data;
 };
 
@@ -70,8 +70,8 @@ export const getComments = async (postId: string, companyId?: string) => {
   return response.data;
 };
 
-export const deleteComment = async (commentId: string) => {
-  const response = await api.delete(`/comments/${commentId}`);
+export const deleteComment = async (commentId: string, companyId?: string) => {
+  const response = await api.delete(`/comments/${commentId}`, { data: { companyId } });
   return response.data;
 };
 
@@ -80,7 +80,7 @@ export const toggleCommentLike = async (commentId: string | number, companyId?: 
   return response.data;
 };
 
-export const toggleCommentPin = async (commentId: string | number) => {
-  const response = await api.post(`/comments/${commentId}/pin`);
+export const toggleCommentPin = async (commentId: string | number, companyId?: string) => {
+  const response = await api.post(`/comments/${commentId}/pin`, { companyId });
   return response.data;
 };

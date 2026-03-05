@@ -16,7 +16,7 @@ import { CreateJobModal } from "@/components/jobs/CreateJobModal"
 import { JobPostsDashboard } from "@/components/jobs/dashboard/JobPostsDashboard"
 import { useJobs } from "@/context/JobsContext"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
-import { useCompanyPermissions } from "@/hooks/use-company"
+import { useCompanyPermissions } from "@/hooks/use-organization"
 import type { Page } from "@/types/common"
 
 const routes: Record<string, string> = {

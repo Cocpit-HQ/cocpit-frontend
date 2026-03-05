@@ -47,8 +47,8 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
     image: session?.user?.image,
   };
 
-  // Include activeProfile.type in query key to separate user vs company feed caches
-  const feedQueryKey = ['feed', activeProfile?.type ?? 'USER', currentUser.id];
+  // Include activeProfile.id in query key to separate different organization feeds
+  const feedQueryKey = ['feed', activeProfile?.type ?? 'USER', activeProfile?.id ?? currentUser.id];
 
   const {
     data,
@@ -60,7 +60,8 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
   } = useInfiniteQuery({
     queryKey: feedQueryKey,
     queryFn: async ({ pageParam }) => {
-      const response = await getFeed(pageParam?.cursorCreatedAt, pageParam?.cursorPostId);
+      const companyId = activeProfile?.type !== 'USER' ? activeProfile?.id : undefined;
+      const response = await getFeed(pageParam?.cursorCreatedAt, pageParam?.cursorPostId, companyId);
       return {
         ...response,
         posts: response.posts.map(mapBackendPostToFrontend)

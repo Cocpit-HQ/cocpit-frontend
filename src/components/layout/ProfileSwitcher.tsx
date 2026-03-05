@@ -28,6 +28,9 @@ export function ProfileSwitcher({ showArrow = false, customTrigger, align = "end
     const { logout, user } = useAuth();
     const router = useRouter();
 
+    const companies = switchableCompanies.filter(c => c.entity_type === 'COMPANY' || !c.entity_type);
+    const institutions = switchableCompanies.filter(c => c.entity_type === 'INSTITUTION');
+
     if (!activeProfile || !user) return null;
 
     const handleLogout = async () => {
@@ -70,28 +73,58 @@ export function ProfileSwitcher({ showArrow = false, customTrigger, align = "end
 
                 <DropdownMenuSeparator />
 
+                {institutions.length > 0 && (
+                    <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuGroup>
+                            <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Educational Institutions</DropdownMenuLabel>
+                            {institutions.map((inst: any) => (
+                                <DropdownMenuItem
+                                    key={inst.org_id || inst.company_id}
+                                    onClick={() => switchProfile("COMPANY", inst.org_id || inst.company_id)}
+                                    className="cursor-pointer"
+                                >
+                                    <div className="flex items-center flex-1 min-w-0">
+                                        <Avatar className="h-6 w-6 mr-2">
+                                            <AvatarImage src={inst.logo_url} />
+                                            <AvatarFallback>{inst.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="truncate">{inst.name}</span>
+                                    </div>
+                                    {activeProfile.id === (inst.org_id || inst.company_id) && <Check className="ml-auto h-4 w-4 text-primary" />}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuGroup>
+                    </>
+                )}
+
+                <DropdownMenuSeparator />
+
                 <DropdownMenuGroup>
-                    <DropdownMenuLabel className="text-xs text-muted-foreground">Company Accounts</DropdownMenuLabel>
-                    {switchableCompanies.length > 0 ? (
-                        switchableCompanies.map((company: any) => (
+                    <DropdownMenuLabel className="text-xs text-muted-foreground uppercase tracking-wider">Company Accounts</DropdownMenuLabel>
+                    {companies.length > 0 ? (
+                        companies.map((company: any) => (
                             <DropdownMenuItem
-                                key={company.company_id}
-                                onClick={() => switchProfile("COMPANY", company.company_id)}
+                                key={company.org_id || company.company_id}
+                                onClick={() => switchProfile("COMPANY", company.org_id || company.company_id)}
                                 className="cursor-pointer"
                             >
                                 <div className="flex items-center flex-1 min-w-0">
-                                    <Building2 className="mr-2 h-4 w-4 flex-shrink-0" />
+                                    <Avatar className="h-6 w-6 mr-2">
+                                        <AvatarImage src={company.logo_url} />
+                                        <AvatarFallback>{company.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                                    </Avatar>
                                     <span className="truncate">{company.name}</span>
                                 </div>
-                                {activeProfile.id === company.company_id && <Check className="ml-auto h-4 w-4 text-primary" />}
+                                {activeProfile.id === (company.org_id || company.company_id) && <Check className="ml-auto h-4 w-4 text-primary" />}
                             </DropdownMenuItem>
                         ))
                     ) : (
                         <div className="px-2 py-1.5 text-xs text-muted-foreground italic">No companies</div>
                     )}
-                    <DropdownMenuItem onClick={() => router.push("/create-company")} className="cursor-pointer text-primary focus:text-primary">
+                    <DropdownMenuItem onClick={() => router.push("/create-organization")} className="cursor-pointer text-primary focus:text-primary">
                         <Plus className="mr-2 h-4 w-4" />
-                        <span>Create Company</span>
+                        <span>Create Organization</span>
                     </DropdownMenuItem>
                 </DropdownMenuGroup>
 

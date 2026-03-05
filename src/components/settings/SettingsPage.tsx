@@ -192,7 +192,7 @@ function AccountSetting({ label, value }: { label: string; value: string }) {
   )
 }
 
-import { useUserCompanies } from "@/components/companies/hooks/use-company"
+import { useUserCompanies } from "@/components/organizations/hooks/use-company"
 import Link from "next/link"
 import { Plus } from "lucide-react"
 
@@ -209,7 +209,7 @@ function CompaniesSettings() {
           <h2 className="mb-2 text-foreground">Companies</h2>
           <p className="text-sm text-muted-foreground">Manage the companies you own or belong to</p>
         </div>
-        <Button onClick={() => router.push('/create-company')}>
+        <Button onClick={() => router.push('/create-organization')}>
           <Plus className="w-4 h-4 mr-2" />
           Create
         </Button>
@@ -234,12 +234,12 @@ function CompaniesSettings() {
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" asChild>
-                  <Link href={`/company/${company.slug}/settings`}>
+                  <Link href={`/organization/${company.slug}/settings`}>
                     Settings
                   </Link>
                 </Button>
                 <Button size="sm" asChild>
-                  <Link href={`/company/${company.slug}`}>
+                  <Link href={`/organization/${company.slug}`}>
                     View Page
                   </Link>
                 </Button>
@@ -249,7 +249,7 @@ function CompaniesSettings() {
         ) : (
           <div className="text-center py-12 border border-dashed rounded-xl">
             <p className="text-muted-foreground mb-4">You haven't created or joined any companies yet.</p>
-            <Button variant="outline" onClick={() => router.push('/create-company')}>
+            <Button variant="outline" onClick={() => router.push('/create-organization')}>
               Create your first company
             </Button>
           </div>

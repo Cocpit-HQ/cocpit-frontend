@@ -30,6 +30,7 @@ export interface User {
 
 export interface CompanyRole {
   company_id: string;
+  org_id?: string;
   name: string;
   slug: string;
   logo_url: string | null;

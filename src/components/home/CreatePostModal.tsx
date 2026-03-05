@@ -18,8 +18,8 @@ import { toast } from 'sonner';
 // Import Area type for onCropComplete
 import { Area } from 'react-easy-crop';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { companyService } from '@/services/company.service';
-import { useCompany } from '@/components/companies/hooks/use-company';
+import { companyService } from '@/services/organization.service';
+import { useCompany } from '@/components/organizations/hooks/use-company';
 import { useSession } from 'next-auth/react';
 
 export type PostType = 'text' | 'photo' | 'poll' | 'video' | 'article';
@@ -1369,11 +1369,16 @@ export function CreatePostModal({
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 mt-3">
-                        {(isCompanyPost
-                          ? ['Update', 'Hiring', 'Milestone', 'Insight', 'Article']
-                          : ['Professional', 'Personal', 'Achievement', 'Article']
-                        ).map((category) => (
+                      <div className="flex flex-wrap items-center gap-2 mt-3">
+                        {((() => {
+                          if (!isCompanyPost) {
+                            return ['Professional', 'Personal', 'Achievement', 'Article'];
+                          }
+                          if ((currentPoster as any)?.entity_type === 'INSTITUTION') {
+                            return ['Announcement', 'Academic', 'Campus Life', 'Hiring', 'Article'];
+                          }
+                          return ['Update', 'Hiring', 'Milestone', 'Insight', 'Article'];
+                        })()).map((category) => (
                           <button
                             key={category}
                             onClick={() => handleSetPostCategory(category as any)}

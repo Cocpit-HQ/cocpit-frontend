@@ -446,7 +446,7 @@ export default function ProfilePage() {
                         <div className="flex flex-wrap gap-2 mb-3">
                           {user.company_roles.map((role) => (
                             <button
-                              key={role.company_id}
+                              key={role.org_id || role.company_id}
                               onClick={() => handleRoleClick(role)}
                               className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20"
                             >

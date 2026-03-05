@@ -6,6 +6,7 @@ import { X, FolderPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { createSavedFolder } from '@/services/api/savedPost'
 import { SavedFolder } from '@/types/entities'
+import { useActiveProfile } from '@/context/ActiveProfileContext'
 
 interface CreateFolderModalProps {
     isOpen: boolean
@@ -14,6 +15,7 @@ interface CreateFolderModalProps {
 }
 
 export function CreateFolderModal({ isOpen, onClose, onFolderCreated }: CreateFolderModalProps) {
+    const { isCompany, activeProfile } = useActiveProfile()
     const [folderName, setFolderName] = useState('')
     const [isLoading, setIsLoading] = useState(false)
 
@@ -23,7 +25,8 @@ export function CreateFolderModal({ isOpen, onClose, onFolderCreated }: CreateFo
 
         setIsLoading(true)
         try {
-            const response = await createSavedFolder(folderName)
+            const companyId = isCompany ? activeProfile?.id : undefined;
+            const response = await createSavedFolder(folderName, companyId)
             if (response.success) {
                 toast.success("Folder created")
                 onFolderCreated(response.folder)

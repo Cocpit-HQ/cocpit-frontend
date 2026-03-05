@@ -3,8 +3,8 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
-import { useUserCompanies } from "@/components/companies/hooks/use-company";
-import { Company } from "@/services/company.service";
+import { useUserCompanies } from "@/components/organizations/hooks/use-company";
+import { Company } from "@/services/organization.service";
 import { User } from "next-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { JOB_KEYS } from "@/components/jobs/hooks/use-job-queries";
@@ -13,6 +13,7 @@ type ProfileType = "USER" | "COMPANY";
 
 interface ActiveProfile {
     type: ProfileType;
+    entityType?: 'COMPANY' | 'INSTITUTION';
     id: string;
     name: string;
     slug?: string;
@@ -74,11 +75,12 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
 
         // If stored profile is COMPANY and user is a member with SWITCH_TO_COMPANY, switch to it
         if (storedProfileType === "COMPANY" && storedProfileId) {
-            const targetCompany = companies.find((c) => c.company_id === storedProfileId);
+            const targetCompany = companies.find((c: any) => (c.org_id || c.company_id) === storedProfileId);
             if (targetCompany && canSwitchToCompany(targetCompany)) {
                 initialProfile = {
                     type: "COMPANY",
-                    id: targetCompany.company_id,
+                    entityType: targetCompany.entity_type as 'COMPANY' | 'INSTITUTION',
+                    id: targetCompany.org_id || targetCompany.company_id,
                     name: targetCompany.name,
                     slug: targetCompany.slug,
                     avatar_url: targetCompany.logo_url,
@@ -135,11 +137,12 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
             router.push("/feed");
 
         } else if (type === "COMPANY") {
-            const targetCompany = companies.find((c) => c.company_id === id);
+            const targetCompany = companies.find((c: any) => (c.org_id || c.company_id) === id);
             if (targetCompany && canSwitchToCompany(targetCompany)) {
                 const companyProfile: ActiveProfile = {
                     type: "COMPANY",
-                    id: targetCompany.company_id,
+                    entityType: targetCompany.entity_type as 'COMPANY' | 'INSTITUTION',
+                    id: targetCompany.org_id || targetCompany.company_id,
                     name: targetCompany.name,
                     slug: targetCompany.slug,
                     avatar_url: targetCompany.logo_url,
@@ -147,10 +150,10 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                 };
                 setActiveProfile(companyProfile);
                 localStorage.setItem("activeProfileType", "COMPANY");
-                localStorage.setItem("activeProfileId", targetCompany.company_id);
+                localStorage.setItem("activeProfileId", targetCompany.org_id || targetCompany.company_id);
 
                 // Redirect to Company Dashboard/Page
-                router.push(`/company/${targetCompany.slug}`);
+                router.push(`/organization/${targetCompany.slug}`);
             }
         }
     };

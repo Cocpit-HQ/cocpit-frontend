@@ -111,7 +111,7 @@ export const HomeHeader = () => {
                                     searchResults.map(user => (
                                         <Link
                                             key={user.type === 'COMPANY' ? user.slug : user.id}
-                                            href={user.type === 'COMPANY' ? `/company/${user.slug}` : `/profile/${user.account_name || user.id}`}
+                                            href={user.type === 'COMPANY' ? `/organization/${user.slug}` : `/profile/${user.account_name || user.id}`}
                                             className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors"
                                         >
                                             <img src={user.avatar_url || (user.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')} alt={user.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
@@ -183,7 +183,7 @@ export const HomeHeader = () => {
                                     searchResults.map(user => (
                                         <Link
                                             key={user.type === 'COMPANY' ? user.slug : user.id}
-                                            href={user.type === 'COMPANY' ? `/company/${user.slug}` : `/profile/${user.account_name || user.id}`}
+                                            href={user.type === 'COMPANY' ? `/organization/${user.slug}` : `/profile/${user.account_name || user.id}`}
                                             className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors"
                                         >
                                             <img src={user.avatar_url || (user.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')} alt={user.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />

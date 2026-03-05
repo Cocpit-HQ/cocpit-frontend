@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { CompanyRole } from "@/types/user";
 import { useRouter } from "next/navigation";
 import { Building2, Eye, EyeOff, Pin, Globe, Lock } from "lucide-react";
-import { updateMemberRoleSettings } from "@/services/api/company";
+import { updateMemberRoleSettings } from "@/services/api/organization";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -128,7 +128,7 @@ export function CompanyRoleModal({ isOpen, onClose, role, isOwnProfile }: Compan
                         type="button"
                         className="w-full"
                         onClick={() => {
-                            router.push(`/company/${role.slug}`);
+                            router.push(`/organization/${role.slug}`);
                             onClose();
                         }}
                     >

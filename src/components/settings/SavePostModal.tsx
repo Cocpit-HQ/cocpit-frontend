@@ -7,6 +7,7 @@ import { SavedFolder } from '@/types/entities'
 import { getSavedFolders, toggleSavePost } from '@/services/api/savedPost'
 import { CreateFolderModal } from './CreateFolderModal'
 import { toast } from 'sonner'
+import { useActiveProfile } from '@/context/ActiveProfileContext'
 
 interface SavePostModalProps {
     isOpen: boolean
@@ -21,16 +22,19 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
     const [savingToFolderId, setSavingToFolderId] = useState<string | null>(null)
 
+    const { isCompany, activeProfile } = useActiveProfile()
+
     useEffect(() => {
         if (isOpen) {
             fetchFolders()
         }
-    }, [isOpen])
+    }, [isOpen, activeProfile?.id])
 
     const fetchFolders = async () => {
         setIsLoading(true)
         try {
-            const response = await getSavedFolders()
+            const companyId = isCompany ? activeProfile?.id : undefined;
+            const response = await getSavedFolders(companyId)
             if (response.success) {
                 setFolders(response.folders)
             }
@@ -44,8 +48,9 @@ export function SavePostModal({ isOpen, onClose, postId, onSaved }: SavePostModa
     const handleSaveToFolder = async (folderId: string | null | undefined) => {
         setSavingToFolderId(folderId || 'all')
         try {
+            const companyId = isCompany ? activeProfile?.id : undefined;
             // folderId null means "All Saved" (no specific folder), undefined means toggle (legacy)
-            const response = await toggleSavePost(postId, folderId)
+            const response = await toggleSavePost(postId, folderId, companyId)
             if (response.success) {
                 toast.success(folderId ? "Saved to folder" : "Saved to All Posts")
                 onSaved(true)

@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import Avatar from '@/components/shared/Avatar'
 import { Button } from '@/components/ui/button'
 import { handleConnectionRequest } from '@/services/api/social'
-import { companyService } from '@/services/company.service'
+import { companyService } from '@/services/organization.service'
 import { toast } from 'sonner'
 import { ConnectionRequest } from '@/types/social'
 import { cn } from '@/lib/utils'
@@ -52,9 +52,9 @@ export const ConnectionRequestCard: React.FC<ConnectionRequestCardProps> = ({ re
 
     const navigateToProfile = () => {
         if (request.isCompanyRequest && request.sender.slug) {
-            router.push(`/company/${request.sender.slug}`)
+            router.push(`/organization/${request.sender.slug}`)
         } else if (request.isCompanyRequest) {
-            router.push(`/company/${request.sender_id}`) // Fallback if slug missing
+            router.push(`/organization/${request.sender_id}`) // Fallback if slug missing
         } else {
             router.push(`/profile/${request.sender_id}`)
         }

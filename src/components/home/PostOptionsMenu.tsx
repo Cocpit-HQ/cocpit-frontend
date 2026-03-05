@@ -32,7 +32,7 @@ interface PostOptionsMenuProps {
   companyId?: string;
 }
 
-import { useNotifyEmployees } from '@/components/companies/hooks/use-company';
+import { useNotifyEmployees } from '@/components/organizations/hooks/use-company';
 import { Megaphone } from 'lucide-react';
 
 export function PostOptionsMenu({

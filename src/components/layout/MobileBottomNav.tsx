@@ -7,7 +7,7 @@ import { Home, Briefcase, Plus, Calendar } from "lucide-react"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useAuth } from "@/hooks/use-auth"
 import { ProfileSwitcher } from "@/components/layout/ProfileSwitcher"
-import { useCompanyPermissions } from "@/components/companies/hooks/use-company"
+import { useCompanyPermissions } from "@/components/organizations/hooks/use-company"
 
 interface MobileBottomNavProps {
   onAdd?: () => void
@@ -102,19 +102,19 @@ export function MobileBottomNav({ onAdd }: MobileBottomNavProps) {
           </span>
         </Link>
 
-        {isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/company/${activeProfile.slug}`)) ? (
+        {isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/organization/${activeProfile.slug}`)) ? (
           <ProfileSwitcher
             align="end"
             customTrigger={
               <button className="flex flex-col items-center gap-1 flex-1">
-                <div className={`relative w-6 h-6 rounded-full overflow-hidden border-2 ${isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/company/${activeProfile.slug}`)) ? "border-primary" : "border-transparent"}`}>
+                <div className={`relative w-6 h-6 rounded-full overflow-hidden border-2 ${isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/organization/${activeProfile.slug}`)) ? "border-primary" : "border-transparent"}`}>
                   <img
                     src={activeProfile?.avatar_url || user?.image || undefined}
                     alt="Profile"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <span className={`text-xs ${isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/company/${activeProfile.slug}`)) ? "text-primary" : "text-muted-foreground"}`}>
+                <span className={`text-xs ${isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/organization/${activeProfile.slug}`)) ? "text-primary" : "text-muted-foreground"}`}>
                   Profile
                 </span>
               </button>
@@ -122,7 +122,7 @@ export function MobileBottomNav({ onAdd }: MobileBottomNavProps) {
           />
         ) : (
           <Link
-            href={activeProfile?.type === "COMPANY" && activeProfile.slug ? `/company/${activeProfile.slug}` : "/profile"}
+            href={activeProfile?.type === "COMPANY" && activeProfile.slug ? `/organization/${activeProfile.slug}` : "/profile"}
             className="flex flex-col items-center gap-1 flex-1"
           >
             <div className="w-6 h-6 rounded-full overflow-hidden border border-transparent">
@@ -133,7 +133,7 @@ export function MobileBottomNav({ onAdd }: MobileBottomNavProps) {
               />
             </div>
             <span
-              className={`text-xs ${isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/company/${activeProfile.slug}`)) ? "text-primary" : "text-muted-foreground"
+              className={`text-xs ${isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/organization/${activeProfile.slug}`)) ? "text-primary" : "text-muted-foreground"
                 }`}
             >
               Profile

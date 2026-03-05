@@ -107,10 +107,11 @@ export interface CreatePostResponse {
   } | Record<string, never> | null;
 }
 
-export const getFeed = async (cursorCreatedAt?: string, cursorPostId?: string): Promise<FeedResponse> => {
+export const getFeed = async (cursorCreatedAt?: string, cursorPostId?: string, companyId?: string): Promise<FeedResponse> => {
   const params = new URLSearchParams();
   if (cursorCreatedAt) params.append("cursorCreatedAt", cursorCreatedAt);
   if (cursorPostId) params.append("cursorPostId", cursorPostId);
+  if (companyId) params.append("companyId", companyId);
 
   const response = await api.get<FeedResponse>(`/All/feeds?${params.toString()}`);
   return response.data;
@@ -121,7 +122,7 @@ export const createPost = async (data: CreatePostRequest): Promise<CreatePostRes
   return response.data;
 };
 
-export const getPostById = async (id: string): Promise<BackendPost> => {
-  const response = await api.get<BackendPost>(`/post/${id}`);
+export const getPostById = async (id: string, companyId?: string): Promise<BackendPost> => {
+  const response = await api.get<BackendPost>(`/post/${id}`, { params: { companyId } });
   return response.data;
 };

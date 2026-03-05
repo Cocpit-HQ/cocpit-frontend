@@ -129,7 +129,7 @@ export function NotificationPopover() {
                   setIsOpen(false)
                 } else if (notification.type === 'follow' && notification.reference_id) {
                   const url = notification.is_company_actor
-                    ? `/company/${notification.actor_slug}`
+                    ? `/organization/${notification.actor_slug}`
                     : `/profile/${notification.reference_id}`;
                   router.push(url);
                   setIsOpen(false);
@@ -138,7 +138,7 @@ export function NotificationPopover() {
                   setIsOpen(false)
                 } else if ((notification.type === 'connection_accepted' || notification.type === 'connection_request') && notification.reference_id) {
                   const url = notification.is_company_actor
-                    ? `/company/${notification.actor_slug}`
+                    ? `/organization/${notification.actor_slug}`
                     : `/profile/${notification.reference_id}`;
                   router.push(url);
                   setIsOpen(false);
@@ -197,7 +197,7 @@ export function NotificationPopover() {
                   let url: string;
                   if (profileType.toLowerCase() === 'company') {
                     // Use slug for company navigation, fall back to reference_id
-                    url = `/company/${slug || notification.reference_id}`;
+                    url = `/organization/${slug || notification.reference_id}`;
                   } else {
                     // Use account_name for user profile, fall back to reference_id
                     url = `/profile/${accountName || notification.reference_id}`;

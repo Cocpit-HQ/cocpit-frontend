@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ProfileSwitcher } from './ProfileSwitcher'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
-import { useCompanyPermissions } from '@/components/companies/hooks/use-company'
+import { useCompanyPermissions } from '@/components/organizations/hooks/use-company'
 
 interface DarkSidebarProps {
   className?: string
@@ -22,7 +22,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
     { icon: Users, label: 'Showcase', subtext: 'Professional stories', href: '/showcase', show: true },
     { icon: Bot, label: 'AI Assistant', subtext: 'Smart suggestions', href: '/ai-assistant', show: true },
     { icon: Calendar, label: 'Events', subtext: 'Network & earn', href: '/events', show: true },
-    { icon: User, label: 'Profile', subtext: 'Your presence', href: activeProfile?.type === 'COMPANY' && activeProfile.slug ? `/company/${activeProfile.slug}` : '/profile', show: true },
+    { icon: User, label: 'Profile', subtext: 'Your presence', href: activeProfile?.type === 'COMPANY' && activeProfile.slug ? `/organization/${activeProfile.slug}` : '/profile', show: true },
     { icon: Settings, label: 'Settings', subtext: 'Preferences', href: '/settings', show: !isCompany || canEdit || checkPermission('MANAGE_SETTINGS') },
   ];
 
@@ -93,7 +93,10 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
         <div className="flex items-center gap-2 p-2 rounded-lg bg-sidebar-accent/50 border border-sidebar-border/50">
           <ProfileSwitcher showArrow={true} align="start" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">Switch Account</p>
+            <p className="text-sm font-medium text-sidebar-foreground truncate">{activeProfile?.name}</p>
+            <p className="text-xs text-muted-foreground truncate">
+              {activeProfile?.type === 'USER' ? 'Personal Account' : (activeProfile?.entityType === 'INSTITUTION' ? 'Institution' : 'Company')}
+            </p>
           </div>
         </div>
       </div>

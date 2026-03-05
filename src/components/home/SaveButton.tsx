@@ -5,6 +5,7 @@ import { Bookmark, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { toggleSavePost } from '@/services/api/savedPost'
 import { cn } from '@/lib/utils'
+import { useActiveProfile } from '@/context/ActiveProfileContext'
 
 interface SaveButtonProps {
     postId: string
@@ -23,6 +24,8 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
         setIsSaved(initialIsSaved)
     }, [initialIsSaved])
 
+    const { isCompany, activeProfile } = useActiveProfile()
+
     const handleToggleSave = async (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
@@ -40,7 +43,8 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
         setIsLoading(true)
 
         try {
-            const response = await toggleSavePost(postId)
+            const companyId = isCompany ? activeProfile?.id : undefined;
+            const response = await toggleSavePost(postId, undefined, companyId)
 
             // Sync with server response
             setIsSaved(response.saved)

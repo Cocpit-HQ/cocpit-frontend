@@ -28,25 +28,25 @@ import {
     getActivityHeatmap,
 } from '@/app/(dashboard)/company-analytics/data'
 
-import { CompanyKpiCards } from '@/components/company-analytics/CompanyKpiCards'
-import { DailyViewsChart } from '@/components/company-analytics/DailyViewsChart'
-import { WeeklyComparisonChart } from '@/components/company-analytics/WeeklyComparisonChart'
-import { EventKpiCards } from '@/components/company-analytics/EventKpiCards'
-import { EventPostingTrendChart } from '@/components/company-analytics/EventPostingTrendChart'
-import { EventRegistrationChart } from '@/components/company-analytics/EventRegistrationChart'
-import { TopEventsTable } from '@/components/company-analytics/TopEventsTable'
-import { JobKpiCards } from '@/components/company-analytics/JobKpiCards'
-import { JobPostingTrendChart } from '@/components/company-analytics/JobPostingTrendChart'
-import { JobApplicationChart } from '@/components/company-analytics/JobApplicationChart'
-import { TopJobsTable } from '@/components/company-analytics/TopJobsTable'
-import { FollowerKpiCards } from '@/components/company-analytics/FollowerKpiCards'
-import { FollowerGrowthChart } from '@/components/company-analytics/FollowerGrowthChart'
-import { AudienceBreakdown } from '@/components/company-analytics/AudienceBreakdown'
-import { ContentKpiCards } from '@/components/company-analytics/ContentKpiCards'
-import { ContentEngagementChart } from '@/components/company-analytics/ContentEngagementChart'
-import { TopPostsTable } from '@/components/company-analytics/TopPostsTable'
-import { ActivityHeatmap } from '@/components/company-analytics/ActivityHeatmap'
-import { AnalyticsSkeleton } from '@/components/company-analytics/AnalyticsSkeleton'
+import { OrganizationKpiCards } from '@/components/organization-analytics/OrganizationKpiCards'
+import { DailyViewsChart } from '@/components/organization-analytics/DailyViewsChart'
+import { WeeklyComparisonChart } from '@/components/organization-analytics/WeeklyComparisonChart'
+import { EventKpiCards } from '@/components/organization-analytics/EventKpiCards'
+import { EventPostingTrendChart } from '@/components/organization-analytics/EventPostingTrendChart'
+import { EventRegistrationChart } from '@/components/organization-analytics/EventRegistrationChart'
+import { TopEventsTable } from '@/components/organization-analytics/TopEventsTable'
+import { JobKpiCards } from '@/components/organization-analytics/JobKpiCards'
+import { JobPostingTrendChart } from '@/components/organization-analytics/JobPostingTrendChart'
+import { JobApplicationChart } from '@/components/organization-analytics/JobApplicationChart'
+import { TopJobsTable } from '@/components/organization-analytics/TopJobsTable'
+import { FollowerKpiCards } from '@/components/organization-analytics/FollowerKpiCards'
+import { FollowerGrowthChart } from '@/components/organization-analytics/FollowerGrowthChart'
+import { AudienceBreakdown } from '@/components/organization-analytics/AudienceBreakdown'
+import { ContentKpiCards } from '@/components/organization-analytics/ContentKpiCards'
+import { ContentEngagementChart } from '@/components/organization-analytics/ContentEngagementChart'
+import { TopPostsTable } from '@/components/organization-analytics/TopPostsTable'
+import { ActivityHeatmap } from '@/components/organization-analytics/ActivityHeatmap'
+import { AnalyticsSkeleton } from '@/components/organization-analytics/AnalyticsSkeleton'
 
 type TabKey = 'profile' | 'events' | 'jobs' | 'followers' | 'content'
 
@@ -207,7 +207,7 @@ export default function CompanyAnalyticsPage() {
                     >
                         {/* KPI Cards */}
                         <section className="mb-10">
-                            {activeTab === 'profile' && <CompanyKpiCards metrics={kpiMetrics} />}
+                            {activeTab === 'profile' && <OrganizationKpiCards metrics={kpiMetrics} />}
                             {activeTab === 'events' && <EventKpiCards metrics={eventKpis} />}
                             {activeTab === 'jobs' && <JobKpiCards metrics={jobKpis} />}
                             {activeTab === 'followers' && <FollowerKpiCards metrics={followerKpis} />}

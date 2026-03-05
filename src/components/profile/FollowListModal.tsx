@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Search, UserMinus, UserPlus, X, Building2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getFollowers, getFollowing, getMyConnections, followUser, unfollowUser, removeConnection } from "@/services/api/social";
-import { companyService } from "@/services/company.service";
+import { companyService } from "@/services/organization.service";
 import { Follower, Following, Connection } from "@/types/social";
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
@@ -132,7 +132,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                 {users.map((user) => {
                     const id = user.user_id || user.follower_id || user.following_id;
                     const isCompany = user.type === 'company';
-                    const linkHref = isCompany ? `/company/${user.slug}` : `/profile/${user.account_name || id}`;
+                    const linkHref = isCompany ? `/organization/${user.slug}` : `/profile/${user.account_name || id}`;
 
                     return (
                         <div key={`${user.type || 'user'}-${id}`} className="flex items-center justify-between">

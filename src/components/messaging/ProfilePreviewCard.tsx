@@ -16,7 +16,7 @@ interface ProfilePreviewCardProps {
 }
 
 export function ProfilePreviewCard({ profile, profileId, profileType }: ProfilePreviewCardProps) {
-    const profileUrl = profileType === "user" ? `/profile/${profileId}` : `/company/${profileId}`;
+    const profileUrl = profileType === "user" ? `/profile/${profileId}` : `/organization/${profileId}`;
 
     return (
         <div className="flex flex-col gap-3 p-4 rounded-xl border border-border bg-card shadow-sm max-w-[280px]">
