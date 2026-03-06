@@ -195,11 +195,18 @@ export default function FeedPost({
     };
   }, [videoSrc]);
 
+  const snapAspectRatio = (ratio: number) => {
+    const targets = [1, 0.8, 16 / 9];
+    return targets.reduce((prev, curr) =>
+      Math.abs(curr - ratio) < Math.abs(prev - ratio) ? curr : prev
+    );
+  };
+
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
     if (!aspectRatio || aspectRatio === 'auto') {
       const img = event.currentTarget;
       const ratio = img.naturalWidth / img.naturalHeight;
-      setDynamicAspectRatio(ratio);
+      setDynamicAspectRatio(snapAspectRatio(ratio));
     }
   };
 
@@ -208,7 +215,7 @@ export default function FeedPost({
       const video = event.currentTarget;
       const ratio = video.videoWidth / video.videoHeight;
       if (ratio && !isNaN(ratio)) {
-        setDynamicAspectRatio(ratio);
+        setDynamicAspectRatio(snapAspectRatio(ratio));
       }
     }
   };
@@ -862,10 +869,10 @@ export default function FeedPost({
         {/* Media content (Now shown after shared post) */}
         {(hasMultipleImages || imageSrc || videoSrc) && (
           <div
-            className={`w-full overflow-hidden bg-gray-100 dark:bg-zinc-900 relative group flex flex-col justify-center ${isProfileView ? 'aspect-square' : ''} ${!isProfileView && !finalAspectRatio && !isVerticalVideo ? 'min-h-[300px] md:min-h-[400px]' : ''}`}
+            className={`w-full overflow-hidden bg-gray-100 dark:bg-zinc-900 relative group flex flex-col justify-center ${isProfileView ? 'aspect-square' : (isVerticalVideo ? '' : (finalAspectRatio ? '' : 'min-h-[300px] md:min-h-[400px]'))}`}
             style={
               !isProfileView
-                ? (isVerticalVideo ? { height: '550px' } : (finalAspectRatio ? { aspectRatio: finalAspectRatio } : undefined))
+                ? (isVerticalVideo ? { height: '550px' } : (finalAspectRatio ? { aspectRatio: finalAspectRatio, maxHeight: '700px' } : undefined))
                 : undefined
             }
             onMouseEnter={triggerBadgeVisibility}
@@ -891,7 +898,7 @@ export default function FeedPost({
                         src={src}
                         alt={`Slide ${index + 1}`}
                         fill
-                        className={`${isProfileView ? 'object-cover' : 'object-contain'}`}
+                        className="object-cover"
                         priority={priority && index === 0}
                         sizes="(max-width: 768px) 100vw, 600px"
                         onLoad={(event) => {
@@ -908,7 +915,7 @@ export default function FeedPost({
                 src={contentImgSrc}
                 alt="Post content"
                 fill
-                className={`${isProfileView ? 'object-cover' : 'object-contain'}`}
+                className="object-cover"
                 priority={priority}
                 sizes="(max-width: 768px) 100vw, 600px"
                 onLoad={handleImageLoad}
