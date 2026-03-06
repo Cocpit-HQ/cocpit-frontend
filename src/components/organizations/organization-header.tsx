@@ -14,7 +14,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { OrganizationFollowersModal } from "@/components/organizations/OrganizationFollowersModal";
 import { OrganizationNotificationBell } from "@/components/organizations/OrganizationNotificationBell";
-import { ShareProfileModal } from "@/components/messaging/ShareProfileModal";
+import { UniversalShareModal } from "@/components/share/UniversalShareModal";
 import { EnrollmentRequestModal } from "@/components/organizations/EnrollmentRequestModal";
 import { MoreHorizontal, Share2, Link as LinkIcon } from "lucide-react";
 import {
@@ -366,13 +366,13 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
                 canManage={canManageCompany}
             />
 
-            <ShareProfileModal
+            <UniversalShareModal
                 isOpen={isShareModalOpen}
                 onClose={() => setIsShareModalOpen(false)}
-                profileId={company.company_id}
-                profileType="company"
-                profileName={company.name}
-                profileUrl={`/organization/${company.slug}`}
+                entityId={company.company_id || company.org_id || ""}
+                entityType="company"
+                entityName={company.name}
+                entityUrl={`/organization/${company.slug}`}
             />
         </div>
     );

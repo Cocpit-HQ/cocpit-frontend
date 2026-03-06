@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { ProfilePreviewCard } from "../ProfilePreviewCard"
+import { EntityPreviewCard } from "../EntityPreviewCard"
 
 // --- Types ---
 interface MessageBubbleProps {
@@ -419,12 +420,21 @@ function MessageBubble(props: MessageBubbleProps) {
           ) : (
             <>
               <SharedPostCard message={message} onMediaLoad={onMediaLoad} />
-              {message.sharedProfile && message.sharedProfileId && message.sharedProfileType && (
+              {message.sharedProfileId && message.sharedProfileType && (
                 <div className="mt-1 mb-2">
                   <ProfilePreviewCard
-                    profile={message.sharedProfile}
+                    profile={message.sharedProfile || { name: "Profile", avatar: null }}
                     profileId={message.sharedProfileId}
                     profileType={message.sharedProfileType}
+                  />
+                </div>
+              )}
+              {/* Universal Entity Preview — for new share messages */}
+              {message.entityType && message.entityId && !message.sharedPost && !message.sharedProfileId && (
+                <div className="mt-1 mb-2">
+                  <EntityPreviewCard
+                    entityType={message.entityType}
+                    entityId={message.entityId}
                   />
                 </div>
               )}
@@ -469,6 +479,9 @@ export default React.memo(MessageBubble, (prevProps, nextProps) => {
     prevProps.message.is_deleted_for_me === nextProps.message.is_deleted_for_me &&
     prevProps.message.is_edited === nextProps.message.is_edited &&
     prevProps.message.isBlocked === nextProps.message.isBlocked &&
-    prevProps.message.media === nextProps.message.media
+    prevProps.message.media === nextProps.message.media &&
+    prevProps.message.sharedProfile === nextProps.message.sharedProfile &&
+    prevProps.message.entityType === nextProps.message.entityType &&
+    prevProps.message.entityId === nextProps.message.entityId
   )
 })

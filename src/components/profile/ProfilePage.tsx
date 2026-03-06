@@ -9,7 +9,7 @@ import Link from "next/link"
 import SuggestionsPanel from "@/components/home/SuggestionsPanel"
 import type { Page } from "@/types/common"
 import { CompanyRoleModal } from "@/components/profile/parts/CompanyRoleModal"
-import { ShareProfileModal } from "@/components/messaging/ShareProfileModal"
+import { UniversalShareModal } from "@/components/share/UniversalShareModal"
 import { MoreVertical, Share2, Link as LinkIcon } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -705,13 +705,13 @@ export default function ProfilePage() {
         isOwnProfile={true}
       />
 
-      <ShareProfileModal
+      <UniversalShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        profileId={user?.id || ""}
-        profileType="user"
-        profileName={user?.name || ""}
-        profileUrl={`/profile/${user?.account_name || user?.id}`}
+        entityId={user?.id || ""}
+        entityType="profile"
+        entityName={user?.name || ""}
+        entityUrl={`/profile/${user?.account_name || user?.id}`}
       />
     </div>
   )

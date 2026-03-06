@@ -204,6 +204,36 @@ export function NotificationPopover() {
                   }
                   router.push(url);
                   setIsOpen(false);
+                } else if (notification.type === 'share') {
+                  // Universal share notification — route based on entity_type
+                  let entityType = notification.entity_type;
+                  let entityId = notification.entity_id || notification.reference_id;
+                  let slug: string | undefined;
+                  let accountName: string | undefined;
+                  try {
+                    const meta = typeof notification.metadata === 'string'
+                      ? JSON.parse(notification.metadata)
+                      : notification.metadata;
+                    entityType = entityType || meta?.entityType;
+                    entityId = entityId || meta?.entityId;
+                    slug = meta?.slug;
+                    accountName = meta?.account_name;
+                  } catch (e) { console.error("Error parsing share metadata", e); }
+
+                  let url = '/';
+                  if (entityType === 'company') {
+                    url = `/organization/${slug || entityId}`;
+                  } else if (entityType === 'profile') {
+                    url = `/profile/${accountName || entityId}`;
+                  } else if (entityType === 'post') {
+                    url = `/post/${entityId}`;
+                  } else if (entityType === 'job') {
+                    url = `/jobs/${entityId}`;
+                  } else if (entityType === 'event') {
+                    url = `/events/${entityId}`;
+                  }
+                  router.push(url);
+                  setIsOpen(false);
                 }
               }}
               className={`p-4 flex gap-3 hover:bg-muted/50 transition-colors cursor-pointer ${!notification.is_read ? "bg-muted/30" : ""}`}

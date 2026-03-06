@@ -58,6 +58,21 @@ export const deleteMessage = async (messageId: string, deleteForEveryone: boolea
   return response.data;
 };
 
+export const shareProfileInDM = async (
+  conversationId: string,
+  profileId: string,
+  profileType: 'user' | 'company',
+  authorCompanyId?: string
+) => {
+  const response = await api.post('/messages/share-profile', {
+    conversation_id: conversationId,
+    profile_id: profileId,
+    profile_type: profileType,
+    authorCompanyId,
+  });
+  return response.data;
+};
+
 // ============ Company Chat Sessions ============
 
 export interface ChatSession {
