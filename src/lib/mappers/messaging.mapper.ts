@@ -34,6 +34,7 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     online: false, // Default to false, updated via socket
     pinnedContext: undefined,
     otherUserId: backendChat.other_user_id, // Map other_user_id
+    otherUserType: backendChat.other_user_type, // Map other_user_type
     isGroup: backendChat.is_group,
     isBlockedByMe: backendChat.is_blocked_by_me || false,
     isBlockedByOther: backendChat.is_blocked_by_other || false,

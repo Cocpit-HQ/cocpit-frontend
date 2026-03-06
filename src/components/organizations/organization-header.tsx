@@ -40,19 +40,20 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
     const canManageCompany = isOwner || checkPermission("MANAGE_SETTINGS");
 
     const { data: relationship, isLoading: isRelationshipLoading } = useQuery({
-        queryKey: ["company_relationship", company?.company_id],
-        queryFn: () => companyService.getRelationship(company!.company_id),
-        enabled: !!company?.company_id,
+        queryKey: ["company_relationship", company?.company_id || company?.org_id],
+        queryFn: () => companyService.getRelationship((company!.company_id || company!.org_id)!),
+        enabled: !!(company?.company_id || company?.org_id),
     });
 
     const followMutation = useMutation({
         mutationFn: () => {
-            if (!company?.company_id) throw new Error("Company ID missing");
-            return companyService.followCompany(company.company_id);
+            const id = company?.company_id || company?.org_id;
+            if (!id) throw new Error("Company ID missing");
+            return companyService.followCompany(id);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["company_relationship", company?.company_id] });
-            queryClient.invalidateQueries({ queryKey: ["company_followers", company?.company_id] });
+            queryClient.invalidateQueries({ queryKey: ["company_relationship", company?.company_id || company?.org_id] });
+            queryClient.invalidateQueries({ queryKey: ["company_followers", company?.company_id || company?.org_id] });
             queryClient.invalidateQueries({ queryKey: ["profileStats"] });
             queryClient.invalidateQueries({ queryKey: ["following"] });
             toast.success(`Followed ${company?.name}`);
@@ -64,12 +65,13 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
 
     const unfollowMutation = useMutation({
         mutationFn: () => {
-            if (!company?.company_id) throw new Error("Company ID missing");
-            return companyService.unfollowCompany(company.company_id);
+            const id = company?.company_id || company?.org_id;
+            if (!id) throw new Error("Company ID missing");
+            return companyService.unfollowCompany(id);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["company_relationship", company?.company_id] });
-            queryClient.invalidateQueries({ queryKey: ["company_followers", company?.company_id] });
+            queryClient.invalidateQueries({ queryKey: ["company_relationship", company?.company_id || company?.org_id] });
+            queryClient.invalidateQueries({ queryKey: ["company_followers", company?.company_id || company?.org_id] });
             queryClient.invalidateQueries({ queryKey: ["profileStats"] });
             queryClient.invalidateQueries({ queryKey: ["following"] });
             toast.success(`Unfollowed ${company?.name}`);
@@ -107,28 +109,31 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
 
     if (!company) return null;
 
+    // Resolve company ID: backend returns org_id, interface declares company_id
+    const companyId = company.company_id || company.org_id || "";
+
     const handleLogoUpload = async (file: File) => {
         const formData = new FormData();
         formData.append("avatar", file); // Backend expects 'avatar' field for uploadAvatar middleware
-        await companyService.uploadLogo(company.company_id, formData);
-        queryClient.invalidateQueries({ queryKey: ["company_relationship", company.company_id] });
+        await companyService.uploadLogo(companyId, formData);
+        queryClient.invalidateQueries({ queryKey: ["company_relationship", companyId] });
         // Also invalidate company details to refresh logo
         queryClient.invalidateQueries({ queryKey: ["company", company.slug] });
     };
 
     const handleLogoDelete = async () => {
-        await companyService.deleteLogo(company.company_id);
+        await companyService.deleteLogo(companyId);
         queryClient.invalidateQueries({ queryKey: ["company", company.slug] });
     };
 
     const handleCoverUpload = async (formData: FormData) => {
-        const res = await companyService.uploadCover(company.company_id, formData);
+        const res = await companyService.uploadCover(companyId, formData);
         queryClient.invalidateQueries({ queryKey: ["company", company.slug] });
         return { coverUrl: res.url };
     };
 
     const handleCoverDelete = async () => {
-        await companyService.deleteCover(company.company_id);
+        await companyService.deleteCover(companyId);
         queryClient.invalidateQueries({ queryKey: ["company", company.slug] });
     };
 
@@ -179,9 +184,9 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
                             )}
                             {isFollowing ? "Unfollow" : "Follow"}
                         </Button>
-                        {isFollowing && company?.company_id && (
+                        {isFollowing && companyId && (
                             <OrganizationNotificationBell
-                                companyId={company.company_id}
+                                companyId={companyId}
                                 isFollowing={true}
                             />
                         )}
@@ -191,7 +196,7 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
                                 key="enrollment-modal"
                                 isOpen={isEnrollmentModalOpen}
                                 onClose={() => setIsEnrollmentModalOpen(false)}
-                                orgId={company.company_id}
+                                orgId={companyId}
                                 orgName={company.name}
                             />
                         )}
@@ -199,31 +204,29 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
                 )}
 
                 {/* Common Action Menu (Share/Copy) */}
-                {canManageCompany && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-9 w-9 p-0 hover:bg-muted">
-                                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuItem onClick={() => setIsShareModalOpen(true)} className="cursor-pointer">
-                                <Share2 className="h-4 w-4 mr-2" />
-                                Share Profile
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => {
-                                    navigator.clipboard.writeText(window.location.href);
-                                    toast.success("Profile link copied");
-                                }}
-                                className="cursor-pointer"
-                            >
-                                <LinkIcon className="h-4 w-4 mr-2" />
-                                Copy URL
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 p-0 hover:bg-muted">
+                            <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuItem onClick={() => setIsShareModalOpen(true)} className="cursor-pointer">
+                            <Share2 className="h-4 w-4 mr-2" />
+                            Share Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={() => {
+                                navigator.clipboard.writeText(window.location.href);
+                                toast.success("Profile link copied");
+                            }}
+                            className="cursor-pointer"
+                        >
+                            <LinkIcon className="h-4 w-4 mr-2" />
+                            Copy URL
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         );
     };
@@ -361,7 +364,7 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
             <OrganizationFollowersModal
                 isOpen={isFollowersModalOpen}
                 onClose={() => setIsFollowersModalOpen(false)}
-                companyId={company.company_id}
+                companyId={companyId}
                 companyName={company.name}
                 canManage={canManageCompany}
             />
@@ -369,10 +372,13 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
             <UniversalShareModal
                 isOpen={isShareModalOpen}
                 onClose={() => setIsShareModalOpen(false)}
-                entityId={company.company_id || company.org_id || ""}
+                entityId={companyId}
                 entityType="company"
                 entityName={company.name}
                 entityUrl={`/organization/${company.slug}`}
+                entityAvatar={company.logo_url}
+                entityHeadline={company.headline || company.industry}
+                entityLocation={company.location}
             />
         </div>
     );
