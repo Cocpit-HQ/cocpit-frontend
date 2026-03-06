@@ -7,6 +7,7 @@ export interface BackendChat {
   other_user_name: string;
   other_user_avatar: string;
   other_user_id?: string; // Added optional other_user_id
+  other_user_type?: "COMPANY" | "USER";
   other_user_headline?: string;
   last_message_text: string;
   unread_count: number;
@@ -70,6 +71,7 @@ export interface ChatThread {
   online: boolean; // Note: Backend response doesn't seem to have online status, might need socket
   pinnedContext?: string;
   otherUserId?: string; // Added to support sending messages to user
+  otherUserType?: "COMPANY" | "USER";
   isGroup?: boolean; // Added for Group Chat
   isBlockedByMe?: boolean;
   isBlockedByOther?: boolean;

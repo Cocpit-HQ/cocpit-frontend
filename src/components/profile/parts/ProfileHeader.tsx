@@ -256,6 +256,9 @@ export function ProfileHeader({
                 entityType="profile"
                 entityName={user.name}
                 entityUrl={`/profile/${user.account_name || user.id}`}
+                entityAvatar={user.avatar}
+                entityHeadline={user.headline}
+                entityLocation={user.location}
             />
         </div >
     );

@@ -37,6 +37,9 @@ interface UniversalShareModalProps {
     entityName?: string // Optional for display
     entityUrl?: string // Optional for "Copy Link" fallback
     postCategory?: string // Specific to posts for repost restriction
+    entityAvatar?: string
+    entityHeadline?: string
+    entityLocation?: string
 }
 
 type ShareMode = "options" | "message" | "notification" | "success"
@@ -52,7 +55,10 @@ export function UniversalShareModal({
     entityType,
     entityName,
     entityUrl,
-    postCategory
+    postCategory,
+    entityAvatar,
+    entityHeadline,
+    entityLocation
 }: UniversalShareModalProps) {
     const [mode, setMode] = useState<ShareMode>("options")
     const [selectedTargetIds, setSelectedTargetIds] = useState<string[]>([])
@@ -144,6 +150,9 @@ export function UniversalShareModal({
                     if (mode === 'notification') {
                         const userObj = users.find(u => u.id === targetId);
                         if (userObj?.type === 'COMPANY') targetType = 'company';
+                    } else if (mode === 'message') {
+                        const convObj = conversations.find(c => c.otherUserId === targetId);
+                        if (convObj?.otherUserType === 'COMPANY') targetType = 'company';
                     }
 
                     return universalShare({
@@ -163,12 +172,13 @@ export function UniversalShareModal({
                 onClose()
             }, 1500)
         } catch (error: any) {
-            console.error("Failed to share", error);
             const errorMessage = error?.response?.data?.message || "Could not share. Please try again.";
+            const isCompanyShareRestriction = errorMessage === "Users cannot share content with company accounts.";
+
             toast({
-                title: "Share failed",
+                title: isCompanyShareRestriction ? "Share Restricted" : "Share failed",
                 description: errorMessage,
-                variant: "destructive",
+                variant: isCompanyShareRestriction ? "default" : "destructive",
             });
         } finally {
             setIsSending(false)
@@ -213,55 +223,87 @@ export function UniversalShareModal({
     }
 
     const OptionsView = (
-        <div className="p-4 space-y-2">
-            {entityType === 'post' && (
+        <div className="p-5 space-y-4">
+            {(entityType === 'profile' || entityType === 'company') && entityName && (
                 <>
-                    <Button
-                        variant="ghost"
-                        className={`w-full justify-start gap-3 h-12 ${postCategory === 'Personal' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        onClick={handleRepost}
-                    >
-                        <Rss className="w-5 h-5" />
-                        <div className="flex flex-col items-start text-left">
-                            <span className="font-medium">Share to Feed</span>
-                            <span className="text-xs text-muted-foreground">
-                                {postCategory === 'Personal' ? 'Personal posts cannot be reposted' : 'Repost this to your feed'}
-                            </span>
+                    <div className="flex items-center gap-4">
+                        <Avatar className="w-14 h-14 border rounded-full shrink-0">
+                            <AvatarImage src={entityAvatar} className="object-cover" />
+                            <AvatarFallback>{entityName.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col flex-1 min-w-0">
+                            <span className="font-bold text-base text-foreground truncate">{entityName}</span>
+                            {entityHeadline && (
+                                <span className="text-sm text-foreground/90 truncate">{entityHeadline}</span>
+                            )}
+                            {entityLocation && (
+                                <span className="text-xs text-muted-foreground truncate">{entityLocation}</span>
+                            )}
                         </div>
-                    </Button>
-                    <Button variant="ghost" className="w-full justify-start gap-3 h-12" onClick={handleShareToStory}>
-                        <PlusCircle className="w-5 h-5" />
-                        <div className="flex flex-col items-start">
-                            <span className="font-medium">Share to Story</span>
-                            <span className="text-xs text-muted-foreground">Add to your daily story</span>
-                        </div>
-                    </Button>
+                    </div>
+                    <div className="h-px bg-border w-full" />
                 </>
             )}
 
-            <Button variant="ghost" className="w-full justify-start gap-3 h-12" onClick={() => setMode('message')}>
-                <MessageSquare className="w-5 h-5" />
-                <div className="flex flex-col items-start">
-                    <span className="font-medium">Send via Message</span>
-                    <span className="text-xs text-muted-foreground">Send to friends or groups</span>
-                </div>
-            </Button>
+            <div className="space-y-3">
+                {entityType === 'post' && (
+                    <>
+                        <div
+                            className={`flex flex-row items-center cursor-pointer p-4 rounded-xl border border-border/50 transition-all duration-200 ${postCategory === 'Personal' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted/60'}`}
+                            onClick={handleRepost}
+                        >
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 text-primary shrink-0">
+                                <Rss className="w-5 h-5" />
+                            </div>
+                            <div className="flex flex-col text-left">
+                                <span className="font-bold text-sm text-foreground">Share to Feed</span>
+                                <span className="text-xs text-muted-foreground mt-0.5">
+                                    {postCategory === 'Personal' ? 'Personal posts cannot be reposted' : 'Repost this to your feed'}
+                                </span>
+                            </div>
+                        </div>
 
-            <Button variant="ghost" className="w-full justify-start gap-3 h-12" onClick={() => setMode('notification')}>
-                <Bell className="w-5 h-5" />
-                <div className="flex flex-col items-start">
-                    <span className="font-medium">Share via Notification</span>
-                    <span className="text-xs text-muted-foreground">Send a notification to a user</span>
-                </div>
-            </Button>
+                        <div
+                            className="flex flex-row items-center cursor-pointer p-4 rounded-xl border border-border/50 hover:bg-muted/60 transition-all duration-200"
+                            onClick={handleShareToStory}
+                        >
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 text-primary shrink-0">
+                                <PlusCircle className="w-5 h-5" />
+                            </div>
+                            <div className="flex flex-col text-left">
+                                <span className="font-bold text-sm text-foreground">Share to Story</span>
+                                <span className="text-xs text-muted-foreground mt-0.5">Add to your daily story</span>
+                            </div>
+                        </div>
+                    </>
+                )}
 
-            <Button variant="ghost" className="w-full justify-start gap-3 h-12" onClick={handleCopyLink}>
-                <LinkIcon className="w-5 h-5" />
-                <div className="flex flex-col items-start">
-                    <span className="font-medium">Copy Link</span>
-                    <span className="text-xs text-muted-foreground">Copy URL to clipboard</span>
+                <div
+                    className="flex flex-row items-center cursor-pointer p-4 rounded-xl border border-border/50 hover:bg-muted/60 transition-all duration-200"
+                    onClick={() => setMode('message')}
+                >
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 text-primary shrink-0">
+                        <MessageSquare className="w-5 h-5" />
+                    </div>
+                    <div className="flex flex-col text-left">
+                        <span className="font-bold text-sm text-foreground">Send via Message</span>
+                        <span className="text-xs text-muted-foreground mt-0.5">Send to friends or groups</span>
+                    </div>
                 </div>
-            </Button>
+
+                <div
+                    className="flex flex-row items-center cursor-pointer p-4 rounded-xl border border-border/50 hover:bg-muted/60 transition-all duration-200"
+                    onClick={() => setMode('notification')}
+                >
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 text-primary shrink-0">
+                        <Bell className="w-5 h-5" />
+                    </div>
+                    <div className="flex flex-col text-left">
+                        <span className="font-bold text-sm text-foreground">Share via Notification</span>
+                        <span className="text-xs text-muted-foreground mt-0.5">Send a notification to a user</span>
+                    </div>
+                </div>
+            </div>
         </div>
     )
 
@@ -280,101 +322,174 @@ export function UniversalShareModal({
     )
 
     const SelectionView = (
-        <div className="flex flex-col h-full md:h-auto max-h-[80vh]">
-            <div className="px-4 py-2 border-b border-border flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setMode('options')} className="-ml-2">
-                    <ArrowLeft className="w-4 h-4 mr-1" /> Back
+        <div className="flex flex-col h-full md:h-auto max-h-[85vh] md:max-h-[80vh]">
+            <div className="px-5 py-3 border-b border-border flex items-center sticky top-0 bg-background z-10">
+                <Button variant="ghost" size="sm" onClick={() => setMode('options')} className="flex items-center gap-2 -ml-2 hover:bg-muted/60 text-foreground font-semibold text-sm rounded-lg px-2">
+                    <ArrowLeft className="w-4 h-4 text-muted-foreground mr-1" />
+                    {mode === 'message' ? 'Send to...' : 'Notify...'}
                 </Button>
-                <span className="font-medium">{mode === 'message' ? 'Send to...' : 'Notify...'}</span>
             </div>
 
-            <div className="px-4 py-3 border-b border-border">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                        placeholder={mode === 'message' ? "Search conversations" : "Search users"}
-                        className="pl-9 bg-muted/50 border-none focus-visible:ring-1"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+            <div className="flex-1 overflow-y-auto">
+                <div className="p-5 space-y-4 border-b border-border">
+                    {/* Entity Preview Header */}
+                    {(entityType === 'profile' || entityType === 'company') && entityName && (
+                        <div className="flex items-center gap-4">
+                            <Avatar className="w-12 h-12 border rounded-full shrink-0">
+                                <AvatarImage src={entityAvatar} className="object-cover" />
+                                <AvatarFallback>{entityName.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col flex-1 min-w-0">
+                                <span className="font-bold text-sm text-foreground truncate">{entityName}</span>
+                                {entityHeadline && (
+                                    <span className="text-xs text-foreground/90 truncate">{entityHeadline}</span>
+                                )}
+                                {entityLocation && (
+                                    <span className="text-[11px] text-muted-foreground truncate mt-0.5">{entityLocation}</span>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Search Bar */}
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground mr-2" />
+                        <Input
+                            placeholder={mode === 'message' ? "Search users or conversations..." : "Search users..."}
+                            className="pl-9 h-10 bg-muted/40 border-border/50 rounded-lg text-sm transition-colors focus-visible:ring-1 focus-visible:ring-primary/30"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Selected Users Chips */}
+                    {selectedTargetIds.length > 0 && (
+                        <div className="space-y-2">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Selected</span>
+                            <div className="flex flex-wrap gap-2">
+                                {selectedTargetIds.map(id => {
+                                    let name = "";
+                                    let avatar = "";
+                                    if (mode === 'notification') {
+                                        const u = users.find(u => u.id === id);
+                                        name = u ? u.full_name : "User";
+                                        avatar = u?.avatar_url;
+                                    } else {
+                                        const c = conversations.find(c => c.otherUserId === id);
+                                        name = c?.name || "Chat";
+                                        avatar = c?.avatar || "";
+                                    }
+
+                                    return (
+                                        <div key={id} className="flex items-center gap-1.5 bg-primary/10 text-primary px-2.5 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:bg-primary/20 transition-colors" onClick={() => toggleTarget(id)}>
+                                            {avatar ? (
+                                                <img src={avatar} className="w-4 h-4 rounded-full object-cover" alt="" />
+                                            ) : (
+                                                <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center text-[8px]">{name.charAt(0)}</div>
+                                            )}
+                                            {name.split(' ')[0]}
+                                            <X className="w-3 h-3 ml-1 opacity-70 hover:opacity-100" />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="p-2 min-h-[250px] pb-4">
+                    {mode === 'message' ? (
+                        isLoadingConvs ? (
+                            <div className="p-8 text-center text-sm text-muted-foreground flex items-center justify-center h-40">
+                                <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
+                                Loading...
+                            </div>
+                        ) : conversations.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
+                            conversations.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).map(conv => {
+                                const isSelected = conv.otherUserId ? selectedTargetIds.includes(conv.otherUserId) : false
+                                return (
+                                    <div
+                                        key={conv.id}
+                                        onClick={() => conv.otherUserId && toggleTarget(conv.otherUserId)}
+                                        className={`flex items-center gap-3 p-3 mx-1 my-0.5 rounded-xl cursor-pointer transition-all duration-200 ${isSelected ? "bg-muted/80 shadow-sm" : "hover:bg-muted/60"}`}
+                                    >
+                                        <div className={`w-10 h-10 rounded-full flex-shrink-0 bg-gradient-to-br ${getAvatarGradient(conv.avatar)} flex items-center justify-center text-white font-medium text-sm`}>
+                                            {(conv.name || "?").charAt(0)}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-sm truncate">{conv.name}</p>
+                                            <p className="text-xs text-muted-foreground truncate">{conv.role || conv.lastMessage}</p>
+                                        </div>
+                                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? "bg-primary border-primary" : "border-muted-foreground/30"}`}>
+                                            {isSelected && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
+                                        </div>
+                                    </div>
+                                )
+                            })
+                        ) : (
+                            <div className="p-8 text-center text-muted-foreground text-sm">No results found</div>
+                        )
+                    ) : (
+                        isLoadingUsers ? (
+                            <div className="p-8 text-center text-sm text-muted-foreground">Searching...</div>
+                        ) : users.length > 0 ? (
+                            users.map(user => {
+                                const isSelected = selectedTargetIds.includes(user.id)
+                                return (
+                                    <div
+                                        key={user.id}
+                                        onClick={() => toggleTarget(user.id)}
+                                        className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${isSelected ? "bg-muted" : "hover:bg-muted/50"}`}
+                                    >
+                                        <Avatar className="w-10 h-10">
+                                            <AvatarImage src={user.avatar_url} />
+                                            <AvatarFallback>{user.full_name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-sm text-foreground truncate">{user.full_name}</p>
+                                            <p className="text-xs text-muted-foreground truncate">{user.headline}</p>
+                                        </div>
+                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isSelected ? "bg-primary border-primary" : "border-muted-foreground/30"}`}>
+                                            {isSelected && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
+                                        </div>
+                                    </div>
+                                )
+                            })
+                        ) : (
+                            <div className="p-8 text-center text-muted-foreground text-sm flex items-center justify-center h-40">{searchQuery.length > 1 ? "No users found" : "Type to search users"}</div>
+                        )
+                    )}
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 space-y-1 min-h-[200px]">
-                {mode === 'message' ? (
-                    isLoadingConvs ? (
-                        <div className="p-8 text-center text-sm text-muted-foreground">Loading...</div>
-                    ) : conversations.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
-                        conversations.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).map(conv => {
-                            const isSelected = conv.otherUserId ? selectedTargetIds.includes(conv.otherUserId) : false
-                            return (
-                                <div
-                                    key={conv.id}
-                                    onClick={() => conv.otherUserId && toggleTarget(conv.otherUserId)}
-                                    className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${isSelected ? "bg-muted" : "hover:bg-muted/50"}`}
-                                >
-                                    <div className={`w-10 h-10 rounded-full flex-shrink-0 bg-gradient-to-br ${getAvatarGradient(conv.avatar)} flex items-center justify-center text-white font-medium text-sm`}>
-                                        {(conv.name || "?").charAt(0)}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-sm truncate">{conv.name}</p>
-                                        <p className="text-xs text-muted-foreground truncate">{conv.role || conv.lastMessage}</p>
-                                    </div>
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? "bg-primary border-primary" : "border-muted-foreground/30"}`}>
-                                        {isSelected && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
-                                    </div>
-                                </div>
-                            )
-                        })
-                    ) : (
-                        <div className="p-8 text-center text-muted-foreground text-sm">No results found</div>
-                    )
-                ) : (
-                    isLoadingUsers ? (
-                        <div className="p-8 text-center text-sm text-muted-foreground">Searching...</div>
-                    ) : users.length > 0 ? (
-                        users.map(user => {
-                            const isSelected = selectedTargetIds.includes(user.id)
-                            return (
-                                <div
-                                    key={user.id}
-                                    onClick={() => toggleTarget(user.id)}
-                                    className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${isSelected ? "bg-muted" : "hover:bg-muted/50"}`}
-                                >
-                                    <Avatar className="w-10 h-10">
-                                        <AvatarImage src={user.avatar_url} />
-                                        <AvatarFallback>{user.full_name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-sm truncate">{user.full_name}</p>
-                                        <p className="text-xs text-muted-foreground truncate">{user.headline}</p>
-                                    </div>
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? "bg-primary border-primary" : "border-muted-foreground/30"}`}>
-                                        {isSelected && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
-                                    </div>
-                                </div>
-                            )
-                        })
-                    ) : (
-                        <div className="p-8 text-center text-muted-foreground text-sm">{searchQuery.length > 1 ? "No users found" : "Type to search users"}</div>
-                    )
-                )}
-            </div>
-
-            <div className="p-4 border-t border-border bg-background">
-                <Input
-                    placeholder="Write a message..."
-                    className="mb-4"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                />
-                <Button
-                    className="w-full gap-2"
-                    disabled={selectedTargetIds.length === 0 || isSending}
-                    onClick={handleSend}
-                >
-                    {isSending ? "Sending..." : <><Send className="w-4 h-4" /> Send</>}
-                </Button>
+            <div className="p-5 border-t border-border bg-background shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] z-10">
+                <div className="flex flex-col space-y-3">
+                    <div className="space-y-1.5">
+                        <Input
+                            placeholder="optional message"
+                            className="bg-muted/40 border-border/50 transition-colors focus-visible:ring-1 focus-visible:ring-primary/30"
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                        />
+                    </div>
+                    <Button
+                        className="w-full gap-2 h-11 font-semibold rounded-lg shadow-sm"
+                        disabled={selectedTargetIds.length === 0 || isSending}
+                        onClick={handleSend}
+                    >
+                        {isSending ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                                Sending...
+                            </>
+                        ) : (
+                            <>
+                                <Send className="w-4 h-4 mr-1" />
+                                Send
+                            </>
+                        )}
+                    </Button>
+                </div>
             </div>
         </div>
     )
@@ -392,10 +507,12 @@ export function UniversalShareModal({
     if (isMobile) {
         return (
             <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-                <DrawerContent className="max-h-[85vh]">
-                    <DrawerHeader className="text-left border-b border-border pb-4">
-                        <DrawerTitle>Share {entityType}</DrawerTitle>
-                    </DrawerHeader>
+                <DrawerContent className="max-h-[85vh] p-0">
+                    {mode === 'options' && (
+                        <DrawerHeader className="text-left border-b border-border pb-4 px-5 pt-5 relative">
+                            <DrawerTitle className="text-lg">Share {entityType === 'profile' ? 'Profile' : entityType === 'company' ? 'Company' : String(entityType)}</DrawerTitle>
+                        </DrawerHeader>
+                    )}
                     <Content />
                 </DrawerContent>
             </Drawer>
@@ -404,13 +521,15 @@ export function UniversalShareModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden">
-                <DialogHeader className="px-4 py-3 border-b border-border">
-                    <DialogTitle>Share {entityType}</DialogTitle>
-                    <div className="sr-only">
-                        <DialogDescription>Select an option to share this {entityType}.</DialogDescription>
-                    </div>
-                </DialogHeader>
+            <DialogContent className="sm:max-w-[420px] sm:rounded-2xl p-0 gap-0 overflow-hidden">
+                {mode === 'options' && (
+                    <DialogHeader className="px-5 pt-5 pb-4 border-b border-border relative">
+                        <DialogTitle className="text-lg">Share {entityType === 'profile' ? 'Profile' : entityType === 'company' ? 'Company' : String(entityType)}</DialogTitle>
+                        <div className="sr-only">
+                            <DialogDescription>Select an option to share this {entityType}.</DialogDescription>
+                        </div>
+                    </DialogHeader>
+                )}
                 <Content />
             </DialogContent>
         </Dialog>

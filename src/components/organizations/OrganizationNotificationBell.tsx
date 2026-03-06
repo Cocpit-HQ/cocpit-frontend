@@ -56,8 +56,10 @@ export function OrganizationNotificationBell({ companyId, isFollowing }: Organiz
     // Don't render if user is not following
     if (!isFollowing) return null;
 
-    const allEnabled = prefs?.events_enabled && prefs?.jobs_enabled && prefs?.posts_enabled;
-    const anyEnabled = prefs?.events_enabled || prefs?.jobs_enabled || prefs?.posts_enabled;
+    const getPref = (key: keyof CompanyNotificationPreferences) => prefs?.[key] ?? true;
+
+    const allEnabled = getPref("events_enabled") && getPref("jobs_enabled") && getPref("posts_enabled");
+    const anyEnabled = getPref("events_enabled") || getPref("jobs_enabled") || getPref("posts_enabled");
 
     return (
         <Popover>
