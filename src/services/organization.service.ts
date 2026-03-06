@@ -89,6 +89,9 @@ export const companyService = {
 
     async getCompany(slug: string): Promise<Company> {
         const res = await api.get(`/organizations/${slug}`);
+        if (res.data && res.data.org_id && !res.data.company_id) {
+            res.data.company_id = res.data.org_id;
+        }
         return res.data;
     },
 
