@@ -42,7 +42,7 @@ import { Comment as CommentType, Post, PollOption } from '@/types/entities'
 import { formatTimeAgo } from '@/lib/timeFormatter'
 import CommentSection from './CommentSection'
 import MobileCommentDrawer from './MobileCommentDrawer'
-import { SharePostModal } from './SharePostModal'
+import { UniversalShareModal } from '../share/UniversalShareModal'
 import { PollCard } from './PollCard'
 import { CreatePostModal } from './CreatePostModal'
 import { updatePost, toggleLike, voteInPoll, removeVote, addComment, deleteComment, getComments, deletePost } from '@/services/api/posts'
@@ -1003,10 +1003,11 @@ export default function FeedPost({
         postId={id}
       />
 
-      <SharePostModal
+      <UniversalShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        postId={id.toString()}
+        entityId={id.toString()}
+        entityType="post"
         postCategory={category}
       />
 

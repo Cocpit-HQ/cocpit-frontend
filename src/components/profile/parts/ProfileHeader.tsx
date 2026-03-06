@@ -10,7 +10,7 @@ import { User } from "@/types/user";
 import { ConnectionButton } from "@/components/profile/ConnectionButton";
 import { CompanyRolesList } from "./CompanyRolesList";
 import { SendOfferDialog } from "./SendOfferDialog";
-import { ShareProfileModal } from "@/components/messaging/ShareProfileModal";
+import { UniversalShareModal } from "@/components/share/UniversalShareModal";
 import { Share2, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -177,24 +177,20 @@ export function ProfileHeader({
                                         connectionRequestSender={user.connection_request_sender}
                                     />
                                 )}
-                                {isOwnProfile && (
-                                    <>
-                                        <DropdownMenuItem onClick={() => setIsShareModalOpen(true)} className="cursor-pointer">
-                                            <Share2 className="w-4 h-4 mr-2" />
-                                            Share Profile
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(window.location.href);
-                                                toast.success("Profile link copied");
-                                            }}
-                                            className="cursor-pointer"
-                                        >
-                                            <LinkIcon className="w-4 h-4 mr-2" />
-                                            Copy Profile Link
-                                        </DropdownMenuItem>
-                                    </>
-                                )}
+                                <DropdownMenuItem onClick={() => setIsShareModalOpen(true)} className="cursor-pointer">
+                                    <Share2 className="w-4 h-4 mr-2" />
+                                    Share Profile
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(window.location.href);
+                                        toast.success("Profile link copied");
+                                    }}
+                                    className="cursor-pointer"
+                                >
+                                    <LinkIcon className="w-4 h-4 mr-2" />
+                                    Copy Profile Link
+                                </DropdownMenuItem>
                                 {!isOwnProfile && (
                                     <DropdownMenuItem onClick={() => setShowBlockDialog(true)} className="text-destructive focus:text-destructive cursor-pointer">
                                         <Ban className="w-4 h-4 mr-2" />
@@ -253,13 +249,13 @@ export function ProfileHeader({
                 isOwnProfile={isOwnProfile}
             />
 
-            <ShareProfileModal
+            <UniversalShareModal
                 isOpen={isShareModalOpen}
                 onClose={() => setIsShareModalOpen(false)}
-                profileId={user.id}
-                profileType="user"
-                profileName={user.name}
-                profileUrl={`/profile/${user.account_name || user.id}`}
+                entityId={user.id}
+                entityType="profile"
+                entityName={user.name}
+                entityUrl={`/profile/${user.account_name || user.id}`}
             />
         </div >
     );
