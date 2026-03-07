@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
-import { resetPassword } from "@/services/api/auth";
+import { resetPassword, requestOTP, verifyOTP } from "@/services/api/auth";
 import Image from "next/image";
 
 export default function ForgotPassword() {
@@ -23,10 +23,11 @@ export default function ForgotPassword() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isCheckingOtp, setIsCheckingOtp] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     if (!email || !email.includes("@")) {
       toast({
         title: "Invalid Email",
@@ -36,39 +37,91 @@ export default function ForgotPassword() {
       return;
     }
     setIsVerifying(true);
-    setTimeout(() => {
+    try {
+      await requestOTP(email.toLowerCase());
       setOtpSent(true);
-      setIsVerifying(false);
       toast({
         title: "OTP Sent!",
         description: "A verification code has been sent to your email.",
       });
-    }, 1500);
+    } catch (error: any) {
+      toast({
+        title: "Failed to send OTP",
+        description: error.response?.data?.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
-  const handleVerifyOtp = (value: string) => {
+  const handleVerifyOtp = async (value: string) => {
     setOtp(value);
     if (value.length === 6) {
-      setTimeout(() => {
+      setIsCheckingOtp(true);
+      console.log("Verifying OTP for password reset:", value);
+      try {
+        await verifyOTP(email.toLowerCase(), value);
+        console.log("OTP verified successfully.");
         setEmailVerified(true);
         toast({
           title: "Email Verified!",
-          description: "You can now set a new password.",
+          description: "You may now set a new password.",
         });
-      }, 500);
+
+        // Auto-submit if passwords are already filled (unlikely but possible)
+        if (newPassword && confirmPassword && newPassword === confirmPassword) {
+          handleReset(email.toLowerCase(), newPassword, value);
+        }
+      } catch (error: any) {
+        if (error.response?.status !== 400 && error.response?.status !== 401) {
+          console.error("Unexpected OTP verification error:", error);
+        }
+        setOtp("");
+        setEmailVerified(false);
+        const errorMessage = error.response?.data?.message || error.message || "Invalid OTP code. Please try again.";
+        toast({
+          title: "Verification Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } finally {
+        setIsCheckingOtp(false);
+      }
+    } else {
+      setEmailVerified(false);
+    }
+  };
+
+  const handleReset = async (targetEmail: string, pass: string, token: string) => {
+    setIsResetting(true);
+    try {
+      await resetPassword(targetEmail, pass, token);
+      toast({
+        title: "Password Reset Successful!",
+        description: "Your password has been reset. Redirecting to login...",
+      });
+      setTimeout(() => {
+        router.push("/");
+      }, 2000);
+    } catch (error: any) {
+      if (error.response?.status !== 400 && error.response?.status !== 401) {
+        console.error("Password reset error:", error);
+      }
+      const errorMessage = error.response?.data?.message || error.message || "An error occurred. Please try again.";
+      toast({
+        title: "Password Reset Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      setOtp("");
+    } finally {
+      setIsResetting(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!emailVerified) {
-      toast({
-        title: "Email Not Verified",
-        description: "Please verify your email first.",
-        variant: "destructive",
-      });
-      return;
-    }
     if (newPassword !== confirmPassword) {
       toast({
         title: "Passwords Don't Match",
@@ -86,24 +139,7 @@ export default function ForgotPassword() {
       return;
     }
 
-    setIsResetting(true);
-    try {
-      await resetPassword(email, newPassword);
-      toast({
-        title: "Password Reset Successful!",
-        description: "Your password has been reset. Redirecting to login...",
-      });
-      setTimeout(() => {
-        router.push("/");
-      }, 2000);
-    } catch (error: any) {
-      toast({
-        title: "Password Reset Failed",
-        description: error.response?.data?.message || "An error occurred. Please try again.",
-        variant: "destructive",
-      });
-      setIsResetting(false);
-    }
+    await handleReset(email.toLowerCase(), newPassword, otp);
   };
 
   return (
@@ -183,7 +219,12 @@ export default function ForgotPassword() {
                 <div className="space-y-2 animate-fade-in">
                   <Label>Enter OTP</Label>
                   <div className="flex justify-center">
-                    <InputOTP maxLength={6} value={otp} onChange={handleVerifyOtp}>
+                    <InputOTP
+                      maxLength={6}
+                      value={otp}
+                      onChange={handleVerifyOtp}
+                      disabled={isCheckingOtp}
+                    >
                       <InputOTPGroup>
                         <InputOTPSlot index={0} />
                         <InputOTPSlot index={1} />
@@ -195,7 +236,7 @@ export default function ForgotPassword() {
                     </InputOTP>
                   </div>
                   <p className="text-xs text-muted-foreground text-center">
-                    Enter any 6 digits to verify (demo)
+                    {isCheckingOtp ? "Verifying..." : "Enter the 6-digit code sent to your email"}
                   </p>
                 </div>
               )}
@@ -251,7 +292,7 @@ export default function ForgotPassword() {
               <Button
                 type="submit"
                 className="w-full mt-6"
-                disabled={!emailVerified || !newPassword || !confirmPassword || isResetting}
+                disabled={!emailVerified || !newPassword || !confirmPassword || isResetting || isCheckingOtp}
               >
                 {isResetting ? "Resetting Password..." : "Reset Password"}
               </Button>

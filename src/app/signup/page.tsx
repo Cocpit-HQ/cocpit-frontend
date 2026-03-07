@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { register } from "@/services/api/auth";
+import { register, requestOTP, verifyOTP } from "@/services/api/auth";
 import { registrationSchema } from "@/lib/validators";
 
 import { useRouter } from "next/navigation";
@@ -26,9 +26,10 @@ export default function SignUp() {
   const [otp, setOtp] = useState("");
   const [emailVerified, setEmailVerified] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isCheckingOtp, setIsCheckingOtp] = useState(false);
   const { toast } = useToast();
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     if (!email || !email.includes("@")) {
       toast({
         title: "Invalid Email",
@@ -37,46 +38,108 @@ export default function SignUp() {
       });
       return;
     }
+
     setIsVerifying(true);
-    setTimeout(() => {
+    try {
+      await requestOTP(email.toLowerCase());
       setOtpSent(true);
-      setIsVerifying(false);
       toast({
         title: "OTP Sent!",
         description: "A verification code has been sent to your email.",
       });
-    }, 1500);
+    } catch (error: any) {
+      toast({
+        title: "Failed to send OTP",
+        description: error.response?.data?.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
-  const handleVerifyOtp = (value: string) => {
+  const handleVerifyOtp = async (value: string) => {
     setOtp(value);
     if (value.length === 6) {
-      setTimeout(() => {
+      setIsCheckingOtp(true);
+      console.log("Automatically verifying OTP:", value);
+      try {
+        await verifyOTP(email.toLowerCase(), value);
+        console.log("OTP verification successful.");
         setEmailVerified(true);
         toast({
           title: "Email Verified!",
           description: "Your email has been successfully verified.",
         });
-      }, 500);
+
+        // Auto-submit if other fields are filled
+        if (fullName && password && accountType) {
+          console.log("Auto-submitting registration form...");
+          handleRegister({
+            fullName,
+            email: email.toLowerCase(),
+            password,
+            accountType,
+            otp: value
+          });
+        }
+      } catch (error: any) {
+        if (error.response?.status !== 400 && error.response?.status !== 401) {
+          console.error("Unexpected OTP verification error:", error);
+        }
+        setOtp("");
+        setEmailVerified(false);
+        const errorMessage = error.response?.data?.message || error.message || "Invalid OTP code. Please try again.";
+        toast({
+          title: "Verification Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } finally {
+        setIsCheckingOtp(false);
+      }
+    } else {
+      setEmailVerified(false);
+    }
+  };
+
+  const handleRegister = async (data: any) => {
+    setIsVerifying(true);
+    try {
+      const response = await register(data);
+      console.log("Registration successful", response);
+      toast({
+        title: "Account Created!",
+        description: "Welcome to Cocpit! Redirecting to login...",
+      });
+      setTimeout(() => {
+        router.push("/");
+      }, 1500);
+    } catch (error: any) {
+      if (error.response?.status !== 400 && error.response?.status !== 401) {
+        console.error("Registration error:", error);
+      }
+      const errorMessage = error.response?.data?.message || error.message || "An unexpected error occurred.";
+      toast({
+        title: "Registration Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      setOtp("");
+    } finally {
+      setIsVerifying(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!emailVerified) {
-      toast({
-        title: "Email Not Verified",
-        description: "Please verify your email before creating an account.",
-        variant: "destructive",
-      });
-      return;
-    }
 
     const result = registrationSchema.safeParse({
       fullName,
       email: email.toLowerCase(),
       password,
       accountType,
+      otp,
     });
 
     if (!result.success) {
@@ -90,6 +153,8 @@ export default function SignUp() {
         errorMessage = error.fieldErrors.password[0];
       } else if (error.fieldErrors.accountType) {
         errorMessage = error.fieldErrors.accountType[0];
+      } else if (error.fieldErrors.otp) {
+        errorMessage = error.fieldErrors.otp[0];
       }
       toast({
         title: "Invalid Input",
@@ -99,24 +164,7 @@ export default function SignUp() {
       return;
     }
 
-    try {
-      const response = await register(result.data);
-      console.log("Registration successful", response);
-      toast({
-        title: "Account Created!",
-        description: "Welcome to Cocpit! Redirecting to login...",
-      });
-      setTimeout(() => {
-        router.push("/");
-      }, 1500);
-    } catch (error: any) {
-      console.error("Registration failed", error);
-      toast({
-        title: "Registration Failed",
-        description: error.message || "An unexpected error occurred.",
-        variant: "destructive",
-      });
-    }
+    await handleRegister(result.data);
   };
 
   return (
@@ -206,7 +254,12 @@ export default function SignUp() {
                 <div className="space-y-2 animate-fade-in">
                   <Label>Enter OTP</Label>
                   <div className="flex justify-center">
-                    <InputOTP maxLength={6} value={otp} onChange={handleVerifyOtp}>
+                    <InputOTP
+                      maxLength={6}
+                      value={otp}
+                      onChange={handleVerifyOtp}
+                      disabled={isCheckingOtp}
+                    >
                       <InputOTPGroup>
                         <InputOTPSlot index={0} />
                         <InputOTPSlot index={1} />
@@ -218,7 +271,7 @@ export default function SignUp() {
                     </InputOTP>
                   </div>
                   <p className="text-xs text-muted-foreground text-center">
-                    Enter any 6 digits to verify (demo)
+                    {isCheckingOtp ? "Verifying..." : "Enter the 6-digit code sent to your email"}
                   </p>
                 </div>
               )}
@@ -267,7 +320,7 @@ export default function SignUp() {
               <Button
                 type="submit"
                 className="w-full mt-6"
-                disabled={!emailVerified || !fullName || !password || !accountType}
+                disabled={!emailVerified || !fullName || !password || !accountType || isCheckingOtp}
               >
                 Create Account
               </Button>
