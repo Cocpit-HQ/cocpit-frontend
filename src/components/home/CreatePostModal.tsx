@@ -955,9 +955,10 @@ export function CreatePostModal({
         setUploadedImages([]);
         setUploadedVideos([]);
         onClose();
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
-        toast.error("Failed to create company post");
+        const errorMsg = companyService.normalizeError(err);
+        toast.error(errorMsg || "Failed to create post");
       } finally {
         setIsSubmitting(false);
         setNotifyEmployees(false);
@@ -1375,7 +1376,7 @@ export function CreatePostModal({
                             return ['Professional', 'Personal', 'Achievement', 'Article'];
                           }
                           if ((currentPoster as any)?.entity_type === 'INSTITUTION') {
-                            return ['Announcement', 'Academic', 'Campus Life', 'Hiring', 'Article'];
+                            return ['Announcement', 'Academic', 'Admission', 'Campus Life', 'Research', 'Club Activity', 'General'];
                           }
                           return ['Update', 'Hiring', 'Milestone', 'Insight', 'Article'];
                         })()).map((category) => (

@@ -97,7 +97,11 @@ export const companyService = {
 
     async getUserCompanies(): Promise<(Company & { role: string })[]> {
         const res = await api.get('/organizations/mine');
-        return res.data;
+        // Normalize for consistency
+        return res.data.map((c: any) => ({
+            ...c,
+            company_id: c.company_id || c.org_id
+        }));
     },
 
     async updateCompany(companyId: string, data: Partial<Company>) {

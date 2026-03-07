@@ -177,7 +177,8 @@ export function useCompanyPermissions(company?: any | null) {
     const { name, permissions, priority } = company.viewer_role_data;
     const roleName = name.toUpperCase();
 
-    const isOwner = roleName === 'OWNER';
+    // Use permission-based ownership detection for both companies and institutions
+    const isOwner = permissions.includes('*');
     const isAdmin = roleName === 'ADMIN';
 
     // Helper to check specific permission

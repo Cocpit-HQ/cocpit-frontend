@@ -218,7 +218,7 @@ function CompaniesSettings() {
       <div className="grid gap-4">
         {companies && companies.length > 0 ? (
           companies.map((company) => (
-            <div key={company.company_id} className="flex items-center justify-between p-4 rounded-xl bg-card border border-border">
+            <div key={company.org_id || company.company_id} className="flex items-center justify-between p-4 rounded-xl bg-card border border-border">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center text-lg font-bold">
                   {company.logo_url ? (
