@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import FeedPost from './FeedPost';
 import PostSkeleton from './PostSkeleton';
-import CreatePost from './CreatePost';
 import { useFeed } from '@/context/FeedContext';
 import { useInView } from '@/hooks/use-in-view';
 import { useActionModal } from '@/context/ActionModalContext';
@@ -11,6 +11,10 @@ import { StoryRail } from './StoryRail';
 import { FeedSortDropdown } from './FeedSortDropdown';
 import { PostType } from './CreatePostModal';
 import { StoryGroup } from '@/types/showcase';
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
+
+// Lazy-load CreatePost (hidden on mobile, only visible on desktop)
+const CreatePost = dynamic(() => import('./CreatePost'), { ssr: false });
 
 interface FeedSectionProps {
     groups: StoryGroup[];
@@ -51,6 +55,16 @@ export const FeedSection = ({
         return sorted;
     }, [posts, activeTab]);
 
+    const listRef = useRef<HTMLDivElement>(null);
+
+    // Initialize the window virtualizer
+    const virtualizer = useWindowVirtualizer({
+        count: sortedPosts.length,
+        estimateSize: () => 350, // estimated height of a post
+        overscan: 5, // pre-render 5 posts outside of viewport
+        scrollMargin: listRef.current?.offsetTop ?? 0,
+    });
+
     return (
         <section className="lg:col-span-8 max-w-[560px] mx-auto w-full">
             {/* Mobile Story/Suggested Rail */}
@@ -82,24 +96,49 @@ export const FeedSection = ({
             </div>
 
             {/* Posts */}
-            <div className="space-y-2 md:space-y-2">
+            <div className="md:space-y-2">
                 {/* Skeletons appear when initial load is happening */}
                 {feedLoading && posts.length === 0 &&
                     Array.from({ length: 3 }).map((_, i) => (
                         <PostSkeleton key={i} />
                     ))}
 
-                {sortedPosts.map((post, index) => (
-                    <FeedPost
-                        key={post.id}
-                        {...post}
-                        initialComments={post.commentData}
-                        isOwnPost={post.author === currentUser.name}
-                        onDelete={deletePost}
-                        onToggleVisibility={togglePostVisibility}
-                        priority={index < 4}
-                    />
-                ))}
+                <div
+                    ref={listRef}
+                    style={{
+                        height: `${virtualizer.getTotalSize()}px`,
+                        width: '100%',
+                        position: 'relative',
+                    }}
+                >
+                    {virtualizer.getVirtualItems().map((virtualItem) => {
+                        const post = sortedPosts[virtualItem.index];
+                        return (
+                            <div
+                                key={virtualItem.key}
+                                data-index={virtualItem.index}
+                                ref={virtualizer.measureElement}
+                                style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    transform: `translateY(${virtualItem.start - virtualizer.options.scrollMargin}px)`,
+                                    paddingBottom: '8px', // spacing between posts (equivalent to space-y-2)
+                                }}
+                            >
+                                <FeedPost
+                                    {...post}
+                                    initialComments={post.commentData}
+                                    isOwnPost={post.author === currentUser.name}
+                                    onDelete={deletePost}
+                                    onToggleVisibility={togglePostVisibility}
+                                    priority={virtualItem.index < 4}
+                                />
+                            </div>
+                        );
+                    })}
+                </div>
 
                 {/* Infinite Scroll Sentinel */}
                 {hasMore && (

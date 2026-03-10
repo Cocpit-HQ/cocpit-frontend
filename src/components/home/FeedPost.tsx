@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { PollAnalyticsModal } from './PollAnalyticsModal';
+import dynamic from 'next/dynamic'
 import {
   ThumbsUp,
   MessageCircle,
@@ -40,15 +40,30 @@ import useEmblaCarousel from 'embla-carousel-react'
 import { toast } from 'sonner'
 import { Comment as CommentType, Post, PollOption } from '@/types/entities'
 import { formatTimeAgo } from '@/lib/timeFormatter'
-import CommentSection from './CommentSection'
-import MobileCommentDrawer from './MobileCommentDrawer'
-import { UniversalShareModal } from '../share/UniversalShareModal'
 import { PollCard } from './PollCard'
-import { CreatePostModal } from './CreatePostModal'
 import { updatePost, toggleLike, voteInPoll, removeVote, addComment, deleteComment, getComments, deletePost } from '@/services/api/posts'
 import { SaveButton } from './SaveButton'
-import { SavePostModal } from '@/components/settings/SavePostModal'
 import { useFeed } from '@/context/FeedContext'
+
+// Lazy-load heavy modal/drawer components (only loaded when user interacts)
+const CommentSection = dynamic(() => import('./CommentSection'), { ssr: false })
+const MobileCommentDrawer = dynamic(() => import('./MobileCommentDrawer'), { ssr: false })
+const PollAnalyticsModal = dynamic(
+  () => import('./PollAnalyticsModal').then(mod => mod.PollAnalyticsModal),
+  { ssr: false }
+)
+const UniversalShareModal = dynamic(
+  () => import('../share/UniversalShareModal').then(mod => mod.UniversalShareModal),
+  { ssr: false }
+)
+const CreatePostModal = dynamic(
+  () => import('./CreatePostModal').then(mod => mod.CreatePostModal),
+  { ssr: false }
+)
+const SavePostModal = dynamic(
+  () => import('@/components/settings/SavePostModal').then(mod => mod.SavePostModal),
+  { ssr: false }
+)
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
