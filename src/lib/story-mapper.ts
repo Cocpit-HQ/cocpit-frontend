@@ -23,6 +23,6 @@ export const mapStory = (story: any): StoryDetail => ({
     media_type: story.media_type,
     media_url: story.media_url,
     thumbnail_url: story.thumbnail_url || (story.story_metadata && typeof story.story_metadata === 'object' ? story.story_metadata.thumbnail_url : null) || story.media_url,
-    shared_post: story.shared_post,
+    shared_post: story.sharedPost || story.shared_post,
     story_metadata: story.story_metadata // Pass through metadata
 });

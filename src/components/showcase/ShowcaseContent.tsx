@@ -72,8 +72,31 @@ export default function ShowcaseContent() {
   useEffect(() => {
     const fetchStories = async () => {
       try {
-        const data = await showcaseService.getGroupedStories()
-        setGroups(data)
+        const stories = await showcaseService.getStories();
+
+        // Group stories by author locally to satisfy StoryCard and Modal requirements
+        const groupedMap = new Map<string | number, StoryGroup>();
+
+        stories.forEach(story => {
+          const authorId = story.author?.id || 'unknown';
+          if (!groupedMap.has(authorId)) {
+            groupedMap.set(authorId, {
+              author: story.author,
+              is_current_user: story.isAuthor || false,
+              latest_story_at: story.created_at || new Date().toISOString(),
+              stories: []
+            });
+          }
+          const group = groupedMap.get(authorId)!;
+          group.stories.push(story);
+
+          // Update latest_story_at if current story is newer
+          if (story.created_at && (!group.latest_story_at || new Date(story.created_at) > new Date(group.latest_story_at))) {
+            group.latest_story_at = story.created_at;
+          }
+        });
+
+        setGroups(Array.from(groupedMap.values()));
       } catch (error) {
         console.error("Failed to fetch stories", error)
       } finally {
@@ -181,7 +204,9 @@ export default function ShowcaseContent() {
                           // Find the first unviewed story, or the first one if all viewed
                           const sortedStories = group.stories
                           const firstUnviewed = sortedStories.find(s => !s.has_viewed) || sortedStories[0];
-                          setSelectedStory({ ...firstUnviewed, author: group.author })
+                          const selected = { ...firstUnviewed, author: group.author };
+                          console.log("Opening StoryViewer with:", selected);
+                          setSelectedStory(selected)
                         }
                       }}
                     />

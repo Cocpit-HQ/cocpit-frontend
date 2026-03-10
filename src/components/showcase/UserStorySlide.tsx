@@ -63,7 +63,8 @@ export const UserStorySlide = ({
     const safeStoryIndex = Math.min(storyIndex, sortedStories.length - 1);
     const currentStory = sortedStories[safeStoryIndex >= 0 ? safeStoryIndex : 0]
     const nextStory = sortedStories[storyIndex + 1]
-    const isMyStory = group.is_current_user
+    const isMyStory = group.is_current_user;
+    console.log('STORY DEBUG', currentStory?.id, currentStory?.shared_post);
 
     const storyById = useMemo(() => {
         const map = new Map<number, StoryLike>();
@@ -874,23 +875,13 @@ export const UserStorySlide = ({
                         </div>
                     </div>
 
-                    {/* Shared Post Overlay */}
-                    {currentStory.shared_post && (
-                        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-8">
-                            <div style={{ transform: `scale(${currentStory.story_metadata?.scale || 0.9})` }} className="transition-transform duration-200">
-                                <SharedPostCard sharedPost={currentStory.shared_post} />
-                            </div>
-                        </div>
-                    )}
-                    {/* 1. Video Player (HLS) */}
-                    {/* Render if it's a legacy video OR a user-edited video that finished rendering */}
                     {mediaLoadFailed && !isLayeredStory ? (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/30 text-white z-10">
                             <p className="text-sm font-medium">Media unavailable</p>
                         </div>
                     ) : currentStory.media_type === 'video' && isActiveUser && !isLayeredStory ? (
                         /* Ready State - double buffered native video (no black transition) */
-                        <div className="absolute inset-0">
+                        <div className="absolute inset-0 z-0">
                             {[0, 1].map((slot) => {
                                 const slotKey = slot as 0 | 1;
                                 const slotStoryId = videoSlotStories[slotKey];
@@ -973,7 +964,7 @@ export const UserStorySlide = ({
                     ) : hasValidCurrentImageSrc ? (
                         <>
                             {/* Snapshot-based: render the baked composite image directly */}
-                            <div className="absolute inset-0 z-0">
+                            <div className="absolute inset-0 z-0 pointer-events-none">
                                 <img
                                     src={currentImageSrc}
                                     alt={currentStory?.title || "Story"}
@@ -988,6 +979,15 @@ export const UserStorySlide = ({
                             </div>
                         </>
                     ) : null}
+
+                    {/* Shared Post Overlay */}
+                    {currentStory.shared_post && (
+                        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-8">
+                            <div style={{ transform: `scale(${currentStory.story_metadata?.scale || 0.9})` }} className="transition-transform duration-200">
+                                <SharedPostCard sharedPost={currentStory.shared_post} />
+                            </div>
+                        </div>
+                    )}
 
                     {/* Metadata Layers Overlay — rendered inside a fixed virtual canvas */}
                     {/* Only show layers if NOT using a pre-rendered final URL */}

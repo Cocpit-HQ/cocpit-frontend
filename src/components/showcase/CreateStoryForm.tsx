@@ -106,13 +106,20 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
         (editingFile instanceof File ? editingFile : null) ||
         (baseFile instanceof File || baseFile instanceof Blob ? baseFile : null);
 
+      let fileToUpload = mainFileToUpload;
+
+      if (!fileToUpload && sharedPostId) {
+        const blob = await getGradientImage(backgroundStyle);
+        fileToUpload = new File([blob], "shared-post-bg.jpg", { type: "image/jpeg" });
+      }
+
       let mediaData = { url: "", public_id: "", media_type: "image" };
 
-      if (mainFileToUpload) {
+      if (fileToUpload) {
         const uploadRes = await showcaseService.uploadMedia(
-          mainFileToUpload instanceof File
-            ? mainFileToUpload
-            : new File([mainFileToUpload], "story-upload", { type: mainFileToUpload.type }),
+          fileToUpload instanceof File
+            ? fileToUpload
+            : new File([fileToUpload], "story-upload", { type: fileToUpload.type }),
           companyId
         );
 
@@ -125,8 +132,6 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
           public_id: uploadRes.public_id,
           media_type: uploadRes.media_type
         };
-      } else if (sharedPostId) {
-        mediaData.media_type = 'image';
       } else {
         throw new Error("No media file available to upload");
       }
