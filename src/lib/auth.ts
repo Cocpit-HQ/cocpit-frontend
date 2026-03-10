@@ -100,38 +100,59 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        // Google OAuth fields — passed when signing in via Google
+        idToken: { label: "Google ID Token", type: "text" },
+        accountType: { label: "Account Type", type: "text" },
       },
       async authorize(credentials, req) {
-        console.log("Authorize function called with credentials:", credentials?.email);
-        if (!credentials?.email || !credentials?.password) {
-          console.error("Credentials missing email or password.");
+        const isGoogleLogin = !!credentials?.idToken;
+
+        console.log(
+          isGoogleLogin
+            ? `Authorize: Google login`
+            : `Authorize: Credentials login for ${credentials?.email}`
+        );
+
+        // Validate required fields based on login type
+        if (!isGoogleLogin && (!credentials?.email || !credentials?.password)) {
           throw new Error("Email and password are required");
+        }
+        if (isGoogleLogin && !credentials?.idToken) {
+          throw new Error("Google ID token is required");
         }
 
         try {
-          // Extract User-Agent and IP from the request object (NextAuth v4 provides this in authorize)
           const userAgent = (req as any)?.headers?.["user-agent"] || "node";
           const xForwardedFor = (req as any)?.headers?.["x-forwarded-for"] || "";
 
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+          // Branch: Google login hits /auth/google, credentials login hits /auth/login
+          const endpoint = isGoogleLogin ? "/auth/google" : "/auth/login";
+          const body = isGoogleLogin
+            ? {
+              idToken: credentials!.idToken,
+              ...(credentials!.accountType ? { accountType: credentials!.accountType } : {}),
+            }
+            : {
+              email: credentials!.email,
+              password: credentials!.password,
+            };
+
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
             method: "POST",
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
+            body: JSON.stringify(body),
             headers: {
               "Content-Type": "application/json",
               "User-Agent": userAgent,
               "X-Forwarded-For": xForwardedFor,
             },
           });
-          console.log("Login API response status:", res.status);
+          console.log(`${endpoint} API response status:`, res.status);
 
           const data = await res.json();
-          console.log("Login API response data:", data);
+          console.log(`${endpoint} API response data:`, data);
 
           if (!res.ok) {
-            console.error("Login API request failed with status:", res.status, "and data:", data);
+            console.error(`${endpoint} failed:`, res.status, data);
             throw new Error(data?.message || "Authentication failed");
           }
 
@@ -140,10 +161,8 @@ export const authOptions: NextAuthOptions = {
             const setCookieHeader = typeof res.headers.getSetCookie === 'function'
               ? res.headers.getSetCookie()
               : res.headers.get("set-cookie");
-            console.log("Login API 'set-cookie' header:", setCookieHeader);
 
             const refreshToken = getCookieValue(setCookieHeader, "refreshToken");
-            console.log("Extracted refreshToken from login response:", refreshToken ? "found" : "not found");
 
             const userPayload = {
               id: data.user.id,
@@ -152,17 +171,16 @@ export const authOptions: NextAuthOptions = {
               image: data.user.avatar_url,
               roles: data.user.roles,
               accessToken: data.accessToken,
-              refreshToken: refreshToken || "", // Fallback to empty string if missing (should fail later)
+              refreshToken: refreshToken || "",
               onboarding_complete: data.user.onboarding_complete === true,
             };
-            console.log("Authorize function returning user payload. Onboarding complete:", userPayload.onboarding_complete);
+            console.log("Authorize returning user. Onboarding complete:", userPayload.onboarding_complete);
             return userPayload;
           }
 
-          console.log("Authorize function returning null as no accessToken or user in response.");
           return null;
         } catch (error: any) {
-          console.error("Login error in authorize function:", error);
+          console.error("Login error in authorize:", error);
           throw new Error(error.message || "Authentication failed");
         }
       },

@@ -12,8 +12,9 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { register, requestOTP, verifyOTP } from "@/services/api/auth";
 import { registrationSchema } from "@/lib/validators";
-
 import { useRouter } from "next/navigation";
+import { signIn, getSession } from "next-auth/react";
+import { GoogleLogin } from "@react-oauth/google";
 
 export default function SignUp() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function SignUp() {
   const [emailVerified, setEmailVerified] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isCheckingOtp, setIsCheckingOtp] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { toast } = useToast();
 
   const handleSendOtp = async () => {
@@ -165,6 +167,58 @@ export default function SignUp() {
     }
 
     await handleRegister(result.data);
+  };
+
+  // ─── Google Sign-Up ────────────────────────────────────────────────────────
+  const handleGoogleSignUp = async (idToken: string) => {
+    if (!accountType) {
+      toast({
+        title: "Role Required",
+        description: "Please select your role before signing up with Google.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGoogleLoading(true);
+    try {
+      // Pass the Google idToken + accountType through NextAuth's authorize,
+      // which routes to POST /auth/google on the backend
+      const result = await signIn("credentials", {
+        idToken,
+        accountType,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        toast({
+          title: "Google sign-up failed",
+          description: result.error,
+          variant: "destructive",
+        });
+        setIsGoogleLoading(false);
+      } else {
+        const session = await getSession();
+        toast({
+          title: "Account created!",
+          description: "Redirecting to profile setup...",
+        });
+
+        // @ts-ignore
+        if (session?.user?.onboarding_complete === false) {
+          router.push("/onboarding");
+        } else {
+          router.push("/feed");
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Google sign-up error",
+        description: error?.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
@@ -320,11 +374,45 @@ export default function SignUp() {
               <Button
                 type="submit"
                 className="w-full mt-6"
-                disabled={!emailVerified || !fullName || !password || !accountType || isCheckingOtp}
+                disabled={!emailVerified || !fullName || !password || !accountType || isCheckingOtp || isGoogleLoading}
               >
                 Create Account
               </Button>
             </form>
+
+            {/* Divider */}
+            <div className="relative flex items-center my-5">
+              <div className="flex-1 border-t border-border" />
+              <span className="px-4 text-xs uppercase text-muted-foreground bg-card">Or</span>
+              <div className="flex-1 border-t border-border" />
+            </div>
+
+            {/* Google Sign Up */}
+            <div style={{ display: 'flex', justifyContent: 'center', opacity: accountType ? 1 : 0.5 }}>
+              <GoogleLogin
+                onSuccess={(credentialResponse) => {
+                  if (credentialResponse.credential) {
+                    handleGoogleSignUp(credentialResponse.credential);
+                  }
+                }}
+                onError={() => {
+                  toast({
+                    title: "Google sign-up failed",
+                    description: "Could not sign up with Google. Please try again.",
+                    variant: "destructive",
+                  });
+                }}
+                text="signup_with"
+                shape="rectangular"
+                size="large"
+                width="350"
+              />
+            </div>
+            {!accountType && (
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                Select your role above to enable Google sign-up
+              </p>
+            )}
 
             {/* Login link */}
             <p className="text-center text-sm text-muted-foreground mt-6">

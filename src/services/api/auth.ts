@@ -36,6 +36,15 @@ export const login = async (credentials: Record<string, string>) => {
   return result;
 };
 
+// 3. Google Login (Public — sends idToken to backend for verification)
+export const loginWithGoogle = async (idToken: string, accountType?: string) => {
+  const response = await publicApi.post("/auth/google", {
+    idToken,
+    ...(accountType ? { accountType } : {}),
+  });
+  return response.data;
+};
+
 export const logout = async () => {
   await libLogout();
 };
