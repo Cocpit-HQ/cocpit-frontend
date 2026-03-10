@@ -994,7 +994,7 @@ export function CreatePostModal({
     if (postType === 'video') return uploadedVideos.length === 0;
     if (postType === 'article') return !articleTitle.trim() || !articleContent.trim() || articleContent === '<p></p>';
     // Text post
-    return !description.trim();
+    return !description.trim() && !sharedPostId;
   };
 
   // Common Header Content for Mobile (Visibility + Category)
@@ -1021,7 +1021,7 @@ export function CreatePostModal({
         <div
           className={`relative w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col ${isMobile
             ? 'rounded-2xl bg-zinc-900/95 backdrop-blur-lg border border-white/10 shadow-2xl overflow-hidden'
-            : 'rounded-lg bg-card shadow-2xl overflow-visible'
+            : 'rounded-lg bg-card shadow-2xl overflow-hidden'
             } `}
         >
           {/* Header */}
@@ -1040,7 +1040,7 @@ export function CreatePostModal({
             </button>
           </div>
 
-          <div className="flex-grow overflow-y-auto">
+          <div className="flex-1 overflow-y-auto scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {isLoadingPost ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -1310,7 +1310,7 @@ export function CreatePostModal({
                   </div>
                 ) : (
                   // ORIGINAL POST UI (Desktop)
-                  <>
+                  <div className="flex flex-col">
                     {/* Post Type Tabs - Only Desktop */}
                     {!editPostId && !sharedPost && (
                       <div className="px-6 pt-4 flex items-center gap-1 border-b border-border bg-muted/10">
@@ -1395,7 +1395,7 @@ export function CreatePostModal({
                     </div>
 
                     {/* DESKTOP CONTENT AREA */}
-                    <div className="px-6 py-6 min-h-[320px]">
+                    <div className="px-6 py-6 flex flex-col gap-4">
 
                       {/* TEXT POST */}
                       {postType === 'text' && (
@@ -1404,7 +1404,7 @@ export function CreatePostModal({
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="What do you want to talk about?"
-                            className="w-full min-h-[280px] text-lg resize-none border-none focus:ring-0 p-0 pr-10 placeholder:text-muted-foreground/70 bg-transparent focus:outline-none"
+                            className={`w-full ${sharedPost ? 'min-h-[80px] max-h-[200px] overflow-y-auto' : 'min-h-[280px]'} text-lg resize-none border-none focus:ring-0 p-0 pr-10 placeholder:text-muted-foreground/70 bg-transparent focus:outline-none`}
                           />
                           {!isMobile && (
                             <div className="absolute top-0 right-0 z-20">
@@ -1426,7 +1426,7 @@ export function CreatePostModal({
                       {sharedPost && (
                         <div className="mt-4 border border-border/50 rounded-xl overflow-hidden bg-muted/20 backdrop-blur-sm">
                           <div className="p-3 flex items-center gap-3 border-b border-border/50 bg-muted/10">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden shrink-0">
                               <img src={sharedPost.authorAvatar || '/assets/pngegg.png'} alt={sharedPost.author} className="w-full h-full object-cover" />
                             </div>
                             <div className="flex flex-col">
@@ -1435,11 +1435,11 @@ export function CreatePostModal({
                             </div>
                           </div>
                           <div className="p-3">
-                            {sharedPost.content && <p className="text-sm text-foreground/80 line-clamp-3 mb-2">{sharedPost.content}</p>}
+                            {sharedPost.content && <p className="text-sm text-foreground/80 mb-2 whitespace-pre-wrap">{sharedPost.content}</p>}
                             {/* Media Preview (Thumbnail) */}
                             {sharedPost.images && sharedPost.images.length > 0 && (
-                              <div className="rounded-lg overflow-hidden h-40 bg-black/5 relative">
-                                <img src={sharedPost.images[0]} className="w-full h-full object-cover" alt="Shared Media" />
+                              <div className="rounded-lg overflow-hidden bg-black/5 relative flex justify-center items-center">
+                                <img src={sharedPost.images[0]} className="w-full max-h-[400px] object-contain rounded-lg" alt="Shared Media" />
                                 {sharedPost.images.length > 1 && (
                                   <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
                                     +{sharedPost.images.length - 1}
@@ -1739,7 +1739,7 @@ export function CreatePostModal({
                         )
                       }
                     </div>
-                  </>
+                  </div>
                 )}
               </>
             )} {/* End Editor Mode */}

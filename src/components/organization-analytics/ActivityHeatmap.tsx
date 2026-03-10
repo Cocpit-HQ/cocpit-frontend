@@ -71,11 +71,35 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
         return labels
     }, [weeks])
 
-    // Total activities
-    const totalActivities = useMemo(
-        () => data.reduce((sum, d) => sum + Math.max(0, d.count), 0),
-        [data]
-    )
+    // Total activities and stats
+    const stats = useMemo(() => {
+        let total = 0
+        const monthCounts: Record<string, number> = {}
+        const dayCounts: Record<string, number> = { 'Sun': 0, 'Mon': 0, 'Tue': 0, 'Wed': 0, 'Thu': 0, 'Fri': 0, 'Sat': 0 }
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+        data.forEach(d => {
+            if (d.count > 0 && d.date) {
+                total += d.count
+                const date = new Date(d.date)
+                const month = date.toLocaleDateString('en-US', { month: 'long' })
+                const day = dayNames[date.getDay()]
+                monthCounts[month] = (monthCounts[month] || 0) + d.count
+                dayCounts[day] = (dayCounts[day] || 0) + d.count
+            }
+        })
+
+        const peakMonth = Object.entries(monthCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'
+        const mostActiveDayShortcut = Object.entries(dayCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'
+
+        const fullDayNames: Record<string, string> = { 'Sun': 'Sunday', 'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday', 'Thu': 'Thursday', 'Fri': 'Friday', 'Sat': 'Saturday' }
+
+        return {
+            totalActivities: total,
+            peakMonth,
+            mostActiveDay: fullDayNames[mostActiveDayShortcut] || mostActiveDayShortcut
+        }
+    }, [data])
 
     return (
         <motion.div
@@ -84,18 +108,36 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
             transition={{ duration: 0.5, delay: 0.6 }}
             className="rounded-2xl border border-border bg-card p-6 shadow-sm"
         >
-            <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10">
-                        <Flame className="w-4 h-4 text-emerald-500" />
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10">
+                            <Flame className="w-4 h-4 text-emerald-500" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-foreground">Activity Heatmap</h3>
                     </div>
-                    <div>
-                        <h3 className="text-base font-semibold text-foreground">Activity Heatmap</h3>
-                        <p className="text-xs text-muted-foreground">{totalActivities.toLocaleString()} activities in the last year</p>
-                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">Your company activity over the last 12 months.</p>
                 </div>
 
-                {/* Legend */}
+                <div className="flex items-center gap-6 bg-muted/30 px-4 py-2 rounded-xl">
+                    <div className="flex flex-col">
+                        <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Total</span>
+                        <span className="font-semibold text-foreground text-sm">{stats.totalActivities.toLocaleString()}</span>
+                    </div>
+                    <div className="w-px h-8 bg-border" />
+                    <div className="flex flex-col">
+                        <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Most Active</span>
+                        <span className="font-semibold text-foreground text-sm">{stats.mostActiveDay}</span>
+                    </div>
+                    <div className="w-px h-8 bg-border" />
+                    <div className="flex flex-col">
+                        <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Peak Month</span>
+                        <span className="font-semibold text-foreground text-sm">{stats.peakMonth}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex justify-end mb-4">
                 <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground">
                     <span>Less</span>
                     {LEVEL_COLORS.map((color, i) => (

@@ -71,7 +71,6 @@ export const PostUploadProvider = ({ children }: { children: ReactNode }) => {
             const response = await createPost(payload);
 
             updatePostStatus(post.id, { progress: 100, status: 'success' });
-            toast.success("Post published successfully!");
 
             // 3. Add to Feed (Client-side mapping similar to CreatePostModal)
             const newPost: Post = {

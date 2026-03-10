@@ -5,6 +5,7 @@ import { StoryAuthor, StoryDetail } from "@/types/showcase"
 import { showcaseService } from "@/services/showcase.service"
 import { StoryMetadata } from "@/types/story-editor"
 import { VirtualLayerCanvas } from "./ViewerLayerItem"
+import { SharedPostCard } from "./SharedPostCard"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useStorySync } from "@/components/showcase/hooks/use-story-sync"
 
@@ -115,29 +116,19 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
   }, [story.created_at, story.timeAgo]);
 
   const metadata = React.useMemo(() => {
-    const meta = (story.story_metadata as unknown as StoryMetadata) || { layers: [] };
-    const layers = meta.layers || [];
+    let meta = story.story_metadata as any;
+    if (typeof meta === 'string') {
+      try {
+        meta = JSON.parse(meta);
+      } catch {
+        meta = { layers: [] };
+      }
+    }
+    const layers = meta?.layers || [];
 
     // Legacy Support: If no layers, create one from the base media
     if (layers.length === 0) {
-      if (story.shared_post) {
-        layers.push({
-          id: 'shared-post',
-          type: 'post',
-          x: 50, y: 50, width: 80, height: 60, rotation: 0, scale: 1, zIndex: 0,
-          post_data: {
-            id: story.shared_post.post_id,
-            content: story.shared_post.content,
-            author: {
-              name: story.shared_post.author?.full_name || 'Unknown',
-              avatar: story.shared_post.author?.avatar_url
-            },
-            media: story.shared_post.media
-          },
-          style: {}
-        } as any);
-      }
-      else if (story.isVideo || story.media_type === 'video') {
+      if (story.isVideo || story.media_type === 'video') {
         layers.push({
           id: 'legacy-video',
           type: 'video',
@@ -344,27 +335,41 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
             </div>
 
             {/* Snapshot-based for images, VirtualLayerCanvas for videos (needs layer overlays) */}
-            {story.media_type === 'video' ? (
-              <VirtualLayerCanvas
-                layers={metadata.layers}
-                isActive
-                background={metadata.background}
-              />
-            ) : (
-              <img
-                src={story.media_url || story.image || ''}
-                alt={story.title || 'Story'}
-                className="w-full h-full object-contain"
-              />
-            )}
-            {story.media_type !== 'video' && !(story.media_url || story.image) && (
-              <div className="flex items-center justify-center h-full text-white/50 flex-col gap-2">
-                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
-                  <Play className="w-6 h-6 fill-current" />
+            <div className={`w-full h-full relative ${!(story.media_url || story.image) ? metadata.backgroundStyle || 'bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500' : ''}`}>
+              {story.media_type === 'video' ? (
+                <VirtualLayerCanvas
+                  layers={metadata.layers}
+                  isActive
+                  background={metadata.background}
+                />
+              ) : (
+                (story.media_url || story.image) ? (
+                  <img
+                    src={story.media_url || story.image || ''}
+                    alt={story.title || 'Story'}
+                    className="w-full h-full object-contain"
+                  />
+                ) : null
+              )}
+
+              {/* Shared Post Overlay */}
+              {story.shared_post && (
+                <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-8">
+                  <div style={{ transform: `scale(${metadata.scale || 0.9})` }} className="transition-transform duration-200">
+                    <SharedPostCard sharedPost={story.shared_post} />
+                  </div>
                 </div>
-                <p className="text-sm font-medium">No content to display</p>
-              </div>
-            )}
+              )}
+
+              {story.media_type !== 'video' && !(story.media_url || story.image) && !story.shared_post && (
+                <div className="flex items-center justify-center h-full text-white/50 flex-col gap-2">
+                  <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                    <Play className="w-6 h-6 fill-current" />
+                  </div>
+                  <p className="text-sm font-medium">No content to display</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

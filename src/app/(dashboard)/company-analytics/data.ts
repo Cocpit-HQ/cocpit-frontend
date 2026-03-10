@@ -1,6 +1,10 @@
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type DateRange = '7d' | '30d' | '90d'
+export type DateRange = '7d' | '30d' | '90d' | '1y' | 'custom'
+
+// Helpers
+const generateSparkline = () => Array.from({ length: 14 }, () => ({ value: Math.max(10, Math.floor(Math.random() * 50) + 20) }))
+const getComparisonText = (range: DateRange) => range === '7d' ? 'vs last week' : range === '30d' ? 'vs last month' : range === '90d' ? 'vs previous quarter' : 'vs previous period'
 
 export interface KpiMetric {
     id: string
@@ -11,6 +15,8 @@ export interface KpiMetric {
     icon: 'Eye' | 'Share2' | 'Users' | 'MessageCircle' | 'Bell' | 'TrendingUp'
     color: string         // Tailwind-compatible color class
     accentHex: string     // hex for icon bg glow
+    comparisonText?: string
+    sparklineData?: { value: number }[]
 }
 
 export interface DailyViewPoint {
@@ -31,6 +37,8 @@ export const getKpiMetrics = (range: DateRange): KpiMetric[] => {
         '7d': 1,
         '30d': 3.8,
         '90d': 10.5,
+        '1y': 42.0,
+        'custom': 15.0,
     }
     const m = multipliers[range]
 
@@ -75,7 +83,7 @@ export const getKpiMetrics = (range: DateRange): KpiMetric[] => {
             color: 'text-cyan-500',
             accentHex: '#06b6d4',
         },
-    ]
+    ].map(m => ({ ...m, comparisonText: getComparisonText(range), sparklineData: generateSparkline() })) as KpiMetric[]
 }
 
 // 30-day daily views data
@@ -121,6 +129,8 @@ export interface EventKpiMetric {
     icon: 'CalendarPlus' | 'UserCheck' | 'Eye' | 'TrendingUp'
     color: string
     accentHex: string
+    comparisonText?: string
+    sparklineData?: { value: number }[]
 }
 
 export interface EventPostingPoint {
@@ -144,7 +154,7 @@ export interface TopEvent {
 // ─── Event Mock Data Generators ──────────────────────────────────────────────
 
 export const getEventKpis = (range: DateRange): EventKpiMetric[] => {
-    const multipliers: Record<DateRange, number> = { '7d': 1, '30d': 3.5, '90d': 9.2 }
+    const multipliers: Record<DateRange, number> = { '7d': 1, '30d': 3.5, '90d': 9.2, '1y': 38.0, 'custom': 14.0 }
     const m = multipliers[range]
 
     return [
@@ -188,7 +198,7 @@ export const getEventKpis = (range: DateRange): EventKpiMetric[] => {
             color: 'text-violet-400',
             accentHex: '#a78bfa',
         },
-    ]
+    ].map(m => ({ ...m, comparisonText: getComparisonText(range), sparklineData: generateSparkline() })) as EventKpiMetric[]
 }
 
 export const getEventPostingTrend = (range: DateRange): EventPostingPoint[] => {
@@ -234,6 +244,8 @@ export interface JobKpiMetric {
     icon: 'Briefcase' | 'FileText' | 'Eye' | 'TrendingUp'
     color: string
     accentHex: string
+    comparisonText?: string
+    sparklineData?: { value: number }[]
 }
 
 export interface JobPostingPoint {
@@ -257,7 +269,7 @@ export interface TopJob {
 // ─── Job Mock Data Generators ────────────────────────────────────────────────
 
 export const getJobKpis = (range: DateRange): JobKpiMetric[] => {
-    const multipliers: Record<DateRange, number> = { '7d': 1, '30d': 3.2, '90d': 8.8 }
+    const multipliers: Record<DateRange, number> = { '7d': 1, '30d': 3.2, '90d': 8.8, '1y': 36.0, 'custom': 13.0 }
     const m = multipliers[range]
 
     return [
@@ -301,7 +313,7 @@ export const getJobKpis = (range: DateRange): JobKpiMetric[] => {
             color: 'text-cyan-400',
             accentHex: '#22d3ee',
         },
-    ]
+    ].map(m => ({ ...m, comparisonText: getComparisonText(range), sparklineData: generateSparkline() })) as JobKpiMetric[]
 }
 
 export const getJobPostingTrend = (range: DateRange): JobPostingPoint[] => {
@@ -347,6 +359,8 @@ export interface FollowerKpiMetric {
     icon: 'Users' | 'UserPlus' | 'TrendingUp' | 'Activity'
     color: string
     accentHex: string
+    comparisonText?: string
+    sparklineData?: { value: number }[]
 }
 
 export interface FollowerGrowthPoint {
@@ -364,7 +378,7 @@ export interface AudienceSegment {
 // ─── Follower Mock Data Generators ───────────────────────────────────────────
 
 export const getFollowerKpis = (range: DateRange): FollowerKpiMetric[] => {
-    const multipliers: Record<DateRange, number> = { '7d': 1, '30d': 3.8, '90d': 10.2 }
+    const multipliers: Record<DateRange, number> = { '7d': 1, '30d': 3.8, '90d': 10.2, '1y': 44.0, 'custom': 16.0 }
     const m = multipliers[range]
 
     return [
@@ -408,7 +422,7 @@ export const getFollowerKpis = (range: DateRange): FollowerKpiMetric[] => {
             color: 'text-emerald-400',
             accentHex: '#34d399',
         },
-    ]
+    ].map(m => ({ ...m, comparisonText: getComparisonText(range), sparklineData: generateSparkline() })) as FollowerKpiMetric[]
 }
 
 export const getFollowerGrowth = (range: DateRange): FollowerGrowthPoint[] => {
@@ -468,6 +482,8 @@ export interface ContentKpiMetric {
     icon: 'FileText' | 'Eye' | 'Heart' | 'TrendingUp'
     color: string
     accentHex: string
+    comparisonText?: string
+    sparklineData?: { value: number }[]
 }
 
 export interface ContentEngagementPoint {
@@ -487,7 +503,7 @@ export interface TopPost {
 // ─── Content Mock Data Generators ────────────────────────────────────────────
 
 export const getContentKpis = (range: DateRange): ContentKpiMetric[] => {
-    const multipliers: Record<DateRange, number> = { '7d': 1, '30d': 3.6, '90d': 9.5 }
+    const multipliers: Record<DateRange, number> = { '7d': 1, '30d': 3.6, '90d': 9.5, '1y': 40.0, 'custom': 14.5 }
     const m = multipliers[range]
 
     return [
@@ -531,7 +547,7 @@ export const getContentKpis = (range: DateRange): ContentKpiMetric[] => {
             color: 'text-amber-400',
             accentHex: '#fbbf24',
         },
-    ]
+    ].map(m => ({ ...m, comparisonText: getComparisonText(range), sparklineData: generateSparkline() })) as ContentKpiMetric[]
 }
 
 export const getContentEngagement = (range: DateRange): ContentEngagementPoint[] => {
@@ -611,3 +627,30 @@ export const getActivityHeatmap = (): ActivityDay[] => {
     return data
 }
 
+// ─── Insights Types ──────────────────────────────────────────────────────────
+
+export interface Insight {
+    id: string
+    type: 'positive' | 'negative' | 'neutral'
+    text: string
+}
+
+// ─── Insights Generator ──────────────────────────────────────────────────────
+
+export const getInsights = (): Insight[] => [
+    {
+        id: 'insight-1',
+        type: 'positive',
+        text: 'Your recent post about the "Series B funding" had an exceptional engagement rate of 14.6%.',
+    },
+    {
+        id: 'insight-2',
+        type: 'neutral',
+        text: 'Follower growth remains steady. Weekends show 40% less activity than weekdays.',
+    },
+    {
+        id: 'insight-3',
+        type: 'positive',
+        text: 'Job applications for "Senior Frontend Engineer" are tracking 25% above your average roles.',
+    },
+]
