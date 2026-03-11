@@ -64,7 +64,6 @@ export const UserStorySlide = ({
     const currentStory = sortedStories[safeStoryIndex >= 0 ? safeStoryIndex : 0]
     const nextStory = sortedStories[storyIndex + 1]
     const isMyStory = group.is_current_user;
-    console.log('STORY DEBUG', currentStory?.id, currentStory?.shared_post);
 
     const storyById = useMemo(() => {
         const map = new Map<number, StoryLike>();

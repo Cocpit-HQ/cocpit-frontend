@@ -9,6 +9,7 @@ import Link from "next/link"
 import SuggestionsPanel from "@/components/home/SuggestionsPanel"
 import type { Page } from "@/types/common"
 import { CompanyRoleModal } from "@/components/profile/parts/CompanyRoleModal"
+import { CompanyRolesList } from "@/components/profile/parts/CompanyRolesList"
 import { UniversalShareModal } from "@/components/share/UniversalShareModal"
 import { MoreVertical, Share2, Link as LinkIcon } from "lucide-react"
 import { toast } from "sonner"
@@ -443,17 +444,12 @@ export default function ProfilePage() {
 
                       {/* Company Roles */}
                       {user?.company_roles && user.company_roles.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {user.company_roles.map((role) => (
-                            <button
-                              key={role.org_id || role.company_id}
-                              onClick={() => handleRoleClick(role)}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20"
-                            >
-                              <Building2 className="w-3 h-3" />
-                              <span>{role.role} at {role.name}</span>
-                            </button>
-                          ))}
+                        <div className="mb-3">
+                          <CompanyRolesList
+                            roles={user.company_roles}
+                            isOwnProfile={true}
+                            onRoleClick={handleRoleClick}
+                          />
                         </div>
                       )}
 

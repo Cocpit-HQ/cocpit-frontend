@@ -76,9 +76,6 @@ export function ProfileHeader({
         setShowBlockDialog(false);
         // Note: The page might need refresh or redirect, but 404 block logic handles view.
         // For smoother UX, maybe router.push('/feed')? 
-        // Let's assume the component consuming this might handle it, or we force it here.
-        // For now, allow Optimistic UI to take effect (clears following) and Toast to show.
-        // A reload will show 404.
         window.location.reload();
     };
 
@@ -113,9 +110,9 @@ export function ProfileHeader({
             <div className="h-36 bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899] relative"></div>
 
             <div className="px-6 pb-6">
-                <div className="flex items-start justify-between -mt-14 mb-4">
+                <div className="flex items-start justify-between -mt-10 sm:-mt-14 mb-4 relative z-10">
                     <div
-                        className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 relative cursor-pointer"
+                        className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 relative cursor-pointer"
                         onClick={onAvatarClick}
                     >
                         <img
@@ -124,15 +121,16 @@ export function ProfileHeader({
                             className="w-full h-full object-cover"
                         />
                     </div>
-                    <div className="mt-16 flex gap-2">
+                    <div className="mt-12 sm:mt-16 flex items-center gap-2">
                         {!isOwnProfile ? (
                             <>
                                 <button
                                     onClick={onMessage}
-                                    className="bg-background hover:bg-muted text-foreground border border-input px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                                    title="Message"
+                                    className="bg-background hover:bg-muted text-foreground border border-input p-2 sm:px-4 sm:py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm font-medium"
                                 >
-                                    <MessageCircle className="w-4 h-4" />
-                                    Message
+                                    <MessageCircle className="w-5 h-5 sm:w-4 sm:h-4" />
+                                    <span className="hidden sm:inline">Message</span>
                                 </button>
                                 <SendOfferDialog targetUserId={user.id} targetUserName={user.name} />
                                 <button
