@@ -3,6 +3,10 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { jwtDecode } from "jwt-decode";
 import { JWT } from "next-auth/jwt";
 
+const inFlightRefreshByToken = new Map<string, Promise<JWT>>();
+const recentRefreshByToken = new Map<string, { accessToken: string; refreshToken: string; expiresAt: number }>();
+const REFRESH_CACHE_TTL_MS = 15_000;
+
 /**
  * Helper to extract a specific cookie value from a Set-Cookie header.
  * Handles both string (single cookie) and array (multiple cookies) formats.
@@ -24,6 +28,72 @@ function getCookieValue(cookieHeader: string | string[] | undefined | null, key:
   return null;
 }
 
+function getRecentRefresh(refreshToken: string): { accessToken: string; refreshToken: string } | null {
+  const cached = recentRefreshByToken.get(refreshToken);
+  if (!cached) return null;
+
+  if (cached.expiresAt <= Date.now()) {
+    recentRefreshByToken.delete(refreshToken);
+    return null;
+  }
+
+  return {
+    accessToken: cached.accessToken,
+    refreshToken: cached.refreshToken,
+  };
+}
+
+async function refreshAccessTokenCoordinated(token: JWT): Promise<JWT> {
+  const refreshToken = token.refreshToken;
+  if (!refreshToken) {
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    };
+  }
+
+  const recent = getRecentRefresh(refreshToken);
+  if (recent) {
+    console.log("Using recently refreshed tokens for stale parallel request.");
+    const mergedToken = {
+      ...token,
+      accessToken: recent.accessToken,
+      refreshToken: recent.refreshToken,
+    };
+    delete mergedToken.error;
+    return mergedToken;
+  }
+
+  const inFlight = inFlightRefreshByToken.get(refreshToken);
+  if (inFlight) {
+    console.log("Awaiting in-flight refresh for the same refresh token.");
+    return inFlight;
+  }
+
+  const refreshPromise = (async () => {
+    const refreshed = await refreshAccessToken(token);
+    if (!refreshed.error && refreshed.accessToken) {
+      recentRefreshByToken.set(refreshToken, {
+        accessToken: refreshed.accessToken,
+        refreshToken: refreshed.refreshToken,
+        expiresAt: Date.now() + REFRESH_CACHE_TTL_MS,
+      });
+
+      const cleanedToken = { ...refreshed };
+      delete cleanedToken.error;
+      return cleanedToken;
+    }
+    return refreshed;
+  })();
+
+  inFlightRefreshByToken.set(refreshToken, refreshPromise);
+  try {
+    return await refreshPromise;
+  } finally {
+    inFlightRefreshByToken.delete(refreshToken);
+  }
+}
+
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   console.log("Attempting to refresh access token with token:", token);
   try {
@@ -41,7 +111,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     let refreshedTokens;
     try {
       refreshedTokens = JSON.parse(text);
-    } catch (e) {
+    } catch {
       console.error("Failed to parse refresh response", text);
       throw new Error(`Invalid JSON response: ${text}`);
     }
@@ -122,8 +192,11 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const userAgent = (req as any)?.headers?.["user-agent"] || "node";
-          const xForwardedFor = (req as any)?.headers?.["x-forwarded-for"] || "";
+          const requestHeaders = (req as { headers?: Record<string, string | string[] | undefined> }).headers;
+          const userAgentHeader = requestHeaders?.["user-agent"];
+          const forwardedHeader = requestHeaders?.["x-forwarded-for"];
+          const userAgent = Array.isArray(userAgentHeader) ? userAgentHeader[0] : (userAgentHeader || "node");
+          const xForwardedFor = Array.isArray(forwardedHeader) ? forwardedHeader[0] : (forwardedHeader || "");
 
           // Branch: Google login hits /auth/google, credentials login hits /auth/login
           const endpoint = isGoogleLogin ? "/auth/google" : "/auth/login";
@@ -179,9 +252,10 @@ export const authOptions: NextAuthOptions = {
           }
 
           return null;
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error("Login error in authorize:", error);
-          throw new Error(error.message || "Authentication failed");
+          const message = error instanceof Error ? error.message : "Authentication failed";
+          throw new Error(message);
         }
       },
     }),
@@ -212,7 +286,7 @@ export const authOptions: NextAuthOptions = {
       // Return previous token if the access token has not expired yet
       try {
         // If the token already has an error, return it immediately to stop the loop
-        if (token.error === "RefreshAccessTokenError") {
+        if (token.error === "RefreshAccessTokenError" || token.error === "SESSION_INVALID") {
           return token;
         }
 
@@ -227,13 +301,17 @@ export const authOptions: NextAuthOptions = {
       }
 
       // Access token has expired, try to update it
-      const refreshedToken = await refreshAccessToken(token);
+      const refreshedToken = await refreshAccessTokenCoordinated(token);
 
-      // If the refresh resulted in SESSION_INVALID, return null to destroy the session
+      // Keep JWT payload as an object; returning null here crashes NextAuth encode flow.
       if (refreshedToken.error === "SESSION_INVALID") {
-        console.warn("JWT Callback: Session is invalid. Returning null to terminate.");
-        // We cast to any to satisfy NextAuth types while triggering session destruction
-        return null as any;
+        console.warn("JWT Callback: Session is invalid. Marking token as invalid.");
+        return {
+          ...token,
+          accessToken: "",
+          refreshToken: "",
+          error: "SESSION_INVALID",
+        };
       }
 
       return refreshedToken;

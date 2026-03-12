@@ -1,5 +1,5 @@
 import axios from "axios";
-import { signOut, getSession } from "next-auth/react";
+import { getSession } from "next-auth/react";
 import { hardLogout } from "@/lib/logout";
 
 // Public API client (No Auth)
@@ -26,6 +26,7 @@ api.interceptors.request.use(
     // Safeguard: If the session already has an error, don't proceed with authenticated requests
     if (session?.user?.error === "RefreshAccessTokenError" || session?.user?.error === "SESSION_INVALID") {
       console.warn(`[Axios] Blocking request due to session error: ${session.user.error}`);
+      await hardLogout("session_ended");
       return Promise.reject(new Error("SESSION_INVALID"));
     }
 
