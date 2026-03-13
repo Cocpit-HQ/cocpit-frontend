@@ -7,6 +7,7 @@ import { StoryDetail, StoryGroup } from '@/types/showcase'
 import { UserMention, getSuggestedUsers } from '@/services/api/users'
 import { followUser } from '@/services/api/social'
 import { toast } from 'sonner'
+import { useStories } from '@/context/StoriesContext'
 
 type StoryRailProps = {
   groups: StoryGroup[]
@@ -33,9 +34,49 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, curr
   const [suggestedUsers, setSuggestedUsers] = useState<UserMention[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const { isStoryViewerOpen, setIsStoryViewerOpen } = useStories();
+  const [frozenGroups, setFrozenGroups] = useState<StoryGroup[] | null>(null);
 
   const myGroup = useMemo(() => groups.find(g => g.is_current_user), [groups]);
-  const otherGroups = useMemo(() => groups.filter(g => !g.is_current_user), [groups]);
+  
+  const otherGroups = useMemo(() => {
+    const filtered = groups.filter(g => !g.is_current_user);
+
+    const performSort = (items: StoryGroup[]) => {
+      return [...items].sort((a, b) => {
+        const aHasUnseen = a.stories.some(s => !s.has_viewed && !s.isAuthor);
+        const bHasUnseen = b.stories.some(s => !s.has_viewed && !s.isAuthor);
+
+        if (aHasUnseen && !bHasUnseen) return -1;
+        if (!aHasUnseen && bHasUnseen) return 1;
+
+        const aTime = a.latest_story_at ? new Date(a.latest_story_at).getTime() : 0;
+        const bTime = b.latest_story_at ? new Date(b.latest_story_at).getTime() : 0;
+        return bTime - aTime;
+      });
+    };
+
+    if (isStoryViewerOpen && frozenGroups) {
+      const orderMap = new Map(frozenGroups.map((g, i) => [g.author.id, i]));
+      return [...filtered].sort((a, b) => {
+        const indexA = orderMap.has(a.author.id) ? orderMap.get(a.author.id)! : Infinity;
+        const indexB = orderMap.has(b.author.id) ? orderMap.get(b.author.id)! : Infinity;
+        return indexA - indexB;
+      });
+    }
+
+    return performSort(filtered);
+  }, [groups, isStoryViewerOpen, frozenGroups]);
+
+  useEffect(() => {
+    if (isStoryViewerOpen) {
+      if (!frozenGroups) {
+        setFrozenGroups(otherGroups);
+      }
+    } else {
+      setFrozenGroups(null);
+    }
+  }, [isStoryViewerOpen, frozenGroups, otherGroups]);
 
   useEffect(() => {
     if (!isLoading && otherGroups.length === 0) {
@@ -205,7 +246,10 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, curr
                 return (
                   <div key={group.author.id} className="flex-shrink-0 flex flex-col items-center gap-2 group relative">
                     <button
-                      onClick={() => onStoryClick(story)}
+                      onClick={() => {
+                        setIsStoryViewerOpen(true);
+                        onStoryClick(story);
+                      }}
                       className={`w-14 h-14 md:w-28 md:h-40 rounded-full md:rounded-xl relative overflow-hidden bg-black ${hasUnviewed ? 'ring-2 ring-primary ring-offset-2' : 'border border-border'
                         }`}
                     >

@@ -386,15 +386,49 @@ function MessageBubble(props: MessageBubbleProps) {
     ? "p-0 overflow-hidden"
     : "px-3 py-2 md:px-4 md:py-2.5"
 
+  // Long press mobile detection
+  const [showMobileActions, setShowMobileActions] = useState(false)
+  const pressTimer = useRef<NodeJS.Timeout | null>(null)
+
+  const handleTouchStart = () => {
+    if (message.is_deleted_for_everyone || message.is_deleted_for_me) return
+    pressTimer.current = setTimeout(() => {
+      setShowMobileActions(true)
+    }, 500)
+  }
+
+  const handleTouchEnd = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current)
+      pressTimer.current = null
+    }
+  }
+
+  const handleMobileAction = (action: string) => {
+    onAction?.(action, message)
+    setShowMobileActions(false)
+  }
+
   return (
-    <div
-      className={cn(
-        "flex w-full mb-1 group transition-all",
-        isMe ? "justify-end" : "justify-start",
-        (message.is_deleted_for_everyone || message.is_deleted_for_me) ? "cursor-default" : "cursor-pointer"
+    <>
+      {showMobileActions && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/50 md:hidden transition-opacity" 
+          onClick={() => setShowMobileActions(false)} 
+        />
       )}
-      onClick={() => !message.is_deleted_for_everyone && !message.is_deleted_for_me && onMessageClick?.(message)}
-    >
+      <div
+        className={cn(
+          "flex w-full mb-1 group transition-all relative",
+          isMe ? "justify-end" : "justify-start",
+          (message.is_deleted_for_everyone || message.is_deleted_for_me) ? "cursor-default" : "cursor-pointer"
+        )}
+        onClick={() => !message.is_deleted_for_everyone && !message.is_deleted_for_me && onMessageClick?.(message)}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+      >
       <div className={cn("max-w-[75%] md:max-w-[60%] flex flex-col", isMe ? "items-end" : "items-start")}>
         {showSenderName && !isMe && (
           <span className="text-xs text-muted-foreground mb-1 ml-1 font-medium">
@@ -407,7 +441,7 @@ function MessageBubble(props: MessageBubbleProps) {
             "relative break-words text-sm md:text-base w-full transition-colors",
             paddingClasses,
             getBubbleClasses(),
-            isSelected && "bg-primary/20 ring-2 ring-primary ring-offset-1 ring-offset-background"
+            (isSelected || showMobileActions) && "ring-2 ring-primary ring-offset-1 ring-offset-background"
           )}
         >
           {isEditing ? (
@@ -453,17 +487,59 @@ function MessageBubble(props: MessageBubbleProps) {
           )}
         </div>
 
-        {/* Action Menu (Three dots) */}
+        {/* Desktop Action Menu (Three dots) */}
         {!isEditing && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
           <div className={cn(
-            "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity bg-background/50 rounded-full",
+            "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity bg-background/50 rounded-full hidden md:block",
             isMe ? "-left-8" : "-right-8"
           )}>
             <MessageMenu message={message} onAction={onAction} />
           </div>
         )}
       </div>
+
+      {/* Mobile Action Bottom Sheet */}
+      {showMobileActions && (
+        <div className="fixed bottom-0 left-0 right-0 z-[60] bg-background border-t border-border rounded-t-2xl shadow-xl overflow-hidden md:hidden animate-in slide-in-from-bottom flex flex-col text-sm font-medium">
+          <div className="flex justify-center p-3 pb-1">
+            <div className="w-10 h-1.5 rounded-full bg-muted-foreground/30" />
+          </div>
+          <button 
+            className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left"
+            onClick={() => handleMobileAction('copy')}
+          >
+            <Copy className="w-5 h-5 text-muted-foreground" />
+            <span>Copy</span>
+          </button>
+          {isMe && (
+            <>
+              <button 
+                className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50"
+                onClick={() => handleMobileAction('info')}
+              >
+                <Info className="w-5 h-5 text-muted-foreground" />
+                <span>Info</span>
+              </button>
+              <button 
+                className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50"
+                onClick={() => handleMobileAction('edit')}
+              >
+                <Pencil className="w-5 h-5 text-muted-foreground" />
+                <span>Edit</span>
+              </button>
+              <button 
+                className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50 text-destructive"
+                onClick={() => handleMobileAction('delete')}
+              >
+                <Trash2 className="w-5 h-5" />
+                <span>Delete</span>
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </div>
+    </>
   )
 }
 

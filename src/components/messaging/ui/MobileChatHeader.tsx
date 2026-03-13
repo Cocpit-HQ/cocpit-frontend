@@ -1,6 +1,6 @@
 import React from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, MoreVertical, Phone, Video, X, Copy, Pencil, Info as InfoIcon } from "lucide-react"
+import { ArrowLeft, MoreVertical, Phone, Video, X, Copy, Pencil, Info as InfoIcon, Trash2 } from "lucide-react"
 import { ChatThread, Message } from "@/types/messaging"
 import Avatar from "@/components/shared/Avatar"
 import { Button } from "@/components/ui/button"
@@ -21,7 +21,7 @@ interface MobileChatHeaderProps {
 
 export default function MobileChatHeader({ chat, onBack, selectedMessage, onMessageAction, currentUserId }: MobileChatHeaderProps) {
   const router = useRouter()
-  const isMyMessage = selectedMessage && (selectedMessage.sender === 'me' || selectedMessage.senderId === currentUserId);
+  const isMyMessage = selectedMessage && (selectedMessage.sender === 'me' || selectedMessage.senderId === currentUserId || selectedMessage.senderId === 'me');
 
   return (
     <div
@@ -88,6 +88,9 @@ export default function MobileChatHeader({ chat, onBack, selectedMessage, onMess
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onMessageAction?.('edit')}>
                       <Pencil className="w-4 h-4 mr-2" /> Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onMessageAction?.('delete')} className="text-destructive focus:text-destructive">
+                      <Trash2 className="w-4 h-4 mr-2" /> Delete
                     </DropdownMenuItem>
                   </>
                 )}

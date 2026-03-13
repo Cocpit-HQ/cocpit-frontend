@@ -3,6 +3,7 @@ import useEmblaCarousel from "embla-carousel-react"
 import { EmblaCarouselType } from "embla-carousel"
 import { StoryDetail, StoryGroup } from "@/types/showcase"
 import { UserStorySlide } from "./UserStorySlide"
+import { useStories } from "@/context/StoriesContext"
 
 type MobileStoryViewerProps = {
     groups: StoryGroup[]
@@ -13,6 +14,7 @@ type MobileStoryViewerProps = {
 }
 
 export function MobileStoryViewer({ groups, initialGroupId, onClose, isDark, onStoryUpdate }: MobileStoryViewerProps) {
+    const { setIsStoryViewerOpen } = useStories();
 
     // Filter out groups with no stories (e.g. empty "Your Story" placeholder)
     const validGroups = useMemo(() => {
@@ -50,9 +52,10 @@ export function MobileStoryViewer({ groups, initialGroupId, onClose, isDark, onS
         if (emblaApi && emblaApi.canScrollNext()) {
             emblaApi.scrollNext()
         } else {
+            setIsStoryViewerOpen(false);
             onClose()
         }
-    }, [emblaApi, onClose]);
+    }, [emblaApi, onClose, setIsStoryViewerOpen]);
 
     const handlePrevUser = useCallback(() => {
         if (emblaApi && emblaApi.canScrollPrev()) {
@@ -82,7 +85,10 @@ export function MobileStoryViewer({ groups, initialGroupId, onClose, isDark, onS
                                     isActiveUser={idx === currentIndex}
                                     onNextUser={handleNextUser}
                                     onPrevUser={handlePrevUser}
-                                    onClose={onClose}
+                                    onClose={() => {
+                                        setIsStoryViewerOpen(false);
+                                        onClose();
+                                    }}
                                     isDark={isDark}
                                     onStoryUpdate={onStoryUpdate}
                                     disableMediaBackgroundFallback={true}

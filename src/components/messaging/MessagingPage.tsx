@@ -40,6 +40,7 @@ export default function MessagingPage() {
   const isMobile = useIsMobile()
   const [selectedChat, setSelectedChat] = useState<ChatThread | null>(null)
   const processedUserIdRef = React.useRef<string | null>(null);
+  const processedMessagesRef = React.useRef<Set<string>>(new Set());
 
   const { activeProfile } = useActiveProfile();
 
@@ -267,12 +268,19 @@ export default function MessagingPage() {
     if (!socket) return;
 
     const handleNewMessage = (message: any) => {
+      // Prevent duplicate socket deliveries (e.g., from reconnections)
+      if (message.message_id) {
+        if (processedMessagesRef.current.has(message.message_id)) return;
+        processedMessagesRef.current.add(message.message_id);
+      }
+
       const queryKey = ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'];
       queryClient.setQueryData(queryKey, (oldData: ChatThread[] | undefined) => {
         if (!oldData) return oldData;
-        let conversationExists = false;
+        
+        let matchedIndex = -1;
 
-        const updatedList = oldData.map(c => {
+        const updatedList = oldData.map((c, index) => {
           const messageGroupId = (message as any).isGroup ? (message.conversation_id || message.group_id) : undefined;
 
           let isMatch = false;
@@ -288,22 +296,24 @@ export default function MessagingPage() {
             }
           }
 
-          if (isMatch) {
-            conversationExists = true;
-            return {
-              ...c,
-              lastMessage: message.text_content || (message.shared_post ? "Shared a post" : (message.shared_profile_id ? "Shared a profile" : "Attachment")),
-              time: formatTimeAgo(message.created_at || new Date().toISOString()),
-              lastMessageAt: new Date().toISOString(),
-              unread: (c.id === selectedChat?.id || (selectedChat?.isGroup && selectedChat.id === c.id)) ? 0 : (c.unread + 1)
-            };
-          }
-          return c;
-        });
+            if (isMatch) {
+              matchedIndex = index;
+              return {
+                ...c,
+                lastMessage: message.text_content || (message.shared_post ? "Shared a post" : (message.shared_profile_id ? "Shared a profile" : "Attachment")),
+                time: formatTimeAgo(message.created_at || new Date().toISOString()),
+                lastMessageAt: message.created_at || new Date().toISOString(),
+                unread: (c.id === selectedChat?.id || (selectedChat?.isGroup && selectedChat.id === c.id)) ? 0 : (c.unread + 1)
+              };
+            }
+            return c;
+          });
 
-        if (conversationExists) {
-          return [...updatedList].sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
-        }
+          if (matchedIndex !== -1) {
+            // O(1) performance optimization: move updated conversation immediately to the top instead of sorting everything
+            const match = updatedList.splice(matchedIndex, 1)[0];
+            return [match, ...updatedList];
+          }
 
         // Not in current profile's conversation list — don't invalidate.
         // This message likely belongs to a different profile (user vs company).
@@ -347,10 +357,76 @@ export default function MessagingPage() {
       // For now, disabling to meet requirement of NO REFETCH on message send/update.
     };
 
+    const handleMessageDeleted = (payload: { messageId: string, conversationId: string }) => {
+      // Edge Case Fix: Only update the sidebar preview if the deleted message is actually the latest message.
+      const messagesData = queryClient.getQueryData<any>(['messages', payload.conversationId]);
+      let isLastMessage = true;
+      if (messagesData && messagesData.pages && messagesData.pages.length > 0) {
+        const newestPage = messagesData.pages[0];
+        if (newestPage && newestPage.length > 0) {
+          const newestMessage = newestPage[newestPage.length - 1];
+          if (newestMessage.id !== payload.messageId && String(newestMessage.id) !== String(payload.messageId)) {
+            isLastMessage = false;
+          }
+        }
+      }
+
+      if (!isLastMessage) return;
+
+      const queryKey = ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'];
+      queryClient.setQueryData(queryKey, (oldData: ChatThread[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(c => {
+          if (c.id === payload.conversationId) {
+            return {
+              ...c,
+              lastMessage: "This message was deleted",
+            };
+          }
+          return c;
+        });
+      });
+    };
+
+    const handleMessageEdited = (payload: { messageId: string, conversationId: string, text_content: string }) => {
+      // Edge Case Fix: Only update the sidebar preview if the edited message is actually the latest message.
+      const messagesData = queryClient.getQueryData<any>(['messages', payload.conversationId]);
+      let isLastMessage = true;
+      if (messagesData && messagesData.pages && messagesData.pages.length > 0) {
+        const newestPage = messagesData.pages[0];
+        if (newestPage && newestPage.length > 0) {
+          const newestMessage = newestPage[newestPage.length - 1];
+          if (newestMessage.id !== payload.messageId && String(newestMessage.id) !== String(payload.messageId)) {
+            isLastMessage = false;
+          }
+        }
+      }
+
+      if (!isLastMessage) return;
+
+      const queryKey = ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'];
+      queryClient.setQueryData(queryKey, (oldData: ChatThread[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(c => {
+          if (c.id === payload.conversationId && payload.text_content) {
+            return {
+              ...c,
+              lastMessage: payload.text_content,
+            };
+          }
+          return c;
+        });
+      });
+    };
+
     socket.on('new_message', handleNewMessage);
     socket.on('notification', handleNotification);
     socket.on('group_updated', handleGroupUpdate);
     socket.on('conversation-updated', handleConversationUpdated);
+    socket.on('message_deleted', handleMessageDeleted);
+    socket.on('message_deleted_for_everyone', handleMessageDeleted);
+    socket.on('message_deleted_for_me', handleMessageDeleted);
+    socket.on('message_edited', handleMessageEdited);
 
     // Session events: re-fetch session status for the affected conversation
     const handleSessionEvent = (payload: { conversationId: string }) => {
@@ -386,11 +462,24 @@ export default function MessagingPage() {
       socket.off('notification', handleNotification);
       socket.off('group_updated', handleGroupUpdate);
       socket.off('conversation-updated', handleConversationUpdated);
+      socket.off('message_deleted', handleMessageDeleted);
+      socket.off('message_deleted_for_everyone', handleMessageDeleted);
+      socket.off('message_deleted_for_me', handleMessageDeleted);
+      socket.off('message_edited', handleMessageEdited);
       socket.off('session_claimed', handleSessionEvent);
       socket.off('session_released', handleSessionEvent);
       socket.off('session_takeover_forced', handleSessionEvent);
     };
-  }, [socket, queryClient, selectedChat?.id, activeProfile, isCompanyMode, companyId, user?.id]); // Only depend on ID, not full object
+  }, [
+    socket, 
+    queryClient, 
+    selectedChat?.id, 
+    activeProfile?.id, 
+    activeProfile?.type, 
+    isCompanyMode, 
+    companyId, 
+    user?.id
+  ]); // Stabilized dependency list to prevent repeated socket registrations
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")

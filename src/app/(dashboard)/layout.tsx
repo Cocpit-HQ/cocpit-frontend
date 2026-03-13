@@ -10,6 +10,7 @@ import { JobsProvider } from "@/context/JobsContext";
 import { ActionModalProvider } from "@/context/ActionModalContext";
 import { PostUploadProvider } from "@/context/PostUploadContext";
 import { GlobalUploadProgress } from "@/components/ui/GlobalUploadProgress";
+import { StoriesProvider } from "@/context/StoriesContext";
 
 export default function DashboardLayout({
     children,
@@ -18,22 +19,24 @@ export default function DashboardLayout({
 }) {
     return (
         <ActiveProfileProvider>
-            <SocketProvider>
-                <SocialProvider>
-                    <EventsProvider>
-                        <FeedProvider>
-                            <PostUploadProvider>
-                                <JobsProvider>
-                                    <ActionModalProvider>
-                                        <AppShell>{children}</AppShell>
-                                        <GlobalUploadProgress />
-                                    </ActionModalProvider>
-                                </JobsProvider>
-                            </PostUploadProvider>
-                        </FeedProvider>
-                    </EventsProvider>
-                </SocialProvider>
-            </SocketProvider>
+            <StoriesProvider>
+                <SocketProvider>
+                    <SocialProvider>
+                        <EventsProvider>
+                            <FeedProvider>
+                                <PostUploadProvider>
+                                    <JobsProvider>
+                                        <ActionModalProvider>
+                                            <AppShell>{children}</AppShell>
+                                            <GlobalUploadProgress />
+                                        </ActionModalProvider>
+                                    </JobsProvider>
+                                </PostUploadProvider>
+                            </FeedProvider>
+                        </EventsProvider>
+                    </SocialProvider>
+                </SocketProvider>
+            </StoriesProvider>
         </ActiveProfileProvider>
     );
 }

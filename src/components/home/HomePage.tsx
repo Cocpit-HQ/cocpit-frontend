@@ -8,7 +8,7 @@ import { X } from 'lucide-react'
 import { HomeHeader } from './HomeHeader'
 import { FeedSection } from './FeedSection'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
-import { useStoryGroups } from '@/components/showcase/hooks/use-story-groups'
+import { useStories } from '@/context/StoriesContext'
 
 // Lazy-load heavy modal/overlay components (saves ~230KB from initial bundle)
 const MobileStoryViewer = dynamic(
@@ -28,38 +28,22 @@ export default function HomePage() {
   const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState('recent')
 
-  // Story State
-  const [storyLoading, setStoryLoading] = useState(true)
+  // UI State
   const [showCreateStory, setShowCreateStory] = useState(false)
   const [mobileSelectedGroupId, setMobileSelectedGroupId] = useState<string | number | null>(null)
 
   const {
     groups,
-    setGroups,
+    isLoading: storyLoading,
     selectedStory,
     setSelectedStory,
     handleCreateStory,
     handleStoryUpdate
-  } = useStoryGroups()
-
-  const { activeProfile } = useActiveProfile();
+  } = useStories()
 
   useEffect(() => {
     setMounted(true)
-    const fetchStories = async () => {
-      try {
-        const { showcaseService } = await import('@/services/showcase.service');
-        const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
-        const data = await showcaseService.getGroupedStories(companyId)
-        setGroups(data)
-      } catch (error) {
-        console.error("Failed to fetch stories", error)
-      } finally {
-        setStoryLoading(false)
-      }
-    }
-    fetchStories()
-  }, [activeProfile?.id, activeProfile?.type])
+  }, [])
 
 
 

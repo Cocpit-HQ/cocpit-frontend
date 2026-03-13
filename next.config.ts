@@ -15,8 +15,8 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Cache static fonts, images, and other assets aggressively
-        source: '/:all*(svg|jpg|png|webp|avif|woff2|woff|ttf|css|js)',
+        // Cache static fonts, images, and other assets aggressively (but NOT css/js to prevent breaking Next.js hydration and HMR)
+        source: '/:all*(svg|jpg|png|webp|avif|woff2|woff|ttf)',
         headers: [
           {
             key: 'Cache-Control',

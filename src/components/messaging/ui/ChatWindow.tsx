@@ -46,7 +46,7 @@ const getAvatarGradient = (avatar: string) => {
 }
 
 function ChatHeaderMenu({ selectedMessage, onMessageAction, currentUserId }: { selectedMessage: Message, onMessageAction: (action: string) => void, currentUserId: string }) {
-  const isMyMessage = selectedMessage.sender === 'me' || selectedMessage.senderId === currentUserId;
+  const isMyMessage = selectedMessage.sender === 'me' || selectedMessage.senderId === currentUserId || selectedMessage.senderId === 'me';
 
   return (
     <>
@@ -641,7 +641,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
           onBack={onBack!}
           selectedMessage={selectedMessage}
           onMessageAction={(action) => handleMessageActionWithMsg(action)}
-          currentUserId={session?.user?.id || ""}
+          currentUserId={activeProfile?.type === 'COMPANY' ? activeProfile.id : (session?.user?.id || "")}
         />
       ) : (
         <div className="p-4 border-b border-border flex items-center justify-between">
