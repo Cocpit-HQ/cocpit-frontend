@@ -73,6 +73,8 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
     videoSrc: videoSrc,
     likes: publicPost.like_count,
     isLiked: publicPost.is_liked,
+    is_commented: publicPost.is_commented,
+    is_saved: publicPost.is_saved,
     comments: publicPost.comment_count.toString(),
     shares: "0", // Backend doesn't return share count
     commentData: [],
@@ -117,6 +119,8 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
           imageSrc: sp.media?.find(m => m.media_type === 'image')?.url,
           likes: sp.like_count || 0,
           isLiked: sp.is_liked,
+          is_commented: sp.is_commented,
+          is_saved: sp.is_saved,
           comments: (sp.comment_count || 0).toString(),
           shares: "0",
           images: sp.media?.filter(m => m.media_type === 'image').map(m => m.url),

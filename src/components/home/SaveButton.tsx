@@ -32,7 +32,7 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
 
         if (isLoading) return
 
-        if (onToggle) {
+        if (onToggle && !isSaved) {
             onToggle()
             return
         }
