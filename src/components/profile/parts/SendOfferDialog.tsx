@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { sendJobOffer } from "@/services/api/offers";
+import { getCompanyJobs } from "@/services/api/jobs";
 import api from "@/lib/axios";
 import { toast } from "sonner";
 
@@ -52,11 +53,15 @@ export function SendOfferDialog({ targetUserId, targetUserName }: SendOfferDialo
         let fetchedOfferedIds: string[] = [];
 
         try {
-            const jobsRes = await api.get("/jobs", {
-                params: { company_id: activeProfile!.id, status: "ACTIVE" },
-            });
-            fetchedJobs = jobsRes.data?.jobs || jobsRes.data || [];
-            console.log("[SendOfferDialog] Fetched jobs:", fetchedJobs.map(j => ({ job_id: j.job_id, title: j.title })));
+            const fetchedList = await getCompanyJobs(activeProfile!.id);
+            fetchedJobs = fetchedList
+                .filter((j: any) => j.status === 'active')
+                .map((j: any) => ({
+                    job_id: j.id || j.job_id,
+                    title: j.title,
+                    location: j.location,
+                    job_type: j.jobType || j.job_type
+                })) as CompanyJob[];
         } catch (err) {
             console.error("[SendOfferDialog] Error fetching jobs:", err);
         }
@@ -64,20 +69,12 @@ export function SendOfferDialog({ targetUserId, targetUserName }: SendOfferDialo
         try {
             const offersRes = await api.get(`/jobs/companies/${activeProfile!.id}/offers/check/${targetUserId}`);
             fetchedOfferedIds = offersRes.data.jobIds || [];
-            console.log("[SendOfferDialog] Already offered job IDs:", fetchedOfferedIds);
         } catch (err) {
             console.error("[SendOfferDialog] Error checking offers:", err);
         }
 
         setJobs(fetchedJobs);
         setOfferedJobIds(fetchedOfferedIds);
-
-        // Debug: log the filter result
-        const available = fetchedJobs.filter(j => {
-            const id = j.job_id || (j as any).id;
-            return !fetchedOfferedIds.includes(id);
-        });
-        console.log("[SendOfferDialog] Available (after filter):", available.map(j => ({ job_id: j.job_id, title: j.title })));
 
         setFetchingJobs(false);
         setOfferLoading(false);

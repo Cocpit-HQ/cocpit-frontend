@@ -51,7 +51,7 @@ function transformJob(backendJob: any): Job {
         logo: `gradient-${(parseInt(backendJob.job_id.slice(0, 8), 16) % 6) + 1}`,
         companyLogo: backendJob.company_logo,
         companySlug: backendJob.company_slug,
-        companyId: backendJob.company_id,
+        companyId: backendJob.org_id || backendJob.company_id,
         isOffer: backendJob.is_offer,
         isSaved: backendJob.isSaved,
         createdAt: backendJob.latest_offer_at || backendJob.created_at,
@@ -83,10 +83,9 @@ function transformJob(backendJob: any): Job {
         declinedOffers: backendJob.declined_count,
         withdrawnOffers: backendJob.withdrawn_count,
 
-        // Mapping Status from applications
-        status: backendJob.applicationStatus
-            ? backendJob.applicationStatus.toLowerCase().replace(" ", "-")
-            : backendJob.current_status?.toLowerCase().replace(" ", "-"),
+        // Mapping Status from applications or standard jobs
+        status: (backendJob.applicationStatus || backendJob.current_status || backendJob.status)
+            ?.toLowerCase().replace(" ", "-"),
 
         // Mocking missing fields gracefully or using provided
         matchScore: backendJob.match_score,
@@ -292,7 +291,7 @@ export const createJob = async (data: JobFormData): Promise<void> => {
         easy_apply: data.easyApply,
         minSalary: data.minSalary,
         maxSalary: data.maxSalary,
-        company_id: data.companyId,
+        org_id: data.companyId,
 
         skills: data.skills.split(",").map(s => s.trim()).filter(Boolean)
     };
@@ -373,6 +372,7 @@ export const updateJob = async (jobId: string, data: JobFormData): Promise<void>
         easy_apply: data.easyApply,
         minSalary: data.minSalary,
         maxSalary: data.maxSalary,
+        org_id: data.companyId,
 
         skills: data.skills.split(",").map(s => s.trim()).filter(Boolean)
     };
