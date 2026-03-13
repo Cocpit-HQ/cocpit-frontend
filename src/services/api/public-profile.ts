@@ -34,6 +34,8 @@ export interface PublicPost {
   media: PublicPostMedia[];
   like_count: number;
   is_liked: boolean;
+  is_commented: boolean;
+  is_saved: boolean;
   comment_count: number;
   poll: PublicPostPoll | null;
   shared_post?: {
@@ -51,6 +53,8 @@ export interface PublicPost {
     like_count?: number;
     comment_count?: number;
     is_liked?: boolean;
+    is_commented?: boolean;
+    is_saved?: boolean;
     poll?: PublicPostPoll | null;
   };
 }
