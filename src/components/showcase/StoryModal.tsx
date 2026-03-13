@@ -8,6 +8,7 @@ import { VirtualLayerCanvas } from "./ViewerLayerItem"
 import { SharedPostCard } from "./SharedPostCard"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useStorySync } from "@/components/showcase/hooks/use-story-sync"
+import { useStories } from '@/context/StoriesContext'
 
 type StoryModalProps = {
   story: StoryDetail
@@ -64,6 +65,7 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
   const menuButtonRef = useRef<HTMLButtonElement>(null)
 
   const { activeProfile } = useActiveProfile();
+  const { setIsStoryViewerOpen } = useStories();
 
   // View Story effect & Fetch Details if Author
   useEffect(() => {
@@ -324,6 +326,7 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
                     className="w-8 h-8 rounded-full bg-black/45 text-white flex items-center justify-center"
                     onClick={(e) => {
                       e.stopPropagation();
+                      setIsStoryViewerOpen(false);
                       onClose();
                     }}
                     aria-label="Close story"

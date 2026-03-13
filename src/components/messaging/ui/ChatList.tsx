@@ -5,6 +5,7 @@ import { Search, Plus } from "lucide-react"
 import { ChatThread } from "@/types/messaging"
 import ChatListItem from "./ChatListItem"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { useSession } from "next-auth/react"
 import { getConversations } from "@/services/api/messaging"
 import { getPendingInvitations, respondInvitation } from "@/services/api/group-chat"
@@ -30,6 +31,7 @@ export function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], i
   const { socket, isUserOnline } = useSocket();
   const { activeProfile } = useActiveProfile();
   const queryClient = useQueryClient();
+  const parentRef = React.useRef<HTMLDivElement>(null);
 
   const { data: session } = useSession();
   const { data: invitations = [] } = useQuery({
@@ -87,6 +89,14 @@ export function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], i
     return (chat.name || "").toLowerCase().includes(searchTerm.toLowerCase());
   }), [chatsWithStatus, activeTab, searchTerm]);
 
+  // Virtualizer setup
+  const rowVirtualizer = useVirtualizer({
+    count: filteredChats.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 72, // approximate height of ChatListItem
+    overscan: 6,
+  });
+
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-border">
@@ -135,7 +145,7 @@ export function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], i
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-24 md:pb-0 scrollbar-hide">
+      <div ref={parentRef} className="flex-1 overflow-y-auto pb-24 md:pb-0 scrollbar-hide relative">
         {/* Invitations Section */}
         {!isCompany && invitations.length > 0 && (
           <div className="p-4 bg-muted/30 space-y-2 border-b border-border">
@@ -157,15 +167,38 @@ export function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], i
         {isLoading && <div className="p-8 text-center text-muted-foreground">Loading conversations...</div>}
         {error && <div className="p-8 text-center text-red-500">Failed to load conversations</div>}
 
-        {!isLoading && !error && filteredChats.map((chat) => (
-          <div key={chat.id} onClick={() => onSelectChat?.(chat)}>
-            <ChatListItem
-              chat={chat}
-              isSelected={selectedChatId === chat.id}
-              isMobile={isMobile}
-            />
+        {!isLoading && !error && filteredChats.length > 0 && (
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              position: "relative",
+              width: "100%",
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const chat = filteredChats[virtualRow.index];
+              return (
+                <div
+                  key={chat.id}
+                  onClick={() => onSelectChat?.(chat)}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <ChatListItem
+                    chat={chat}
+                    isSelected={selectedChatId === chat.id}
+                    isMobile={isMobile}
+                  />
+                </div>
+              );
+            })}
           </div>
-        ))}
+        )}
         {!isLoading && !error && filteredChats.length === 0 && (
           <div className="p-8 text-center text-muted-foreground">
             No conversations found

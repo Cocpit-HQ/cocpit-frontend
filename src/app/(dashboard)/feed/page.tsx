@@ -1,6 +1,7 @@
 import { QueryClient, dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { getServerStories } from '@/lib/server-stories'
 import { getServerFeed } from '@/lib/server-feed'
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper'
 import HomePage from '@/components/home/HomePage'
@@ -12,8 +13,11 @@ export default async function FeedRoute() {
   const session = await getServerSession(authOptions)
   const userId = session?.user?.id || ''
 
-  // Prefetch the first page of the feed on the server
-  const feedData = await getServerFeed()
+  // Prefetch stories and feed
+  const [feedData, storiesData] = await Promise.all([
+    getServerFeed(),
+    getServerStories()
+  ]);
 
   if (feedData) {
     // Seed the infinite query cache with the first page
@@ -27,6 +31,11 @@ export default async function FeedRoute() {
       ],
       pageParams: [null],
     })
+  }
+
+  if (storiesData) {
+    // Query key matches StoriesContext: ['grouped-stories', userId]
+    queryClient.setQueryData(['grouped-stories', userId], storiesData);
   }
 
   return (
