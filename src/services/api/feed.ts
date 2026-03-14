@@ -111,18 +111,21 @@ export const getFeed = async (cursorCreatedAt?: string, cursorPostId?: string, c
   const params = new URLSearchParams();
   if (cursorCreatedAt) params.append("cursorCreatedAt", cursorCreatedAt);
   if (cursorPostId) params.append("cursorPostId", cursorPostId);
-  if (companyId) params.append("companyId", companyId);
+  void companyId;
 
   const response = await api.get<FeedResponse>(`/All/feeds?${params.toString()}`);
   return response.data;
 };
 
 export const createPost = async (data: CreatePostRequest): Promise<CreatePostResponse> => {
-  const response = await api.post<CreatePostResponse>('/post', data);
+  const { companyId, ...payload } = data;
+  void companyId;
+  const response = await api.post<CreatePostResponse>("/post", payload);
   return response.data;
 };
 
 export const getPostById = async (id: string, companyId?: string): Promise<BackendPost> => {
-  const response = await api.get<BackendPost>(`/post/${id}`, { params: { companyId } });
+  void companyId;
+  const response = await api.get<BackendPost>(`/post/${id}`);
   return response.data;
 };

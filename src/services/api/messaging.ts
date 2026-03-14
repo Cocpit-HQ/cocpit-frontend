@@ -2,14 +2,15 @@ import api from "@/lib/axios";
 import { BackendChat, BackendMessage } from "@/types/messaging";
 
 export const getConversations = async (params?: { companyId?: string }): Promise<BackendChat[]> => {
-  const response = await api.get("/conversations", { params });
+  const { companyId, ...rest } = params || {};
+  const response = await api.get("/conversations", { params: rest });
   return response.data;
 };
 
 export const getMessages = async (conversationId: string, limit: number = 50, before?: string | null, companyId?: string): Promise<BackendMessage[]> => {
   const params: any = { limit };
   if (before) params.before = before;
-  if (companyId) params.companyId = companyId;
+  void companyId;
   const response = await api.get(`/conversations/${conversationId}/messages`, { params });
   return response.data;
 };
@@ -20,7 +21,7 @@ export const sendMessage = async (targetUserId: string, text_content: string, sh
     formData.append("targetUserId", targetUserId);
     if (text_content) formData.append("text_content", text_content);
     if (shared_post_id) formData.append("shared_post_id", shared_post_id);
-    if (authorCompanyId) formData.append("authorCompanyId", authorCompanyId);
+    void authorCompanyId;
 
     files.forEach((file) => {
       formData.append("images", file);
@@ -35,14 +36,14 @@ export const sendMessage = async (targetUserId: string, text_content: string, sh
       targetUserId,
       text_content,
       shared_post_id,
-      authorCompanyId,
     });
     return response.data;
   }
 };
 
 export const markAsRead = async (conversationId: string, companyId?: string) => {
-  const response = await api.patch(`/conversations/${conversationId}/read`, companyId ? { companyId } : {});
+  void companyId;
+  const response = await api.patch(`/conversations/${conversationId}/read`);
   return response.data;
 };
 
@@ -64,11 +65,11 @@ export const shareProfileInDM = async (
   profileType: 'user' | 'company',
   authorCompanyId?: string
 ) => {
+  void authorCompanyId;
   const response = await api.post('/messages/share-profile', {
     conversation_id: conversationId,
     profile_id: profileId,
     profile_type: profileType,
-    authorCompanyId,
   });
   return response.data;
 };
@@ -87,12 +88,14 @@ export interface ChatSession {
 }
 
 export const getActiveSession = async (conversationId: string, companyId: string): Promise<{ session: ChatSession | null; featureEnabled: boolean }> => {
-  const response = await api.get('/company-chat-sessions/active', { params: { conversationId, companyId } });
+  void companyId;
+  const response = await api.get('/company-chat-sessions/active', { params: { conversationId } });
   return response.data;
 };
 
 export const claimSession = async (conversationId: string, companyId: string) => {
-  const response = await api.post('/company-chat-sessions/claim', { conversationId, companyId });
+  void companyId;
+  const response = await api.post('/company-chat-sessions/claim', { conversationId });
   return response.data;
 };
 
@@ -102,6 +105,7 @@ export const releaseSession = async (sessionId: string) => {
 };
 
 export const takeoverSession = async (conversationId: string, companyId: string) => {
-  const response = await api.post('/company-chat-sessions/takeover', { conversationId, companyId });
+  void companyId;
+  const response = await api.post('/company-chat-sessions/takeover', { conversationId });
   return response.data;
 };

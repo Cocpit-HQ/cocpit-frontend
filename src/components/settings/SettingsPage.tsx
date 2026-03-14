@@ -42,6 +42,7 @@ import {
 import { useAuth } from "@/hooks/use-auth"
 import { useIsMobile } from "@/hooks/use-mobile"
 import type { Page, Theme } from "@/types/common"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 
 type SettingsSection = "appearance" | "notifications" | "privacy" | "account" | "blocked" | "sessions" | "companies" | "saved"
 
@@ -261,6 +262,7 @@ function CompaniesSettings() {
 
 export default function SettingsPage() {
   const router = useRouter()
+  const { activeProfile } = useActiveProfile()
   const { theme, resolvedTheme, setTheme } = useTheme()
   const systemTheme = useSystemTheme()
   const { logout } = useAuth()
@@ -270,6 +272,16 @@ export default function SettingsPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("")
   const isMobile = useIsMobile()
+
+  useEffect(() => {
+    if (activeProfile?.type === "COMPANY" && activeProfile.slug) {
+      router.replace(`/organization/${activeProfile.slug}/settings`)
+    }
+  }, [activeProfile, router])
+
+  if (activeProfile?.type === "COMPANY") {
+    return null
+  }
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")

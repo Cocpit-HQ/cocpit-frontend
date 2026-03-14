@@ -34,9 +34,20 @@ export const useFeed = () => {
 
 interface FeedProviderProps {
   children: ReactNode;
+  enableInitialFetch?: boolean;
 }
 
-export const FeedProvider = ({ children }: FeedProviderProps) => {
+interface FeedPage {
+  posts: Post[];
+  nextCursor?: { cursorCreatedAt: string; cursorPostId: string } | null;
+}
+
+interface FeedInfiniteData {
+  pages: FeedPage[];
+  pageParams: Array<{ cursorCreatedAt: string; cursorPostId: string } | null>;
+}
+
+export const FeedProvider = ({ children, enableInitialFetch = true }: FeedProviderProps) => {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const { activeProfile } = useActiveProfile();
@@ -48,13 +59,15 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
   };
 
   // Include activeProfile.id in query key to separate different organization feeds
-  const feedQueryKey = ['feed', activeProfile?.type ?? 'USER', activeProfile?.id ?? currentUser.id];
+  const feedQueryKey = React.useMemo(
+    () => ['feed', activeProfile?.type ?? 'USER', activeProfile?.id ?? currentUser.id] as const,
+    [activeProfile?.id, activeProfile?.type, currentUser.id]
+  );
 
   const {
     data,
     fetchNextPage,
     hasNextPage,
-    isFetching,
     isFetchingNextPage,
     isLoading
   } = useInfiniteQuery({
@@ -70,6 +83,7 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
     initialPageParam: null as { cursorCreatedAt: string; cursorPostId: string } | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     refetchOnWindowFocus: false, // Prevent overwhelming refetches
+    enabled: enableInitialFetch,
   });
 
   const posts = React.useMemo(() => {
@@ -82,7 +96,7 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
       seen.add(post.id);
       return true;
     });
-  }, [data?.pages]);
+  }, [data]);
 
   // Combine initial loading and pagination loading for simpler consumer logic,
   // or expose them separately if needed. Here we follow previous interface.
@@ -95,7 +109,7 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const addPost = useCallback((post: Post) => {
-    queryClient.setQueryData(feedQueryKey, (oldData: any) => {
+    queryClient.setQueryData<FeedInfiniteData | undefined>(feedQueryKey, (oldData) => {
       if (!oldData) return oldData;
 
       // Add to the first page
@@ -112,15 +126,15 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
         pages: newPages
       };
     });
-  }, [queryClient]);
+  }, [feedQueryKey, queryClient]);
 
   const deletePost = useCallback(async (id: string) => {
     // Optimistic update
-    queryClient.setQueryData(feedQueryKey, (oldData: any) => {
+    queryClient.setQueryData<FeedInfiniteData | undefined>(feedQueryKey, (oldData) => {
       if (!oldData) return oldData;
       return {
         ...oldData,
-        pages: oldData.pages.map((page: any) => ({
+        pages: oldData.pages.map((page) => ({
           ...page,
           posts: page.posts.filter((p: Post) => p.id !== id)
         }))
@@ -134,14 +148,14 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
       // Revert is complex with infinite query, simplified: invalidate to refetch
       queryClient.invalidateQueries({ queryKey: feedQueryKey });
     }
-  }, [queryClient, currentUser.id]);
+  }, [feedQueryKey, queryClient]);
 
   const togglePostVisibility = useCallback((id: string) => {
-    queryClient.setQueryData(feedQueryKey, (oldData: any) => {
+    queryClient.setQueryData<FeedInfiniteData | undefined>(feedQueryKey, (oldData) => {
       if (!oldData) return oldData;
       return {
         ...oldData,
-        pages: oldData.pages.map((page: any) => ({
+        pages: oldData.pages.map((page) => ({
           ...page,
           posts: page.posts.map((post: Post) =>
             post.id === id
@@ -151,14 +165,14 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
         }))
       };
     });
-  }, [queryClient]);
+  }, [feedQueryKey, queryClient]);
 
   const updatePostInFeed = useCallback((id: string, updates: Partial<Post>) => {
-    queryClient.setQueryData(feedQueryKey, (oldData: any) => {
+    queryClient.setQueryData<FeedInfiniteData | undefined>(feedQueryKey, (oldData) => {
       if (!oldData) return oldData;
       return {
         ...oldData,
-        pages: oldData.pages.map((page: any) => ({
+        pages: oldData.pages.map((page) => ({
           ...page,
           posts: page.posts.map((post: Post) =>
             post.id === id ? { ...post, ...updates } : post
@@ -166,7 +180,7 @@ export const FeedProvider = ({ children }: FeedProviderProps) => {
         }))
       };
     });
-  }, [queryClient]);
+  }, [feedQueryKey, queryClient]);
 
   return (
     <FeedContext.Provider value={{

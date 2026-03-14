@@ -50,7 +50,9 @@ export interface EntityPreviewRequest {
  * Universal share — routes to message, notification, or copy_link
  */
 export const universalShare = async (payload: UniversalSharePayload): Promise<ShareResult> => {
-    const { data } = await api.post("/share", payload);
+    const { senderCompanyId, ...rest } = payload;
+    void senderCompanyId;
+    const { data } = await api.post("/share", rest);
     return data;
 };
 
@@ -105,7 +107,9 @@ export interface ShareToFeedPayload {
  * Delegates to createPost with shared_post_id.
  */
 export const shareToFeed = async (payload: ShareToFeedPayload) => {
-    const { data } = await api.post("/share/feed", payload);
+    const { companyId, ...rest } = payload;
+    void companyId;
+    const { data } = await api.post("/share/feed", rest);
     return data;
 };
 

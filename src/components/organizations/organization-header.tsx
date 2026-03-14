@@ -10,6 +10,7 @@ import { Company, companyService } from "@/services/organization.service";
 import { BadgeCheck, MapPin, Globe, Users, PenBox, UserPlus, UserMinus, Loader2, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { useCompanyPermissions } from "@/components/organizations/hooks/use-company";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { OrganizationFollowersModal } from "@/components/organizations/OrganizationFollowersModal";
@@ -31,6 +32,7 @@ interface OrganizationHeaderProps {
 
 export function OrganizationHeader({ company, isLoading }: OrganizationHeaderProps) {
     const { isOwner, isAdmin, checkPermission } = useCompanyPermissions(company);
+    const { activeProfile } = useActiveProfile();
     const queryClient = useQueryClient();
     const [isEditAvatarOpen, setIsEditAvatarOpen] = useState(false);
     const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
@@ -84,6 +86,7 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
     const isFollowing = relationship?.isFollowing;
     const followerCount = relationship?.followerCount || 0;
     const isActionLoading = followMutation.isPending || unfollowMutation.isPending;
+    const isOrgActor = activeProfile?.type === "COMPANY";
 
     if (isLoading) {
         return (
@@ -159,7 +162,7 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
                     </Button>
                 ) : (
                     <>
-                        {isInstitution && !company?.viewer_role_data && (
+                        {!isOrgActor && isInstitution && !company?.viewer_role_data && (
                             <Button
                                 onClick={() => setIsEnrollmentModalOpen(true)}
                                 size="sm"
@@ -168,30 +171,34 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
                                 Join as Student
                             </Button>
                         )}
-                        <Button
-                            onClick={() => isFollowing ? unfollowMutation.mutate() : followMutation.mutate()}
-                            variant={isFollowing ? "outline" : "default"}
-                            disabled={isActionLoading || isRelationshipLoading}
-                            className="w-full md:w-auto min-w-[120px]"
-                            size="sm"
-                        >
-                            {isActionLoading ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : isFollowing ? (
-                                <UserMinus className="mr-2 h-4 w-4" />
-                            ) : (
-                                <UserPlus className="mr-2 h-4 w-4" />
-                            )}
-                            {isFollowing ? "Unfollow" : "Follow"}
-                        </Button>
-                        {isFollowing && companyId && (
-                            <OrganizationNotificationBell
-                                companyId={companyId}
-                                isFollowing={true}
-                            />
+                        {!isOrgActor && (
+                            <>
+                                <Button
+                                    onClick={() => isFollowing ? unfollowMutation.mutate() : followMutation.mutate()}
+                                    variant={isFollowing ? "outline" : "default"}
+                                    disabled={isActionLoading || isRelationshipLoading}
+                                    className="w-full md:w-auto min-w-[120px]"
+                                    size="sm"
+                                >
+                                    {isActionLoading ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : isFollowing ? (
+                                        <UserMinus className="mr-2 h-4 w-4" />
+                                    ) : (
+                                        <UserPlus className="mr-2 h-4 w-4" />
+                                    )}
+                                    {isFollowing ? "Unfollow" : "Follow"}
+                                </Button>
+                                {isFollowing && companyId && (
+                                    <OrganizationNotificationBell
+                                        companyId={companyId}
+                                        isFollowing={true}
+                                    />
+                                )}
+                            </>
                         )}
 
-                        {isInstitution && company && (
+                        {!isOrgActor && isInstitution && company && (
                             <EnrollmentRequestModal
                                 key="enrollment-modal"
                                 isOpen={isEnrollmentModalOpen}

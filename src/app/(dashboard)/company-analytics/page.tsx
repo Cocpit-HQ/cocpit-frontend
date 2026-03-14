@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BarChart3, User, Calendar, Briefcase, Users, Rss, ChevronDown, Download, LayoutDashboard } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useActiveProfile } from '@/context/ActiveProfileContext'
 
 import {
     DateRange,
@@ -74,10 +76,18 @@ export default function CompanyAnalyticsPage() {
     const [mounted, setMounted] = useState(false)
     const [dateRange, setDateRange] = useState<DateRange>('30d')
     const [activeTab, setActiveTab] = useState<TabKey>('overview')
+    const router = useRouter()
+    const { activeProfile } = useActiveProfile()
 
     useEffect(() => {
         setMounted(true)
     }, [])
+
+    useEffect(() => {
+        if (activeProfile?.type === "COMPANY" && activeProfile.slug) {
+            router.replace(`/organization/${activeProfile.slug}/analytics`)
+        }
+    }, [activeProfile, router])
 
     // ─── Profile Data
     const kpiMetrics = useMemo(() => getKpiMetrics(dateRange), [dateRange])

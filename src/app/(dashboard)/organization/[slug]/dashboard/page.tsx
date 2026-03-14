@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import { useCompany, useCompanyPermissions } from "@/hooks/useOrganization";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 export default function CompanyDashboardPage() {
     const params = useParams();
@@ -26,6 +27,7 @@ export default function CompanyDashboardPage() {
     const searchParams = useSearchParams();
     const slug = params.slug as string;
     const activeTab = searchParams.get("tab") || "overview";
+    const { activeProfile } = useActiveProfile();
 
     const isMobile = useIsMobile();
     const [currentTab, setCurrentTab] = useState(activeTab);
@@ -58,6 +60,26 @@ export default function CompanyDashboardPage() {
 
     if (isLoading) {
         return <div className="container p-8"><Skeleton className="h-8 w-64 mb-4" /><Skeleton className="h-64 w-full" /></div>;
+    }
+
+    if (!company) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-4">
+                <h2 className="text-2xl font-bold">Company not found</h2>
+                <Button variant="link" onClick={() => router.push("/feed")}>Go Home</Button>
+            </div>
+        );
+    }
+
+    const isOrgActor = activeProfile?.type === "COMPANY" && activeProfile.id === (company.org_id || company.company_id);
+    if (!isOrgActor) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-4">
+                <h2 className="text-2xl font-bold text-destructive">Access Denied</h2>
+                <p className="text-muted-foreground">Switch to this organization to view its dashboard.</p>
+                <Button variant="outline" className="mt-4" onClick={() => router.push(`/organization/${slug}`)}>Back to Profile</Button>
+            </div>
+        );
     }
 
     // Basic permission check (Client-side visual only)

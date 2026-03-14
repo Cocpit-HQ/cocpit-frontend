@@ -8,7 +8,8 @@ export const toggleSavePost = async (
     folderId?: string | null,
     companyId?: string
 ): Promise<ToggleSaveResponse> => {
-    const res = await api.post<ToggleSaveResponse>(`/posts/${postId}/save`, { folderId, companyId });
+    void companyId;
+    const res = await api.post<ToggleSaveResponse>(`/posts/${postId}/save`, { folderId });
     return res.data;
 };
 
@@ -19,8 +20,9 @@ export const getSavedPosts = async (
     limit: number = 20,
     companyId?: string
 ): Promise<SavedPostsResponse> => {
+    void companyId;
     const res = await api.get<SavedPostsResponse>("/saved-posts", {
-        params: { folderId, page, limit, companyId }
+        params: { folderId, page, limit }
     });
     return res.data;
 };
@@ -28,22 +30,26 @@ export const getSavedPosts = async (
 // --- Folder Operations ---
 
 export const createSavedFolder = async (name: string, companyId?: string): Promise<{ success: boolean; folder: SavedFolder }> => {
-    const res = await api.post("/saved-folders", { name, companyId });
+    void companyId;
+    const res = await api.post("/saved-folders", { name });
     return res.data;
 };
 
 export const getSavedFolders = async (companyId?: string): Promise<{ success: boolean; folders: SavedFolder[] }> => {
-    const res = await api.get("/saved-folders", { params: { companyId } });
+    void companyId;
+    const res = await api.get("/saved-folders");
     return res.data;
 };
 
 export const renameSavedFolder = async (folderId: string, name: string, companyId?: string): Promise<{ success: boolean; folder: SavedFolder }> => {
-    const res = await api.put(`/saved-folders/${folderId}`, { name, companyId });
+    void companyId;
+    const res = await api.put(`/saved-folders/${folderId}`, { name });
     return res.data;
 };
 
 export const deleteSavedFolder = async (folderId: string, companyId?: string): Promise<{ success: boolean; message: string }> => {
-    const res = await api.delete(`/saved-folders/${folderId}`, { params: { companyId } });
+    void companyId;
+    const res = await api.delete(`/saved-folders/${folderId}`);
     return res.data;
 };
 

@@ -3,6 +3,7 @@ import { useSession } from "next-auth/react";
 import * as api from "@/services/api/jobs";
 import { JobFilters, MyJobsTab } from "@/types/jobs";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { actorScopeKey } from "@/lib/actor-context";
 
 // Helper to convert frontend filters to API params
 const getSearchParams = (filters: JobFilters, searchKeywords: string): api.JobSearchParams => {
@@ -14,30 +15,32 @@ const getSearchParams = (filters: JobFilters, searchKeywords: string): api.JobSe
 
 export const JOB_KEYS = {
     all: ["jobs"] as const,
-    feed: (filters: JobFilters, search: string) => [...JOB_KEYS.all, "feed", filters, search] as const,
-    offers: (filters: JobFilters, search: string, companyId?: string) => [...JOB_KEYS.all, "offers", companyId, filters, search] as const,
-    myJobs: (tab: MyJobsTab, filters: JobFilters, search: string) => [...JOB_KEYS.all, "myJobs", tab, filters, search] as const,
-    dashboard: (companyId: string | undefined | null, filters: JobFilters, search: string) => [...JOB_KEYS.all, "dashboard", companyId, filters, search] as const,
+    feed: (actorKey: readonly [string, string], filters: JobFilters, search: string) => [...JOB_KEYS.all, ...actorKey, "feed", filters, search] as const,
+    offers: (actorKey: readonly [string, string], filters: JobFilters, search: string, companyId?: string) => [...JOB_KEYS.all, ...actorKey, "offers", companyId, filters, search] as const,
+    myJobs: (actorKey: readonly [string, string], tab: MyJobsTab, filters: JobFilters, search: string) => [...JOB_KEYS.all, ...actorKey, "myJobs", tab, filters, search] as const,
+    dashboard: (actorKey: readonly [string, string], companyId: string | undefined | null, filters: JobFilters, search: string) => [...JOB_KEYS.all, ...actorKey, "dashboard", companyId, filters, search] as const,
 };
 
 export function useInfiniteJobs(
     activeTab: "view" | "offers" | "my-jobs" | "dashboard",
     myJobsTab: MyJobsTab,
     filters: JobFilters,
-    searchKeywords: string
+    searchKeywords: string,
+    enabledOverride: boolean = true
 ) {
-    const { status } = useSession();
+    const { status, data: session } = useSession();
     const isAuthenticated = status === "authenticated";
     const { activeProfile } = useActiveProfile();
+    const actorKey = actorScopeKey(activeProfile, session?.user?.id ?? "me");
 
     return useInfiniteQuery({
         queryKey: activeTab === "my-jobs"
-            ? JOB_KEYS.myJobs(myJobsTab, filters, searchKeywords)
+            ? JOB_KEYS.myJobs(actorKey, myJobsTab, filters, searchKeywords)
             : activeTab === "offers"
-                ? JOB_KEYS.offers(filters, searchKeywords, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined)
+                ? JOB_KEYS.offers(actorKey, filters, searchKeywords, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined)
                 : activeTab === "dashboard"
-                    ? JOB_KEYS.dashboard(activeProfile?.id, filters, searchKeywords)
-                    : JOB_KEYS.feed(filters, searchKeywords),
+                    ? JOB_KEYS.dashboard(actorKey, activeProfile?.id, filters, searchKeywords)
+                    : JOB_KEYS.feed(actorKey, filters, searchKeywords),
 
         queryFn: async ({ pageParam }) => {
             const params = {
@@ -84,7 +87,7 @@ export function useInfiniteJobs(
             // For all others (view, offers, dashboard), backend usually sorts by created_at
             return lastItem.createdAt;
         },
-        enabled: (activeTab !== "my-jobs" && activeTab !== "dashboard") || isAuthenticated,
+        enabled: enabledOverride && ((activeTab !== "my-jobs" && activeTab !== "dashboard") || isAuthenticated),
     });
 }
 

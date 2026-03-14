@@ -1,16 +1,14 @@
 "use client";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { DashboardActorGate } from "@/components/layout/DashboardActorGate";
 import { ActiveProfileProvider } from "@/context/ActiveProfileContext";
 import { SocketProvider } from "@/context/SocketContext";
-import { SocialProvider } from "@/context/SocialContext";
-import { EventsProvider } from "@/context/EventsContext";
 import { FeedProvider } from "@/context/FeedContext";
-import { JobsProvider } from "@/context/JobsContext";
 import { ActionModalProvider } from "@/context/ActionModalContext";
 import { PostUploadProvider } from "@/context/PostUploadContext";
+import { JobsProvider } from "@/context/JobsContext";
 import { GlobalUploadProgress } from "@/components/ui/GlobalUploadProgress";
-import { StoriesProvider } from "@/context/StoriesContext";
 
 export default function DashboardLayout({
     children,
@@ -19,24 +17,20 @@ export default function DashboardLayout({
 }) {
     return (
         <ActiveProfileProvider>
-            <StoriesProvider>
+            <DashboardActorGate>
                 <SocketProvider>
-                    <SocialProvider>
-                        <EventsProvider>
-                            <FeedProvider>
-                                <PostUploadProvider>
-                                    <JobsProvider>
-                                        <ActionModalProvider>
-                                            <AppShell>{children}</AppShell>
-                                            <GlobalUploadProgress />
-                                        </ActionModalProvider>
-                                    </JobsProvider>
-                                </PostUploadProvider>
-                            </FeedProvider>
-                        </EventsProvider>
-                    </SocialProvider>
+                    <JobsProvider enableInitialFetch={false}>
+                        <FeedProvider enableInitialFetch={false}>
+                            <PostUploadProvider>
+                                <ActionModalProvider>
+                                    <AppShell>{children}</AppShell>
+                                    <GlobalUploadProgress />
+                                </ActionModalProvider>
+                            </PostUploadProvider>
+                        </FeedProvider>
+                    </JobsProvider>
                 </SocketProvider>
-            </StoriesProvider>
+            </DashboardActorGate>
         </ActiveProfileProvider>
     );
 }

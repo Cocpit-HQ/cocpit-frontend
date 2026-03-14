@@ -130,7 +130,16 @@ export function ProfileSwitcher({ showArrow = false, customTrigger, align = "end
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem onClick={() => router.push("/settings")} className="cursor-pointer">
+                <DropdownMenuItem
+                    onClick={() => {
+                        if (activeProfile?.type === "COMPANY" && activeProfile.slug) {
+                            router.push(`/organization/${activeProfile.slug}/settings`);
+                        } else {
+                            router.push("/settings");
+                        }
+                    }}
+                    className="cursor-pointer"
+                >
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                 </DropdownMenuItem>

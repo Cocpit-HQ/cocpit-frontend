@@ -1,292 +1,350 @@
-"use client";
+'use client'
 
-import { useCompany, useAnalyticsOverview, useAnalyticsEngagement, useAnalyticsJobs, useCompanyPermissions } from "@/hooks/useOrganization";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
-import { Loader2, TrendingUp, Users, Eye, MessageSquare, Briefcase } from "lucide-react";
-import { use } from "react";
+import React, { useState, useEffect, useMemo, use } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { BarChart3, User, Calendar, Briefcase, Users, Rss, ChevronDown, Download, LayoutDashboard } from 'lucide-react'
+import { useActiveProfile } from '@/context/ActiveProfileContext'
 
-// Helper for formatting dates
-const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-};
+import {
+    DateRange,
+    getKpiMetrics,
+    getDailyViews,
+    getWeeklyComparison,
+    getEventKpis,
+    getEventPostingTrend,
+    getEventRegistrations,
+    getTopEvents,
+    getJobKpis,
+    getJobPostingTrend,
+    getJobApplications,
+    getTopJobs,
+    getFollowerKpis,
+    getFollowerGrowth,
+    getAudienceByIndustry,
+    getAudienceByLocation,
+    getAudienceBySeniority,
+    getContentKpis,
+    getContentEngagement,
+    getTopPosts,
+    getActivityHeatmap,
+    getInsights,
+} from '@/app/(dashboard)/company-analytics/data'
+
+import { OrganizationKpiCards } from '@/components/organization-analytics/OrganizationKpiCards'
+import { DailyViewsChart } from '@/components/organization-analytics/DailyViewsChart'
+import { WeeklyComparisonChart } from '@/components/organization-analytics/WeeklyComparisonChart'
+import { EventKpiCards } from '@/components/organization-analytics/EventKpiCards'
+import { EventPostingTrendChart } from '@/components/organization-analytics/EventPostingTrendChart'
+import { EventRegistrationChart } from '@/components/organization-analytics/EventRegistrationChart'
+import { TopEventsTable } from '@/components/organization-analytics/TopEventsTable'
+import { JobKpiCards } from '@/components/organization-analytics/JobKpiCards'
+import { JobPostingTrendChart } from '@/components/organization-analytics/JobPostingTrendChart'
+import { JobApplicationChart } from '@/components/organization-analytics/JobApplicationChart'
+import { TopJobsTable } from '@/components/organization-analytics/TopJobsTable'
+import { FollowerKpiCards } from '@/components/organization-analytics/FollowerKpiCards'
+import { FollowerGrowthChart } from '@/components/organization-analytics/FollowerGrowthChart'
+import { AudienceBreakdown } from '@/components/organization-analytics/AudienceBreakdown'
+import { ContentKpiCards } from '@/components/organization-analytics/ContentKpiCards'
+import { ContentEngagementChart } from '@/components/organization-analytics/ContentEngagementChart'
+import { TopPostsTable } from '@/components/organization-analytics/TopPostsTable'
+import { ActivityHeatmap } from '@/components/organization-analytics/ActivityHeatmap'
+import { AnalyticsSkeleton } from '@/components/organization-analytics/AnalyticsSkeleton'
+import { InsightsPanel } from '@/components/organization-analytics/InsightsPanel'
+import { SharesVsViewsChart } from '@/components/organization-analytics/SharesVsViewsChart'
+
+type TabKey = 'overview' | 'profile' | 'content' | 'jobs' | 'followers' | 'events'
+
+const DATE_RANGES: { value: DateRange; label: string }[] = [
+    { value: '7d', label: 'Last 7 days' },
+    { value: '30d', label: 'Last 30 days' },
+    { value: '90d', label: 'Last 90 days' },
+    { value: '1y', label: 'This Year' },
+    { value: 'custom', label: 'Custom Range' },
+]
+
+const TABS: { key: TabKey; label: string; icon: React.ElementType; accent: string }[] = [
+    { key: 'overview', label: 'Overview', icon: LayoutDashboard, accent: 'bg-indigo-500' },
+    { key: 'profile', label: 'Profile', icon: User, accent: 'bg-primary' },
+    { key: 'content', label: 'Content', icon: Rss, accent: 'bg-amber-500' },
+    { key: 'jobs', label: 'Jobs', icon: Briefcase, accent: 'bg-cyan-500' },
+    { key: 'followers', label: 'Followers', icon: Users, accent: 'bg-emerald-500' },
+    { key: 'events', label: 'Events', icon: Calendar, accent: 'bg-violet-500' },
+]
 
 export default function AnalyticsPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
-    const { data: company, isLoading: isCompanyLoading } = useCompany(slug);
+    const [mounted, setMounted] = useState(false)
+    const [dateRange, setDateRange] = useState<DateRange>('30d')
+    const [activeTab, setActiveTab] = useState<TabKey>('overview')
+    const { activeProfile } = useActiveProfile()
 
-    // We need companyID for analytics hooks.
-    const companyId = company?.company_id;
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
-    const {
-        data: overviewData,
-        isLoading: isOverviewLoading,
-        error: overviewError
-    } = useAnalyticsOverview(companyId!);
+    // ─── Profile Data
+    const kpiMetrics = useMemo(() => getKpiMetrics(dateRange), [dateRange])
+    const dailyViews = useMemo(() => getDailyViews(dateRange), [dateRange])
+    const weeklyComparison = useMemo(() => getWeeklyComparison(), [])
 
-    const {
-        data: engagementData,
-        isLoading: isEngagementLoading
-    } = useAnalyticsEngagement(companyId!);
+    // ─── Event Data
+    const eventKpis = useMemo(() => getEventKpis(dateRange), [dateRange])
+    const eventPostingTrend = useMemo(() => getEventPostingTrend(dateRange), [dateRange])
+    const eventRegistrations = useMemo(() => getEventRegistrations(), [])
+    const topEvents = useMemo(() => getTopEvents(), [])
 
-    const {
-        data: jobsData,
-        isLoading: isJobsLoading
-    } = useAnalyticsJobs(companyId!);
+    // ─── Job Data
+    const jobKpis = useMemo(() => getJobKpis(dateRange), [dateRange])
+    const jobPostingTrend = useMemo(() => getJobPostingTrend(dateRange), [dateRange])
+    const jobApplications = useMemo(() => getJobApplications(), [])
+    const topJobs = useMemo(() => getTopJobs(), [])
 
-    const { isOwner, isAdmin, isAnalyst, isRecruiter } = useCompanyPermissions(company);
+    // ─── Follower Data
+    const followerKpis = useMemo(() => getFollowerKpis(dateRange), [dateRange])
+    const followerGrowth = useMemo(() => getFollowerGrowth(dateRange), [dateRange])
+    const audienceIndustry = useMemo(() => getAudienceByIndustry(), [])
+    const audienceLocation = useMemo(() => getAudienceByLocation(), [])
+    const audienceSeniority = useMemo(() => getAudienceBySeniority(), [])
 
-    if (isCompanyLoading) return <div className="p-8"><Skeleton className="h-96 w-full" /></div>;
+    // ─── Content Data
+    const contentKpis = useMemo(() => getContentKpis(dateRange), [dateRange])
+    const contentEngagement = useMemo(() => getContentEngagement(dateRange), [dateRange])
+    const topPosts = useMemo(() => getTopPosts(), [])
 
-    // Permission Guard UI (Client side, backed by API 403)
-    if (!isOwner && !isAdmin && !isAnalyst && !isRecruiter) {
-        return (
-            <div className="p-8">
-                <Alert variant="destructive">
-                    <AlertTitle>Access Denied</AlertTitle>
-                    <AlertDescription>You do not have permission to view analytics for this company.</AlertDescription>
-                </Alert>
-            </div>
-        );
+    // ─── Shared / General Data
+    const activityData = useMemo(() => getActivityHeatmap(), [])
+    const insights = useMemo(() => getInsights(), [])
+
+    if (!mounted) {
+        return <AnalyticsSkeleton />
     }
 
-    // Recruiter only sees Jobs?
-    // The tabs might control visibility, but API protects data.
+    const sectionAccents: Record<TabKey, string> = {
+        overview: 'bg-indigo-500',
+        profile: 'bg-primary',
+        events: 'bg-violet-500',
+        jobs: 'bg-cyan-500',
+        followers: 'bg-emerald-500',
+        content: 'bg-amber-500',
+    }
+
+    const sectionTitles: Record<TabKey, { title: string; subtitle: string }> = {
+        overview: { title: 'Dashboard Overview', subtitle: 'Key metrics and insights at a glance' },
+        profile: { title: 'Profile Performance', subtitle: 'Track profile views and engagement' },
+        events: { title: 'Event Performance', subtitle: 'Track event registrations and reach' },
+        jobs: { title: 'Job Performance', subtitle: 'Track job applications and hiring pipeline' },
+        followers: { title: 'Follower Insights', subtitle: 'Understand your audience and growth' },
+        content: { title: 'Content Performance', subtitle: 'Track post engagement and reach' },
+    }
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h2 className="text-3xl font-bold tracking-tight">Analytics</h2>
-                <p className="text-muted-foreground">
-                    Insights into your company's performance, engagement, and recruitment.
-                </p>
+        <div className="min-h-screen bg-background">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* ─── Header ─────────────────────────────────────────────── */}
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10">
+                            <BarChart3 className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-foreground tracking-tight">
+                                Company Analytics
+                            </h1>
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                                Track your company&apos;s performance and engagement
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Actions & Filters */}
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <select
+                                title="Date Range"
+                                value={dateRange}
+                                onChange={(e) => setDateRange(e.target.value as DateRange)}
+                                className="appearance-none pl-4 pr-10 py-2.5 bg-card border border-border rounded-xl text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/20 hover:border-border/80 transition-colors cursor-pointer"
+                            >
+                                {DATE_RANGES.map(range => (
+                                    <option key={range.value} value={range.value}>{range.label}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                        </div>
+
+                        <button
+                            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium rounded-xl transition-colors shadow-sm"
+                            onClick={() => console.log('Export triggered')}
+                        >
+                            <Download className="w-4 h-4" />
+                            <span className="hidden sm:inline">Export</span>
+                        </button>
+                    </div>
+                </motion.div>
+
+                {/* ─── Section Tabs ────────────────────────────────────────── */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 }}
+                    className="mb-10"
+                >
+                    <div className="flex items-center p-1 rounded-xl border border-border bg-card shadow-sm w-fit overflow-x-auto smooth-scroll">
+                        {TABS.map((tab) => {
+                            const Icon = tab.icon
+                            const isActive = activeTab === tab.key
+                            return (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => setActiveTab(tab.key)}
+                                    className={`relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap
+                                        ${isActive
+                                            ? `${tab.accent} text-white shadow-sm`
+                                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                                        }`}
+                                >
+                                    <Icon className="w-4 h-4" />
+                                    {tab.label}
+                                </button>
+                            )
+                        })}
+                    </div>
+                </motion.div>
+
+                {/* ─── Tab Content ─────────────────────────────────────────── */}
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -16 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        {/* Overview Tab Content */}
+                        {activeTab === 'overview' && (
+                            <div className="space-y-8 flex flex-col w-full">
+                                {/* Row 1: KPI Cards */}
+                                <section>
+                                    <OrganizationKpiCards metrics={kpiMetrics} />
+                                </section>
+
+                                {/* Row 2: Main Chart (Full Width) */}
+                                <section>
+                                    <DailyViewsChart data={dailyViews} />
+                                </section>
+
+                                {/* Row 3: Shares vs Views | Follower Growth */}
+                                <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+                                    <SharesVsViewsChart data={weeklyComparison} />
+                                    <FollowerGrowthChart data={followerGrowth} />
+                                </section>
+
+                                {/* Row 4: Activity Heatmap */}
+                                <section>
+                                    <ActivityHeatmap data={activityData} />
+                                </section>
+
+                                {/* Row 5: Insights Panel */}
+                                <section>
+                                    <InsightsPanel insights={insights} />
+                                </section>
+                            </div>
+                        )}
+
+                        {/* Other Tabs KPI Cards */}
+                        {activeTab !== 'overview' && (
+                            <>
+                                <section className="mb-10">
+                                    {activeTab === 'profile' && <OrganizationKpiCards metrics={kpiMetrics} />}
+                                    {activeTab === 'events' && <EventKpiCards metrics={eventKpis} />}
+                                    {activeTab === 'jobs' && <JobKpiCards metrics={jobKpis} />}
+                                    {activeTab === 'followers' && <FollowerKpiCards metrics={followerKpis} />}
+                                    {activeTab === 'content' && <ContentKpiCards metrics={contentKpis} />}
+                                </section>
+
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.4, delay: 0.2 }}
+                                    className="flex items-center gap-2 mb-6"
+                                >
+                                    <div className={`w-1 h-6 rounded-full ${sectionAccents[activeTab]}`} />
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-foreground">
+                                            {sectionTitles[activeTab].title}
+                                        </h2>
+                                        <p className="text-xs text-muted-foreground">
+                                            {sectionTitles[activeTab].subtitle}
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            </>
+                        )}
+
+                        {/* Charts Grid */}
+                        {activeTab !== 'overview' && (
+                            <section className="mb-8">
+                                {activeTab === 'profile' && (
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <DailyViewsChart data={dailyViews} />
+                                        <WeeklyComparisonChart data={weeklyComparison} />
+                                    </div>
+                                )}
+                                {activeTab === 'events' && (
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <EventPostingTrendChart data={eventPostingTrend} />
+                                        <EventRegistrationChart data={eventRegistrations} />
+                                    </div>
+                                )}
+                                {activeTab === 'jobs' && (
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <JobPostingTrendChart data={jobPostingTrend} />
+                                        <JobApplicationChart data={jobApplications} />
+                                    </div>
+                                )}
+                                {activeTab === 'followers' && (
+                                    <div className="space-y-6">
+                                        <FollowerGrowthChart data={followerGrowth} />
+                                        <AudienceBreakdown
+                                            industry={audienceIndustry}
+                                            location={audienceLocation}
+                                            seniority={audienceSeniority}
+                                        />
+                                    </div>
+                                )}
+                                {activeTab === 'content' && (
+                                    <div className="space-y-6">
+                                        <ContentEngagementChart data={contentEngagement} />
+                                    </div>
+                                )}
+                            </section>
+                        )}
+
+                        {/* Top Performers Tables */}
+                        {activeTab === 'events' && (
+                            <section className="mb-8">
+                                <TopEventsTable data={topEvents} />
+                            </section>
+                        )}
+                        {activeTab === 'jobs' && (
+                            <section className="mb-8">
+                                <TopJobsTable data={topJobs} />
+                            </section>
+                        )}
+                        {activeTab === 'content' && (
+                            <section className="mb-8">
+                                <TopPostsTable data={topPosts} />
+                            </section>
+                        )}
+
+                    </motion.div>
+                </AnimatePresence>
             </div>
-
-            <Tabs defaultValue="overview" className="space-y-4">
-                <TabsList>
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="engagement">Engagement</TabsTrigger>
-                    <TabsTrigger value="jobs">Recruitment</TabsTrigger>
-                </TabsList>
-
-                {/* OVERVIEW TAB */}
-                <TabsContent value="overview" className="space-y-4">
-                    {isOverviewLoading ? (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            {[1, 2].map(i => <Skeleton key={i} className="h-32" />)}
-                        </div>
-                    ) : overviewError ? (
-                        <Alert variant="destructive"><AlertDescription>Failed to load overview data</AlertDescription></Alert>
-                    ) : (
-                        <div className="space-y-4">
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                                <Card>
-                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                        <CardTitle className="text-sm font-medium">Total Followers</CardTitle>
-                                        <Users className="h-4 w-4 text-muted-foreground" />
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="text-2xl font-bold">{overviewData?.followers.total}</div>
-                                        <p className="text-xs text-muted-foreground">
-                                            Follower base
-                                        </p>
-                                    </CardContent>
-                                </Card>
-                                <Card>
-                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                        <CardTitle className="text-sm font-medium">Profile Views (30d)</CardTitle>
-                                        <Eye className="h-4 w-4 text-muted-foreground" />
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="text-2xl font-bold">{overviewData?.views.total}</div>
-                                        <p className="text-xs text-muted-foreground">
-                                            Unique visits
-                                        </p>
-                                    </CardContent>
-                                </Card>
-                            </div>
-
-                            {/* Charts */}
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <Card className="col-span-1">
-                                    <CardHeader>
-                                        <CardTitle>Follower Growth (30d)</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="pl-2">
-                                        <div className="h-[200px] w-full">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <LineChart data={overviewData?.followers.history}>
-                                                    <XAxis
-                                                        dataKey="date"
-                                                        stroke="#888888"
-                                                        fontSize={12}
-                                                        tickLine={false}
-                                                        axisLine={false}
-                                                        tickFormatter={formatDate}
-                                                    />
-                                                    <YAxis
-                                                        stroke="#888888"
-                                                        fontSize={12}
-                                                        tickLine={false}
-                                                        axisLine={false}
-                                                        allowDecimals={false}
-                                                    />
-                                                    <Tooltip
-                                                        labelFormatter={formatDate}
-                                                        contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)' }}
-                                                    />
-                                                    <Line type="monotone" dataKey="count" stroke="#adfa1d" strokeWidth={2} activeDot={{ r: 8 }} />
-                                                </LineChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                                <Card className="col-span-1">
-                                    <CardHeader>
-                                        <CardTitle>Profile Views (30d)</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="pl-2">
-                                        <div className="h-[200px] w-full">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={overviewData?.views.history}>
-                                                    <XAxis
-                                                        dataKey="date"
-                                                        stroke="#888888"
-                                                        fontSize={12}
-                                                        tickLine={false}
-                                                        axisLine={false}
-                                                        tickFormatter={formatDate}
-                                                    />
-                                                    <YAxis
-                                                        stroke="#888888"
-                                                        fontSize={12}
-                                                        tickLine={false}
-                                                        axisLine={false}
-                                                        allowDecimals={false}
-                                                    />
-                                                    <Tooltip
-                                                        labelFormatter={formatDate}
-                                                        contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)' }}
-                                                    />
-                                                    <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                                                </BarChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        </div>
-                    )}
-                </TabsContent>
-
-                {/* ENGAGEMENT TAB */}
-                <TabsContent value="engagement" className="space-y-4">
-                    {isEngagementLoading ? (
-                        <Skeleton className="h-64" />
-                    ) : (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                            <Card className="col-span-4">
-                                <CardHeader>
-                                    <CardTitle>Top Performing Posts</CardTitle>
-                                    <CardDescription>
-                                        Your most engaging content recently.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        {engagementData?.topPosts.map((post: any) => (
-                                            <div key={post.post_id} className="flex items-center">
-                                                <div className="ml-4 space-y-1">
-                                                    <p className="text-sm font-medium leading-none line-clamp-1">{post.content || "Media Post"}</p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {new Date(post.created_at).toLocaleDateString()}
-                                                    </p>
-                                                </div>
-                                                <div className="ml-auto font-medium flex gap-4">
-                                                    <div className="flex items-center gap-1"><TrendingUp className="h-4 w-4" /> {parseInt(post.like_count) + parseInt(post.comment_count)}</div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {engagementData?.topPosts.length === 0 && <p className="text-muted-foreground">No posts yet.</p>}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                            <Card className="col-span-3">
-                                <CardHeader>
-                                    <CardTitle>Interaction Summary</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-8">
-                                        <div className="flex items-center">
-                                            <div className="ml-4 space-y-1">
-                                                <p className="text-sm font-medium leading-none">Likes Received</p>
-                                                <p className="text-sm text-muted-foreground">Positive reactions</p>
-                                            </div>
-                                            <div className="ml-auto font-bold">{engagementData?.stats.likes_received}</div>
-                                        </div>
-                                        <div className="flex items-center">
-                                            <div className="ml-4 space-y-1">
-                                                <p className="text-sm font-medium leading-none">Comments Received</p>
-                                                <p className="text-sm text-muted-foreground">Community discussions</p>
-                                            </div>
-                                            <div className="ml-auto font-bold">{engagementData?.stats.comments_received}</div>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    )}
-                </TabsContent>
-
-                {/* JOBS TAB */}
-                <TabsContent value="jobs" className="space-y-4">
-                    {isJobsLoading ? (
-                        <Skeleton className="h-64" />
-                    ) : (
-                        <div className="grid gap-4 md:grid-cols-3">
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
-                                    <Briefcase className="h-4 w-4 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold">{jobsData?.overview.active_jobs || 0}</div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Open positions
-                                    </p>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
-                                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold">{jobsData?.overview.total_applications || 0}</div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Across all jobs
-                                    </p>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-                                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold">--%</div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Views to Applications
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    )}
-                </TabsContent>
-            </Tabs>
         </div>
-    );
+    )
 }

@@ -5,8 +5,21 @@ import { io, Socket } from 'socket.io-client';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { NotificationPayload, UserStatusPayload } from '@/types/socket';
 import Avatar from '@/components/shared/Avatar';
+
+type TargetedMessageNotification = NotificationPayload & {
+  targetProfileType?: 'USER' | 'COMPANY';
+  targetCompanyId?: string;
+};
+
+type CompanyUpdateNotification = NotificationPayload & {
+  actor_name?: string;
+  actor_avatar?: string;
+  text?: string;
+  reference_id?: string | number;
+};
 
 interface SocketContextType {
   socket: Socket | null;
@@ -29,7 +42,8 @@ const SocketContext = createContext<SocketContextType>({
 const SOCKET_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/api\/?$/, "");
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-  const { data: session, update } = useSession();
+  const { data: session } = useSession();
+  const { activeProfile } = useActiveProfile();
   const { toast } = useToast();
   const router = useRouter();
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -37,8 +51,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
 
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-
-  const isUserOnline = (userId: string) => onlineUsers.has(userId);
 
   // Ref to track the current token to prevent checking equality against a changing dependency causing loops
   const tokenRef = useRef<string | null>(null);
@@ -53,20 +65,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   }, [activeConversationId]);
 
   useEffect(() => {
-    const storedType = localStorage.getItem('activeProfileType');
-    const storedId = localStorage.getItem('activeProfileId');
-    if (storedType && storedId) {
-      activeProfileRef.current = { type: storedType, id: storedId };
-    }
-    // Re-sync on storage changes from other tabs/components
-    const handleStorage = () => {
-      const t = localStorage.getItem('activeProfileType');
-      const i = localStorage.getItem('activeProfileId');
-      if (t && i) activeProfileRef.current = { type: t, id: i };
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, []);
+    activeProfileRef.current = activeProfile
+      ? { type: activeProfile.type, id: activeProfile.id }
+      : null;
+  }, [activeProfile]);
 
   useEffect(() => {
     // Check for auth error in session
@@ -84,8 +86,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("Token lost, disconnecting socket");
         socketRef.current.disconnect();
         socketRef.current = null;
-        setSocket(null);
-        setIsConnected(false);
+        queueMicrotask(() => {
+          setSocket(null);
+          setIsConnected(false);
+        });
       }
       return;
     }
@@ -150,9 +154,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         const currentProfile = activeProfileRef.current;
         const currentProfileType = currentProfile?.type || 'USER';
         const currentProfileId = currentProfile?.id;
-        if ((payload as any).targetProfileType) {
-          const targetType = (payload as any).targetProfileType;
-          if (targetType === 'COMPANY' && (currentProfileType !== 'COMPANY' || currentProfileId !== (payload as any).targetCompanyId)) {
+        const targetedPayload = payload as TargetedMessageNotification;
+        if (targetedPayload.targetProfileType) {
+          const targetType = targetedPayload.targetProfileType;
+          if (targetType === 'COMPANY' && (currentProfileType !== 'COMPANY' || currentProfileId !== targetedPayload.targetCompanyId)) {
             return; // Company-targeted notification, but not viewing that company
           }
           if (targetType === 'USER' && currentProfileType !== 'USER') {
@@ -187,12 +192,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         });
       } else if (['company_job', 'company_event', 'company_post'].includes(payload.type)) {
         // Company notification from followed companies
-        const companyName = (payload as any).actor_name || 'A company';
-        const companyAvatar = (payload as any).actor_avatar;
-        const notifText = (payload as any).text || 'New company update';
-        const referenceId = (payload as any).reference_id;
-        const actorSlug = (payload as any).actor_slug;
-
+        const companyPayload = payload as CompanyUpdateNotification;
+        const companyName = companyPayload.actor_name || 'A company';
+        const companyAvatar = companyPayload.actor_avatar;
+        const notifText = companyPayload.text || 'New company update';
+        const referenceId = companyPayload.reference_id;
         let navigateTo = '/notifications';
         if (payload.type === 'company_job' && referenceId) navigateTo = `/jobs/${referenceId}`;
         else if (payload.type === 'company_event' && referenceId) navigateTo = `/events/${referenceId}`;
@@ -241,7 +245,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('userStatusChanged', handleUserStatus);
 
     socketRef.current = newSocket;
-    setSocket(newSocket);
+    queueMicrotask(() => {
+      setSocket(newSocket);
+    });
 
     return () => {
       // Cleanup function
@@ -257,7 +263,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('userStatusChanged', handleUserStatus);
       newSocket.disconnect();
     };
-  }, [session?.user?.accessToken, toast, router]);
+  }, [session?.user?.accessToken, session?.user?.error, toast, router]);
 
   const isUserOnlineMemo = React.useCallback((userId: string) => onlineUsers.has(userId), [onlineUsers]);
 

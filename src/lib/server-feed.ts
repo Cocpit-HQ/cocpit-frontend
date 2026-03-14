@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { FeedResponse } from "@/services/api/feed";
+import { cookies } from "next/headers";
 
 /**
  * Server-side feed fetcher.
@@ -21,11 +22,22 @@ export async function getServerFeed(): Promise<FeedResponse | null> {
             return null;
         }
 
+        const cookieStore = await cookies();
+        const activeActorCookie = cookieStore.get("activeActor")?.value || "";
+        const [actorType, actorId] = activeActorCookie.split(":");
+
+        const headers: Record<string, string> = {
+            Authorization: `Bearer ${session.user.accessToken}`,
+            "Content-Type": "application/json",
+        };
+
+        if (actorType && actorId) {
+            headers["x-actor-type"] = actorType;
+            headers["x-actor-id"] = actorId;
+        }
+
         const response = await fetch(`${apiUrl}/All/feeds`, {
-            headers: {
-                Authorization: `Bearer ${session.user.accessToken}`,
-                "Content-Type": "application/json",
-            },
+            headers,
             // Don't cache - feed is personalized per user
             cache: "no-store",
         });

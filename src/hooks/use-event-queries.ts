@@ -9,15 +9,16 @@ import {
 } from "@/services/api/event";
 import { mapBackendEventToEventCard } from "@/lib/mappers/event.mapper";
 import { BackendEvent, EventCard } from "@/types/event";
+import { actorScopeKey } from "@/lib/actor-context";
 
 // Keys
 export const eventKeys = {
     all: ["events"] as const,
     feed: (filters: any) => ["events", "feed", filters] as const,
     detail: (id: string | number) => ["events", "detail", id] as const,
-    myEvents: ["events", "my"] as const,
-    registered: ["events", "registered"] as const,
-    saved: ["events", "saved"] as const,
+    myEvents: (actorKey: readonly [string, string]) => ["events", "my", ...actorKey] as const,
+    registered: (actorKey: readonly [string, string]) => ["events", "registered", ...actorKey] as const,
+    saved: (actorKey: readonly [string, string]) => ["events", "saved", ...actorKey] as const,
 };
 
 import { useSession } from "next-auth/react";
@@ -49,12 +50,13 @@ export function useEventFeed(filters: any) {
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 export function useMyEvents() {
-    const { status } = useSession();
+    const { status, data: session } = useSession();
     const { activeProfile } = useActiveProfile();
     const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+    const actorKey = actorScopeKey(activeProfile, session?.user?.id ?? "me");
 
     return useQuery({
-        queryKey: [...eventKeys.myEvents, companyId], // Add companyId to key
+        queryKey: eventKeys.myEvents(actorKey),
         queryFn: async () => {
             const data = await getMyCreatedEvents(companyId);
             return data.map(mapBackendEventToEventCard);
@@ -66,9 +68,11 @@ export function useMyEvents() {
 
 // --- Registered Events ---
 export function useRegisteredEvents() {
-    const { status } = useSession();
+    const { status, data: session } = useSession();
+    const { activeProfile } = useActiveProfile();
+    const actorKey = actorScopeKey(activeProfile, session?.user?.id ?? "me");
     return useQuery({
-        queryKey: eventKeys.registered,
+        queryKey: eventKeys.registered(actorKey),
         queryFn: async () => {
             const data = await getMyRegisteredEvents();
             return data;
@@ -80,9 +84,11 @@ export function useRegisteredEvents() {
 
 // --- Saved Events ---
 export function useSavedEvents() {
-    const { status } = useSession();
+    const { status, data: session } = useSession();
+    const { activeProfile } = useActiveProfile();
+    const actorKey = actorScopeKey(activeProfile, session?.user?.id ?? "me");
     return useQuery({
-        queryKey: eventKeys.saved,
+        queryKey: eventKeys.saved(actorKey),
         queryFn: async () => {
             const data = await getMySavedEvents();
             return data;

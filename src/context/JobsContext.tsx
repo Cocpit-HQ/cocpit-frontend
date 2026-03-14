@@ -30,7 +30,13 @@ const INITIAL_FILTERS: JobFilters = {
 // Simple debounce hook for local state if not available, but user has it.
 // Assuming useDebounce is (value, delay) => debouncedValue
 
-export function JobsProvider({ children }: { children: React.ReactNode }) {
+export function JobsProvider({ 
+  children,
+  enableInitialFetch = true
+}: { 
+  children: React.ReactNode;
+  enableInitialFetch?: boolean;
+}) {
   const [filters, setFilters] = useState<JobFilters>(INITIAL_FILTERS);
   const [searchKeywords, setSearchKeywords] = useState("");
   const [activeTab, setActiveTab] = useState<JobListMode>("view");
@@ -48,7 +54,13 @@ export function JobsProvider({ children }: { children: React.ReactNode }) {
     isFetchingNextPage,
     isLoading,
     isError
-  } = useInfiniteJobs(activeTab, myJobsTab, debouncedFilters, debouncedSearch);
+  } = useInfiniteJobs(
+    activeTab, 
+    myJobsTab, 
+    debouncedFilters, 
+    debouncedSearch,
+    enableInitialFetch
+  );
 
   // Mutations
   const { saveJob: saveJobMutation, applyJob: applyJobMutation } = useJobMutations();

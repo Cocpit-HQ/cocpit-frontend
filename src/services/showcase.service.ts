@@ -10,8 +10,8 @@ export const showcaseService = {
     },
 
     createStory: async (storyData: { title: string; description: string; media_url: string; media_type?: string; public_id?: string; shared_post_id?: string; story_metadata?: any }, companyId?: string) => {
-        const config = companyId ? { headers: { 'x-company-id': companyId } } : {};
-        const { data } = await api.post("/story", storyData, config);
+        void companyId;
+        const { data } = await api.post("/story", storyData);
         return data;
     },
 
@@ -21,16 +21,16 @@ export const showcaseService = {
         const config = {
             headers: {
                 "Content-Type": "multipart/form-data",
-                ...(companyId ? { 'x-company-id': companyId } : {})
             },
         };
+        void companyId;
         const { data } = await api.post("/upload/story", formData, config);
         return data;
     },
 
     getGroupedStories: async (companyId?: string): Promise<StoryGroup[]> => {
-        const config = companyId ? { headers: { 'x-company-id': companyId } } : {};
-        const { data } = await api.get("/stories/grouped", config);
+        void companyId;
+        const { data } = await api.get("/stories/grouped");
         // Map backend response to match StoryGroup structure
         return data.map((group: any) => ({
             author: {
@@ -45,25 +45,25 @@ export const showcaseService = {
     },
 
     deleteStory: async (id: number, companyId?: string) => {
-        const config = companyId ? { headers: { 'x-company-id': companyId } } : {};
-        const { data } = await api.delete(`/stories/${id}`, config);
+        void companyId;
+        const { data } = await api.delete(`/stories/${id}`);
         return data;
     },
 
     viewStory: async (id: number, companyId?: string) => {
-        const config = companyId ? { headers: { 'x-company-id': companyId } } : {};
-        await api.post(`/stories/${id}/view`, {}, config);
+        void companyId;
+        await api.post(`/stories/${id}/view`);
     },
 
     reactToStory: async (id: number, reaction: boolean, companyId?: string) => {
-        const config = companyId ? { headers: { 'x-company-id': companyId } } : {};
-        const { data } = await api.post(`/stories/${id}/react`, { reaction }, config);
+        void companyId;
+        const { data } = await api.post(`/stories/${id}/react`, { reaction });
         return data;
     },
 
     getStoryDetails: async (id: number, companyId?: string) => {
-        const config = companyId ? { headers: { 'x-company-id': companyId } } : {};
-        const { data } = await api.get(`/stories/${id}`, config);
+        void companyId;
+        const { data } = await api.get(`/stories/${id}`);
         // Transform backend response to match StoryDetail structure for viewers/likers
         const viewers = data.viewers.map((v: any) => ({
             id: v.user_id,
@@ -85,8 +85,8 @@ export const showcaseService = {
     },
 
     addStoryComment: async (storyId: number, content: string, companyId?: string) => {
-        const config = companyId ? { headers: { 'x-company-id': companyId } } : {};
-        const { data } = await api.post(`/stories/${storyId}/comments`, { content }, config);
+        void companyId;
+        const { data } = await api.post(`/stories/${storyId}/comments`, { content });
         return data;
     },
 

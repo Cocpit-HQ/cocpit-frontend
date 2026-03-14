@@ -11,9 +11,15 @@ import {
 } from "@/services/api/event";
 import { eventKeys } from "./use-event-queries";
 import { RegisterEventPayload } from "@/types/event";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useSession } from "next-auth/react";
+import { actorScopeKey } from "@/lib/actor-context";
 
 export function useEventActions() {
     const queryClient = useQueryClient();
+    const { activeProfile } = useActiveProfile();
+    const { data: session } = useSession();
+    const actorKey = actorScopeKey(activeProfile, session?.user?.id ?? "me");
 
     // --- Registration ---
     const registerMutation = useMutation({
@@ -21,7 +27,7 @@ export function useEventActions() {
             registerForEvent(id, payload),
         onSuccess: (_, { id }) => {
             // Invalidate relevant queries
-            queryClient.invalidateQueries({ queryKey: eventKeys.registered });
+            queryClient.invalidateQueries({ queryKey: eventKeys.registered(actorKey) });
             queryClient.invalidateQueries({ queryKey: eventKeys.detail(id) });
             // Optimistic updates could be done here, but invalidation is safer for complex status
         }
@@ -30,7 +36,7 @@ export function useEventActions() {
     const unregisterMutation = useMutation({
         mutationFn: (id: string | number) => unregisterFromEvent(id),
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries({ queryKey: eventKeys.registered });
+            queryClient.invalidateQueries({ queryKey: eventKeys.registered(actorKey) });
             queryClient.invalidateQueries({ queryKey: eventKeys.detail(id) });
         }
     });
@@ -39,7 +45,7 @@ export function useEventActions() {
     const saveMutation = useMutation({
         mutationFn: (id: string | number) => saveEvent(id),
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries({ queryKey: eventKeys.saved });
+            queryClient.invalidateQueries({ queryKey: eventKeys.saved(actorKey) });
             // Also potentially update feed item "isSaved" status via setQueryData?
             // For now invalidation of 'saved' list is key.
             // Modifying the infinite feed data is complex but possible.
@@ -49,7 +55,7 @@ export function useEventActions() {
     const unsaveMutation = useMutation({
         mutationFn: (id: string | number) => unsaveEvent(id),
         onSuccess: (_, id) => {
-            queryClient.invalidateQueries({ queryKey: eventKeys.saved });
+            queryClient.invalidateQueries({ queryKey: eventKeys.saved(actorKey) });
         }
     });
 
@@ -58,7 +64,7 @@ export function useEventActions() {
         mutationFn: (formData: FormData) => createEvent(formData),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: eventKeys.all }); // Refresh feeds
-            queryClient.invalidateQueries({ queryKey: eventKeys.myEvents });
+            queryClient.invalidateQueries({ queryKey: eventKeys.myEvents(actorKey) });
         }
     });
 
@@ -67,7 +73,7 @@ export function useEventActions() {
             updateEvent(id, formData),
         onSuccess: (_, { id }) => {
             queryClient.invalidateQueries({ queryKey: eventKeys.detail(id) });
-            queryClient.invalidateQueries({ queryKey: eventKeys.myEvents });
+            queryClient.invalidateQueries({ queryKey: eventKeys.myEvents(actorKey) });
             queryClient.invalidateQueries({ queryKey: eventKeys.feed({}) }); // Might be aggressive
         }
     });

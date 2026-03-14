@@ -57,9 +57,8 @@ export async function deleteEvent(id: number | string): Promise<void> {
 }
 
 // Protected: Get My Created Events
-export async function getMyCreatedEvents(companyId?: string): Promise<BackendEvent[]> {
-    const query = companyId ? `?companyId=${companyId}` : "";
-    const response = await api.get<BackendEvent[]>(`/events/me/events/created${query}`);
+export async function getMyCreatedEvents(_companyId?: string): Promise<BackendEvent[]> {
+    const response = await api.get<BackendEvent[]>("/events/me/events/created");
     return Array.isArray(response.data) ? response.data : [];
 }
 

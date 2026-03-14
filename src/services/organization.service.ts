@@ -203,7 +203,8 @@ export const companyService = {
 
     // Chat Audit
     async getChatSessionHistory(companyId: string, params: any) {
-        const res = await api.get(`/organization-chat-sessions/history`, { params: { companyId, ...params } });
+        void companyId;
+        const res = await api.get(`/organization-chat-sessions/history`, { params });
         return res.data;
     },
 

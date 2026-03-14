@@ -3,6 +3,24 @@ import api, { publicApi } from "@/lib/axios";
 import { logout as libLogout } from "@/lib/logout";
 import { z } from "zod";
 import { registrationSchema } from "@/lib/validators";
+import { Company } from "@/services/organization.service";
+
+export interface ActorContextResponse {
+  actor: {
+    type: "USER" | "ORGANIZATION";
+    id: string;
+    slug?: string;
+    name?: string;
+    avatar_url?: string;
+    entity_type?: "COMPANY" | "INSTITUTION";
+    viewer_role_data?: { name: string; permissions: string[]; priority: number } | null;
+  };
+  organizations: Array<Company & {
+    role?: string;
+    viewer_role_data?: { name: string; permissions: string[]; priority: number } | null;
+  }>;
+  source: "default_user" | "cookie" | "explicit_user" | "explicit_organization";
+}
 
 // 1. Request OTP (Public)
 export const requestOTP = async (email: string) => {
@@ -47,6 +65,23 @@ export const loginWithGoogle = async (idToken: string, accountType?: string) => 
 
 export const logout = async () => {
   await libLogout();
+};
+
+export const getActorContext = async (): Promise<ActorContextResponse> => {
+  const response = await api.get("/auth/actor-context", {
+    withCredentials: true,
+  });
+  return response.data;
+};
+
+export const setActorContext = async (payload: {
+  type: "USER" | "ORGANIZATION";
+  id?: string;
+}): Promise<ActorContextResponse> => {
+  const response = await api.post("/auth/actor-context", payload, {
+    withCredentials: true,
+  });
+  return response.data;
 };
 
 // --- Session Management ---

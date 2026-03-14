@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { StoryDetail, StoryGroup } from '@/types/showcase';
 import { showcaseService } from '@/services/showcase.service';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { actorScopeKey } from '@/lib/actor-context';
 
 interface StoriesContextType {
     groups: StoryGroup[];
@@ -27,7 +28,7 @@ export function StoriesProvider({ children }: { children: React.ReactNode }) {
     const [isStoryViewerOpen, setIsStoryViewerOpen] = useState(false);
 
     const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
-    const queryKey = useMemo(() => ['grouped-stories', activeProfile?.id], [activeProfile?.id]);
+    const queryKey = useMemo(() => ['grouped-stories', ...actorScopeKey(activeProfile)], [activeProfile]);
 
     const { data: groups = [], isLoading, refetch } = useQuery({
         queryKey: queryKey,

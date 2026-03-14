@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { Plus, Check, X } from "lucide-react";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { usePathname } from "next/navigation";
 
 type Suggestion = {
   id: string;
@@ -14,11 +16,10 @@ type Suggestion = {
 
 interface SuggestionsPanelProps { }
 
-import { usePathname } from "next/navigation";
-
 export function SuggestionsPanel({ }: SuggestionsPanelProps) {
   const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
+  const { activeProfile } = useActiveProfile();
 
   useEffect(() => {
     setIsMounted(true);
@@ -28,7 +29,9 @@ export function SuggestionsPanel({ }: SuggestionsPanelProps) {
   // Ensure pathname is valid before checking
   const shouldHide = pathname && HIDDEN_ROUTES.some(route => pathname.startsWith(route));
 
-  if (shouldHide) return null;
+  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
+
+  if (shouldHide || activeProfile?.type === "COMPANY") return null;
 
   const suggestions: Suggestion[] = [
     {
@@ -77,8 +80,6 @@ export function SuggestionsPanel({ }: SuggestionsPanelProps) {
       verified: false,
     },
   ];
-
-  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
 
   const visibleSuggestions = suggestions.filter(
     (s) => !hiddenIds.includes(s.id)

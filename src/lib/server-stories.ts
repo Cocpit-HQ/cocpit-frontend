@@ -2,13 +2,14 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { StoryGroup } from "@/types/showcase";
 import { mapStory } from "@/lib/story-mapper";
+import { cookies } from "next/headers";
 
 /**
  * Server-side stories fetcher.
  * Uses getServerSession to get the access token and calls the backend directly.
  * This runs ONLY on the server (in Server Components or Route Handlers).
  */
-export async function getServerStories(companyId?: string): Promise<StoryGroup[] | null> {
+export async function getServerStories(): Promise<StoryGroup[] | null> {
     try {
         const session = await getServerSession(authOptions);
 
@@ -22,14 +23,24 @@ export async function getServerStories(companyId?: string): Promise<StoryGroup[]
             return null;
         }
 
+        const cookieStore = await cookies();
+        const activeActorCookie = cookieStore.get("activeActor")?.value || "";
+        const [actorType, actorId] = activeActorCookie.split(":");
+
+        const headers: Record<string, string> = {
+            Authorization: `Bearer ${session.user.accessToken}`,
+            "Content-Type": "application/json",
+        };
+
+        if (actorType && actorId) {
+            headers["x-actor-type"] = actorType;
+            headers["x-actor-id"] = actorId;
+        }
+
         const url = new URL(`${apiUrl}/stories/grouped`);
 
         const response = await fetch(url.toString(), {
-            headers: {
-                Authorization: `Bearer ${session.user.accessToken}`,
-                "Content-Type": "application/json",
-                ...(companyId ? { 'x-company-id': companyId } : {})
-            },
+            headers,
             cache: "no-store",
         });
 

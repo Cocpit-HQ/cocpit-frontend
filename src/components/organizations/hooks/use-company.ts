@@ -1,7 +1,10 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { companyService, Company, OrganizationTechStack, OrganizationGalleryItem } from '@/services/organization.service';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
+import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { actorScopeKey } from "@/lib/actor-context";
 
 export const COMP_KEYS = {
     all: ['companies'] as const,
@@ -20,14 +23,12 @@ export function useCompany(slug: string) {
     });
 }
 
-import { useSession } from 'next-auth/react';
-
-export function useUserCompanies() {
+export function useUserCompanies(options?: { enabled?: boolean }) {
     const { data: session } = useSession();
     return useQuery({
         queryKey: ['user-companies'],
         queryFn: () => companyService.getUserCompanies(),
-        enabled: !!session?.user,
+        enabled: (options?.enabled ?? true) && !!session?.user,
     });
 }
 
@@ -168,6 +169,10 @@ export function useCompanyPermissions(company?: any | null) {
             isEditor: false,
             canEdit: false,
             canManageMembers: false,
+            canPostJobs: false,
+            canCreateContent: false,
+            canViewAnalytics: false,
+            canManageRoles: false,
             canVerify: false,
             canDelete: false,
             checkPermission: (perm: string) => false
@@ -217,34 +222,50 @@ export function useCompanyPermissions(company?: any | null) {
 }
 
 export function useAnalyticsOverview(companyId: string) {
+    const { activeProfile } = useActiveProfile();
+    const { data: session } = useSession();
+    const actorKey = actorScopeKey(activeProfile, session?.user?.id ?? "me");
+    const isOrgActor = activeProfile?.type === "COMPANY" && activeProfile.id === companyId;
     return useQuery({
-        queryKey: [...COMP_KEYS.detail(companyId), 'analytics', 'overview'],
+        queryKey: [...COMP_KEYS.detail(companyId), ...actorKey, 'analytics', 'overview'],
         queryFn: () => companyService.getAnalyticsOverview(companyId),
-        enabled: !!companyId,
+        enabled: !!companyId && isOrgActor,
     });
 }
 
 export function useAnalyticsEngagement(companyId: string) {
+    const { activeProfile } = useActiveProfile();
+    const { data: session } = useSession();
+    const actorKey = actorScopeKey(activeProfile, session?.user?.id ?? "me");
+    const isOrgActor = activeProfile?.type === "COMPANY" && activeProfile.id === companyId;
     return useQuery({
-        queryKey: [...COMP_KEYS.detail(companyId), 'analytics', 'engagement'],
+        queryKey: [...COMP_KEYS.detail(companyId), ...actorKey, 'analytics', 'engagement'],
         queryFn: () => companyService.getAnalyticsEngagement(companyId),
-        enabled: !!companyId,
+        enabled: !!companyId && isOrgActor,
     });
 }
 
 export function useAnalyticsJobs(companyId: string) {
+    const { activeProfile } = useActiveProfile();
+    const { data: session } = useSession();
+    const actorKey = actorScopeKey(activeProfile, session?.user?.id ?? "me");
+    const isOrgActor = activeProfile?.type === "COMPANY" && activeProfile.id === companyId;
     return useQuery({
-        queryKey: [...COMP_KEYS.detail(companyId), 'analytics', 'jobs'],
+        queryKey: [...COMP_KEYS.detail(companyId), ...actorKey, 'analytics', 'jobs'],
         queryFn: () => companyService.getAnalyticsJobs(companyId),
-        enabled: !!companyId,
+        enabled: !!companyId && isOrgActor,
     });
 }
 
 export function useAuditLogs(companyId: string, params: any = {}) {
+    const { activeProfile } = useActiveProfile();
+    const { data: session } = useSession();
+    const actorKey = actorScopeKey(activeProfile, session?.user?.id ?? "me");
+    const isOrgActor = activeProfile?.type === "COMPANY" && activeProfile.id === companyId;
     return useQuery({
-        queryKey: [...COMP_KEYS.detail(companyId), 'audit-logs', params],
+        queryKey: [...COMP_KEYS.detail(companyId), ...actorKey, 'audit-logs', params],
         queryFn: () => companyService.getAuditLogs(companyId, params),
-        enabled: !!companyId,
+        enabled: !!companyId && isOrgActor,
     });
 }
 
@@ -372,10 +393,14 @@ export function useRequestEnrollment() {
 }
 
 export function usePendingEnrollments(orgId: string) {
+    const { activeProfile } = useActiveProfile();
+    const { data: session } = useSession();
+    const actorKey = actorScopeKey(activeProfile, session?.user?.id ?? "me");
+    const isOrgActor = activeProfile?.type === "COMPANY" && activeProfile.id === orgId;
     return useQuery({
-        queryKey: [...COMP_KEYS.detail(orgId), 'enrollments', 'pending'],
+        queryKey: [...COMP_KEYS.detail(orgId), ...actorKey, 'enrollments', 'pending'],
         queryFn: () => companyService.getPendingEnrollments(orgId),
-        enabled: !!orgId,
+        enabled: !!orgId && isOrgActor,
     });
 }
 
@@ -392,4 +417,3 @@ export function useReviewEnrollment() {
         onError: (err) => toast.error(companyService.normalizeError(err))
     });
 }
-
