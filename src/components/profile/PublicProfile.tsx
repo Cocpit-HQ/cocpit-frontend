@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { Ban } from "lucide-react";
+import { BackButton } from "@/components/shared/BackButton";
 
 import SuggestionsPanel from "@/components/home/SuggestionsPanel";
 import PostCard from "@/components/shared/PostCard";
@@ -104,7 +105,11 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto py-6 md:py-8 pb-20 md:pb-12 px-4 md:px-0">
         <div className="flex flex-col gap-6 md:gap-8">
-          <div className="w-full">
+          <div className="flex flex-col gap-1 md:gap-2">
+            {/* Back Arrow */}
+            <BackButton />
+
+            <div className="w-full">
 
             <ProfileHeader
               user={user}
@@ -185,6 +190,7 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
                   </p>
                 )}
               </div>
+            </div>
             </div>
           </div>
         </div>

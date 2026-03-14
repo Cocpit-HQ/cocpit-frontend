@@ -45,14 +45,26 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
   const quickActions = allQuickActions.filter(item => item.show);
 
   const isActive = (href: string) => {
-    if (href === '/feed' && pathname === '/') return true
+    if (!pathname) return false
+
+    // Feed special case
+    if (href === '/feed') {
+      return pathname === '/feed' || pathname === '/'
+    }
+
+    // Profile special case
+    if (href === '/profile') {
+      return pathname === '/profile'
+    }
+
+    // Default behavior
     
     // For organization profile, ensure we don't match sub-paths like /settings
     if (href.startsWith('/organization/') && !href.endsWith('/settings') && !href.endsWith('/analytics')) {
         return pathname === href;
     }
 
-    return pathname?.startsWith(href)
+    return pathname.startsWith(href)
   }
 
   return (

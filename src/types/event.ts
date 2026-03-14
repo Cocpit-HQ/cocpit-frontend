@@ -45,6 +45,7 @@ export interface BackendEvent {
     price?: number;
     ticket_name?: string;
 
+    event_status?: string; // New field from backend
     created_at: string;
     updated_at: string;
 }
@@ -142,4 +143,5 @@ export interface EventCard {
         name: string;
         logo: string;
     };
+    event_status?: string; // New field from backend
 }
