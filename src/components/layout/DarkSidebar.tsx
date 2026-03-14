@@ -15,30 +15,43 @@ interface DarkSidebarProps {
 export function DarkSidebar({ className }: DarkSidebarProps) {
   const pathname = usePathname()
   const { activeProfile, isCompany } = useActiveProfile()
-  const { canPostJobs, canViewAnalytics, canEdit, checkPermission } = useCompanyPermissions(activeProfile)
-  const settingsHref = "/settings";
+  const { canEdit, checkPermission } = useCompanyPermissions(activeProfile)
+  
+  const settingsHref = isCompany && activeProfile?.slug 
+    ? `/organization/${activeProfile.slug}/settings` 
+    : "/settings";
+    
   const analyticsHref = isCompany && activeProfile?.slug ? `/organization/${activeProfile.slug}/analytics` : "/analytics";
+  const profileHref = activeProfile?.type === 'COMPANY' && activeProfile.slug 
+    ? `/organization/${activeProfile.slug}` 
+    : '/profile';
 
   const allNavItems = [
     { icon: Home, label: 'Feed', subtext: 'Latest updates', href: '/feed', show: true },
     { icon: Users, label: 'Showcase', subtext: 'Professional stories', href: '/showcase', show: true },
     { icon: Bot, label: 'AI Assistant', subtext: 'Smart suggestions', href: '/ai-assistant', show: true },
     { icon: Calendar, label: 'Events', subtext: 'Network & earn', href: '/events', show: true },
-    { icon: User, label: 'Profile', subtext: 'Your presence', href: activeProfile?.type === 'COMPANY' && activeProfile.slug ? `/organization/${activeProfile.slug}` : '/profile', show: true },
+    { icon: User, label: 'Profile', subtext: 'Your presence', href: profileHref, show: true },
     { icon: Settings, label: 'Settings', subtext: 'Preferences', href: settingsHref, show: !isCompany || canEdit || checkPermission('MANAGE_SETTINGS') },
   ];
 
   const navItems = allNavItems.filter(item => item.show);
 
   const allQuickActions = [
-    { icon: Briefcase, label: 'Jobs', badge: '12 new', href: '/jobs', show: !isCompany || canPostJobs || checkPermission('VIEW_APPLICANTS') },
-    { icon: BarChart3, label: 'Analytics', badge: 'Insights', href: analyticsHref, show: !isCompany || canViewAnalytics },
+    { icon: Briefcase, label: 'Jobs', badge: '12 new', href: '/jobs', show: !isCompany || checkPermission('POST_JOBS') || checkPermission('VIEW_APPLICANTS') },
+    { icon: BarChart3, label: 'Analytics', badge: 'Insights', href: analyticsHref, show: !isCompany || checkPermission('VIEW_ANALYTICS') },
   ];
 
   const quickActions = allQuickActions.filter(item => item.show);
 
   const isActive = (href: string) => {
     if (href === '/feed' && pathname === '/') return true
+    
+    // For organization profile, ensure we don't match sub-paths like /settings
+    if (href.startsWith('/organization/') && !href.endsWith('/settings') && !href.endsWith('/analytics')) {
+        return pathname === href;
+    }
+
     return pathname?.startsWith(href)
   }
 

@@ -273,16 +273,6 @@ export default function SettingsPage() {
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("")
   const isMobile = useIsMobile()
 
-  useEffect(() => {
-    if (activeProfile?.type === "COMPANY" && activeProfile.slug) {
-      router.replace(`/organization/${activeProfile.slug}/settings`)
-    }
-  }, [activeProfile, router])
-
-  if (activeProfile?.type === "COMPANY") {
-    return null
-  }
-
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
   }
