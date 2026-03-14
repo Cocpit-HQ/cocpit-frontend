@@ -36,6 +36,7 @@ export function mapBackendEventToEventCard(e: BackendEvent): EventCard {
             id: e.company_id,
             name: e.company_name || "Company",
             logo: e.company_logo || ""
-        } : undefined
+        } : undefined,
+        event_status: e.event_status
     };
 }

@@ -20,7 +20,7 @@ export function StandardEventCard({ event, onClick, className = "", isRegistered
   return (
     <div
       onClick={onClick}
-      className={`rounded-2xl overflow-hidden border group cursor-pointer hover:-translate-y-1 transition-all duration-300 bg-card border-border hover:border-primary/50 hover:shadow-lg relative h-full flex flex-col ${className}`}
+      className={`rounded-2xl overflow-hidden border group cursor-pointer hover:-translate-y-1 transition-all duration-300 bg-card border-border hover:border-primary/50 hover:shadow-lg relative h-full flex flex-col ${event.event_status === "expired" ? "opacity-60" : ""} ${className}`}
     >
       <div className="relative h-48 overflow-hidden">
         {/* ... (existing image code) ... */}
@@ -38,6 +38,7 @@ export function StandardEventCard({ event, onClick, className = "", isRegistered
         <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-medium text-white border border-white/20">
           {event.category}
         </div>
+
         {isRegistered && (
           <div className="absolute bottom-4 right-4 bg-green-500/90 backdrop-blur-sm px-3 py-1 rounded-lg text-xs font-bold text-white shadow-sm">
             Registered
@@ -52,6 +53,20 @@ export function StandardEventCard({ event, onClick, className = "", isRegistered
             <span className="text-lg font-bold">{event.date.includes('-') ? new Date(event.date).getDate() : (event.date.split(' ')[1]?.replace(',', '') || '01')}</span>
           </div>
           <div className="flex-1">
+            {event.event_status && (
+              <div className={`mb-1.5 w-fit px-2 py-0.5 rounded-full text-[10px] font-semibold border
+                ${event.event_status === "live" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+                  event.event_status === "registration_closed" ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" :
+                  event.event_status === "expired" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                  "bg-blue-500/10 text-blue-500 border-blue-500/20"}
+              `}>
+                {event.event_status === "live" && "Live"}
+                {event.event_status === "registration_closed" && "Registration Closed"}
+                {event.event_status === "expired" && "Expired"}
+                {event.event_status === "upcoming" && "Upcoming"}
+              </div>
+            )}
+
             <h3 className="font-bold text-lg leading-tight mb-1 line-clamp-1 group-hover:text-primary transition-colors text-foreground">
               {event.title}
             </h3>

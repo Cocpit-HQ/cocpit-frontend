@@ -30,14 +30,18 @@ export function MobileBottomNav({ onAdd }: MobileBottomNavProps) {
   const showCreate = !isCompany || canPostJobs || canCreateContent
 
   const isActive = (route: string) => {
+    if (!pathname) return false
+
+    // Feed special case
     if (route === "/feed" && pathname === "/") return true;
     
     // Exact match for organization profile to avoid highlighting on settings/events
     if (route.startsWith('/organization/') && !route.endsWith('/settings') && !route.endsWith('/events')) {
       return pathname === route;
     }
-    
-    return pathname?.startsWith(route)
+
+    // Default behavior
+    return pathname.startsWith(route)
   }
 
   return (

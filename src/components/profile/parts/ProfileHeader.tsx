@@ -2,7 +2,8 @@
 "use client";
 
 import React from "react";
-import { MessageCircle, UserPlus, UserCheck, CheckCircle } from "lucide-react";
+import { MessageCircle, UserPlus, UserCheck, CheckCircle, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { ProfileIdentityChips } from "@/components/profile/ProfileIdentityChips";
 import { CompanyRoleModal } from "./CompanyRoleModal";
 import { Building2 } from "lucide-react";
@@ -57,6 +58,7 @@ export function ProfileHeader({
     onMessage,
     onAvatarClick,
 }: ProfileHeaderProps) {
+    const router = useRouter();
     const { blockUser } = useSocial();
     const [showBlockDialog, setShowBlockDialog] = useState(false);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -89,6 +91,7 @@ export function ProfileHeader({
 
     return (
         <div className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border">
+
             {/* Block Confirmation Dialog */}
             <AlertDialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
                 <AlertDialogContent>
@@ -258,6 +261,6 @@ export function ProfileHeader({
                 entityHeadline={user.headline}
                 entityLocation={user.location}
             />
-        </div >
+        </div>
     );
 }

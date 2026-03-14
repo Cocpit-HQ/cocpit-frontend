@@ -43,7 +43,12 @@ interface EventFiltersProps {
 
 export function EventFilters({ filters, setFilters }: EventFiltersProps) {
   const [open, setOpen] = React.useState(false)
+  const [mounted, setMounted] = React.useState(false)
   const isDesktop = useMediaQuery("(min-width: 768px)")
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleCheckboxChange = (
     category: keyof FilterState,
@@ -169,7 +174,7 @@ export function EventFilters({ filters, setFilters }: EventFiltersProps) {
     </div>
   )
 
-  if (isDesktop) {
+  if (mounted && isDesktop) {
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>

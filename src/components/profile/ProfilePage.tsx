@@ -1,6 +1,4 @@
-
 "use client"
-
 import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Menu, LogOut, Edit2, CheckCircle, GraduationCap, Briefcase, Pencil, Plus, Building2 } from "lucide-react"
@@ -39,6 +37,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { useAuth } from "@/hooks/use-auth"
 import FeedPost from "@/components/home/FeedPost"
 import PostCard from "@/components/shared/PostCard"
+import { BackButton } from "@/components/shared/BackButton"
 import { getUserPosts } from "@/services/api/profile"
 import { deletePost as apiDeletePost } from "@/services/api/posts"
 import { UserData, Skill, AddSkillsPayload } from "@/types/user"
@@ -71,6 +70,7 @@ const routes: Record<string, string> = {
 
 export default function ProfilePage() {
   const router = useRouter()
+  const showBackArrow = typeof window !== "undefined" && document.referrer.includes("/feed")
 
   // New TanStack Query Hook
   const { data: profileData, isLoading } = useMyProfile();
@@ -311,14 +311,19 @@ export default function ProfilePage() {
           <ProfileSkeleton />
         ) : (
           <div className="flex flex-col gap-6 md:gap-8">
-            <div className="w-full">
+            <div className="flex flex-col gap-1 md:gap-2">
+              {/* Back Arrow */}
+              <BackButton />
+
+              <div className="w-full">
               <div className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border">
+
                 <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage}>
                   <div className="absolute top-3 right-3 md:hidden z-10">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="bg-transparent text-white p-2 rounded-full hover:bg-white/10 transition-all">
-                          <Menu className="w-5 h-5" />
+                        <button className="bg-white/20 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/30 transition-all border border-white/20 flex items-center justify-center">
+                          <MoreVertical className="w-5 h-5" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="bg-black/50 backdrop-blur-sm border-white/20 text-white">
@@ -615,8 +620,8 @@ export default function ProfilePage() {
                   ))}
                 </div>
               </div>
+              </div>
             </div>
-
           </div>
         )}
       </div>
