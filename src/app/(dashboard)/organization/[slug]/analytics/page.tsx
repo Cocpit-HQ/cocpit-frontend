@@ -71,6 +71,10 @@ const TABS: { key: TabKey; label: string; icon: React.ElementType; accent: strin
     { key: 'events', label: 'Events', icon: Calendar, accent: 'bg-violet-500' },
 ]
 
+import { useQuery } from '@tanstack/react-query'
+import { getDashboardStats } from '@/services/api/dashboard'
+import { companyService } from '@/services/organization.service'
+
 export default function AnalyticsPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
     const [mounted, setMounted] = useState(false)
@@ -78,12 +82,38 @@ export default function AnalyticsPage({ params }: { params: Promise<{ slug: stri
     const [activeTab, setActiveTab] = useState<TabKey>('overview')
     const { activeProfile } = useActiveProfile()
 
+    const { data: company } = useQuery({
+        queryKey: ['company', slug],
+        queryFn: () => companyService.getCompany(slug),
+    });
+
+    const { data: dashboardData } = useQuery({
+        queryKey: ['dashboardStats', company?.org_id || company?.company_id],
+        queryFn: () => getDashboardStats(company?.org_id || company?.company_id, 'organization'),
+        enabled: !!(company?.org_id || company?.company_id),
+    });
+
     useEffect(() => {
         setMounted(true)
     }, [])
 
     // ─── Profile Data
-    const kpiMetrics = useMemo(() => getKpiMetrics(dateRange), [dateRange])
+    const kpiMetrics = useMemo(() => {
+        const metrics = getKpiMetrics(dateRange);
+        if (dashboardData?.overview) {
+            const viewsMetric = metrics.find(m => m.id === 'profile-views');
+            if (viewsMetric) {
+                viewsMetric.value = dashboardData.overview.totalViews;
+            }
+        } else {
+            // Set to null while loading to trigger skeleton in KPI cards
+            const viewsMetric = metrics.find(m => m.id === 'profile-views');
+            if (viewsMetric) {
+                viewsMetric.value = null;
+            }
+        }
+        return metrics;
+    }, [dateRange, dashboardData])
     const dailyViews = useMemo(() => getDailyViews(dateRange), [dateRange])
     const weeklyComparison = useMemo(() => getWeeklyComparison(), [])
 

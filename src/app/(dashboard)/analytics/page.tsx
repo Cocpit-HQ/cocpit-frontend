@@ -13,6 +13,8 @@ import {
   getSkillGapData,
   SkillData
 } from '@/app/(dashboard)/analytics/data'
+import { useQuery } from '@tanstack/react-query'
+import { getDashboardStats } from '@/services/api/dashboard'
 
 import { SkillGapVisualizer } from '@/components/analytics/SkillGapVisualizer'
 import { OverviewStats } from '@/components/analytics/OverviewStats'
@@ -45,8 +47,30 @@ export default function AnalyticsPage() {
     router.push(routes[page] ?? '/feed')
   }
 
+  const { data: dashboardData } = useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: () => getDashboardStats(),
+  });
+
   // Derived Data based on TimeRange
-  const overviewStats = useMemo(() => getOverviewStats(timeRange), [timeRange])
+  const overviewStats = useMemo(() => {
+    const stats = getOverviewStats(timeRange);
+    
+    // Find the statistics that should be real
+    const viewStat = stats.find(s => s.label === 'Profile Views');
+    
+    if (dashboardData?.overview) {
+      if (viewStat) {
+        viewStat.value = dashboardData.overview.totalViews.toLocaleString();
+      }
+    } else if (viewStat) {
+      // Set to null while loading to trigger skeleton in OverviewStats
+      viewStat.value = null;
+    }
+    
+    return stats;
+  }, [timeRange, dashboardData])
+
   const engagementData = useMemo(() => getEngagementData(timeRange), [timeRange])
   const funnelData = useMemo(() => getFunnelData(timeRange), [timeRange])
 

@@ -32,6 +32,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { initialSkills as currentUserSkills } from "@/lib/data/profile";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { getProfileStats } from "@/services/api/social";
+import { recordProfileView, getProfileViewCount } from "@/services/api/dashboard";
 
 interface PublicProfileProps {
   userId: string;
@@ -54,6 +55,19 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
     enabled: !!userId,
     staleTime: 1000 * 30, // 30 seconds
   });
+
+  const { data: viewCountData } = useQuery({
+    queryKey: ['profileViewCount', userId],
+    queryFn: () => getProfileViewCount(userId, 'user'),
+    enabled: !!userId,
+  });
+
+  // Record profile view
+  React.useEffect(() => {
+    if (userId && session?.user?.id && userId !== session.user.id) {
+      recordProfileView(userId, 'user').catch(console.error);
+    }
+  }, [userId, session?.user?.id]);
 
   const isOwnProfile = session?.user?.id === userId;
   const isUserFollowing = user ? isFollowing(user.id) : false;
@@ -122,9 +136,9 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
             />
 
             <ProfileStats
-              connectionsCount={profileStats?.connections_count ?? user.connections_count ?? 0}
-              profileViewsCount="--"
-              postsCount={publicPosts?.length || 0}
+              connectionsCount={profileStats?.connections_count ?? user.connections_count ?? null}
+              profileViewsCount={viewCountData?.totalViews ?? null}
+              postsCount={publicPosts?.length ?? null}
               isUserFollowing={isUserFollowing}
               followersCount={profileStats?.followers_count ?? user.followers_count ?? 0}
               followingCount={profileStats?.following_count ?? user.following_count ?? 0}

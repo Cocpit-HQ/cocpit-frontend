@@ -9,7 +9,7 @@ const getComparisonText = (range: DateRange) => range === '7d' ? 'vs last week' 
 export interface KpiMetric {
     id: string
     label: string
-    value: number
+    value: number | null
     change: number        // percentage change, e.g. +12.5 or -3.2
     trend: 'up' | 'down'
     icon: 'Eye' | 'Share2' | 'Users' | 'MessageCircle' | 'Bell' | 'TrendingUp'

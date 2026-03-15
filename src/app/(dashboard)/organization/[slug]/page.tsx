@@ -17,6 +17,8 @@ import { OrganizationPublicJobs } from "@/components/organizations/OrganizationP
 import { HomeRecentPosts } from "@/components/organizations/home-tab/HomeRecentPosts";
 import { HomeUpcomingEvents } from "@/components/organizations/home-tab/HomeUpcomingEvents";
 import { HomeGalleryPreview } from "@/components/organizations/home-tab/HomeGalleryPreview";
+import { recordProfileView } from "@/services/api/dashboard";
+import { useSession } from "next-auth/react";
 
 
 export default function CompanyPage() {
@@ -39,6 +41,15 @@ export default function CompanyPage() {
         queryFn: () => companyService.getCompany(slug),
         retry: false,
     });
+
+    const { data: session } = useSession();
+
+    // Record organization profile view
+    React.useEffect(() => {
+        if (company?.org_id) {
+            recordProfileView(company.org_id, 'organization').catch(console.error);
+        }
+    }, [company?.org_id]);
 
     if (error) {
         return (
