@@ -10,7 +10,7 @@ import { getUserPosts } from "@/services/api/profile";
 import { deletePost as apiDeletePost } from "@/services/api/posts";
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import { Post } from "@/types/entities";
-import { useFeed } from "@/context/FeedContext";
+import { useFeed } from "@/hooks/use-feed";
 
 const routes: Record<string, string> = {
   home: "/feed",

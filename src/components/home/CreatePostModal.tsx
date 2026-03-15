@@ -3,7 +3,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Image, Video, Plus, Trash2, Camera, Smile, FileText, Sparkles, Bold, Italic, Heading2, Heading3, List, ListOrdered, Link as LinkIcon, Unlink, Loader2, Eye, EyeOff, Type, BarChart2, Edit2 } from 'lucide-react';
-import { useFeed } from '@/context/FeedContext';
+import { useFeed } from '@/hooks/use-feed';
 import { usePostUpload } from '@/context/PostUploadContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { createPost, CreatePostRequest } from '@/services/api/feed';

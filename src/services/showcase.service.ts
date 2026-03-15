@@ -10,8 +10,8 @@ export const showcaseService = {
     },
 
     createStory: async (storyData: { title: string; description: string; media_url: string; media_type?: string; public_id?: string; shared_post_id?: string; story_metadata?: any }, companyId?: string) => {
-        void companyId;
-        const { data } = await api.post("/story", storyData);
+        const params = companyId ? `?companyId=${companyId}` : '';
+        const { data } = await api.post(`/story${params}`, storyData);
         return data;
     },
 
@@ -45,25 +45,25 @@ export const showcaseService = {
     },
 
     deleteStory: async (id: number, companyId?: string) => {
-        void companyId;
-        const { data } = await api.delete(`/stories/${id}`);
+        const params = companyId ? `?companyId=${companyId}` : '';
+        const { data } = await api.delete(`/stories/${id}${params}`);
         return data;
     },
 
     viewStory: async (id: number, companyId?: string) => {
-        void companyId;
-        await api.post(`/stories/${id}/view`);
+        const params = companyId ? `?companyId=${companyId}` : '';
+        await api.post(`/stories/${id}/view${params}`);
     },
 
     reactToStory: async (id: number, reaction: boolean, companyId?: string) => {
-        void companyId;
-        const { data } = await api.post(`/stories/${id}/react`, { reaction });
+        const params = companyId ? `?companyId=${companyId}` : '';
+        const { data } = await api.post(`/stories/${id}/react${params}`, { reaction });
         return data;
     },
 
     getStoryDetails: async (id: number, companyId?: string) => {
-        void companyId;
-        const { data } = await api.get(`/stories/${id}`);
+        const params = companyId ? `?companyId=${companyId}` : '';
+        const { data } = await api.get(`/stories/${id}${params}`);
         // Transform backend response to match StoryDetail structure for viewers/likers
         const viewers = data.viewers.map((v: any) => ({
             id: v.user_id,
@@ -85,8 +85,8 @@ export const showcaseService = {
     },
 
     addStoryComment: async (storyId: number, content: string, companyId?: string) => {
-        void companyId;
-        const { data } = await api.post(`/stories/${storyId}/comments`, { content });
+        const params = companyId ? `?companyId=${companyId}` : '';
+        const { data } = await api.post(`/stories/${storyId}/comments${params}`, { content });
         return data;
     },
 

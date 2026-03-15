@@ -64,6 +64,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     const router = useRouter();
     const queryClient = useQueryClient();
     const companies = bootstrappedCompanies;
+    const lastBootstrappedSessionRef = React.useRef<string | null>(null);
 
     const canSwitchToCompany = (company: Company & { viewer_role_data?: { permissions: string[] } | null }) => {
         const permissions = company?.viewer_role_data?.permissions || [];
@@ -77,6 +78,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
 
         if (status === "unauthenticated") {
             setActorRequestHeaders(null);
+            lastBootstrappedSessionRef.current = null;
             queueMicrotask(() => {
                 setActiveProfile(null);
                 setBootstrappedCompanies([]);
@@ -85,7 +87,13 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
             return;
         }
 
-        if (!session?.user) return;
+        const sessionId = (session?.user as any)?.accessToken || session?.user?.email;
+        if (!session?.user || !sessionId) return;
+
+        // Skip if already bootstrapped for this specific session state (accessToken)
+        if (isInitialized && lastBootstrappedSessionRef.current === sessionId) {
+            return;
+        }
 
         let isCancelled = false;
 
@@ -93,6 +101,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
             const userProfile = createUserProfile(session.user as any);
             trackActorMetric("bootstrap_start", {
                 mode: "canonical",
+                sessionId: sessionId.substring(0, 10) + "...",
             });
 
             try {
@@ -113,6 +122,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                     }
                 }
 
+                lastBootstrappedSessionRef.current = sessionId;
                 setActiveProfile(nextProfile);
                 setIsInitialized(true);
                 trackActorMetric("bootstrap_complete", {
@@ -125,6 +135,8 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                 console.warn("[ActorContext] Bootstrap endpoint failed. Falling back to user profile.", error);
                 trackActorMetric("bootstrap_fallback", { reason: "bootstrap_error" });
                 if (isCancelled) return;
+                
+                lastBootstrappedSessionRef.current = sessionId;
                 setBootstrappedCompanies([]);
                 setActiveProfile(userProfile);
                 setIsInitialized(true);

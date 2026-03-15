@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useLayoutEffect, useState, forwardRef } from 
 import { Message } from "@/types/messaging"
 import MessageBubble from "./MessageBubble"
 import { Loader2 } from "lucide-react"
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface MessageListProps {
   messages: Message[]
@@ -23,6 +24,13 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true)
   const [prevScrollHeight, setPrevScrollHeight] = useState(0)
 
+  const rowVirtualizer = useVirtualizer({
+    count: messages.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 60, // approximate height of MessageBubble
+    overscan: 10,
+  });
+
   // Auto-scroll to bottom logic
   useEffect(() => {
     if (shouldScrollToBottom && scrollRef.current) {
@@ -43,7 +51,7 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
       }
       setPrevScrollHeight(0)
     }
-  }, [isLoadingMore, prevScrollHeight, scrollRef]) // Dependency on isLoadingMore transition
+  }, [isLoadingMore, prevScrollHeight, scrollRef])
 
   // Check if we should auto-scroll for next update
   const handleScroll = () => {
@@ -53,25 +61,10 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
 
     if (scrollTop === 0 && hasMore && !isLoadingMore && onLoadMore) {
       setShouldScrollToBottom(false)
-      setPrevScrollHeight(scrollHeight) // Capture height *before* loading triggers
+      setPrevScrollHeight(scrollHeight)
       onLoadMore()
     } else {
       setShouldScrollToBottom(isAtBottom)
-    }
-  }
-
-  // Detect when we receive new *latest* messages to set scroll to bottom
-  useEffect(() => {
-    // If we are not loading more, and we have new messages that are chronologically newer
-    // we might want to auto scroll.
-    // For simplicity, if we are at bottom, stay at bottom.
-  }, [messages])
-
-
-  // Handle media load to ensure we stay at bottom if already there
-  const handleMediaLoad = () => {
-    if (shouldScrollToBottom && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }
 
@@ -79,7 +72,7 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
     <div
       ref={scrollRef}
       onScroll={handleScroll}
-      className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide"
+      className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide relative"
     >
       {hasMore && (
         <div className="flex justify-center py-2">
@@ -87,31 +80,53 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
         </div>
       )}
 
-      {messages.map((msg, index) => {
-        const prev = messages[index - 1]
-        const next = messages[index + 1]
+      <div
+        style={{
+          height: `${rowVirtualizer.getTotalSize()}px`,
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+          const msg = messages[virtualRow.index];
+          const prev = messages[virtualRow.index - 1];
+          const next = messages[virtualRow.index + 1];
 
-        // Simple grouping logic based on sender
-        const isFirstInGroup = !prev || prev.sender !== msg.sender
-        const isLastInGroup = !next || next.sender !== msg.sender
-        const groupedMsg = { ...msg, isFirstInGroup, isLastInGroup }
+          // Simple grouping logic based on sender
+          const isFirstInGroup = !prev || prev.sender !== msg.sender;
+          const isLastInGroup = !next || next.sender !== msg.sender;
+          const groupedMsg = { ...msg, isFirstInGroup, isLastInGroup };
 
-        return (
-          <MessageBubble
-            key={msg.id}
-            message={groupedMsg}
-            onAction={onAction}
-            isEditing={editingMessageId === msg.id}
-            onSaveEdit={(text) => onSaveEdit?.(msg.id, text)}
-            onCancelEdit={onCancelEdit}
-            isSelected={selectedMessageId === msg.id}
-            onMessageClick={onMessageClick}
-            onMediaClick={onMediaClick}
-            onMediaLoad={handleMediaLoad}
-          />
-        )
-      })}
-      {/* Remove empty div ref, usage handled by container scrollTop */}
+          return (
+            <div
+              key={msg.id}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              <MessageBubble
+                message={groupedMsg}
+                onAction={onAction}
+                isEditing={editingMessageId === msg.id}
+                onSaveEdit={(text) => onSaveEdit?.(msg.id, text)}
+                onCancelEdit={onCancelEdit}
+                isSelected={selectedMessageId === msg.id}
+                onMessageClick={onMessageClick}
+                onMediaClick={onMediaClick}
+                onMediaLoad={() => {
+                  if (shouldScrollToBottom && scrollRef.current) {
+                    scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+                  }
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
     </div>
   )
 })

@@ -1,5 +1,7 @@
 "use client";
 
+
+// Refactored to use standalone useFeed hook
 import React, { useState } from 'react';
 import { MoreHorizontal, Trash2, Edit2, Eye, EyeOff } from 'lucide-react';
 import {
@@ -18,7 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { CreatePostModal } from './CreatePostModal';
-import { useFeed } from '@/context/FeedContext';
+import { useFeed } from '@/hooks/use-feed';
 import { updatePost } from '@/services/api/posts';
 
 interface PostOptionsMenuProps {

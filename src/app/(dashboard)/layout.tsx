@@ -4,34 +4,52 @@ import { AppShell } from "@/components/layout/AppShell";
 import { DashboardActorGate } from "@/components/layout/DashboardActorGate";
 import { ActiveProfileProvider } from "@/context/ActiveProfileContext";
 import { SocketProvider } from "@/context/SocketContext";
-import { FeedProvider } from "@/context/FeedContext";
-import { ActionModalProvider } from "@/context/ActionModalContext";
-import { PostUploadProvider } from "@/context/PostUploadContext";
+import { SocialProvider } from "@/context/SocialContext";
+import { StoriesProvider } from "@/context/StoriesContext";
 import { JobsProvider } from "@/context/JobsContext";
 import { GlobalUploadProgress } from "@/components/ui/GlobalUploadProgress";
+import { usePathname } from "next/navigation";
+import { useUIStore } from "@/store/ui.store";
+import { CreatePostModal } from "@/components/home/CreatePostModal";
+import MobileCreateMenu from "@/components/home/MobileCreateMenu";
 
 export default function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    const pathname = usePathname();
+    const isFeedRoute = pathname?.startsWith("/feed") ?? false;
+    const { activeModal, setActiveModal, isOptionsOpen, setOptionsOpen, initialPostType } = useUIStore();
+
     return (
         <ActiveProfileProvider>
             <DashboardActorGate>
                 <SocketProvider>
-                    <JobsProvider enableInitialFetch={false}>
-                        <FeedProvider enableInitialFetch={false}>
-                            <PostUploadProvider>
-                                <ActionModalProvider>
-                                    <AppShell>{children}</AppShell>
-                                    <GlobalUploadProgress />
-                                </ActionModalProvider>
-                            </PostUploadProvider>
-                        </FeedProvider>
-                    </JobsProvider>
+                    <SocialProvider>
+                        <StoriesProvider enabled={isFeedRoute}>
+                            <JobsProvider>
+                                <AppShell>{children}</AppShell>
+                                <GlobalUploadProgress />
+                                
+                                <MobileCreateMenu
+                                    open={isOptionsOpen}
+                                    onOpenChange={setOptionsOpen}
+                                    onOptionClick={(type) => {
+                                        setOptionsOpen(false);
+                                        setActiveModal('create-post', type as any);
+                                    }}
+                                />
+                                <CreatePostModal
+                                    isOpen={activeModal === 'create-post'}
+                                    onClose={() => setActiveModal(null)}
+                                    initialPostType={initialPostType}
+                                />
+                            </JobsProvider>
+                        </StoriesProvider>
+                    </SocialProvider>
                 </SocketProvider>
             </DashboardActorGate>
         </ActiveProfileProvider>
     );
 }
-

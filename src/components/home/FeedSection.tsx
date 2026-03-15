@@ -4,7 +4,7 @@ import React, { useMemo, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import FeedPost from './FeedPost';
 import PostSkeleton from './PostSkeleton';
-import { useFeed } from '@/context/FeedContext';
+import { useFeed } from '@/hooks/use-feed';
 import { useInView } from '@/hooks/use-in-view';
 import { useActionModal } from '@/context/ActionModalContext';
 import { StoryRail } from './StoryRail';

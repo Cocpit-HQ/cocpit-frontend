@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react"
 import { Eye, Heart, MessageCircle, Send } from "lucide-react"
 import { StoryDetail, StoryAuthor } from "@/types/showcase"
 import { showcaseService } from "@/services/showcase.service"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useStorySync } from "@/components/showcase/hooks/use-story-sync"
 
 interface StoryAnalytics {
@@ -25,6 +26,7 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory }: Sto
     const [details, setDetails] = useState<StoryAnalytics | null>(null)
     const [loading, setLoading] = useState(false)
     const [loadingComments, setLoadingComments] = useState(false)
+    const { activeProfile } = useActiveProfile()
 
     // Real-time synchronization
     useStorySync(isOpen ? story.id : undefined, {
@@ -47,7 +49,8 @@ export function StoryInteractionPanel({ isOpen, onClose, story, isMyStory }: Sto
             // Fetch Analytics (for My Story)
             if (isMyStory && !details) {
                 setLoading(true);
-                showcaseService.getStoryDetails(story.id).then(data => {
+                const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+                showcaseService.getStoryDetails(story.id, companyId).then(data => {
                     setDetails(data);
                 }).catch(err => {
                     console.error("Failed to fetch story details", err);

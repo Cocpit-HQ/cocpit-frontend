@@ -21,7 +21,7 @@ interface StoriesContextType {
 
 const StoriesContext = createContext<StoriesContextType | undefined>(undefined);
 
-export function StoriesProvider({ children }: { children: React.ReactNode }) {
+export function StoriesProvider({ children, enabled = true }: { children: React.ReactNode, enabled?: boolean }) {
     const { activeProfile } = useActiveProfile();
     const queryClient = useQueryClient();
     const [selectedStory, setSelectedStory] = useState<StoryDetail | null>(null);
@@ -35,6 +35,7 @@ export function StoriesProvider({ children }: { children: React.ReactNode }) {
         queryFn: () => showcaseService.getGroupedStories(companyId),
         staleTime: 1000 * 60 * 5, // 5 minutes
         refetchOnWindowFocus: false,
+        enabled,
     });
 
     const handleCreateStory = useCallback((newStory: StoryDetail) => {

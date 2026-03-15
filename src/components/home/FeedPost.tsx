@@ -43,7 +43,7 @@ import { formatTimeAgo } from '@/lib/timeFormatter'
 import { PollCard } from './PollCard'
 import { updatePost, toggleLike, voteInPoll, removeVote, addComment, deleteComment, getComments, deletePost } from '@/services/api/posts'
 import { SaveButton } from './SaveButton'
-import { useFeed } from '@/context/FeedContext'
+import { useFeed } from '@/hooks/use-feed'
 
 // Lazy-load heavy modal/drawer components (only loaded when user interacts)
 const CommentSection = dynamic(() => import('./CommentSection'), { ssr: false })

@@ -32,7 +32,7 @@ import { ProfileIdentity } from "@/types/profile"
 import { ProfileIdentityChips } from "@/components/profile/ProfileIdentityChips"
 import { LivingResume } from "@/components/profile/LivingResume"
 import { SkillProofPill } from "@/components/profile/SkillProofPill"
-import { useFeed } from "@/context/FeedContext"
+import { useFeed } from "@/hooks/use-feed"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useAuth } from "@/hooks/use-auth"
 import FeedPost from "@/components/home/FeedPost"
@@ -110,7 +110,7 @@ export default function ProfilePage() {
     setIsRoleModalOpen(true);
   };
 
-  const { togglePostVisibility } = useFeed();
+  const { togglePostVisibility } = useFeed(false);
   const [previewPosts, setPreviewPosts] = useState<Post[]>([]);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const isMobile = useIsMobile();
