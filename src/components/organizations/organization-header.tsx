@@ -7,8 +7,9 @@ import EditCoverPhoto from "@/components/profile/EditCoverPhoto";
 import { EditAvatarModal } from "@/components/profile/EditAvatarModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Company, companyService } from "@/services/organization.service";
-import { BadgeCheck, MapPin, Globe, Users, PenBox, UserPlus, UserMinus, Loader2, LayoutDashboard } from "lucide-react";
+import { BadgeCheck, MapPin, Globe, Users, PenBox, UserPlus, UserMinus, Loader2, LayoutDashboard, Eye } from "lucide-react";
 import Link from "next/link";
+import { getProfileViewCount } from "@/services/api/dashboard";
 import { useCompanyPermissions } from "@/components/organizations/hooks/use-company";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -44,6 +45,12 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
     const { data: relationship, isLoading: isRelationshipLoading } = useQuery({
         queryKey: ["company_relationship", company?.company_id || company?.org_id],
         queryFn: () => companyService.getRelationship((company!.company_id || company!.org_id)!),
+        enabled: !!(company?.company_id || company?.org_id),
+    });
+
+    const { data: viewCountData } = useQuery({
+        queryKey: ['companyViewCount', company?.company_id || company?.org_id],
+        queryFn: () => getProfileViewCount((company?.company_id || company?.org_id)!, 'organization'),
         enabled: !!(company?.company_id || company?.org_id),
     });
 
@@ -351,6 +358,14 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
                                     <Skeleton className="h-4 w-12" />
                                 ) : (
                                     <span className="font-medium">{followerCount.toLocaleString()} followers</span>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-md">
+                                <Eye className="h-4 w-4 text-muted-foreground" />
+                                {viewCountData === undefined ? (
+                                    <Skeleton className="h-4 w-12" />
+                                ) : (
+                                    <span className="font-medium">{(viewCountData?.totalViews || 0).toLocaleString()} views</span>
                                 )}
                             </div>
                         </div>

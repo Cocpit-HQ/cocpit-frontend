@@ -2,7 +2,8 @@
 
 import React from 'react'
 import { Eye, Search, UserPlus, MessageSquare, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react'
-import { OverviewStat, getOverviewStats } from '@/app/(dashboard)/analytics/data';
+import { OverviewStat } from '@/app/(dashboard)/analytics/data';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface OverviewStatsProps {
   stats: OverviewStat[]
@@ -34,21 +35,31 @@ export function OverviewStats({ stats }: OverviewStatsProps) {
                 <Icon className="w-5 h-5" />
               </div>
               <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full
-                ${isNeutral
-                  ? 'bg-muted text-muted-foreground'
-                  : isPositive
-                    ? 'bg-green-500/10 text-green-600 dark:text-green-400'
-                    : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                ${stat.value === null 
+                  ? 'bg-transparent text-transparent' // Hide trend while loading
+                  : isNeutral
+                    ? 'bg-muted text-muted-foreground'
+                    : isPositive
+                      ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                      : 'bg-red-500/10 text-red-600 dark:text-red-400'
                 }`}
               >
-                {isNeutral ? <Minus className="w-3 h-3" /> : isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                {stat.change}
+                {stat.value !== null && (
+                  <>
+                    {isNeutral ? <Minus className="w-3 h-3" /> : isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                    {stat.change}
+                  </>
+                )}
               </div>
             </div>
 
             <div>
               <h3 className="text-2xl font-bold mb-1 text-foreground">
-                {stat.value}
+                {stat.value === null ? (
+                  <Skeleton className="h-8 w-24" />
+                ) : (
+                  stat.value
+                )}
               </h3>
               <p className="text-sm text-muted-foreground">
                 {stat.label}

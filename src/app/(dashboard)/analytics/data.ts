@@ -4,7 +4,7 @@ import { TimeRange } from './page'
 
 export interface OverviewStat {
   label: string
-  value: string
+  value: string | null
   change: string // e.g., "+12.5%"
   trend: 'up' | 'down' | 'neutral'
   iconName: 'Eye' | 'Search' | 'UserPlus' | 'MessageSquare'

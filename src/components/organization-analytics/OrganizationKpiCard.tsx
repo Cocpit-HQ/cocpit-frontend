@@ -31,9 +31,11 @@ export function OrganizationKpiCard({ metric, index }: OrganizationKpiCardProps)
     const Icon = iconMap[metric.icon]
     const isGrowthCard = metric.id === 'growth'
 
-    const displayValue = isGrowthCard
-        ? `${metric.value.toFixed(1)}%`
-        : metric.value
+    const displayValue = metric.value === null
+        ? null
+        : isGrowthCard
+            ? `${metric.value.toFixed(1)}%`
+            : metric.value
 
     return (
         <motion.div

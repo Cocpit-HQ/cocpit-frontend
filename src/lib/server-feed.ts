@@ -31,8 +31,8 @@ export async function getServerFeed(): Promise<FeedResponse | null> {
             "Content-Type": "application/json",
         };
 
-        if (actorType && actorId) {
-            headers["x-actor-type"] = actorType;
+        if (actorType === "ORGANIZATION" && actorId) {
+            headers["x-actor-type"] = "ORGANIZATION";
             headers["x-actor-id"] = actorId;
         }
 
