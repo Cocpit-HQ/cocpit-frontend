@@ -100,6 +100,8 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
           return (
             <div
               key={msg.id}
+              ref={rowVirtualizer.measureElement}
+              data-index={virtualRow.index}
               style={{
                 position: 'absolute',
                 top: 0,

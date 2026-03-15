@@ -64,7 +64,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     const router = useRouter();
     const queryClient = useQueryClient();
     const companies = bootstrappedCompanies;
-    const lastBootstrappedSessionRef = React.useRef<string | null>(null);
+    const bootstrapLockRef = React.useRef<string | null>(null);
 
     const canSwitchToCompany = (company: Company & { viewer_role_data?: { permissions: string[] } | null }) => {
         const permissions = company?.viewer_role_data?.permissions || [];
@@ -78,7 +78,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
 
         if (status === "unauthenticated") {
             setActorRequestHeaders(null);
-            lastBootstrappedSessionRef.current = null;
+            bootstrapLockRef.current = null;
             queueMicrotask(() => {
                 setActiveProfile(null);
                 setBootstrappedCompanies([]);
@@ -90,11 +90,13 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
         const sessionId = (session?.user as any)?.accessToken || session?.user?.email;
         if (!session?.user || !sessionId) return;
 
-        // Skip if already bootstrapped for this specific session state (accessToken)
-        if (isInitialized && lastBootstrappedSessionRef.current === sessionId) {
+        // CRITICAL GUARD: Skip if already bootstrapped OR in progress for this session
+        if (bootstrapLockRef.current === sessionId) {
             return;
         }
 
+        // Lock immediately to prevent race conditions from session reference changes
+        bootstrapLockRef.current = sessionId;
         let isCancelled = false;
 
         const initializeProfile = async () => {
@@ -122,7 +124,6 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                     }
                 }
 
-                lastBootstrappedSessionRef.current = sessionId;
                 setActiveProfile(nextProfile);
                 setIsInitialized(true);
                 trackActorMetric("bootstrap_complete", {
@@ -136,7 +137,6 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                 trackActorMetric("bootstrap_fallback", { reason: "bootstrap_error" });
                 if (isCancelled) return;
                 
-                lastBootstrappedSessionRef.current = sessionId;
                 setBootstrappedCompanies([]);
                 setActiveProfile(userProfile);
                 setIsInitialized(true);
