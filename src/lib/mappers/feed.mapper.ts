@@ -14,9 +14,13 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   const mediaList = Array.isArray(backendPost.media) ? backendPost.media : [];
 
   mediaList.forEach((item) => {
-    if (item.media_type === "image") {
+    // Robust video/image detection fallback
+    const isActuallyVideo = item.url.toLowerCase().match(/\.(mp4|webm|mov)(\?|#|$)/);
+    const mediaType = isActuallyVideo ? "video" : item.media_type;
+
+    if (mediaType === "image") {
       images.push(item.url);
-    } else if (item.media_type === "video") {
+    } else if (mediaType === "video") {
       videoSrc = item.url;
     }
   });
@@ -95,9 +99,12 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
       // Process shared post media
       if (Array.isArray(sp.media)) {
         sp.media.forEach((item) => {
-          if (item.media_type === "image") {
+          const isActuallyVideo = item.url.toLowerCase().match(/\.(mp4|webm|mov)(\?|#|$)/);
+          const mediaType = isActuallyVideo ? "video" : item.media_type;
+
+          if (mediaType === "image") {
             spImages.push(item.url);
-          } else if (item.media_type === "video") {
+          } else if (mediaType === "video") {
             spVideoSrc = item.url;
           }
         });

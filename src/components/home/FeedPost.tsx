@@ -246,14 +246,18 @@ export default function FeedPost({
 
 
   // Helper to filter out invalid blob URLs from persisted posts
-  const isValidUrl = (url: string | undefined | null) => {
+  const isValidImageUrl = (url: string | undefined | null) => {
     if (!url) return false;
-    if (id === 'preview-id') return true; // Allow blob URLs in preview mode
-    return !url.startsWith('blob:');
+    // Don't pass video URLs to Next.js Image optimization
+    const isVideo = url.toLowerCase().match(/\.(mp4|webm|mov)(\?|#|$)/);
+    if (isVideo) return false;
+
+    // Allow everything else (blob URLs or real URLs) to render as images
+    return true;
   };
 
-  const validImages = images?.filter(isValidUrl) || [];
-  const validImageSrc = isValidUrl(imageSrc) ? imageSrc : undefined;
+  const validImages = images?.filter(isValidImageUrl) || [];
+  const validImageSrc = isValidImageUrl(imageSrc) ? imageSrc : undefined;
 
   const contentImgSrc = validImageSrc || (validImages.length > 0 ? validImages[0] : null) || '/assets/pngegg.png'
   const avatarSrc = authorAvatar || '/assets/pngegg.png'
@@ -885,7 +889,7 @@ export default function FeedPost({
         )}
 
         {/* Media content (Now shown after shared post) */}
-        {(hasMultipleImages || imageSrc || videoSrc) && (
+        {(validImages.length > 0 || !!videoSrc) && (
           <div
             className={`w-full overflow-hidden bg-gray-100 dark:bg-zinc-900 relative group flex flex-col justify-center ${isProfileView ? 'aspect-square' : (isVerticalVideo ? '' : (finalAspectRatio ? '' : 'min-h-[300px] md:min-h-[400px]'))}`}
             style={

@@ -44,10 +44,7 @@ export const usePostUpload = () => {
             // 2. Create Post
             const finalContent = {
                 ...content,
-                media: mediaUrls.length > 0 ? mediaUrls.map((url, index) => ({ 
-                    url, 
-                    media_type: mediaFiles[index].type.startsWith('video') ? 'video' : 'image' 
-                })) : []
+                media_urls: mediaUrls
             };
 
             const response = await createPost(finalContent);
