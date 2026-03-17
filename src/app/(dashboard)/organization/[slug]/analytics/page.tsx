@@ -105,12 +105,17 @@ export default function AnalyticsPage({ params }: { params: Promise<{ slug: stri
             if (viewsMetric) {
                 viewsMetric.value = dashboardData.overview.totalViews;
             }
+            const followersMetric = metrics.find(m => m.id === 'followers');
+            if (followersMetric) {
+                followersMetric.value = dashboardData.overview.totalConnections;
+            }
         } else {
             // Set to null while loading to trigger skeleton in KPI cards
-            const viewsMetric = metrics.find(m => m.id === 'profile-views');
-            if (viewsMetric) {
-                viewsMetric.value = null;
-            }
+            const metricsToReset = ['profile-views', 'followers'];
+            metricsToReset.forEach(id => {
+                const m = metrics.find(metric => metric.id === id);
+                if (m) m.value = null;
+            });
         }
         return metrics;
     }, [dateRange, dashboardData])

@@ -3,10 +3,10 @@ import api from "@/lib/axios";
 export interface DashboardStats {
   overview: {
     totalViews: number;
+    searchAppearances: number;
     totalConnections: number;
-    activeJobs: number;
+    totalImpressions: number;
   };
-  recentActivity: any[];
 }
 
 export interface ProfileViewCountResponse {

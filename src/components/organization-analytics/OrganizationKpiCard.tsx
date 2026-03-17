@@ -9,6 +9,7 @@ import {
     MessageCircle,
     Bell,
     TrendingUp,
+    Search,
 } from 'lucide-react'
 import { KpiMetric } from '@/app/(dashboard)/company-analytics/data'
 import { MetricCard } from './MetricCard'
@@ -20,6 +21,7 @@ const iconMap = {
     MessageCircle,
     Bell,
     TrendingUp,
+    Search,
 } as const
 
 interface OrganizationKpiCardProps {

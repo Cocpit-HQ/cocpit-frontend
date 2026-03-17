@@ -12,7 +12,7 @@ export interface KpiMetric {
     value: number | null
     change: number        // percentage change, e.g. +12.5 or -3.2
     trend: 'up' | 'down'
-    icon: 'Eye' | 'Share2' | 'Users' | 'MessageCircle' | 'Bell' | 'TrendingUp'
+    icon: 'Eye' | 'Share2' | 'Users' | 'MessageCircle' | 'Bell' | 'TrendingUp' | 'Search'
     color: string         // Tailwind-compatible color class
     accentHex: string     // hex for icon bg glow
     comparisonText?: string
@@ -80,8 +80,8 @@ export const getKpiMetrics = (range: DateRange): KpiMetric[] => {
             change: 4.2,
             trend: 'up',
             icon: 'TrendingUp',
-            color: 'text-cyan-500',
-            accentHex: '#06b6d4',
+            color: 'text-primary',
+            accentHex: '#3b82f6',
         },
     ].map(m => ({ ...m, comparisonText: getComparisonText(range), sparklineData: generateSparkline() })) as KpiMetric[]
 }

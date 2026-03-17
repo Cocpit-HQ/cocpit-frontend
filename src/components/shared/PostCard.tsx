@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Post } from '@/types/entities';
 import { PostOptionsMenu } from '@/components/home/PostOptionsMenu';
 import DOMPurify from 'dompurify';
+import { usePostImpression } from '@/hooks/usePostImpression';
 
 
 interface PostCardProps {
@@ -16,6 +17,7 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post, href, onDelete, isOwnPost, companyId }: PostCardProps) {
+    const impressionRef = usePostImpression(post.post_id || post.id);
     // Support both backend (post_id, image_url, media[]) and frontend (id, imageSrc, images[])
     const id = post.post_id || post.id;
     const content = post.content || '';
@@ -35,7 +37,7 @@ export default function PostCard({ post, href, onDelete, isOwnPost, companyId }:
     const sanitizedContent = typeof window !== 'undefined' ? DOMPurify.sanitize(content) : content;
 
     return (
-        <div className="relative group h-full">
+        <div ref={impressionRef as any} className="relative group h-full">
             <Link href={href || `/post/${id}`} className="block w-full h-full">
                 <div className="aspect-square bg-card border border-border rounded-xl overflow-hidden relative shadow-sm group-hover:shadow-md transition-shadow">
                     {displayImage ? (

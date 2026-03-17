@@ -70,11 +70,11 @@ export const getOverviewStats = (range: TimeRange): OverviewStat[] => {
       iconName: 'UserPlus'
     },
     {
-      label: 'Direct Messages',
-      value: (24 * m).toLocaleString(),
+      label: 'Total Impressions',
+      value: (1840 * m).toLocaleString(),
       change: '+18.0%',
       trend: 'up',
-      iconName: 'MessageSquare'
+      iconName: 'Eye'
     }
   ]
 }
