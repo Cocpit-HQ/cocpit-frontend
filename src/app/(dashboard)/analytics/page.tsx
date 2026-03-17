@@ -56,23 +56,54 @@ export default function AnalyticsPage() {
   const overviewStats = useMemo(() => {
     const stats = getOverviewStats(timeRange);
     
-    // Find the statistics that should be real
-    const viewStat = stats.find(s => s.label === 'Profile Views');
-    
+    // If we have real data, overwrite the mock values
     if (dashboardData?.overview) {
-      if (viewStat) {
-        viewStat.value = dashboardData.overview.totalViews.toLocaleString();
-      }
-    } else if (viewStat) {
-      // Set to null while loading to trigger skeleton in OverviewStats
-      viewStat.value = null;
+      stats.forEach(stat => {
+        if (stat.label === 'Profile Views') {
+          stat.value = (dashboardData.overview.totalViews ?? 0).toLocaleString();
+        } else if (stat.label === 'Search Appearances') {
+          // Explicitly check for property existence to avoid falling back on 0
+          const rawCount = dashboardData.overview.searchAppearances !== undefined 
+            ? dashboardData.overview.searchAppearances 
+            : (dashboardData.overview as any).search_appearances;
+          
+          const count = rawCount ?? 0;
+          stat.value = count.toLocaleString();
+        } else if (stat.label === 'Connection Requests') {
+          stat.value = (dashboardData.overview.totalConnections ?? 0).toLocaleString();
+        } else if (stat.label === 'Total Impressions') {
+          stat.value = (dashboardData.overview.totalImpressions ?? 0).toLocaleString();
+        }
+      });
+    } else {
+      // Set to null while loading to trigger skeleton in OverviewStats for the real fields
+      stats.forEach(stat => {
+        if (stat.label === 'Profile Views' || stat.label === 'Search Appearances' || stat.label === 'Connection Requests' || stat.label === 'Total Impressions') {
+          stat.value = null;
+        }
+      });
     }
     
     return stats;
   }, [timeRange, dashboardData])
 
   const engagementData = useMemo(() => getEngagementData(timeRange), [timeRange])
-  const funnelData = useMemo(() => getFunnelData(timeRange), [timeRange])
+  
+  const funnelData = useMemo(() => {
+    const data = getFunnelData(timeRange);
+    
+    if (dashboardData?.overview) {
+      data.forEach(stage => {
+        if (stage.stage === 'Search Appearances') {
+          stage.count = dashboardData.overview.searchAppearances ?? (dashboardData.overview as any).search_appearances ?? 0;
+        } else if (stage.stage === 'Profile Clicks') {
+          stage.count = dashboardData.overview.totalViews ?? 0;
+        }
+      });
+    }
+    
+    return data;
+  }, [timeRange, dashboardData])
 
   // Static for now, but could be dynamic
   const audienceIndustries = useMemo(() => getAudienceIndustries(), [])

@@ -1,4 +1,3 @@
-// Standalone hook for feed management
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';

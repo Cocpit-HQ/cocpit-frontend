@@ -95,6 +95,8 @@ interface FeedPostProps extends Omit<Post, 'commentData'> {
   isFullContent?: boolean;
 }
 
+import { usePostImpression } from '@/hooks/usePostImpression'
+
 export default function FeedPost({
   id,
   author,
@@ -130,6 +132,7 @@ export default function FeedPost({
   onSaveChange,
   isFullContent = false
 }: FeedPostProps) {
+  const impressionRef = usePostImpression(id.toString());
   const [isLiked, setIsLiked] = useState(initialIsLiked)
   const [isCommented, setIsCommented] = useState(initialIsCommented)
   const [isSaved, setIsSaved] = useState(is_saved)
@@ -570,7 +573,7 @@ export default function FeedPost({
   const commentsCount = commentsLoaded ? postComments.length : (typeof initialCommentsCount === 'string' ? parseInt(initialCommentsCount) : initialCommentsCount);
 
   return (
-    <div id={`post-${id}`} className="bg-card border-border md:rounded-lg md:border overflow-hidden flex flex-col h-full shadow-sm mb-2">
+    <div id={`post-${id}`} ref={impressionRef as any} className="bg-card border-border md:rounded-lg md:border overflow-hidden flex flex-col h-full shadow-sm mb-2">
       <div className="p-4 pb-2">
         <div className="flex items-start justify-between mb-2">
           <div className="flex gap-3">

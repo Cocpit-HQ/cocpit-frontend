@@ -41,7 +41,6 @@ export default async function FeedRoute() {
 
   if (feedData) {
     // Seed the infinite query cache with the first page
-    // Query key matches FeedContext: ['feed', activeType, activeId]
     queryClient.setQueryData(['feed', activeType, activeId], {
       pages: [
         {
