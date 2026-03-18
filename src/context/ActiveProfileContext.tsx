@@ -91,7 +91,10 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
         if (!session?.user || !sessionId) return;
 
         // CRITICAL GUARD: Skip if already bootstrapped OR in progress for this session
-        if (bootstrapLockRef.current === sessionId) {
+        // We only block if we are ALREADY initialized for this sessionId.
+        // If we aren't initialized yet, we MUST allow the bootstrap to run,
+        // even if the ref was set by a previous (possibly cancelled) attempt.
+        if (isInitialized && bootstrapLockRef.current === sessionId) {
             return;
         }
 
