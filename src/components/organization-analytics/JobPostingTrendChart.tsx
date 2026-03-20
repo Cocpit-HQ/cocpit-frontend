@@ -11,7 +11,7 @@ import {
     Tooltip,
     CartesianGrid,
 } from 'recharts'
-import { JobPostingPoint } from '@/app/(dashboard)/company-analytics/data'
+import { JobPostingPoint } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 
 interface JobPostingTrendChartProps {
     data: JobPostingPoint[]

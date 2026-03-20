@@ -3,7 +3,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Trophy, Image, FileText, Video, BookOpen } from 'lucide-react'
-import { TopPost } from '@/app/(dashboard)/company-analytics/data'
+import { TopPost } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 
 interface TopPostsTableProps {
     data: TopPost[]

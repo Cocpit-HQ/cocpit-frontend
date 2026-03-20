@@ -111,4 +111,17 @@ export interface Post {
   shared_post?: Post | null;
   isAvailable?: boolean;
   unavailableReason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
+  
+  // Job sharing fields
+  isJob?: boolean;
+  jobId?: string;
+  jobTitle?: string;
+  jobLocation?: string;
+  jobCompany?: string;
+  jobLogo?: string;
+  jobType?: string;
+  jobWorkMode?: string;
+  jobSalaryMin?: number;
+  jobSalaryMax?: number;
+  jobIsActive?: boolean;
 }

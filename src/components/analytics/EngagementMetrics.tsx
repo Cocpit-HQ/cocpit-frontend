@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts'
-import { EngagementDataPoint, getEngagementData } from '@/app/(dashboard)/analytics/data';
+import { EngagementDataPoint, getEngagementData } from '@/app/(authenticated)/(dashboard)/analytics/data';
 
 interface EngagementMetricsProps {
   data: EngagementDataPoint[]

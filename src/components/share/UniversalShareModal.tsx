@@ -198,7 +198,7 @@ export function UniversalShareModal({
     }
 
     const handleRepost = () => {
-        if (postCategory === 'Personal') {
+        if (entityType === 'post' && postCategory === 'Personal') {
             toast({
                 title: "Share restricted",
                 description: "Personal posts cannot be reposted to the feed.",
@@ -217,14 +217,23 @@ export function UniversalShareModal({
                     setIsRepostModalOpen(false)
                     onClose()
                 }}
-                sharedPostId={entityId}
+                sharedPostId={entityType === 'post' ? entityId : undefined}
+                sharedJobId={entityType === 'job' ? entityId : undefined}
+                initialSharedPost={entityType === 'job' ? {
+                    isJob: true,
+                    jobId: entityId,
+                    jobTitle: entityName,
+                    jobLocation: entityLocation,
+                    jobCompany: entityHeadline,
+                    jobLogo: entityAvatar
+                } : undefined}
             />
         )
     }
 
     const OptionsView = (
         <div className="p-5 space-y-4">
-            {(entityType === 'profile' || entityType === 'company') && entityName && (
+            {(entityType === 'profile' || entityType === 'company' || entityType === 'job') && entityName && (
                 <>
                     <div className="flex items-center gap-4">
                         <Avatar className="w-14 h-14 border rounded-full shrink-0">
@@ -246,7 +255,7 @@ export function UniversalShareModal({
             )}
 
             <div className="space-y-3">
-                {entityType === 'post' && (
+                {(entityType === 'post' || entityType === 'job') && (
                     <>
                         <div
                             className={`flex flex-row items-center cursor-pointer p-4 rounded-xl border border-border/50 transition-all duration-200 ${postCategory === 'Personal' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted/60'}`}
@@ -333,7 +342,7 @@ export function UniversalShareModal({
             <div className="flex-1 overflow-y-auto">
                 <div className="p-5 space-y-4 border-b border-border">
                     {/* Entity Preview Header */}
-                    {(entityType === 'profile' || entityType === 'company') && entityName && (
+                    {(entityType === 'profile' || entityType === 'company' || entityType === 'job') && entityName && (
                         <div className="flex items-center gap-4">
                             <Avatar className="w-12 h-12 border rounded-full shrink-0">
                                 <AvatarImage src={entityAvatar} className="object-cover" />

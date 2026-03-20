@@ -13,6 +13,7 @@ import { TaskSubmissionModal } from "./dashboard/TaskSubmissionModal"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { respondToOffer } from "@/services/api/offers"
 import { toast } from "sonner"
+import { UniversalShareModal } from "@/components/share/UniversalShareModal"
 
 
 interface JobDetailViewProps {
@@ -31,7 +32,7 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
 
   const [showQuickApply, setShowQuickApply] = useState(false)
   const [showTaskModal, setShowTaskModal] = useState(false)
-  const [isCopied, setIsCopied] = useState(false)
+  const [isShareOpen, setIsShareOpen] = useState(false)
   const [recruiterStats, setRecruiterStats] = useState<{ responseRate: number, typicallyRespondsIn: string, isActive: boolean } | null>(null)
 
 
@@ -40,12 +41,6 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
       getRecruiterStats(job.recruiterId).then(setRecruiterStats).catch(console.error)
     }
   }, [job.recruiterId])
-
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href)
-    setIsCopied(true)
-    setTimeout(() => setIsCopied(false), 2000)
-  }
 
   // Helper for Timeline
   const renderTimeline = () => {
@@ -105,10 +100,10 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
           </button>
           <span className="font-medium text-lg truncate flex-1">{job.title}</span>
           <button
-            onClick={handleShare}
+            onClick={() => setIsShareOpen(true)}
             className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground"
           >
-            {isCopied ? <CheckCircle className="w-5 h-5 text-green-500" /> : <Share2 className="w-5 h-5" />}
+            <Share2 className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -375,6 +370,17 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
           router.refresh()
           // Optionally trigger a context reload if exposed, but refresh works for server components/data
         }}
+      />
+
+      <UniversalShareModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        entityId={job.id}
+        entityType="job"
+        entityName={job.title}
+        entityLocation={job.location}
+        entityHeadline={job.company}
+        entityAvatar={job.companyLogo}
       />
     </div>
   )

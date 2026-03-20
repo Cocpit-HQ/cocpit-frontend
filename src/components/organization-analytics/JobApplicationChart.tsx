@@ -12,7 +12,7 @@ import {
     CartesianGrid,
     Legend,
 } from 'recharts'
-import { JobApplicationPoint } from '@/app/(dashboard)/company-analytics/data'
+import { JobApplicationPoint } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 
 interface JobApplicationChartProps {
     data: JobApplicationPoint[]

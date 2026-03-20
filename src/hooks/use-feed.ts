@@ -2,9 +2,11 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { getFeed } from '@/services/api/feed';
+import { deletePost as apiDeletePost } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { Post } from '@/types/entities';
 import React, { useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 
 export const useFeed = (enableInitialFetch = true) => {
   const { data: session } = useSession();
@@ -72,7 +74,15 @@ export const useFeed = (enableInitialFetch = true) => {
         }))
       };
     });
-    // In actual app, call apiDeletePost(id) here
+    try {
+      await apiDeletePost(id);
+      toast.success("Post deleted successfully");
+    } catch (error) {
+      console.error("Failed to delete post:", error);
+      toast.error("Failed to delete post");
+      // Optionally: refetch the feed to restore the post if deletion failed
+      queryClient.invalidateQueries({ queryKey: feedQueryKey });
+    }
   }, [feedQueryKey, queryClient]);
 
   const togglePostVisibility = useCallback((id: string) => {

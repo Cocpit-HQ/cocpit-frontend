@@ -92,6 +92,31 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         isAvailable: false,
         unavailableReason: sp.reason // Map the specific reason
       } as Post & { isAvailable?: boolean; unavailableReason?: string };
+    } else if (sp.shared_entity_type === 'job' || sp.job_id) {
+      sharedPost = {
+        id: sp.job_id || `job-${Date.now()}`,
+        authorId: "",
+        author: "",
+        timeAgo: "",
+        content: "",
+        likes: 0,
+        comments: "0",
+        shares: "0",
+        isAvailable: true,
+        // Job-specific fields mapped to the extended Post type
+        isJob: true,
+        jobId: sp.job_id,
+        jobTitle: sp.title,
+        jobLocation: sp.location,
+        jobCompany: sp.company_name,
+        jobLogo: sp.company_logo,
+        jobType: sp.job_type,
+        jobWorkMode: sp.work_mode,
+        jobSalaryMin: sp.salary_min,
+        jobSalaryMax: sp.salary_max,
+        jobIsActive: sp.is_active,
+      } as Post & { isAvailable?: boolean; isJob?: boolean };
+      console.log('[Mapper Debug] Mapped Job sharedPost:', sharedPost);
     } else if (sp.author && sp.post_id) { // Ensure required fields exist
       const spImages: string[] = [];
       let spVideoSrc: string | undefined = undefined;

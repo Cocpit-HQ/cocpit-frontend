@@ -12,7 +12,7 @@ import {
     CartesianGrid,
     Legend,
 } from 'recharts'
-import { FollowerGrowthPoint } from '@/app/(dashboard)/company-analytics/data'
+import { FollowerGrowthPoint } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 
 interface FollowerGrowthChartProps {
     data: FollowerGrowthPoint[]

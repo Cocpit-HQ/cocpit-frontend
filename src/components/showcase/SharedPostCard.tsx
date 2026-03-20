@@ -12,8 +12,16 @@ interface SharedPostCardProps {
             user_id: string;
             full_name: string;
             avatar_url: string;
+            account_name?: string;
         };
         media?: { url: string; media_type: string }[];
+        shared_entity_type?: string;
+        job_id?: string;
+        title?: string;
+        company_name?: string;
+        location?: string;
+        work_mode?: string;
+        company_logo?: string;
     };
     onClick?: () => void;
 }
@@ -29,7 +37,9 @@ export const SharedPostCard: React.FC<SharedPostCardProps> = ({ sharedPost, onCl
         }
 
         if (sharedPost.is_accessible || sharedPost.reason === 'personal_connection') {
-            if (sharedPost.post_id) {
+            if (sharedPost.shared_entity_type === 'job' && sharedPost.job_id) {
+                router.push(`/jobs/${sharedPost.job_id}`);
+            } else if (sharedPost.post_id) {
                 router.push(`/post/${sharedPost.post_id}`);
             } else if (sharedPost.author?.user_id) {
                 router.push(`/profile/${(sharedPost.author as any).account_name || sharedPost.author.user_id}`);
@@ -77,8 +87,27 @@ export const SharedPostCard: React.FC<SharedPostCardProps> = ({ sharedPost, onCl
                         </div>
                     )}
                 </div>
+            ) : sharedPost.shared_entity_type === 'job' ? (
+                /* Job State */
+                <div className="p-4 flex gap-4 items-center">
+                    <div className="w-14 h-14 shrink-0 rounded-lg bg-white overflow-hidden flex items-center justify-center border border-white/10 shadow-sm">
+                        {sharedPost.company_logo ? (
+                            <img src={sharedPost.company_logo} alt={sharedPost.company_name} className="w-full h-full object-contain p-1" />
+                        ) : (
+                            <span className="text-2xl font-bold text-black/50">{sharedPost.company_name?.charAt(0) || "J"}</span>
+                        )}
+                    </div>
+                    <div className="flex flex-col flex-1 min-w-0">
+                        <h4 className="text-base font-semibold text-white truncate">{sharedPost.title}</h4>
+                        <p className="text-sm text-white/90 truncate font-medium">{sharedPost.company_name}</p>
+                        <p className="text-xs text-white/60 truncate mt-0.5">
+                            {sharedPost.location}
+                            {sharedPost.work_mode ? ` (${sharedPost.work_mode})` : ''}
+                        </p>
+                    </div>
+                </div>
             ) : (
-                /* Accessible State */
+                /* Accessible Post State */
                 <div className="p-4 space-y-3">
                     <div className="flex items-center gap-2 mb-2">
                         {sharedPost.author?.avatar_url && (

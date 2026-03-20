@@ -11,7 +11,7 @@ import {
     Tooltip,
     CartesianGrid,
 } from 'recharts'
-import { EventPostingPoint } from '@/app/(dashboard)/company-analytics/data'
+import { EventPostingPoint } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 
 interface EventPostingTrendChartProps {
     data: EventPostingPoint[]

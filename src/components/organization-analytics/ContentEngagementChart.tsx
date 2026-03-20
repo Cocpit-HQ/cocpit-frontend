@@ -12,7 +12,7 @@ import {
     CartesianGrid,
     Legend,
 } from 'recharts'
-import { ContentEngagementPoint } from '@/app/(dashboard)/company-analytics/data'
+import { ContentEngagementPoint } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 
 interface ContentEngagementChartProps {
     data: ContentEngagementPoint[]

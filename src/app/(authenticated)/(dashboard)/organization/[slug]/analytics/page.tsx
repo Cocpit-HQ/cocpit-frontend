@@ -1,9 +1,8 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, use } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BarChart3, User, Calendar, Briefcase, Users, Rss, ChevronDown, Download, LayoutDashboard } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 
 import {
@@ -29,7 +28,7 @@ import {
     getTopPosts,
     getActivityHeatmap,
     getInsights,
-} from '@/app/(dashboard)/company-analytics/data'
+} from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 
 import { OrganizationKpiCards } from '@/components/organization-analytics/OrganizationKpiCards'
 import { DailyViewsChart } from '@/components/organization-analytics/DailyViewsChart'
@@ -72,25 +71,54 @@ const TABS: { key: TabKey; label: string; icon: React.ElementType; accent: strin
     { key: 'events', label: 'Events', icon: Calendar, accent: 'bg-violet-500' },
 ]
 
-export default function CompanyAnalyticsPage() {
+import { useQuery } from '@tanstack/react-query'
+import { getDashboardStats } from '@/services/api/dashboard'
+import { companyService } from '@/services/organization.service'
+
+export default function AnalyticsPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = use(params);
     const [mounted, setMounted] = useState(false)
     const [dateRange, setDateRange] = useState<DateRange>('30d')
     const [activeTab, setActiveTab] = useState<TabKey>('overview')
-    const router = useRouter()
     const { activeProfile } = useActiveProfile()
+
+    const { data: company } = useQuery({
+        queryKey: ['company', slug],
+        queryFn: () => companyService.getCompany(slug),
+    });
+
+    const { data: dashboardData } = useQuery({
+        queryKey: ['dashboardStats', company?.org_id || company?.company_id],
+        queryFn: () => getDashboardStats(company?.org_id || company?.company_id, 'organization'),
+        enabled: !!(company?.org_id || company?.company_id),
+    });
 
     useEffect(() => {
         setMounted(true)
     }, [])
 
-    useEffect(() => {
-        if (activeProfile?.type === "COMPANY" && activeProfile.slug) {
-            router.replace(`/organization/${activeProfile.slug}/analytics`)
-        }
-    }, [activeProfile, router])
-
     // ─── Profile Data
-    const kpiMetrics = useMemo(() => getKpiMetrics(dateRange), [dateRange])
+    const kpiMetrics = useMemo(() => {
+        const metrics = getKpiMetrics(dateRange);
+        if (dashboardData?.overview) {
+            const viewsMetric = metrics.find(m => m.id === 'profile-views');
+            if (viewsMetric) {
+                viewsMetric.value = dashboardData.overview.totalViews;
+            }
+            const followersMetric = metrics.find(m => m.id === 'followers');
+            if (followersMetric) {
+                followersMetric.value = dashboardData.overview.totalConnections;
+            }
+        } else {
+            // Set to null while loading to trigger skeleton in KPI cards
+            const metricsToReset = ['profile-views', 'followers'];
+            metricsToReset.forEach(id => {
+                const m = metrics.find(metric => metric.id === id);
+                if (m) m.value = null;
+            });
+        }
+        return metrics;
+    }, [dateRange, dashboardData])
     const dailyViews = useMemo(() => getDailyViews(dateRange), [dateRange])
     const weeklyComparison = useMemo(() => getWeeklyComparison(), [])
 

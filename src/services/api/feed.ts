@@ -49,6 +49,18 @@ export interface BackendPost {
     is_commented?: boolean;
     is_saved?: boolean;
     poll?: BackendPoll | null;
+    shared_entity_type?: 'job' | 'post';
+    job_id?: string;
+    title?: string;
+    company_name?: string;
+    location?: string;
+    job_type?: string;
+    work_mode?: string;
+    salary_min?: number;
+    salary_max?: number;
+    company_logo?: string;
+    is_active?: boolean;
+    company_slug?: string;
   } | null;
 }
 
@@ -85,6 +97,7 @@ export interface CreatePostRequest {
   poll_options?: string[];
   poll_duration?: string;
   shared_post_id?: string;
+  shared_job_id?: string;
   companyId?: string;
 }
 

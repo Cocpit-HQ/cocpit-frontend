@@ -13,7 +13,7 @@ import {
     Area,
     AreaChart,
 } from 'recharts'
-import { DailyViewPoint } from '@/app/(dashboard)/company-analytics/data'
+import { DailyViewPoint } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 
 interface DailyViewsChartProps {
     data: DailyViewPoint[]

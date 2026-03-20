@@ -1,6 +1,6 @@
 import React from 'react'
 import { Sparkles, TrendingUp, CalendarDays, BarChart2 } from 'lucide-react'
-import { Insight } from '@/app/(dashboard)/company-analytics/data'
+import { Insight } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 
 interface InsightsPanelProps {
     insights: Insight[]

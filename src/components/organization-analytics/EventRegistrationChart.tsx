@@ -12,7 +12,7 @@ import {
     CartesianGrid,
     Legend,
 } from 'recharts'
-import { EventRegistrationPoint } from '@/app/(dashboard)/company-analytics/data'
+import { EventRegistrationPoint } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 
 interface EventRegistrationChartProps {
     data: EventRegistrationPoint[]

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { KpiMetric } from '@/app/(dashboard)/company-analytics/data'
+import { KpiMetric } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 import { OrganizationKpiCard } from './OrganizationKpiCard'
 
 interface OrganizationKpiCardsProps {

@@ -3,7 +3,7 @@
 import React from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as ReTooltip } from 'recharts'
 import { MapPin, Briefcase } from 'lucide-react'
-import { AudienceMetric } from '@/app/(dashboard)/analytics/data';
+import { AudienceMetric } from '@/app/(authenticated)/(dashboard)/analytics/data';
 
 interface AudienceInsightsProps {
   industries: AudienceMetric[]

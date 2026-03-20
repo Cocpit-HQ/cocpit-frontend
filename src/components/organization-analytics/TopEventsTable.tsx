@@ -3,7 +3,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Trophy } from 'lucide-react'
-import { TopEvent } from '@/app/(dashboard)/company-analytics/data'
+import { TopEvent } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 
 interface TopEventsTableProps {
     data: TopEvent[]

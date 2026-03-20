@@ -8,7 +8,7 @@ import {
     Heart,
     TrendingUp,
 } from 'lucide-react'
-import { ContentKpiMetric } from '@/app/(dashboard)/company-analytics/data'
+import { ContentKpiMetric } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 import { MetricCard } from './MetricCard'
 
 const iconMap = {

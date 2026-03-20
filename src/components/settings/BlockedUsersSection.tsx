@@ -14,7 +14,7 @@ interface BlockedUser {
     account_name: string;
 }
 
-export default function BlockedUsersPage() {
+export function BlockedUsersSection() {
     const { unblockUser } = useSocial();
     const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
     const [loading, setLoading] = useState(true);

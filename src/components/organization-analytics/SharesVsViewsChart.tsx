@@ -13,7 +13,7 @@ import {
     ResponsiveContainer,
     Legend
 } from 'recharts'
-import { WeeklyComparisonPoint } from '@/app/(dashboard)/company-analytics/data'
+import { WeeklyComparisonPoint } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 
 interface SharesVsViewsChartProps {
     data: WeeklyComparisonPoint[]

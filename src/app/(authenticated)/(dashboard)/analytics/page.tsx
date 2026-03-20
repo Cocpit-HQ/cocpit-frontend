@@ -12,7 +12,7 @@ import {
   TARGET_ROLES,
   getSkillGapData,
   SkillData
-} from '@/app/(dashboard)/analytics/data'
+} from '@/app/(authenticated)/(dashboard)/analytics/data'
 import { useQuery } from '@tanstack/react-query'
 import { getDashboardStats } from '@/services/api/dashboard'
 

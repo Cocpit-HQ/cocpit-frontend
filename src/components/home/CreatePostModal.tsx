@@ -31,6 +31,7 @@ export interface CreatePostModalProps {
   editPostId?: string;
   onUpdate?: (post: Partial<Post>) => void;
   sharedPostId?: string;
+  sharedJobId?: string;
   companyId?: string;
   companyName?: string;
   companyLogo?: string;
@@ -199,7 +200,8 @@ export function CreatePostModal({
   companyName,
   companyLogo,
   onPostCreated,
-  initialSharedPost
+  initialSharedPost,
+  sharedJobId
 }: CreatePostModalProps) {
   const isMobile = useIsMobile();
   const { addPost } = useFeed();
@@ -300,7 +302,7 @@ export function CreatePostModal({
   const [aspectRatio, setAspectRatio] = useState(4 / 5);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [previewMediaUrls, setPreviewMediaUrls] = useState<string[]>([]);
-  const [sharedPost, setSharedPost] = useState<Post | null>(initialSharedPost || null);
+  const [sharedPost, setSharedPost] = useState<any>(initialSharedPost || null);
 
   // Refs to track media for cleanup without triggering effects
   const uploadedImagesRef = useRef<MediaItem[]>([]);
@@ -820,7 +822,6 @@ export function CreatePostModal({
   );
 
   // --- Background Upload Integration ---
-  // const { startUpload } = usePostUpload(); // Moved to top
 
   const handlePost = async () => {
     const { text: finalContent } = getActiveState();
@@ -837,7 +838,11 @@ export function CreatePostModal({
       companyId: isCompanyPost ? postAsCompanyId || undefined : undefined // Use local state
     };
 
+    let filesToUpload: File[] = [];
+
     if (sharedPostId) payload.shared_post_id = sharedPostId;
+    if (sharedJobId) payload.shared_job_id = sharedJobId;
+    console.log('[CreatePostModal Debug] payload:', payload);
 
     // Handle Poll
     if (postType === 'poll') {
@@ -848,9 +853,6 @@ export function CreatePostModal({
       payload.content = pollQuestion;
       payload.title = "";
     }
-
-    // Collect Files
-    let filesToUpload: File[] = [];
 
     if (postType === 'photo') {
       const processedFiles = await Promise.all(uploadedImages.map(async (item) => {
@@ -994,7 +996,7 @@ export function CreatePostModal({
     if (postType === 'video') return uploadedVideos.length === 0;
     if (postType === 'article') return !articleTitle.trim() || !articleContent.trim() || articleContent === '<p></p>';
     // Text post
-    return !description.trim() && !sharedPostId;
+    return !description.trim() && !sharedPostId && !sharedJobId;
   };
 
   // Common Header Content for Mobile (Visibility + Category)
@@ -1423,7 +1425,7 @@ export function CreatePostModal({
                       )}
 
                       {/* SHARED POST PREVIEW */}
-                      {sharedPost && (
+                      {sharedPost && !sharedPost.isJob && (
                         <div className="mt-4 border border-border/50 rounded-xl overflow-hidden bg-muted/20 backdrop-blur-sm">
                           <div className="p-3 flex items-center gap-3 border-b border-border/50 bg-muted/10">
                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden shrink-0">
@@ -1457,6 +1459,32 @@ export function CreatePostModal({
                                 </div>
                               </div>
                             )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* SHARED JOB PREVIEW */}
+                      {sharedPost && sharedPost.isJob && (
+                        <div className="mt-4 border border-border/50 rounded-xl overflow-hidden bg-muted/20 backdrop-blur-sm p-4 flex gap-4 items-center">
+                          <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-lg bg-background overflow-hidden flex items-center justify-center border border-border/50 shadow-sm">
+                            {sharedPost.jobLogo ? (
+                              <img src={sharedPost.jobLogo} alt={sharedPost.jobCompany || "Company"} className="w-full h-full object-contain p-1" />
+                            ) : (
+                              <span className="text-2xl font-bold text-muted-foreground">{sharedPost.jobCompany?.charAt(0) || "J"}</span>
+                            )}
+                          </div>
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <h4 className="text-base font-semibold text-foreground truncate">{sharedPost.jobTitle}</h4>
+                            <p className="text-sm text-foreground/90 truncate font-medium">{sharedPost.jobCompany}</p>
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                              {sharedPost.jobLocation}
+                              {sharedPost.jobWorkMode ? ` (${sharedPost.jobWorkMode})` : ''}
+                            </p>
+                          </div>
+                          <div className="shrink-0 ml-4 hidden sm:block">
+                             <div className="px-4 py-1.5 rounded-full border border-primary text-primary text-sm font-medium shadow-sm">
+                               View job
+                             </div>
                           </div>
                         </div>
                       )}

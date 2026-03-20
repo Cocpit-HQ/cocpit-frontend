@@ -3,7 +3,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Building2, MapPin, Award } from 'lucide-react'
-import { AudienceSegment } from '@/app/(dashboard)/company-analytics/data'
+import { AudienceSegment } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 
 interface AudienceBreakdownProps {
     industry: AudienceSegment[]

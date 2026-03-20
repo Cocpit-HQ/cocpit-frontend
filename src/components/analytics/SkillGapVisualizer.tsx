@@ -11,7 +11,7 @@ import {
   Tooltip
 } from 'recharts'
 import { Target, ChevronRight, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { TARGET_ROLES, getSkillGapData, SkillData } from '@/app/(dashboard)/analytics/data';
+import { TARGET_ROLES, getSkillGapData, SkillData } from '@/app/(authenticated)/(dashboard)/analytics/data';
 
 export function SkillGapVisualizer() {
   const [selectedRole, setSelectedRole] = useState(TARGET_ROLES[0].id)

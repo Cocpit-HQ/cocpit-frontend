@@ -8,7 +8,7 @@ import {
     Eye,
     TrendingUp,
 } from 'lucide-react'
-import { EventKpiMetric } from '@/app/(dashboard)/company-analytics/data'
+import { EventKpiMetric } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 import { MetricCard } from './MetricCard'
 
 const iconMap = {

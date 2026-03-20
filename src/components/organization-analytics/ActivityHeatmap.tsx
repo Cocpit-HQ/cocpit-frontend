@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Flame } from 'lucide-react'
-import { ActivityDay } from '@/app/(dashboard)/company-analytics/data'
+import { ActivityDay } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 
 interface ActivityHeatmapProps {
     data: ActivityDay[]

@@ -3,7 +3,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Trophy } from 'lucide-react'
-import { TopJob } from '@/app/(dashboard)/company-analytics/data'
+import { TopJob } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 
 interface TopJobsTableProps {
     data: TopJob[]

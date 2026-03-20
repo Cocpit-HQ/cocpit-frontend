@@ -8,7 +8,7 @@ import {
     TrendingUp,
     Activity,
 } from 'lucide-react'
-import { FollowerKpiMetric } from '@/app/(dashboard)/company-analytics/data'
+import { FollowerKpiMetric } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 import { MetricCard } from './MetricCard'
 
 const iconMap = {

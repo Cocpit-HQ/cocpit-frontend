@@ -11,7 +11,7 @@ import {
     TrendingUp,
     Search,
 } from 'lucide-react'
-import { KpiMetric } from '@/app/(dashboard)/company-analytics/data'
+import { KpiMetric } from '@/app/(authenticated)/(dashboard)/company-analytics/data'
 import { MetricCard } from './MetricCard'
 
 const iconMap = {

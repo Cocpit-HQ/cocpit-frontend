@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Bookmark, Briefcase, Clock, MapPin, DollarSign, Zap, CheckCircle, Mic, Video, X } from "lucide-react"
+import { Bookmark, Briefcase, Clock, MapPin, DollarSign, Zap, CheckCircle, Mic, Video, X, Share2 } from "lucide-react"
 import { type Job } from "@/types/jobs"
 import { useJobs } from "@/context/JobsContext"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { useState } from "react"
 import { QuickApplyModal } from "./QuickApplyModal"
 import { TaskSubmissionModal } from "./dashboard/TaskSubmissionModal"
+import { UniversalShareModal } from "@/components/share/UniversalShareModal"
 
 interface JobCardProps {
   job: Job
@@ -20,6 +21,7 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
   const { isCompany } = useActiveProfile()
   const [showQuickApply, setShowQuickApply] = useState(false)
   const [showTaskModal, setShowTaskModal] = useState(false)
+  const [isShareOpen, setIsShareOpen] = useState(false)
 
   // Status Badge Helper for non-applied view
   const getStatusBadge = (status?: string) => {
@@ -178,7 +180,17 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
 
           {/* Action Button */}
           <div className="shrink-0 flex flex-col gap-2 items-end">
-            <button
+            <div className="flex items-center gap-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsShareOpen(true)
+                }}
+                className="p-2 rounded-full text-muted-foreground hover:bg-muted/50 transition-colors"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
+              <button
               onClick={(e) => {
                 e.stopPropagation()
                 saveJob(job.jobId || job.id)
@@ -192,6 +204,7 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
             >
               <Bookmark className={cn("w-5 h-5", job.isSaved && "fill-current")} />
             </button>
+            </div>
 
             {/* View Details / Applied Badge */}
             <div className="mt-2 flex items-center gap-2">
@@ -234,6 +247,17 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
           // can trigger refresh
           setShowTaskModal(false)
         }}
+      />
+
+      <UniversalShareModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        entityId={job.jobId || job.id}
+        entityType="job"
+        entityName={job.title}
+        entityLocation={job.location}
+        entityHeadline={job.company}
+        entityAvatar={job.companyLogo}
       />
     </>
   )

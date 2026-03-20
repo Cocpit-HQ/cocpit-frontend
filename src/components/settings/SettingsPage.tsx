@@ -21,7 +21,7 @@ import {
   Bookmark,
 } from "lucide-react"
 
-import BlockedUsersPage from "@/app/(dashboard)/settings/blocked/page"
+import { BlockedUsersSection } from "@/components/settings/BlockedUsersSection"
 import ActiveSessions from "@/components/settings/ActiveSessions"
 import { deleteAccount } from "@/services/api/user"
 import { toast } from "sonner"
@@ -587,7 +587,7 @@ export default function SettingsPage() {
                     <p className="text-sm text-muted-foreground">Manage the users you have blocked</p>
                   </div>
                   <div className="rounded-xl bg-card border border-border overflow-hidden">
-                    <BlockedUsersPage />
+                    <BlockedUsersSection />
                   </div>
                 </div>
               )}

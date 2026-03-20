@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { Filter, MousePointerClick, UserCheck, MessageCircle } from 'lucide-react'
-import { FunnelStage, getFunnelData } from '@/app/(dashboard)/analytics/data';
+import { FunnelStage, getFunnelData } from '@/app/(authenticated)/(dashboard)/analytics/data';
 
 interface RecruiterFunnelProps {
   data: FunnelStage[]
