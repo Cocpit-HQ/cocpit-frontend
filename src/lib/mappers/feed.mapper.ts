@@ -116,7 +116,6 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         jobSalaryMax: sp.salary_max,
         jobIsActive: sp.is_active,
       } as Post & { isAvailable?: boolean; isJob?: boolean };
-      console.log('[Mapper Debug] Mapped Job sharedPost:', sharedPost);
     } else if (sp.author && sp.post_id) { // Ensure required fields exist
       const spImages: string[] = [];
       let spVideoSrc: string | undefined = undefined;

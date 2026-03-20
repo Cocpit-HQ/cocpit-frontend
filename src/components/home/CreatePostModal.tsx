@@ -3,6 +3,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Image, Video, Plus, Trash2, Camera, Smile, FileText, Sparkles, Bold, Italic, Heading2, Heading3, List, ListOrdered, Link as LinkIcon, Unlink, Loader2, Eye, EyeOff, Type, BarChart2, Edit2 } from 'lucide-react';
+import { Dialog, DialogPortal } from '@/components/ui/dialog';
 import { useFeed } from '@/hooks/use-feed';
 import { usePostUpload } from '@/context/PostUploadContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -1018,8 +1019,9 @@ export function CreatePostModal({
   );
 
   return (
-    <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogPortal>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div
           className={`relative w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col ${isMobile
             ? 'rounded-2xl bg-zinc-900/95 backdrop-blur-lg border border-white/10 shadow-2xl overflow-hidden'
@@ -1851,6 +1853,7 @@ export function CreatePostModal({
         onChange={handleVideoUpload}
         className="hidden"
       />
-    </>
+      </DialogPortal>
+    </Dialog>
   );
 }
