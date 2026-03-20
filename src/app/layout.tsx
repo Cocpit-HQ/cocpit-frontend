@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Cocpit",
   description: "Connect. Grow. Succeed.",
+  icons: {
+    icon: "/assets/logo.PNG",
+  },
 };
 
 export default function RootLayout({
