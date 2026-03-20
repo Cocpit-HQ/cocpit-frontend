@@ -37,7 +37,6 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { useAuth } from "@/hooks/use-auth"
 import FeedPost from "@/components/home/FeedPost"
 import PostCard from "@/components/shared/PostCard"
-import { BackButton } from "@/components/shared/BackButton"
 import { getUserPosts } from "@/services/api/profile"
 import { deletePost as apiDeletePost } from "@/services/api/posts"
 import { UserData, Skill, AddSkillsPayload } from "@/types/user"
@@ -70,7 +69,6 @@ const routes: Record<string, string> = {
 
 export default function ProfilePage() {
   const router = useRouter()
-  const showBackArrow = typeof window !== "undefined" && document.referrer.includes("/feed")
 
   // New TanStack Query Hook
   const { data: profileData, isLoading } = useMyProfile();
@@ -312,9 +310,6 @@ export default function ProfilePage() {
         ) : (
           <div className="flex flex-col gap-6 md:gap-8">
             <div className="flex flex-col gap-1 md:gap-2">
-              {/* Back Arrow */}
-              <BackButton />
-
               <div className="w-full">
               <div className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border">
 

@@ -34,10 +34,16 @@ export function MobileBottomNav({ onAdd }: MobileBottomNavProps) {
 
     // Feed special case
     if (route === "/feed" && pathname === "/") return true;
-    
+
     // Exact match for organization profile to avoid highlighting on settings/events
     if (route.startsWith('/organization/') && !route.endsWith('/settings') && !route.endsWith('/events')) {
       return pathname === route;
+    }
+
+    // Profile special case: only highlight for own profile and its sub-pages
+    // This prevents highlighting when viewing public profiles at /profile/[id]
+    if (route === "/profile") {
+      return pathname === "/profile" || pathname === "/profile/posts" || pathname.startsWith("/profile/edit");
     }
 
     // Default behavior
