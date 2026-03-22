@@ -24,9 +24,18 @@ const CreateStoryForm = dynamic(
   { ssr: false }
 )
 
+import { useScrollRestoration } from '@/hooks/use-scroll-restoration';
+import { useFeed } from '@/hooks/use-feed';
+import { useFeedUIStore } from '@/store/feed.store'
+
 export default function HomePage() {
   const [mounted, setMounted] = useState(false)
-  const [activeTab, setActiveTab] = useState('recent')
+  const { loading: isFeedLoading } = useFeed(true);
+  
+  // Render control: Block scroll setting until Feed Data is verified and DOM is rendered (mounted)
+  useScrollRestoration(mounted && !isFeedLoading);
+
+  const { activeTab, setActiveTab } = useFeedUIStore();
 
   // UI State
   const [showCreateStory, setShowCreateStory] = useState(false)

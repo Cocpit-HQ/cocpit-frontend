@@ -8,6 +8,7 @@ import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useAuth } from "@/hooks/use-auth"
 import { ProfileSwitcher } from "@/components/layout/ProfileSwitcher"
 import { useCompanyPermissions } from "@/components/organizations/hooks/use-company"
+import { useNavigationMemoryLink } from "@/hooks/use-navigation-memory"
 
 interface MobileBottomNavProps {
   onAdd?: () => void
@@ -22,6 +23,7 @@ const NAV_ROUTES: Record<string, string> = {
 
 export function MobileBottomNav({ onAdd }: MobileBottomNavProps) {
   const pathname = usePathname()
+  const { handleNavClick } = useNavigationMemoryLink()
   const { activeProfile, isCompany } = useActiveProfile()
   const { user } = useAuth()
   const { canPostJobs, canCreateContent, checkPermission } = useCompanyPermissions(activeProfile)
@@ -57,6 +59,7 @@ export function MobileBottomNav({ onAdd }: MobileBottomNavProps) {
       <div className="max-w-md mx-auto flex items-center justify-between px-4 py-2">
         <Link
           href="/feed"
+          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/feed')}
           className="flex flex-col items-center gap-1 flex-1"
         >
           <Home
@@ -74,6 +77,7 @@ export function MobileBottomNav({ onAdd }: MobileBottomNavProps) {
         {showJobs && (
           <Link
             href="/jobs"
+            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/jobs')}
             className="flex flex-col items-center gap-1 flex-1"
           >
             <Briefcase
@@ -104,6 +108,7 @@ export function MobileBottomNav({ onAdd }: MobileBottomNavProps) {
 
         <Link
           href="/events"
+          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/events')}
           className="flex flex-col items-center gap-1 flex-1"
         >
           <Calendar

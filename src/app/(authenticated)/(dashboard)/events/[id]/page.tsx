@@ -4,6 +4,7 @@ import {
   EventRegistrationModal,
 } from '@/components/events/EventRegistrationModal';
 import { useParams, useRouter } from 'next/navigation';
+import { useSmartBack } from '@/hooks/use-smart-back';
 import { useEvents } from '@/context/EventsContext';
 import { getEventById, registerForEvent } from "@/services/api/event"
 import { mapBackendEventToEventCard } from "@/lib/mappers/event.mapper"
@@ -23,6 +24,7 @@ import type { EventCard } from '@/types/event';
 const EventDetailPage = () => {
   const params = useParams();
   const router = useRouter();
+  const { goBack } = useSmartBack();
   const { id } = params;
 
   // Normalize ID to string for comparison, as URL params are strings
@@ -97,7 +99,7 @@ const EventDetailPage = () => {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <div className="text-xl text-red-500 font-semibold">{error || "Event not found"}</div>
         <button
-          onClick={() => router.back()}
+          onClick={() => goBack('/events')}
           className="flex items-center gap-2 text-primary hover:underline"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -116,7 +118,7 @@ const EventDetailPage = () => {
 
         <div className="mb-4 flex items-center justify-between">
           <button
-            onClick={() => router.back()}
+            onClick={() => goBack('/events')}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />

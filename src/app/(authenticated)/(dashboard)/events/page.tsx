@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { EventsPage } from "@/components/events/EventsPage";
 import { Loader2 } from "lucide-react";
+import { MemoryRouter } from "@/components/layout/MemoryRouter";
 
 export default function EventsRoute() {
   return (
@@ -9,6 +10,7 @@ export default function EventsRoute() {
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     }>
+      <MemoryRouter section="events" />
       <EventsPage />
     </Suspense>
   );

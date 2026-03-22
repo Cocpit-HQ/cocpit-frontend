@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Filter, Plus, Search, Loader2 } from "lucide-react"
 import { useInView } from "react-intersection-observer"
 
-import { AppShell } from "@/components/layout/AppShell"
 import { JobCard } from "@/components/jobs/JobCard"
 import { JobFiltersSidebar } from "@/components/jobs/JobFiltersSidebar"
 import { JobSearchBar } from "@/components/jobs/JobSearchBar"
@@ -15,19 +14,11 @@ import { JobTabs } from "@/components/jobs/JobTabs"
 import { CreateJobModal } from "@/components/jobs/CreateJobModal"
 import { JobPostsDashboard } from "@/components/jobs/dashboard/JobPostsDashboard"
 import { useJobs } from "@/context/JobsContext"
-import type { Page } from "@/types/common"
-
-const routes: Record<string, string> = {
-  home: "/feed",
-  network: "/showcase",
-  events: "/events",
-  profile: "/profile",
-  settings: "/settings",
-  jobs: "/jobs",
-  analytics: "/analytics",
-}
+import { useScrollRestoration } from "@/hooks/use-scroll-restoration"
 
 export default function JobsPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _searchParams = searchParams;
   const router = useRouter()
   const searchParamsHook = useSearchParams()
   const [mounted, setMounted] = useState(false)
@@ -41,7 +32,6 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
     setMyJobsTab,
     searchKeywords,
     setSearchKeywords,
-    filters,
     isLoading,
     isFetchingNextPage,
     hasNextPage,
@@ -56,33 +46,47 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true)
+  }, [])
+
   // Sync URL params with Context State
   useEffect(() => {
-    setMounted(true)
-    const tab = searchParamsHook.get('tab')
-    const subtab = searchParamsHook.get('subtab')
+    requestAnimationFrame(() => {
+      const tab = searchParamsHook.get('tab')
+      const subtab = searchParamsHook.get('subtab')
 
-    if (tab === 'my-jobs') {
-      setActiveTab('my-jobs')
-      if (subtab && ['in-progress', 'applied', 'in-past', 'saved'].includes(subtab as string)) {
-        setMyJobsTab(subtab as any)
+      if (tab === 'my-jobs') {
+        setActiveTab('my-jobs')
+        if (subtab && ['in-progress', 'applied', 'in-past', 'saved'].includes(subtab as string)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setMyJobsTab(subtab as any)
+        }
+      } else if (tab === 'offers') {
+        setActiveTab('offers')
+      } else if (tab === 'dashboard') {
+        setActiveTab('dashboard')
+      } else {
+        setActiveTab('view')
       }
-    } else if (tab === 'offers') {
-      setActiveTab('offers')
-    } else if (tab === 'dashboard') {
-      setActiveTab('dashboard')
-    } else {
-      setActiveTab('view')
-    }
+    })
   }, [searchParamsHook, setActiveTab, setMyJobsTab])
 
-  const navigateTo = (page: Page) => {
-    router.push(routes[page] ?? "/feed")
-  }
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useScrollRestoration(mounted, isDesktop ? "jobs-scroll-container" : undefined);
 
   // --- Search State ---
   const [isSearchExpanded, setIsSearchExpanded] = useState(false)
-  const [searchLocations, setSearchLocations] = useState<string[]>([])
+  const [searchLocations] = useState<string[]>([])
   const [searchLocationInput, setSearchLocationInput] = useState("")
 
   // --- Mobile UI State ---
@@ -301,7 +305,7 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
                   <div className="relative h-full lg:bg-card lg:border lg:border-border lg:rounded-xl flex flex-col lg:overflow-hidden">
 
                     {/* Scrollable Content Area */}
-                    <div className="flex-1 lg:overflow-y-auto lg:[&::-webkit-scrollbar]:hidden lg:p-6">
+                    <div id="jobs-scroll-container" className="flex-1 lg:overflow-y-auto lg:[&::-webkit-scrollbar]:hidden lg:p-6">
                       <div className="space-y-4">
                         {/* Header Content - Now Scrollable */}
                         <div className="hidden lg:block">

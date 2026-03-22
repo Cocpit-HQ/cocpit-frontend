@@ -15,6 +15,8 @@ import { UserEventsList } from "@/components/events/UserEventsList"
 import { useEventFeed } from "@/components/events/hooks/use-event-queries"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useCompanyPermissions } from "@/hooks/use-organization"
+import { useEventUrlState } from "@/hooks/use-event-url-state"
+import { useScrollRestoration } from "@/hooks/use-scroll-restoration"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -31,11 +33,9 @@ export function EventsPage() {
   const searchParams = useSearchParams()
   const { theme } = useTheme()
 
-  // State
-  const [searchQuery, setSearchQuery] = useState("")
-  const [filters, setFilters] = useState<FilterState>(initialFilterState)
+  // State mapping to URL
+  const { searchQuery, setSearchQuery, filters, setFilters, activeTab, setActiveTab } = useEventUrlState();
   const [showCreateEvent, setShowCreateEvent] = useState(false)
-  const [activeTab, setActiveTabState] = useState(searchParams.get('tab') || "upcoming")
 
   const { activeProfile, isCompany } = useActiveProfile()
   const { canCreateContent } = useCompanyPermissions(activeProfile)
@@ -43,25 +43,12 @@ export function EventsPage() {
   // Determine if user can create event (always true for normal users, gated for companies)
   const canCreateEvent = !isCompany || canCreateContent
 
-  // URL Sync
-  const setActiveTab = (tab: string) => {
-    setActiveTabState(tab);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('tab', tab);
-    router.replace(`/events?${params.toString()}`, { scroll: false });
-  };
-
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  useEffect(() => {
-    const tabFromUrl = searchParams.get('tab');
-    if (tabFromUrl && tabFromUrl !== activeTab) {
-      setActiveTabState(tabFromUrl);
-    }
-  }, [searchParams]);
+  useScrollRestoration(mounted);
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed")
@@ -69,12 +56,12 @@ export function EventsPage() {
 
   // Filter Helpers
   const removeFilter = (type: keyof FilterState, value: string) => {
-    setFilters(prev => {
+    setFilters((prev: FilterState) => {
       const list = prev[type] as string[];
       return { ...prev, [type]: list.filter(v => v !== value) };
     });
   }
-  const removePopular = () => setFilters(prev => ({ ...prev, popular: false }));
+  const removePopular = () => setFilters((prev: FilterState) => ({ ...prev, popular: false }));
 
   // Hero Carousel Logic: Fetch first few items from the feed hook to display as suggestions
   // We can just use the same hook but with limit=3 or reuse the cache.
@@ -130,25 +117,25 @@ export function EventsPage() {
                 <button onClick={removePopular} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
               </div>
             )}
-            {filters.types.map(t => (
+            {filters.types.map((t: string) => (
               <div key={t} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
                 {t === 'InPerson' ? 'In-person' : t}
                 <button onClick={() => removeFilter('types', t)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
               </div>
             ))}
-            {filters.prices.map(p => (
+            {filters.prices.map((p: string) => (
               <div key={p} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
                 {p}
                 <button onClick={() => removeFilter('prices', p)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
               </div>
             ))}
-            {filters.categories.map(c => (
+            {filters.categories.map((c: string) => (
               <div key={c} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
                 {c}
                 <button onClick={() => removeFilter('categories', c)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>
               </div>
             ))}
-            {filters.dates.map(d => (
+            {filters.dates.map((d: string) => (
               <div key={d} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
                 {d}
                 <button onClick={() => removeFilter('dates', d)} className="hover:text-primary/70"><X className="w-3 h-3" /></button>

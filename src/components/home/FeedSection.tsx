@@ -61,8 +61,9 @@ export const FeedSection = ({
     const virtualizer = useWindowVirtualizer({
         count: sortedPosts.length,
         estimateSize: () => 350, // estimated height of a post
-        overscan: 5, // pre-render 5 posts outside of viewport
+        overscan: 20, // pre-render 20 posts outside of viewport to mitigate gray screen on fast scroll
         scrollMargin: listRef.current?.offsetTop ?? 0,
+        initialOffset: typeof window !== 'undefined' ? parseInt(sessionStorage.getItem('scroll-/feed') || '0', 10) : 0,
     });
 
     return (

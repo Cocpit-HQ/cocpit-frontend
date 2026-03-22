@@ -10,12 +10,14 @@ import { usePathname } from "next/navigation";
 import { useUIStore } from "@/store/ui.store";
 import { CreatePostModal } from "@/components/home/CreatePostModal";
 import MobileCreateMenu from "@/components/home/MobileCreateMenu";
+import { useNavigationTracker } from "@/hooks/use-navigation-memory";
 
 export default function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    useNavigationTracker();
     const pathname = usePathname();
     const isFeedRoute = pathname?.startsWith("/feed") ?? false;
     const { activeModal, setActiveModal, isOptionsOpen, setOptionsOpen, initialPostType } = useUIStore();

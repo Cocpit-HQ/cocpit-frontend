@@ -14,7 +14,7 @@ import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { respondToOffer } from "@/services/api/offers"
 import { toast } from "sonner"
 import { UniversalShareModal } from "@/components/share/UniversalShareModal"
-
+import { useSmartBack } from "@/hooks/use-smart-back"
 
 interface JobDetailViewProps {
   job: Job
@@ -22,6 +22,7 @@ interface JobDetailViewProps {
 
 export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
   const router = useRouter()
+  const { goBack } = useSmartBack()
   const { jobs, saveJob } = useJobs()
   const { isCompany } = useActiveProfile()
 
@@ -78,12 +79,12 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
                     step.completed ? "text-primary" : isGlow ? "text-primary font-bold" : "text-muted-foreground"
                   )}>{step.status}</span>
                   {step.date && <span className="text-xs text-muted-foreground">{step.date}</span>}
-                </div>
+                 </div>
               </div>
-            )
-          })}
-        </div>
-      </div>
+             )
+           })}
+         </div>
+       </div>
     )
   }
 
@@ -93,7 +94,7 @@ export function JobDetailView({ job: initialJob }: JobDetailViewProps) {
       <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center gap-4">
           <button
-            onClick={() => router.back()}
+            onClick={() => goBack('/jobs')}
             className="p-2 hover:bg-muted rounded-full transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-muted-foreground" />

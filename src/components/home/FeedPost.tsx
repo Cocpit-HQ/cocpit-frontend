@@ -45,6 +45,7 @@ import { PollCard } from './PollCard'
 import { updatePost, toggleLike, voteInPoll, removeVote, addComment, deleteComment, getComments, deletePost } from '@/services/api/posts'
 import { SaveButton } from './SaveButton'
 import { useFeed } from '@/hooks/use-feed'
+import { useFeedUIStore } from '@/store/feed.store'
 
 // Lazy-load heavy modal/drawer components (only loaded when user interacts)
 const CommentSection = dynamic(() => import('./CommentSection'), { ssr: false })
@@ -139,7 +140,10 @@ export default function FeedPost({
   const [isCommented, setIsCommented] = useState(initialIsCommented)
   const [isSaved, setIsSaved] = useState(is_saved)
   const [likeCount, setLikeCount] = useState(typeof likes === 'string' ? parseInt(likes) : likes)
-  const [isExpanded, setIsExpanded] = useState(false)
+
+  const { expandedPosts, setExpandedPost, expandedComments, setExpandedComment, imageAspectRatios, setImageAspectRatio } = useFeedUIStore();
+  const isExpanded = expandedPosts[id.toString()] || false;
+  const setIsExpanded = (val: boolean) => setExpandedPost(id.toString(), val);
 
   // Sync state with props
   useEffect(() => {
@@ -151,7 +155,8 @@ export default function FeedPost({
   useEffect(() => {
     setLikeCount(typeof likes === 'string' ? parseInt(likes) : likes);
   }, [likes]);
-  const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false)
+  const isCommentSectionOpen = expandedComments[id.toString()] || false;
+  const setIsCommentSectionOpen = (val: boolean) => setExpandedComment(id.toString(), val);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false)
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false)
@@ -182,8 +187,9 @@ export default function FeedPost({
   const searchParams = useSearchParams();
 
   // Dynamic aspect ratio for images (when backend doesn't provide it)
+  const storedRatio = imageAspectRatios[id.toString()];
   const [dynamicAspectRatio, setDynamicAspectRatio] = useState<number | undefined>(
-    aspectRatio && aspectRatio !== 'auto' ? parseFloat(aspectRatio.toString()) : undefined
+    aspectRatio && aspectRatio !== 'auto' ? parseFloat(aspectRatio.toString()) : storedRatio
   );
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -228,7 +234,9 @@ export default function FeedPost({
     if (!aspectRatio || aspectRatio === 'auto') {
       const img = event.currentTarget;
       const ratio = img.naturalWidth / img.naturalHeight;
-      setDynamicAspectRatio(snapAspectRatio(ratio));
+      const snapped = snapAspectRatio(ratio);
+      setDynamicAspectRatio(snapped);
+      setImageAspectRatio(id.toString(), snapped);
     }
   };
 
@@ -237,7 +245,9 @@ export default function FeedPost({
       const video = event.currentTarget;
       const ratio = video.videoWidth / video.videoHeight;
       if (ratio && !isNaN(ratio)) {
-        setDynamicAspectRatio(snapAspectRatio(ratio));
+        const snapped = snapAspectRatio(ratio);
+        setDynamicAspectRatio(snapped);
+        setImageAspectRatio(id.toString(), snapped);
       }
     }
   };

@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import { ProfileSwitcher } from './ProfileSwitcher'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { useCompanyPermissions } from '@/components/organizations/hooks/use-company'
+import { useNavigationMemoryLink } from '@/hooks/use-navigation-memory'
 
 interface DarkSidebarProps {
   className?: string
@@ -14,6 +15,7 @@ interface DarkSidebarProps {
 
 export function DarkSidebar({ className }: DarkSidebarProps) {
   const pathname = usePathname()
+  const { handleNavClick } = useNavigationMemoryLink()
   const { activeProfile, isCompany } = useActiveProfile()
   const { canEdit, checkPermission } = useCompanyPermissions(activeProfile)
   
@@ -82,6 +84,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
               <Link
                 key={item.label}
                 href={item.href}
+                onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, item.href)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${active ? 'bg-primary text-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}>
                 <Icon className="w-5 h-5" />
                 <div className="flex-1 text-left">
@@ -101,7 +104,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
                 const Icon = item.icon
                 const active = isActive(item.href)
                 return (
-                  <Link key={item.label} href={item.href} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${active ? 'bg-primary/10 text-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}>
+                  <Link key={item.label} href={item.href} onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, item.href)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${active ? 'bg-primary/10 text-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}>
                     <Icon className="w-5 h-5" />
                     <div className="flex-1 text-left">
                       <div className="text-sidebar-foreground">{item.label}</div>
