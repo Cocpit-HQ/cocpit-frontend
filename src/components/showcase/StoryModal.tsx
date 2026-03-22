@@ -6,9 +6,11 @@ import { showcaseService } from "@/services/showcase.service"
 import { StoryMetadata } from "@/types/story-editor"
 import { VirtualLayerCanvas } from "./ViewerLayerItem"
 import { SharedPostCard } from "./SharedPostCard"
+import { JobStoryCard } from "../jobs/JobStoryCard"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useStorySync } from "@/components/showcase/hooks/use-story-sync"
 import { useStories } from '@/context/StoriesContext'
+import { getStoryImageUrl, getStoryThumbnailUrl, getStoryVideoUrl, parseStoryMetadata } from "@/lib/story-media"
 
 type StoryModalProps = {
   story: StoryDetail
@@ -26,6 +28,38 @@ interface StoryAnalytics {
   viewers: StoryAuthor[];
   likers: StoryAuthor[];
 }
+
+interface StoryComment {
+  comment_id?: string | number;
+  avatar_url?: string | null;
+  full_name?: string;
+  created_at?: string;
+  content?: string;
+}
+
+type StoryLayer = {
+  id: string;
+  type: "image" | "video";
+  src: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  scale: number;
+  zIndex: number;
+  style: Record<string, unknown>;
+};
+
+type StoryModalMetadata = ReturnType<typeof parseStoryMetadata> & {
+  type?: string;
+  scale?: number;
+  backgroundStyle?: string;
+  background?: unknown;
+  layers?: StoryLayer[];
+};
+
+type JobStoryMetadata = React.ComponentProps<typeof JobStoryCard>["metadata"];
 
 const PREDEFINED_EMOJIS = [
   "😀", "😂", "😍", "🥰", "😎", "😭", "😡", "🤯",
@@ -47,8 +81,8 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
 
   // Real Data State
   const [activeTab, setActiveTab] = useState<'comments' | 'viewers' | 'likes'>('comments')
-  const [realComments, setRealComments] = useState<any[]>([])
-  const [loadingComments, setLoadingComments] = useState(false)
+  const [realComments, setRealComments] = useState<StoryComment[] | null>(null)
+  const loadingComments = realComments === null
 
   // UI State
   const [showDescription, setShowDescription] = useState(false)
@@ -81,17 +115,19 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
 
   // Fetch comments
   useEffect(() => {
-    setLoadingComments(true)
     showcaseService.getStoryComments(story.id)
       .then(data => setRealComments(data))
       .catch(err => console.error("Failed to fetch comments", err))
-      .finally(() => setLoadingComments(false))
+      .finally(() => {
+        setRealComments((prev) => prev ?? [])
+      })
   }, [story.id])
 
   // Real-time synchronization
   useStorySync(story.id, {
     onCommentAdded: (newComment) => {
       setRealComments(prev => {
+        if (!prev) return [newComment];
         if (prev.some(c => c.comment_id === newComment.comment_id)) return prev;
         return [...prev, newComment];
       });
@@ -117,42 +153,49 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
     return story.timeAgo || "";
   }, [story.created_at, story.timeAgo]);
 
+  const storyImageSrc = React.useMemo(() => getStoryImageUrl(story), [story]);
+  const storyThumbnailSrc = React.useMemo(() => getStoryThumbnailUrl(story), [story]);
+  const storyVideoSrc = React.useMemo(() => getStoryVideoUrl(story), [story]);
+  const parsedStoryMetadata = React.useMemo<StoryModalMetadata>(
+    () => parseStoryMetadata(story.story_metadata) as StoryModalMetadata,
+    [story.story_metadata]
+  );
+  const isJobStory = parsedStoryMetadata?.type === "job";
+  const commentsCount = realComments?.length ?? 0;
+
   const metadata = React.useMemo(() => {
-    let meta = story.story_metadata as any;
-    if (typeof meta === 'string') {
-      try {
-        meta = JSON.parse(meta);
-      } catch {
-        meta = { layers: [] };
-      }
-    }
-    const layers = meta?.layers || [];
+    const meta = parsedStoryMetadata;
+    const layers = Array.isArray(meta?.layers) ? [...meta.layers] : [];
 
     // Legacy Support: If no layers, create one from the base media
     if (layers.length === 0) {
       if (story.isVideo || story.media_type === 'video') {
-        layers.push({
+        const legacyVideoLayer: StoryLayer = {
           id: 'legacy-video',
           type: 'video',
-          src: story.media_url || story.image || '', // Fallback to image if video url missing? No, user needs video. 
-          // But actually story.image usually holds thumbnail for video. 
-          // If it's video, we need media_url. 
+          src: storyVideoSrc || '',
           x: 50, y: 50, width: 100, height: 100, rotation: 0, scale: 1, zIndex: 0,
           style: {}
-        } as any);
-      } else if (story.image || story.thumbnail_url) {
-        layers.push({
+        };
+        layers.push(legacyVideoLayer);
+      } else if (storyImageSrc || storyThumbnailSrc) {
+        const legacyImageLayer: StoryLayer = {
           id: 'legacy-image',
           type: 'image',
-          src: story.image || story.thumbnail_url || '',
+          src: storyImageSrc || storyThumbnailSrc || '',
           x: 50, y: 50, width: 100, height: 100, rotation: 0, scale: 1, zIndex: 0,
           style: {}
-        } as any);
+        };
+        layers.push(legacyImageLayer);
       }
     }
 
     return { ...meta, layers };
-  }, [story]);
+  }, [parsedStoryMetadata, story, storyImageSrc, storyThumbnailSrc, storyVideoSrc]);
+  const jobMetadata = metadata as unknown as JobStoryMetadata;
+  const backgroundClass = !storyImageSrc && !storyVideoSrc && typeof metadata?.backgroundStyle === "string"
+    ? metadata.backgroundStyle
+    : "";
 
   const handleDeleteStory = async () => {
     if (confirm("Are you sure you want to delete this story?")) {
@@ -205,7 +248,7 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
       try {
         const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
         const newComment = await showcaseService.addStoryComment(story.id, comment, companyId);
-        setRealComments(prev => [...prev, {
+        setRealComments(prev => [...(prev ?? []), {
           ...newComment.comment,
           full_name: "You",
           avatar_url: null,
@@ -256,7 +299,7 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
   return (
     <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="w-full max-w-6xl h-[85vh] bg-card rounded-2xl overflow-hidden flex shadow-2xl relative animate-in zoom-in-95 duration-200"
+        className="w-full max-w-6xl h-[85vh] bg-card rounded-2xl overflow-hidden flex shadow-2xl relative"
         onClick={e => e.stopPropagation()}
       >
 
@@ -338,17 +381,19 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
             </div>
 
             {/* Snapshot-based for images, VirtualLayerCanvas for videos (needs layer overlays) */}
-            <div className={`w-full h-full relative ${!(story.media_url || story.image) ? metadata.backgroundStyle || 'bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500' : ''}`}>
+            <div className={`w-full h-full relative ${backgroundClass}`}>
               {story.media_type === 'video' ? (
                 <VirtualLayerCanvas
                   layers={metadata.layers}
                   isActive
-                  background={metadata.background}
+                  background={metadata.background as string | undefined}
                 />
+              ) : isJobStory ? (
+                null
               ) : (
-                (story.media_url || story.image) ? (
+                storyImageSrc ? (
                   <img
-                    src={story.media_url || story.image || ''}
+                    src={storyImageSrc}
                     alt={story.title || 'Story'}
                     className="w-full h-full object-contain"
                   />
@@ -356,15 +401,21 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
               )}
 
               {/* Shared Post Overlay */}
-              {story.shared_post && (
+              {isJobStory ? (
+                <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-auto p-8">
+                  <div style={{ transform: `scale(${typeof metadata.scale === 'number' ? metadata.scale : 1.5})` }}>
+                    <JobStoryCard metadata={jobMetadata} onAction={onClose} />
+                  </div>
+                </div>
+              ) : story.shared_post ? (
                 <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-8">
                   <div style={{ transform: `scale(${metadata.scale || 0.9})` }} className="transition-transform duration-200">
                     <SharedPostCard sharedPost={story.shared_post} />
                   </div>
                 </div>
-              )}
+              ) : null}
 
-              {story.media_type !== 'video' && !(story.media_url || story.image) && !story.shared_post && (
+              {story.media_type !== 'video' && !isJobStory && !storyImageSrc && !story.shared_post && (
                 <div className="flex items-center justify-center h-full text-white/50 flex-col gap-2">
                   <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
                     <Play className="w-6 h-6 fill-current" />
@@ -405,7 +456,7 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
                   onClick={() => setActiveTab('comments')}
                   className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all ${activeTab === 'comments' ? 'bg-card shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                 >
-                  Comments ({realComments.length})
+                  Comments ({commentsCount})
                 </button>
                 <button
                   onClick={() => setActiveTab('viewers')}
@@ -429,18 +480,18 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
                   {!story.isAuthor && (
                     <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
                       <MessageCircle className="w-3 h-3" />
-                      Comments ({realComments.length})
+                      Comments ({commentsCount})
                     </h4>
                   )}
 
                   {loadingComments ? (
                     <div className="text-center py-4 text-muted-foreground text-xs">Loading comments...</div>
-                  ) : realComments.length === 0 ? (
+                  ) : commentsCount === 0 ? (
                     <div className="text-center py-8 text-muted-foreground/50 italic text-sm">
                       No comments yet. Be the first to say something!
                     </div>
                   ) : (
-                    realComments.map((c, idx) => (
+                    (realComments ?? []).map((c, idx) => (
                       <div key={c.comment_id || idx} className="group relative bg-muted/30 hover:bg-muted/50 transition-colors rounded-2xl p-3 border border-transparent hover:border-border/50">
                         <div className="flex items-start gap-3">
                           <div className="w-8 h-8 rounded-full border border-border/50 overflow-hidden flex-shrink-0 bg-secondary">
@@ -455,7 +506,7 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-0.5">
                               <p className="text-xs font-bold text-foreground truncate">{c.full_name}</p>
-                              <span className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
+                              <span className="text-[10px] text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : ''}</span>
                             </div>
                             <p className="text-sm text-foreground/90 leading-relaxed">{c.content}</p>
                           </div>

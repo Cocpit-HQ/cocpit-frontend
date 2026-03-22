@@ -3,6 +3,7 @@ import { Play, Layers, Eye, ThumbsUp } from "lucide-react"
 import { AuthorBadge } from "@/components/showcase/AuthorBadge"
 import { formatCompactNumber } from "@/lib/utils"
 import type { StoryGroup, StoryDetail } from "@/types/showcase"
+import { getStoryThumbnailUrl } from "@/lib/story-media"
 
 interface StoryCardProps {
     group: StoryGroup
@@ -13,6 +14,10 @@ export function StoryCard({ group, onClick }: StoryCardProps) {
     const sortedStories = group.stories // Assuming already sorted by parent or we just take the list
     const latestStory = sortedStories[sortedStories.length - 1]
     const storiesCount = group.stories.length
+    const previewImage = latestStory ? getStoryThumbnailUrl(latestStory) : undefined
+    const fallbackBackground = latestStory?.story_metadata?.type === "job"
+        ? latestStory.story_metadata?.backgroundStyle || ""
+        : latestStory?.story_metadata?.backgroundStyle || "bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500"
 
     if (!latestStory) return null
 
@@ -39,9 +44,9 @@ export function StoryCard({ group, onClick }: StoryCardProps) {
                 <div className={`w-full h-full transition-all duration-500 filter blur-xl group-hover:blur-lg`}>
                     {/* Background Image/Color */}
                     <div className="w-full h-full absolute inset-0">
-                        {latestStory.image || latestStory.thumbnail_url ? (
+                        {previewImage ? (
                             <img
-                                src={latestStory.thumbnail_url || latestStory.image}
+                                src={previewImage}
                                 alt={latestStory.title}
                                 loading="lazy"
                                 decoding="async"
@@ -49,7 +54,7 @@ export function StoryCard({ group, onClick }: StoryCardProps) {
                                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
                             />
                         ) : (
-                            <div className={`w-full h-full ${latestStory.story_metadata?.backgroundStyle || 'bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500'}`} />
+                            <div className={`w-full h-full ${fallbackBackground}`} />
                         )}
                     </div>
 

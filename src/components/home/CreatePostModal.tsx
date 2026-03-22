@@ -11,6 +11,7 @@ import { createPost, CreatePostRequest } from '@/services/api/feed';
 import { getPostById, updatePost, UpdatePostRequest } from '@/services/api/posts';
 import { uploadMedia } from '@/services/api/media';
 import { Post, PostVisibility } from '@/types/entities';
+import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { MediaCropper } from './MediaCropper';
 import getCroppedImg, { getPaddedImg } from '@/lib/canvasUtils';
 import { PostPreview } from './PostPreview';
@@ -942,6 +943,8 @@ export function CreatePostModal({
 
         // 2. Create Post
         const response = await createPost(payload);
+        const createdPost = await getPostById(response.postId);
+        addPost(mapBackendPostToFrontend(createdPost));
 
         // 3. Notify
         if (notifyEmployees) {

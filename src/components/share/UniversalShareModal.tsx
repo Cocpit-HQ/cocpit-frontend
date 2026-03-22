@@ -192,7 +192,13 @@ export function UniversalShareModal({
         onClose();
     }
 
-    const handleShareToStory = () => {
+    const handleShareToStory = async () => {
+        if (entityType === 'job') {
+            router.push(`/stories/create?shared_job_id=${entityId}`);
+            onClose();
+            return;
+        }
+
         router.push(`/stories/create?shared_post_id=${entityId}`);
         onClose();
     }

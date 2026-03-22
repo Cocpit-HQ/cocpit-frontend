@@ -4,6 +4,7 @@ import { StoryDetail, StoryGroup } from "@/types/showcase"
 import { StoryInteractionPanel } from "./StoryInteractionPanel"
 import { showcaseService } from "@/services/showcase.service"
 import { SharedPostCard } from "./SharedPostCard"
+import { JobStoryCard } from "../jobs/JobStoryCard"
 import { StoryMetadata } from "@/types/story-editor"
 import { VirtualLayerCanvas } from "./ViewerLayerItem"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
@@ -99,6 +100,9 @@ export const UserStorySlide = ({
         const candidate = (url || "").trim();
         if (!candidate) return false;
 
+        // Reject the fake job placeholder from being treated as a valid image source
+        if (candidate === "job-structured-data") return false;
+
         if (
             candidate.startsWith("blob:") ||
             candidate.startsWith("data:") ||
@@ -192,8 +196,11 @@ export const UserStorySlide = ({
         setMediaLoadFailed(false)
         setIsVirtualLayerReady(false)
 
-        // For snapshot images: check if already cached to skip black flash
-        if (currentStory?.media_type !== 'video' && currentStory?.media_url) {
+        // For job stories: we handle readiness in the second useEffect
+        // but let's ensure we don't accidentally set it to false here for too long
+        if (currentStory?.story_metadata?.type === 'job') {
+            setIsImageReady(true);
+        } else if (currentStory?.media_type !== 'video' && currentStory?.media_url) {
             const probe = new Image();
             probe.src = currentStory.media_url;
             if (probe.complete && probe.naturalWidth > 0) {
@@ -227,6 +234,18 @@ export const UserStorySlide = ({
     });
 
     useEffect(() => {
+        if (currentStory) {
+            console.log("FINAL STORY:", currentStory);
+            console.log('[DEBUG] UserStorySlide currentStory details:', {
+                id: currentStory.id,
+                media_url: currentStory.media_url,
+                metadata_type: currentStory.story_metadata?.type,
+                full_metadata: currentStory.story_metadata
+            });
+        }
+    }, [currentStory?.id]);
+
+    useEffect(() => {
         if (!currentStory || isLayeredStory) return;
 
         if (currentStory.media_type === "video") {
@@ -234,6 +253,13 @@ export const UserStorySlide = ({
                 setMediaLoadFailed(true);
                 markVideoSlotReady(activeVideoSlot, true);
             }
+            return;
+        }
+
+        // For job stories, we are always ready if we used our internal placeholder or gradient
+        if (currentStory.story_metadata?.type === 'job') {
+            setMediaLoadFailed(false);
+            setIsImageReady(true);
             return;
         }
 
@@ -960,6 +986,12 @@ export const UserStorySlide = ({
                                 );
                             })}
                         </div>
+                    ) : currentStory.story_metadata?.type === "job" ? (
+                        currentStory.story_metadata?.backgroundStyle ? (
+                            <div className="absolute inset-0 z-0">
+                                <div className={`w-full h-full ${currentStory.story_metadata.backgroundStyle}`} />
+                            </div>
+                        ) : null
                     ) : hasValidCurrentImageSrc ? (
                         <>
                             {/* Snapshot-based: render the baked composite image directly */}
@@ -979,14 +1011,40 @@ export const UserStorySlide = ({
                         </>
                     ) : null}
 
-                    {/* Shared Post Overlay */}
-                    {currentStory.shared_post && (
-                        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-8">
-                            <div style={{ transform: `scale(${currentStory.story_metadata?.scale || 0.9})` }} className="transition-transform duration-200">
-                                <SharedPostCard sharedPost={currentStory.shared_post} />
-                            </div>
-                        </div>
-                    )}
+                    {/* Render Overlays based on Story Type */}
+                    {(() => {
+                        const metadata = currentStory.story_metadata;
+                        const type = metadata?.type;
+                        const scale = typeof metadata?.scale === "number"
+                            ? metadata.scale
+                            : type === "job"
+                                ? 1.5
+                                : 0.9;
+                        const scaleStyle = { transform: `scale(${scale})` };
+
+                        switch (type) {
+                            case 'job':
+                                return (
+                                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-auto p-8">
+                                        <div style={scaleStyle}>
+                                            <JobStoryCard metadata={metadata as any} onAction={onClose} />
+                                        </div>
+                                    </div>
+                                );
+                            case 'post':
+                            default:
+                                if (currentStory.shared_post) {
+                                    return (
+                                        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-8">
+                                            <div style={scaleStyle} className="transition-transform duration-200">
+                                                <SharedPostCard sharedPost={currentStory.shared_post} />
+                                            </div>
+                                        </div>
+                                    );
+                                }
+                                return null;
+                        }
+                    })()}
 
                     {/* Metadata Layers Overlay — rendered inside a fixed virtual canvas */}
                     {/* Only show layers if NOT using a pre-rendered final URL */}

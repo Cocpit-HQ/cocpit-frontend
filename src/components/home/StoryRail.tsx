@@ -8,6 +8,7 @@ import { UserMention, getSuggestedUsers } from '@/services/api/users'
 import { followUser } from '@/services/api/social'
 import { toast } from 'sonner'
 import { useStories } from '@/context/StoriesContext'
+import { getStoryThumbnailUrl } from '@/lib/story-media'
 
 type StoryRailProps = {
   groups: StoryGroup[]
@@ -19,7 +20,8 @@ type StoryRailProps = {
 
 // Helper to determine image source
 function getStoryImage(story: StoryDetail): string | null {
-  if (story.thumbnail_url) return story.thumbnail_url;
+  const thumbnailUrl = getStoryThumbnailUrl(story);
+  if (thumbnailUrl) return thumbnailUrl;
 
   if (story.media_type === 'video' || (story.image && (story.image.endsWith('.mp4') || story.image.endsWith('.mov')))) {
     if (story.image && story.image.includes('cloudinary')) {
