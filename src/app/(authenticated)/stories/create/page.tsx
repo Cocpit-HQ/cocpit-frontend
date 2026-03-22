@@ -11,6 +11,7 @@ function CreateStoryContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const sharedPostId = searchParams.get("shared_post_id")
+    const sharedJobId = searchParams.get("shared_job_id")
 
     return (
         <div className="flex flex-col h-screen bg-black text-white">
@@ -28,6 +29,7 @@ function CreateStoryContent() {
                     onCancel={() => router.back()}
                     onCreated={() => router.push('/feed')} // Or navigate to stories view
                     sharedPostId={sharedPostId}
+                    sharedJobId={sharedJobId}
                 />
             </div>
         </div>

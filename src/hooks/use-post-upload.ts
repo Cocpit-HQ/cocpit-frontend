@@ -2,8 +2,20 @@ import { useUIStore } from '@/store/ui.store';
 import { createPost, CreatePostRequest } from '@/services/api/feed';
 import { uploadMedia } from '@/services/api/media';
 import { useFeed } from '@/hooks/use-feed';
+import { getPostById } from '@/services/api/posts';
+import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
+
+type PendingUploadPost = {
+    id: string;
+    content: CreatePostRequest;
+    mediaFiles: File[];
+    progress: number;
+    status: 'uploading' | 'processing' | 'success' | 'error';
+    error?: string;
+    type: 'post';
+};
 
 export const usePostUpload = () => {
     const { pendingPosts, setPendingPosts } = useUIStore();
@@ -11,7 +23,7 @@ export const usePostUpload = () => {
 
     const startUpload = useCallback(async (content: CreatePostRequest, mediaFiles: File[]) => {
         const id = Math.random().toString(36).substring(7);
-        const newPendingPost: any = {
+        const newPendingPost: PendingUploadPost = {
             id,
             content,
             mediaFiles,
@@ -48,6 +60,8 @@ export const usePostUpload = () => {
             };
 
             const response = await createPost(finalContent);
+            const createdPost = await getPostById(response.postId);
+            addPost(mapBackendPostToFrontend(createdPost));
             
             // 3. Update Store
             setPendingPosts(prev => prev.map(p => 
@@ -68,7 +82,7 @@ export const usePostUpload = () => {
             ));
             toast.error("Failed to publish post");
         }
-    }, [setPendingPosts]);
+    }, [addPost, setPendingPosts]);
 
     return {
         pendingPosts,

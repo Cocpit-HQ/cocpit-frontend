@@ -134,3 +134,19 @@ export const shareToStory = async (payload: ShareToStoryPayload) => {
     return data;
 };
 
+export interface ShareJobToStoryPayload {
+    jobId: string;
+    title?: string;
+    company_name?: string;
+    location?: string;
+    avatar?: string;
+}
+
+/**
+ * Share a job to story.
+ */
+export const shareJobToStory = async (payload: ShareJobToStoryPayload) => {
+    const { data } = await api.post("/share/job-to-story", payload);
+    return data;
+};
+

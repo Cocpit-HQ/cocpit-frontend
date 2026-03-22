@@ -13,24 +13,29 @@ import { EditorCanvas } from "./editor/EditorCanvas";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { VirtualLayerCanvas } from "./ViewerLayerItem";
 import { v4 as uuidv4 } from "uuid";
+import { getJobById } from "@/services/api/jobs";
+import { JobStoryCard } from "../jobs/JobStoryCard";
 
 type Props = {
   onCancel?: () => void
   onCreated?: (story: StoryDetail) => void
   sharedPostId?: string | null
+  sharedJobId?: string | null
 }
 
-export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
+export function CreateStoryForm({ onCancel, onCreated, sharedPostId, sharedJobId }: Props) {
   const [description, setDescription] = useState("")
   const [selectedImage, setSelectedImage] = useState<string | null>(null) // Used for background in share mode
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [postData, setPostData] = useState<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [jobData, setJobData] = useState<any>(null)
 
   // Background selection & Scaling for text/shared post stories
   const [backgroundStyle, setBackgroundStyle] = useState("bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500")
-  const [scale, setScale] = useState(1);
+  const [scale, setScale] = useState(sharedJobId ? 1.5 : 1);
 
   // Editor State
   const [editingFile, setEditingFile] = useState<File | null>(null);
@@ -44,6 +49,7 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
   const imageInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<File | null>(null);
+  const isSharedEntityStory = !!sharedPostId || !!sharedJobId;
 
   // Fetch shared post data
   React.useEffect(() => {
@@ -70,6 +76,22 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
     }
   }, [sharedPostId]);
 
+  React.useEffect(() => {
+    if (sharedJobId) {
+      getJobById(sharedJobId)
+        .then((job) => {
+          setJobData(job);
+        })
+        .catch((err) => console.error("Failed to load shared job", err));
+    }
+  }, [sharedJobId]);
+
+  React.useEffect(() => {
+    if (sharedJobId) {
+      setScale((prev) => (prev === 1 ? 1.5 : prev));
+    }
+  }, [sharedJobId]);
+
   const handleCancel = () => {
     onCancel?.()
   }
@@ -78,10 +100,11 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
   const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
 
   const handleCreate = async () => {
-    if ((!selectedImage && !selectedVideo && !sharedPostId) || isSubmitting) return
+    if (sharedJobId && !jobData) return
+    if ((!selectedImage && !selectedVideo && !isSharedEntityStory) || isSubmitting) return
 
     // Duration Check (for video)
-    if (selectedVideo && !sharedPostId) {
+    if (selectedVideo && !isSharedEntityStory) {
       const video = document.createElement('video');
       video.src = selectedVideo;
       await new Promise((resolve) => {
@@ -108,7 +131,7 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
 
       let fileToUpload = mainFileToUpload;
 
-      if (!fileToUpload && sharedPostId) {
+      if (!fileToUpload && isSharedEntityStory) {
         const blob = await getGradientImage(backgroundStyle);
         fileToUpload = new File([blob], "shared-post-bg.jpg", { type: "image/jpeg" });
       }
@@ -168,6 +191,22 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
         public_id: mediaData.public_id,
         shared_post_id: sharedPostId || undefined,
         story_metadata: sharedPostId ? {
+          backgroundStyle: !selectedImage ? backgroundStyle : undefined,
+          scale: scale
+        } : sharedJobId ? {
+          type: "job",
+          job_id: jobData?.jobId || sharedJobId,
+          title: jobData?.title || "",
+          company_name: jobData?.company || "",
+          location: jobData?.location || "",
+          salary: jobData?.salary || "",
+          applicants: jobData?.applicants ?? 0,
+          company_logo: jobData?.companyLogo || "",
+          avatar: jobData?.companyLogo || "",
+          job_type: jobData?.type || "",
+          posted_time: jobData?.postedTime || "",
+          actively_hiring: !!jobData?.activelyHiring,
+          is_saved: !!jobData?.isSaved,
           backgroundStyle: !selectedImage ? backgroundStyle : undefined,
           scale: scale
         } : finalMetadataObj || undefined
@@ -359,7 +398,7 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
       )}
 
       {/* Dynamic Content Area */}
-      {!sharedPostId ? (
+      {!isSharedEntityStory ? (
         // STANDARD MODE
         <div className="space-y-6">
           {/* Mode Switcher */}
@@ -512,15 +551,39 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
 
             {/* Shared Post Card */}
             <div
-              className="z-10 w-full transition-transform duration-200"
+              className="z-10 w-full"
               style={{ transform: `scale(${scale})` }}
             >
-              {postData ? (
-                // Dynamically import or just access if I imported it. I'll rely on SharedPostCard import (which I need to add)
+              {sharedPostId ? (
+                postData ? (
                 <SharedPostCard sharedPost={postData} onClick={() => { }} />
-              ) : (
+                ) : (
                 <div className="w-full h-32 bg-white/10 animate-pulse rounded-xl" />
-              )}
+                )
+              ) : sharedJobId ? (
+                jobData ? (
+                  <div className="pointer-events-none">
+                    <JobStoryCard
+                      metadata={{
+                        job_id: jobData.jobId || sharedJobId,
+                        title: jobData.title,
+                        company_name: jobData.company,
+                        location: jobData.location,
+                        salary: jobData.salary,
+                        applicants: jobData.applicants,
+                        company_logo: jobData.companyLogo,
+                        avatar: jobData.companyLogo,
+                        job_type: jobData.type,
+                        posted_time: jobData.postedTime,
+                        actively_hiring: !!jobData.activelyHiring,
+                        is_saved: !!jobData.isSaved,
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full h-32 bg-white/10 animate-pulse rounded-xl" />
+                )
+              ) : null}
             </div>
           </div>
 
@@ -569,7 +632,7 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
             {/* Scale Control */}
             <div>
               <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                <span>Post Size</span>
+                <span>{sharedJobId ? "Card Size" : "Post Size"}</span>
                 <span>{Math.round(scale * 100)}%</span>
               </div>
               <input
@@ -601,7 +664,7 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
           <textarea
             id="story-description"
             placeholder="Add a description to your story..."
-            rows={sharedPostId ? 3 : 6}
+            rows={isSharedEntityStory ? 3 : 6}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="flex-1 bg-transparent focus:outline-none resize-none placeholder-muted-foreground"
@@ -619,7 +682,7 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId }: Props) {
         </button>
         <button
           onClick={handleCreate}
-          disabled={isSubmitting || (!selectedImage && !selectedVideo && !sharedPostId)}
+          disabled={isSubmitting || (sharedJobId && !jobData) || (!selectedImage && !selectedVideo && !isSharedEntityStory)}
           className="flex-1 px-6 py-3 rounded-lg text-sm bg-primary text-primary-foreground hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
