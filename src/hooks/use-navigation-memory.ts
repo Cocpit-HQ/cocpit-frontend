@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useCallback } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 const TRACKED_SECTIONS = ['events', 'jobs', 'feed'];
 
@@ -11,14 +11,22 @@ const TRACKED_SECTIONS = ['events', 'jobs', 'feed'];
  */
 export function useNavigationTracker() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     // Only track if it matches a known section boundary
     const sectionMatch = TRACKED_SECTIONS.find(s => pathname.startsWith(`/${s}`));
     if (sectionMatch) {
-      sessionStorage.setItem(`nav_memory_${sectionMatch}`, pathname);
+      const queryString = searchParams.toString();
+      const currentPath = queryString ? `${pathname}?${queryString}` : pathname;
+      sessionStorage.setItem(`nav_memory_${sectionMatch}`, currentPath);
+
+      // Store a flawless _base memory for robust back-navigation tab restoration
+      if (pathname === `/${sectionMatch}`) {
+        sessionStorage.setItem(`nav_memory_${sectionMatch}_base`, currentPath);
+      }
     }
-  }, [pathname]);
+  }, [pathname, searchParams]);
 }
 
 /**
