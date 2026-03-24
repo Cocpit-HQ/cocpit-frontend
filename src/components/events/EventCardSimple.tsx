@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export interface SimpleEvent {
-    id: number;
+    id: string | number;
     title: string;
     date: string;
     location: string;
