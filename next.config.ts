@@ -36,6 +36,20 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        // Proxy specific backend auth routes
+        source: "/api/auth/:path(login|refresh|register|google|logout|me|actor-context|sessions|reset-password|request-otp|verify-otp)",
+        destination: "http://localhost:5000/api/auth/:path*",
+      },
+      {
+        // Proxy all other /api routes except /api/auth
+        source: "/api/:path((?!auth).*)",
+        destination: "http://localhost:5000/api/:path*",
+      },
+    ];
+  },
 };
 
 const analyzeBundles = withBundleAnalyzer({

@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { jwtDecode } from "jwt-decode";
 import { JWT } from "next-auth/jwt";
+import { env } from "@/config/env";
 
 const inFlightRefreshByToken = new Map<string, Promise<JWT>>();
 const recentRefreshByToken = new Map<string, { accessToken: string; refreshToken: string; expiresAt: number }>();
@@ -97,7 +98,7 @@ async function refreshAccessTokenCoordinated(token: JWT): Promise<JWT> {
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   console.log("Attempting to refresh access token with token:", token);
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
+    const response = await fetch(`${env.API_URL}/auth/refresh`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -210,7 +211,7 @@ export const authOptions: NextAuthOptions = {
               password: credentials!.password,
             };
 
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
+          const res = await fetch(`${env.API_URL}${endpoint}`, {
             method: "POST",
             body: JSON.stringify(body),
             headers: {

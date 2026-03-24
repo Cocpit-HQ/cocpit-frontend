@@ -1,4 +1,5 @@
 import { signOut, getSession } from "next-auth/react";
+import { env } from "@/config/env";
 
 let isLoggingOut = false;
 
@@ -25,7 +26,7 @@ export const hardLogout = async (reason?: string, isInternal: boolean = false) =
     // 2. Notify backend of termination if we still have an access token
     const session = await getSession();
     if (session?.user?.accessToken) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+      fetch(`${env.API_URL}/auth/logout`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${session.user.accessToken}`

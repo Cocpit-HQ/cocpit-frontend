@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
-import { ActiveProfileProvider } from "@/context/ActiveProfileContext";
 import { DashboardActorGate } from "@/components/layout/DashboardActorGate";
 
 export default async function AuthenticatedLayout({
@@ -16,10 +15,8 @@ export default async function AuthenticatedLayout({
     }
 
     return (
-        <ActiveProfileProvider>
-            <DashboardActorGate>
-                {children}
-            </DashboardActorGate>
-        </ActiveProfileProvider>
+        <DashboardActorGate>
+            {children}
+        </DashboardActorGate>
     );
 }

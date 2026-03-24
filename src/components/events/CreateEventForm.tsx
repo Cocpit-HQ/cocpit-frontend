@@ -290,6 +290,9 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
 
       if (values.companyId) {
         data.append("companyId", values.companyId);
+      } else {
+        // Explicitly signal personal posting to override potential org actor context
+        data.append("companyId", "me");
       }
 
       if (initialData) {
@@ -332,11 +335,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
               <Select
                 value={selectedCompanyId || "me"}
                 onValueChange={(val) => {
-                  if (val === "me") {
-                    form.setValue("companyId", undefined);
-                  } else {
-                    form.setValue("companyId", val);
-                  }
+                  form.setValue("companyId", val);
                 }}
               >
                 <SelectTrigger className={`w-full px-4 py-3 h-auto rounded-xl border ${theme === 'light' ? 'bg-white/20 border-black/5' : 'bg-white/5 border-white/10'} text-foreground`}>

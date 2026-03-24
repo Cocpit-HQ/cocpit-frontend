@@ -94,10 +94,42 @@ export interface RegisterEventPayload {
     job_title?: string;
 }
 
+export interface EventTicket {
+    ticketId: string;
+    eventId: string;
+    userId: string;
+    name: string;
+    email: string;
+    mobile: string;
+    eventName: string;
+    date: string;
+    time: string;
+    location: string;
+    organizerName: string;
+    organizerEmail?: string;
+    qrCode: string;
+    createdAt: string;
+    status?: string;
+    checkedInAt?: string | null;
+}
+
 export interface RegisterEventResponse {
     message: string;
     registrationId?: string;
     status: 'registered' | 'waitlisted';
+    ticket?: EventTicket;
+}
+
+export interface ValidateEventTicketPayload {
+    ticketId: string;
+    eventId?: string;
+}
+
+export interface ValidateEventTicketResponse {
+    message: string;
+    user: string;
+    ticketId: string;
+    checkedInAt: string;
 }
 
 export type MyCreatedEventsResponse = BackendEvent[];

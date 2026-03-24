@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { FeedResponse } from "@/services/api/feed";
 import { cookies } from "next/headers";
+import { env } from "@/config/env";
 
 /**
  * Server-side feed fetcher.
@@ -16,11 +17,7 @@ export async function getServerFeed(): Promise<FeedResponse | null> {
             return null;
         }
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        if (!apiUrl) {
-            console.error("[Server Feed] NEXT_PUBLIC_API_URL is not defined");
-            return null;
-        }
+        const apiUrl = env.API_URL;
 
         const cookieStore = await cookies();
         const activeActorCookie = cookieStore.get("activeActor")?.value || "";

@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { StoryGroup } from "@/types/showcase";
 import { mapStory } from "@/lib/story-mapper";
 import { cookies } from "next/headers";
+import { env } from "@/config/env";
 
 /**
  * Server-side stories fetcher.
@@ -17,11 +18,7 @@ export async function getServerStories(): Promise<StoryGroup[] | null> {
             return null;
         }
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        if (!apiUrl) {
-            console.error("[Server Stories] NEXT_PUBLIC_API_URL is not defined");
-            return null;
-        }
+        const apiUrl = env.API_URL;
 
         const cookieStore = await cookies();
         const activeActorCookie = cookieStore.get("activeActor")?.value || "";
