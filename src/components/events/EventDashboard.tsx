@@ -570,7 +570,7 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                                 setShowEditModal(false);
                                 setEditingEvent(null);
                             }}
-                            initialData={editingEvent}
+                            initialData={editingEvent || undefined}
                         />
                     </div>
                 )
