@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { useState } from "react";
 import { SessionProvider } from "next-auth/react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { ActiveProfileProvider } from "@/context/ActiveProfileContext";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -23,9 +24,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
         <ThemeProvider attribute="data-theme" defaultTheme="navy" enableSystem={false} themes={['light', 'dark', 'navy']}>
           <QueryClientProvider client={queryClient}>
-            <TooltipProvider>
-              {children}
-            </TooltipProvider>
+            <ActiveProfileProvider>
+              <TooltipProvider>
+                {children}
+              </TooltipProvider>
+            </ActiveProfileProvider>
           </QueryClientProvider>
         </ThemeProvider>
       </GoogleOAuthProvider>

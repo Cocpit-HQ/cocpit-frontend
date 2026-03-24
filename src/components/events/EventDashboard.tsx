@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { EventCardSimple } from './EventCardSimple';
 import { CreateEventForm } from './CreateEventForm';
 import { Page, Theme } from '@/types/common';
-import { Plus, Search, Calendar, Users, Clock, DollarSign, Filter, MapPin, Menu, BarChart2 } from 'lucide-react';
+import { Search, Calendar, Users, Clock, DollarSign, Filter, MapPin, Menu, BarChart2, ScanLine } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { BackendEvent } from '@/types/event';
 
 interface EventDashboardProps {
     navigateTo: (page: Page) => void;
@@ -21,47 +22,36 @@ interface EventDashboardProps {
     theme: Theme;
 }
 
-const myEvents = [
-    {
-        id: 1,
-        title: 'Product Management Summit 2025',
-        date: 'March 15, 2025',
-        location: 'San Francisco, CA',
-        attendees: 234,
-        status: 'Published',
-    },
-    {
-        id: 2,
-        title: 'Tech Networking Mixer',
-        date: 'March 20, 2025',
-        location: 'Virtual Event',
-        attendees: 156,
-        status: 'Draft',
-    },
-    {
-        id: 3,
-        title: 'Web Development Workshop',
-        date: 'March 25, 2025',
-        location: 'New York, NY',
-        attendees: 89,
-        status: 'Published',
-    },
-];
-
 const participantsData = [
     { name: "Alex Morgan", time: "Registered 2 hours ago", initial: "A", color: "bg-blue-500" },
     { name: "Sarah Chen", time: "Registered 5 hours ago", initial: "S", color: "bg-green-500" },
     { name: "Michael Ross", time: "Registered 1 day ago", initial: "M", color: "bg-orange-500" }
 ];
 
-export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
+type DashboardEvent = BackendEvent & {
+    id: string;
+    date: string;
+    ticketType: 'Paid' | 'Free';
+    ticketPrice: number;
+    totalTickets: number;
+    soldTickets: number;
+    freeRegistrations: number;
+    paidRegistrations: number;
+    revenue: number;
+    isSoldOut: boolean;
+    formattedDate: string;
+    status: string;
+    attendees: number;
+};
+
+export function EventDashboard({ theme }: EventDashboardProps) {
     // force dark mode logic for this specific dashboard view to match screenshot exactly if that's the intent, 
     // but better to use the theme variables. 
     // The screenshot shows a very specific dark theme. 
     // We'll use the card/background classes which map to the theme variables.
     const { activeProfile } = useActiveProfile(); // Get active profile context
 
-    const [events, setEvents] = useState<any[]>([]);
+    const [events, setEvents] = useState<DashboardEvent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedEventId, setSelectedEventId] = useState<number | string | null>(null);
     const [selectedStat, setSelectedStat] = useState<string>("revenue"); // Default selected stat
@@ -72,7 +62,7 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
 
     // Edit/Delete State
     const [showEditModal, setShowEditModal] = useState(false);
-    const [editingEvent, setEditingEvent] = useState<any>(null);
+    const [editingEvent, setEditingEvent] = useState<DashboardEvent | null>(null);
 
     const detailsRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
@@ -89,7 +79,7 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                 // or just use it directly. EventCardSimple expects basic fields.
                 // We need to ensure we can calculate analytics from it if possible, or mock analytics for now.
 
-                const eventsWithAnalytics = data.map(event => {
+                const eventsWithAnalytics: DashboardEvent[] = data.map((event) => {
                     // Mock analytics for now as backend might not return stats yet
                     const isPaid = event.price_type === 'Paid';
                     const ticketPrice = Number(event.price) || 0;
@@ -112,7 +102,8 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                         revenue,
                         isSoldOut: soldTickets >= totalTickets,
                         formattedDate: new Date(event.start_time).toLocaleDateString(),
-                        status: 'Published' // Assuming published for now
+                        status: 'Published', // Assuming published for now
+                        attendees: soldTickets,
                     };
                 });
 
@@ -127,7 +118,7 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
             }
         };
         fetchMyEvents();
-    }, []);
+    }, [activeProfile?.id, activeProfile?.type]);
 
     const handleEventClick = (id: number | string) => {
         setSelectedEventId(id);
@@ -139,7 +130,7 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
         }
     };
 
-    const handleEdit = (event: any) => {
+    const handleEdit = (event: DashboardEvent) => {
         // Map back to BackendEvent structure if needed or pass directly
         setEditingEvent(event);
         setShowEditModal(true);
@@ -189,6 +180,19 @@ export function EventDashboard({ navigateTo, theme }: EventDashboardProps) {
                     <p className="text-muted-foreground">Manage and track your events</p>
                 </div>
                 {/* Create Event button removed as requested */}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="lg:col-start-4">
+                    <button
+                        onClick={() => selectedEvent && router.push(`/events/${selectedEvent.id}/scan`)}
+                        disabled={!selectedEvent}
+                        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-4 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <ScanLine className="h-4 w-4" />
+                        <span>Scan Entry</span>
+                    </button>
+                </div>
             </div>
 
             {/* Top Stats Row */}

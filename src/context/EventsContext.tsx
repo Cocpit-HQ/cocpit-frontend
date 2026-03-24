@@ -58,8 +58,8 @@ export function EventsProvider({ children }: { children: ReactNode }) {
   // --- Wrapper Functions explicitly matching old Context API ---
   const registerForEvent = async (id: number | string, payload: RegisterEventPayload) => {
     try {
-      await register.mutateAsync({ id, payload });
-      return { success: true };
+      const result = await register.mutateAsync({ id, payload });
+      return { success: true, ticket: (result as any)?.ticket };
     } catch (error) {
       return { success: false, error };
     }

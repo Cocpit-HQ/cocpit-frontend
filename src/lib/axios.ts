@@ -1,10 +1,11 @@
 import axios from "axios";
 import { getSession } from "next-auth/react";
 import { hardLogout } from "@/lib/logout";
+import { env } from "@/config/env";
 
 // Public API client (No Auth)
 export const publicApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: env.API_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -12,7 +13,7 @@ export const publicApi = axios.create({
 
 // Authenticated API client
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: env.API_URL,
   withCredentials: true,
 });
 

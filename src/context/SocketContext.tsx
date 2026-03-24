@@ -39,7 +39,7 @@ const SocketContext = createContext<SocketContextType>({
   setActiveConversationId: () => { }
 });
 
-const SOCKET_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/api\/?$/, "");
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session } = useSession();
@@ -114,7 +114,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     const newSocket = io(SOCKET_URL, {
       auth: { token },
-      transports: ["websocket"], // Force WebSocket to verify stability
+      transports: ["websocket"],
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,

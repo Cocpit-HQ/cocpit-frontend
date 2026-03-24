@@ -3,9 +3,13 @@
  * Ensures all required env vars are loaded and validated
  */
 
+const isServer = typeof window === "undefined";
+
 export const env = {
   // API
-  API_URL: process.env.NEXT_PUBLIC_API_URL,
+  API_URL: isServer 
+    ? (process.env.INTERNAL_API_URL || "http://localhost:5000/api") 
+    : (process.env.NEXT_PUBLIC_API_URL || "/api"),
   API_KEY: process.env.NEXT_PUBLIC_API_KEY,
   
   // Auth

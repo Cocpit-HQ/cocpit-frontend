@@ -1,38 +1,48 @@
 "use client";
 
+import Link from 'next/link';
 import {
   EventRegistrationModal,
 } from '@/components/events/EventRegistrationModal';
 import { useParams, useRouter } from 'next/navigation';
 import { useSmartBack } from '@/hooks/use-smart-back';
 import { useEvents } from '@/context/EventsContext';
-import { getEventById, registerForEvent } from "@/services/api/event"
+import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useSession } from 'next-auth/react';
+import { getEventById, getTicket } from "@/services/api/event"
 import { mapBackendEventToEventCard } from "@/lib/mappers/event.mapper"
+import TicketCard from '@/components/events/TicketCard';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import {
   Calendar,
   MapPin,
   Users,
   Mail,
-  Phone,
   User,
   ChevronLeft,
   Bookmark,
+  ScanLine,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import type { EventCard } from '@/types/event';
+import type { EventCard, EventTicket } from '@/types/event';
 
 const EventDetailPage = () => {
   const params = useParams();
   const router = useRouter();
   const { goBack } = useSmartBack();
   const { id } = params;
+  const { data: session } = useSession();
+  const { activeProfile } = useActiveProfile();
 
   // Normalize ID to string for comparison, as URL params are strings
   const eventIdStr = Array.isArray(id) ? id[0] : id;
 
-  const { events, isRegistered, registeredEventIds, refreshRegisteredEvents, isSaved, saveEvent, unsaveEvent, cancelRegistration } = useEvents();
+  const { events, isRegistered, isSaved, saveEvent, unsaveEvent, cancelRegistration } = useEvents();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [downloadTicketData, setDownloadTicketData] = useState<EventTicket | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Local state for the event, potentially fetched independently if not in context
   const [fetchedEvent, setFetchedEvent] = useState<EventCard | null>(null);
@@ -60,7 +70,6 @@ const EventDetailPage = () => {
 
       setLoading(true);
       try {
-        const { getEventById } = await import('@/services/api/event');
         const data = await getEventById(eventIdStr);
         if (isMounted) {
           setFetchedEvent(mapBackendEventToEventCard(data));
@@ -82,6 +91,55 @@ const EventDetailPage = () => {
 
     return () => { isMounted = false; };
   }, [eventIdStr, contextEvent]);
+
+  const handleDownloadTicket = async () => {
+    try {
+      setIsDownloading(true);
+      if (!eventIdStr) return;
+      const ticketData = await getTicket(eventIdStr);
+      setDownloadTicketData(ticketData);
+
+      setTimeout(async () => {
+        const element = document.getElementById("hidden-ticket-render");
+        if (!element) {
+          setIsDownloading(false);
+          return;
+        }
+
+        const originalColorScheme = document.body.style.colorScheme;
+        document.body.style.colorScheme = "light";
+
+        const canvas = await html2canvas(element, { 
+          scale: 2,
+          backgroundColor: "#ffffff"
+        });
+
+        document.body.style.colorScheme = originalColorScheme;
+
+        const imgData = canvas.toDataURL("image/png");
+
+        const pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4"
+        });
+        
+        const pdfWidth = 100;
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        pdf.addImage(imgData, "PNG", (210 - pdfWidth) / 2, 20, pdfWidth, pdfHeight);
+        pdf.save(`ticket-${event?.title.substring(0, 10).replace(/\s/g, '') || 'event'}.pdf`);
+        
+        setIsDownloading(false);
+        setDownloadTicketData(null);
+      }, 500); // 500ms allows the react component to render in the DOM fully before screenshotting
+    } catch (err) {
+      console.error("Failed to download ticket", err);
+      alert("Could not generate ticket. Please try again later.");
+      setIsDownloading(false);
+      setDownloadTicketData(null);
+    }
+  };
 
   // Derived event: Context takes precedence if available (synchronous), otherwise fetched
   const event = contextEvent || fetchedEvent;
@@ -111,6 +169,9 @@ const EventDetailPage = () => {
 
   const registered = isRegistered(event.id);
   const saved = isSaved(event.id);
+  const canScanTickets = activeProfile?.type === 'COMPANY'
+    ? event.company?.id === activeProfile.id
+    : Boolean(event.organizer?.email && session?.user?.email && event.organizer.email === session.user.email);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -222,10 +283,11 @@ const EventDetailPage = () => {
             {registered ? (
               <div className="space-y-3">
                 <button
-                  onClick={() => alert('Mock Ticket Download')} // Implement mock download
-                  className="w-full bg-green-600 text-white font-bold px-6 py-4 rounded-xl hover:bg-green-700 transition-all text-lg shadow-lg"
+                  onClick={handleDownloadTicket}
+                  disabled={isDownloading}
+                  className="w-full bg-green-600 text-white font-bold px-6 py-4 rounded-xl hover:bg-green-700 transition-all text-lg shadow-lg disabled:opacity-50"
                 >
-                  Download Ticket
+                  {isDownloading ? "Generating PDF..." : "Download Ticket"}
                 </button>
                 <button
                   onClick={async () => {
@@ -257,6 +319,15 @@ const EventDetailPage = () => {
                 Register for this event
               </button>
             )}
+            {canScanTickets && (
+              <Link
+                href={`/events/${event.id}/scan`}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-6 py-3 font-semibold text-primary transition-colors hover:bg-primary/20"
+              >
+                <ScanLine className="h-5 w-5" />
+                <span>Scan Entry</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -265,6 +336,15 @@ const EventDetailPage = () => {
         onClose={() => setIsModalOpen(false)}
         event={event}
       />
+
+      {/* Hidden container just to render the ticket for html2canvas to capture */}
+      {downloadTicketData && (
+        <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
+          <div id="hidden-ticket-render" className="w-[380px]">
+            <TicketCard ticket={downloadTicketData} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

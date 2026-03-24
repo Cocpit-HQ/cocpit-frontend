@@ -9,7 +9,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   // Extract images and video
   const images: string[] = [];
   let videoSrc: string | undefined = undefined;
-  const primaryMediaAspectRatio = backendPost.media?.[0]?.aspect_ratio || undefined;
+  //const primaryMediaAspectRatio = backendPost.media?.[0]?.aspect_ratio || undefined;
 
   // Ensure media is an array before iterating
   const mediaList = Array.isArray(backendPost.media) ? backendPost.media : [];
@@ -171,7 +171,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         imageSrc: spImages.length > 0 ? spImages[0] : undefined,
         images: spImages.length > 0 ? spImages : undefined,
         videoSrc: spVideoSrc,
-        aspectRatio: sp.media?.[0]?.aspect_ratio || undefined,
+        //aspectRatio: sp.media?.[0]?.aspect_ratio || undefined,
         likes: sp.like_count || 0,
         isLiked: (sp as any).is_liked, // New field from backend
         is_commented: (sp as any).is_commented,
@@ -198,7 +198,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     imageSrc: images.length > 0 ? images[0] : undefined,
     images: images.length > 0 ? images : undefined,
     videoSrc: videoSrc,
-    aspectRatio: primaryMediaAspectRatio,
+    //aspectRatio: primaryMediaAspectRatio,
     // Backend doesn't return likes/comments/shares counts in the list view provided
     likes: backendPost.like_count,
     isLiked: backendPost.is_liked,

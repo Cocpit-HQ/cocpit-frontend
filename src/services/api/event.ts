@@ -1,5 +1,5 @@
 import api from "@/lib/axios";
-import { CreateEventResponse, BackendEvent, EventCard, RegisterEventResponse, RegisterEventPayload } from "@/types/event";
+import { CreateEventResponse, BackendEvent, EventCard, EventTicket, RegisterEventResponse, RegisterEventPayload, ValidateEventTicketPayload, ValidateEventTicketResponse } from "@/types/event";
 import { mapBackendEventToEventCard } from "@/lib/mappers/event.mapper";
 
 // Public: Get all events (with filters)
@@ -9,8 +9,16 @@ export interface PaginatedEvents {
     hasMore: boolean;
 }
 
-export const getAllEvents = async (filters?: any): Promise<PaginatedEvents> => {
-    const query = filters ? `?${new URLSearchParams(filters).toString()}` : "";
+type EventFilters = Record<string, string | number | boolean | null | undefined>;
+
+export const getAllEvents = async (filters?: EventFilters): Promise<PaginatedEvents> => {
+    const query = filters
+        ? `?${new URLSearchParams(
+            Object.entries(filters)
+                .filter(([, value]) => value !== undefined && value !== null)
+                .map(([key, value]) => [key, String(value)])
+        ).toString()}`
+        : "";
     const response = await api.get(`/events${query}`);
     // Handle both old (array) and new (paginated) responses if unsure, but we know backend changed.
     // However, TypeScript might complain if we don't return exactly PaginatedEvents.
@@ -24,6 +32,20 @@ export const getAllEvents = async (filters?: any): Promise<PaginatedEvents> => {
 // Public: Get single event
 export const getEventById = async (id: number | string): Promise<BackendEvent> => {
     const response = await api.get<BackendEvent>(`/events/${id}`);
+    return response.data;
+};
+
+// Protected: Get Ticket
+export const getTicket = async (id: number | string): Promise<EventTicket> => {
+    const response = await api.get<EventTicket>(`/events/${id}/ticket`);
+    return response.data;
+};
+
+export const validateEventTicket = async (
+    id: number | string,
+    payload: ValidateEventTicketPayload
+): Promise<ValidateEventTicketResponse> => {
+    const response = await api.post<ValidateEventTicketResponse>(`/events/${id}/tickets/validate`, payload);
     return response.data;
 };
 
@@ -57,8 +79,9 @@ export async function deleteEvent(id: number | string): Promise<void> {
 }
 
 // Protected: Get My Created Events
-export async function getMyCreatedEvents(_companyId?: string): Promise<BackendEvent[]> {
-    const response = await api.get<BackendEvent[]>("/events/me/events/created");
+export async function getMyCreatedEvents(companyId?: string): Promise<BackendEvent[]> {
+    const query = companyId ? `?companyId=${encodeURIComponent(companyId)}` : "";
+    const response = await api.get<BackendEvent[]>(`/events/me/events/created${query}`);
     return Array.isArray(response.data) ? response.data : [];
 }
 
