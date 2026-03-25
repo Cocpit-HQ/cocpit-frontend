@@ -111,7 +111,28 @@ const EventDetailPage = () => {
 
         const canvas = await html2canvas(element, { 
           scale: 2,
-          backgroundColor: "#ffffff"
+          backgroundColor: "#ffffff",
+          onclone: (clonedDoc) => {
+            const elements = clonedDoc.getElementsByTagName('*');
+            for (let i = 0; i < elements.length; i++) {
+              const el = elements[i] as HTMLElement;
+              const style = window.getComputedStyle(el);
+              
+              if (el.classList?.contains('animate-pulse')) {
+                 el.style.display = 'none';
+              }
+              
+              if (el.style.backgroundColor?.includes('okl') || style.backgroundColor?.includes('okl')) {
+                el.style.backgroundColor = "#1f2937"; 
+              }
+              if (el.style.color?.includes('okl') || style.color?.includes('okl')) {
+                el.style.color = "#ffffff";
+              }
+              if (el.style.backgroundImage?.includes('okl') || style.backgroundImage?.includes('okl')) {
+                el.style.backgroundImage = "none";
+              }
+            }
+          }
         });
 
         document.body.style.colorScheme = originalColorScheme;
