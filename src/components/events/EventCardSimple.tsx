@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Calendar, MapPin, MoreVertical, Users, Edit, Trash } from 'lucide-react';
+import { Calendar, MapPin, MoreVertical, Users, Edit, Trash, ScanLine } from 'lucide-react';
 import { Theme } from '@/types/common';
 import {
     DropdownMenu,
@@ -25,10 +25,11 @@ interface EventCardSimpleProps {
     onEdit: () => void;
     onDelete: () => void;
     onViewDetails?: () => void;
+    onScan?: () => void;
     theme: Theme;
 }
 
-export function EventCardSimple({ event, isSelected, onClick, onEdit, onDelete, onViewDetails, theme }: EventCardSimpleProps) {
+export function EventCardSimple({ event, isSelected, onClick, onEdit, onDelete, onViewDetails, onScan, theme }: EventCardSimpleProps) {
     return (
         <div
             onClick={onClick}
@@ -57,6 +58,16 @@ export function EventCardSimple({ event, isSelected, onClick, onEdit, onDelete, 
                         >
                             <Edit className="w-3.5 h-3.5" />
                             Edit Event
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onScan?.();
+                            }}
+                            className="cursor-pointer hover:bg-white/5 focus:bg-white/5 gap-2 lg:hidden"
+                        >
+                            <ScanLine className="w-3.5 h-3.5" />
+                            Scan Entry
                         </DropdownMenuItem>
                         <DropdownMenuItem
                             onClick={(e) => {
@@ -101,15 +112,27 @@ export function EventCardSimple({ event, isSelected, onClick, onEdit, onDelete, 
             </div>
 
             {isSelected && (
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onViewDetails?.();
-                    }}
-                    className="w-full mt-2 text-xs bg-primary text-primary-foreground py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
-                >
-                    View Details
-                </button>
+                <div className="flex gap-2 mt-2">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onViewDetails?.();
+                        }}
+                        className="flex-1 text-[11px] bg-muted hover:bg-muted/80 text-foreground py-2 rounded-lg font-medium transition-colors border border-border"
+                    >
+                        View Details
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onScan?.();
+                        }}
+                        className="flex-1 flex items-center justify-center gap-1.5 text-[11px] bg-primary text-primary-foreground py-2 rounded-lg font-medium hover:opacity-90 transition-opacity lg:hidden"
+                    >
+                        <ScanLine className="w-3.5 h-3.5" />
+                        Scan Entry
+                    </button>
+                </div>
             )}
         </div>
     );

@@ -60,6 +60,11 @@ export default function TicketCard({ ticket }: { ticket: any }) {
           </div>
         </div>
 
+        {/* Explicit Event Name under QR */}
+        <p className="text-primary font-bold text-sm mt-3 px-3 py-1 bg-primary/10 rounded-full">
+          Valid for: {ticket.eventName}
+        </p>
+
         <p style={{ color: "#9ca3af" }} className="text-xs mt-5 font-mono tracking-widest uppercase">
           Ticket ID: {ticket.ticketId}
         </p>

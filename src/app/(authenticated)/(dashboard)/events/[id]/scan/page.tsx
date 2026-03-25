@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, LoaderCircle, ScanLine, ShieldAlert, ShieldCheck } from "lucide-react";
-import { validateEventTicket } from "@/services/api/event";
+import { validateEventTicket, getEventById } from "@/services/api/event";
 import type { Html5Qrcode } from "html5-qrcode";
 
 type ScanTone = "idle" | "processing" | "success" | "error";
@@ -42,11 +42,26 @@ export default function EventScanPage() {
     message: "Point the camera at an event ticket QR code.",
   });
   const [isScannerReady, setIsScannerReady] = useState(false);
+  const [currentEventName, setCurrentEventName] = useState<string>("Loading event...");
+  const [lastRawData, setLastRawData] = useState<string | null>(null);
 
   useEffect(() => {
     if (!eventId) return;
 
     let cancelled = false;
+
+    // Fetch current event name
+    const fetchEvent = async () => {
+      try {
+        const event = await getEventById(eventId);
+        if (!cancelled && event) {
+          setCurrentEventName(event.title);
+        }
+      } catch (err) {
+        if (!cancelled) setCurrentEventName("Event Check-In");
+      }
+    };
+    void fetchEvent();
 
     const mountScanner = async () => {
       try {
@@ -66,6 +81,7 @@ export default function EventScanPage() {
 
             isProcessingRef.current = true;
             lastDecodedRef.current = decodedText;
+            setLastRawData(decodedText);
             setStatus({ tone: "processing", message: "Validating ticket..." });
 
             try {
@@ -153,7 +169,9 @@ export default function EventScanPage() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Organizer scanner</p>
-            <h1 className="text-3xl font-bold">Ticket Check-In</h1>
+            <h1 className="text-3xl font-bold truncate max-w-[200px] sm:max-w-md" title={currentEventName}>
+              {currentEventName}
+            </h1>
           </div>
           <Link
             href={`/events/${eventId}`}
@@ -205,6 +223,15 @@ export default function EventScanPage() {
               </div>
               <p className="text-sm">{status.message}</p>
             </div>
+
+            {status.tone === "error" && lastRawData && (
+              <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-red-500/70">Raw Scanned Data</p>
+                <code className="block break-all text-[10px] text-muted-foreground font-mono bg-black/20 p-2 rounded">
+                  {lastRawData}
+                </code>
+              </div>
+            )}
 
             <div className="rounded-2xl border border-border bg-card p-4">
               <p className="mb-2 text-sm font-semibold">Validation rules</p>

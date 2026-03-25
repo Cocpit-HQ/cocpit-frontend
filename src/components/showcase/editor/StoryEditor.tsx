@@ -245,6 +245,26 @@ export function StoryEditor({ file, initialMetadata, onSave, onCancel, disableBa
                 scrollY: 0,
                 x: 0,
                 y: 0,
+                onclone: (clonedDoc) => {
+                    const elements = clonedDoc.getElementsByTagName('*');
+                    for (let i = 0; i < elements.length; i++) {
+                        const el = elements[i] as HTMLElement;
+                        try {
+                            const style = window.getComputedStyle(el);
+                            if (el.style.backgroundColor?.includes('okl') || style.backgroundColor?.includes('okl')) {
+                                el.style.backgroundColor = "#111827"; 
+                            }
+                            if (el.style.color?.includes('okl') || style.color?.includes('okl')) {
+                                el.style.color = "#ffffff";
+                            }
+                            if (el.style.backgroundImage?.includes('okl') || style.backgroundImage?.includes('okl')) {
+                                el.style.backgroundImage = "none";
+                            }
+                        } catch (e) {
+                            // Ignore elements that don't support getComputedStyle or other minor errors
+                        }
+                    }
+                }
             });
 
             // Restore the CSS transform

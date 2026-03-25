@@ -182,19 +182,6 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                 {/* Create Event button removed as requested */}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="lg:col-start-4">
-                    <button
-                        onClick={() => selectedEvent && router.push(`/events/${selectedEvent.id}/scan`)}
-                        disabled={!selectedEvent}
-                        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-4 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        <ScanLine className="h-4 w-4" />
-                        <span>Scan Entry</span>
-                    </button>
-                </div>
-            </div>
-
             {/* Top Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* All Events */}
@@ -332,6 +319,7 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                                         onEdit={() => handleEdit(event)}
                                         onDelete={() => handleDelete(event.id)}
                                         onViewDetails={() => router.push(`/events/${event.id}`)}
+                                        onScan={() => router.push(`/events/${event.id}/scan`)}
                                         theme={theme}
                                     />
                                 ))
@@ -346,8 +334,23 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                         <div className={`${theme === 'light' ? 'bg-white/60 border-black/5' : 'bg-white/5 border-white/10'} backdrop-blur-md border rounded-xl p-6 h-auto md:h-[600px] overflow-y-auto scrollbar-hide`} >
                             {/* Event Header */}
                             <div className="flex justify-between items-start mb-6">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-foreground mb-2">{selectedEvent.title}</h2>
+                                <div className="flex-1">
+                                    <h2 className="text-2xl font-bold text-foreground mb-1">{selectedEvent.title}</h2>
+                                    <div className="flex gap-2 items-center mb-3">
+                                        <span className={`h-8 flex items-center justify-center px-3 rounded-full text-xs font-medium border whitespace-nowrap ${selectedEvent.status === 'Published' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'}`}>
+                                            {selectedEvent.status}
+                                        </span>
+                                        <span className="h-8 flex items-center justify-center px-3 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20 whitespace-nowrap">
+                                            {selectedEvent.ticketType} Event
+                                        </span>
+                                        <button
+                                            onClick={() => router.push(`/events/${selectedEvent.id}/scan`)}
+                                            className="h-8 flex items-center justify-center gap-2 px-3 rounded-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-colors text-xs font-medium lg:hidden whitespace-nowrap"
+                                        >
+                                            <ScanLine className="w-4 h-4" />
+                                            <span>Scan Entry</span>
+                                        </button>
+                                    </div>
                                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                         <div className="flex items-center gap-1.5">
                                             <Calendar className="w-4 h-4" />
@@ -359,15 +362,7 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex gap-4 items-start">
-                                    <div className="flex flex-col items-end gap-2">
-                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${selectedEvent.status === 'Published' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'}`}>
-                                            {selectedEvent.status}
-                                        </span>
-                                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                                            {selectedEvent.ticketType} Event
-                                        </span>
-                                    </div>
+                                <div className="flex items-start pt-1">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <button className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-foreground border border-white/10 transition-colors">
