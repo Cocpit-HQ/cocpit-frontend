@@ -36,6 +36,7 @@ export interface BackendEvent {
     user_avatar?: string;
 
     registered_count?: number;
+    checked_in_count?: number;
 
     max_attendees?: number;
     registration_deadline?: string;

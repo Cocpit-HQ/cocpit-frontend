@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { EventCardSimple } from './EventCardSimple';
 import { CreateEventForm } from './CreateEventForm';
 import { Page, Theme } from '@/types/common';
-import { Search, Calendar, Users, Clock, DollarSign, Filter, MapPin, Menu, BarChart2, ScanLine } from 'lucide-react';
+import { Search, Calendar, Users, Clock, DollarSign, Filter, MapPin, Menu, BarChart2, ScanLine, UserCheck, Loader2 } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -15,6 +15,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { BackendEvent } from '@/types/event';
+import type { Participant, EventParticipants } from '@/services/api/event';
 
 interface EventDashboardProps {
     navigateTo: (page: Page) => void;
@@ -22,11 +23,19 @@ interface EventDashboardProps {
     theme: Theme;
 }
 
-const participantsData = [
-    { name: "Alex Morgan", time: "Registered 2 hours ago", initial: "A", color: "bg-blue-500" },
-    { name: "Sarah Chen", time: "Registered 5 hours ago", initial: "S", color: "bg-green-500" },
-    { name: "Michael Ross", time: "Registered 1 day ago", initial: "M", color: "bg-orange-500" }
-];
+const avatarColors = ["bg-blue-500", "bg-green-500", "bg-orange-500", "bg-pink-500", "bg-purple-500", "bg-cyan-500", "bg-amber-500", "bg-rose-500"];
+const getAvatarColor = (name: string) => avatarColors[Math.abs([...name].reduce((a, c) => a + c.charCodeAt(0), 0)) % avatarColors.length];
+const getInitial = (name: string) => name?.charAt(0)?.toUpperCase() || '?';
+const timeAgo = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+};
 
 type DashboardEvent = BackendEvent & {
     id: string;
@@ -59,6 +68,9 @@ export function EventDashboard({ theme }: EventDashboardProps) {
     const [filterType, setFilterType] = useState('all');
     const [viewMode, setViewMode] = useState<'analytics' | 'participants'>('analytics');
     const [participantSearchQuery, setParticipantSearchQuery] = useState('');
+    const [participantTab, setParticipantTab] = useState<'registered' | 'attended'>('registered');
+    const [participants, setParticipants] = useState<EventParticipants>({ registered: [], attended: [] });
+    const [isLoadingParticipants, setIsLoadingParticipants] = useState(false);
 
     // Edit/Delete State
     const [showEditModal, setShowEditModal] = useState(false);
@@ -103,7 +115,7 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                         isSoldOut: soldTickets >= totalTickets,
                         formattedDate: new Date(event.start_time).toLocaleDateString(),
                         status: 'Published', // Assuming published for now
-                        attendees: soldTickets,
+                        attendees: event.checked_in_count || 0,
                     };
                 });
 
@@ -119,6 +131,27 @@ export function EventDashboard({ theme }: EventDashboardProps) {
         };
         fetchMyEvents();
     }, [activeProfile?.id, activeProfile?.type]);
+
+    // Fetch participants when switching to participants view
+    const fetchParticipants = useCallback(async (eventId: string | number) => {
+        setIsLoadingParticipants(true);
+        try {
+            const { getEventParticipants } = await import('@/services/api/event');
+            const data = await getEventParticipants(eventId);
+            setParticipants(data);
+        } catch (err) {
+            console.error('Failed to fetch participants', err);
+            setParticipants({ registered: [], attended: [] });
+        } finally {
+            setIsLoadingParticipants(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (viewMode === 'participants' && selectedEventId) {
+            fetchParticipants(selectedEventId);
+        }
+    }, [viewMode, selectedEventId, fetchParticipants]);
 
     const handleEventClick = (id: number | string) => {
         setSelectedEventId(id);
@@ -396,8 +429,8 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                                     <h3 className="text-sm font-semibold text-foreground mb-3">Quick Stats</h3>
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                                         <div
-                                            onClick={() => setSelectedStat("attendees")}
-                                            className={`rounded-lg p-4 border transition-all cursor-pointer ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'attendees' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                                            onClick={() => { setViewMode('participants'); setParticipantTab('attended'); }}
+                                            className={`rounded-lg p-4 border transition-all cursor-pointer hover:scale-[1.02] ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'attendees' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-green-500/50'}`}
                                         >
                                             <p className="text-xs text-muted-foreground mb-1">Total Attendees</p>
                                             <p className="text-xl font-bold text-foreground">{selectedEvent.attendees || 0}</p>
@@ -410,11 +443,11 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                                             <p className="text-xl font-bold text-foreground">1,234</p>
                                         </div>
                                         <div
-                                            onClick={() => setSelectedStat("rate")}
-                                            className={`rounded-lg p-4 border transition-all cursor-pointer ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'rate' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                                            onClick={() => { setViewMode('participants'); setParticipantTab('registered'); }}
+                                            className={`rounded-lg p-4 border transition-all cursor-pointer hover:scale-[1.02] ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'registrations' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-primary/50'}`}
                                         >
-                                            <p className="text-xs text-muted-foreground mb-1">Registration Rate</p>
-                                            <p className="text-xl font-bold text-foreground">18.4%</p>
+                                            <p className="text-xs text-muted-foreground mb-1">Registration Count</p>
+                                            <p className="text-xl font-bold text-foreground">{selectedEvent.soldTickets?.toLocaleString() || 0}</p>
                                         </div>
                                         <div
                                             onClick={() => setSelectedStat("revenue")}
@@ -513,7 +546,8 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                                 </>
                             ) : (
                                 <>
-                                    <div className="mb-3">
+                                    {/* Search */}
+                                    <div className="mb-4">
                                         <div className="relative w-full">
                                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                                             <input
@@ -525,22 +559,77 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                                             />
                                         </div>
                                     </div>
-                                    <h3 className="text-sm font-semibold text-foreground mb-3">Participants</h3>
-                                    <div className="space-y-4">
-                                        {participantsData
-                                            .filter(p => p.name.toLowerCase().includes(participantSearchQuery.toLowerCase()))
-                                            .map((activity, i) => (
-                                                <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border border-border/50 ${theme === 'light' ? 'bg-[#f3f4f6]/50' : 'bg-[#171c28]/50'}`}>
-                                                    <div className={`w-10 h-10 rounded-full ${activity.color} flex items-center justify-center text-sm text-white font-medium`}>
-                                                        {activity.initial}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-medium text-foreground">{activity.name}</p>
-                                                        <p className="text-xs text-muted-foreground">{activity.time}</p>
-                                                    </div>
-                                                </div>
-                                            ))}
+
+                                    {/* Sub-Tabs */}
+                                    <div className="flex gap-2 mb-4">
+                                        <button
+                                            onClick={() => setParticipantTab('registered')}
+                                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
+                                                participantTab === 'registered'
+                                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                                    : `border border-border text-muted-foreground hover:text-foreground ${theme === 'light' ? 'hover:bg-black/5' : 'hover:bg-white/5'}`
+                                            }`}
+                                        >
+                                            <Users className="w-3.5 h-3.5" />
+                                            Registered ({participants.registered.length})
+                                        </button>
+                                        <button
+                                            onClick={() => setParticipantTab('attended')}
+                                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
+                                                participantTab === 'attended'
+                                                    ? 'bg-green-600 text-white shadow-sm'
+                                                    : `border border-border text-muted-foreground hover:text-foreground ${theme === 'light' ? 'hover:bg-black/5' : 'hover:bg-white/5'}`
+                                            }`}
+                                        >
+                                            <UserCheck className="w-3.5 h-3.5" />
+                                            Attended ({participants.attended.length})
+                                        </button>
                                     </div>
+
+                                    {/* Participant List */}
+                                    {isLoadingParticipants ? (
+                                        <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            <span className="text-sm">Loading participants...</span>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {(() => {
+                                                const list = participantTab === 'registered' ? participants.registered : participants.attended;
+                                                const filtered = list.filter(p =>
+                                                    p.full_name?.toLowerCase().includes(participantSearchQuery.toLowerCase()) ||
+                                                    p.email?.toLowerCase().includes(participantSearchQuery.toLowerCase())
+                                                );
+                                                if (filtered.length === 0) {
+                                                    return (
+                                                        <div className="text-center py-12 text-muted-foreground">
+                                                            <p className="text-sm">{participantSearchQuery ? 'No matching participants' : `No ${participantTab} users yet`}</p>
+                                                        </div>
+                                                    );
+                                                }
+                                                return filtered.map((user) => (
+                                                    <div key={user.user_id} className={`flex items-center gap-3 p-3 rounded-xl border border-border/50 transition-colors ${theme === 'light' ? 'bg-[#f3f4f6]/50 hover:bg-[#f3f4f6]' : 'bg-[#171c28]/50 hover:bg-[#171c28]'}`}>
+                                                        {user.avatar_url ? (
+                                                            <img src={user.avatar_url} alt={user.full_name} className="w-10 h-10 rounded-full object-cover" />
+                                                        ) : (
+                                                            <div className={`w-10 h-10 rounded-full ${getAvatarColor(user.full_name)} flex items-center justify-center text-sm text-white font-medium`}>
+                                                                {getInitial(user.full_name)}
+                                                            </div>
+                                                        )}
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-medium text-foreground truncate">{user.full_name}</p>
+                                                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                                                        </div>
+                                                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                            {participantTab === 'registered'
+                                                                ? timeAgo(user.registered_at)
+                                                                : timeAgo(user.checked_in_at)}
+                                                        </span>
+                                                    </div>
+                                                ));
+                                            })()}
+                                        </div>
+                                    )}
                                 </>
                             )}
 

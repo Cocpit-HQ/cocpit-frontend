@@ -108,3 +108,24 @@ export async function saveEvent(id: number | string): Promise<void> {
 export async function unsaveEvent(id: number | string): Promise<void> {
     await api.delete(`/events/${id}/save`);
 }
+
+// ─── Participants ───────────────────────────────────────────────────────────────
+
+export interface Participant {
+    user_id: string;
+    full_name: string;
+    email: string;
+    avatar_url: string | null;
+    registered_at?: string;
+    checked_in_at?: string;
+}
+
+export interface EventParticipants {
+    registered: Participant[];
+    attended: Participant[];
+}
+
+export async function getEventParticipants(id: number | string): Promise<EventParticipants> {
+    const response = await api.get<EventParticipants>(`/events/${id}/participants`);
+    return response.data;
+}
