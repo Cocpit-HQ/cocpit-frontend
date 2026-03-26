@@ -216,20 +216,20 @@ export function EventDashboard({ theme }: EventDashboardProps) {
             </div>
 
             {/* Top Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                 {/* All Events */}
                 {/* All Events */}
                 <div
                     onClick={() => setSelectedStat("all_events")}
-                    className={`${theme === 'light' ? 'bg-white/60 border-black/5 hover:bg-white/80' : 'bg-white/5 border-white/10 hover:bg-white/10'} backdrop-blur-md rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'all_events' ? 'border-primary ring-1 ring-primary' : `${theme === 'light' ? 'hover:border-black/10' : 'hover:border-white/20'}`}`}
+                    className={`${theme === 'light' ? 'bg-white/60 border-black/5 hover:bg-white/80' : 'bg-white/5 border-white/10 hover:bg-white/10'} backdrop-blur-md rounded-xl p-3 md:p-5 flex flex-col justify-between h-28 md:h-32 relative overflow-hidden group border transition-all cursor-pointer active:scale-95 ${selectedStat === 'all_events' ? 'border-primary ring-1 ring-primary' : `${theme === 'light' ? 'hover:border-black/10' : 'hover:border-white/20'}`}`}
                 >
                     <div className="flex justify-between items-start z-10">
                         <div>
-                            <p className="text-sm text-muted-foreground mb-1">All Events</p>
-                            <h2 className="text-3xl font-bold text-foreground">{totalEvents}</h2>
+                            <p className="text-[10px] md:text-sm text-muted-foreground mb-1">All Events</p>
+                            <h2 className="text-xl md:text-3xl font-bold text-foreground">{totalEvents}</h2>
                         </div>
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                            <Calendar className="w-5 h-5" />
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                            <Calendar className="w-4 h-4 md:w-5 md:h-5" />
                         </div>
                     </div>
                 </div>
@@ -238,15 +238,15 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                 {/* Active Events */}
                 <div
                     onClick={() => setSelectedStat("active_events")}
-                    className={`${theme === 'light' ? 'bg-white/60 border-black/5 hover:bg-white/80' : 'bg-white/5 border-white/10 hover:bg-white/10'} backdrop-blur-md rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'active_events' ? 'border-primary ring-1 ring-primary' : `${theme === 'light' ? 'hover:border-black/10' : 'hover:border-white/20'}`}`}
+                    className={`${theme === 'light' ? 'bg-white/60 border-black/5 hover:bg-white/80' : 'bg-white/5 border-white/10 hover:bg-white/10'} backdrop-blur-md rounded-xl p-3 md:p-5 flex flex-col justify-between h-28 md:h-32 relative overflow-hidden group border transition-all cursor-pointer active:scale-95 ${selectedStat === 'active_events' ? 'border-primary ring-1 ring-primary' : `${theme === 'light' ? 'hover:border-black/10' : 'hover:border-white/20'}`}`}
                 >
                     <div className="flex justify-between items-start z-10">
                         <div>
-                            <p className="text-sm text-muted-foreground mb-1">Active Events</p>
-                            <h2 className="text-3xl font-bold text-foreground">{activeEvents}</h2>
+                            <p className="text-[10px] md:text-sm text-muted-foreground mb-1">Active Events</p>
+                            <h2 className="text-xl md:text-3xl font-bold text-foreground">{activeEvents}</h2>
                         </div>
-                        <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500">
-                            <Clock className="w-5 h-5" />
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500">
+                            <Clock className="w-4 h-4 md:w-5 md:h-5" />
                         </div>
                     </div>
                 </div>
@@ -255,23 +255,23 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                 {/* Tickets Sold */}
                 <div
                     onClick={() => setSelectedStat("tickets_sold")}
-                    className={`${theme === 'light' ? 'bg-white/60 border-black/5 hover:bg-white/80' : 'bg-white/5 border-white/10 hover:bg-white/10'} backdrop-blur-md rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'tickets_sold' ? 'border-primary ring-1 ring-primary' : `${theme === 'light' ? 'hover:border-black/10' : 'hover:border-white/20'}`}`}
+                    className={`${theme === 'light' ? 'bg-white/60 border-black/5 hover:bg-white/80' : 'bg-white/5 border-white/10 hover:bg-white/10'} backdrop-blur-md rounded-xl p-3 md:p-5 flex flex-col justify-between h-28 md:h-32 relative overflow-hidden group border transition-all cursor-pointer active:scale-95 ${selectedStat === 'tickets_sold' ? 'border-primary ring-1 ring-primary' : `${theme === 'light' ? 'hover:border-black/10' : 'hover:border-white/20'}`}`}
                 >
                     <div className="flex justify-between items-start z-10 w-full">
                         <div>
-                            <p className="text-sm text-muted-foreground mb-1">Tickets Sold</p>
-                            <h2 className="text-3xl font-bold text-foreground">{totalTicketsSold}</h2>
+                            <p className="text-[10px] md:text-sm text-muted-foreground mb-1">Tickets Sold</p>
+                            <h2 className="text-xl md:text-3xl font-bold text-foreground">{totalTicketsSold}</h2>
                         </div>
-                        <div className="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-500">
-                            <Users className="w-5 h-5" />
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-500">
+                            <Users className="w-4 h-4 md:w-5 md:h-5" />
                         </div>
                     </div>
-                    <div className="z-10 w-full mt-2">
-                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                            <span>Capacity: {totalTicketCapacity}</span>
+                    <div className="z-10 w-full mt-1 md:mt-2">
+                        <div className="flex justify-between text-[9px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">
+                            <span>Cap: {totalTicketCapacity}</span>
                             <span>{capacityPercentage}%</span>
                         </div>
-                        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                        <div className="h-1 md:h-1.5 w-full bg-muted rounded-full overflow-hidden">
                             <div
                                 className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
                                 style={{ width: `${capacityPercentage}%` }}
@@ -283,15 +283,15 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                 {/* Total Revenue */}
                 <div
                     onClick={() => setSelectedStat("total_revenue_top")}
-                    className={`${theme === 'light' ? 'bg-white/60 border-black/5 hover:bg-white/80' : 'bg-white/5 border-white/10 hover:bg-white/10'} backdrop-blur-md rounded-xl p-5 flex flex-col justify-between h-32 relative overflow-hidden group border transition-all cursor-pointer ${selectedStat === 'total_revenue_top' ? 'border-primary ring-1 ring-primary' : `${theme === 'light' ? 'hover:border-black/10' : 'hover:border-white/20'}`}`}
+                    className={`${theme === 'light' ? 'bg-white/60 border-black/5 hover:bg-white/80' : 'bg-white/5 border-white/10 hover:bg-white/10'} backdrop-blur-md rounded-xl p-3 md:p-5 flex flex-col justify-between h-28 md:h-32 relative overflow-hidden group border transition-all cursor-pointer active:scale-95 ${selectedStat === 'total_revenue_top' ? 'border-primary ring-1 ring-primary' : `${theme === 'light' ? 'hover:border-black/10' : 'hover:border-white/20'}`}`}
                 >
                     <div className="flex justify-between items-start z-10">
                         <div>
-                            <p className="text-sm text-muted-foreground mb-1">Total Revenue</p>
-                            <h2 className="text-3xl font-bold text-foreground">${totalRevenue.toLocaleString()}</h2>
+                            <p className="text-[10px] md:text-sm text-muted-foreground mb-1">Total Revenue</p>
+                            <h2 className="text-xl md:text-3xl font-bold text-foreground">${totalRevenue.toLocaleString()}</h2>
                         </div>
-                        <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
-                            <DollarSign className="w-5 h-5" />
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
+                            <DollarSign className="w-4 h-4 md:w-5 md:h-5" />
                         </div>
                     </div>
                 </div>
@@ -427,34 +427,34 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                                     {/* Quick Stats Grid */}
                                     <Separator className="marketing-separator my-8 bg-white/10" />
                                     <h3 className="text-sm font-semibold text-foreground mb-3">Quick Stats</h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
                                         <div
                                             onClick={() => { setViewMode('participants'); setParticipantTab('attended'); }}
-                                            className={`rounded-lg p-4 border transition-all cursor-pointer hover:scale-[1.02] ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'attendees' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-green-500/50'}`}
+                                            className={`rounded-lg p-3 md:p-4 border transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'attendees' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-green-500/50'}`}
                                         >
-                                            <p className="text-xs text-muted-foreground mb-1">Total Attendees</p>
-                                            <p className="text-xl font-bold text-foreground">{selectedEvent.attendees || 0}</p>
+                                            <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Total Attendees</p>
+                                            <p className="text-lg md:text-xl font-bold text-foreground">{selectedEvent.attendees || 0}</p>
                                         </div>
                                         <div
                                             onClick={() => setSelectedStat("views")}
-                                            className={`rounded-lg p-4 border transition-all cursor-pointer ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'views' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                                            className={`rounded-lg p-3 md:p-4 border transition-all cursor-pointer active:scale-95 ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'views' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
                                         >
-                                            <p className="text-xs text-muted-foreground mb-1">Views</p>
-                                            <p className="text-xl font-bold text-foreground">1,234</p>
+                                            <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Views</p>
+                                            <p className="text-lg md:text-xl font-bold text-foreground">1,234</p>
                                         </div>
                                         <div
                                             onClick={() => { setViewMode('participants'); setParticipantTab('registered'); }}
-                                            className={`rounded-lg p-4 border transition-all cursor-pointer hover:scale-[1.02] ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'registrations' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-primary/50'}`}
+                                            className={`rounded-lg p-3 md:p-4 border transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'registrations' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-primary/50'}`}
                                         >
-                                            <p className="text-xs text-muted-foreground mb-1">Registration Count</p>
-                                            <p className="text-xl font-bold text-foreground">{selectedEvent.soldTickets?.toLocaleString() || 0}</p>
+                                            <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Registration Count</p>
+                                            <p className="text-lg md:text-xl font-bold text-foreground">{selectedEvent.soldTickets?.toLocaleString() || 0}</p>
                                         </div>
                                         <div
                                             onClick={() => setSelectedStat("revenue")}
-                                            className={`rounded-lg p-4 border transition-all cursor-pointer ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'revenue' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                                            className={`rounded-lg p-3 md:p-4 border transition-all cursor-pointer active:scale-95 ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'revenue' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
                                         >
-                                            <p className="text-xs text-muted-foreground mb-1">Revenue</p>
-                                            <p className="text-xl font-bold text-foreground">${selectedEvent.revenue?.toLocaleString() || 0}</p>
+                                            <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Revenue</p>
+                                            <p className="text-lg md:text-xl font-bold text-foreground">${selectedEvent.revenue?.toLocaleString() || 0}</p>
                                         </div>
                                     </div>
 
