@@ -204,15 +204,19 @@ export function ProfileHeader({
                 </div>
 
                 <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <h1 className="text-2xl text-foreground">{user.name}</h1>
-                        <CheckCircle className="w-5 h-5 text-primary fill-primary/10" />
+                    <div className="flex items-center gap-2 mb-0.5">
+                        <h1 className="text-2xl font-semibold text-foreground">{user.name}</h1>
+                        <CheckCircle className="w-5 h-5 text-primary fill-primary/10 flex-shrink-0" />
                         {user.connectionStatus !== "none" && (
                             <span className="text-sm text-muted-foreground">
                                 · {user.connectionStatus === "connected" ? "1st" : "2nd"}
                             </span>
                         )}
                     </div>
+
+                    {user.account_name && (
+                        <p className="text-sm text-muted-foreground mb-1.5 truncate max-w-xs">@{user.account_name}</p>
+                    )}
 
                     {/* Company Roles */}
                     {user.company_roles && user.company_roles.length > 0 && (

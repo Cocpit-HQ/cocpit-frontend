@@ -1,12 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useJobs } from "@/context/JobsContext"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Check, AlertCircle } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Check, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { WorkMode, CompanyType, JobFormData, Job } from "@/types/jobs"
 import * as api from "@/services/api/jobs"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
+import { JobDetailsStep } from "./JobDetailsStep"
+import { JobDescriptionStep } from "./JobDescriptionStep"
 
 interface CreateJobModalProps {
   open?: boolean
@@ -15,22 +18,28 @@ interface CreateJobModalProps {
   initialData?: Job
 }
 
-import { useActiveProfile } from "@/context/ActiveProfileContext"
-
 export function CreateJobModal({ open, onOpenChange, trigger, initialData }: CreateJobModalProps) {
   const { addJob } = useJobs()
   const { activeProfile, isCompany } = useActiveProfile()
   const [internalOpen, setInternalOpen] = useState(false)
   const isControlled = open !== undefined
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!isControlled) {
       setInternalOpen(newOpen)
     }
     onOpenChange?.(newOpen)
+    if (!newOpen) {
+      setTimeout(() => setCurrentStep(1), 300)
+    }
   }
 
   const isOpen = isControlled ? open : internalOpen
+
+  // Stepper State
+  const [currentStep, setCurrentStep] = useState(1)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   // Form State
   const [formData, setFormData] = useState({
@@ -49,8 +58,14 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
     easyApply: true,
     activelyHiring: true,
     aboutCompany: "",
-
   })
+
+  // Scroll to top when step changes
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentStep])
 
   // Pre-fill form when initialData changes
   useEffect(() => {
@@ -60,7 +75,7 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
         company: initialData.company,
         location: initialData.location,
         type: initialData.type,
-        minSalary: "", // Salary parsing would go here if needed
+        minSalary: "", 
         maxSalary: "",
         description: initialData.description || "",
         skills: initialData.skills?.join(", ") || "",
@@ -71,13 +86,11 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
         easyApply: initialData.easyApply || false,
         activelyHiring: initialData.activelyHiring || false,
         aboutCompany: initialData.aboutCompany || "",
-
       })
-    } else {
-      // Reset defaults if no initialData (e.g. when opening "Post Job" after editing)
+    } else if (isOpen) {
       setFormData({
         title: "",
-        company: "",
+        company: activeProfile?.name || "",
         location: "",
         type: "Full-time",
         minSalary: "",
@@ -85,27 +98,58 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
         description: "",
         skills: "",
         experience: "Entry Level",
-        workMode: "Onsite" as WorkMode,
-        companyType: "Startup" as CompanyType,
+        workMode: "Onsite",
+        companyType: "Startup",
         industry: "Technology",
         easyApply: true,
         activelyHiring: true,
         aboutCompany: "",
-
       })
     }
-  }, [initialData, isOpen]) // Reset/Fill when modal opens or data changes
+    setCurrentStep(1)
+    setErrors({})
+  }, [initialData, isOpen, activeProfile])
 
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  const isStep1Valid = () => {
+    return formData.title.trim() !== "" && 
+           formData.company.trim() !== "" && 
+           formData.location.trim() !== ""
+  }
+
+  const validateStep1 = () => {
+    const newErrors: Record<string, string> = {}
+    if (!formData.title.trim()) newErrors.title = "Job title is required"
+    if (!formData.company.trim()) newErrors.company = "Company name is required"
+    if (!formData.location.trim()) newErrors.location = "Location is required"
+    
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleNext = () => {
+    if (validateStep1()) {
+      setCurrentStep(2)
+    }
+  }
+
+  const handleBack = () => {
+    setCurrentStep(1)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (currentStep === 1) {
+      handleNext()
+      return
+    }
+
     setIsSubmitting(true)
-    setError(null)
+    setSubmitError(null)
 
     try {
-      // Map to strict JobFormData interface
       const apiData: JobFormData = {
         jobTitle: formData.title,
         companyName: formData.company,
@@ -129,278 +173,139 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
         await api.updateJob(initialData.id, apiData)
       } else {
         await api.createJob(apiData)
-        await addJob({} as any) // Trigger context refresh
+        await addJob({} as any)
       }
 
       handleOpenChange(false)
-
-      if (!initialData) {
-        setFormData({
-          title: "",
-          company: "",
-          location: "",
-          type: "Full-time",
-          minSalary: "",
-          maxSalary: "",
-          description: "",
-          skills: "",
-          experience: "Entry Level",
-          workMode: "Onsite",
-          companyType: "Startup",
-          industry: "Technology",
-          easyApply: true,
-          activelyHiring: true,
-          aboutCompany: "",
-
-        })
-      }
-
     } catch (err: any) {
       console.error("Failed to save job", err);
-      setError(err.response?.data?.message || "Failed to save job. Please try again.")
+      setSubmitError(err.response?.data?.message || "Failed to save job. Please try again.")
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const updateFormData = (data: Partial<typeof formData>) => {
+    setFormData(prev => ({ ...prev, ...data }))
+    if (errors[Object.keys(data)[0]]) {
+      setErrors(prev => {
+        const next = { ...prev }
+        delete next[Object.keys(data)[0]]
+        return next
+      })
     }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0 bg-background rounded-xl border border-border">
-        <DialogHeader className="p-6 pb-2 border-b border-border sticky top-0 bg-background z-10">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-bold">{initialData ? "Edit Job" : "Post a Job"}</DialogTitle>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0 bg-background rounded-2xl border border-border overflow-hidden">
+        <DialogHeader className="p-6 border-b border-border bg-background/50 backdrop-blur-sm">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
+                Step {currentStep} of 2
+              </span>
+              <span className="text-sm text-muted-foreground font-medium">
+                — {currentStep === 1 ? "Job Details" : "Description & Settings"}
+              </span>
+            </div>
+            <DialogTitle className="text-2xl font-bold tracking-tight">
+              {initialData ? "Update Job Posting" : "Create New Job"}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              {initialData ? "Modify the details of your job listing." : "Provide the details for your new job opening."}
+            </DialogDescription>
           </div>
-          <p className="text-sm text-muted-foreground">{initialData ? "Update the job details below." : "Create a new job listing to find the best talent."}</p>
+          
+          <div className="absolute bottom-0 left-0 h-1 bg-muted w-full">
+            <div 
+              className="h-full bg-primary transition-all duration-500 ease-out"
+              style={{ width: `${(currentStep / 2) * 100}%` }}
+            />
+          </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {error && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2 text-red-500 text-sm">
-              <AlertCircle className="w-4 h-4" />
-              {error}
-            </div>
-          )}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-smooth">
+          <form onSubmit={handleSubmit} className="flex flex-col min-h-full">
+            <div className="p-6 space-y-6 flex-1">
+              {submitError && (
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-500 text-sm animate-in fade-in zoom-in duration-200">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  {submitError}
+                </div>
+              )}
 
-          {/* Section 1: Job Details */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-foreground border-b border-border pb-2">Job Details</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Job Title *</label>
-                <input
-                  required
-                  type="text"
-                  placeholder="e.g. Senior Frontend Engineer"
-                  className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none"
-                  value={formData.title}
-                  onChange={e => setFormData({ ...formData, title: e.target.value })}
+              {currentStep === 1 ? (
+                <JobDetailsStep 
+                  formData={formData} 
+                  updateFormData={updateFormData} 
+                  errors={errors} 
                 />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Employment Type *</label>
-                <select
-                  className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none"
-                  value={formData.type}
-                  onChange={e => setFormData({ ...formData, type: e.target.value })}
-                >
-                  <option>Full-time</option>
-                  <option>Part-time</option>
-                  <option>Contract</option>
-                  <option>Freelance</option>
-                  <option>Internship</option>
-                </select>
-              </div>
+              ) : (
+                <JobDescriptionStep 
+                  formData={formData} 
+                  updateFormData={updateFormData} 
+                />
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Location *</label>
-                <input
-                  required
-                  type="text"
-                  placeholder="e.g. San Francisco, CA"
-                  className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none"
-                  value={formData.location}
-                  onChange={e => setFormData({ ...formData, location: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Work Mode *</label>
-                <select
-                  className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none"
-                  value={formData.workMode}
-                  onChange={e => setFormData({ ...formData, workMode: e.target.value as WorkMode })}
-                >
-                  <option>Onsite</option>
-                  <option>Hybrid</option>
-                  <option>Remote</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Min Salary (Annual)</label>
-                <input
-                  type="number"
-                  placeholder="e.g. 100000"
-                  className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none"
-                  value={formData.minSalary}
-                  onChange={e => setFormData({ ...formData, minSalary: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Max Salary (Annual)</label>
-                <input
-                  type="number"
-                  placeholder="e.g. 150000"
-                  className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none"
-                  value={formData.maxSalary}
-                  onChange={e => setFormData({ ...formData, maxSalary: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Experience Level</label>
-              <select
-                className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none"
-                value={formData.experience}
-                onChange={e => setFormData({ ...formData, experience: e.target.value })}
+            <div className="p-6 border-t border-border bg-background flex items-center justify-between gap-3 sticky bottom-0 z-20">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  currentStep === 1 ? handleOpenChange(false) : handleBack()
+                }}
+                className="px-5 py-2.5 rounded-xl border border-border font-semibold hover:bg-muted transition-all flex items-center gap-2"
               >
-                <option>Entry Level</option>
-                <option>Mid Level</option>
-                <option>Senior Level</option>
-                <option>Director</option>
-                <option>Executive</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
-              <textarea
-                rows={4}
-                placeholder="Describe the role, responsibilities, and requirements..."
-                className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none resize-none"
-                value={formData.description}
-                onChange={e => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Skills (comma separated)</label>
-              <input
-                type="text"
-                placeholder="e.g. React, TypeScript, Tailwind CSS"
-                className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none"
-                value={formData.skills}
-                onChange={e => setFormData({ ...formData, skills: e.target.value })}
-              />
-            </div>
-          </div>
-
-          {/* Section 2: Company Info */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-foreground border-b border-border pb-2">Company Information</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Company Name *</label>
-                <input
-                  required
-                  type="text"
-                  placeholder="e.g. Acme Corp"
-                  className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none"
-                  value={formData.company}
-                  onChange={e => setFormData({ ...formData, company: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Company Type</label>
-                <select
-                  className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none"
-                  value={formData.companyType}
-                  onChange={e => setFormData({ ...formData, companyType: e.target.value as CompanyType })}
-                >
-                  <option>Startup</option>
-                  <option>MNC</option>
-                  <option>Product-based</option>
-                  <option>Service-based</option>
-                </select>
+                {currentStep === 1 ? (
+                  "Cancel"
+                ) : (
+                  <>
+                    <ArrowLeft className="w-4 h-4" />
+                    Back
+                  </>
+                )}
+              </button>
+              
+              <div className="flex items-center gap-3">
+                {currentStep === 1 ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      handleNext()
+                    }}
+                    disabled={!isStep1Valid()}
+                    className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:grayscale-[0.5] disabled:cursor-not-allowed"
+                  >
+                    Next
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-8 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        {initialData ? "Updating..." : "Posting..."}
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4" />
+                        {initialData ? "Update Job" : "Post Job"}
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">About Company</label>
-              <textarea
-                rows={3}
-                placeholder="Brief description about the company..."
-                className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none resize-none"
-                value={formData.aboutCompany}
-                onChange={e => setFormData({ ...formData, aboutCompany: e.target.value })}
-              />
-            </div>
-          </div>
-
-          {/* Section 3: Settings */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-foreground border-b border-border pb-2">Settings</h3>
-
-            <div className="flex flex-col gap-3">
-              <label className="flex items-center gap-3 cursor-pointer p-3 border border-border rounded-lg hover:bg-muted/50">
-                <div className={cn("w-5 h-5 rounded border flex items-center justify-center transition-colors", formData.easyApply ? "bg-primary border-primary" : "border-muted-foreground")}>
-                  {formData.easyApply && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
-                </div>
-                <input type="checkbox" className="hidden" checked={formData.easyApply} onChange={e => setFormData({ ...formData, easyApply: e.target.checked })} />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">Enable Easy Apply</span>
-                  <span className="text-xs text-muted-foreground">Allow candidates to apply with one click</span>
-                </div>
-              </label>
-
-              <label className="flex items-center gap-3 cursor-pointer p-3 border border-border rounded-lg hover:bg-muted/50">
-                <div className={cn("w-5 h-5 rounded border flex items-center justify-center transition-colors", formData.activelyHiring ? "bg-primary border-primary" : "border-muted-foreground")}>
-                  {formData.activelyHiring && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
-                </div>
-                <input type="checkbox" className="hidden" checked={formData.activelyHiring} onChange={e => setFormData({ ...formData, activelyHiring: e.target.checked })} />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">Actively Hiring Badge</span>
-                  <span className="text-xs text-muted-foreground">Show an 'Actively Hiring' badge on the job card</span>
-                </div>
-              </label>
-            </div>
-
-            {/* Voice Pitch Requirement */}
-
-          </div>
-
-          <div className="pt-4 border-t border-border flex justify-end gap-3 sticky bottom-0 bg-background pb-6">
-            <button
-              type="button"
-              onClick={() => handleOpenChange(false)}
-              className="px-4 py-2 rounded-lg border border-border font-medium hover:bg-muted transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  {initialData ? "Updating..." : "Posting..."}
-                </>
-              ) : (initialData ? "Update Job" : "Post Job")}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   )
