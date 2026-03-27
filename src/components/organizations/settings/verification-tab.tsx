@@ -14,8 +14,18 @@ interface VerificationTabProps {
     company: Company;
 }
 
+const extractDomain = (website: string | undefined) => {
+    if (!website) return "";
+    try {
+        const url = website.startsWith('http') ? website : `https://${website}`;
+        return new URL(url).hostname.replace('www.', '');
+    } catch (e) {
+        return website.replace('www.', '');
+    }
+};
+
 export function VerificationTab({ company }: VerificationTabProps) {
-    const [domain, setDomain] = useState(company.website ? new URL(company.website).hostname.replace('www.', '') : "");
+    const [domain, setDomain] = useState(() => extractDomain(company.website));
     const [otpOpen, setOtpOpen] = useState(false);
 
     // We assume backend returns OTP in mock response.

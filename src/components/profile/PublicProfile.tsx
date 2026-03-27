@@ -52,22 +52,24 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
   const { data: profileStats } = useQuery({
     queryKey: ['profileStats', userId],
     queryFn: () => getProfileStats(userId),
-    enabled: !!userId,
+    enabled: !!userId && !!user,
     staleTime: 1000 * 30, // 30 seconds
   });
 
   const { data: viewCountData } = useQuery({
     queryKey: ['profileViewCount', userId],
     queryFn: () => getProfileViewCount(userId, 'user'),
-    enabled: !!userId,
+    enabled: !!userId && !!user,
   });
 
   // Record profile view
   React.useEffect(() => {
-    if (userId && session?.user?.id && userId !== session.user.id) {
-      recordProfileView(userId, 'user').catch(console.error);
+    if (user && userId && session?.user?.id && userId !== session.user.id) {
+      recordProfileView(userId, 'user').catch(() => {
+        // Silently ignore tracking errors to avoid console spam
+      });
     }
-  }, [userId, session?.user?.id]);
+  }, [userId, session?.user?.id, user]);
 
   const isOwnProfile = session?.user?.id === userId;
   const isUserFollowing = user ? isFollowing(user.id) : false;

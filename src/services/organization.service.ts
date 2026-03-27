@@ -28,6 +28,9 @@ export interface Company {
     created_at: string;
     viewer_role_data?: { name: string; permissions: string[]; priority: number } | null; // Populated by backend if authenticated
     member_count?: number;
+    parent_org?: { org_id: string; name: string; slug: string; logo_url?: string; entity_type: string } | null;
+    children_count?: number;
+    parent_org_id?: string | null;
 }
 
 export interface CompanyMember {
@@ -354,6 +357,37 @@ export const companyService = {
         announcements_enabled?: boolean;
     }) {
         const res = await api.put(`/organizations/${companyId}/notification-preferences`, prefs);
+        return res.data;
+    },
+
+    // --- Hierarchy ---
+    async searchOrganizations(query: string): Promise<Company[]> {
+        const res = await api.get(`/organizations/search`, { params: { q: query, limit: 10 } });
+        return res.data;
+    },
+
+    async getOrgChildren(orgId: string): Promise<Company[]> {
+        const res = await api.get(`/organizations/${orgId}/children`);
+        return res.data?.children || [];
+    },
+
+    async sendParentRequest(orgId: string, parentOrgId: string, message?: string) {
+        const res = await api.post(`/organizations/${orgId}/parent-request`, { parent_org_id: parentOrgId, message });
+        return res.data;
+    },
+
+    async getPendingParentRequests(orgId: string) {
+        const res = await api.get(`/organizations/${orgId}/parent-requests`);
+        return res.data;
+    },
+
+    async respondToParentRequest(orgId: string, requestId: string, action: 'ACCEPT' | 'REJECT') {
+        const res = await api.patch(`/organizations/${orgId}/parent-requests/${requestId}`, { action });
+        return res.data;
+    },
+
+    async removeParent(orgId: string) {
+        const res = await api.delete(`/organizations/${orgId}/parent`);
         return res.data;
     },
 };

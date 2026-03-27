@@ -14,9 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { VerificationTab } from "@/components/organizations/settings/verification-tab";
-
-
-import { Company } from "@/services/organization.service"; // Import Company interface
+import { OrgParentRequestModal } from "./OrgParentRequestModal";
+import { OrgParentRequests } from "./OrgParentRequests";import { Company } from "@/services/organization.service"; // Import Company interface
 
 interface OrganizationSettingsProps {
     company: Company;
@@ -45,7 +44,7 @@ export function OrganizationSettings({ company }: OrganizationSettingsProps) {
                 <TransferOwnership companyId={company.company_id} members={members} />
             )}
 
-
+            <HierarchySettings company={company} />
 
             <DangerZone companyId={company.company_id} isOwner={isOwner} />
         </div>
@@ -246,4 +245,79 @@ function DangerZone({ companyId, isOwner }: { companyId: string, isOwner: boolea
     );
 }
 
+function HierarchySettings({ company }: { company: Company }) {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const queryClient = useQueryClient();
+    const router = useRouter();
+
+    const leaveParentMutation = useMutation({
+        mutationFn: () => companyService.removeParent(company.company_id),
+        onSuccess: () => {
+            toast.success("Successfully unlinked from parent organization.");
+            queryClient.invalidateQueries({ queryKey: ["company", company.slug] });
+        },
+        onError: (err: any) => toast.error(companyService.normalizeError(err)),
+    });
+
+    return (
+        <div className="space-y-6">
+            {/* Outgoing Requirements: Join/Leave Parent */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Organization Hierarchy</CardTitle>
+                    <CardDescription>
+                        Manage associations if this organization belongs to a larger parent organization.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {company.parent_org ? (
+                        <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
+                            <div>
+                                <h4 className="font-medium">Current Parent Organization</h4>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    You are currently a sub-organization of <strong>{company.parent_org.name}</strong>.
+                                </p>
+                            </div>
+                            <Button
+                                variant="outline"
+                                className="text-destructive hover:bg-destructive/10"
+                                onClick={() => {
+                                    if (confirm("Are you sure you want to unlink from this parent organization?")) {
+                                        leaveParentMutation.mutate();
+                                    }
+                                }}
+                                disabled={leaveParentMutation.isPending}
+                            >
+                                {leaveParentMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Leave Parent
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
+                            <div>
+                                <h4 className="font-medium">Join Parent Organization</h4>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    Request to become a sub-organization under a larger organization.
+                                </p>
+                            </div>
+                            <Button onClick={() => setIsModalOpen(true)}>
+                                Request Parent
+                            </Button>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            <OrgParentRequestModal 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+                currentOrgId={company.company_id}
+                currentOrgSlug={company.slug}
+            />
+
+            {/* Incoming Requirements: Review Requests */}
+            <OrgParentRequests orgId={company.company_id} />
+        </div>
+    );
+}
 

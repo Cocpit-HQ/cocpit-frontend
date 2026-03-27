@@ -17,6 +17,7 @@ import { OrganizationPublicJobs } from "@/components/organizations/OrganizationP
 import { HomeRecentPosts } from "@/components/organizations/home-tab/HomeRecentPosts";
 import { HomeUpcomingEvents } from "@/components/organizations/home-tab/HomeUpcomingEvents";
 import { HomeGalleryPreview } from "@/components/organizations/home-tab/HomeGalleryPreview";
+import { OrgSubOrganizations } from "@/components/organizations/OrgSubOrganizations";
 import { recordProfileView } from "@/services/api/dashboard";
 import { useSession } from "next-auth/react";
 
@@ -150,6 +151,11 @@ export default function CompanyPage() {
                                 company={company}
                                 onViewAll={() => handleTabChange("about")} // Gallery is usually in About tab or own tab? Based on code it is in About tab.
                             />
+                        )}
+
+                        {/* Sub-Organizations Section */}
+                        {company && (company.children_count || 0) > 0 && (
+                            <OrgSubOrganizations orgId={company.company_id} />
                         )}
                     </TabsContent>
 

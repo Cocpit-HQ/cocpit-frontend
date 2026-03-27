@@ -1,5 +1,6 @@
-import SettingsPage from "@/components/settings/SettingsPage";
+import { redirect } from "next/navigation";
 
-export default function OrganizationSettingsPage() {
-    return <SettingsPage />;
+export default async function OrganizationSettingsPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
+    redirect(`/organization/${slug}/dashboard?tab=settings`);
 }

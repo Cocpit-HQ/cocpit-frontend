@@ -18,7 +18,7 @@ export interface BackendPost {
   author_avatar: string | null;
   author_slug?: string;
   author_company_id?: string;
-  is_company_post?: boolean;
+  is_organization_post?: boolean;
   category_name: 'Personal' | 'Professional' | 'Achievement' | 'Update' | 'Hiring' | 'Milestone' | 'Insight' | 'Article' | null;
   media: BackendMedia[];
   poll: BackendPoll | null;
@@ -40,7 +40,7 @@ export interface BackendPost {
       full_name: string;
       avatar_url: string | null;
       author_slug?: string;
-      is_company_post?: boolean;
+      is_organization_post?: boolean;
     };
     media?: BackendMedia[];
     like_count?: number;

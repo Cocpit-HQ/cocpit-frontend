@@ -180,7 +180,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         shares: "0",
         poll: spPoll,
         authorSlug: sp.author.author_slug,
-        isCompanyPost: sp.author.is_company_post,
+        isCompanyPost: sp.author.is_organization_post,
         isAvailable: true
       } as Post & { isAvailable?: boolean };
     }
@@ -211,7 +211,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     visibility: backendPost.visibility,
     poll: poll,
     authorSlug: backendPost.author_slug,
-    isCompanyPost: backendPost.is_company_post,
+    isCompanyPost: backendPost.is_organization_post,
     shared_post: sharedPost,
   };
 };

@@ -7,7 +7,7 @@ import EditCoverPhoto from "@/components/profile/EditCoverPhoto";
 import { EditAvatarModal } from "@/components/profile/EditAvatarModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Company, companyService } from "@/services/organization.service";
-import { BadgeCheck, MapPin, Globe, Users, PenBox, UserPlus, UserMinus, Loader2, LayoutDashboard, Eye } from "lucide-react";
+import { BadgeCheck, MapPin, Globe, Users, PenBox, UserPlus, UserMinus, Loader2, LayoutDashboard, Eye, Network } from "lucide-react";
 import Link from "next/link";
 import { getProfileViewCount } from "@/services/api/dashboard";
 import { useCompanyPermissions } from "@/components/organizations/hooks/use-company";
@@ -335,6 +335,14 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
                         </div>
 
                         <div className="flex flex-wrap gap-4 text-sm text-foreground/80 justify-start pt-2">
+                            {company?.parent_org && (
+                                <Link href={`/organization/${company.parent_org.slug}`}>
+                                    <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-md hover:bg-muted transition-colors cursor-pointer">
+                                        <Network className="h-4 w-4 text-muted-foreground" />
+                                        <span className="text-sm">Part of <span className="font-medium text-foreground">{company.parent_org.name}</span></span>
+                                    </div>
+                                </Link>
+                            )}
                             {company?.location && (
                                 <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-md">
                                     <MapPin className="h-4 w-4 text-muted-foreground" />
