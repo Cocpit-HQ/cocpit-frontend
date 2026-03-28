@@ -62,6 +62,7 @@ export interface BackendPost {
     is_active?: boolean;
     company_slug?: string;
   } | null;
+  is_broadcast?: boolean;
 }
 
 export interface BackendMedia {
@@ -99,6 +100,7 @@ export interface CreatePostRequest {
   shared_post_id?: string;
   shared_job_id?: string;
   companyId?: string;
+  is_broadcast?: boolean;
 }
 
 export interface CreatePostResponse {

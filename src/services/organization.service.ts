@@ -310,7 +310,7 @@ export const companyService = {
             const data = error.response?.data as any;
 
             if (status === 429) {
-                return "You have reached the daily limit for creating companies.";
+                return data?.message || "You are sending requests too quickly. Please wait a moment.";
             }
             if (status === 409) { // Conflict
                 return "This company URL is already taken. Please choose another.";

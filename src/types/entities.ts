@@ -124,4 +124,7 @@ export interface Post {
   jobSalaryMin?: number;
   jobSalaryMax?: number;
   jobIsActive?: boolean;
+  // Broadcast fields
+  is_broadcast?: boolean;
+  broadcastOrgName?: string;
 }

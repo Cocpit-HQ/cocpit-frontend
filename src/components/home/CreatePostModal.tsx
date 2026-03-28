@@ -230,12 +230,19 @@ export function CreatePostModal({
 
   // Derived state for current poster identity
   const currentPoster = postAsCompanyId
-    ? userCompanies.find(c => c.company_id === postAsCompanyId)
+    ? userCompanies.find(c => c.company_id === postAsCompanyId || c.org_id === postAsCompanyId)
     : currentUser;
 
   const isCompanyPost = !!postAsCompanyId;
   const [postType, setPostType] = useState<PostType>(initialPostType);
   const [notifyEmployees, setNotifyEmployees] = useState(false);
+  const [isBroadcast, setIsBroadcast] = useState(false);
+
+  // Derive whether the active company has sub-organizations (to show broadcast toggle)
+  const activeCompanyData = postAsCompanyId
+    ? userCompanies.find(c => c.company_id === postAsCompanyId || c.org_id === postAsCompanyId)
+    : null;
+  const hasChildren = (activeCompanyData?.children_count ?? 0) > 0;
   const [description, setDescription] = useState('');
   const [photoCaption, setPhotoCaption] = useState('');
   const [videoCaption, setVideoCaption] = useState('');
@@ -837,7 +844,8 @@ export function CreatePostModal({
       post_type: postType === 'photo' ? 'image' :
         postType === 'article' ? 'article' :
           postType, // video, poll, text
-      companyId: isCompanyPost ? postAsCompanyId || undefined : undefined // Use local state
+      companyId: isCompanyPost ? postAsCompanyId || undefined : undefined, // Use local state
+      ...(isCompanyPost && isBroadcast ? { is_broadcast: true } : {}),
     };
 
     let filesToUpload: File[] = [];
@@ -929,7 +937,8 @@ export function CreatePostModal({
     }
 
     // CREATE FLOW
-    if (propCompanyId) {
+    if (isCompanyPost) {
+      const targetCompanyId = postAsCompanyId!;
       // COMPANY POST - Foreground Upload to allow Notification
       setIsSubmitting(true);
       try {
@@ -948,7 +957,7 @@ export function CreatePostModal({
 
         // 3. Notify
         if (notifyEmployees) {
-          await companyService.notifyEmployees(propCompanyId, response.postId);
+          await companyService.notifyEmployees(targetCompanyId, response.postId);
           toast.success("Post created and employees notified!");
         } else {
           toast.success("Post published!");
@@ -968,6 +977,7 @@ export function CreatePostModal({
       } finally {
         setIsSubmitting(false);
         setNotifyEmployees(false);
+        setIsBroadcast(false);
       }
     } else {
       // USER POST - Background Upload
@@ -1059,9 +1069,9 @@ export function CreatePostModal({
                   content={postType === 'photo' ? photoCaption : postType === 'video' ? videoCaption : description}
                   mediaUrls={previewMediaUrls}
                   postType={postType === 'photo' ? 'image' : 'video'} // Only photo/video use preview really
-                  currentUser={propCompanyId ? {
+                  currentUser={isCompanyPost ? {
                     name: (currentPoster as any)?.name || 'Company',
-                    avatar: (currentPoster as any)?.logo_url || undefined
+                    avatar: (currentPoster as any)?.logo_url || (currentPoster as any)?.avatar_url || undefined
                   } : {
                     name: currentUser?.name || 'User',
                     avatar: currentUser?.image || undefined
@@ -1344,9 +1354,9 @@ export function CreatePostModal({
                     <div className="px-6 pt-6 pb-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
-                          {propCompanyId ? (
+                          {isCompanyPost ? (
                             <img
-                              src={(currentPoster as any)?.logo_url || '/assets/pngegg.png'}
+                              src={(currentPoster as any)?.logo_url || (currentPoster as any)?.avatar_url || '/assets/pngegg.png'}
                               alt={(currentPoster as any)?.name || 'Company'}
                               className="w-full h-full object-cover"
                             />
@@ -1359,11 +1369,11 @@ export function CreatePostModal({
                           )}
                         </div>
                         <div>
-                          <h3 className="text-foreground">
-                            {propCompanyId ? ((currentPoster as any)?.name || 'Company') : (currentUser?.name || 'Sally Liang')}
+                          <h3 className="text-foreground font-semibold">
+                            {isCompanyPost ? ((currentPoster as any)?.name || 'Company') : (currentUser?.name || 'User')}
                           </h3>
                           <div className="flex items-center gap-2">
-                            <p className="text-sm text-muted-foreground">Post to Anyone</p>
+                            <p className="text-sm text-muted-foreground">{isCompanyPost ? 'Organization Post' : 'Post to Anyone'}</p>
                             {/* Visibility Toggle */}
                             {editPostId && (
                               <button
@@ -1803,19 +1813,48 @@ export function CreatePostModal({
                   </button>
                 )}
 
-                {/* Notify Employees Checkbox */}
-                {propCompanyId && !editPostId && (
-                  <div className="flex items-center gap-2 mr-auto">
-                    <input
-                      type="checkbox"
-                      id="notifyEmployees"
-                      checked={notifyEmployees}
-                      onChange={(e) => setNotifyEmployees(e.target.checked)}
-                      className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-                    />
-                    <label htmlFor="notifyEmployees" className="text-sm text-foreground cursor-pointer select-none">
-                      Notify Members
-                    </label>
+                {/* Notify Employees Checkbox + Broadcast Toggle */}
+                {isCompanyPost && !editPostId && (
+                  <div className="flex items-center gap-4 mr-auto flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="notifyEmployees"
+                        checked={notifyEmployees}
+                        onChange={(e) => setNotifyEmployees(e.target.checked)}
+                        className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                      />
+                      <label htmlFor="notifyEmployees" className="text-sm text-foreground cursor-pointer select-none">
+                        Notify Members
+                      </label>
+                    </div>
+
+                    {/* Broadcast to Sub-orgs Toggle — only shown for orgs with children */}
+                    {isCompanyPost && (
+                      <div
+                        className="flex items-center gap-2"
+                        title={!hasChildren ? "Your organization has no sub-organizations yet" : ""}
+                      >
+                        <input
+                          type="checkbox"
+                          id="broadcastToggle"
+                          checked={isBroadcast}
+                          onChange={(e) => setIsBroadcast(e.target.checked)}
+                          disabled={!hasChildren}
+                          className="w-4 h-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                        />
+                        <label
+                          htmlFor="broadcastToggle"
+                          className={`text-sm cursor-pointer select-none flex items-center gap-1 ${
+                            hasChildren
+                              ? 'text-amber-700 dark:text-amber-400'
+                              : 'text-muted-foreground opacity-50 cursor-not-allowed'
+                          }`}
+                        >
+                          📢 Broadcast to sub-orgs
+                        </label>
+                      </div>
+                    )}
                   </div>
                 )}
                 <button

@@ -213,5 +213,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     authorSlug: backendPost.author_slug,
     isCompanyPost: backendPost.is_organization_post,
     shared_post: sharedPost,
+    is_broadcast: backendPost.is_broadcast || false,
+    broadcastOrgName: backendPost.is_broadcast ? backendPost.author_name : undefined,
   };
 };

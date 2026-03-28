@@ -70,6 +70,7 @@ import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
+import { BroadcastBanner } from './BroadcastBanner'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -95,6 +96,8 @@ interface FeedPostProps extends Omit<Post, 'commentData'> {
   is_commented?: boolean;
   onSaveChange?: (isSaved: boolean) => void;
   isFullContent?: boolean;
+  is_broadcast?: boolean;
+  broadcastOrgName?: string;
 }
 
 import { usePostImpression } from '@/hooks/usePostImpression'
@@ -132,7 +135,9 @@ export default function FeedPost({
   is_saved,
   is_commented: initialIsCommented = false,
   onSaveChange,
-  isFullContent = false
+  isFullContent = false,
+  is_broadcast = false,
+  broadcastOrgName,
 }: FeedPostProps) {
 
   const impressionRef = usePostImpression(id.toString());
@@ -777,6 +782,10 @@ export default function FeedPost({
       </div >
 
       <div className="flex-1 flex flex-col justify-center w-full">
+        {/* Broadcast banner — rendered above content for org announcements */}
+        {is_broadcast && broadcastOrgName && (
+          <BroadcastBanner orgName={broadcastOrgName} />
+        )}
         {content && (
           <div className="px-4 mb-3">
             <div>
