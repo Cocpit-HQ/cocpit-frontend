@@ -5,6 +5,7 @@ import { searchUsers, UserMention } from '@/services/api/users';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
+import { searchHashtags, HashtagSuggestion } from '@/services/api/hashtags';
 
 interface MentionTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
     value: string;
@@ -16,96 +17,163 @@ interface MentionTextareaProps extends React.TextareaHTMLAttributes<HTMLTextArea
 
 export const MentionTextarea = ({ value, onChange, onMentionSelect, className, ...props }: MentionTextareaProps) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const [mentionQuery, setMentionQuery] = useState('');
-    const [showMentions, setShowMentions] = useState(false);
-    const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
+    const [query, setQuery] = useState('');
+    const [mode, setMode] = useState<'mention' | 'hashtag' | null>(null);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [hashtags, setHashtags] = useState<HashtagSuggestion[]>([]);
     const [users, setUsers] = useState<UserMention[]>([]);
     const [activeIndex, setActiveIndex] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const debouncedQuery = useDebounce(mentionQuery, 300);
+    const debouncedQuery = useDebounce(query, 300);
 
     useEffect(() => {
-        if (debouncedQuery) {
-            searchUsers(debouncedQuery).then(results => {
-                setUsers(results);
-                setActiveIndex(0);
-            });
-        } else {
-            setUsers([]);
-        }
-    }, [debouncedQuery]);
+        let isMounted = true;
+        const abortController = new AbortController();
+
+        const fetchData = async () => {
+            if (!debouncedQuery || !mode) {
+                setUsers([]);
+                setHashtags([]);
+                return;
+            }
+
+            setIsLoading(true);
+            try {
+                if (mode === 'mention') {
+                    const results = await searchUsers(debouncedQuery);
+                    if (isMounted) {
+                        setUsers(results);
+                        setActiveIndex(0);
+                    }
+                } else if (mode === 'hashtag') {
+                    const results = await searchHashtags(debouncedQuery, abortController.signal);
+                    if (isMounted) {
+                        setHashtags(results.tags);
+                        setActiveIndex(0);
+                    }
+                }
+            } catch (err: any) {
+                if (err.name !== 'AbortError') console.error('Search failed', err);
+            } finally {
+                if (isMounted) setIsLoading(false);
+            }
+        };
+
+        fetchData();
+
+        return () => {
+            isMounted = false;
+            abortController.abort();
+        };
+    }, [debouncedQuery, mode]);
 
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         onChange(e);
 
         const cursor = e.target.selectionStart;
         const text = e.target.value;
-        const lastAt = text.lastIndexOf('@', cursor - 1);
+        const textBeforeCursor = text.substring(0, cursor);
 
-        if (lastAt !== -1) {
-            const query = text.substring(lastAt + 1, cursor);
-            if (!/\s/.test(query)) { // If no space, it's a potential mention
-                setMentionQuery(query);
-                setShowMentions(true);
+        const mentionMatch = textBeforeCursor.match(/@([a-zA-Z0-9_]*)$/);
+        const hashtagMatch = textBeforeCursor.match(/#([a-zA-Z0-9_]*)$/);
 
-                // Calculate position (approximation)
-                // A real robust library would use getBoundingClientRect of a mirror div
-                // For simplicity, we just anchor it near the cursor or bottom-left of textarea for now if we can't easily get cursor coordinates
-                // Better approach: Floating absolute position relative to textarea container
-
-                // For MVP, detailed cursor tracking is complex. 
-                // We will position it at the bottom of the textarea or follow a simple logic.
-                // Let's try to get coordinates.
-            } else {
-                setShowMentions(false);
-            }
+        if (mentionMatch) {
+            setQuery(mentionMatch[1]);
+            setMode('mention');
+            setShowSuggestions(true);
+        } else if (hashtagMatch) {
+            setQuery(hashtagMatch[1]);
+            setMode('hashtag');
+            setShowSuggestions(true);
         } else {
-            setShowMentions(false);
+            setShowSuggestions(false);
+            setMode(null);
+            setQuery('');
         }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (showMentions && users.length > 0) {
+        const itemsCount = mode === 'mention' ? users.length : hashtags.length;
+        
+        if (showSuggestions && itemsCount > 0) {
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                setActiveIndex(prev => (prev + 1) % users.length);
+                setActiveIndex(prev => (prev + 1) % itemsCount);
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                setActiveIndex(prev => (prev - 1 + users.length) % users.length);
+                setActiveIndex(prev => (prev - 1 + itemsCount) % itemsCount);
             } else if (e.key === 'Enter' || e.key === 'Tab') {
                 e.preventDefault();
-                selectUser(users[activeIndex]);
+                if (mode === 'mention') {
+                    selectUser(users[activeIndex]);
+                } else {
+                    selectHashtag(hashtags[activeIndex]);
+                }
             } else if (e.key === 'Escape') {
-                setShowMentions(false);
+                setShowSuggestions(false);
             }
         }
     };
 
     const selectUser = (user: UserMention) => {
-        const cursor = textareaRef.current?.selectionStart || 0;
-        const lastAt = value.lastIndexOf('@', cursor - 1);
-        const prefix = value.substring(0, lastAt);
-        const suffix = value.substring(cursor);
+        const el = textareaRef.current;
+        if (!el) return;
 
-        // Insert name
-        const newValue = `${prefix}@${user.full_name} ${suffix}`;
+        const cursor = el.selectionStart;
+        const textBefore = value.substring(0, cursor);
+        const textAfter = value.substring(cursor);
+        
+        const match = textBefore.match(/@([a-zA-Z0-9_]*)$/);
+        if (match) {
+            const baseLeft = textBefore.substring(0, match.index);
+            const injected = `@${user.full_name} `;
+            const newValue = baseLeft + injected + textAfter;
 
-        // Create synthetic event
-        const event = {
-            target: { value: newValue }
-        } as React.ChangeEvent<HTMLTextAreaElement>;
+            const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
+            onChange(event);
+            setShowSuggestions(false);
+            if (onMentionSelect) onMentionSelect(user);
 
-        onChange(event);
-        setShowMentions(false);
-        if (onMentionSelect) onMentionSelect(user);
+            setTimeout(() => {
+                const newPos = baseLeft.length + injected.length;
+                el.setSelectionRange(newPos, newPos);
+                el.focus();
+            }, 0);
+        }
+    };
 
-        // Reset focus
-        setTimeout(() => {
-            if (textareaRef.current) {
-                textareaRef.current.focus();
-                // textareaRef.current.setSelectionRange... (optional correction)
-            }
-        }, 0);
+    const selectHashtag = (tag: HashtagSuggestion) => {
+        const el = textareaRef.current;
+        if (!el) return;
+
+        // Duplicate prevention using regex boundary
+        const boundaryRegex = new RegExp(`(^|\\s)#${tag.tag}(\\s|$)`, 'i');
+        if (boundaryRegex.test(value)) {
+            setShowSuggestions(false);
+            return;
+        }
+
+        const cursor = el.selectionStart;
+        const textBefore = value.substring(0, cursor);
+        const textAfter = value.substring(cursor);
+        
+        const match = textBefore.match(/#([a-zA-Z0-9_]*)$/);
+        if (match) {
+            const baseLeft = textBefore.substring(0, match.index);
+            const injected = `#${tag.tag} `;
+            const newValue = baseLeft + injected + textAfter;
+
+            const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
+            onChange(event);
+            setShowSuggestions(false);
+
+            setTimeout(() => {
+                const newPos = baseLeft.length + injected.length;
+                el.setSelectionRange(newPos, newPos);
+                el.focus();
+            }, 0);
+        }
     };
 
     return (
@@ -119,12 +187,12 @@ export const MentionTextarea = ({ value, onChange, onMentionSelect, className, .
                 {...props}
             />
 
-            {showMentions && users.length > 0 && (
+            {showSuggestions && (
                 <div className="absolute z-50 w-64 mt-1 bg-popover text-popover-foreground border rounded-md shadow-lg overflow-hidden animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 duration-200"
                     style={{ bottom: '100%', left: 0, marginBottom: '8px' }}
                 >
                     <div className="p-1 max-h-[200px] overflow-y-auto">
-                        {users.map((user, index) => (
+                        {mode === 'mention' && users.map((user, index) => (
                             <button
                                 key={user.id}
                                 onClick={() => selectUser(user)}
@@ -143,6 +211,32 @@ export const MentionTextarea = ({ value, onChange, onMentionSelect, className, .
                                 </div>
                             </button>
                         ))}
+
+                        {mode === 'hashtag' && hashtags.map((h, index) => (
+                            <button
+                                key={h.tag}
+                                onClick={() => selectHashtag(h)}
+                                className={cn(
+                                    "w-full flex items-center justify-between px-3 py-2 text-sm rounded-sm select-none outline-none transition-colors",
+                                    index === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted/80"
+                                )}
+                            >
+                                <span className="font-medium text-primary">#{h.tag}</span>
+                                <span className="text-xs text-muted-foreground">{h.usage_count} posts</span>
+                            </button>
+                        ))}
+
+                        {isLoading && (
+                            <div className="px-3 py-2 text-xs text-muted-foreground animate-pulse">
+                                Searching...
+                            </div>
+                        )}
+                        
+                        {!isLoading && ((mode === 'mention' && users.length === 0) || (mode === 'hashtag' && hashtags.length === 0)) && (
+                            <div className="px-3 py-2 text-xs text-muted-foreground italic">
+                                No results found
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

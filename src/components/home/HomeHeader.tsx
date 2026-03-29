@@ -9,8 +9,10 @@ import { searchUsers } from '@/services/api/user';
 import { SearchedUser } from '@/types/user';
 import { ProfileSwitcher } from '@/components/layout/ProfileSwitcher';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
+import { useRouter } from 'next/navigation';
 
 export const HomeHeader = () => {
+    const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<SearchedUser[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
@@ -109,7 +111,17 @@ export const HomeHeader = () => {
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                     if (searchQuery.trim()) {
-                                        saveSearch(searchQuery);
+                                        const query = searchQuery.trim();
+                                        if (query.startsWith('#')) {
+                                            const tag = query.substring(1).toLowerCase();
+                                            if (tag) {
+                                                saveSearch(query);
+                                                setIsSearchFocused(false);
+                                                router.push(`/hashtag/${tag}`);
+                                                return;
+                                            }
+                                        }
+                                        saveSearch(query);
                                         setIsSearchFocused(false);
                                     }
                                 }
@@ -287,7 +299,17 @@ export const HomeHeader = () => {
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                     if (searchQuery.trim()) {
-                                        saveSearch(searchQuery);
+                                        const query = searchQuery.trim();
+                                        if (query.startsWith('#')) {
+                                            const tag = query.substring(1).toLowerCase();
+                                            if (tag) {
+                                                saveSearch(query);
+                                                setIsSearchFocused(false);
+                                                router.push(`/hashtag/${tag}`);
+                                                return;
+                                            }
+                                        }
+                                        saveSearch(query);
                                         setIsSearchFocused(false);
                                     }
                                 }

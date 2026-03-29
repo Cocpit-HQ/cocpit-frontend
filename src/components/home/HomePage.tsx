@@ -9,6 +9,7 @@ import { HomeHeader } from './HomeHeader'
 import { FeedSection } from './FeedSection'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { useStories } from '@/context/StoriesContext'
+import TrendingHashtags from './TrendingHashtags'
 
 // Lazy-load heavy modal/overlay components (saves ~230KB from initial bundle)
 const MobileStoryViewer = dynamic(
@@ -77,9 +78,10 @@ export default function HomePage() {
               setActiveTab={setActiveTab}
             />
 
-            {/* Suggestions */}
-            <aside className="lg:col-span-4">
-              <div className="sticky top-24 md:top-28">
+            {/* Sideboards */}
+            <aside className="lg:col-span-4 space-y-6">
+              <div className="sticky top-24 md:top-28 space-y-6">
+                <TrendingHashtags />
                 <SuggestionsPanel />
               </div>
             </aside>
