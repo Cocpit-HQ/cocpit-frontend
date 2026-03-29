@@ -11,14 +11,17 @@ interface SkillModalProps {
   initialSkills?: string[]
   onSave: (skills: string[]) => void
   isDark?: boolean // Optional
+  loading?: boolean
 }
 
-export function SkillModal({ isOpen, onClose, initialSkills = [], onSave }: SkillModalProps) {
+export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loading = false }: SkillModalProps) {
   const [skills, setSkills] = useState<string[]>(initialSkills)
+  const [currentInput, setCurrentInput] = useState("")
 
   useEffect(() => {
     if (isOpen) {
       setSkills(initialSkills)
+      setCurrentInput("")
     }
   }, [isOpen, initialSkills])
 
@@ -26,6 +29,15 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave }: Skil
 
   const handleTagsChange = (newTags: string[]) => {
     setSkills(newTags)
+  }
+
+  const handleSave = () => {
+    const pending = currentInput.trim();
+    const finalSkills = [...skills];
+    if (pending && !finalSkills.includes(pending)) {
+      finalSkills.push(pending);
+    }
+    onSave(finalSkills);
   }
 
   return (
@@ -39,7 +51,11 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave }: Skil
         </div>
 
         <div className="p-6 space-y-4">
-          <SkillTagInput initialTags={skills} onTagsChange={handleTagsChange} />
+          <SkillTagInput
+            initialTags={skills}
+            onTagsChange={handleTagsChange}
+            onInputChange={setCurrentInput}
+          />
         </div>
 
         <div className="flex justify-end gap-3 p-6 border-t border-border">
@@ -50,8 +66,12 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave }: Skil
           >
             Cancel
           </Button>
-          <Button onClick={() => onSave(skills)} className="bg-primary hover:bg-primary/90 text-primary-foreground border-0">
-            Save Changes
+          <Button
+            onClick={handleSave}
+            disabled={loading}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground border-0"
+          >
+            {loading ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>

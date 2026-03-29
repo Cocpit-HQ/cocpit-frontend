@@ -24,13 +24,29 @@ export function ChatListItem({ chat, isSelected, isMobile }: ChatListItemProps) 
         }`}
     >
       <div className="flex gap-3">
-        <Avatar
-          url={chat.avatar}
-          name={chat.name}
-          size="lg" // 12 -> 3rem -> lg/xl? 48px is w-12. My size map: lg=12. Correct.
-          online={chat.online}
-          fallbackGradient="gradient-1"
-        />
+        {chat.isGroup ? (
+          <Avatar
+            url={chat.avatar}
+            name={chat.name}
+            size="lg"
+            online={chat.online}
+            fallbackGradient="gradient-1"
+          />
+        ) : (
+          <Link
+            href={chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`}
+            onClick={(e) => e.stopPropagation()}
+            className="shrink-0 hover:opacity-80 transition-opacity"
+          >
+            <Avatar
+              url={chat.avatar}
+              name={chat.name}
+              size="lg"
+              online={chat.online}
+              fallbackGradient="gradient-1"
+            />
+          </Link>
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2 min-w-0 overflow-hidden flex-1">
@@ -44,9 +60,15 @@ export function ChatListItem({ chat, isSelected, isMobile }: ChatListItemProps) 
               {chat.sessionStatus === 'unclaimed' && (
                 <span className="w-2 h-2 rounded-full bg-muted-foreground/30 shrink-0" title="Unclaimed" />
               )}
-              <h3 className="font-semibold truncate text-foreground min-w-0">
-                {chat.name}
-              </h3>
+              {chat.isGroup ? (
+                <h3 className="font-semibold truncate text-foreground min-w-0">
+                  {chat.name}
+                </h3>
+              ) : (
+                <h3 className="font-semibold truncate text-foreground min-w-0">
+                  {chat.name}
+                </h3>
+              )}
               {chat.role && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary whitespace-nowrap flex-shrink-0">
                   {chat.role}

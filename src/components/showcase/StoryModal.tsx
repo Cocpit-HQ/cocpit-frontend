@@ -11,6 +11,7 @@ import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useStorySync } from "@/components/showcase/hooks/use-story-sync"
 import { useStories } from '@/context/StoriesContext'
 import { getStoryImageUrl, getStoryThumbnailUrl, getStoryVideoUrl, parseStoryMetadata } from "@/lib/story-media"
+import { formatTimeAgo } from "@/lib/utils"
 
 type StoryModalProps = {
   story: StoryDetail
@@ -144,13 +145,7 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
   const uploader = story.author;
 
   const storyTimestamp = React.useMemo(() => {
-    if (story.created_at) {
-      const created = new Date(story.created_at);
-      if (!Number.isNaN(created.getTime())) {
-        return created.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-      }
-    }
-    return story.timeAgo || "";
+    return formatTimeAgo(story.created_at, story.timeAgo);
   }, [story.created_at, story.timeAgo]);
 
   const storyImageSrc = React.useMemo(() => getStoryImageUrl(story), [story]);
@@ -388,28 +383,24 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
                   isActive
                   background={metadata.background as string | undefined}
                 />
-              ) : isJobStory ? (
-                null
-              ) : (
-                storyImageSrc ? (
-                  <img
-                    src={storyImageSrc}
-                    alt={story.title || 'Story'}
-                    className="w-full h-full object-contain"
-                  />
-                ) : null
-              )}
+              ) : storyImageSrc ? (
+                <img
+                  src={storyImageSrc}
+                  alt={story.title || 'Story'}
+                  className="w-full h-full object-contain"
+                />
+              ) : null}
 
               {/* Shared Post Overlay */}
               {isJobStory ? (
                 <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-auto p-8">
-                  <div style={{ transform: `scale(${typeof metadata.scale === 'number' ? metadata.scale : 1.5})` }}>
+                  <div style={{ transform: `scale(${typeof metadata.scale === 'number' ? metadata.scale : 1.5})` }} className={parsedStoryMetadata?.is_baked ? "opacity-0" : ""}>
                     <JobStoryCard metadata={jobMetadata} onAction={onClose} />
                   </div>
                 </div>
               ) : story.shared_post ? (
                 <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-8">
-                  <div style={{ transform: `scale(${metadata.scale || 0.9})` }} className="transition-transform duration-200">
+                  <div style={{ transform: `scale(${metadata.scale || 0.9})` }} className={`transition-transform duration-200 ${parsedStoryMetadata?.is_baked ? "opacity-0" : ""}`}>
                     <SharedPostCard sharedPost={story.shared_post} />
                   </div>
                 </div>
@@ -506,7 +497,7 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-0.5">
                               <p className="text-xs font-bold text-foreground truncate">{c.full_name}</p>
-                              <span className="text-[10px] text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : ''}</span>
+                              <span className="text-[10px] text-muted-foreground">{c.created_at ? formatTimeAgo(c.created_at) : ''}</span>
                             </div>
                             <p className="text-sm text-foreground/90 leading-relaxed">{c.content}</p>
                           </div>

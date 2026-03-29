@@ -147,6 +147,7 @@ export function useSkillMutations() {
                     skills: [...old.skills, ...response.skills]
                 };
             });
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
         }
     });
 
@@ -160,6 +161,7 @@ export function useSkillMutations() {
                     skills: old.skills.filter(s => s.skill_id !== id)
                 };
             });
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
         }
     });
 

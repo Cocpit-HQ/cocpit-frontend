@@ -9,6 +9,7 @@ export interface BackendChat {
   other_user_id?: string; // Added optional other_user_id
   other_user_type?: "COMPANY" | "USER";
   other_user_headline?: string;
+  other_user_slug?: string;
   last_message_text: string;
   unread_count: number;
   timeAgo?: string;
@@ -72,6 +73,7 @@ export interface ChatThread {
   pinnedContext?: string;
   otherUserId?: string; // Added to support sending messages to user
   otherUserType?: "COMPANY" | "USER";
+  otherUserSlug?: string;
   isGroup?: boolean; // Added for Group Chat
   isBlockedByMe?: boolean;
   isBlockedByOther?: boolean;

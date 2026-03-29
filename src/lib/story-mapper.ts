@@ -60,6 +60,7 @@ export const mapStory = (story: RawStory): StoryDetail => {
         media_url,
         thumbnail_url,
         shared_post: story.sharedPost || story.shared_post,
-        story_metadata
+        story_metadata,
+        created_at: story.created_at
     };
 };

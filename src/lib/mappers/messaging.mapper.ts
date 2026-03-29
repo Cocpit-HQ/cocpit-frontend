@@ -35,6 +35,7 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     pinnedContext: undefined,
     otherUserId: backendChat.other_user_id, // Map other_user_id
     otherUserType: backendChat.other_user_type, // Map other_user_type
+    otherUserSlug: backendChat.other_user_slug, // Map other_user_slug
     isGroup: backendChat.is_group,
     isBlockedByMe: backendChat.is_blocked_by_me || false,
     isBlockedByOther: backendChat.is_blocked_by_other || false,

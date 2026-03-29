@@ -278,15 +278,12 @@ export const getMyApplications = async (status: string, filters?: JobSearchParam
 export const createJob = async (data: JobFormData): Promise<void> => {
     const payload = {
         title: data.jobTitle,
-        company_name: data.companyName,
         location: data.location,
         description: data.jobDescription,
         experience_level: data.experience,
         job_type: data.jobType,
         work_mode: data.workMode,
-        company_type: data.companyType,
         industry: data.industry,
-        about_company: data.aboutCompany,
         actively_hiring: data.activelyHiring,
         easy_apply: data.easyApply,
         minSalary: data.minSalary,
@@ -359,15 +356,12 @@ export const getMyCreatedJobs = async (filters?: JobSearchParams): Promise<Job[]
 export const updateJob = async (jobId: string, data: JobFormData): Promise<void> => {
     const payload = {
         title: data.jobTitle,
-        company_name: data.companyName,
         location: data.location,
         description: data.jobDescription,
         experience_level: data.experience,
         job_type: data.jobType,
         work_mode: data.workMode,
-        company_type: data.companyType,
         industry: data.industry,
-        about_company: data.aboutCompany,
         actively_hiring: data.activelyHiring,
         easy_apply: data.easyApply,
         minSalary: data.minSalary,

@@ -1,4 +1,5 @@
 import React from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, MoreVertical, Phone, Video, X, Copy, Pencil, Info as InfoIcon, Trash2 } from "lucide-react"
 import { ChatThread, Message } from "@/types/messaging"
@@ -40,25 +41,49 @@ export default function MobileChatHeader({ chat, onBack, selectedMessage, onMess
 
         {!selectedMessage ? (
           <div className="flex items-center gap-2 overflow-hidden flex-1">
-            <Avatar
-              url={chat.avatar}
-              name={chat.name}
-              size="sm"
-              online={chat.online}
-            />
-            <div className="flex-1 min-w-0 flex flex-col justify-center">
-              <h3 className="font-semibold text-sm text-foreground truncate w-full">
-                {chat.name}
-              </h3>
-              {chat.role && (
-                <p className="text-xs text-primary truncate w-full">{chat.role}</p>
-              )}
-              {!chat.role && (
-                <p className="text-xs text-muted-foreground truncate w-full">
-                  {chat.online ? "Active now" : "Offline"}
-                </p>
-              )}
-            </div>
+            {chat.isGroup ? (
+              <div className="flex items-center gap-2 overflow-hidden flex-1">
+                <Avatar
+                  url={chat.avatar}
+                  name={chat.name}
+                  size="sm"
+                  online={chat.online}
+                />
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <h3 className="font-semibold text-sm text-foreground truncate w-full">
+                    {chat.name}
+                  </h3>
+                  <p className="text-xs text-muted-foreground truncate w-full">
+                    {chat.role ? chat.role : "Group Chat"}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <Link 
+                href={chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`}
+                className="flex items-center gap-2 overflow-hidden flex-1 group"
+              >
+                <Avatar
+                  url={chat.avatar}
+                  name={chat.name}
+                  size="sm"
+                  online={chat.online}
+                />
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <h3 className="font-semibold text-sm text-foreground truncate w-full group-hover:underline group-hover:text-primary transition-colors">
+                    {chat.name}
+                  </h3>
+                  {chat.role && (
+                    <p className="text-xs text-primary truncate w-full">{chat.role}</p>
+                  )}
+                  {!chat.role && (
+                    <p className="text-xs text-muted-foreground truncate w-full">
+                      {chat.online ? "Active now" : "Offline"}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            )}
           </div>
         ) : (
           <div className="font-medium text-foreground">1 Selected</div>

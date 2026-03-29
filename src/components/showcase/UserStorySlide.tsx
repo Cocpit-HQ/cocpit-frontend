@@ -9,6 +9,7 @@ import { StoryMetadata } from "@/types/story-editor"
 import { VirtualLayerCanvas } from "./ViewerLayerItem"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useStorySync } from "@/components/showcase/hooks/use-story-sync"
+import { formatTimeAgo } from "@/lib/utils"
 
 type UserStorySlideProps = {
     group: StoryGroup
@@ -723,17 +724,10 @@ export const UserStorySlide = ({
         handleAutoNext();
     };
 
-    const formatStoryTimestamp = (createdAt?: string, fallback?: string) => {
-        if (!createdAt) return fallback || "";
-        const created = new Date(createdAt);
-        if (Number.isNaN(created.getTime())) return fallback || "";
-        return created.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-    };
-
     const uploader = currentStory.author || group.author;
     const uploaderName = uploader?.name || "Unknown";
     const uploaderAvatar = uploader?.avatar || "/assets/pngegg.png";
-    const storyTimestamp = formatStoryTimestamp(currentStory.created_at, currentStory.timeAgo);
+    const storyTimestamp = formatTimeAgo(currentStory.created_at, currentStory.timeAgo);
     const displayedLikeCount =
         (currentStory.likes || 0) -
         (currentStory.isLiked ? 1 : 0) +
@@ -986,12 +980,6 @@ export const UserStorySlide = ({
                                 );
                             })}
                         </div>
-                    ) : currentStory.story_metadata?.type === "job" ? (
-                        currentStory.story_metadata?.backgroundStyle ? (
-                            <div className="absolute inset-0 z-0">
-                                <div className={`w-full h-full ${currentStory.story_metadata.backgroundStyle}`} />
-                            </div>
-                        ) : null
                     ) : hasValidCurrentImageSrc ? (
                         <>
                             {/* Snapshot-based: render the baked composite image directly */}
@@ -1009,6 +997,12 @@ export const UserStorySlide = ({
                                 />
                             </div>
                         </>
+                    ) : currentStory.story_metadata?.type === "job" ? (
+                        currentStory.story_metadata?.backgroundStyle ? (
+                            <div className="absolute inset-0 z-0">
+                                <div className={`w-full h-full ${currentStory.story_metadata.backgroundStyle}`} />
+                            </div>
+                        ) : null
                     ) : null}
 
                     {/* Render Overlays based on Story Type */}
@@ -1026,7 +1020,7 @@ export const UserStorySlide = ({
                             case 'job':
                                 return (
                                     <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-auto p-8">
-                                        <div style={scaleStyle}>
+                                        <div style={scaleStyle} className={metadata?.is_baked ? "opacity-0" : ""}>
                                             <JobStoryCard metadata={metadata as any} onAction={onClose} />
                                         </div>
                                     </div>
@@ -1035,8 +1029,8 @@ export const UserStorySlide = ({
                             default:
                                 if (currentStory.shared_post) {
                                     return (
-                                        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-8">
-                                            <div style={scaleStyle} className="transition-transform duration-200">
+                                        <div className={`absolute inset-0 flex items-center justify-center z-10 ${metadata?.is_baked ? "pointer-events-auto" : "pointer-events-none"} p-8`}>
+                                            <div style={scaleStyle} className={`transition-transform duration-200 ${metadata?.is_baked ? "opacity-0" : ""}`}>
                                                 <SharedPostCard sharedPost={currentStory.shared_post} />
                                             </div>
                                         </div>

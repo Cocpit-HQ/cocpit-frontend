@@ -80,7 +80,6 @@ export interface JobFilters {
 
 export interface JobFormData {
   jobTitle: string;
-  companyName: string;
   jobDescription: string;
   location: string;
   experience: string;
@@ -90,9 +89,7 @@ export interface JobFormData {
   maxSalary?: string | number;
   skills: string; // comma separated for form
   workMode: WorkMode;
-  companyType: CompanyType;
   industry: string;
-  aboutCompany: string;
   activelyHiring: boolean;
   easyApply: boolean;
   companyId?: string;

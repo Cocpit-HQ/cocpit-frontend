@@ -102,9 +102,9 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
   return (
     <>
       <div className="job-card group bg-card border border-border rounded-xl p-4 sm:p-6 transition-all shadow-sm hover:shadow-md">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           {/* Logo & Info */}
-          <Link href={`/jobs/${job.jobId || job.id}`} className="flex items-start gap-4 flex-1">
+          <Link href={`/jobs/${job.jobId || job.id}`} className="flex items-start gap-4 flex-1 min-w-0 w-full">
             {job.companyLogo ? (
               <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border border-border shadow-inner shrink-0 relative">
                 <img src={job.companyLogo} alt={job.company} className="w-full h-full object-cover" />
@@ -116,51 +116,52 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
             )}
 
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <h3 className="font-semibold text-lg text-foreground truncate group-hover:text-primary transition-colors">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                <h3 className="font-semibold text-base sm:text-lg text-foreground truncate group-hover:text-primary transition-colors pr-2">
                   {job.title}
                 </h3>
-                {/* Status Badges - Simplified for My Jobs view as Timeline is present */}
-                {activeTab !== 'my-jobs' && (
-                  <>
-                    {(job.status || job.hasApplied) && getStatusBadge(job.status || (job.hasApplied ? 'applied' : undefined))}
-                    {job.isSaved && (
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-500">Saved</span>
-                    )}
-                  </>
-                )}
-                {/* Explicit badges for My Jobs if needed, e.g. Hiring */}
-                {job.activelyHiring && (
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/20">
-                    Hiring
-                  </span>
-                )}
+                {/* Status Badges */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {activeTab !== 'my-jobs' && (
+                    <>
+                      {(job.status || job.hasApplied) && getStatusBadge(job.status || (job.hasApplied ? 'applied' : undefined))}
+                      {job.isSaved && (
+                        <span className="text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-500">Saved</span>
+                      )}
+                    </>
+                  )}
+                  {job.activelyHiring && (
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/20 whitespace-nowrap">
+                      Hiring
+                    </span>
+                  )}
+                </div>
               </div>
 
-              <div className="text-sm text-foreground/80 mb-2 flex items-center gap-2">
-                <span className="font-medium">{job.company}</span>
-                <span className="text-muted-foreground">•</span>
-                <span className="text-muted-foreground">{job.location}</span>
+              <div className="text-xs sm:text-sm text-foreground/80 mb-2 flex items-center gap-1.5 sm:gap-2">
+                <span className="font-medium truncate max-w-[140px] sm:max-w-none">{job.company}</span>
+                <span className="text-muted-foreground shrink-0">•</span>
+                <span className="text-muted-foreground truncate max-w-[120px] sm:max-w-none">{job.location}</span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-y-2 gap-x-3 sm:gap-x-4 text-[11px] sm:text-xs text-muted-foreground">
                 <div className="flex items-center gap-1.5">
-                  <Briefcase className="w-3.5 h-3.5" />
-                  {job.type}
+                  <Briefcase className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{job.type}</span>
                 </div>
                 {job.salary && (
                   <div className="flex items-center gap-1.5">
-                    <DollarSign className="w-3.5 h-3.5" />
-                    {job.salary}
+                    <DollarSign className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{job.salary}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" />
-                  {job.postedTime}
+                  <Clock className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{job.postedTime}</span>
                 </div>
               </div>
 
-              <div className="mt-3 text-xs text-muted-foreground flex items-center gap-2">
+              <div className="mt-2.5 sm:mt-3 text-[11px] sm:text-xs text-muted-foreground flex items-center gap-2">
                 {job.isOffer && job.offerStatus ? (
                   <span className={cn(
                     "px-2 py-0.5 rounded-full font-medium",
@@ -179,35 +180,51 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
           </Link>
 
           {/* Action Button */}
-          <div className="shrink-0 flex flex-col gap-2 items-end">
+          <div className="w-full sm:w-auto shrink-0 flex flex-row sm:flex-col items-center justify-between sm:items-end gap-2 mt-3 sm:mt-0 pt-3 sm:pt-0 border-t border-border sm:border-transparent">
+            {/* Mobile Left: View Details & Status */}
+            <div className="flex sm:hidden flex-row items-center gap-2">
+              <Link href={`/jobs/${job.id}`} className="text-xs font-medium hover:underline text-foreground">Details</Link>
+              {(job.status === 'applied' || job.hasApplied || job.status === 'shortlisted') ? (
+                <div className="flex items-center gap-1 text-green-500 text-[11px] font-medium">
+                  <CheckCircle className="w-3 h-3" />
+                  Applied
+                </div>
+              ) : isCompany ? (
+                <span className="text-[10px] text-muted-foreground italic">Switch to user to apply</span>
+              ) : null}
+            </div>
+
+            {/* Top Right on Desktop, Center/Right on Mobile: Actions */}
             <div className="flex items-center gap-1">
               <button
                 onClick={(e) => {
                   e.stopPropagation()
                   setIsShareOpen(true)
                 }}
-                className="p-2 rounded-full text-muted-foreground hover:bg-muted/50 transition-colors"
+                className="p-1.5 sm:p-2 rounded-full text-muted-foreground hover:bg-muted/50 transition-colors"
+                aria-label="Share Job"
               >
-                <Share2 className="w-5 h-5" />
+                <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <button
-              onClick={(e) => {
-                e.stopPropagation()
-                saveJob(job.jobId || job.id)
-              }}
-              className={cn(
-                "p-2 rounded-full transition-colors",
-                job.isSaved
-                  ? "text-pink-500 hover:bg-pink-500/10"
-                  : "text-muted-foreground hover:bg-muted/50"
-              )}
-            >
-              <Bookmark className={cn("w-5 h-5", job.isSaved && "fill-current")} />
-            </button>
+                onClick={(e) => {
+                  e.stopPropagation()
+                  saveJob(job.jobId || job.id)
+                }}
+                className={cn(
+                  "p-1.5 sm:p-2 rounded-full transition-colors",
+                  job.isSaved
+                    ? "text-pink-500 hover:bg-pink-500/10"
+                    : "text-muted-foreground hover:bg-muted/50"
+                )}
+                aria-label={job.isSaved ? "Saved Job" : "Save Job"}
+              >
+                <Bookmark className={cn("w-4 h-4 sm:w-5 sm:h-5", job.isSaved && "fill-current")} />
+              </button>
             </div>
 
-            {/* View Details / Applied Badge */}
-            <div className="mt-2 flex items-center gap-2">
+            {/* Bottom Right on Desktop: View Details & Status */}
+            <div className="hidden sm:flex mt-1 items-center gap-2">
               <Link href={`/jobs/${job.id}`} className="text-sm font-medium hover:underline text-foreground">Details</Link>
               {(job.status === 'applied' || job.hasApplied || job.status === 'shortlisted') ? (
                 <div className="flex items-center gap-1 text-green-500 text-xs font-medium">

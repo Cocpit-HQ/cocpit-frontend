@@ -6,15 +6,17 @@ import { X } from "lucide-react"
 interface SkillTagInputProps {
   initialTags?: string[]
   onTagsChange: (tags: string[]) => void
+  onInputChange?: (value: string) => void
   isDark?: boolean // Optional
 }
 
-export function SkillTagInput({ initialTags = [], onTagsChange }: SkillTagInputProps) {
+export function SkillTagInput({ initialTags = [], onTagsChange, onInputChange }: SkillTagInputProps) {
   const [tags, setTags] = useState<string[]>(initialTags)
   const [inputValue, setInputValue] = useState("")
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value)
+    if (onInputChange) onInputChange(e.target.value)
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -26,8 +28,10 @@ export function SkillTagInput({ initialTags = [], onTagsChange }: SkillTagInputP
         setTags(newTags)
         onTagsChange(newTags)
         setInputValue("")
+        if (onInputChange) onInputChange("")
       } else {
         setInputValue("")
+        if (onInputChange) onInputChange("")
       }
     } else if (e.key === "Backspace" && inputValue === "" && tags.length > 0) {
       const newTags = tags.slice(0, -1)
