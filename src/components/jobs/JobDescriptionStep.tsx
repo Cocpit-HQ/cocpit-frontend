@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils"
 interface JobDescriptionStepProps {
   formData: {
     description: string
-    aboutCompany: string
     easyApply: boolean
     activelyHiring: boolean
   }
@@ -26,20 +25,6 @@ export function JobDescriptionStep({ formData, updateFormData }: JobDescriptionS
             className="w-full p-3 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none resize-none transition-colors"
             value={formData.description}
             onChange={e => updateFormData({ description: e.target.value })}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <h3 className="font-semibold text-foreground border-b border-border pb-2">About Company</h3>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Company Overview</label>
-          <textarea
-            rows={4}
-            placeholder="Brief description about the company..."
-            className="w-full p-3 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none resize-none transition-colors"
-            value={formData.aboutCompany}
-            onChange={e => updateFormData({ aboutCompany: e.target.value })}
           />
         </div>
       </div>

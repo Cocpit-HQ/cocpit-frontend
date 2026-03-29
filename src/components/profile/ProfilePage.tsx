@@ -311,96 +311,40 @@ export default function ProfilePage() {
           <div className="flex flex-col gap-6 md:gap-8">
             <div className="flex flex-col gap-1 md:gap-2">
               <div className="w-full">
-              <div className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border">
+                <div className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border">
 
-                <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage}>
-                  <div className="absolute top-3 right-3 md:hidden z-10">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="bg-white/20 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/30 transition-all border border-white/20 flex items-center justify-center">
-                          <MoreVertical className="w-5 h-5" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="bg-black/50 backdrop-blur-sm border-white/20 text-white">
-                        <DropdownMenuItem onSelect={() => router.push("/settings")}>
-                          Settings
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => router.push("/analytics")}>
-                          Analytics
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={handleLogout}>
-                          <LogOut className="w-4 h-4 mr-2" />
-                          Log out
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  <div className="hidden md:flex absolute top-3 right-3 gap-2 z-10">
-                    <button onClick={() => router.push('/analytics')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
-                      View Analytics
-                    </button>
-                    <button onClick={() => router.push('/profile/edit')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
-                      Edit Profile
-                    </button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="bg-white/20 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/30 transition-all border border-white/20 flex items-center justify-center">
-                          <MoreVertical className="w-5 h-5" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setIsShareModalOpen(true)} className="cursor-pointer">
-                          <Share2 className="w-4 h-4 mr-2" />
-                          Share Profile
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            navigator.clipboard.writeText(window.location.href);
-                            toast.success("Profile link copied");
-                          }}
-                          className="cursor-pointer"
-                        >
-                          <LinkIcon className="w-4 h-4 mr-2" />
-                          Copy Profile Link
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </EditCoverPhoto>
-
-                <div className="px-6 pb-6">
-                  <div className="flex items-start justify-between -mt-14 mb-4">
-                    <div className="relative group">
-                      <div
-                        className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 cursor-pointer"
-                        onClick={() => setIsViewAvatarOpen(true)}
-                      >
-                        <img
-                          src={user?.avatar ?? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop"}
-                          alt="Profile"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsEditAvatarOpen(true);
-                        }}
-                        className="absolute bottom-1 right-1 p-2 bg-background border border-border rounded-full text-muted-foreground hover:text-foreground shadow-sm md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-                        aria-label="Edit Profile Picture"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
+                  <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage}>
+                    <div className="absolute top-3 right-3 md:hidden z-10">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="bg-white/20 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/30 transition-all border border-white/20 flex items-center justify-center">
+                            <MoreVertical className="w-5 h-5" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="bg-black/50 backdrop-blur-sm border-white/20 text-white">
+                          <DropdownMenuItem onSelect={() => router.push("/settings")}>
+                            Settings
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => router.push("/analytics")}>
+                            Analytics
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={handleLogout}>
+                            <LogOut className="w-4 h-4 mr-2" />
+                            Log out
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-
-                    <div className="md:hidden mt-16 flex gap-2">
-                      <button onClick={() => router.push('/profile/edit')} className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center gap-2 text-sm">
-                        <Edit2 className="w-4 h-4" />
+                    <div className="hidden md:flex absolute top-3 right-3 gap-2 z-10">
+                      <button onClick={() => router.push('/analytics')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
+                        View Analytics
+                      </button>
+                      <button onClick={() => router.push('/profile/edit')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
                         Edit Profile
                       </button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="bg-background border border-border p-2 rounded-lg flex items-center justify-center">
+                          <button className="bg-white/20 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/30 transition-all border border-white/20 flex items-center justify-center">
                             <MoreVertical className="w-5 h-5" />
                           </button>
                         </DropdownMenuTrigger>
@@ -422,203 +366,259 @@ export default function ProfilePage() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
+                  </EditCoverPhoto>
 
-                    <div className="hidden md:flex flex-col items-end mt-16">
-                      <button
-                        onClick={() => setIsContactInfoModalOpen(true)}
-                        className="text-primary hover:underline font-medium text-sm"
-                      >
-                        Contact info
-                      </button>
-                    </div>
-                  </div>
-
-
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1 min-w-0 mr-4">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <h1 className="text-2xl font-semibold text-foreground">{user?.name}</h1>
-                        <CheckCircle className="w-5 h-5 text-primary fill-primary/10 flex-shrink-0" />
-                        <span className="text-sm text-muted-foreground">· 2nd</span>
-                      </div>
-
-                      {user?.account_name && (
-                        <p className="text-sm text-muted-foreground mb-1.5 truncate max-w-xs">@{user.account_name}</p>
-                      )}
-
-                      {/* Company Roles */}
-                      {user?.company_roles && user.company_roles.length > 0 && (
-                        <div className="mb-3">
-                          <CompanyRolesList
-                            roles={user.company_roles}
-                            isOwnProfile={true}
-                            onRoleClick={handleRoleClick}
+                  <div className="px-6 pb-6">
+                    <div className="flex items-start justify-between -mt-14 mb-4">
+                      <div className="relative group">
+                        <div
+                          className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 cursor-pointer"
+                          onClick={() => setIsViewAvatarOpen(true)}
+                        >
+                          <img
+                            src={user?.avatar ?? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop"}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
                           />
                         </div>
-                      )}
-
-                      <p className="text-base mb-2 text-foreground">
-                        {user?.headline}
-                      </p>
-
-                      <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
-                        <span className="text-muted-foreground">{user?.location}</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsEditAvatarOpen(true);
+                          }}
+                          className="absolute bottom-1 right-1 p-2 bg-background border border-border rounded-full text-muted-foreground hover:text-foreground shadow-sm md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                          aria-label="Edit Profile Picture"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
                       </div>
 
-                      <button onClick={() => openFollowList("connections")} className="text-sm text-primary hover:underline font-medium mb-4">
-                        {(user?.connections_count || 0) > 500 ? "500+" : user?.connections_count} connections
-                      </button>
+                      <div className="md:hidden mt-16 flex gap-2">
+                        <button onClick={() => router.push('/profile/edit')} className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center gap-2 text-sm">
+                          <Edit2 className="w-4 h-4" />
+                          Edit Profile
+                        </button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="bg-background border border-border p-2 rounded-lg flex items-center justify-center">
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setIsShareModalOpen(true)} className="cursor-pointer">
+                              <Share2 className="w-4 h-4 mr-2" />
+                              Share Profile
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                navigator.clipboard.writeText(window.location.href);
+                                toast.success("Profile link copied");
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <LinkIcon className="w-4 h-4 mr-2" />
+                              Copy Profile Link
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      <div className="hidden md:flex flex-col items-end mt-16">
+                        <button
+                          onClick={() => setIsContactInfoModalOpen(true)}
+                          className="text-primary hover:underline font-medium text-sm"
+                        >
+                          Contact info
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="flex flex-col gap-2 pt-2">
-                      {/* Latest Education/Experience display logic */}
-                      {latestEducation && (
-                        <div onClick={scrollToEducation} className="hidden md:flex items-center gap-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors max-w-[280px]">
-                          <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
-                            <GraduationCap className="w-6 h-6 text-yellow-600" />
-                          </div>
-                          <span className="text-sm font-semibold text-foreground hover:underline line-clamp-2">
-                            {/* @ts-ignore */}
-                            {latestEducation.school_name || latestEducation.school || 'University'}
-                          </span>
-                        </div>
-                      )}
 
-                      {latestExperience && (
-                        <div onClick={scrollToExperience} className="hidden md:flex items-center gap-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors max-w-[280px]">
-                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                            <Briefcase className="w-6 h-6 text-blue-600" />
-                          </div>
-                          <span className="text-sm font-semibold text-foreground hover:underline line-clamp-2">
-                            {latestExperience.company_name}
-                          </span>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1 min-w-0 mr-4">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h1 className="text-2xl font-semibold text-foreground">{user?.name}</h1>
+                          <CheckCircle className="w-5 h-5 text-primary fill-primary/10 flex-shrink-0" />
+                          <span className="text-sm text-muted-foreground">· 2nd</span>
                         </div>
-                      )}
+
+                        {user?.account_name && (
+                          <p className="text-sm text-muted-foreground mb-1.5 truncate max-w-xs">@{user.account_name}</p>
+                        )}
+
+                        {/* Company Roles */}
+                        {user?.company_roles && user.company_roles.length > 0 && (
+                          <div className="mb-3">
+                            <CompanyRolesList
+                              roles={user.company_roles}
+                              isOwnProfile={true}
+                              onRoleClick={handleRoleClick}
+                            />
+                          </div>
+                        )}
+
+                        <p className="text-base mb-2 text-foreground">
+                          {user?.headline}
+                        </p>
+
+                        <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
+                          <span className="text-muted-foreground">{user?.location}</span>
+                        </div>
+
+                        <button onClick={() => openFollowList("connections")} className="text-sm text-primary hover:underline font-medium mb-4">
+                          {(user?.connections_count || 0) > 500 ? "500+" : user?.connections_count} connections
+                        </button>
+                      </div>
+
+                      <div className="flex flex-col gap-2 pt-2">
+                        {/* Latest Education/Experience display logic */}
+                        {latestEducation && (
+                          <div onClick={scrollToEducation} className="hidden md:flex items-center gap-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors max-w-[280px]">
+                            <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                              <GraduationCap className="w-6 h-6 text-yellow-600" />
+                            </div>
+                            <span className="text-sm font-semibold text-foreground hover:underline line-clamp-2">
+                              {/* @ts-ignore */}
+                              {latestEducation.school_name || latestEducation.school || 'University'}
+                            </span>
+                          </div>
+                        )}
+
+                        {latestExperience && (
+                          <div onClick={scrollToExperience} className="hidden md:flex items-center gap-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors max-w-[280px]">
+                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                              <Briefcase className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <span className="text-sm font-semibold text-foreground hover:underline line-clamp-2">
+                              {latestExperience.company_name}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <ProfileIdentityChips initialIdentity={profileIdentity} />
+                  </div>
+                </div>
+
+                {/* Stats & Resume */}
+                <div className="rounded-xl border p-4 mb-6 bg-card border-border">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors" onClick={() => openFollowList("followers")}>
+                      <p className="text-xl font-semibold mb-1 text-foreground">{profileStats?.followers_count ?? user?.followers_count ?? 0}</p>
+                      <p className="text-xs text-muted-foreground">Followers</p>
+                    </div>
+                    <div className="text-center border-l border-r border-border cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors" onClick={() => openFollowList("following")}>
+                      <p className="text-xl font-semibold mb-1 text-foreground">{profileStats?.following_count ?? user?.following_count ?? 0}</p>
+                      <p className="text-xs text-muted-foreground">Following</p>
+                    </div>
+                    <div className="text-center cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors" onClick={() => openFollowList("connections")}>
+                      <p className="text-xl font-semibold mb-1 text-foreground">{profileStats?.connections_count ?? user?.connections_count ?? 0}</p>
+                      <p className="text-xs text-muted-foreground">Connections</p>
                     </div>
                   </div>
-
-                  <ProfileIdentityChips initialIdentity={profileIdentity} />
                 </div>
-              </div>
 
-              {/* Stats & Resume */}
-              <div className="rounded-xl border p-4 mb-6 bg-card border-border">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors" onClick={() => openFollowList("followers")}>
-                    <p className="text-xl font-semibold mb-1 text-foreground">{profileStats?.followers_count ?? user?.followers_count ?? 0}</p>
-                    <p className="text-xs text-muted-foreground">Followers</p>
+
+
+                <LivingResume experiences={experiences} skills={skills.map(s => s.name)} />
+
+                {/* About */}
+                <div className="rounded-xl border p-6 mb-4 bg-card border-border">
+                  <h2 className="text-xl text-foreground mb-4">About</h2>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {user?.about}
+                  </p>
+                </div>
+
+                {/* Experience Section */}
+                <div id="experience-section" className="rounded-xl border p-6 mb-4 bg-card border-border">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl text-foreground">Experience</h2>
+                    <button onClick={() => { setEditingExperience(null); setIsAddExperienceModalOpen(true); }} className="text-primary hover:underline text-sm">Add</button>
                   </div>
-                  <div className="text-center border-l border-r border-border cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors" onClick={() => openFollowList("following")}>
-                    <p className="text-xl font-semibold mb-1 text-foreground">{profileStats?.following_count ?? user?.following_count ?? 0}</p>
-                    <p className="text-xs text-muted-foreground">Following</p>
+                  <div className="space-y-6">
+                    {experiences.map(exp => (
+                      <EditableExperienceItem
+                        key={exp.experience_id}
+                        experience={exp}
+                        onEdit={() => { setEditingExperience(exp); setIsAddExperienceModalOpen(true); }}
+                      />
+                    ))}
                   </div>
-                  <div className="text-center cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors" onClick={() => openFollowList("connections")}>
-                    <p className="text-xl font-semibold mb-1 text-foreground">{profileStats?.connections_count ?? user?.connections_count ?? 0}</p>
-                    <p className="text-xs text-muted-foreground">Connections</p>
+                </div>
+
+                {/* Skills Section */}
+                <div className="rounded-xl border p-6 mb-4 bg-card border-border">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl text-foreground">Skills</h2>
+                    <button onClick={() => setIsAddSkillModalOpen(true)} className="text-primary hover:underline text-sm">Add</button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {skills.map((skill: any, index) => {
+                      const skillName = skill.name || (typeof skill === 'string' ? skill : '');
+                      if (!skillName) return null;
+                      return (
+                        <SkillProofPill
+                          key={skill.skill_id || `skill-${index}`}
+                          skill={skillName}
+                          experiences={experiences}
+                          posts={previewPosts}
+                          onDelete={handleDeleteSkill}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
-              </div>
 
-
-
-              <LivingResume experiences={experiences} skills={skills.map(s => s.name)} />
-
-              {/* About */}
-              <div className="rounded-xl border p-6 mb-4 bg-card border-border">
-                <h2 className="text-xl text-foreground mb-4">About</h2>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {user?.about}
-                </p>
-              </div>
-
-              {/* Experience Section */}
-              <div id="experience-section" className="rounded-xl border p-6 mb-4 bg-card border-border">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl text-foreground">Experience</h2>
-                  <button onClick={() => { setEditingExperience(null); setIsAddExperienceModalOpen(true); }} className="text-primary hover:underline text-sm">Add</button>
-                </div>
-                <div className="space-y-6">
-                  {experiences.map(exp => (
-                    <EditableExperienceItem
-                      key={exp.experience_id}
-                      experience={exp}
-                      onEdit={() => { setEditingExperience(exp); setIsAddExperienceModalOpen(true); }}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Skills Section */}
-              <div className="rounded-xl border p-6 mb-4 bg-card border-border">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl text-foreground">Skills</h2>
-                  <button onClick={() => setIsAddSkillModalOpen(true)} className="text-primary hover:underline text-sm">Add</button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {skills.map((skill: any, index) => {
-                    const skillName = skill.name || (typeof skill === 'string' ? skill : '');
-                    if (!skillName) return null;
-                    return (
-                      <SkillProofPill
-                        key={skill.skill_id || `skill-${index}`}
-                        skill={skillName}
-                        experiences={experiences}
-                        posts={previewPosts}
-                        onDelete={handleDeleteSkill}
+                {/* Education Section */}
+                <div id="education-section" className="rounded-xl border p-6 bg-card border-border">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl text-foreground">Education</h2>
+                    <button onClick={() => { setEditingEducation(null); setIsAddEducationModalOpen(true); }} className="text-primary hover:underline text-sm">Add</button>
+                  </div>
+                  <div className="space-y-6">
+                    {educations.map(edu => (
+                      <EditableEducationItem
+                        key={edu.education_id}
+                        education={edu}
+                        onEdit={() => { setEditingEducation(edu); setIsAddEducationModalOpen(true); }}
                       />
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Education Section */}
-              <div id="education-section" className="rounded-xl border p-6 bg-card border-border">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl text-foreground">Education</h2>
-                  <button onClick={() => { setEditingEducation(null); setIsAddEducationModalOpen(true); }} className="text-primary hover:underline text-sm">Add</button>
+                {/* Posts Section */}
+                <div className="mt-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl text-foreground font-semibold">Latest Posts</h2>
+                    <Link href="/profile/posts" className="text-sm text-primary hover:underline">
+                      See all posts
+                    </Link>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {previewPosts.map(post => (
+                      isMobile ? (
+                        <PostCard
+                          key={post.id}
+                          post={post}
+                          isOwnPost={true}
+                          onDelete={handleDeletePost}
+                        />
+                      ) : (
+                        <FeedPost
+                          key={post.id}
+                          {...post}
+                          initialComments={post.commentData}
+                          isOwnPost={true}
+                          onDelete={handleDeletePost}
+                          onToggleVisibility={handleToggleVisibility}
+                          isProfileView={true}
+                        />
+                      )
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-6">
-                  {educations.map(edu => (
-                    <EditableEducationItem
-                      key={edu.education_id}
-                      education={edu}
-                      onEdit={() => { setEditingEducation(edu); setIsAddEducationModalOpen(true); }}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Posts Section */}
-              <div className="mt-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl text-foreground font-semibold">Latest Posts</h2>
-                  <Link href="/profile/posts" className="text-sm text-primary hover:underline">
-                    See all posts
-                  </Link>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  {previewPosts.map(post => (
-                    isMobile ? (
-                      <PostCard
-                        key={post.id}
-                        post={post}
-                        isOwnPost={true}
-                        onDelete={handleDeletePost}
-                      />
-                    ) : (
-                      <FeedPost
-                        key={post.id}
-                        {...post}
-                        initialComments={post.commentData}
-                        isOwnPost={true}
-                        onDelete={handleDeletePost}
-                        onToggleVisibility={handleToggleVisibility}
-                        isProfileView={true}
-                      />
-                    )
-                  ))}
-                </div>
-              </div>
               </div>
             </div>
           </div>

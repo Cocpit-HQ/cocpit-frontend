@@ -62,6 +62,7 @@ export const JobStoryCard: React.FC<JobStoryCardProps> = ({ metadata, onAction }
                             <img
                                 src={storyJob.companyLogo}
                                 alt={storyJob.company}
+                                crossOrigin="anonymous"
                                 className="w-full h-full rounded-full object-cover scale-[1.04]"
                                 onError={(e) => {
                                     e.currentTarget.style.display = "none";

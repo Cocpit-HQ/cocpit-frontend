@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
+import Link from "next/link"
 import { MoreHorizontal, Phone, Video } from "lucide-react"
 import { ChatThread, Message } from "@/types/messaging"
 import { avatarGradients } from "@/constants/messaging"
@@ -648,18 +649,40 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
           {!selectedMessage ? (
             <>
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                <Avatar
-                  url={chat.avatar}
-                  name={chat.name}
-                  size="md"
-                  online={chat.online}
-                />
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-foreground truncate">{chat.name}</h3>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {chat.role ? chat.role : chat.online ? "Active now" : (chat.isGroup ? `${chat.unread} messages` : "Offline")}
-                  </p>
-                </div>
+                {chat.isGroup ? (
+                   <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <Avatar
+                      url={chat.avatar}
+                      name={chat.name}
+                      size="md"
+                      online={chat.online}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-foreground truncate">{chat.name}</h3>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {chat.role ? chat.role : "Group Chat"}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <Link
+                    href={chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`}
+                    className="flex items-center gap-3 min-w-0 flex-1 group transition-opacity"
+                  >
+                    <Avatar
+                      url={chat.avatar}
+                      name={chat.name}
+                      size="md"
+                      online={chat.online}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-foreground truncate group-hover:underline group-hover:text-primary">{chat.name}</h3>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {chat.role ? chat.role : chat.online ? "Active now" : "Offline"}
+                      </p>
+                    </div>
+                  </Link>
+                )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button disabled={!!(isBlockedByMe || isBlockedByOther)} className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground disabled:opacity-50">

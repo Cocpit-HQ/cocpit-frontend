@@ -44,7 +44,6 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
   // Form State
   const [formData, setFormData] = useState({
     title: "",
-    company: "",
     location: "",
     type: "Full-time",
     minSalary: "",
@@ -53,11 +52,9 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
     skills: "",
     experience: "Entry Level",
     workMode: "Onsite" as WorkMode,
-    companyType: "Startup" as CompanyType,
     industry: "Technology",
     easyApply: true,
     activelyHiring: true,
-    aboutCompany: "",
   })
 
   // Scroll to top when step changes
@@ -72,7 +69,6 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
     if (initialData) {
       setFormData({
         title: initialData.title,
-        company: initialData.company,
         location: initialData.location,
         type: initialData.type,
         minSalary: "", 
@@ -81,16 +77,13 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
         skills: initialData.skills?.join(", ") || "",
         experience: initialData.experience || "Entry Level",
         workMode: (initialData.workMode as WorkMode) || "Onsite",
-        companyType: (initialData.companyType as CompanyType) || "Startup",
         industry: initialData.industry || "Technology",
         easyApply: initialData.easyApply || false,
         activelyHiring: initialData.activelyHiring || false,
-        aboutCompany: initialData.aboutCompany || "",
       })
     } else if (isOpen) {
       setFormData({
         title: "",
-        company: activeProfile?.name || "",
         location: "",
         type: "Full-time",
         minSalary: "",
@@ -99,11 +92,9 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
         skills: "",
         experience: "Entry Level",
         workMode: "Onsite",
-        companyType: "Startup",
         industry: "Technology",
         easyApply: true,
         activelyHiring: true,
-        aboutCompany: "",
       })
     }
     setCurrentStep(1)
@@ -115,14 +106,12 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
 
   const isStep1Valid = () => {
     return formData.title.trim() !== "" && 
-           formData.company.trim() !== "" && 
            formData.location.trim() !== ""
   }
 
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {}
     if (!formData.title.trim()) newErrors.title = "Job title is required"
-    if (!formData.company.trim()) newErrors.company = "Company name is required"
     if (!formData.location.trim()) newErrors.location = "Location is required"
     
     setErrors(newErrors)
@@ -152,7 +141,6 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
     try {
       const apiData: JobFormData = {
         jobTitle: formData.title,
-        companyName: formData.company,
         jobDescription: formData.description,
         location: formData.location,
         experience: formData.experience,
@@ -161,9 +149,7 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
         maxSalary: formData.maxSalary,
         skills: formData.skills,
         workMode: formData.workMode,
-        companyType: formData.companyType,
         industry: formData.industry,
-        aboutCompany: formData.aboutCompany,
         activelyHiring: formData.activelyHiring,
         easyApply: formData.easyApply,
         companyId: isCompany && activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined,

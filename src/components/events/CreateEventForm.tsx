@@ -317,8 +317,8 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
   }
 
   return (
-    <div className={`${theme === 'light' ? 'bg-white/10 border-white/20' : 'bg-[#2d3548]/40 border-white/10'} backdrop-blur-[80px] border flex flex-col h-full md:h-auto md:max-h-[90vh] md:rounded-2xl shadow-2xl overflow-hidden`}>
-      <div className={`flex items-center justify-between p-6 border-b ${theme === 'light' ? 'border-black/5' : 'border-white/10'} flex-shrink-0`}>
+    <div className="bg-background border border-border flex flex-col h-full md:h-auto md:max-h-[90vh] md:rounded-2xl shadow-2xl overflow-hidden">
+      <div className="flex items-center justify-between p-6 border-b border-border flex-shrink-0">
         <h2 className="text-xl font-bold text-foreground">{initialData ? "Edit Event" : "Create New Event"}</h2>
         <button onClick={onClose} className={`p-2 rounded-full transition-colors ${theme === 'light' ? 'hover:bg-black/5 text-muted-foreground hover:text-foreground' : 'hover:bg-white/10 text-muted-foreground hover:text-foreground'}`}>
           <X className="w-5 h-5" />
@@ -396,28 +396,31 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
 
               <div>
                 <Label className="mb-2 block">Event Banner</Label>
-                {previewUrl ? (
-                  <div className="relative mt-2">
-                    <img src={previewUrl} alt="Banner preview" className="w-full h-auto rounded-xl object-cover aspect-[16/9]" />
-                    <button type="button" onClick={handleRemoveImage} className="absolute top-2 right-2 bg-black/60 text-white p-1.5 rounded-full hover:bg-black/80 transition-colors">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className={`mt-2 flex justify-center rounded-lg border border-dashed px-6 py-10 ${theme === 'light' ? 'bg-white/20 border-black/5' : 'bg-white/5 border-white/10'}`}>
+                <div className="relative mt-2">
+                  {/* The placeholder dictates the exact height of the component. It becomes invisible when an image is present. */}
+                  <div className={`flex justify-center rounded-xl border border-dashed px-6 py-10 ${theme === 'light' ? 'bg-white/20 border-black/5' : 'bg-white/5 border-white/10'} ${previewUrl ? 'opacity-0 pointer-events-none' : ''}`}>
                     <div className="text-center">
                       <Image className="mx-auto h-12 w-12 text-muted-foreground" />
                       <div className="mt-4 flex text-sm leading-6 text-muted-foreground">
                         <label className="relative cursor-pointer rounded-md font-semibold text-primary hover:text-primary/80">
                           <span>Upload a file</span>
-                          <input type="file" className="sr-only" accept="image/*" onChange={handleFileChange} />
+                          {!previewUrl && <input type="file" className="sr-only" accept="image/*" onChange={handleFileChange} />}
                         </label>
                         <p className="pl-1">or drag and drop</p>
                       </div>
                       <p className="text-xs leading-5 text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
                     </div>
                   </div>
-                )}
+
+                  {previewUrl && (
+                    <div className="absolute inset-0 rounded-xl overflow-hidden border border-border">
+                      <img src={previewUrl} alt="Banner preview" className="w-full h-full object-cover" />
+                      <button type="button" onClick={handleRemoveImage} className="absolute top-2 right-2 bg-black/60 text-white p-1.5 rounded-full hover:bg-black/80 transition-colors z-10">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -728,7 +731,7 @@ export function CreateEventForm({ onClose, initialData }: CreateEventFormProps) 
         </form>
       </div>
 
-      <div className={`p-6 border-t ${theme === 'light' ? 'border-black/5 bg-white/20' : 'border-white/10 bg-black/20'} backdrop-blur-[80px] flex gap-4 flex-shrink-0 z-10`}>
+      <div className="p-6 border-t border-border bg-background flex gap-4 flex-shrink-0 z-10 sticky bottom-0">
         <button
           onClick={onClose}
           type="button"

@@ -186,6 +186,15 @@ export function EventDashboard({ theme }: EventDashboardProps) {
 
     const selectedEvent = events.find(e => e.id === selectedEventId);
 
+    // New analytics calculations for Quick Stats
+    const remainingSeats = selectedEvent ? Math.max(0, (selectedEvent.totalTickets || 0) - (selectedEvent.soldTickets || 0)) : 0;
+    const fillRate = selectedEvent && (selectedEvent.totalTickets || 0) > 0
+        ? ((selectedEvent.soldTickets || 0) / (selectedEvent.totalTickets || 0)) * 100
+        : 0;
+    const attendanceRate = selectedEvent && (selectedEvent.soldTickets || 0) > 0
+        ? ((selectedEvent.attendees || 0) / (selectedEvent.soldTickets || 0)) * 100
+        : 0;
+
     const filteredEvents = events.filter(event => {
         const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesFilter =
@@ -436,11 +445,24 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                                             <p className="text-lg md:text-xl font-bold text-foreground">{selectedEvent.attendees || 0}</p>
                                         </div>
                                         <div
-                                            onClick={() => setSelectedStat("views")}
-                                            className={`rounded-lg p-3 md:p-4 border transition-all cursor-pointer active:scale-95 ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'views' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                                            onClick={() => setSelectedStat("remaining_seats")}
+                                            className={`rounded-lg p-3 md:p-4 border transition-all cursor-pointer active:scale-95 ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'remaining_seats' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
                                         >
-                                            <p className="text-[10px] md:text-xs text-muted-foreground mb-1">Views</p>
-                                            <p className="text-lg md:text-xl font-bold text-foreground">1,234</p>
+                                            <div className="flex justify-between items-start mb-1">
+                                                <p className="text-[10px] md:text-xs text-muted-foreground">Remaining Seats</p>
+                                                <span className={`text-[8px] md:text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap ${remainingSeats <= 0 ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'
+                                                    }`}>
+                                                    {remainingSeats <= 0 ? 'Full' : 'Available'}
+                                                </span>
+                                            </div>
+                                            <p className="text-lg md:text-xl font-bold text-foreground">{remainingSeats}</p>
+                                            <div className="mt-1.5 h-1 w-full bg-muted rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full transition-all duration-500 ${remainingSeats <= 0 ? 'bg-red-500' : 'bg-green-500'
+                                                        }`}
+                                                    style={{ width: `${Math.min(fillRate, 100)}%` }}
+                                                />
+                                            </div>
                                         </div>
                                         <div
                                             onClick={() => { setViewMode('participants'); setParticipantTab('registered'); }}
@@ -529,16 +551,20 @@ export function EventDashboard({ theme }: EventDashboardProps) {
 
                                             {/* Conversion & Avg Card */}
                                             <div
-                                                onClick={() => setSelectedStat("conversion")}
-                                                className={`rounded-lg p-4 border transition-all cursor-pointer grid grid-cols-2 gap-4 ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'conversion' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
+                                                onClick={() => setSelectedStat("attendance_rate")}
+                                                className={`rounded-lg p-4 border transition-all cursor-pointer grid grid-cols-2 gap-4 ${theme === 'light' ? 'bg-[#f3f4f6]' : 'bg-[#171c28]'} ${selectedStat === 'attendance_rate' ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-white/50'}`}
                                             >
                                                 <div>
-                                                    <p className="text-[10px] text-muted-foreground">Conversion</p>
-                                                    <p className="text-sm font-semibold text-foreground">91.0%</p>
+                                                    <p className="text-[10px] text-muted-foreground">Attendance Rate</p>
+                                                    <p className="text-sm font-semibold text-foreground">{attendanceRate.toFixed(1)}%</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] text-muted-foreground">Avg / Attendee</p>
-                                                    <p className="text-sm font-semibold text-foreground">$44.60</p>
+                                                    <p className="text-sm font-semibold text-foreground">
+                                                        ${selectedEvent && (selectedEvent.attendees || 0) > 0
+                                                            ? ((selectedEvent.revenue || 0) / selectedEvent.attendees).toFixed(2)
+                                                            : '0.00'}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
@@ -564,22 +590,20 @@ export function EventDashboard({ theme }: EventDashboardProps) {
                                     <div className="flex gap-2 mb-4">
                                         <button
                                             onClick={() => setParticipantTab('registered')}
-                                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
-                                                participantTab === 'registered'
+                                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${participantTab === 'registered'
                                                     ? 'bg-primary text-primary-foreground shadow-sm'
                                                     : `border border-border text-muted-foreground hover:text-foreground ${theme === 'light' ? 'hover:bg-black/5' : 'hover:bg-white/5'}`
-                                            }`}
+                                                }`}
                                         >
                                             <Users className="w-3.5 h-3.5" />
                                             Registered ({participants.registered.length})
                                         </button>
                                         <button
                                             onClick={() => setParticipantTab('attended')}
-                                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
-                                                participantTab === 'attended'
+                                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${participantTab === 'attended'
                                                     ? 'bg-green-600 text-white shadow-sm'
                                                     : `border border-border text-muted-foreground hover:text-foreground ${theme === 'light' ? 'hover:bg-black/5' : 'hover:bg-white/5'}`
-                                            }`}
+                                                }`}
                                         >
                                             <UserCheck className="w-3.5 h-3.5" />
                                             Attended ({participants.attended.length})
@@ -648,7 +672,7 @@ export function EventDashboard({ theme }: EventDashboardProps) {
             {/* Edit Modal */}
             {
                 showEditModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/10 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
                         <CreateEventForm
                             onClose={() => {
                                 setShowEditModal(false);

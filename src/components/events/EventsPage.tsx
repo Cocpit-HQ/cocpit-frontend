@@ -203,7 +203,7 @@ export function EventsPage() {
 
       {/* Create Event Modal */}
       {showCreateEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/10 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
           <CreateEventForm onClose={() => {
             setShowCreateEvent(false);
             if (activeTab !== 'my_events') {

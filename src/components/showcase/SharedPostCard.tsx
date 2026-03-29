@@ -92,7 +92,7 @@ export const SharedPostCard: React.FC<SharedPostCardProps> = ({ sharedPost, onCl
                 <div className="p-4 flex gap-4 items-center">
                     <div className="w-14 h-14 shrink-0 rounded-lg bg-white overflow-hidden flex items-center justify-center border border-white/10 shadow-sm">
                         {sharedPost.company_logo ? (
-                            <img src={sharedPost.company_logo} alt={sharedPost.company_name} className="w-full h-full object-contain p-1" />
+                            <img src={sharedPost.company_logo} alt={sharedPost.company_name} crossOrigin="anonymous" className="w-full h-full object-contain p-1" />
                         ) : (
                             <span className="text-2xl font-bold text-black/50">{sharedPost.company_name?.charAt(0) || "J"}</span>
                         )}
@@ -111,7 +111,7 @@ export const SharedPostCard: React.FC<SharedPostCardProps> = ({ sharedPost, onCl
                 <div className="p-4 space-y-3">
                     <div className="flex items-center gap-2 mb-2">
                         {sharedPost.author?.avatar_url && (
-                            <img src={sharedPost.author.avatar_url} className="w-8 h-8 rounded-full object-cover" />
+                            <img src={sharedPost.author.avatar_url} crossOrigin="anonymous" className="w-8 h-8 rounded-full object-cover" />
                         )}
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-white truncate">{sharedPost.author?.full_name}</p>
@@ -142,7 +142,7 @@ export const SharedPostCard: React.FC<SharedPostCardProps> = ({ sharedPost, onCl
                                     </div>
                                 </>
                             ) : (
-                                <img src={sharedPost.media[0].url} className="w-full h-full object-cover" />
+                                <img src={sharedPost.media[0].url} crossOrigin="anonymous" className="w-full h-full object-cover" />
                             )}
                         </div>
                     )}

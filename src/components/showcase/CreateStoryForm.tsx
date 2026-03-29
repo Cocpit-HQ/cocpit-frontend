@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useRef } from "react"
+import html2canvas from "html2canvas"
 import { Image, Video, FileText, Sparkles } from "lucide-react"
 import { mapStory } from "@/lib/story-mapper";
 import { StoryDetail } from "@/types/showcase";
@@ -48,6 +49,7 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId, sharedJobId
 
   const imageInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
+  const previewRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<File | null>(null);
   const isSharedEntityStory = !!sharedPostId || !!sharedJobId;
 
@@ -132,8 +134,21 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId, sharedJobId
       let fileToUpload = mainFileToUpload;
 
       if (!fileToUpload && isSharedEntityStory) {
-        const blob = await getGradientImage(backgroundStyle);
-        fileToUpload = new File([blob], "shared-post-bg.jpg", { type: "image/jpeg" });
+        if (previewRef.current) {
+          const canvas = await html2canvas(previewRef.current, {
+            useCORS: true,
+            allowTaint: true,
+            scale: 2,
+            backgroundColor: null
+          });
+          
+          const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+          if (!blob) throw new Error("Failed to generate shared story image");
+          fileToUpload = new File([blob], "shared-entity-story.jpg", { type: "image/jpeg" });
+        } else {
+          const blob = await getGradientImage(backgroundStyle);
+          fileToUpload = new File([blob], "shared-post-bg.jpg", { type: "image/jpeg" });
+        }
       }
 
       let mediaData = { url: "", public_id: "", media_type: "image" };
@@ -192,7 +207,8 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId, sharedJobId
         shared_post_id: sharedPostId || undefined,
         story_metadata: sharedPostId ? {
           backgroundStyle: !selectedImage ? backgroundStyle : undefined,
-          scale: scale
+          scale: scale,
+          is_baked: true
         } : sharedJobId ? {
           type: "job",
           job_id: jobData?.jobId || sharedJobId,
@@ -208,7 +224,8 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId, sharedJobId
           actively_hiring: !!jobData?.activelyHiring,
           is_saved: !!jobData?.isSaved,
           backgroundStyle: !selectedImage ? backgroundStyle : undefined,
-          scale: scale
+          scale: scale,
+          is_baked: true
         } : finalMetadataObj || undefined
       }, companyId);
 
@@ -539,6 +556,7 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId, sharedJobId
         <div className="flex flex-col items-center">
           {/* Preview Container (Phone Aspect Ratio) */}
           <div
+            ref={previewRef}
             className={`
                     w-[280px] aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl relative flex items-center justify-center p-4 mb-6
                     ${selectedImage ? '' : backgroundStyle}

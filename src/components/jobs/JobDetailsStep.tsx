@@ -5,14 +5,12 @@ import type { WorkMode, CompanyType } from "@/types/jobs"
 interface JobDetailsStepProps {
   formData: {
     title: string
-    company: string
     location: string
     type: string
     minSalary: string
     maxSalary: string
     experience: string
     workMode: WorkMode
-    companyType: CompanyType
     skills: string
   }
   updateFormData: (data: Partial<JobDetailsStepProps["formData"]>) => void
@@ -136,39 +134,6 @@ export function JobDetailsStep({ formData, updateFormData, errors }: JobDetailsS
         </div>
       </div>
 
-      <div className="space-y-4">
-        <h3 className="font-semibold text-foreground border-b border-border pb-2">Company Information</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Company Name *</label>
-            <input
-              type="text"
-              placeholder="e.g. Acme Corp"
-              className={`w-full p-2 rounded-lg border bg-background focus:ring-1 focus:ring-primary outline-none transition-colors ${
-                errors.company ? "border-red-500" : "border-border"
-              }`}
-              value={formData.company}
-              onChange={e => updateFormData({ company: e.target.value })}
-            />
-            {errors.company && <p className="text-xs text-red-500">{errors.company}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Company Type *</label>
-            <select
-              className="w-full p-2 rounded-lg border border-border bg-background focus:ring-1 focus:ring-primary outline-none transition-colors"
-              value={formData.companyType}
-              onChange={e => updateFormData({ companyType: e.target.value as CompanyType })}
-            >
-              <option>Startup</option>
-              <option>MNC</option>
-              <option>Product-based</option>
-              <option>Service-based</option>
-            </select>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
