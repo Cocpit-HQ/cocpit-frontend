@@ -152,7 +152,7 @@ export function EventsPage() {
 
         {/* Tabs */}
         <div className="flex gap-3 md:gap-4 mb-8 overflow-x-auto scrollbar-hide py-1">
-          {["upcoming", "registered", "saved", ...(canCreateEvent ? ["my_events", "dashboard"] : [])].map((tab) => (
+          {["upcoming", "registered", "saved", ...(canCreateEvent ? ["dashboard"] : [])].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -195,8 +195,8 @@ export function EventsPage() {
         ) : activeTab === 'dashboard' ? (
           <EventDashboard navigateTo={navigateTo} theme={mounted ? (theme || 'dark') as Theme : 'dark'} />
         ) : (
-          // Other Tabs
-          <UserEventsList key={activeTab} type={activeTab as 'my_events' | 'registered' | 'saved'} />
+          // Other Tabs (Registered/Saved)
+          <UserEventsList key={activeTab} type={activeTab as 'registered' | 'saved'} />
         )}
 
       </div>
@@ -206,8 +206,8 @@ export function EventsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
           <CreateEventForm onClose={() => {
             setShowCreateEvent(false);
-            if (activeTab !== 'my_events') {
-              setActiveTab('my_events');
+            if (activeTab === 'my_events') {
+              setActiveTab('dashboard');
             }
           }} />
         </div>

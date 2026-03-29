@@ -10,7 +10,7 @@ import { useEvents } from "@/context/EventsContext";
 import { Loader2 } from "lucide-react";
 
 interface EventListProps {
-    type: 'my_events' | 'registered' | 'saved';
+    type: 'registered' | 'saved';
 }
 
 export function UserEventsList({ type }: EventListProps) {
@@ -21,10 +21,9 @@ export function UserEventsList({ type }: EventListProps) {
     // Select hook
     let hook;
     switch (type) {
-        case 'my_events': hook = useMyEvents; break;
         case 'registered': hook = useRegisteredEvents; break;
         case 'saved': hook = useSavedEvents; break;
-        default: hook = useMyEvents;
+        default: hook = useRegisteredEvents;
     }
 
     const { data: events, isLoading, isError } = hook();

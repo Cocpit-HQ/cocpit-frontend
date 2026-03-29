@@ -64,7 +64,10 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
             setResumeSource('profile');
           }
         })
-        .catch(err => console.error("Failed to fetch profile", err))
+        .catch((err: any) => {
+          console.error("Failed to fetch profile", err);
+          setIsLoadingProfile(false);
+        })
         .finally(() => setIsLoadingProfile(false));
     }
   }, [isOpen]);
@@ -175,7 +178,7 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
               <DialogTitle>Apply to {jobTitle}</DialogTitle>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} className="space-y-4 pt-4">
               {error && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2 text-red-500 text-sm">
                   <AlertCircle className="w-4 h-4" />
@@ -301,6 +304,7 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
                 <button
                   type="submit"
                   disabled={isSubmitting || isLoadingProfile}
+                  onClick={(e) => e.stopPropagation()}
                   className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (

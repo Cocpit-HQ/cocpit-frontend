@@ -49,7 +49,6 @@ export function JobTabs({ mode, setMode, myJobsTab, setMyJobsTab, offersCount }:
           {(
             [
               { id: "applied", label: "Applied" },
-              { id: "in-past", label: "In Past" },
               { id: "saved", label: "Saved" },
             ] as const
           ).map((tab) => {
