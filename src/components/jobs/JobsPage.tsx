@@ -59,7 +59,7 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
 
       if (tab === 'my-jobs') {
         setActiveTab('my-jobs')
-        if (subtab && ['in-progress', 'applied', 'in-past', 'saved'].includes(subtab as string)) {
+        if (subtab && ['in-progress', 'applied', 'saved'].includes(subtab as string)) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setMyJobsTab(subtab as any)
         }
@@ -147,25 +147,9 @@ export default function JobsPage({ searchParams }: { searchParams: { [key: strin
     if (activeTab !== "my-jobs") return true;
 
     // Logic for "applied" tab: Exclude if task submitted
+    // Logic for "applied" tab: Now shows all applications
     if (myJobsTab === "applied") {
-      // If rejected, it shouldn't be here (backend usually handles, but double check)
-      if (job.status === "rejected") return false;
-      // If task IS submitted, it goes to Past
-      if (job.applicationScreening?.required && job.applicationScreening.submittedAt) return false;
       return true;
-    }
-
-    // Logic for "in-past" tab: Include if rejected OR task submitted
-    if (myJobsTab === "in-past") {
-      if (job.status === "rejected") return true;
-      if (job.applicationScreening?.required && job.applicationScreening.submittedAt) return true;
-      // If Approved/Interview/Offer they might be 'in-progress'. 
-      // User asked: "wait for status of approved or rejected" in "in past". 
-      // Typically 'Approved' is 'In Progress', but user instruction was specific.
-      // Assuming 'Approved' also goes to 'In Past' based on "wait for status of approved" phrase.
-      if (job.status === "approved" || job.status === "interview" || job.status === "offer") return true;
-
-      return false;
     }
 
     // Logic for "saved" - handled by backend mostly or separate list, but if in main list:

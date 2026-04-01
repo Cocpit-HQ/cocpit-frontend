@@ -115,7 +115,7 @@ export const jobs: Job[] = [
     applicants: 60,
     salary: "$100k - $130k",
     logo: "gradient-3",
-    status: "in-past",
+    status: "applied",
   },
   {
     id: "10",

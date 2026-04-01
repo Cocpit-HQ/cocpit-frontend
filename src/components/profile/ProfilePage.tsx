@@ -180,7 +180,11 @@ export default function ProfilePage() {
     router.push("/");
   };
 
+  const [isSavingSkills, setIsSavingSkills] = useState(false);
+
   const handleSaveSkills = async (newSkills: string[]) => {
+    setIsSavingSkills(true);
+    try {
     const normalizedNewSkills = newSkills.map(s => s.trim()).filter(s => s !== "");
     const currentSkillNames = skills.map(s => s.name);
 
@@ -202,6 +206,13 @@ export default function ProfilePage() {
     }
 
     setIsAddSkillModalOpen(false);
+    toast.success("Skills updated successfully");
+    } catch (error: any) {
+      console.error("Failed to save skills", error);
+      toast.error(error.response?.data?.message || "Failed to save skills. Please try again.");
+    } finally {
+      setIsSavingSkills(false);
+    }
   };
 
   const handleDeleteSkill = (skillName: string) => {
@@ -630,6 +641,7 @@ export default function ProfilePage() {
         onClose={() => setIsAddSkillModalOpen(false)}
         initialSkills={skills.map(s => s.name)}
         onSave={handleSaveSkills}
+        loading={isSavingSkills}
       />
 
       <Dialog open={isAddExperienceModalOpen} onOpenChange={setIsAddExperienceModalOpen}>

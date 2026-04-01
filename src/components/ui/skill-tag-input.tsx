@@ -14,6 +14,10 @@ export function SkillTagInput({ initialTags = [], onTagsChange, onInputChange }:
   const [tags, setTags] = useState<string[]>(initialTags)
   const [inputValue, setInputValue] = useState("")
 
+  React.useEffect(() => {
+    setTags(initialTags)
+  }, [initialTags])
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value)
     if (onInputChange) onInputChange(e.target.value)

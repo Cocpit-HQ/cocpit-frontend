@@ -141,10 +141,10 @@ export function useSkillMutations() {
         onSuccess: (response) => {
             queryClient.setQueryData(["my-profile"], (old: UserProfile | undefined) => {
                 if (!old) return old;
-                // response.skills is the list of ADDED skills. Merge them.
+                // response.skills is now the FULL list of skills for the profile.
                 return {
                     ...old,
-                    skills: [...old.skills, ...response.skills]
+                    skills: response.skills
                 };
             });
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });

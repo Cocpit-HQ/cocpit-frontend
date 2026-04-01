@@ -1,6 +1,6 @@
 export type JobListMode = "view" | "my-jobs" | "offers" | "dashboard";
 
-export type JobStatus = "in-progress" | "applied" | "in-past" | "shortlisted" | "approved" | "rejected" | "interview" | "offer";
+export type JobStatus = "in-progress" | "applied" | "shortlisted" | "approved" | "rejected" | "interview" | "offer";
 export type MyJobsTab = JobStatus | "saved";
 
 export type WorkMode = "Remote" | "Hybrid" | "Onsite";
