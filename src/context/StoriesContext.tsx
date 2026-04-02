@@ -14,6 +14,7 @@ interface StoriesContextType {
     setSelectedStory: (story: StoryDetail | null) => void;
     handleCreateStory: (newStory: StoryDetail) => void;
     handleStoryUpdate: (updatedStory: StoryDetail) => void;
+    markStoryViewed: (storyId: number) => void;
     refreshStories: () => Promise<void>;
     isStoryViewerOpen: boolean;
     setIsStoryViewerOpen: (isOpen: boolean) => void;
@@ -86,6 +87,19 @@ export function StoriesProvider({ children, enabled = true }: { children: React.
         setSelectedStory((prev) => prev?.id === updatedStory.id ? updatedStory : prev);
     }, [queryClient, queryKey]);
 
+    const markStoryViewed = useCallback((storyId: number) => {
+        queryClient.setQueryData(queryKey, (oldGroups: StoryGroup[] | undefined) => {
+            if (!oldGroups) return oldGroups;
+            return oldGroups.map(group => {
+                const storyIndex = group.stories.findIndex(s => s.id === storyId);
+                if (storyIndex === -1) return group;
+                const updatedStories = [...group.stories];
+                updatedStories[storyIndex] = { ...updatedStories[storyIndex], has_viewed: true };
+                return { ...group, stories: updatedStories };
+            });
+        });
+    }, [queryClient, queryKey]);
+
     const refreshStories = useCallback(async () => {
         await refetch();
     }, [refetch]);
@@ -97,6 +111,7 @@ export function StoriesProvider({ children, enabled = true }: { children: React.
         setSelectedStory,
         handleCreateStory,
         handleStoryUpdate,
+        markStoryViewed,
         refreshStories,
         isStoryViewerOpen,
         setIsStoryViewerOpen

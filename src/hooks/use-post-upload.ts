@@ -36,11 +36,11 @@ export const usePostUpload = () => {
 
         try {
             let mediaUrls: string[] = [];
-            
+
             // 1. Upload Media
             if (mediaFiles && mediaFiles.length > 0) {
                 const progressInterval = setInterval(() => {
-                    setPendingPosts(prev => prev.map(p => 
+                    setPendingPosts(prev => prev.map(p =>
                         p.id === id ? { ...p, progress: Math.min(p.progress + 10, 90) } : p
                     ));
                 }, 500);
@@ -62,12 +62,12 @@ export const usePostUpload = () => {
             const response = await createPost(finalContent);
             const createdPost = await getPostById(response.postId);
             addPost(mapBackendPostToFrontend(createdPost));
-            
+
             // 3. Update Store
-            setPendingPosts(prev => prev.map(p => 
+            setPendingPosts(prev => prev.map(p =>
                 p.id === id ? { ...p, status: 'success', progress: 100 } : p
             ));
-            
+
             toast.success("Post published successfully!");
 
             // Auto-clear after 3 seconds
@@ -77,7 +77,7 @@ export const usePostUpload = () => {
 
         } catch (error) {
             console.error("Upload failed", error);
-            setPendingPosts(prev => prev.map(p => 
+            setPendingPosts(prev => prev.map(p =>
                 p.id === id ? { ...p, status: 'error', error: 'Failed to upload' } : p
             ));
             toast.error("Failed to publish post");

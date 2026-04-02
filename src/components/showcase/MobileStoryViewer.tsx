@@ -11,9 +11,10 @@ type MobileStoryViewerProps = {
     onClose: () => void
     isDark?: boolean
     onStoryUpdate?: (story: StoryDetail) => void
+    onStoryViewed?: (storyId: number) => void
 }
 
-export function MobileStoryViewer({ groups, initialGroupId, onClose, isDark, onStoryUpdate }: MobileStoryViewerProps) {
+export function MobileStoryViewer({ groups, initialGroupId, onClose, isDark, onStoryUpdate, onStoryViewed }: MobileStoryViewerProps) {
     const { setIsStoryViewerOpen } = useStories();
 
     // Filter out groups with no stories (e.g. empty "Your Story" placeholder)
@@ -91,6 +92,7 @@ export function MobileStoryViewer({ groups, initialGroupId, onClose, isDark, onS
                                     }}
                                     isDark={isDark}
                                     onStoryUpdate={onStoryUpdate}
+                                    onStoryViewed={onStoryViewed}
                                     disableMediaBackgroundFallback={true}
                                 />
                             ) : (

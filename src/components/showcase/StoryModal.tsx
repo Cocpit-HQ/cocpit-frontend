@@ -18,6 +18,7 @@ type StoryModalProps = {
   onClose: () => void
   isDark?: boolean
   onStoryUpdate?: (story: StoryDetail) => void
+  onStoryViewed?: (storyId: number) => void
   onNext?: () => void
   onPrev?: () => void
   hasNext?: boolean
@@ -76,7 +77,7 @@ const SHARE_USERS = [
   { id: 5, name: "Eva White", role: "Marketing Lead" },
 ]
 
-export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasNext, hasPrev }: StoryModalProps) {
+export function StoryModal({ story, onClose, onStoryUpdate, onStoryViewed, onNext, onPrev, hasNext, hasPrev }: StoryModalProps) {
   const [isLiked, setIsLiked] = useState(!!story.isLiked)
   const [comment, setComment] = useState("")
 
@@ -100,11 +101,14 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
   const menuButtonRef = useRef<HTMLButtonElement>(null)
 
   const { activeProfile } = useActiveProfile();
-  const { setIsStoryViewerOpen } = useStories();
+  const { setIsStoryViewerOpen, markStoryViewed } = useStories();
 
   // View Story effect & Fetch Details if Author
   useEffect(() => {
     const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+    // Optimistically mark as viewed so the blue ring disappears immediately
+    markStoryViewed(story.id);
+    if (onStoryViewed) onStoryViewed(story.id);
     showcaseService.viewStory(story.id, companyId).catch(err => console.error("View story failed", err));
 
     if (story.isAuthor) {

@@ -64,7 +64,8 @@ export default function ShowcaseContent() {
     selectedStory,
     setSelectedStory,
     handleCreateStory,
-    handleStoryUpdate
+    handleStoryUpdate,
+    markStoryViewed
   } = useStoryGroups();
   const [showCreateStory, setShowCreateStory] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -235,6 +236,7 @@ export default function ShowcaseContent() {
           story={selectedStory}
           onClose={() => setSelectedStory(null)}
           onStoryUpdate={handleStoryUpdate}
+          onStoryViewed={markStoryViewed}
           onNext={() => {
             const currentIndex = selectedStoryGroup.stories.findIndex(s => s.id === selectedStory.id);
             if (currentIndex < selectedStoryGroup.stories.length - 1) {
@@ -264,6 +266,7 @@ export default function ShowcaseContent() {
           initialGroupId={mobileSelectedGroupId}
           onClose={() => setMobileSelectedGroupId(null)}
           onStoryUpdate={handleStoryUpdate}
+          onStoryViewed={markStoryViewed}
         />
       )}
 

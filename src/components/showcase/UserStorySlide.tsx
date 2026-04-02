@@ -10,6 +10,7 @@ import { VirtualLayerCanvas } from "./ViewerLayerItem"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useStorySync } from "@/components/showcase/hooks/use-story-sync"
 import { formatTimeAgo } from "@/lib/utils"
+import { useStories } from "@/context/StoriesContext"
 
 type UserStorySlideProps = {
     group: StoryGroup
@@ -19,6 +20,7 @@ type UserStorySlideProps = {
     onClose: () => void
     isDark?: boolean
     onStoryUpdate?: (story: StoryDetail) => void
+    onStoryViewed?: (storyId: number) => void
     disableMediaBackgroundFallback?: boolean
 }
 
@@ -31,6 +33,7 @@ export const UserStorySlide = ({
     onClose,
     isDark,
     onStoryUpdate,
+    onStoryViewed,
     disableMediaBackgroundFallback: _disableMediaBackgroundFallback = false
 }: UserStorySlideProps) => {
     type StoryLike = StoryDetail;
@@ -41,6 +44,7 @@ export const UserStorySlide = ({
     const [isPaused] = useState(false)
     const [isMuted, setIsMuted] = useState(true)
     const { activeProfile } = useActiveProfile();
+    const { markStoryViewed } = useStories();
 
     const videoSlotRef0 = useRef<HTMLVideoElement>(null)
     const videoSlotRef1 = useRef<HTMLVideoElement>(null)
@@ -220,9 +224,12 @@ export const UserStorySlide = ({
     useEffect(() => {
         if (isActiveUser && currentStory && !currentStory.isAuthor) {
             const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+            // Optimistically mark as viewed so the blue ring disappears immediately
+            markStoryViewed(currentStory.id);
+            if (onStoryViewed) onStoryViewed(currentStory.id);
             showcaseService.viewStory(currentStory.id, companyId).catch(err => console.error("View story failed", err));
         }
-    }, [currentStory?.id, currentStory?.isAuthor, isActiveUser, activeProfile?.id, activeProfile?.type])
+    }, [currentStory?.id, currentStory?.isAuthor, isActiveUser, activeProfile?.id, activeProfile?.type, markStoryViewed])
 
     // Real-time synchronization
     useStorySync(isActiveUser ? currentStory?.id : undefined, {
