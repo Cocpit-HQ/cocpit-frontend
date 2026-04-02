@@ -3,7 +3,7 @@
 
 // Refactored to use standalone useFeed hook
 import React, { useState } from 'react';
-import { MoreHorizontal, Trash2, Edit2, Eye, EyeOff } from 'lucide-react';
+import { MoreHorizontal, Trash2, Edit2, Eye, EyeOff, Flag } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +22,7 @@ import {
 import { CreatePostModal } from './CreatePostModal';
 import { useFeed } from '@/hooks/use-feed';
 import { updatePost } from '@/services/api/posts';
+import { ReportModal } from '@/components/shared/ReportModal';
 
 interface PostOptionsMenuProps {
   postId: string;
@@ -48,10 +49,12 @@ export function PostOptionsMenu({
 }: PostOptionsMenuProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const { updatePostInFeed } = useFeed();
   const { mutate: notifyEmployees } = useNotifyEmployees();
 
-  if (!isOwnPost) return null;
+  // If not own post and no specific actions allowed, we still show the menu for Reporting
+  // if (!isOwnPost) return null; 
 
   const isPoll = postType === 'poll';
 
@@ -84,38 +87,53 @@ export function PostOptionsMenu({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 bg-card border-border">
-            {!isPoll && (
+            {isOwnPost ? (
               <>
+                {!isPoll && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsEditModalOpen(true);
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <Edit2 className="w-4 h-4 mr-2" />
+                      <span>Edit Post</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleToggleVisibility}
+                      className="cursor-pointer"
+                    >
+                      {visibility === 'private' ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+                      <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
-                    setIsEditModalOpen(true);
+                    setIsDeleteDialogOpen(true);
                   }}
-                  className="cursor-pointer"
+                  className="text-red-500 focus:text-red-500 cursor-pointer focus:bg-red-50 dark:focus:bg-red-950/20"
                 >
-                  <Edit2 className="w-4 h-4 mr-2" />
-                  <span>Edit Post</span>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  <span>Delete Post</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={handleToggleVisibility}
-                  className="cursor-pointer"
-                >
-                  {visibility === 'private' ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
-                  <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
               </>
+            ) : (
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsReportModalOpen(true);
+                }}
+                className="cursor-pointer"
+              >
+                <Flag className="w-4 h-4 mr-2" />
+                <span>Report Post</span>
+              </DropdownMenuItem>
             )}
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsDeleteDialogOpen(true);
-              }}
-              className="text-red-500 focus:text-red-500 cursor-pointer focus:bg-red-50 dark:focus:bg-red-950/20"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              <span>Delete Post</span>
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -157,6 +175,13 @@ export function PostOptionsMenu({
         onClose={() => setIsEditModalOpen(false)}
         editPostId={postId}
         onUpdate={(updatedPost) => updatePostInFeed(postId, updatedPost)}
+      />
+
+      <ReportModal 
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        targetType="POST"
+        targetId={postId}
       />
     </>
   );

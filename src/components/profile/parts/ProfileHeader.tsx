@@ -14,6 +14,8 @@ import { SendOfferDialog } from "./SendOfferDialog";
 import { UniversalShareModal } from "@/components/share/UniversalShareModal";
 import { Share2, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
+import { ReportModal } from "@/components/shared/ReportModal";
+import { Flag } from "lucide-react";
 
 interface ProfileHeaderProps {
     user: User;
@@ -62,6 +64,7 @@ export function ProfileHeader({
     const { blockUser } = useSocial();
     const [showBlockDialog, setShowBlockDialog] = useState(false);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
     // Read connection status directly from the same cache as ConnectionButton
     const { data: relationship } = useQuery<any>({
@@ -192,11 +195,17 @@ export function ProfileHeader({
                                     <LinkIcon className="w-4 h-4 mr-2" />
                                     Copy Profile Link
                                 </DropdownMenuItem>
-                                {!isOwnProfile && (
-                                    <DropdownMenuItem onClick={() => setShowBlockDialog(true)} className="text-destructive focus:text-destructive cursor-pointer">
-                                        <Ban className="w-4 h-4 mr-2" />
-                                        Block User
-                                    </DropdownMenuItem>
+                                 {!isOwnProfile && (
+                                    <>
+                                        <DropdownMenuItem onClick={() => setIsReportModalOpen(true)} className="cursor-pointer">
+                                            <Flag className="w-4 h-4 mr-2" />
+                                            Report Profile
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => setShowBlockDialog(true)} className="text-destructive focus:text-destructive cursor-pointer">
+                                            <Ban className="w-4 h-4 mr-2" />
+                                            Block User
+                                        </DropdownMenuItem>
+                                    </>
                                 )}
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -264,6 +273,13 @@ export function ProfileHeader({
                 entityAvatar={user.avatar}
                 entityHeadline={user.headline}
                 entityLocation={user.location}
+            />
+
+            <ReportModal
+                isOpen={isReportModalOpen}
+                onClose={() => setIsReportModalOpen(false)}
+                targetType="USER"
+                targetId={user.id}
             />
         </div>
     );
