@@ -185,7 +185,12 @@ export default function FeedPost({
   const { updatePostInFeed } = useFeed();
   const { data: session } = useSession();
   const { isCompany, activeProfile } = useActiveProfile();
-  const isMe = session?.user?.id === authorId || isOwnPost; // Fallback to isOwnPost if needed
+  // isMe: true only when the current active account is the same entity that authored this post.
+  // - Personal post: only when NOT acting as a company and the session user matches.
+  // - Company post: only when acting as the matching company.
+  const isMe = isCompanyPost
+    ? isCompany && !!activeProfile && activeProfile.id?.toString() === authorId?.toString()
+    : !isCompany && session?.user?.id?.toString() === authorId?.toString();
 
   // Carousel State
   const searchParams = useSearchParams();

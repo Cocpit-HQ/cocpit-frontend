@@ -35,6 +35,7 @@ import { SkillProofPill } from "@/components/profile/SkillProofPill"
 import { useFeed } from "@/hooks/use-feed"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useAuth } from "@/hooks/use-auth"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 import FeedPost from "@/components/home/FeedPost"
 import PostCard from "@/components/shared/PostCard"
 import { getUserPosts } from "@/services/api/profile"
@@ -109,6 +110,7 @@ export default function ProfilePage() {
   };
 
   const { togglePostVisibility } = useFeed(false);
+  const { isCompany } = useActiveProfile();
   const [previewPosts, setPreviewPosts] = useState<Post[]>([]);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const isMobile = useIsMobile();
@@ -613,7 +615,7 @@ export default function ProfilePage() {
                         <PostCard
                           key={post.id}
                           post={post}
-                          isOwnPost={true}
+                          isOwnPost={!isCompany}
                           onDelete={handleDeletePost}
                         />
                       ) : (
@@ -621,7 +623,7 @@ export default function ProfilePage() {
                           key={post.id}
                           {...post}
                           initialComments={post.commentData}
-                          isOwnPost={true}
+                          isOwnPost={!isCompany}
                           onDelete={handleDeletePost}
                           onToggleVisibility={handleToggleVisibility}
                           isProfileView={true}

@@ -206,21 +206,23 @@ export function JobCard({ job, mode = "view" }: JobCardProps) {
               >
                 <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  saveJob(job.jobId || job.id)
-                }}
-                className={cn(
-                  "p-1.5 sm:p-2 rounded-full transition-colors",
-                  job.isSaved
-                    ? "text-pink-500 hover:bg-pink-500/10"
-                    : "text-muted-foreground hover:bg-muted/50"
-                )}
-                aria-label={job.isSaved ? "Saved Job" : "Save Job"}
-              >
-                <Bookmark className={cn("w-4 h-4 sm:w-5 sm:h-5", job.isSaved && "fill-current")} />
-              </button>
+              {!isCompany && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    saveJob(job.jobId || job.id)
+                  }}
+                  className={cn(
+                    "p-1.5 sm:p-2 rounded-full transition-colors",
+                    job.isSaved
+                      ? "text-pink-500 hover:bg-pink-500/10"
+                      : "text-muted-foreground hover:bg-muted/50"
+                  )}
+                  aria-label={job.isSaved ? "Saved Job" : "Save Job"}
+                >
+                  <Bookmark className={cn("w-4 h-4 sm:w-5 sm:h-5", job.isSaved && "fill-current")} />
+                </button>
+              )}
             </div>
 
             {/* Bottom Right on Desktop: View Details & Status */}

@@ -139,7 +139,13 @@ export const FeedSection = ({
                                 <FeedPost
                                     {...post}
                                     initialComments={post.commentData}
-                                    isOwnPost={post.author === currentUser.name}
+                                    isOwnPost={
+                                        post.isCompanyPost
+                                            // Company post: only the matching active company account is the owner
+                                            ? isCompany && !!activeProfile && post.authorId?.toString() === activeProfile.id?.toString()
+                                            // Personal post: only the personal account is the owner (not when acting as company)
+                                            : !isCompany && post.authorId?.toString() === currentUser?.id?.toString()
+                                    }
                                     onDelete={deletePost}
                                     onToggleVisibility={togglePostVisibility}
                                     priority={virtualItem.index < 4}

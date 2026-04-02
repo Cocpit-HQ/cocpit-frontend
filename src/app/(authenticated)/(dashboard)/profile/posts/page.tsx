@@ -11,6 +11,7 @@ import { deletePost as apiDeletePost } from "@/services/api/posts";
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import { Post } from "@/types/entities";
 import { useFeed } from "@/hooks/use-feed";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -34,6 +35,7 @@ export default function ProfilePostsPage() {
   const observerTarget = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
   const { togglePostVisibility } = useFeed();
+  const { isCompany } = useActiveProfile();
 
   const navigateTo = (page: Page) => {
     router.push(routes[page] ?? "/feed");
@@ -180,7 +182,7 @@ export default function ProfilePostsPage() {
                 <FeedPost
                   {...post}
                   initialComments={post.commentData}
-                  isOwnPost={true}
+                  isOwnPost={!isCompany}
                   onDelete={handleDeletePost}
                   onToggleVisibility={handleToggleVisibility}
                 />

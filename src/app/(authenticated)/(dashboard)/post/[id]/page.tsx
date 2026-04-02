@@ -8,6 +8,7 @@ import { mapBackendPostToFrontend } from "@/lib/mappers/feed.mapper"
 import { Post } from "@/types/entities"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 
 interface PageProps {
     params: Promise<{
@@ -24,6 +25,7 @@ export default function SinglePostPage({ params }: PageProps) {
     const [post, setPost] = useState<Post | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState("")
+    const { isCompany, activeProfile } = useActiveProfile()
 
     useEffect(() => {
         const fetchPost = async () => {
@@ -57,9 +59,14 @@ export default function SinglePostPage({ params }: PageProps) {
         router.push(routes[page] ?? '/feed')
     }
 
-    // Determine if current user is the post owner
-    const isOwnPost = post && session?.user?.id
-        ? post.authorId?.toString() === session.user.id.toString()
+    // Determine if current user is the post owner,
+    // respecting the active account context (personal vs company)
+    const isOwnPost = post
+        ? post.isCompanyPost
+            // Company post: owner only when acting as the same company
+            ? isCompany && !!activeProfile && post.authorId?.toString() === activeProfile.id?.toString()
+            // Personal post: owner only when acting as personal account
+            : !isCompany && !!session?.user?.id && post.authorId?.toString() === session.user.id.toString()
         : false
 
     return (
