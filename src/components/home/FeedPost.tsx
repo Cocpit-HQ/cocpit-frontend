@@ -71,6 +71,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { BroadcastBanner } from './BroadcastBanner'
+import { ReportModal } from '../shared/ReportModal'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -174,6 +175,7 @@ export default function FeedPost({
   const optionsBtnRef = useRef<HTMLButtonElement>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   // Poll State
   const [pollData, setPollData] = useState(poll);
@@ -707,8 +709,7 @@ export default function FeedPost({
 
                         <button
                           onClick={() => {
-                            console.log("Report post", id);
-                            toast.success("Report submitted");
+                            setIsReportModalOpen(true);
                             setShowOptions(false);
                           }}
                           className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
@@ -1122,6 +1123,13 @@ export default function FeedPost({
           setIsSaved(newSavedState);
           if (onSaveChange) onSaveChange(newSavedState);
         }}
+      />
+
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        targetType="POST"
+        targetId={id}
       />
     </div >
   )

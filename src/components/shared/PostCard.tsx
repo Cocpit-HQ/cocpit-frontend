@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Post } from '@/types/entities';
 import { PostOptionsMenu } from '@/components/home/PostOptionsMenu';
 import DOMPurify from 'dompurify';
 import { usePostImpression } from '@/hooks/usePostImpression';
@@ -94,19 +93,17 @@ export default function PostCard({ post, href, onDelete, isOwnPost, companyId }:
                 </div>
             </Link>
 
-            {isOwnPost && (
-                <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <PostOptionsMenu
-                        postId={id.toString()}
-                        isOwnPost={isOwnPost}
-                        onDelete={onDelete}
-                        className="bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60"
-                        postType={post.poll ? 'poll' : (displayImage ? 'image' : (isSharedJob ? 'article' : 'text'))}
-                        visibility={post.visibility || 'public'}
-                        companyId={companyId}
-                    />
-                </div>
-            )}
+            <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                <PostOptionsMenu
+                    postId={id.toString()}
+                    isOwnPost={isOwnPost}
+                    onDelete={onDelete}
+                    className="bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60"
+                    postType={post.poll ? 'poll' : (displayImage ? 'image' : (isSharedJob ? 'article' : 'text'))}
+                    visibility={post.visibility || 'public'}
+                    companyId={companyId}
+                />
+            </div>
         </div>
     );
 }

@@ -13,6 +13,7 @@ import {
 import { toast } from 'sonner';
 import { useSocial } from '@/context/SocialContext';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { ReportModal } from '@/components/shared/ReportModal';
 
 interface CommentProps {
   comment: CommentType;
@@ -61,6 +62,7 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
   const [isPinned, setIsPinned] = useState(is_pinned || false);
   const { blockUser } = useSocial();
   const { isCompany, activeProfile } = useActiveProfile();
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const handleBlock = async () => {
     try {
@@ -216,10 +218,12 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
                 </DropdownMenuItem>
               )}
 
-              <DropdownMenuItem onClick={() => toast.info("Reported")}>
-                <Flag className="w-4 h-4 mr-2" />
-                Report
-              </DropdownMenuItem>
+              {!isOwner && (
+                <DropdownMenuItem onClick={() => setIsReportModalOpen(true)}>
+                  <Flag className="w-4 h-4 mr-2" />
+                  Report
+                </DropdownMenuItem>
+              )}
 
               {(isOwner || isPostOwner) && onDelete && (
                 <>
@@ -244,6 +248,13 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
           <Heart className={`w-3 h-3 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
         </button>
       </div>
+
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        targetType="COMMENT"
+        targetId={id}
+      />
 
     </div>
   );
