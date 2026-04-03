@@ -105,32 +105,46 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const isStep1Valid = () => {
-    return formData.title.trim() !== "" && 
-           formData.location.trim() !== ""
+    return formData.title.trim() !== ""
+  }
+
+  const isStep2Valid = () => {
+    return formData.description.trim() !== ""
   }
 
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {}
     if (!formData.title.trim()) newErrors.title = "Job title is required"
-    if (!formData.location.trim()) newErrors.location = "Location is required"
+    
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const validateStep2 = () => {
+    const newErrors: Record<string, string> = {}
+    if (!formData.description.trim()) newErrors.description = "Job description is required"
     
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleNext = () => {
-    if (validateStep1()) {
+    if (currentStep === 1 && validateStep1()) {
       setCurrentStep(2)
+    } else if (currentStep === 2 && validateStep2()) {
+      setCurrentStep(3)
+    } else if (currentStep === 3) {
+      setCurrentStep(4)
     }
   }
 
   const handleBack = () => {
-    setCurrentStep(1)
+    setCurrentStep(prev => Math.max(1, prev - 1))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (currentStep === 1) {
+    if (currentStep < 4) {
       handleNext()
       return
     }
@@ -190,10 +204,15 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 mb-1">
               <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
-                Step {currentStep} of 2
+                Step {currentStep} of 4
               </span>
               <span className="text-sm text-muted-foreground font-medium">
-                — {currentStep === 1 ? "Job Details" : "Description & Settings"}
+                — {
+                  currentStep === 1 ? "Job Title" : 
+                  currentStep === 2 ? "Description & Settings" : 
+                  currentStep === 3 ? "Salary & Location" : 
+                  "Experience & Skills"
+                }
               </span>
             </div>
             <DialogTitle className="text-2xl font-bold tracking-tight">
@@ -207,7 +226,7 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
           <div className="absolute bottom-0 left-0 h-1 bg-muted w-full">
             <div 
               className="h-full bg-primary transition-all duration-500 ease-out"
-              style={{ width: `${(currentStep / 2) * 100}%` }}
+              style={{ width: `${(currentStep / 4) * 100}%` }}
             />
           </div>
         </DialogHeader>
@@ -222,16 +241,38 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
                 </div>
               )}
 
-              {currentStep === 1 ? (
+              {currentStep === 1 && (
                 <JobDetailsStep 
                   formData={formData} 
                   updateFormData={updateFormData} 
                   errors={errors} 
+                  step={1}
                 />
-              ) : (
+              )}
+
+              {currentStep === 2 && (
                 <JobDescriptionStep 
                   formData={formData} 
                   updateFormData={updateFormData} 
+                  errors={errors}
+                />
+              )}
+
+              {currentStep === 3 && (
+                <JobDetailsStep 
+                  formData={formData} 
+                  updateFormData={updateFormData} 
+                  errors={errors} 
+                  step={3}
+                />
+              )}
+
+              {currentStep === 4 && (
+                <JobDetailsStep 
+                  formData={formData} 
+                  updateFormData={updateFormData} 
+                  errors={errors} 
+                  step={4}
                 />
               )}
             </div>
@@ -256,14 +297,17 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
               </button>
               
               <div className="flex items-center gap-3">
-                {currentStep === 1 ? (
+                {currentStep < 4 ? (
                   <button
                     type="button"
                     onClick={(e) => {
                       e.preventDefault()
                       handleNext()
                     }}
-                    disabled={!isStep1Valid()}
+                    disabled={
+                      (currentStep === 1 && !isStep1Valid()) ||
+                      (currentStep === 2 && !isStep2Valid())
+                    }
                     className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:grayscale-[0.5] disabled:cursor-not-allowed"
                   >
                     Next

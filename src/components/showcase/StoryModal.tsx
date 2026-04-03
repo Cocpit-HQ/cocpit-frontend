@@ -12,12 +12,14 @@ import { useStorySync } from "@/components/showcase/hooks/use-story-sync"
 import { useStories } from '@/context/StoriesContext'
 import { getStoryImageUrl, getStoryThumbnailUrl, getStoryVideoUrl, parseStoryMetadata } from "@/lib/story-media"
 import { formatTimeAgo } from "@/lib/utils"
+import { useFeed } from "@/hooks/use-feed"
 
 type StoryModalProps = {
   story: StoryDetail
   onClose: () => void
   isDark?: boolean
   onStoryUpdate?: (story: StoryDetail) => void
+  onStoryViewed?: (storyId: number) => void
   onNext?: () => void
   onPrev?: () => void
   hasNext?: boolean
@@ -76,9 +78,17 @@ const SHARE_USERS = [
   { id: 5, name: "Eva White", role: "Marketing Lead" },
 ]
 
-export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasNext, hasPrev }: StoryModalProps) {
+export function StoryModal({ story, onClose, onStoryUpdate, onStoryViewed, onNext, onPrev, hasNext, hasPrev }: StoryModalProps) {
+  const { activeProfile, isCompany } = useActiveProfile();
+  const { currentUser } = useFeed();
   const [isLiked, setIsLiked] = useState(!!story.isLiked)
   const [comment, setComment] = useState("")
+
+  const activeAccount = React.useMemo(() => (
+    isCompany && activeProfile
+      ? { name: activeProfile.name, image: activeProfile.avatar_url }
+      : currentUser
+  ), [isCompany, activeProfile, currentUser]);
 
   // Real Data State
   const [activeTab, setActiveTab] = useState<'comments' | 'viewers' | 'likes'>('comments')
@@ -99,12 +109,14 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
   const menuRef = useRef<HTMLDivElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
 
-  const { activeProfile } = useActiveProfile();
-  const { setIsStoryViewerOpen } = useStories();
+  const { setIsStoryViewerOpen, markStoryViewed } = useStories();
 
   // View Story effect & Fetch Details if Author
   useEffect(() => {
     const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+    // Optimistically mark as viewed so the blue ring disappears immediately
+    markStoryViewed(story.id);
+    if (onStoryViewed) onStoryViewed(story.id);
     showcaseService.viewStory(story.id, companyId).catch(err => console.error("View story failed", err));
 
     if (story.isAuthor) {
@@ -328,7 +340,7 @@ export function StoryModal({ story, onClose, onStoryUpdate, onNext, onPrev, hasN
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="w-8 h-8 rounded-full overflow-hidden bg-white/20 border border-white/30 shrink-0">
                     <img
-                      src={uploader?.avatar || "/assets/pngegg.png"}
+                      src={(story.isAuthor && activeAccount?.image) ? activeAccount.image : (uploader?.avatar || "/assets/pngegg.png")}
                       alt={uploader?.name || "Story uploader"}
                       className="w-full h-full object-cover"
                       onError={(e) => {

@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react'
 import { Image, Video, FileText, BarChart3 } from 'lucide-react'
 import { useActionModal } from '@/context/ActionModalContext'
 import { PostType } from './CreatePostModal'
+import { useActiveProfile } from '@/context/ActiveProfileContext'
+import { useFeed } from '@/hooks/use-feed'
 
 interface CreatePostProps {
   onOpenModal: (type?: PostType) => void
@@ -22,6 +24,13 @@ function PostButton({ icon, label, onClick }: { icon: React.ReactNode; label: st
 }
 
 export function CreatePost({ onOpenModal }: CreatePostProps) {
+  const { activeProfile, isCompany } = useActiveProfile();
+  const { currentUser } = useFeed();
+  
+  const avatar = isCompany && activeProfile?.avatar_url 
+    ? activeProfile.avatar_url 
+    : (currentUser?.image || "/assets/pngegg.png");
+
   return (
     <div
       className="rounded-lg border p-4 mb-3 bg-card border-border shadow-sm"
@@ -29,9 +38,10 @@ export function CreatePost({ onOpenModal }: CreatePostProps) {
       <div className="flex gap-3 mb-3 items-center">
         <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex-shrink-0 overflow-hidden">
           <img
-            src="/assets/pngegg.png"
+            src={avatar}
             alt="profile"
             className="w-full h-full object-cover"
+            onError={(e) => { e.currentTarget.src = "/assets/pngegg.png" }}
           />
         </div>
         <input

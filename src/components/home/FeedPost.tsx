@@ -71,6 +71,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { BroadcastBanner } from './BroadcastBanner'
+import { PostCarousel } from '../shared/PostCarousel'
 import { ReportModal } from '../shared/ReportModal'
 import {
   DropdownMenu,
@@ -187,10 +188,6 @@ export default function FeedPost({
   const isMe = session?.user?.id === authorId || isOwnPost; // Fallback to isOwnPost if needed
 
   // Carousel State
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false })
-  const [currentSlide, setCurrentSlide] = useState(0)
-  const [showBadge, setShowBadge] = useState(false)
-  const badgeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const searchParams = useSearchParams();
 
   // Dynamic aspect ratio for images (when backend doesn't provide it)
@@ -286,29 +283,9 @@ export default function FeedPost({
 
   const isTextOnlyPost = !validImageSrc && validImages.length === 0 && !videoSrc && !pollData && !shared_post;
 
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return
-    setCurrentSlide(emblaApi.selectedScrollSnap())
-    triggerBadgeVisibility()
-  }, [emblaApi])
-
   const triggerBadgeVisibility = useCallback(() => {
-    setShowBadge(true)
-    if (badgeTimeoutRef.current) clearTimeout(badgeTimeoutRef.current)
-    badgeTimeoutRef.current = setTimeout(() => {
-      setShowBadge(false)
-    }, 2000)
+    // Keep for potential other uses or remove if entirely unused
   }, [])
-
-  useEffect(() => {
-    if (!emblaApi) return
-    emblaApi.on('select', onSelect)
-    emblaApi.on('reInit', onSelect)
-    emblaApi.on('scroll', triggerBadgeVisibility)
-    return () => {
-      if (badgeTimeoutRef.current) clearTimeout(badgeTimeoutRef.current)
-    }
-  }, [emblaApi, onSelect, triggerBadgeVisibility])
 
   // --- COMMENT LOGIC ---
   const fetchPostComments = useCallback(async () => {
@@ -974,26 +951,11 @@ export default function FeedPost({
                 className={`w-full h-full bg-black ${isVerticalVideo ? 'object-contain' : 'object-cover'}`}
               />
             ) : hasMultipleImages ? (
-              <div className="absolute inset-0 overflow-hidden" ref={emblaRef}>
-                <div className="flex h-full">
-                  {validImages.map((src, index) => (
-                    <div className="flex-[0_0_100%] min-w-0 relative h-full flex justify-center items-center bg-gray-100 dark:bg-zinc-900" key={index}>
-                      <Image
-                        src={src}
-                        alt={`Slide ${index + 1}`}
-                        fill
-                        className="object-cover"
-                        priority={priority && index === 0}
-                        sizes="(max-width: 768px) 100vw, 600px"
-                        onLoad={(event) => {
-                          // Only set ratio based on the first image to prevent jumping during slide
-                          if (index === 0) handleImageLoad(event);
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <PostCarousel
+                images={validImages}
+                priority={priority}
+                onImageLoad={(e) => handleImageLoad(e)}
+              />
             ) : (
               <Image
                 src={contentImgSrc}
@@ -1004,14 +966,6 @@ export default function FeedPost({
                 sizes="(max-width: 768px) 100vw, 600px"
                 onLoad={handleImageLoad}
               />
-            )}
-            {/* Slide Counter Badge */}
-            {hasMultipleImages && (
-              <div
-                className={`absolute top-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded-full transition-opacity duration-300 ${showBadge ? 'opacity-100' : 'opacity-0'}`}
-              >
-                {currentSlide + 1}/{validImages.length}
-              </div>
             )}
           </div>
         )}

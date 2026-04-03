@@ -49,12 +49,23 @@ export function useStoryGroups(initialGroups: StoryGroup[] = []) {
         setSelectedStory((prev) => prev?.id === updatedStory.id ? updatedStory : prev);
     }, []);
 
+    const markStoryViewed = useCallback((storyId: number) => {
+        setGroups((prevGroups) => prevGroups.map(group => {
+            const storyIndex = group.stories.findIndex(s => s.id === storyId);
+            if (storyIndex === -1) return group;
+            const updatedStories = [...group.stories];
+            updatedStories[storyIndex] = { ...updatedStories[storyIndex], has_viewed: true };
+            return { ...group, stories: updatedStories };
+        }));
+    }, []);
+
     return {
         groups,
         setGroups,
         selectedStory,
         setSelectedStory,
         handleCreateStory,
-        handleStoryUpdate
+        handleStoryUpdate,
+        markStoryViewed
     };
 }

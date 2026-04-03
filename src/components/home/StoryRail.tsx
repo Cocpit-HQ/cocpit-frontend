@@ -15,7 +15,7 @@ type StoryRailProps = {
   onCreateClick: () => void
   onStoryClick: (story: StoryDetail) => void
   isLoading?: boolean
-  currentUser?: { name: string; image?: string | null }
+  activeAccount?: { name: string; image?: string | null }
 }
 
 // Helper to determine image source
@@ -32,7 +32,7 @@ function getStoryImage(story: StoryDetail): string | null {
   return story.image || null;
 }
 
-export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, currentUser }: StoryRailProps) {
+export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, activeAccount }: StoryRailProps) {
   const [suggestedUsers, setSuggestedUsers] = useState<UserMention[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
@@ -201,11 +201,11 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, curr
                   >
                     <div className="relative">
                       <div className="w-14 h-14 md:w-28 md:h-40 rounded-full md:rounded-xl bg-muted hover:bg-muted/80 flex items-center justify-center border border-border transition-colors relative overflow-hidden">
-                        {currentUser?.image ? (
+                        {activeAccount?.image ? (
                           <>
                             <img
-                              src={currentUser.image}
-                              alt={currentUser.name}
+                              src={activeAccount.image}
+                              alt={activeAccount.name}
                               className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity"
                             />
                             {/* Desktop Overlay */}

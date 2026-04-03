@@ -141,7 +141,7 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId, sharedJobId
             scale: 2,
             backgroundColor: null
           });
-          
+
           const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
           if (!blob) throw new Error("Failed to generate shared story image");
           fileToUpload = new File([blob], "shared-entity-story.jpg", { type: "image/jpeg" });
@@ -574,9 +574,9 @@ export function CreateStoryForm({ onCancel, onCreated, sharedPostId, sharedJobId
             >
               {sharedPostId ? (
                 postData ? (
-                <SharedPostCard sharedPost={postData} onClick={() => { }} />
+                  <SharedPostCard sharedPost={postData} onClick={() => { }} />
                 ) : (
-                <div className="w-full h-32 bg-white/10 animate-pulse rounded-xl" />
+                  <div className="w-full h-32 bg-white/10 animate-pulse rounded-xl" />
                 )
               ) : sharedJobId ? (
                 jobData ? (

@@ -111,7 +111,7 @@ export interface Post {
   shared_post?: Post | null;
   isAvailable?: boolean;
   unavailableReason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
-  
+
   // Job sharing fields
   isJob?: boolean;
   jobId?: string;
