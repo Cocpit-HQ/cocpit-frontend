@@ -7,6 +7,7 @@ import PostSkeleton from './PostSkeleton';
 import { useFeed } from '@/hooks/use-feed';
 import { useInView } from '@/hooks/use-in-view';
 import { useActionModal } from '@/context/ActionModalContext';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { StoryRail } from './StoryRail';
 import { FeedSortDropdown } from './FeedSortDropdown';
 import { PostType } from './CreatePostModal';
@@ -34,7 +35,14 @@ export const FeedSection = ({
     setActiveTab
 }: FeedSectionProps) => {
     const { posts, currentUser, deletePost, togglePostVisibility, loadMorePosts, hasMore, loading: feedLoading } = useFeed();
+    const { activeProfile, isCompany } = useActiveProfile();
     const { openModal } = useActionModal();
+
+    const activeAccount = useMemo(() => (
+        isCompany && activeProfile
+            ? { name: activeProfile.name, image: activeProfile.avatar_url }
+            : currentUser
+    ), [isCompany, activeProfile, currentUser]);
 
     const { ref: loadMoreRef, inView } = useInView({
         threshold: 0,
@@ -74,7 +82,7 @@ export const FeedSection = ({
                     <StoryRail
                         groups={groups}
                         isLoading={storyLoading}
-                        currentUser={currentUser}
+                        activeAccount={activeAccount}
                         onCreateClick={() => setShowCreateStory(true)}
                         onStoryClick={(story) => {
                             const group = groups.find(g => g.stories.some(s => s.id === story.id));

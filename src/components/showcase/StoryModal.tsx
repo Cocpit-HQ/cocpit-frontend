@@ -12,6 +12,7 @@ import { useStorySync } from "@/components/showcase/hooks/use-story-sync"
 import { useStories } from '@/context/StoriesContext'
 import { getStoryImageUrl, getStoryThumbnailUrl, getStoryVideoUrl, parseStoryMetadata } from "@/lib/story-media"
 import { formatTimeAgo } from "@/lib/utils"
+import { useFeed } from "@/hooks/use-feed"
 
 type StoryModalProps = {
   story: StoryDetail
@@ -78,8 +79,16 @@ const SHARE_USERS = [
 ]
 
 export function StoryModal({ story, onClose, onStoryUpdate, onStoryViewed, onNext, onPrev, hasNext, hasPrev }: StoryModalProps) {
+  const { activeProfile, isCompany } = useActiveProfile();
+  const { currentUser } = useFeed();
   const [isLiked, setIsLiked] = useState(!!story.isLiked)
   const [comment, setComment] = useState("")
+
+  const activeAccount = React.useMemo(() => (
+    isCompany && activeProfile
+      ? { name: activeProfile.name, image: activeProfile.avatar_url }
+      : currentUser
+  ), [isCompany, activeProfile, currentUser]);
 
   // Real Data State
   const [activeTab, setActiveTab] = useState<'comments' | 'viewers' | 'likes'>('comments')
@@ -100,7 +109,6 @@ export function StoryModal({ story, onClose, onStoryUpdate, onStoryViewed, onNex
   const menuRef = useRef<HTMLDivElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
 
-  const { activeProfile } = useActiveProfile();
   const { setIsStoryViewerOpen, markStoryViewed } = useStories();
 
   // View Story effect & Fetch Details if Author
@@ -332,7 +340,7 @@ export function StoryModal({ story, onClose, onStoryUpdate, onStoryViewed, onNex
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="w-8 h-8 rounded-full overflow-hidden bg-white/20 border border-white/30 shrink-0">
                     <img
-                      src={uploader?.avatar || "/assets/pngegg.png"}
+                      src={(story.isAuthor && activeAccount?.image) ? activeAccount.image : (uploader?.avatar || "/assets/pngegg.png")}
                       alt={uploader?.name || "Story uploader"}
                       className="w-full h-full object-cover"
                       onError={(e) => {
