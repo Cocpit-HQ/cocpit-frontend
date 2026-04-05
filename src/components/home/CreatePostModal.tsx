@@ -1162,8 +1162,7 @@ export function CreatePostModal({
                               </div>
                             )}
 
-                            <textarea
-                              ref={photoCaptionRef}
+                            <MentionTextarea
                               value={photoCaption}
                               onChange={(e) => setPhotoCaption(e.target.value)}
                               placeholder="Write a caption..."
@@ -1222,8 +1221,7 @@ export function CreatePostModal({
                                 </button>
                               )}
                             </div>
-                            <textarea
-                              ref={videoCaptionRef}
+                            <MentionTextarea
                               value={videoCaption}
                               onChange={(e) => setVideoCaption(e.target.value)}
                               placeholder="Write a caption..."

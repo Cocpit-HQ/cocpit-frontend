@@ -39,6 +39,7 @@ export const hardLogout = async (reason?: string, isInternal: boolean = false) =
     // 3. Clear all local storage auth-related artifacts
     if (typeof window !== "undefined") {
       localStorage.removeItem("nextauth.message");
+      sessionStorage.removeItem("hideTrendingNow");
       // Add any other custom cache keys here (Query cache, etc. are cleared by full page reload normally)
     }
 
