@@ -27,6 +27,25 @@ export const MentionTextarea = ({ value, onChange, onMentionSelect, className, .
 
     const debouncedQuery = useDebounce(query, 300);
 
+    // Helper for matching text highlighting
+    const highlightMatch = (text: string, queryText: string) => {
+        if (!queryText.trim()) return text;
+        try {
+            const parts = text.split(new RegExp(`(${queryText})`, 'gi'));
+            return (
+                <>
+                    {parts.map((part, i) => 
+                        part.toLowerCase() === queryText.toLowerCase() 
+                            ? <b key={i} className="text-primary font-bold">{part}</b> 
+                            : part
+                    )}
+                </>
+            );
+        } catch (e) {
+            return text;
+        }
+    };
+
     useEffect(() => {
         let isMounted = true;
         const abortController = new AbortController();
@@ -206,8 +225,8 @@ export const MentionTextarea = ({ value, onChange, onMentionSelect, className, .
                                     <AvatarFallback>{user.full_name[0]}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex flex-col items-start overflow-hidden text-left">
-                                    <span className="font-medium truncate">{user.full_name}</span>
-                                    <span className="text-xs text-muted-foreground truncate">@{user.account_name}</span>
+                                    <span className="font-medium truncate">{highlightMatch(user.full_name, query)}</span>
+                                    <span className="text-xs text-muted-foreground truncate">@{highlightMatch(user.account_name, query)}</span>
                                 </div>
                             </button>
                         ))}
@@ -221,7 +240,7 @@ export const MentionTextarea = ({ value, onChange, onMentionSelect, className, .
                                     index === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted/80"
                                 )}
                             >
-                                <span className="font-medium text-primary">#{h.tag}</span>
+                                <span className="font-medium text-primary">#{highlightMatch(h.tag, query)}</span>
                                 <span className="text-xs text-muted-foreground">{h.usage_count} posts</span>
                             </button>
                         ))}

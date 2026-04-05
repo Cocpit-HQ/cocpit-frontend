@@ -6,6 +6,10 @@ export interface FeedResponse {
     cursorCreatedAt: string;
     cursorPostId: string;
   } | null;
+  hashtag?: {
+    tag: string;
+    usage_count: number;
+  };
 }
 
 export interface BackendPost {

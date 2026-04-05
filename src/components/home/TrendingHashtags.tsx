@@ -3,11 +3,19 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getTrendingHashtags, HashtagSuggestion } from '@/services/api/hashtags';
-import { Hash, TrendingUp, Loader2 } from 'lucide-react';
+import { Hash, TrendingUp, Loader2, X } from 'lucide-react';
 
 export default function TrendingHashtags() {
   const [hashtags, setHashtags] = useState<HashtagSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    const isHidden = sessionStorage.getItem('hideTrendingNow') === 'true';
+    if (isHidden) {
+      setIsVisible(false);
+    }
+  }, []);
 
   useEffect(() => {
     getTrendingHashtags()
@@ -15,6 +23,13 @@ export default function TrendingHashtags() {
       .catch(err => console.error("Failed to fetch trending hashtags", err))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleDismiss = () => {
+    setIsVisible(false);
+    sessionStorage.setItem('hideTrendingNow', 'true');
+  };
+
+  if (!isVisible) return null;
 
   if (loading) {
     return (
@@ -42,29 +57,42 @@ export default function TrendingHashtags() {
           <TrendingUp className="w-4 h-4 text-primary" />
           Trending Now
         </h2>
+        <button
+          onClick={handleDismiss}
+          className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          aria-label="Dismiss trending"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
       <div className="p-2">
-        {hashtags.map((h) => (
+        {hashtags.slice(0, 5).map((h) => (
           <Link
             key={h.tag}
-            href={`/hashtag/${h.tag}`}
+            href={`/hashtag/${h.tag.toLowerCase()}`}
             className="flex flex-col px-3 py-2 hover:bg-muted transition-colors rounded-lg group"
           >
             <span className="font-semibold text-sm group-hover:text-primary transition-colors flex items-center gap-1">
               <Hash className="w-3 h-3 text-muted-foreground" />
               {h.tag}
             </span>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-              {h.usage_count} Posts
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+              {h.usage_count.toLocaleString()} Posts
             </span>
           </Link>
         ))}
       </div>
-      <div className="p-3 border-t border-border">
-          <button className="text-xs text-primary font-medium hover:underline w-full text-left">
-              Show more
-          </button>
-      </div>
+      {hashtags.length > 5 && (
+        <div className="p-3 border-t border-border/50 bg-muted/5">
+            <Link 
+              href="/search?q=%23"
+              className="text-[11px] text-primary font-bold hover:text-primary/80 w-full text-left transition-colors flex items-center justify-between group"
+            >
+                See all trending topics
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+            </Link>
+        </div>
+      )}
     </div>
   );
 }

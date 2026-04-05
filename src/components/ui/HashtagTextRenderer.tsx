@@ -35,7 +35,7 @@ export const HashtagTextRenderer = memo(({ content }: HashtagTextRendererProps) 
             <Link
               key={i}
               href={`/hashtag/${tag}`}
-              className="text-primary hover:underline font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-sm"
+              className="inline-block px-1 -mx-1 text-primary font-bold hover:bg-primary/5 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30"
               onClick={(e) => e.stopPropagation()}
             >
               {part}

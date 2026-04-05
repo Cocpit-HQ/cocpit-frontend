@@ -30,9 +30,12 @@ export const useHashtagFeed = (tag: string) => {
     enabled: !!session && !!tag,
   });
 
-  const posts = useMemo(() => {
-    if (!data?.pages) return [];
-    return data.pages.flatMap(page => page.posts);
+  const { pages, hashtagMetadata } = useMemo(() => {
+    if (!data?.pages) return { pages: [], hashtagMetadata: null };
+    return {
+      pages: data.pages.flatMap(page => page.posts),
+      hashtagMetadata: data.pages[0]?.hashtag || null
+    };
   }, [data]);
 
   const loadMorePosts = useCallback(async () => {
@@ -42,7 +45,8 @@ export const useHashtagFeed = (tag: string) => {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return {
-    posts,
+    posts: pages,
+    hashtagMetadata,
     loadMorePosts,
     hasMore: !!hasNextPage,
     loading: isLoading || isFetchingNextPage,
