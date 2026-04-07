@@ -205,7 +205,7 @@ export default function MyCompanyPage() {
                   <p className="text-xs text-slate-500 font-medium">Manage parent-child relationships and venture subdivisions.</p>
                 </div>
                 <div className="cockpit-hierarchy-wrapper space-y-10">
-                   <OrgSubOrganizations orgId={company.org_id || company.company_id} />
+                   <OrgSubOrganizations orgId={displayCompany.org_id || displayCompany.company_id} />
                    
                    <div className="p-8 rounded-[32px] border border-dashed border-white/10 bg-white/5 text-center space-y-4">
                       <div className="w-12 h-12 rounded-full bg-slate-900 mx-auto flex items-center justify-center border border-white/5">
