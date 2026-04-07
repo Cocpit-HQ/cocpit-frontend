@@ -272,6 +272,8 @@ const MessageMedia = ({
   )
 }
 
+import { Mention } from "./MentionCard"
+
 const MessageText = ({
   message,
   isMediaOnly,
@@ -281,16 +283,46 @@ const MessageText = ({
   isMediaOnly: boolean,
   isMe: boolean
 }) => {
+  const router = useRouter()
   if (isMediaOnly) return null
+
+  const renderTextWithMentions = (text: string) => {
+    if (!text) return null
+    
+    // Quick regex to find @mentions. Allows alphanumeric, underscore, dot, and dash.
+    const mentionRegex = /(@[a-zA-Z0-9_.\-]+)/g
+    const parts = text.split(mentionRegex)
+    
+    if (parts.length <= 1) return text
+    
+    return parts.map((part, i) => {
+      if (part.match(mentionRegex)) {
+        const username = part.substring(1) // remove the @
+        return (
+          <Mention key={i} username={username} isMe={isMe}>
+            <span 
+              className={cn(
+                "hover:underline cursor-pointer font-bold",
+                isMe ? "text-white" : "text-[#818cf8]"
+              )}
+            >
+              {part}
+            </span>
+          </Mention>
+        )
+      }
+      return <span key={i}>{part}</span>
+    })
+  }
 
   return (
     <div className={cn(message.media && message.media.length > 0 ? "px-3 py-2 md:px-4 md:py-2.5" : "")}>
-      <span className="leading-snug block">
+      <span className="leading-snug block whitespace-pre-wrap break-words">
         {message.is_deleted_for_everyone
           ? "This message deleted for everyone"
           : message.is_deleted_for_me
             ? "This message deleted for you"
-            : (message.text || message.text_content)}
+            : renderTextWithMentions(message.text || message.text_content || "")}
         {message.is_edited && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
           <span className="text-[10px] opacity-60 ml-1 italic">(edited)</span>
         )}
