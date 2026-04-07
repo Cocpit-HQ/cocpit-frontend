@@ -4,7 +4,6 @@ import React from 'react'
 import { Home, Users, Calendar, User, Settings, Briefcase, BarChart3, Bot } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ProfileSwitcher } from './ProfileSwitcher'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { useCompanyPermissions } from '@/components/organizations/hooks/use-company'
 import { useNavigationMemoryLink } from '@/hooks/use-navigation-memory'
@@ -119,16 +118,14 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
 
       </div>
 
-      <div className="p-4 border-t border-sidebar-border">
-        <div className="flex items-center gap-2 p-2 rounded-lg bg-sidebar-accent/50 border border-sidebar-border/50">
-          <ProfileSwitcher showArrow={true} align="start" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">{activeProfile?.name}</p>
-            <p className="text-xs text-muted-foreground truncate">
-              {activeProfile?.type === 'USER' ? 'Personal Account' : (activeProfile?.entityType === 'INSTITUTION' ? 'Institution' : 'Company')}
-            </p>
-          </div>
-        </div>
+      <div className="p-3 border-t border-sidebar-border">
+        <Link 
+          href={isCompany ? "/business/overview" : "/business/create-company"}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-full bg-[#1e293b] border border-white/10 hover:bg-[#2d3a4f] transition-all group"
+        >
+          <Briefcase className="w-5 h-5 text-[#818cf8] group-hover:scale-110 transition-transform" strokeWidth={2.5} />
+          <span className="text-sm font-medium text-slate-100">Cocpit Business</span>
+        </Link>
       </div>
 
     </aside>
