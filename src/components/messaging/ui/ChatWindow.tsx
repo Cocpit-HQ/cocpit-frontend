@@ -13,7 +13,8 @@ import { useSession } from "next-auth/react"
 import { SocketMessage, TypingPayload } from "@/types/socket"
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery, InfiniteData } from "@tanstack/react-query"
 import { getMessages, sendMessage, markAsRead, editMessage } from "@/services/api/messaging"
-import { sendMessage as sendGroupMessage } from "@/services/api/group-chat"
+import { sendMessage as sendGroupMessage, getGroupDetails } from "@/services/api/group-chat"
+import { GroupMember } from "@/types/group-chat"
 import { mapBackendMessageToMessage } from "@/lib/mappers/messaging.mapper"
 import Avatar from "@/components/shared/Avatar"
 import { useSocial } from "@/context/SocialContext"
@@ -634,6 +635,60 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
     setPreviewMedia({ url, type, name });
   };
 
+  const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
+
+  useEffect(() => {
+    if (chat.isGroup) {
+      getGroupDetails(chat.id).then(details => {
+        // Broaden fallback for member list property
+        const members = details.members || (details as any).participants || (details as any).users || [];
+        setGroupMembers(members);
+      }).catch(err => {
+        console.error("Failed to load group members:", err);
+      });
+    }
+  }, [chat.id, chat.isGroup]);
+
+  const searchGroupMembers = React.useCallback(async (query: string) => {
+    if (!chat.isGroup) return [];
+    
+    // Safety check for empty cache: if empty, try to fetch immediately
+    let membersToFilter = groupMembers;
+    if (membersToFilter.length === 0) {
+      try {
+        const details = await getGroupDetails(chat.id);
+        const members = (details as any).members || (details as any).participants || (details as any).users || [];
+        setGroupMembers(members);
+        membersToFilter = members;
+      } catch (e) {
+        console.error("Delayed fetch of group members failed", e);
+      }
+    }
+    
+    const q = (query || "").toLowerCase();
+    
+    return membersToFilter.filter(m => {
+      const fullName = (m.full_name || (m as any).name || (m as any).fullName || "").toLowerCase();
+      const accountName = (m.account_name || (m as any).accountName || (m as any).username || "").toLowerCase();
+      
+      // If query is empty, return true for all
+      if (!q) return true;
+      
+      return fullName.includes(q) || accountName.includes(q);
+    }).map(m => {
+      const fName = m.full_name || (m as any).name || (m as any).fullName || "User";
+      const uId = m.user_id || (m as any).id || (m as any).userId;
+      return {
+        ...m,
+        id: uId,
+        user_id: uId,
+        full_name: fName,
+        account_name: m.account_name || (m as any).accountName || (m as any).username || fName.replace(/\s+/g, '_').toLowerCase(),
+        avatar_url: m.avatar_url || (m as any).avatar || ''
+      };
+    });
+  }, [groupMembers, chat.id, chat.isGroup]);
+
   return (
     <div className={`flex flex-col h-full ${isMobile ? "h-dvh bg-background" : ""}`}>
       {isMobile ? (
@@ -652,13 +707,15 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
                 {chat.isGroup ? (
                    <div className="flex items-center gap-3 min-w-0 flex-1">
                     <Avatar
-                      url={chat.avatar}
+              url={chat.avatar}
                       name={chat.name}
                       size="md"
                       online={chat.online}
                     />
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-foreground truncate">{chat.name}</h3>
+                    <div className="flex-1 min-w-0 pr-2">
+                      <h3 className="text-sm font-semibold truncate text-foreground">
+                        {chat.name}
+                      </h3>
                       <p className="text-xs text-muted-foreground truncate">
                         {chat.role ? chat.role : "Group Chat"}
                       </p>
@@ -769,6 +826,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
         <UnifiedMessageInput
           onSendMessage={handleSendMessage}
           onTyping={handleTypingInput}
+          searchUsersFn={chat.isGroup ? searchGroupMembers : undefined}
           disabled={(!chat.otherUserId && !chat.isGroup) || !!isBlockedByOther || sessionDisabled}
           disabledMessage={
             isBlockedByOther ? "User not found" :
