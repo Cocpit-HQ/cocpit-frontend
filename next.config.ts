@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.INTERNAL_API_URL || 'http://localhost:5001';
+    const backendUrl = process.env.INTERNAL_API_URL || process.env.BACKEND_URL + '/api' || 'http://localhost:5001/api';
     return [
       {
         // Proxy specific backend auth routes
