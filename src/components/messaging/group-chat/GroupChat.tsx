@@ -507,6 +507,27 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                     onTyping={handleTypingInput}
                     isLoading={isLoading || isMessagesLoading}
                     placeholder="Type a message to group..."
+                    searchUsersFn={async (query: string) => {
+                        const myId = currentUser.id || currentUser.user_id;
+                        const members = activeGroup?.members || [];
+                        return members
+                            .filter(m => m.user_id !== myId) // Exclude self
+                            .filter(m => {
+                                if (!query) return true; // Show all on empty query (just "@")
+                                const q = query.toLowerCase();
+                                return (
+                                    m.full_name?.toLowerCase().includes(q) ||
+                                    m.account_name?.toLowerCase().includes(q)
+                                );
+                            })
+                            .map(m => ({
+                                id: m.user_id,
+                                full_name: m.full_name,
+                                account_name: m.account_name || '',
+                                avatar_url: m.avatar_url || '',
+                                headline: m.headline || ''
+                            }));
+                    }}
                 />
             ) : (
                 <div className="p-4 border-t border-border bg-card/50 backdrop-blur-sm text-center text-muted-foreground text-sm flex flex-col items-center gap-1">

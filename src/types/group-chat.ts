@@ -12,6 +12,7 @@ export interface GroupDetails {
 
 export interface GroupMember {
     user_id: string;
+    account_name: string;
     full_name: string;
     avatar_url?: string;
     headline?: string;

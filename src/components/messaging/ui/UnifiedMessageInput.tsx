@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useEffect } from "react"
 import { Paperclip, Send, Smile, Mic, X, FileText, Film, Image as ImageIcon } from "lucide-react"
+import { MentionTextarea } from "@/components/ui/MentionTextarea"
+import { UserMention } from "@/services/api/users"
 
 interface UnifiedMessageInputProps {
     onSendMessage: (text: string, files: File[]) => void
@@ -10,6 +12,7 @@ interface UnifiedMessageInputProps {
     disabledMessage?: string
     placeholder?: string
     isLoading?: boolean
+    searchUsersFn?: (query: string) => Promise<UserMention[]>
 }
 
 const EMOJI_LIST = ["😀", "😂", "😍", "🥺", "🔥", "👍", "👎", "🎉", "❤️", "💼", "🚀", "💯", "👏", "🤔", "👀", "✨", "✅", "❌", "🙌", "😎"];
@@ -20,7 +23,8 @@ export default function UnifiedMessageInput({
     disabled,
     disabledMessage,
     placeholder,
-    isLoading
+    isLoading,
+    searchUsersFn
 }: UnifiedMessageInputProps) {
     const [text, setText] = useState("")
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -143,18 +147,21 @@ export default function UnifiedMessageInput({
 
             <div className="flex items-end gap-2 max-w-4xl mx-auto">
                 <div className="flex-1 relative rounded-2xl bg-muted">
-                    <textarea
-                        ref={textareaRef}
+                    <MentionTextarea
+                        innerRef={textareaRef}
                         value={text}
+                        searchUsersFn={searchUsersFn}
                         onChange={(e) => {
                             setText(e.target.value);
                             if (onTyping) onTyping();
 
                             const target = e.target;
-                            target.style.height = 'auto';
-                            const newHeight = Math.min(target.scrollHeight, 128);
-                            target.style.height = `${newHeight}px`;
-                            target.style.overflowY = target.scrollHeight > 128 ? 'auto' : 'hidden';
+                            if (target && 'style' in target) {
+                                target.style.height = 'auto';
+                                const newHeight = Math.min(target.scrollHeight, 128);
+                                target.style.height = `${newHeight}px`;
+                                target.style.overflowY = target.scrollHeight > 128 ? 'auto' : 'hidden';
+                            }
                         }}
                         onKeyDown={handleKeyDown}
                         placeholder={disabledMessage || placeholder || (isDisabled ? "Loading..." : "Type a message...")}
