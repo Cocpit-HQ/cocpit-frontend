@@ -37,16 +37,17 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.INTERNAL_API_URL || 'http://localhost:5001';
     return [
       {
         // Proxy specific backend auth routes
         source: "/api/auth/:path(login|refresh|register|google|logout|me|actor-context|sessions|reset-password|request-otp|verify-otp)",
-        destination: "http://localhost:5000/api/auth/:path*",
+        destination: `${backendUrl}/auth/:path*`,
       },
       {
         // Proxy all other /api routes except /api/auth
         source: "/api/:path((?!auth).*)",
-        destination: "http://localhost:5000/api/:path*",
+        destination: `${backendUrl}/:path*`,
       },
     ];
   },
