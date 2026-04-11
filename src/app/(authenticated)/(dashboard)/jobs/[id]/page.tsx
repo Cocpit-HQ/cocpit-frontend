@@ -24,6 +24,9 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     if (contextJob) {
       setFetchedJob(contextJob);
       setLoading(false);
+      // 🔥 Fire background fetch to ensure 'view_job' activity is logged 
+      // and to refresh any stale data.
+      api.getJobById(jobId).then(job => setFetchedJob(job)).catch(() => {});
       return;
     }
 

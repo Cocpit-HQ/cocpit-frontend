@@ -160,7 +160,7 @@ export const MentionTextarea = ({
         const match = textBefore.match(/@([a-zA-Z0-9_]*)$/);
         if (match) {
             const baseLeft = textBefore.substring(0, match.index);
-            const injected = `@${user.full_name} `;
+            const injected = `@${user.account_name} `;
             const newValue = baseLeft + injected + textAfter;
 
             const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;

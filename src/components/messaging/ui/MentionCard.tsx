@@ -6,7 +6,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, User, Loader2 } from "lucide-react";
-import { searchUsers, UserMention } from "@/services/api/users";
+import { searchUsers, getUserByUsername, UserMention } from "@/services/api/users";
 import { useSocial } from "@/context/SocialContext";
 
 export interface MentionProps {
@@ -21,14 +21,33 @@ export function Mention({ username, isMe, children }: MentionProps) {
   
   const [userData, setUserData] = useState<UserMention | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchAttempted, setFetchAttempted] = useState(false);
 
   const handleOpenChange = async (open: boolean) => {
-    if (open && !userData && !isLoading) {
+    if (open && !userData && !isLoading && !fetchAttempted) {
       setIsLoading(true);
       try {
-        const results = await searchUsers(username);
-        // Find exact match by account_name (case-insensitive)
-        const match = results.find(u => u.account_name.toLowerCase() === username.toLowerCase());
+        // 1. Try direct profile lookup (most reliable — backend resolves account_name)
+        let match = await getUserByUsername(username);
+
+        // 2. Fallback to search if direct lookup fails (handles old full_name format mentions)
+        if (!match) {
+          const results = await searchUsers(username);
+          // Exact match by account_name
+          match = results.find(u => u.account_name.toLowerCase() === username.toLowerCase()) || null;
+          // Fallback: startsWith (for partial captures from old @full_name mentions)
+          if (!match) {
+            match = results.find(u =>
+              u.full_name.toLowerCase().startsWith(username.toLowerCase()) ||
+              u.account_name.toLowerCase().startsWith(username.toLowerCase())
+            ) || null;
+          }
+          // Single result = strong match
+          if (!match && results.length === 1) {
+            match = results[0];
+          }
+        }
+
         if (match) {
           setUserData(match);
         }
@@ -36,6 +55,7 @@ export function Mention({ username, isMe, children }: MentionProps) {
         console.error("Failed to fetch user data for mention", err);
       } finally {
         setIsLoading(false);
+        setFetchAttempted(true);
       }
     }
   };

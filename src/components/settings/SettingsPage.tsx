@@ -1,7 +1,8 @@
 "use client"
 
 import React, { useEffect, useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+
 import { useTheme } from "next-themes"
 import {
   Palette,
@@ -18,11 +19,16 @@ import {
   Ban,
   Trash2,
   Building,
+  HandIcon,
   Bookmark,
+  History,
 } from "lucide-react"
+
 
 import { BlockedUsersSection } from "@/components/settings/BlockedUsersSection"
 import ActiveSessions from "@/components/settings/ActiveSessions"
+import { YourActivity } from "@/components/settings/YourActivity"
+
 import { deleteAccount } from "@/services/api/user"
 import { toast } from "sonner"
 
@@ -44,7 +50,8 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import type { Page, Theme } from "@/types/common"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 
-type SettingsSection = "appearance" | "notifications" | "privacy" | "account" | "blocked" | "sessions" | "companies" | "saved"
+type SettingsSection = "appearance" | "notifications" | "privacy" | "account" | "blocked" | "sessions" | "companies" | "saved" | "activity"
+
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -277,8 +284,34 @@ export default function SettingsPage() {
     router.push(routes[page] ?? "/feed")
   }
 
+  const searchParams = useSearchParams()
+  const sectionParam = searchParams.get('section')
+  
   const [activeSection, setActiveSection] = useState<SettingsSection>("appearance")
   const [compactMode, setCompactMode] = useState(false)
+  const [initialSyncDone, setInitialSyncDone] = useState(false)
+
+  // Sync section from URL on mount
+  useEffect(() => {
+    if (sectionParam) {
+      setActiveSection(sectionParam as SettingsSection)
+    }
+    setInitialSyncDone(true)
+  }, [sectionParam])
+
+  // Sync state back to URL
+  useEffect(() => {
+    if (!initialSyncDone) return
+
+    const currentSection = searchParams.get('section')
+    if (currentSection === activeSection) return
+
+    const params = new URLSearchParams(window.location.search)
+    params.set('section', activeSection)
+    router.replace(`${window.location.pathname}?${params.toString()}`, { scroll: false })
+  }, [activeSection, router, initialSyncDone, searchParams])
+
+
 
   // Mobile navigation state
   const [showMobileDetail, setShowMobileDetail] = useState(false)
@@ -380,6 +413,13 @@ export default function SettingsPage() {
                   description="View and manage your saved content"
                   isActive={activeSection === "saved"}
                   onClick={() => handleSectionClick("saved")}
+                />
+                <SettingsNavCard
+                  icon={<History className="w-5 h-5" />}
+                  title="Your Activity"
+                  description="Review your interaction history"
+                  isActive={activeSection === "activity"}
+                  onClick={() => handleSectionClick("activity")}
                 />
                 <SettingsNavCard
                   icon={<Bell className="w-5 h-5" />}
@@ -596,7 +636,13 @@ export default function SettingsPage() {
                   <ActiveSessions />
                 </div>
               )}
+              {activeSection === "activity" && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <YourActivity />
+                </div>
+              )}
             </div>
+
           )}
 
           <div className="lg:col-span-3 hidden lg:block">
