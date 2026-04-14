@@ -319,7 +319,7 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
                                     ) : (
                                         <>
                                             {company?.headline ? `${company.headline} • ` : ''}
-                                            {company?.industry} • {company?.size} employees
+                                            {company?.industry} • {company?.size}{company?.size && !company.size.toLowerCase().includes('employee') ? ' employees' : ''}
                                         </>
                                     )}
                                 </p>

@@ -213,7 +213,7 @@ export default function CompanyPage() {
                                             {company?.size && (
                                                 <div>
                                                     <h4 className="font-medium mb-1">Company Size</h4>
-                                                    <p className="text-muted-foreground">{company.size} employees</p>
+                                                    <p className="text-muted-foreground">{company.size}{company.size && !company.size.toLowerCase().includes('employee') ? ' employees' : ''}</p>
                                                 </div>
                                             )}
                                         </>

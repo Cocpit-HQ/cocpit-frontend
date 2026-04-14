@@ -23,6 +23,12 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { companyService } from '@/services/organization.service';
 import { useCompany } from '@/components/organizations/hooks/use-company';
 import { useSession } from 'next-auth/react';
+import { sanitizeContent } from '@/lib/contentSanitizer';
+import { useMentions } from '@/hooks/use-mentions';
+import { UserMention } from '@/services/api/users';
+import { HashtagSuggestion } from '@/services/api/hashtags';
+import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export type PostType = 'text' | 'photo' | 'poll' | 'video' | 'article';
 
@@ -61,78 +67,7 @@ interface PollOption {
   text: string;
 }
 
-// --- TipTap Editor Components ---
-
-const EditorToolbar = ({ onFormat }: { onFormat: (command: string, value?: string) => void }) => {
-  const handleLink = () => {
-    const url = window.prompt('Enter URL:');
-    if (url) onFormat('createLink', url);
-  };
-
-  return (
-    <div className="flex items-center gap-1 px-2 py-2 border-b border-border bg-muted/20 sticky top-0 z-10">
-      <button
-        onClick={() => onFormat('bold')}
-        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
-        title="Bold"
-      >
-        <Bold className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => onFormat('italic')}
-        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
-        title="Italic"
-      >
-        <Italic className="w-4 h-4" />
-      </button>
-      <div className="w-px h-4 bg-border mx-1" />
-      <button
-        onClick={() => onFormat('formatBlock', 'H2')}
-        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
-        title="Heading 2"
-      >
-        <Heading2 className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => onFormat('formatBlock', 'H3')}
-        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
-        title="Heading 3"
-      >
-        <Heading3 className="w-4 h-4" />
-      </button>
-      <div className="w-px h-4 bg-border mx-1" />
-      <button
-        onClick={() => onFormat('insertUnorderedList')}
-        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
-        title="Bullet List"
-      >
-        <List className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => onFormat('insertOrderedList')}
-        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
-        title="Numbered List"
-      >
-        <ListOrdered className="w-4 h-4" />
-      </button>
-      <div className="w-px h-4 bg-border mx-1" />
-      <button
-        onClick={handleLink}
-        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
-        title="Link"
-      >
-        <LinkIcon className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => onFormat('unlink')}
-        className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors"
-        title="Unlink"
-      >
-        <Unlink className="w-4 h-4" />
-      </button>
-    </div>
-  );
-};
+// --- Plain Text Editor Components ---
 
 const RichTextEditor = ({
   content,
@@ -148,43 +83,236 @@ const RichTextEditor = ({
   placeholder?: string
 }) => {
   const editorRef = useRef<HTMLDivElement>(null);
+  const savedRangeRef = useRef<Range | null>(null);
+  const {
+    query, setQuery,
+    mode, setMode,
+    showSuggestions, setShowSuggestions,
+    suggestionPosition, setSuggestionPosition,
+    users, hashtags,
+    activeIndex, setActiveIndex,
+    isLoading,
+    handleKeyDown: mentionKeyDown
+  } = useMentions();
 
   // Sync content updates (e.g. from AI)
   useEffect(() => {
     if (editorRef.current && content !== editorRef.current.innerHTML) {
-      // Only update if significantly different to avoid cursor jumps, 
-      // but here we just do simple check. 
-      // For contentEditable, this is tricky. We'll trust the parent not to blast updates 
-      // unless it's a reset.
-      if (editorRef.current.innerHTML !== content) {
-        editorRef.current.innerHTML = content;
-      }
+      editorRef.current.innerHTML = content;
     }
   }, [content]);
 
-  const handleFormat = (command: string, value?: string) => {
-    document.execCommand(command, false, value);
-    editorRef.current?.focus();
-    if (editorRef.current) onChange(editorRef.current.innerHTML);
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData("text/plain");
+    document.execCommand("insertText", false, text);
+  };
+
+  const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
+    const html = e.currentTarget.innerHTML;
+    onChange(html);
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    const textBeforeCursor = range.startContainer.textContent?.substring(0, range.startOffset) || "";
+
+    const mentionMatch = textBeforeCursor.match(/@([a-zA-Z0-9_]*)$/);
+    const hashtagMatch = textBeforeCursor.match(/#([a-zA-Z0-9_]*)$/);
+
+    if (mentionMatch || hashtagMatch) {
+      savedRangeRef.current = range.cloneRange();
+      const rect = range.getBoundingClientRect();
+      const editorRect = editorRef.current?.getBoundingClientRect();
+
+      if (editorRect) {
+        setSuggestionPosition({
+          top: rect.bottom - editorRect.top + 5,
+          left: rect.left - editorRect.left
+        });
+      }
+
+      setQuery(mentionMatch ? mentionMatch[1] : hashtagMatch![1]);
+      setMode(mentionMatch ? 'mention' : 'hashtag');
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+      setMode(null);
+      savedRangeRef.current = null;
+    }
+  };
+
+  const onSelect = (item: any, format: 'account' | 'full' = 'full') => {
+    const range = savedRangeRef.current;
+    if (!range) return;
+
+    const textNode = range.startContainer;
+    const offset = range.startOffset;
+
+    const textContent = textNode.textContent || "";
+    const textBefore = textContent.substring(0, offset);
+    const textAfter = textContent.substring(offset);
+
+    const matchRegex = mode === 'mention' ? /@([a-zA-Z0-9_]*)$/ : /#([a-zA-Z0-9_]*)$/;
+    const match = textBefore.match(matchRegex);
+
+    if (match) {
+      const baseLeft = textBefore.substring(0, match.index);
+      let injected = "";
+      
+      if (mode === 'mention') {
+        const user = item as UserMention;
+        const handle = user.account_name || user.full_name?.replace(/\s+/g, '').toLowerCase();
+        const content = format === 'full' ? (user.full_name || handle) : handle;
+        injected = `@[${content}](${handle}) `;
+      } else {
+        const tag = item as HashtagSuggestion;
+        injected = `#${tag.tag} `;
+      }
+
+      textNode.textContent = baseLeft + injected + textAfter;
+      
+      // Move cursor to end of injected text
+      const selection = window.getSelection();
+      if (selection) {
+        const newRange = document.createRange();
+        newRange.setStart(textNode, baseLeft.length + injected.length);
+        newRange.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+      }
+
+      onChange(editorRef.current?.innerHTML || "");
+      setShowSuggestions(false);
+      setMode(null);
+      savedRangeRef.current = null;
+      editorRef.current?.focus();
+    }
+  };
+
+  const highlightMatch = (text: string, queryText: string) => {
+    if (!queryText.trim()) return text;
+    try {
+      const parts = text.split(new RegExp(`(${queryText})`, 'gi'));
+      return (
+        <>
+          {parts.map((part, i) =>
+            part.toLowerCase() === queryText.toLowerCase()
+              ? <b key={i} className="text-primary font-bold">{part}</b>
+              : part
+          )}
+        </>
+      );
+    } catch (e) {
+      return text;
+    }
   };
 
   return (
-    <div className={`flex flex-col border rounded-lg overflow-hidden border-border ${className}`}>
-      <EditorToolbar onFormat={handleFormat} />
+    <div className={`flex flex-col border rounded-lg border-border relative ${className}`}>
       <div
         ref={editorRef}
         contentEditable
-        onInput={(e) => onChange(e.currentTarget.innerHTML)}
+        onInput={handleInput}
+        onPaste={handlePaste}
+        onKeyDown={(e) => mentionKeyDown(e, onSelect)}
         className={`prose prose-sm dark:prose-invert max-w-none focus:outline-none px-4 py-3 ${editorClassName}`}
-        style={{ outline: 'none' }}
+        style={{ outline: "none" }}
         data-placeholder={placeholder}
       />
+
+      {showSuggestions && (
+        <div 
+          className="absolute z-[100] w-72 bg-popover text-popover-foreground border rounded-lg shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95"
+          style={{ 
+            top: suggestionPosition.top, 
+            left: Math.min(suggestionPosition.left, (editorRef.current?.clientWidth || 300) - 260),
+          }}
+        >
+          <div className="p-1 max-h-[300px] overflow-y-auto custom-scrollbar">
+            {mode === 'mention' && users.map((user, index) => (
+              <div
+                key={user.id}
+                onMouseEnter={() => setActiveIndex(index)}
+                className={cn(
+                  "flex items-center justify-between px-3 py-2 rounded-md transition-all group",
+                  index === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted/50"
+                )}
+              >
+                <div className="flex items-center gap-3 overflow-hidden flex-1">
+                  <Avatar className="h-7 w-7 border shrink-0">
+                    <AvatarImage src={user.avatar_url} />
+                    <AvatarFallback>{user.full_name?.[0] || 'U'}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold truncate">{highlightMatch(user.full_name, query)}</span>
+                    <span className="text-[10px] text-muted-foreground truncate">@{highlightMatch(user.account_name, query)}</span>
+                  </div>
+                </div>
+                <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity pr-1">
+                  <button
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      onSelect(user, 'full');
+                    }}
+                    className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-1 rounded bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+                  >
+                    Name
+                  </button>
+                  <button
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      onSelect(user, 'account');
+                    }}
+                    className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-1 rounded bg-muted text-muted-foreground hover:bg-foreground hover:text-background transition-colors"
+                  >
+                    @
+                  </button>
+                </div>
+              </div>
+            ))}
+
+
+            {mode === 'hashtag' && hashtags.map((h, index) => (
+              <div
+                key={h.tag}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onSelect(h);
+                }}
+                onMouseEnter={() => setActiveIndex(index)}
+                className={cn(
+                  "flex items-center justify-between px-3 py-2 cursor-pointer text-xs rounded-md transition-all",
+                  index === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted/50"
+                )}
+              >
+                <span className="font-medium text-primary">#{highlightMatch(h.tag, query)}</span>
+                <span className="text-[10px] text-muted-foreground">{h.usage_count} posts</span>
+              </div>
+            ))}
+
+            {isLoading && (
+              <div className="px-3 py-3 text-[10px] text-muted-foreground animate-pulse text-center">
+                Searching...
+              </div>
+            )}
+            
+            {!isLoading && showSuggestions && ((mode === 'mention' && users.length === 0) || (mode === 'hashtag' && hashtags.length === 0)) && query && (
+              <div className="px-3 py-3 text-[10px] text-muted-foreground italic text-center">
+                No results found
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         [contenteditable]:empty:before {
           content: attr(data-placeholder);
           color: #9ca3af;
           pointer-events: none;
-          display: block; /* For Firefox */
+          display: block;
         }
       `}</style>
     </div>
@@ -204,7 +332,8 @@ export function CreatePostModal({
   onPostCreated,
   initialSharedPost,
   sharedJobId
-}: CreatePostModalProps) {
+}: 
+CreatePostModalProps) {
   const isMobile = useIsMobile();
   const { addPost } = useFeed();
   const { data: session } = useSession();
@@ -747,6 +876,12 @@ export function CreatePostModal({
 
     const newUrls: string[] = [];
 
+    // Sanitize any potential HTML in textual content before preview
+    setDescription(prev => sanitizeContent(prev));
+    setPhotoCaption(prev => sanitizeContent(prev));
+    setVideoCaption(prev => sanitizeContent(prev));
+    setArticleContent(prev => sanitizeContent(prev));
+
     if (postType === 'photo') {
       for (const img of uploadedImages) {
         // Only crop if it's a new file and has crop data
@@ -833,11 +968,12 @@ export function CreatePostModal({
   // --- Background Upload Integration ---
 
   const handlePost = async () => {
-    const { text: finalContent } = getActiveState();
+    const { text } = getActiveState();
+    const finalContent = sanitizeContent(text);
 
     // Prepare content
     const payload: CreatePostRequest = {
-      title: postType === 'article' ? articleTitle : '',
+      title: postType === 'article' ? sanitizeContent(articleTitle) : '',
       content: finalContent,
       category: postCategory,
       visibility: visibility,
@@ -856,11 +992,11 @@ export function CreatePostModal({
 
     // Handle Poll
     if (postType === 'poll') {
-      const filteredOptions = pollOptions.filter(o => o.text.trim()).map(o => o.text);
+      const filteredOptions = pollOptions.filter(o => o.text.trim()).map(o => sanitizeContent(o.text));
       if (filteredOptions.length < 2) return;
       payload.poll_options = filteredOptions;
       payload.poll_duration = pollDuration;
-      payload.content = pollQuestion;
+      payload.content = sanitizeContent(pollQuestion);
       payload.title = "";
     }
 
@@ -911,10 +1047,12 @@ export function CreatePostModal({
       try {
         const updatePayload: UpdatePostRequest = {};
         if (originalPost) {
-          if (originalPost.content !== finalContent) updatePayload.content = finalContent;
+          if (sanitizeContent(originalPost.content) !== finalContent) updatePayload.content = finalContent;
           if (originalPost.category !== postCategory) updatePayload.category = postCategory;
           if (originalPost.visibility !== visibility) updatePayload.visibility = visibility;
-          if (postType === 'article' && originalPost.title !== articleTitle) updatePayload.title = articleTitle;
+          if (postType === 'article' && sanitizeContent(originalPost.title || '') !== sanitizeContent(articleTitle)) {
+            updatePayload.title = sanitizeContent(articleTitle);
+          }
         } else {
           updatePayload.content = finalContent;
           updatePayload.category = postCategory;
@@ -1326,32 +1464,10 @@ export function CreatePostModal({
                 ) : (
                   // ORIGINAL POST UI (Desktop)
                   <div className="flex flex-col">
-                    {/* Post Type Tabs - Only Desktop */}
-                    {!editPostId && !sharedPost && (
-                      <div className="px-6 pt-4 flex items-center gap-1 border-b border-border bg-muted/10">
-                        {(['text', 'photo', 'video', 'article', 'poll'] as const).map((t) => (
-                          <button
-                            key={t}
-                            onClick={() => setPostType(t)}
-                            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${postType === t
-                              ? 'border-primary text-primary'
-                              : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                              } `}
-                          >
-                            {t === 'text' && <Type className="w-4 h-4" />}
-                            {t === 'photo' && <Image className="w-4 h-4" />}
-                            {t === 'video' && <Video className="w-4 h-4" />}
-                            {t === 'article' && <FileText className="w-4 h-4" />}
-                            {t === 'poll' && <BarChart2 className="w-4 h-4" />}
-                            <span className="capitalize">{t}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {/* Profile Section - Only show in Editor Mode */}
-                    <div className="px-6 pt-6 pb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
+                    {/* 1. User Profile Section (Top) */}
+                    <div className="px-6 py-6 border-b border-border/50">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden shrink-0 shadow-md">
                           {isCompanyPost ? (
                             <img
                               src={(currentPoster as any)?.logo_url || (currentPoster as any)?.avatar_url || '/assets/pngegg.png'}
@@ -1366,17 +1482,19 @@ export function CreatePostModal({
                             />
                           )}
                         </div>
-                        <div>
-                          <h3 className="text-foreground font-semibold">
+                        <div className="flex flex-col">
+                          <h3 className="text-foreground font-bold text-base">
                             {isCompanyPost ? ((currentPoster as any)?.name || 'Company') : (currentUser?.name || 'User')}
                           </h3>
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm text-muted-foreground">{isCompanyPost ? 'Organization Post' : 'Post to Anyone'}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <p className="text-xs text-muted-foreground font-medium">
+                              {isCompanyPost ? 'Organization Post' : 'Post to Anyone'}
+                            </p>
                             {/* Visibility Toggle */}
                             {editPostId && (
                               <button
                                 onClick={() => setVisibility(visibility === 'public' ? 'private' : 'public')}
-                                className="text-xs px-2 py-0.5 rounded bg-muted hover:bg-muted/80 flex items-center gap-1"
+                                className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-muted hover:bg-muted/80 flex items-center gap-1 transition-colors border border-border/50"
                               >
                                 {visibility === 'public' ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                                 {visibility === 'public' ? 'Public' : 'Private'}
@@ -1385,7 +1503,35 @@ export function CreatePostModal({
                           </div>
                         </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 mt-3">
+                    </div>
+
+                    {/* 2. Post Type Tabs - Moved below Profile */}
+                    {!editPostId && !sharedPost && (
+                      <div className="px-6 flex items-center gap-1 border-b border-border bg-muted/5">
+                        {(['text', 'photo', 'video', 'article', 'poll'] as const).map((t) => (
+                          <button
+                            key={t}
+                            onClick={() => setPostType(t)}
+                            className={`px-4 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 ${postType === t
+                              ? 'border-primary text-primary bg-primary/5'
+                              : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                              } `}
+                          >
+                            {t === 'text' && <Type className="w-4 h-4" />}
+                            {t === 'photo' && <Image className="w-4 h-4" />}
+                            {t === 'video' && <Video className="w-4 h-4" />}
+                            {t === 'article' && <FileText className="w-4 h-4" />}
+                            {t === 'poll' && <BarChart2 className="w-4 h-4" />}
+                            <span className="capitalize">{t}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 3. Category Tabs - Independent Section */}
+                    <div className="px-6 py-4 bg-muted/5 border-b border-border/30">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-tight mr-2">Category:</span>
                         {((() => {
                           if (!isCompanyPost) {
                             return ['Professional', 'Personal', 'Achievement', 'Article'];
@@ -1398,9 +1544,9 @@ export function CreatePostModal({
                           <button
                             key={category}
                             onClick={() => handleSetPostCategory(category as any)}
-                            className={`px-3 py-1 text-sm rounded-full transition-colors ${postCategory === category
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                            className={`px-3 py-1 text-xs font-semibold rounded-full transition-all border ${postCategory === category
+                              ? 'bg-primary border-primary text-primary-foreground shadow-sm'
+                              : 'bg-background border-border text-muted-foreground hover:border-primary hover:text-primary'
                               } `}
                           >
                             {category}

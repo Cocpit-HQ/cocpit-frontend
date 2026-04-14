@@ -80,7 +80,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { HashtagTextRenderer } from '@/components/ui/HashtagTextRenderer'
+import { RichTextRenderer } from '@/components/ui/RichTextRenderer'
 
 interface FeedPostProps extends Omit<Post, 'commentData'> {
   initialComments?: CommentType[]
@@ -774,7 +774,7 @@ export default function FeedPost({
           <div className="px-4 mb-3">
             <div>
               <div className={`leading-normal text-sm text-foreground/90 whitespace-pre-wrap ${!isFullContent && !isExpanded ? 'line-clamp-5' : ''}`}>
-                <HashtagTextRenderer content={content} />
+                <RichTextRenderer content={content} authorName={author} authorSlug={authorSlug} />
               </div>
               {!isFullContent && (content.length > 300 || content.split('\n').length > 4) && (
                 <button
