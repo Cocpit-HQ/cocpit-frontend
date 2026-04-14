@@ -289,15 +289,37 @@ const MessageText = ({
   const renderTextWithMentions = (text: string) => {
     if (!text) return null
     
-    // Quick regex to find @mentions. Allows alphanumeric, underscore, dot, and dash.
-    const mentionRegex = /(@[a-zA-Z0-9_.\-]+)/g
+    // Support structured @[Name](username) and legacy @username
+    const mentionRegex = /(@\[[^\]]+\]\([^)]+\)|@[a-zA-Z0-9_.\-]+)/g
     const parts = text.split(mentionRegex)
     
     if (parts.length <= 1) return text
     
     return parts.map((part, i) => {
-      if (part.match(mentionRegex)) {
-        const username = part.substring(1) // remove the @
+      // 1. Handle Structured Mentions (@[Display Name](handle))
+      const structuredMatch = part.match(/^@\[([^\]]+)\]\(([^)]+)\)$/);
+      if (structuredMatch) {
+        const displayName = structuredMatch[1];
+        const username = structuredMatch[2];
+        
+        return (
+          <Mention key={i} username={username} isMe={isMe}>
+            <span 
+              className={cn(
+                "hover:underline cursor-pointer font-bold",
+                isMe ? "text-white" : "text-[#818cf8]"
+              )}
+            >
+              {displayName}
+            </span>
+          </Mention>
+        );
+      }
+
+      // 2. Handle Simple Mentions (@username)
+      const simpleMatch = part.match(/^@([a-zA-Z0-9_.\-]+)$/);
+      if (simpleMatch) {
+        const username = simpleMatch[1];
         return (
           <Mention key={i} username={username} isMe={isMe}>
             <span 
@@ -311,6 +333,7 @@ const MessageText = ({
           </Mention>
         )
       }
+      
       return <span key={i}>{part}</span>
     })
   }
