@@ -12,6 +12,7 @@ import { CreateJobModal } from "../CreateJobModal"
 import { useJobs } from "@/context/JobsContext"
 import { useInView } from "react-intersection-observer"
 import { useEffect } from "react"
+import { toast } from "sonner"
 
 interface JobPostsListProps {
     selectedJobId: string
@@ -106,23 +107,17 @@ export function JobPostsList({ selectedJobId, onSelectJob }: JobPostsListProps) 
                                                     onClick={async (e) => {
                                                         e.stopPropagation()
                                                         if (confirm("Are you sure you want to delete this job?")) {
-                                                            try {
-                                                                await api.deleteJob(job.id)
-                                                                // Invalidate queries handled by mutation hook or manual triggering?
-                                                                // Since we don't have a mutation for delete in useJobMutations yet, 
-                                                                // we rely on the list re-fetching or we should add delete mutation.
-                                                                // For now, let's just force validtion via a hack or ignoring it?
-                                                                // Ideally we implemented useDeleteJob mutation.
-                                                                // Since I can't easily add it to the large hook file without rewriting again,
-                                                                // I'll leave the API call but the list might not update automatically 
-                                                                // unless we invalidate 'jobs'. 
-                                                                // But Context doesn't expose invalidate.
-                                                                // Temporary solution: reload page or wait for strict re-implementation.
-                                                                window.location.reload()
-                                                            } catch (err) {
-                                                                console.error("Failed to delete job", err)
-                                                                alert("Failed to delete job")
-                                                            }
+                                                            const deletePromise = api.deleteJob(job.id);
+                                                            
+                                                            toast.promise(deletePromise, {
+                                                                loading: 'Deleting job...',
+                                                                success: () => {
+                                                                    // Short delay before reload to let user see success
+                                                                    setTimeout(() => window.location.reload(), 1000);
+                                                                    return 'Job deleted successfully';
+                                                                },
+                                                                error: 'Failed to delete job'
+                                                            });
                                                         }
                                                     }}
                                                 >
