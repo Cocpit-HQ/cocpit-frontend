@@ -152,15 +152,17 @@ export default function ForgotPasswordForm() {
       </div>
     ) : (
     <div className={styles.pageWrapper}>
-      {/* Left side - Full height image */}
+      {/* Left side - Branded overlay */}
       <div className={styles.brandPanel}>
-        <Image
-          src="/assets/Rectangle 4.svg"
-          alt="Opening Page"
-          fill
-          className={styles.brandImage}
-          priority
-        />
+        <div className={styles.imageInnerWrapper}>
+          <Image
+            src="/assets/Rectangle 4.svg"
+            alt="Opening Page"
+            fill
+            className={styles.brandImage}
+            priority
+          />
+        </div>
       </div>
 
       {/* Right side - Form container */}

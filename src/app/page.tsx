@@ -5,15 +5,17 @@ import Image from "next/image";
 export default function Home() {
   return (
     <div className="min-h-screen flex w-full">
-      {/* Left side - Full height image */}
-      <div className="hidden lg:block lg:w-[50%] relative bg-black">
-        <Image
-          src="/assets/Rectangle 4.svg"
-          alt="Opening Page"
-          fill
-          className="object-cover"
-          priority
-        />
+      {/* Left side - Branded overlay */}
+      <div className="hidden lg:block lg:w-[50%] bg-white pt-[22px] pb-[22px] pl-[22px]">
+        <div className="relative w-full h-full rounded-[1.5rem] overflow-hidden bg-black">
+          <Image
+            src="/assets/Rectangle 4.svg"
+            alt="Opening Page"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
       </div>
 
       {/* Right side - Form container */}
