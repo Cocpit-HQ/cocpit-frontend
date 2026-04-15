@@ -112,15 +112,17 @@ export default function ForgotPasswordForm() {
     {resetSuccess ? (
       <div className={styles.pageWrapper}>
         {/* Left side - Rectangle 4 image */}
-        <div className={styles.brandPanel}>
-          <Image
-            src="/assets/Rectangle 4.svg"
-            alt="Success Background"
-            fill
-            className={styles.brandImage}
-            priority
-          />
-        </div>
+        <div className="hidden lg:block lg:w-[50%] bg-white pt-[22px] pb-[22px] pl-[22px]">
+                <div className="relative  h-full ml-[8vw] rounded-[1.5rem] overflow-hidden ">
+                  <Image
+                    src="/assets/Rectangle 4.svg"
+                    alt="Opening Page"
+                    fill
+                    // className="object-cover"
+                    priority
+                  />
+                </div>
+              </div>
 
         {/* Right side - Success content */}
         <div className={styles.formPanel}>
@@ -153,17 +155,17 @@ export default function ForgotPasswordForm() {
     ) : (
     <div className={styles.pageWrapper}>
       {/* Left side - Branded overlay */}
-      <div className={styles.brandPanel}>
-        <div className={styles.imageInnerWrapper}>
-          <Image
-            src="/assets/Rectangle 4.svg"
-            alt="Opening Page"
-            fill
-            className={styles.brandImage}
-            priority
-          />
-        </div>
-      </div>
+      <div className="hidden lg:block lg:w-[50%] bg-white pt-[22px] pb-[22px] pl-[22px]">
+              <div className="relative  h-full ml-[8vw] rounded-[1.5rem] overflow-hidden ">
+                <Image
+                  src="/assets/Rectangle 4.svg"
+                  alt="Opening Page"
+                  fill
+                  // className="object-cover"
+                  priority
+                />
+              </div>
+            </div>
 
       {/* Right side - Form container */}
       <div className={styles.formPanel}>
