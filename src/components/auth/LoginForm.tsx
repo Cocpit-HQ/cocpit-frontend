@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Mail, Lock, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Eye, EyeClosed } from "iconoir-react";
 import { useToast } from "@/hooks/use-toast";
 import styles from "./LoginForm.module.css";
@@ -22,6 +22,7 @@ const LoginForm = () => {
   const searchParams = useSearchParams();
   const reason = searchParams.get("reason");
   const [sessionEnded, setSessionEnded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number | undefined>(undefined);
@@ -72,13 +73,10 @@ const LoginForm = () => {
       });
 
       if (result?.error) {
-        toast({
-          title: "Login failed",
-          description: result.error,
-          variant: "destructive",
-        });
+        setError("Incorrect password");
         setIsLoading(false);
       } else {
+        setError(null);
         await handlePostLoginRedirect();
       }
     } catch (error) {
@@ -123,100 +121,110 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="w-full flex flex-col gap-3">
+    <div className={styles.container}>
       {/* Header */}
-      <div className="flex flex-col text-center items-center mb-6 md:mb-4">
-        <h2 className="text-[36px] md:text-[32px] font-bold text-black tracking-tight leading-[1.1] mb-2 md:mb-1">
-          <span className="block md:inline">Welcome to</span>
-          <span className="hidden md:inline"> </span>
-          <span className="bg-clip-text text-transparent block md:inline" style={{ backgroundImage: 'linear-gradient(90deg, #009DDF 58.17%, #22C55E 100%)' }}>Cocpit</span>
+      <div className={styles.header}>
+        <h2 className={styles.title}>
+          <span className={styles.titleText}>Welcome to</span>
+          <span className={styles.titleSpacer}> </span>
+          <span className={styles.titleGradient}>Cocpit</span>
         </h2>
-        <p className="text-[13px] md:text-[14px] text-gray-400 mt-1">
+        <p className={styles.subtitle}>
           Find jobs, connect, grow
         </p>
       </div>
 
       {sessionEnded && (
-        <div className="p-3 mb-2 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-amber-600">
-          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-          <p className="text-xs font-medium leading-relaxed">
+        <div className={styles.sessionAlert}>
+          <AlertCircle className={styles.sessionAlertIcon} />
+          <p className={styles.sessionAlertText}>
             You were signed out because your session ended. This happens if you log out from another device or if your session expires.
           </p>
         </div>
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className={styles.form}>
         {/* Email field */}
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="email" className="text-xs font-semibold text-black ml-1">
+        <div className={styles.fieldGroup}>
+          <label htmlFor="email" className={styles.label}>
             Email or Phone
           </label>
-          <div className="relative">
+          <div className={styles.inputWrapper}>
             <input
               id="email"
               type="text"
               autoComplete="username"
               placeholder="xyz@gmail.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full h-[48px] px-4 border border-gray-200 rounded-2xl bg-white text-black text-[13px] placeholder:text-gray-400 focus:outline-none focus:border-[#03b87b] focus:ring-1 focus:ring-[#03b87b] transition-colors"
-              style={{ WebkitBoxShadow: '0 0 0 30px white inset', WebkitTextFillColor: 'black' }}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError(null);
+              }}
+              className={styles.input}
               disabled={isLoading || isGoogleLoading}
             />
           </div>
         </div>
 
         {/* Password field */}
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="password" className="text-xs font-semibold text-black ml-1">
+        <div className={styles.fieldGroup}>
+          <label htmlFor="password" className={styles.label}>
             Password
           </label>
-          <div className="relative flex items-center">
+          <div className={styles.inputWrapperFlex}>
             <input
               id="password"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               placeholder="123456789"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-[48px] px-4 pr-12 border border-gray-200 rounded-2xl bg-white text-black text-[13px] placeholder:text-gray-400 focus:outline-none focus:border-[#03b87b] focus:ring-1 focus:ring-[#03b87b] transition-colors"
-              style={{ WebkitBoxShadow: '0 0 0 30px white inset', WebkitTextFillColor: 'black' }}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError(null);
+              }}
+              className={`${styles.input} ${styles.inputWithToggle}`}
               disabled={isLoading || isGoogleLoading}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              className={styles.passwordToggle}
               disabled={isLoading || isGoogleLoading}
             >
-              {showPassword ? <EyeClosed className="w-[18px] h-[18px]" strokeWidth={2} /> : <Eye className="w-[18px] h-[18px]" strokeWidth={2} />}
+              {showPassword ? <EyeClosed className={styles.toggleIcon} strokeWidth={2} /> : <Eye className={styles.toggleIcon} strokeWidth={2} />}
             </button>
           </div>
           
-          <div className="flex justify-end mt-1">
+          <div className={styles.passwordHelperRow}>
+            {error ? (
+              <span className={styles.errorText}>
+                *{error}
+              </span>
+            ) : <div />}
             <Link
               href="/forgot-password"
-              className="text-[11px] font-medium text-gray-500 hover:text-[#03b87b] transition-colors"
+              className={styles.forgotPasswordLink}
             >
               Forgot password?
             </Link>
           </div>
         </div>
 
-        {/* Sign in button */}
         <button
           type="submit"
-          className={`w-full h-[48px] bg-white border border-gray-200 rounded-2xl text-gray-600 text-[14px] font-semibold hover:bg-gray-50 transition-colors mt-2 ${
-            (isLoading || isGoogleLoading) ? 'opacity-70 cursor-not-allowed' : ''
+          className={`${styles.submitButton} ${
+            email && password 
+              ? styles.submitButtonActive 
+              : styles.submitButtonInactive
           }`}
           disabled={isLoading || isGoogleLoading}
         >
           {isLoading ? (
-            <span className="flex items-center justify-center gap-2">
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            <span className={styles.loadingContent}>
+              <svg className={styles.spinner} viewBox="0 0 24 24">
+                <circle className={styles.spinnerTrack} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" />
+                <path className={styles.spinnerArc} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
               Signing in...
             </span>
@@ -225,20 +233,32 @@ const LoginForm = () => {
       </form>
 
       {/* Google Sign In Wrapper */}
-      <div className="relative w-full h-[48px] mt-1" ref={containerRef}>
+      <div className={styles.googleButtonWrapper} ref={containerRef}>
         {/* Custom Visual Button simulating designer mock exactly */}
-        <div className="absolute inset-0 flex items-center justify-center gap-2.5 bg-white border border-gray-200 rounded-2xl pointer-events-none hover:bg-gray-50/50 transition-colors">
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 8.414l8.073-4.921c1.618-1.214 3.927-.059 3.927 1.964Z" fill="#EA4335" />
-            <path d="M16.364 11.73v9.273h6A1.636 1.636 0 0 0 24 19.366V5.457l-7.636 6.273Z" fill="#34A853" />
-            <path d="M7.636 11.73l6.545 4.91L24 5.457v-.539a1.636 1.636 0 0 0-2.584-1.34L12 9.049 2.584 3.578A1.636 1.636 0 0 0 0 4.918v.539l7.636 6.273Z" fill="#FBBC04" />
-            <path d="M0 5.457v13.909c0 .904.732 1.636 1.636 1.636h6V11.73L0 5.457Z" fill="#4285F4" />
+        <div className={styles.googleButtonVisual}>
+          <svg className={styles.googleIcon} viewBox="0 0 24 24">
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              fill="#4285F4"
+            />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              fill="#34A853"
+            />
+            <path
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+              fill="#FBBC05"
+            />
+            <path
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              fill="#EA4335"
+            />
           </svg>
-          <span className="text-[14px] font-semibold text-gray-600">Continue with Gmail</span>
+          <span className={styles.googleButtonText}>Continue with Google</span>
         </div>
 
         {/* Real Google Button layered invisibly on top */}
-        <div className="absolute inset-0 opacity-[0.01] overflow-hidden rounded-2xl">
+        <div className={styles.googleButtonReal}>
           {containerWidth !== undefined && (
             <GoogleLogin
               onSuccess={(credentialResponse) => {
@@ -263,9 +283,9 @@ const LoginForm = () => {
       </div>
 
       {/* Sign up link */}
-      <p className="text-center text-[12px] font-medium text-black mt-2">
+      <p className={styles.signupText}>
         Don't have an account?{" "}
-        <Link href="/signup" className="text-sky-500 hover:underline">
+        <Link href="/signup" className={styles.signupLink}>
           sign up
         </Link>
       </p>
