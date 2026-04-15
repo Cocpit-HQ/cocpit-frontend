@@ -111,32 +111,21 @@ export default function SignUpForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Step 1: Go to step 2 on Continue click
-    if (step === 1) {
-      handleGoToStep2();
-      return;
-    }
-
+    if (step === 1) return; // Guard clause, shouldn't happen, but just in case
     // Step 2: Register
     const result = registrationSchema.safeParse({
-      fullName,
+      fullName: "User", // Dummy value since design removed this field
       email: email.toLowerCase(),
       password,
-      accountType,
+      accountType: "personal", // Dummy value
       otp,
     });
 
     if (!result.success) {
       const error = result.error.flatten();
       let errorMessage = "Please check your input.";
-      if (error.fieldErrors.fullName) {
-        errorMessage = error.fieldErrors.fullName[0];
-      } else if (error.fieldErrors.email) {
-        errorMessage = error.fieldErrors.email[0];
-      } else if (error.fieldErrors.password) {
+      if (error.fieldErrors.password) {
         errorMessage = error.fieldErrors.password[0];
-      } else if (error.fieldErrors.accountType) {
-        errorMessage = error.fieldErrors.accountType[0];
       } else if (error.fieldErrors.otp) {
         errorMessage = error.fieldErrors.otp[0];
       }
@@ -153,15 +142,17 @@ export default function SignUpForm() {
 
   return (
     <div className={styles.pageWrapper}>
-      {/* Left side - Full height image */}
+      {/* Left side - Branded overlay */}
       <div className={styles.brandPanel}>
-        <Image
-          src="/assets/Rectangle 4.svg"
-          alt="Sign Up"
-          fill
-          className={styles.brandImage}
-          priority
-        />
+        <div className={styles.imageInnerWrapper}>
+          <Image
+            src="/assets/Rectangle 4.svg"
+            alt="Sign Up"
+            fill
+            className={styles.brandImage}
+            priority
+          />
+        </div>
       </div>
 
       {/* Right side - Form container */}
@@ -171,13 +162,14 @@ export default function SignUpForm() {
           {/* Header Title */}
           <div className={styles.header}>
             <h2 className={styles.title}>
-              Welcome to{" "}
-              <span className={styles.titleGradient}>
-                Cocpit
-              </span>
+              {step === 1 ? (
+                <>Welcome to{" "}<span className={styles.titleGradient}>Cocpit</span></>
+              ) : (
+                <>Create{" "}<span className={styles.titleGradient}>password</span></>
+              )}
             </h2>
             <p className={styles.subtitle}>
-              {step === 1 ? "Find jobs, connect, grow" : "Complete your profile"}
+              {step === 1 ? "Find jobs, connect, grow" : "Set a password to continue"}
             </p>
           </div>
 
@@ -206,19 +198,18 @@ export default function SignUpForm() {
                 </div>
 
                 {/* Verify Button */}
-                {!emailVerified && (
-                  <button
-                    type="button"
-                    onClick={handleSendOtp}
-                    disabled={isVerifying || !email}
-                    className={styles.verifyButton}
-                  >
-                    {isVerifying ? "Sending..." : otpSent ? "Resend" : "Verify"}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={handleSendOtp}
+                  disabled={isVerifying || !email || emailVerified}
+                  className={styles.verifyButton}
+                  style={{ display: emailVerified ? 'none' : 'block' }} // visually hide but keep layout stable if needed, actually better to just hide it
+                >
+                  {isVerifying ? "Sending..." : otpSent ? "Resend" : "Verify"}
+                </button>
 
                 {/* OTP Input */}
-                {otpSent && !emailVerified && (
+                {otpSent && (
                   <div className={styles.fieldGroup}>
                     <label className={styles.label}>Enter OTP</label>
                     <div className={styles.inputWrapper}>
@@ -277,7 +268,8 @@ export default function SignUpForm() {
 
                 {/* Continue Button - turns blue after OTP verified */}
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={() => setStep(2)}
                   disabled={!emailVerified || isCheckingOtp}
                   className={`${styles.submitButton} ${emailVerified ? styles.submitButtonActive : ''}`}
                 >
@@ -300,29 +292,16 @@ export default function SignUpForm() {
               </>
             )}
 
-            {/* ═══ STEP 2: Full Name, Password, Account Type ═══ */}
+            {/* ═══ STEP 2: Create Password ═══ */}
             {step === 2 && (
               <>
-                {/* Full Name */}
-                <div className={styles.fieldGroup}>
-                  <label className={styles.label}>Full Name</label>
-                  <input
-                    type="text"
-                    placeholder="John Doe"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className={styles.input}
-                    required
-                  />
-                </div>
-
                 {/* Password */}
                 <div className={styles.fieldGroup}>
                   <label className={styles.label}>Password</label>
                   <div className={styles.inputWrapper}>
                     <input
                       type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
+                      placeholder="123456789"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className={`${styles.input} ${styles.inputWithIcon}`}
@@ -341,57 +320,29 @@ export default function SignUpForm() {
                   </div>
                 </div>
 
-                {/* Account Type */}
-                <div className={styles.fieldGroup}>
-                  <label className={styles.label}>Account Type</label>
-                  <div className={styles.accountTypeRow}>
-                    <button
-                      type="button"
-                      onClick={() => setAccountType("personal")}
-                      className={`${styles.accountTypeButton} ${accountType === "personal" ? styles.accountTypeActive : ''}`}
-                    >
-                      Personal
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAccountType("business")}
-                      className={`${styles.accountTypeButton} ${accountType === "business" ? styles.accountTypeActive : ''}`}
-                    >
-                      Business
-                    </button>
-                  </div>
-                </div>
-
-                {/* Register Button */}
+                {/* Continue Button - turns blue when password entered */}
                 <button
                   type="submit"
-                  disabled={!fullName || !password || !accountType || isVerifying}
-                  className={`${styles.submitButton} ${fullName && password && accountType ? styles.submitButtonActive : ''}`}
+                  disabled={!password || isVerifying}
+                  className={`${styles.submitButton} ${password ? styles.submitButtonActive : ''}`}
                 >
                   {isVerifying ? "Creating account..." : "Continue"}
-                </button>
-
-                {/* Back to step 1 */}
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className={styles.backButton}
-                >
-                  ← Back
                 </button>
               </>
             )}
           </form>
 
           {/* Login link */}
-          <div className={styles.navigation}>
-            <p className={styles.navigationText}>
-              Already have an account?{" "}
-              <Link href="/" className={styles.navigationLink}>
-                sign in
-              </Link>
-            </p>
-          </div>
+          {step === 1 && (
+            <div className={styles.navigation}>
+              <p className={styles.navigationText}>
+                Already have an account?{" "}
+                <Link href="/" className={styles.navigationLink}>
+                  sign in
+                </Link>
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Footer Text */}

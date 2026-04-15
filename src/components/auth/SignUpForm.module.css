@@ -15,7 +15,8 @@
 .brandPanel {
   display: none;
   position: relative;
-  background: #000000;
+  background: #ffffff;
+  padding: 22px 0 22px 22px;
 }
 
 @media (min-width: 1024px) {
@@ -23,6 +24,15 @@
     display: block;
     width: 50%;
   }
+}
+
+.imageInnerWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  background: #000000;
 }
 
 .brandImage {
@@ -69,6 +79,7 @@
   flex-direction: column;
   text-align: center;
   align-items: center;
+  gap: 16px;
 }
 
 .title {
@@ -96,7 +107,6 @@
 .subtitle {
   font-size: 14px;
   color: #9ca3af;
-  margin-top: 0.5rem;
 }
 
 /* ── Form ────────────────────────────────────────────────────────── */

@@ -160,6 +160,7 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   backdrop-filter: blur(24px);
   -webkit-box-shadow: 0 0 0 30px white inset;
+  box-shadow: 0 0 0 30px white inset;
   -webkit-text-fill-color: #000000;
 }
 
