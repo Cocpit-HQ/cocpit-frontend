@@ -8,7 +8,7 @@ export default function Home() {
       {/* Left side - Full height image */}
       <div className="hidden lg:block lg:w-[50%] relative bg-black">
         <Image
-          src="/assets/openingPage.jpg"
+          src="/assets/Rectangle 4.svg"
           alt="Opening Page"
           fill
           className="object-cover"

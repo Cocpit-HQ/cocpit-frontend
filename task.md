@@ -8,10 +8,12 @@
     - [x] Place Profile Card at the top
     - [x] Place Post Type Tabs second
     - [x] Place Category Buttons third
-    - [x] Place Text Editor fourth
+    - [x] Update title and subtext for OTP verification step
 - [x] **Phase 3: Styling & Spacing**
-    - [x] Add consistent `gap-4` or `gap-6` between sections
-    - [x] Verify padding and alignment
+    - [x] Replace `InputOTP` with a standard text input field
+    - [x] Add "Enter OTP" label and "Resend code" alignment
+    - [x] Add the "Verify" button and link it to the existing verification logic
+    - [x] Ensure consistent styling (glassmorphism on inputs)
 - [x] **Phase 4: Verification**
     - [x] Test layout on Desktop
     - [x] Ensure Mobile layout is unaffected or improved
