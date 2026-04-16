@@ -8,6 +8,7 @@ import { Icon } from "@iconify/react";
 import { useToast } from "@/hooks/use-toast";
 import { resetPassword, requestOTP, verifyOTP } from "@/services/api/auth";
 import Image from "next/image";
+import AuthImagePanel from "@/components/auth/AuthImagePanel";
 import styles from "./ForgotPasswordForm.module.css";
 
 export default function ForgotPasswordForm() {
@@ -112,17 +113,7 @@ export default function ForgotPasswordForm() {
     {resetSuccess ? (
       <div className={styles.pageWrapper}>
         {/* Left side - Rectangle 4 image */}
-        <div className="hidden lg:block lg:w-[50%] bg-white pt-[22px] pb-[22px] pl-[22px]">
-                <div className="relative  h-full ml-[8vw] rounded-[1.5rem] overflow-hidden ">
-                  <Image
-                    src="/assets/Rectangle 4.svg"
-                    alt="Opening Page"
-                    fill
-                    // className="object-cover"
-                    priority
-                  />
-                </div>
-              </div>
+        <AuthImagePanel />
 
         {/* Right side - Success content */}
         <div className={styles.formPanel}>
@@ -155,17 +146,7 @@ export default function ForgotPasswordForm() {
     ) : (
     <div className={styles.pageWrapper}>
       {/* Left side - Branded overlay */}
-      <div className="hidden lg:block lg:w-[50%] bg-white pt-[22px] pb-[22px] pl-[22px]">
-              <div className="relative  h-full ml-[8vw] rounded-[1.5rem] overflow-hidden ">
-                <Image
-                  src="/assets/Rectangle 4.svg"
-                  alt="Opening Page"
-                  fill
-                  // className="object-cover"
-                  priority
-                />
-              </div>
-            </div>
+      <AuthImagePanel />
 
       {/* Right side - Form container */}
       <div className={styles.formPanel}>
