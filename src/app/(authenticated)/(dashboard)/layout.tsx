@@ -8,7 +8,7 @@ import { JobsProvider } from "@/context/JobsContext";
 import { GlobalUploadProgress } from "@/components/ui/GlobalUploadProgress";
 import { usePathname } from "next/navigation";
 import { useUIStore } from "@/store/ui.store";
-import { CreatePostModal } from "@/components/home/CreatePostModal";
+import { CreatePostModal } from "@/features/create-post/components/CreatePostModal";
 import MobileCreateMenu from "@/components/home/MobileCreateMenu";
 import { useNavigationTracker } from "@/hooks/use-navigation-memory";
 

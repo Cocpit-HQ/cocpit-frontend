@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import api from '@/lib/axios';
 import { useQueryClient } from '@tanstack/react-query';
 import { Company } from '@/services/organization.service';
-import { CreatePostModal } from '@/components/home/CreatePostModal';
+import { CreatePostModal } from '@/features/create-post/components/CreatePostModal';
 
 interface OrganizationPostsProps {
     companyId: string;
