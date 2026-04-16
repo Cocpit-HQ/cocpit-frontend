@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Image, Video, FileText, BarChart3 } from 'lucide-react'
-import { useActionModal } from '@/context/ActionModalContext'
-import { PostType } from './CreatePostModal'
+import { PostType } from '@/features/create-post/types'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { useFeed } from '@/hooks/use-feed'
 

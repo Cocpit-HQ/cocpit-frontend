@@ -1,11 +1,9 @@
 import { useUIStore } from '@/store/ui.store';
-import { createPost, CreatePostRequest } from '@/services/api/feed';
-import { uploadMedia } from '@/services/api/media';
+import { CreatePostRequest } from '@/services/api/feed';
 import { useFeed } from '@/hooks/use-feed';
-import { getPostById } from '@/services/api/posts';
-import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
+import { postApi } from '@/features/create-post/api/post.api';
 
 type PendingUploadPost = {
     id: string;
@@ -35,40 +33,27 @@ export const usePostUpload = () => {
         setPendingPosts(prev => [...prev, newPendingPost]);
 
         try {
-            let mediaUrls: string[] = [];
+            // 1. Progress simulation for UI feedback
+            const progressInterval = setInterval(() => {
+                setPendingPosts(prev => prev.map(p =>
+                    p.id === id ? { ...p, progress: Math.min(p.progress + 10, 90) } : p
+                ));
+            }, 800);
 
-            // 1. Upload Media
-            if (mediaFiles && mediaFiles.length > 0) {
-                const progressInterval = setInterval(() => {
-                    setPendingPosts(prev => prev.map(p =>
-                        p.id === id ? { ...p, progress: Math.min(p.progress + 10, 90) } : p
-                    ));
-                }, 500);
+            try {
+                // 2. Use the centralized postApi for creation (handles media + post + fetch)
+                const { mappedPost } = await postApi.create(content, mediaFiles);
+                addPost(mappedPost);
 
-                try {
-                    const uploadResults = await uploadMedia(mediaFiles);
-                    mediaUrls = uploadResults.map(res => res.url);
-                } finally {
-                    clearInterval(progressInterval);
-                }
+                // 3. Update Store to success
+                setPendingPosts(prev => prev.map(p =>
+                    p.id === id ? { ...p, status: 'success', progress: 100 } : p
+                ));
+
+                toast.success("Post published successfully!");
+            } finally {
+                clearInterval(progressInterval);
             }
-
-            // 2. Create Post
-            const finalContent = {
-                ...content,
-                media_urls: mediaUrls
-            };
-
-            const response = await createPost(finalContent);
-            const createdPost = await getPostById(response.postId);
-            addPost(mapBackendPostToFrontend(createdPost));
-
-            // 3. Update Store
-            setPendingPosts(prev => prev.map(p =>
-                p.id === id ? { ...p, status: 'success', progress: 100 } : p
-            ));
-
-            toast.success("Post published successfully!");
 
             // Auto-clear after 3 seconds
             setTimeout(() => {

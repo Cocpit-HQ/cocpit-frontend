@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { CreatePostModal } from './CreatePostModal';
+import { CreatePostModal } from '@/features/create-post/components/CreatePostModal';
 import { useFeed } from '@/hooks/use-feed';
 import { updatePost } from '@/services/api/posts';
 import { ReportModal } from '@/components/shared/ReportModal';

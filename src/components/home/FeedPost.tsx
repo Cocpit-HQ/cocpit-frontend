@@ -59,7 +59,7 @@ const UniversalShareModal = dynamic(
   { ssr: false }
 )
 const CreatePostModal = dynamic(
-  () => import('./CreatePostModal').then(mod => mod.CreatePostModal),
+  () => import('@/features/create-post/components/CreatePostModal').then(mod => mod.CreatePostModal),
   { ssr: false }
 )
 const SavePostModal = dynamic(

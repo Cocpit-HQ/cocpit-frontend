@@ -3,8 +3,7 @@
 import React from "react";
 import { DarkSidebar } from "@/components/layout/DarkSidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
-import { useActionModal } from "@/context/ActionModalContext";
-// import { usePathname } from "next/navigation";
+import { useUIStore } from "@/store/ui.store";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -15,8 +14,7 @@ export function AppShell({
   children,
   hideBottomNav = false,
 }: AppShellProps) {
-  const { toggleOptions } = useActionModal();
-  // const pathname = usePathname();
+  const { setOptionsOpen } = useUIStore();
 
   return (
     <div className="relative flex min-h-screen">
@@ -30,7 +28,7 @@ export function AppShell({
 
       {/* Mobile bottom navigation */}
       {!hideBottomNav && (
-        <MobileBottomNav onAdd={toggleOptions} />
+        <MobileBottomNav onAdd={() => setOptionsOpen(true)} />
       )}
     </div>
   );
