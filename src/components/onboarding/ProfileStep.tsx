@@ -8,6 +8,8 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
+import LocationAutocomplete from "@/components/ui/LocationAutocomplete";
+import type { LocationSuggestion } from "@/services/api/location";
 
 export default function ProfileStep() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -16,6 +18,7 @@ export default function ProfileStep() {
   const [nameAvailable, setNameAvailable] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
 
   const debouncedAccountName = useDebounce(accountName, 500);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,23 +92,14 @@ export default function ProfileStep() {
   };
 
   const handleSubmit = async () => {
-    if (!profileImageFile || !accountName || nameAvailable !== true) return;
+    if (!profileImageFile || !accountName || nameAvailable !== true || !selectedLocation) return;
 
     setSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append("avatar", profileImageFile); // Key 'avatar' or 'file'? Services usually use 'file' or 'files'. Media uses 'files'. uploadAvatar uses 'file' typically.
-      // Wait, uploadAvatar logic: api.post("/profile/avatar", formData).
-      // Backend usually expects a specific key.
-      // Since I don't see the backend code for /onboarding/complete, I will guess 'avatar' or 'image'.
-      // If I look at `uploadAvatar` implementation in `profile.ts`, it just passes formData.
-      // If I assume "Reuse existing avatar upload patterns", I should check how `uploadAvatar` constructs formData if possible.
-      // `uploadAvatar` takes `FormData` as arg.
-      // Let's assume the key is 'avatar' for this specific endpoint, or 'file'.
-      // Common practice: 'file'.
-      // I'll use 'avatar' as it's semantic.
       formData.append("avatar", profileImageFile);
       formData.append("account_name", accountName);
+      formData.append("location_id", String(selectedLocation.id));
 
       const response = await completeOnboarding(formData);
 
@@ -136,7 +130,8 @@ export default function ProfileStep() {
     !!accountName &&
     nameAvailable === true &&
     !checking &&
-    validateAccountName(accountName);
+    validateAccountName(accountName) &&
+    !!selectedLocation;
 
   return (
     <div className={styles.formContent}>
@@ -171,6 +166,18 @@ export default function ProfileStep() {
             onChange={handleImageUpload}
             style={{ display: "none" }}
           />
+        </div>
+
+        {/* Location */}
+        <div className={styles.fieldGroup}>
+          <label className={styles.label}>Location <span style={{color: '#ef4444'}}>*</span></label>
+          <LocationAutocomplete
+            selected={selectedLocation}
+            onSelect={setSelectedLocation}
+          />
+          {!selectedLocation && (
+            <p className="text-xs text-muted-foreground mt-1">Select a city from the suggestions.</p>
+          )}
         </div>
 
         {/* Account Name */}
