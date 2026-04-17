@@ -2,7 +2,7 @@
 
 import React, { useMemo, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import FeedPost from './FeedPost';
+import FeedPost from '@/features/feed/components/FeedPost';
 import PostSkeleton from './PostSkeleton';
 import { useFeed } from '@/hooks/use-feed';
 import { useInView } from '@/hooks/use-in-view';

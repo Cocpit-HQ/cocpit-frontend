@@ -12,9 +12,10 @@ interface CommentListProps {
   currentUserId?: string;
   isPostOwner?: boolean;
   postId?: string | number;
+  onReport?: (commentId: string | number) => void;
 }
 
-export default function CommentList({ comments, onReply, onDelete, currentUserId, isPostOwner, postId }: CommentListProps) {
+export default function CommentList({ comments, onReply, onDelete, currentUserId, isPostOwner, postId, onReport }: CommentListProps) {
 
   // ✅ CORRECTED: Use parent_id, not heuristics
   const { rootComments, replyMap } = useMemo(() => {
@@ -77,7 +78,7 @@ export default function CommentList({ comments, onReply, onDelete, currentUserId
 
   return (
     <div className="space-y-4 pb-4">
-      {rootComments.map((root) => (
+      {rootComments.map((root, index) => (
         <React.Fragment key={root.id}>
           <Comment
             comment={root}
@@ -87,6 +88,7 @@ export default function CommentList({ comments, onReply, onDelete, currentUserId
             variant="root"
             isPostOwner={isPostOwner}
             postId={postId}
+            onReport={onReport}
           />
           {/* Render Replies if any */}
           {replyMap.has(root.id) && (
@@ -98,6 +100,7 @@ export default function CommentList({ comments, onReply, onDelete, currentUserId
               isDark={false}
               isPostOwner={isPostOwner}
               postId={postId}
+              onReport={onReport}
             />
           )}
         </React.Fragment>
