@@ -15,11 +15,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import { Poppins } from "next/font/google";
+const poppins = Poppins({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
 export const metadata: Metadata = {
   title: "Cocpit",
   description: "Connect. Grow. Succeed.",
   icons: {
-    icon: "/assets/logo.PNG",
+    icon: "/assets/weblogo.png.PNG",
   },
 };
 
@@ -31,7 +38,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased`}
       >
         <Providers>
           {children}

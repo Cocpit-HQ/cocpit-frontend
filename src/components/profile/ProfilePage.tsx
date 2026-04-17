@@ -551,9 +551,9 @@ export default function ProfilePage() {
                     <button onClick={() => { setEditingExperience(null); setIsAddExperienceModalOpen(true); }} className="text-primary hover:underline text-sm">Add</button>
                   </div>
                   <div className="space-y-6">
-                    {experiences.map(exp => (
+                    {experiences.map((exp, index) => (
                       <EditableExperienceItem
-                        key={exp.experience_id}
+                        key={`${exp.experience_id}-${index}`}
                         experience={exp}
                         onEdit={() => { setEditingExperience(exp); setIsAddExperienceModalOpen(true); }}
                       />
@@ -591,9 +591,9 @@ export default function ProfilePage() {
                     <button onClick={() => { setEditingEducation(null); setIsAddEducationModalOpen(true); }} className="text-primary hover:underline text-sm">Add</button>
                   </div>
                   <div className="space-y-6">
-                    {educations.map(edu => (
+                    {educations.map((edu, index) => (
                       <EditableEducationItem
-                        key={edu.education_id}
+                        key={`${edu.education_id}-${index}`}
                         education={edu}
                         onEdit={() => { setEditingEducation(edu); setIsAddEducationModalOpen(true); }}
                       />
@@ -610,17 +610,17 @@ export default function ProfilePage() {
                     </Link>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    {previewPosts.map(post => (
+                    {previewPosts.map((post, index) => (
                       isMobile ? (
                         <PostCard
-                          key={post.id}
+                          key={`${post.id}-${index}`}
                           post={post}
                           isOwnPost={!isCompany}
                           onDelete={handleDeletePost}
                         />
                       ) : (
                         <FeedPost
-                          key={post.id}
+                          key={`${post.id}-${index}`}
                           {...post}
                           initialComments={post.commentData}
                           isOwnPost={!isCompany}
