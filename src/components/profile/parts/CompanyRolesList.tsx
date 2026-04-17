@@ -118,8 +118,8 @@ export function CompanyRolesList({ roles, isOwnProfile, onRoleClick }: CompanyRo
 
             {expanded && filteredRoles.length > 1 && (
                 <div className="flex flex-col gap-2 pl-4 border-l-2 border-muted ml-2 mt-1 animate-in fade-in slide-in-from-top-2">
-                    {filteredRoles.slice(1).map((role: CompanyRole) => (
-                        <div key={role.org_id || role.company_id} className="group relative w-full sm:w-auto">
+                    {filteredRoles.slice(1).map((role: CompanyRole, index: number) => (
+                        <div key={`${role.org_id || role.company_id}-${index}`} className="group relative w-full sm:w-auto">
                             <button
                                 onClick={() => onRoleClick(role)}
                                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors border max-w-full text-left

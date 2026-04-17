@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MapPin, Loader2, X } from "lucide-react";
+import { MapPin, Loader2, X, ChevronDown } from "lucide-react";
 import { searchLocations, LocationSuggestion } from "@/services/api/location";
 import { useDebounce } from "@/hooks/use-debounce";
 import styles from "./LocationAutocomplete.module.css";
@@ -76,26 +76,51 @@ export default function LocationAutocomplete({ onSelect, selected }: LocationAut
     if (selected) onSelect(null); // Clear selection when user starts re-typing
   };
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFocus = () => {
+    if (suggestions.length > 0) {
+      setOpen(true);
+    }
+  };
+
+  const handleWrapperClick = () => {
+    inputRef.current?.focus();
+    setOpen(true);
+  };
+
   return (
     <div ref={wrapperRef} className={styles.wrapper}>
-      <div className={styles.inputWrapper}>
-        <MapPin className={styles.prefixIcon} />
+      <div 
+        className={styles.inputWrapper} 
+        onClick={handleWrapperClick}
+        style={{ cursor: "pointer" }}
+      >
         <input
+          ref={inputRef}
           type="text"
           className={styles.input}
-          placeholder="Search city, e.g. Pune"
+          placeholder="Enter your location"
           value={query}
           onChange={handleInputChange}
+          onFocus={handleFocus}
           autoComplete="off"
         />
         <div className={styles.suffix}>
           {loading ? (
             <Loader2 className={styles.spinner} />
           ) : selected ? (
-            <button type="button" onClick={handleClear} className={styles.clearBtn} title="Clear location">
+            <button 
+              type="button" 
+              onClick={(e) => { e.stopPropagation(); handleClear(); }} 
+              className={styles.clearBtn} 
+              title="Clear location"
+            >
               <X className={styles.clearIcon} />
             </button>
-          ) : null}
+          ) : (
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+          )}
         </div>
       </div>
 
