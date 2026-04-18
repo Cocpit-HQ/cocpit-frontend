@@ -29,45 +29,45 @@ jobs:
 
       - name: Sync, Build, and Restart PM2
         shell: powershell
-  run: |
-    $destPath = "${{ env.DEST }}"
-    
-    if (!(Test-Path $destPath)) {
-        New-Item -ItemType Directory -Path $destPath | Out-Null
-    }
+        run: |
+          $destPath = "${{ env.DEST }}"
+          
+          if (!(Test-Path $destPath)) {
+              New-Item -ItemType Directory -Path $destPath | Out-Null
+          }
 
-    pm2 stop $env:PM2_NAME 2>$null
-    
-    $ghost = netstat -ano | findstr :$env:PORT
-    if ($ghost) {
-        $pidToKill = ($ghost -split '\s+')[-1]
-        taskkill /F /PID $pidToKill /T 2>$null
-    }
-    
-    Start-Sleep -s 5
-    
-    cd "$destPath"
+          pm2 stop $env:PM2_NAME 2>$null
+          
+          $ghost = netstat -ano | findstr :$env:PORT
+          if ($ghost) {
+              $pidToKill = ($ghost -split '\s+')[-1]
+              taskkill /F /PID $pidToKill /T 2>$null
+          }
+          
+          Start-Sleep -s 5
+          
+          cd "$destPath"
 
-    if (Test-Path ".next") {
-        Remove-Item -Recurse -Force ".next" -ErrorAction SilentlyContinue
-    }
-    
-    robocopy "$($env:GITHUB_WORKSPACE)" "$destPath" /MIR /XF .env /XD .git node_modules _work .next
-    if ($LASTEXITCODE -ge 8) { throw "Robocopy failed" }
-    
-    npm install
-    npm run build
-    
-    $env:PORT = "${{ env.PORT }}"
-    
-    try {
-        pm2 reload $env:PM2_NAME --update-env
-        Write-Host "PM2 reload successful"
-    }
-    catch {
-        Write-Host "PM2 process not found. Starting new process..."
+          if (Test-Path ".next") {
+              Remove-Item -Recurse -Force ".next" -ErrorAction SilentlyContinue
+          }
+          
+          robocopy "$($env:GITHUB_WORKSPACE)" "$destPath" /MIR /XF .env /XD .git node_modules _work .next
+          if ($LASTEXITCODE -ge 8) { throw "Robocopy failed" }
+          
+          npm install
+          npm run build
+          
+          $env:PORT = "${{ env.PORT }}"
+          
+          try {
+              pm2 reload $env:PM2_NAME --update-env
+              Write-Host "PM2 reload successful"
+          }
+          catch {
+              Write-Host "PM2 process not found. Starting new process..."
 
-        pm2 start node_modules/next/dist/bin/next `
-            --name $env:PM2_NAME `
-            -- start -p $env:PORT
-    }
+              pm2 start node_modules/next/dist/bin/next `
+                  --name $env:PM2_NAME `
+                  -- start -p $env:PORT
+          }
