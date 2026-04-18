@@ -32,6 +32,10 @@ jobs:
         run: |
           $destPath = "${{ env.DEST }}"
           
+          if (!(Test-Path $destPath)) {
+              New-Item -ItemType Directory -Path $destPath | Out-Null
+          }
+
           pm2 stop $env:PM2_NAME 2>$null
           
           $ghost = netstat -ano | findstr :$env:PORT
@@ -56,7 +60,14 @@ jobs:
           
           $env:PORT = "${{ env.PORT }}"
           
-          pm2 reload $env:PM2_NAME --update-env
-          if ($LASTEXITCODE -ne 0) {
-              pm2 start node_modules/next/dist/bin/next --name $env:PM2_NAME -- start -p $env:PORT
+          try {
+              pm2 reload $env:PM2_NAME --update-env
+              Write-Host "PM2 reload successful"
+          }
+          catch {
+              Write-Host "PM2 process not found. Starting new process..."
+
+              pm2 start node_modules/next/dist/bin/next `
+                  --name $env:PM2_NAME `
+                  -- start -p $env:PORT
           }
