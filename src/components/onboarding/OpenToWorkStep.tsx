@@ -45,9 +45,11 @@ export default function OpenToWorkStep({ onNext, onBack, currentStep, totalSteps
           </div>
         </div>
 
-        {/* Title & Subtitle */}
-        <h1 className={styles.title}>Tell us more about you</h1>
-        <p className={styles.subtitle}>This helps us show relevant opportunities</p>
+        {/* Title & Subtitle Group */}
+        <div className={styles.textGroup}>
+          <h1 className={styles.title}>Tell us more about you</h1>
+          <p className={styles.subtitle}>This helps us show relevant opportunities</p>
+        </div>
 
         {/* Form */}
         <div className={styles.form}>

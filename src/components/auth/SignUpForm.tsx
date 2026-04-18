@@ -13,10 +13,8 @@ import styles from "./SignUpForm.module.css";
 export default function SignUpForm() {
   const router = useRouter();
   const [step, setStep] = useState(1); // Step 1: Email/OTP, Step 2: Details
-  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [accountType, setAccountType] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
@@ -67,6 +65,10 @@ export default function SignUpForm() {
           title: "Email Verified!",
           description: "Your email has been successfully verified.",
         });
+        // Automatically proceed to password creation
+        setTimeout(() => {
+          setStep(2);
+        }, 800);
       } catch (error: any) {
         setEmailVerified(false);
         setOtpError(true);
@@ -114,10 +116,8 @@ export default function SignUpForm() {
     if (step === 1) return; // Guard clause, shouldn't happen, but just in case
     // Step 2: Register
     const result = registrationSchema.safeParse({
-      fullName: "User", // Dummy value since design removed this field
       email: email.toLowerCase(),
       password,
-      accountType: "personal", // Dummy value
       otp,
     });
 
@@ -255,15 +255,6 @@ export default function SignUpForm() {
                   </div>
                 )}
 
-                {/* Continue Button - turns blue after OTP verified */}
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  disabled={!emailVerified || isCheckingOtp}
-                  className={`${styles.submitButton} ${emailVerified ? styles.submitButtonActive : ''}`}
-                >
-                  Continue
-                </button>
 
                 {/* Continue with Google */}
                 <button
