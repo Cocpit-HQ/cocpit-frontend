@@ -22,22 +22,22 @@ export default function TellUsAboutYouStep({ onNext, onBack, currentStep, totalS
 
   const handleContinue = async () => {
     if (!selectedLocation) return;
-    
+
     setSubmitting(true);
     try {
       const formData = new FormData();
       formData.append("location_id", selectedLocation.id.toString());
-      
+
       // We pass partial data, the backend controller we updated handles merging
       await completeOnboarding(formData);
-      
+
       onNext();
     } catch (error) {
       console.error("Failed to save location:", error);
-      toast({ 
-        title: "Error", 
-        description: "Failed to save your location. Please try again.", 
-        variant: "destructive" 
+      toast({
+        title: "Error",
+        description: "Failed to save your location. Please try again.",
+        variant: "destructive"
       });
     } finally {
       setSubmitting(false);
@@ -51,14 +51,14 @@ export default function TellUsAboutYouStep({ onNext, onBack, currentStep, totalS
     }
 
     toast({ title: "Detecting Location", description: "Getting your current position..." });
-    
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         // In a real app, we'd reverse geocode here. 
         // For now, we'll show a message or try to find a matching city if we had an API.
-        toast({ 
-            title: "Location Detected", 
-            description: `Lat: ${position.coords.latitude.toFixed(2)}, Lon: ${position.coords.longitude.toFixed(2)}. Please select your city manually from the list below.`,
+        toast({
+          title: "Location Detected",
+          description: `Lat: ${position.coords.latitude.toFixed(2)}, Lon: ${position.coords.longitude.toFixed(2)}. Please select your city manually from the list below.`,
         });
       },
       (error) => {
@@ -96,12 +96,12 @@ export default function TellUsAboutYouStep({ onNext, onBack, currentStep, totalS
         {/* Location Form */}
         <div className={styles.formGroup}>
           <label className={styles.label}>Location</label>
-          <LocationAutocomplete 
-            selected={selectedLocation} 
-            onSelect={setSelectedLocation} 
+          <LocationAutocomplete
+            selected={selectedLocation}
+            onSelect={setSelectedLocation}
           />
-          <button 
-            type="button" 
+          <button
+            type="button"
             className={styles.useLocationBtn}
             onClick={handleUseCurrentLocation}
           >

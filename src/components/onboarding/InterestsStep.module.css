@@ -11,6 +11,7 @@
 
 .content {
   width: 360px;
+  min-height: 640px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -78,8 +79,8 @@
   font-size: 24px;
   line-height: 32px;
   text-align: center;
-  color: #18181b;
-  margin-bottom: 8px;
+  color: #000000;
+  margin: 0;
 }
 
 .subtitle {
@@ -87,9 +88,17 @@
   font-weight: 400;
   font-size: 14px;
   line-height: 20px;
+  letter-spacing: 0%;
   text-align: center;
-  color: #9ca3af;
-  margin-top: -16px;
+  color: #6B7280;
+  margin: 0;
+}
+
+.textGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Search Box */
@@ -102,11 +111,11 @@
   width: 100%;
   height: 48px;
   padding: 0 44px 0 16px;
-  border: 1px solid #e4e4e7;
-  border-radius: 12px;
+  border: 1px solid #DDE3EA;
+  border-radius: 16px;
   background: #ffffff;
   color: #18181b;
-  font-size: 14px;
+  font-size: 16px;
   transition: all 0.2s ease;
   box-sizing: border-box;
 }
@@ -140,31 +149,31 @@
 .tagsContainer {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 24px;
   width: 100%;
   flex: 1;
 }
 
 .tag {
-  padding: 8px 16px;
-  border: 1px solid #e0f2fe;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border: 1px solid #818CF8;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: #0ea5e9;
-  background-color: #f0f9ff;
+  color: #818CF8;
+  background-color: #EEF2FF;
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.tag:hover {
-  background-color: #e0f2fe;
+  white-space: nowrap;
 }
 
 .tagSelected {
-  background-color: #6366F1;
-  border-color: #6366F1;
+  background-color: #818CF8;
   color: #ffffff;
 }
 
@@ -179,12 +188,12 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  border: 1px solid #e4e4e7;
+  border: 1px solid #DADADA;
   background-color: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #71717a;
+  color: #6B7280;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
@@ -197,11 +206,12 @@
 
 .continueButton {
   flex: 1;
+  width: 296px;
   height: 48px;
-  border-radius: 12px;
-  border: 1px solid #d4d4d8;
+  border-radius: 16px;
+  border: 1px solid #6B7280;
   background-color: transparent;
-  color: #71717a;
+  color: #6B7280;
   font-family: var(--font-poppins), sans-serif;
   font-size: 16px;
   font-weight: 500;
@@ -210,18 +220,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
+  padding: 8px 16px;
 }
 
 .continueButton:not(:disabled) {
   background-color: #6366F1;
-  border: none;
+  border: 1px solid #FFFFFF1A;
   color: #ffffff;
 }
 
 .continueButton:hover:not(:disabled) {
-  background-color: #6366F1;
+  background-color: #4F46E5;
+  border-color: #4F46E5;
+  color: #ffffff;
 }
 
 .continueButton:disabled {

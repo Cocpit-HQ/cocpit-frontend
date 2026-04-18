@@ -11,6 +11,7 @@
 
 .content {
   width: 360px;
+  min-height: 640px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -53,8 +54,9 @@
   font-weight: 400;
   font-size: 14px;
   line-height: 20px;
+  letter-spacing: 0%;
   text-align: center;
-  color: #9ca3af;
+  color: #6B7280;
   margin: 0;
 }
 
@@ -104,7 +106,22 @@
   margin-bottom: 12px;
 }
 
-.selectedCard .icon {
+.iconWrapper {
+  width: 35px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.iconElement {
+  opacity: 1;
+  color: #6B7280;
+}
+
+.selectedCard .icon,
+.selectedCard .iconElement {
   color: #0ea5e9;
 }
 
@@ -159,11 +176,12 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  border: 1px solid #e4e4e7;
+  border: 1px solid #DADADA;
   background: #ffffff;
   cursor: pointer;
   transition: background-color 0.2s;
   flex-shrink: 0;
+  color: #6B7280;
 }
 
 .backButton:hover:not(:disabled) {
@@ -177,27 +195,34 @@
 
 .continueButton {
   flex: 1;
+  width: 296px;
   height: 48px;
-  border-radius: 12px;
-  border: 1px solid #e4e4e7;
-  background: #ffffff;
-  color: #71717a;
+  border-radius: 16px;
+  padding: 8px 16px;
+  gap: 10px;
+  border: 1px solid #6B7280;
+  background: transparent;
+  color: #6B7280;
   font-family: var(--font-poppins), sans-serif;
   font-size: 16px;
   font-weight: 500;
   line-height: 24px;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: not-allowed;
   transition: all 0.2s;
 }
 
 .continueActive {
-  background: #6366F1;
+  background-color: #6366F1;
   color: #ffffff;
-  border-color: #6366F1;
+  border: 1px solid #FFFFFF1A;
   cursor: pointer;
 }
 
 .continueActive:hover {
-  background: #6366F1;
+  background-color: #4F46E5;
+  border-color: #4F46E5;
 }

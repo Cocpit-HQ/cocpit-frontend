@@ -45,9 +45,11 @@ export default function UserRoleStep({ onNext, onBack, currentStep, totalSteps }
           </div>
         </div>
 
-        {/* Title & Subtitle */}
-        <h1 className={styles.title}>What best describes you?</h1>
-        <p className={styles.subtitle}>This helps personalize your experience</p>
+        {/* Title & Subtitle Group */}
+        <div className={styles.textGroup}>
+          <h1 className={styles.title}>What best describes you?</h1>
+          <p className={styles.subtitle}>This helps personalize your experience</p>
+        </div>
 
         {/* Options List */}
         <div className={styles.optionsList}>

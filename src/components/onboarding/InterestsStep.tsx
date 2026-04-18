@@ -79,9 +79,11 @@ export default function InterestsStep({
           </div>
         </div>
 
-        {/* Title & Subtitle */}
-        <h1 className={styles.title}>{title}</h1>
-        <p className={styles.subtitle}>{subtitle}</p>
+        {/* Title & Subtitle Group */}
+        <div className={styles.textGroup}>
+          <h1 className={styles.title}>{title}</h1>
+          <p className={styles.subtitle}>{subtitle}</p>
+        </div>
 
         {/* Search */}
         <div className={styles.searchWrapper}>

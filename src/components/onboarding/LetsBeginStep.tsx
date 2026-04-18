@@ -74,22 +74,31 @@ export default function LetsBeginStep({
             className={`${styles.optionCard} ${selected === "upload" && !uploadedName ? styles.selectedCard : ""}`}
             onClick={handleUploadClick}
           >
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              style={{ display: 'none' }} 
+            <input
+              type="file"
+              ref={fileInputRef}
+              style={{ display: 'none' }}
               accept=".pdf,.doc,.docx"
               onChange={handleFileChange}
             />
             {uploadedName && !error ? (
               <>
-                <FileText color="#ef4444" size={40} style={{ marginBottom: '12px' }} />
+                <div className={styles.iconWrapper}>
+                  <FileText color="#ef4444" size={35} />
+                </div>
                 <span className={styles.optionTitle} style={{ color: '#009DDF' }}>Change document</span>
                 <span className={styles.optionSubtitle}>We'll auto-fill your details</span>
               </>
             ) : (
               <>
-                <Icon icon="solar:cloud-upload-linear" className={styles.icon} width={40} height={40} style={{ marginBottom: error ? '4px' : '12px' }} />
+                <div className={styles.iconWrapper}>
+                  <Icon
+                    icon="iconoir:cloud-upload"
+                    className={styles.iconElement}
+                    width={35}
+                    height={30}
+                  />
+                </div>
                 {error && <span style={{ color: '#f87171', fontSize: '10px', marginBottom: '8px', fontWeight: 500 }}>{error}</span>}
                 <span className={styles.optionTitle}>Drop or upload resume</span>
                 <span className={styles.optionSubtitle}>We'll auto-fill your details</span>
@@ -110,7 +119,14 @@ export default function LetsBeginStep({
             className={`${styles.optionCard} ${selected === "manual" ? styles.selectedCard : ""}`}
             onClick={() => setSelected("manual")}
           >
-            <Icon icon="solar:text-field-focus-linear" className={styles.icon} width={40} height={40} />
+            <div className={styles.iconWrapper}>
+              <Icon
+                icon="iconoir:text-box"
+                className={styles.iconElement}
+                width={35}
+                height={30}
+              />
+            </div>
             <span className={styles.optionTitle}>Fill manually</span>
             <span className={styles.optionSubtitle}>You'll be redirected to set up page</span>
           </button>

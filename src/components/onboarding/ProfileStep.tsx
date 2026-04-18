@@ -55,8 +55,8 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
           }
           if (profile.user.avatar) {
             // Add base URL for local uploads if it's not a full URL
-            const url = profile.user.avatar.startsWith('http') 
-              ? profile.user.avatar 
+            const url = profile.user.avatar.startsWith('http')
+              ? profile.user.avatar
               : `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000'}/${profile.user.avatar}`;
             setProfileImage(url);
           }
@@ -90,10 +90,10 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
         setChecking(false);
       }
     };
-    
+
     // Skip availability check if we're still loading or if the name hasn't changed from what we just fetched
     if (!loadingInitial) {
-       checkAvailability();
+      checkAvailability();
     }
   }, [debouncedAccountName, loadingInitial]);
 
@@ -114,10 +114,10 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
         const formData = new FormData();
         formData.append("avatar", file);
         const response = await uploadAvatar(formData);
-        
+
         // 3. Update state with actual server URL
-        const fullUrl = response.avatarUrl.startsWith('http') 
-          ? response.avatarUrl 
+        const fullUrl = response.avatarUrl.startsWith('http')
+          ? response.avatarUrl
           : `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000'}/${response.avatarUrl}`;
         setProfileImage(fullUrl);
       } catch (error) {
@@ -138,7 +138,7 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
 
   const handleSubmit = async () => {
     if ((!profileImage && !profileImageFile) || !accountName || nameAvailable !== true || !fullName.trim()) return;
-    
+
     setSubmitting(true);
     try {
       const formData = new FormData();
@@ -169,7 +169,7 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
   return (
     <div className={styles.container}>
       <div className={styles.content}>
-        
+
         {/* Header Group */}
         <div className={styles.headerGroup}>
           {/* Logo */}
@@ -188,9 +188,11 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
           </div>
         </div>
 
-        {/* Titles */}
-        <h1 className={styles.title}>Set up your profile</h1>
-        <p className={styles.subtitle}>This helps personalize your experience</p>
+        {/* Title & Subtitle Group */}
+        <div className={styles.textGroup}>
+          <h1 className={styles.title}>Set up your profile</h1>
+          <p className={styles.subtitle}>This helps personalize your experience</p>
+        </div>
 
         {/* Profile photo circle */}
         <div className={styles.photoUploadContainer}>
@@ -201,20 +203,16 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
                   <img src={profileImage} alt="Profile" className={styles.photoImage} />
                   {isUploadingPhoto && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
-                       <Loader2 className="w-8 h-8 animate-spin text-white" />
+                      <Loader2 className="w-8 h-8 animate-spin text-white" />
                     </div>
                   )}
                 </div>
               ) : (
-                <div className={styles.photoPlaceholder}>
+                <div className={styles.photoPlaceholder} style={{ width: '100%', height: '100%' }}>
                   {isUploadingPhoto ? (
                     <Loader2 className="w-8 h-8 animate-spin text-white" />
                   ) : (
-                    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <circle cx="12" cy="10" r="3" />
-                      <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
-                    </svg>
+                    <img src="/assets/profilephoto.png" alt="Profile Placeholder" className={styles.photoImage} />
                   )}
                 </div>
               )}
@@ -233,7 +231,6 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
           <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
         </div>
 
-        {/* Form Fields */}
         <div className={styles.formGroup}>
           <label className={styles.label}>Full Name</label>
           <input
@@ -250,11 +247,9 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
           <div className={styles.inputWrapper}>
             <input
               type="text"
-              className={`${styles.input} ${
-                accountName && nameAvailable === false ? 'border-red-500' : ''
-              } ${
-                accountName && nameAvailable === true ? 'border-green-500' : ''
-              }`}
+              className={`${styles.input} ${accountName && nameAvailable === false ? 'border-red-500' : ''
+                } ${accountName && nameAvailable === true ? 'border-green-500' : ''
+                }`}
               placeholder="johndoe23"
               value={accountName}
               onChange={handleAccountNameChange}
@@ -270,7 +265,7 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
           </div>
           {nameAvailable === false && !checking && (
             <p className={styles.errorText}>
-               {validateAccountName(accountName) ? "Username already taken" : "Invalid format. Use only lowercase letters, numbers, and underscores."}
+              {validateAccountName(accountName) ? "Username already taken" : "Invalid format. Use only lowercase letters, numbers, and underscores."}
             </p>
           )}
         </div>
