@@ -55,6 +55,7 @@ export interface Comment {
   is_pinned?: boolean; // For pinning
   pinned_at?: string | null; // When it was pinned
   pinned_by?: string | null; // Who pinned it
+  isPending?: boolean; // For optimistic UI
 }
 
 export interface PollOption {

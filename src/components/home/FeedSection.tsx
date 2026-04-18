@@ -2,17 +2,17 @@
 
 import React, { useMemo, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import FeedPost from './FeedPost';
+import FeedPost from '@/features/feed/components/FeedPost';
 import PostSkeleton from './PostSkeleton';
 import { useFeed } from '@/hooks/use-feed';
 import { useInView } from '@/hooks/use-in-view';
-import { useActionModal } from '@/context/ActionModalContext';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { StoryRail } from './StoryRail';
 import { FeedSortDropdown } from './FeedSortDropdown';
-import { PostType } from './CreatePostModal';
+import { PostType } from '@/features/create-post/types';
 import { StoryGroup } from '@/types/showcase';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
+import { useUIStore } from '@/store/ui.store';
 
 // Lazy-load CreatePost (hidden on mobile, only visible on desktop)
 const CreatePost = dynamic(() => import('./CreatePost'), { ssr: false });
@@ -36,7 +36,7 @@ export const FeedSection = ({
 }: FeedSectionProps) => {
     const { posts, currentUser, deletePost, togglePostVisibility, loadMorePosts, hasMore, loading: feedLoading } = useFeed();
     const { activeProfile, isCompany } = useActiveProfile();
-    const { openModal } = useActionModal();
+    const { setActiveModal } = useUIStore();
 
     const activeAccount = useMemo(() => (
         isCompany && activeProfile
@@ -96,7 +96,7 @@ export const FeedSection = ({
 
             {/* Create Post */}
             <div className="hidden md:block">
-                <CreatePost onOpenModal={openModal as (type?: PostType) => void} />
+                <CreatePost onOpenModal={(type) => setActiveModal('create-post', type)} />
             </div>
 
             {/* Sort Dropdown */}

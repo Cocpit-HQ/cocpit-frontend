@@ -145,7 +145,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                 console.warn("[ActorContext] Bootstrap endpoint failed. Falling back to user profile.", error);
                 trackActorMetric("bootstrap_fallback", { reason: "bootstrap_error" });
                 if (isCancelled) return;
-                
+
                 setBootstrappedCompanies([]);
                 setActiveProfile(userProfile);
                 setIsInitialized(true);

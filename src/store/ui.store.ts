@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-type PostType = 'text' | 'photo' | 'video' | 'poll';
+import { PostType } from '@/features/create-post/types';
 
 interface PendingPost {
   id: string;

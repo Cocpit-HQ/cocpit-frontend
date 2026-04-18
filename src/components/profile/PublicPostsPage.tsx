@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 
 import { AppShell } from "@/components/layout/AppShell"
-import FeedPost from "@/components/home/FeedPost"
+import { FeedPost } from "@/features/feed/components/FeedPost"
 import { getPublicProfilePosts } from "@/services/api/public-profile"
 import { mapPublicPostToPost } from "@/lib/mappers/public-profile.mapper"
 import { Post } from "@/types/entities"

@@ -1,5 +1,5 @@
 import React from 'react';
-import FeedPost from './FeedPost';
+import { FeedPost } from '@/features/feed/components/FeedPost';
 import { Post } from '@/types/entities';
 
 interface PostPreviewProps {
