@@ -3,7 +3,7 @@
 import React, { useEffect, useState, use } from "react"
 import { AppShell } from "@/components/layout/AppShell"
 import { getPostById } from "@/services/api/posts"
-import FeedPost from "@/components/home/FeedPost"
+import { FeedPost } from "@/features/feed/components/FeedPost"
 import { mapBackendPostToFrontend } from "@/lib/mappers/feed.mapper"
 import { Post } from "@/types/entities"
 import { useRouter } from "next/navigation"

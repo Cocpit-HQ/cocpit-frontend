@@ -10,7 +10,7 @@ import { BackButton } from "@/components/shared/BackButton";
 
 import SuggestionsPanel from "@/components/home/SuggestionsPanel";
 import PostCard from "@/components/shared/PostCard";
-import FeedPost from "@/components/home/FeedPost";
+import { FeedPost } from "@/features/feed/components/FeedPost";
 import { ViewAvatarModal } from "@/components/profile/ViewAvatarModal";
 import { SkillOverlap } from "@/components/profile/SkillOverlap";
 

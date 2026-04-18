@@ -3,7 +3,7 @@
 import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useHashtagFeed } from '@/hooks/use-hashtag-feed';
-import FeedPost from '@/components/home/FeedPost';
+import { FeedPost } from '@/features/feed/components/FeedPost';
 import PostSkeleton from '@/components/home/PostSkeleton';
 import { useInView } from '@/hooks/use-in-view';
 import { useEffect } from 'react';

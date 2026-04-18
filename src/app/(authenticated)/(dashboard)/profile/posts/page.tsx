@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import FeedPost from "@/components/home/FeedPost";
+import { FeedPost } from "@/features/feed/components/FeedPost";
 import { AppShell } from "@/components/layout/AppShell";
 import type { Page } from "@/types/common";
 import { getUserPosts } from "@/services/api/profile";

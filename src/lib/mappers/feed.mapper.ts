@@ -1,7 +1,23 @@
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { Post } from "@/types/entities";
+import { Post, Comment } from "@/types/entities";
 import { BackendPost } from "@/services/api/feed";
+
+export interface BackendComment {
+  comment_id: string | number;
+  content: string;
+  created_at: string;
+  user_id: string;
+  full_name: string;
+  avatar_url: string | null;
+  author_slug?: string;
+  is_organization_comment?: boolean;
+  parent_id?: string | number | null;
+  like_count?: number;
+  is_liked?: boolean;
+  is_pinned?: boolean;
+  pinned_at?: string | null;
+}
 
 dayjs.extend(relativeTime);
 
@@ -213,7 +229,43 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     authorSlug: backendPost.author_slug,
     isCompanyPost: backendPost.is_organization_post,
     shared_post: sharedPost,
-    is_broadcast: backendPost.is_broadcast || false,
-    broadcastOrgName: backendPost.is_broadcast ? backendPost.author_name : undefined,
+  };
+};
+
+export const mapBackendCommentToFrontend = (backendComment: BackendComment): Comment => {
+  const now = dayjs();
+  const created = dayjs(backendComment.created_at);
+  const diffMinutes = now.diff(created, "minute");
+  const diffHours = now.diff(created, "hour");
+  const diffDays = now.diff(created, "day");
+
+  let shortTimeAgo = "";
+  if (diffMinutes <= 0) {
+    shortTimeAgo = "Just now";
+  } else if (diffMinutes < 60) {
+    shortTimeAgo = `${diffMinutes}m`;
+  } else if (diffHours < 24) {
+    shortTimeAgo = `${diffHours}h`;
+  } else {
+    shortTimeAgo = `${diffDays}d`;
+  }
+
+  return {
+    id: backendComment.comment_id,
+    authorId: backendComment.user_id,
+    author: {
+      name: backendComment.full_name,
+      avatar: backendComment.avatar_url || "/assets/pngegg.png",
+      authorSlug: backendComment.author_slug,
+      isCompanyPost: backendComment.is_organization_comment,
+    },
+    text: backendComment.content,
+    timeAgo: shortTimeAgo,
+    created_at: backendComment.created_at,
+    like_count: backendComment.like_count || 0,
+    is_liked: backendComment.is_liked || false,
+    parent_id: backendComment.parent_id,
+    is_pinned: backendComment.is_pinned,
+    pinned_at: backendComment.pinned_at,
   };
 };
