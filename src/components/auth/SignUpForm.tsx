@@ -190,11 +190,13 @@ export default function SignUpForm() {
                 <button
                   type="button"
                   onClick={handleSendOtp}
-                  disabled={isVerifying || !email || emailVerified}
-                  className={styles.verifyButton}
-                  style={{ display: emailVerified ? 'none' : 'block' }} // visually hide but keep layout stable if needed, actually better to just hide it
+                  disabled={isVerifying || !email || otpSent || emailVerified}
+                  className={`${styles.verifyButton} ${
+                    email && !emailVerified ? styles.verifyButtonActive : ""
+                  }`}
+                  style={{ display: otpSent ? 'none' : 'block' }}
                 >
-                  {isVerifying ? "Sending..." : otpSent ? "Resend" : "Verify"}
+                  {isVerifying ? "Sending..." : emailVerified ? "Verified" : "Verify"}
                 </button>
 
                 {/* OTP Input */}
