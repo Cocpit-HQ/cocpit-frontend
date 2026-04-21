@@ -10,6 +10,10 @@ import WorkExperienceStep from "@/components/onboarding/WorkExperienceStep";
 import FreelancerStep from "@/components/onboarding/FreelancerStep";
 import OpenToWorkStep from "@/components/onboarding/OpenToWorkStep";
 import InterestsStep from "@/components/onboarding/InterestsStep";
+import { completeOnboarding } from "@/services/api/onboarding";
+import { useOnboardingStore } from "@/store/onboarding.store";
+import { getProfile } from "@/services/api/profile";
+import { useEffect } from "react";
 
 const INTERESTS_DATA = [
   "Design", "Tech", "Marketing", "AI", "Startups",
@@ -22,13 +26,49 @@ const SKILLS_DATA = [
 ];
 
 export default function OnboardingPage() {
-  const [step, setStep] = useState(0);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [showSubStep, setShowSubStep] = useState(false);
+  const { 
+    step, setStep, 
+    userRole, setUserRole, 
+    showSubStep, setShowSubStep,
+    selectedInterests, setSelectedInterests,
+    selectedSkills, setSelectedSkills,
+    isInitialized, setInitialized,
+    setFullName, setAccountName, setProfileImage, setLocation
+  } = useOnboardingStore();
+  
   const [isCompleted, setIsCompleted] = useState(false);
   const totalSteps = 5;
 
-  const handleNext = () => setStep((s) => Math.min(s + 1, totalSteps));
+  // Initialize store from profile data once
+  useEffect(() => {
+    const initStore = async () => {
+      if (isInitialized) return;
+      
+      try {
+        const profile = await getProfile();
+        if (profile && profile.user) {
+          if (profile.user.name) setFullName(profile.user.name);
+          if (profile.user.account_name) setAccountName(profile.user.account_name);
+          if (profile.user.avatar) setProfileImage(profile.user.avatar);
+          
+          // Set location if it exists (assuming backend might return it in a session or profile)
+          if (profile.user.location) {
+             // We use the location string as name, and mock or use ID if available
+             // For now, since UserData doesn't explicitly show ID, we initialize if we find a saved state
+             // But we need to keep the store consistent.
+          }
+          
+          setInitialized(true);
+        }
+      } catch (error) {
+        console.error("Failed to initialize onboarding store:", error);
+      }
+    };
+
+    initStore();
+  }, [isInitialized, setFullName, setAccountName, setProfileImage, setInitialized]);
+
+  const handleNext = () => setStep(Math.min(step + 1, totalSteps));
 
   const handleBack = () => {
     if (step === 5) {
@@ -39,7 +79,7 @@ export default function OnboardingPage() {
     } else if (step === 3 && showSubStep) {
       setShowSubStep(false);
     } else {
-      setStep((s) => Math.max(s - 1, 0));
+      setStep(Math.max(step - 1, 0));
     }
   };
 
@@ -52,12 +92,20 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleFinish = () => {
-    setIsCompleted(true);
-    // Automatically redirect after 2 seconds to feed
-    setTimeout(() => {
-      window.location.href = "/feed";
-    }, 2000);
+  const handleFinish = async () => {
+    try {
+      // Create empty FormData as expected by service (though backend doesn't use it yet)
+      const formData = new FormData();
+      await completeOnboarding(formData);
+      
+      setIsCompleted(true);
+      // Automatically redirect after 2 seconds to feed
+      setTimeout(() => {
+        window.location.href = "/feed";
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to complete onboarding:", error);
+    }
   };
 
   if (isCompleted) {
@@ -147,7 +195,10 @@ export default function OnboardingPage() {
       )}
       {step === 4 && (
         <InterestsStep
-          onNext={handleNext}
+          onNext={(interests) => {
+            setSelectedInterests(interests);
+            handleNext();
+          }}
           onBack={handleBack}
           currentStep={4}
           totalSteps={totalSteps}
@@ -156,11 +207,15 @@ export default function OnboardingPage() {
           placeholder="Search"
           initialData={INTERESTS_DATA}
           minSelection={4}
+          initialSelected={selectedInterests}
         />
       )}
       {step === 5 && (
         <InterestsStep
-          onNext={handleFinish}
+          onNext={(skills) => {
+            setSelectedSkills(skills);
+            handleFinish();
+          }}
           onBack={handleBack}
           currentStep={5}
           totalSteps={totalSteps}
@@ -170,6 +225,7 @@ export default function OnboardingPage() {
           initialData={SKILLS_DATA}
           actionLabel="Finish"
           minSelection={4}
+          initialSelected={selectedSkills}
         />
       )}
     </div>

@@ -4,8 +4,10 @@ import { useState } from "react";
 import { Loader2, ChevronLeft } from "lucide-react";
 import LocationAutocomplete from "@/components/ui/LocationAutocomplete";
 import { LocationSuggestion } from "@/services/api/location";
-import { completeOnboarding } from "@/services/api/onboarding";
+import { updateOnboardingLocation } from "@/services/api/onboarding";
 import { useToast } from "@/hooks/use-toast";
+import { useOnboardingStore } from "@/store/onboarding.store";
+import { useMemo } from "react";
 import styles from "./TellUsAboutYouStep.module.css";
 
 interface TellUsAboutYouStepProps {
@@ -16,20 +18,37 @@ interface TellUsAboutYouStepProps {
 }
 
 export default function TellUsAboutYouStep({ onNext, onBack, currentStep, totalSteps }: TellUsAboutYouStepProps) {
-  const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
+  const { locationId, locationName, latitude, longitude, setLocation } = useOnboardingStore();
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+
+  const selectedLocation = useMemo((): LocationSuggestion | null => {
+    if (!locationId || !locationName) return null;
+    return { 
+      id: parseInt(locationId), 
+      name: locationName,
+      latitude: latitude || "0",
+      longitude: longitude || "0"
+    };
+  }, [locationId, locationName, latitude, longitude]);
+
+  const setSelectedLocation = (loc: LocationSuggestion | null) => {
+    if (loc) {
+      setLocation(loc.id.toString(), loc.name, loc.latitude, loc.longitude);
+    } else {
+      setLocation(null, null, null, null);
+    }
+  };
 
   const handleContinue = async () => {
     if (!selectedLocation) return;
 
     setSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append("location_id", selectedLocation.id.toString());
-
-      // We pass partial data, the backend controller we updated handles merging
-      await completeOnboarding(formData);
+      await updateOnboardingLocation({
+        location_id: selectedLocation.id.toString(),
+        location: selectedLocation.name
+      });
 
       onNext();
     } catch (error) {

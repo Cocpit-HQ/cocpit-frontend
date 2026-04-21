@@ -99,18 +99,27 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  margin-bottom: 8px;
 }
 
-.optionsList {
+.selectionArea {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 8px;
   flex: 1;
+}
+
+.label {
+  font-family: var(--font-poppins), sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #71717a;
+  text-align: left;
+  margin-left: 4px;
 }
 
 .card {
   width: 100%;
-  max-width: 360px;
   height: 56px;
   display: flex;
   align-items: center;
@@ -118,76 +127,40 @@
   padding: 0 16px;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: #ffffff;
   cursor: pointer;
   transition: all 0.2s ease;
   box-sizing: border-box;
-  opacity: 1;
 }
 
-.card:not(.cardActive):hover {
-  background-color: rgba(255, 255, 255, 0.8);
+.card:hover {
   border-color: rgba(0, 0, 0, 0.15);
+  background-color: #fafafa;
 }
 
-.cardActive {
-  /* Only radio and text changes internally, no card container overrides */
+.selectContent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.cardText {
-  flex: 1;
+.selectText {
   font-family: var(--font-poppins), sans-serif;
   font-weight: 400;
   font-size: 16px;
-  line-height: 24px;
-  letter-spacing: 0%;
-  text-align: left;
-  color: #6B7280;
+  color: #18181b;
 }
 
-.cardActive .cardText {
-  /* No color change for text on selection */
-}
-
-.radio {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid #9CA3AF;
-  background: transparent;
-  opacity: 0.38;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.radioActive {
-  opacity: 1;
-  border-color: #6366F1;
-  background-color: transparent;
-}
-
-.radioInner {
-  width: 10px;
-  height: 10px;
-  background-color: #6366F1;
-  border-radius: 50%;
-  transform: scale(0);
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.radioActive .radioInner {
-  transform: scale(1);
+.chevron {
+  color: #71717a;
+  transition: transform 0.2s ease;
 }
 
 .actionRow {
   display: flex;
   width: 100%;
   gap: 16px;
+  margin-top: auto;
 }
 
 .backButton {
@@ -212,12 +185,11 @@
 
 .continueButton {
   flex: 1;
-  width: 296px;
   height: 48px;
   border-radius: 16px;
-  border: 1px solid #6B7280;
-  background-color: transparent;
-  color: #6B7280;
+  border: none;
+  background-color: #6366F1;
+  color: #ffffff;
   font-family: var(--font-poppins), sans-serif;
   font-size: 16px;
   font-weight: 500;
@@ -226,22 +198,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
-  padding: 8px 16px;
-}
-
-.continueButton:not(:disabled) {
-  background-color: #6366F1;
-  border: 1px solid #FFFFFF1A;
-  color: #ffffff;
 }
 
 .continueButton:hover:not(:disabled) {
   background-color: #4F46E5;
-  border-color: #4F46E5;
-  color: #ffffff;
 }
 
 .continueButton:disabled {

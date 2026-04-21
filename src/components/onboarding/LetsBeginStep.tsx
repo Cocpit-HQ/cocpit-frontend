@@ -117,7 +117,10 @@ export default function LetsBeginStep({
           <button
             type="button"
             className={`${styles.optionCard} ${selected === "manual" ? styles.selectedCard : ""}`}
-            onClick={() => setSelected("manual")}
+            onClick={() => {
+              setSelected("manual");
+              onNext();
+            }}
           >
             <div className={styles.iconWrapper}>
               <Icon

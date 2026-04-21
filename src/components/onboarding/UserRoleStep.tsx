@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronDown } from "lucide-react";
+import { useOnboardingStore } from "@/store/onboarding.store";
 import styles from "./UserRoleStep.module.css";
 
 interface UserRoleStepProps {
@@ -19,7 +19,9 @@ const ROLES = [
 ];
 
 export default function UserRoleStep({ onNext, onBack, currentStep, totalSteps }: UserRoleStepProps) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { userRole, setUserRole } = useOnboardingStore();
+  const selectedId = userRole;
+  const setSelectedId = setUserRole;
 
   const handleContinue = () => {
     if (selectedId) {
@@ -51,20 +53,17 @@ export default function UserRoleStep({ onNext, onBack, currentStep, totalSteps }
           <p className={styles.subtitle}>This helps personalize your experience</p>
         </div>
 
-        {/* Options List */}
-        <div className={styles.optionsList}>
-          {ROLES.map((role) => (
-            <div
-              key={role.id}
-              className={`${styles.card} ${selectedId === role.id ? styles.cardActive : ""}`}
-              onClick={() => setSelectedId(role.id)}
-            >
-              <span className={styles.cardText}>{role.label}</span>
-              <div className={`${styles.radio} ${selectedId === role.id ? styles.radioActive : ""}`}>
-                <div className={styles.radioInner} />
-              </div>
+        {/* Selection Area */}
+        <div className={styles.selectionArea}>
+          <span className={styles.label}>Current status</span>
+          <div className={styles.card}>
+            <div className={styles.selectContent}>
+              <span className={styles.selectText}>
+                {ROLES.find(r => r.id === (selectedId || "student"))?.label}
+              </span>
             </div>
-          ))}
+            <ChevronDown className={styles.chevron} size={20} />
+          </div>
         </div>
 
         {/* Actions */}

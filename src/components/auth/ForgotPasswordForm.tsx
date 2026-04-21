@@ -174,7 +174,7 @@ export default function ForgotPasswordForm() {
                 </label>
                 <input
                   type="text"
-                  placeholder="xyz@gmail.com"
+                  placeholder="Enter email"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -200,13 +200,13 @@ export default function ForgotPasswordForm() {
             <div className={styles.form}>
               <div className={styles.fieldGroup}>
                 <label className={styles.label}>
-                  Enter OTP
+                  Verification code
                 </label>
                 <div className={styles.fieldGroup}>
                   <div className={styles.inputWrapper}>
                     <input
                       type="text"
-                      placeholder="223344"
+                      placeholder="Enter OTP"
                       value={otp}
                       onChange={(e) => {
                         const val = e.target.value;
@@ -283,7 +283,7 @@ export default function ForgotPasswordForm() {
                 <div className={styles.inputWrapperFlex}>
                   <input
                     type={showNewPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder="Set password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     className={`${styles.input} ${styles.inputWithIcon}`}
@@ -303,7 +303,7 @@ export default function ForgotPasswordForm() {
                 <div className={styles.inputWrapperFlex}>
                   <input
                     type={showConfirmPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder="Set password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className={`${styles.input} ${styles.inputWithIcon}`}
