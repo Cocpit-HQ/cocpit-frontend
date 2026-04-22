@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronDown } from "lucide-react";
 import styles from "./WorkExperienceStep.module.css";
 
 interface WorkExperienceStepProps {
-  onNext: () => void;
+  onNext: (data: any) => void;
   onBack: () => void;
   currentStep: number;
   totalSteps: number;
@@ -114,7 +114,7 @@ export default function WorkExperienceStep({ onNext, onBack, currentStep, totalS
           <button
             type="button"
             className={styles.continueButton}
-            onClick={onNext}
+            onClick={() => onNext({ company_name: company, title: role })}
             disabled={!isValid}
           >
             Continue

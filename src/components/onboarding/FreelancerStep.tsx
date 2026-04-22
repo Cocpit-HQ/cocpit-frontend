@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronDown } from "lucide-react";
 import styles from "./FreelancerStep.module.css";
 
 interface FreelancerStepProps {
-  onNext: () => void;
+  onNext: (data: any) => void;
   onBack: () => void;
   currentStep: number;
   totalSteps: number;
@@ -86,7 +86,7 @@ export default function FreelancerStep({ onNext, onBack, currentStep, totalSteps
           <button
             type="button"
             className={styles.continueButton}
-            onClick={onNext}
+            onClick={() => onNext({ title: role })}
             disabled={!isValid}
           >
             Continue

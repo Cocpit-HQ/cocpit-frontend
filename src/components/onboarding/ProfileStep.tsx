@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
 import { Loader2, ChevronLeft, Check, X, Pencil } from "lucide-react";
-import { checkAccountNameAvailability, completeOnboarding } from "@/services/api/onboarding";
+import { checkAccountNameAvailability, updateProfile } from "@/services/api/onboarding";
 import { getProfile, uploadAvatar } from "@/services/api/profile";
 import { useDebounce } from "@/hooks/use-debounce";
 import styles from "./ProfileStep.module.css";
@@ -146,10 +146,9 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
         formData.append("avatar", profileImageFile);
       }
       formData.append("account_name", accountName);
-      formData.append("location_id", "1");
       formData.append("full_name", fullName);
 
-      await completeOnboarding(formData);
+      await updateProfile(formData);
 
       toast({ title: "Setup Complete", description: "Your profile has been set up successfully." });
       // Move to next step

@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronDown } from "lucide-react";
+import SchoolAutocomplete from "@/components/ui/SchoolAutocomplete";
 import styles from "./EducationStep.module.css";
 
 interface EducationStepProps {
-  onNext: () => void;
+  onNext: (data: any) => void;
   onBack: () => void;
   currentStep: number;
   totalSteps: number;
@@ -32,10 +33,12 @@ const SPECIALIZATIONS = [
 ];
 
 export default function EducationStep({ onNext, onBack, currentStep, totalSteps }: EducationStepProps) {
+  const [schoolOrgId, setSchoolOrgId] = useState<string | null>(null);
+  const [schoolName, setSchoolName] = useState("");
   const [education, setEducation] = useState("");
   const [specialization, setSpecialization] = useState("");
 
-  const isValid = education !== "" && specialization !== "";
+  const isValid = education !== "" && specialization !== "" && schoolName.trim() !== "";
 
   return (
     <div className={styles.container}>
@@ -64,7 +67,19 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
         {/* Form */}
         <div className={styles.form}>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Education</label>
+            <label className={styles.label}>School / University</label>
+            <SchoolAutocomplete
+              selectedId={schoolOrgId}
+              selectedName={schoolName}
+              onSelect={(id, name) => {
+                setSchoolOrgId(id);
+                setSchoolName(name);
+              }}
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Degree</label>
             <div className={styles.selectWrapper}>
               <select
                 className={styles.select}
@@ -112,7 +127,12 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
           <button
             type="button"
             className={styles.continueButton}
-            onClick={onNext}
+            onClick={() => onNext({ 
+              school_org_id: schoolOrgId, 
+              school_name: schoolName, 
+              degree: education, 
+              field_of_study: specialization 
+            })}
             disabled={!isValid}
           >
             Continue

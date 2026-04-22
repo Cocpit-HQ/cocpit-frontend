@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Loader2, ChevronLeft } from "lucide-react";
 import LocationAutocomplete from "@/components/ui/LocationAutocomplete";
 import { LocationSuggestion } from "@/services/api/location";
-import { completeOnboarding } from "@/services/api/onboarding";
+import { updateLocation } from "@/services/api/onboarding";
 import { useToast } from "@/hooks/use-toast";
 import styles from "./TellUsAboutYouStep.module.css";
 
@@ -25,11 +25,10 @@ export default function TellUsAboutYouStep({ onNext, onBack, currentStep, totalS
 
     setSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append("location_id", selectedLocation.id.toString());
-
-      // We pass partial data, the backend controller we updated handles merging
-      await completeOnboarding(formData);
+      await updateLocation({
+        location_id: selectedLocation.id.toString(),
+        location: selectedLocation.name
+      });
 
       onNext();
     } catch (error) {

@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronDown } from "lucide-react";
 import styles from "./OpenToWorkStep.module.css";
 
 interface OpenToWorkStepProps {
-  onNext: () => void;
+  onNext: (data: any) => void;
   onBack: () => void;
   currentStep: number;
   totalSteps: number;
@@ -84,7 +84,7 @@ export default function OpenToWorkStep({ onNext, onBack, currentStep, totalSteps
           <button
             type="button"
             className={styles.continueButton}
-            onClick={onNext}
+            onClick={() => onNext({ title: jobType })}
             disabled={!isValid}
           >
             Continue

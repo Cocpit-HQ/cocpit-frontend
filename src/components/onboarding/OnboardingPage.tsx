@@ -10,6 +10,7 @@ import WorkExperienceStep from "@/components/onboarding/WorkExperienceStep";
 import FreelancerStep from "@/components/onboarding/FreelancerStep";
 import OpenToWorkStep from "@/components/onboarding/OpenToWorkStep";
 import InterestsStep from "@/components/onboarding/InterestsStep";
+import { completeOnboarding, saveRole, saveDetails, saveInterests, saveSkills } from "@/services/api/onboarding";
 
 const INTERESTS_DATA = [
   "Design", "Tech", "Marketing", "AI", "Startups",
@@ -43,21 +44,71 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleRoleSelect = (role: string) => {
-    setUserRole(role);
-    if (role === "student" || role === "working" || role === "freelancer" || role === "open_to_work") {
-      setShowSubStep(true);
-    } else {
-      handleNext();
+  const handleRoleSelect = async (role: string) => {
+    try {
+      await saveRole({ role });
+      setUserRole(role);
+      if (role === "student" || role === "working" || role === "freelancer" || role === "open_to_work") {
+        setShowSubStep(true);
+      } else {
+        handleNext();
+      }
+    } catch (err) {
+      console.error("Failed to save role:", err);
     }
   };
 
-  const handleFinish = () => {
-    setIsCompleted(true);
-    // Automatically redirect after 2 seconds to feed
-    setTimeout(() => {
-      window.location.href = "/feed";
-    }, 2000);
+  const handleDetailsSubmit = async (details: any) => {
+    try {
+      // Map frontend roles to backend enum
+      const roleMap: Record<string, string> = {
+        working: "employed",
+        freelancer: "self_employed",
+        open_to_work: "unemployed",
+        student: "student",
+      };
+      
+      const mappedRole = userRole ? (roleMap[userRole] || userRole) : "unemployed";
+      // Strip null values so Zod optional() fields don't receive explicit nulls
+      const cleanDetails = Object.fromEntries(
+        Object.entries(details).filter(([, v]) => v !== null && v !== undefined && v !== "")
+      );
+      await saveDetails({ role: mappedRole, ...cleanDetails });
+      handleNext();
+    } catch (err) {
+      console.error("Failed to save details:", err);
+    }
+  };
+
+  const handleInterestsSubmit = async (interests: string[]) => {
+    try {
+      await saveInterests({ interests });
+      handleNext();
+    } catch (err) {
+      console.error("Failed to save interests:", err);
+    }
+  };
+
+  const handleSkillsSubmit = async (skills: string[]) => {
+    try {
+      await saveSkills({ skills });
+      handleFinish();
+    } catch (err) {
+      console.error("Failed to save skills:", err);
+    }
+  };
+
+  const handleFinish = async () => {
+    try {
+      await completeOnboarding();
+      setIsCompleted(true);
+      // Automatically redirect after 2 seconds to feed
+      setTimeout(() => {
+        window.location.href = "/feed";
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to complete onboarding:", err);
+    }
   };
 
   if (isCompleted) {
@@ -116,28 +167,28 @@ export default function OnboardingPage() {
         ) : (
           userRole === "student" ? (
             <EducationStep
-              onNext={handleNext}
+              onNext={handleDetailsSubmit}
               onBack={handleBack}
               currentStep={3}
               totalSteps={totalSteps}
             />
           ) : userRole === "working" ? (
             <WorkExperienceStep
-              onNext={handleNext}
+              onNext={handleDetailsSubmit}
               onBack={handleBack}
               currentStep={3}
               totalSteps={totalSteps}
             />
           ) : userRole === "freelancer" ? (
             <FreelancerStep
-              onNext={handleNext}
+              onNext={handleDetailsSubmit}
               onBack={handleBack}
               currentStep={3}
               totalSteps={totalSteps}
             />
           ) : (
             <OpenToWorkStep
-              onNext={handleNext}
+              onNext={handleDetailsSubmit}
               onBack={handleBack}
               currentStep={3}
               totalSteps={totalSteps}
@@ -147,7 +198,7 @@ export default function OnboardingPage() {
       )}
       {step === 4 && (
         <InterestsStep
-          onNext={handleNext}
+          onNext={handleInterestsSubmit}
           onBack={handleBack}
           currentStep={4}
           totalSteps={totalSteps}
@@ -160,7 +211,7 @@ export default function OnboardingPage() {
       )}
       {step === 5 && (
         <InterestsStep
-          onNext={handleFinish}
+          onNext={handleSkillsSubmit}
           onBack={handleBack}
           currentStep={5}
           totalSteps={totalSteps}
