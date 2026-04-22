@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronDown } from "lucide-react";
+import { useOnboardingStore } from "@/store/onboarding.store";
+import { saveOnboardingDetails } from "@/services/api/onboarding";
 import styles from "./WorkExperienceStep.module.css";
 
 interface WorkExperienceStepProps {
@@ -34,10 +36,30 @@ const ROLES = [
 ];
 
 export default function WorkExperienceStep({ onNext, onBack, currentStep, totalSteps }: WorkExperienceStepProps) {
+  const { userRole } = useOnboardingStore();
   const [company, setCompany] = useState("");
   const [role, setRole] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const isValid = company !== "" && role !== "";
+
+  const handleContinue = async () => {
+    if (!isValid || !userRole) return;
+
+    setIsSaving(true);
+    try {
+      await saveOnboardingDetails({
+        role: userRole,
+        company_name: company,
+        title: role,
+      });
+      onNext();
+    } catch (error) {
+      console.error("Failed to save work details:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -114,10 +136,10 @@ export default function WorkExperienceStep({ onNext, onBack, currentStep, totalS
           <button
             type="button"
             className={styles.continueButton}
-            onClick={onNext}
-            disabled={!isValid}
+            onClick={handleContinue}
+            disabled={!isValid || isSaving}
           >
-            Continue
+            {isSaving ? "Saving..." : "Continue"}
           </button>
         </div>
       </div>

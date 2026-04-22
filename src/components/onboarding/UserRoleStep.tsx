@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronDown } from "lucide-react";
 import { useOnboardingStore } from "@/store/onboarding.store";
+import { saveOnboardingRole } from "@/services/api/onboarding";
 import styles from "./UserRoleStep.module.css";
 
 interface UserRoleStepProps {
@@ -24,6 +25,7 @@ const ROLES = [
 export default function UserRoleStep({ onNext, onBack, currentStep, totalSteps }: UserRoleStepProps) {
   const { userRole, setUserRole } = useOnboardingStore();
   const [isOpen, setIsOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const selectedId = userRole;
 
   const handleSelect = (id: string) => {
@@ -31,9 +33,17 @@ export default function UserRoleStep({ onNext, onBack, currentStep, totalSteps }
     setIsOpen(false);
   };
 
-  const handleContinue = () => {
-    if (selectedId) {
+  const handleContinue = async () => {
+    if (!selectedId) return;
+
+    setIsSaving(true);
+    try {
+      await saveOnboardingRole(selectedId);
       onNext(selectedId);
+    } catch (error) {
+      console.error("Failed to save role:", error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -65,8 +75,8 @@ export default function UserRoleStep({ onNext, onBack, currentStep, totalSteps }
         <div className={styles.selectionArea}>
           <span className={styles.label}>Current status</span>
           <div className={styles.dropdownContainer}>
-            <div 
-              className={`${styles.card} ${isOpen ? styles.cardActive : ""}`} 
+            <div
+              className={`${styles.card} ${isOpen ? styles.cardActive : ""}`}
               onClick={() => setIsOpen(!isOpen)}
             >
               <div className={styles.selectContent}>
@@ -106,9 +116,9 @@ export default function UserRoleStep({ onNext, onBack, currentStep, totalSteps }
             type="button"
             className={styles.continueButton}
             onClick={handleContinue}
-            disabled={!selectedId}
+            disabled={!selectedId || isSaving}
           >
-            Continue
+            {isSaving ? "Saving..." : "Continue"}
           </button>
         </div>
       </div>

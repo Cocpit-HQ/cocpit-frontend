@@ -119,7 +119,7 @@ export default function ForgotPasswordForm() {
         <div className={styles.formPanel}>
           <div className={styles.successContent}>
             <Image
-              src="/assets/Illustration - Asset 40 1.svg"
+              src="/assets/Illustration - Asset 40 1.png"
               alt="Success"
               width={182}
               height={187}
