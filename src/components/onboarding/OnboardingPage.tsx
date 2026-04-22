@@ -85,11 +85,8 @@ export default function OnboardingPage() {
 
   const handleRoleSelect = (role: string) => {
     setUserRole(role);
-    if (role === "student" || role === "working" || role === "freelancer" || role === "open_to_work") {
-      setShowSubStep(true);
-    } else {
-      handleNext();
-    }
+    // All roles now have a sub-step to collect more info
+    setShowSubStep(true);
   };
 
   const handleFinish = async () => {
@@ -162,21 +159,21 @@ export default function OnboardingPage() {
             totalSteps={totalSteps}
           />
         ) : (
-          userRole === "student" ? (
+          ["student", "fresher", "intern"].includes(userRole || "") ? (
             <EducationStep
               onNext={handleNext}
               onBack={handleBack}
               currentStep={3}
               totalSteps={totalSteps}
             />
-          ) : userRole === "working" ? (
+          ) : userRole === "employed" ? (
             <WorkExperienceStep
               onNext={handleNext}
               onBack={handleBack}
               currentStep={3}
               totalSteps={totalSteps}
             />
-          ) : userRole === "freelancer" ? (
+          ) : userRole === "self_employed" ? (
             <FreelancerStep
               onNext={handleNext}
               onBack={handleBack}

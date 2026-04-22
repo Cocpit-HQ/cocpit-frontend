@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ChevronLeft, ChevronDown } from "lucide-react";
 import { useOnboardingStore } from "@/store/onboarding.store";
 import styles from "./UserRoleStep.module.css";
@@ -13,15 +14,22 @@ interface UserRoleStepProps {
 
 const ROLES = [
   { id: "student", label: "Student" },
-  { id: "working", label: "Working" },
-  { id: "freelancer", label: "Freelancer" },
-  { id: "open_to_work", label: "Open to work" },
+  { id: "fresher", label: "Fresher" },
+  { id: "intern", label: "Intern" },
+  { id: "self_employed", label: "Self employed" },
+  { id: "employed", label: "Employed" },
+  { id: "unemployed", label: "Unemployed" },
 ];
 
 export default function UserRoleStep({ onNext, onBack, currentStep, totalSteps }: UserRoleStepProps) {
   const { userRole, setUserRole } = useOnboardingStore();
+  const [isOpen, setIsOpen] = useState(false);
   const selectedId = userRole;
-  const setSelectedId = setUserRole;
+
+  const handleSelect = (id: string) => {
+    setUserRole(id);
+    setIsOpen(false);
+  };
 
   const handleContinue = () => {
     if (selectedId) {
@@ -56,13 +64,32 @@ export default function UserRoleStep({ onNext, onBack, currentStep, totalSteps }
         {/* Selection Area */}
         <div className={styles.selectionArea}>
           <span className={styles.label}>Current status</span>
-          <div className={styles.card}>
-            <div className={styles.selectContent}>
-              <span className={styles.selectText}>
-                {ROLES.find(r => r.id === (selectedId || "student"))?.label}
-              </span>
+          <div className={styles.dropdownContainer}>
+            <div 
+              className={`${styles.card} ${isOpen ? styles.cardActive : ""}`} 
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              <div className={styles.selectContent}>
+                <span className={`${styles.selectText} ${!selectedId ? styles.placeholder : ""}`}>
+                  {ROLES.find(r => r.id === selectedId)?.label || "Choose your status"}
+                </span>
+              </div>
+              <ChevronDown className={`${styles.chevron} ${isOpen ? styles.chevronRotate : ""}`} size={20} />
             </div>
-            <ChevronDown className={styles.chevron} size={20} />
+
+            {isOpen && (
+              <div className={styles.optionsList}>
+                {ROLES.map((role) => (
+                  <div
+                    key={role.id}
+                    className={`${styles.option} ${selectedId === role.id ? styles.optionSelected : ""}`}
+                    onClick={() => handleSelect(role.id)}
+                  >
+                    {role.label}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
