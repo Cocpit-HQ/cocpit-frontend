@@ -25,3 +25,24 @@ export const completeOnboarding = async (data: FormData): Promise<CompleteOnboar
   const response = await api.post<CompleteOnboardingResponse>("/onboarding/complete", data);
   return response.data;
 };
+
+export interface UpdateOnboardingProfilePayload {
+  account_name: string;
+  full_name: string;
+  location_id?: string;
+}
+
+export const updateOnboardingProfile = async (formData: FormData): Promise<any> => {
+  const response = await api.patch("/onboarding/profile", formData);
+  return response.data;
+};
+
+export interface UpdateOnboardingLocationPayload {
+  location_id: string;
+  location: string;
+}
+
+export const updateOnboardingLocation = async (payload: UpdateOnboardingLocationPayload): Promise<any> => {
+  const response = await api.patch("/onboarding/location", payload);
+  return response.data;
+};

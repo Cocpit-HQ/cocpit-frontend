@@ -67,7 +67,7 @@
   -webkit-background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  background-image: linear-gradient(90deg, #009DDF 58.17%, #22C55E 100%);
+  background-image: linear-gradient(90deg, #6366F1 0%, #8B5CF6 100%);
   display: block;
 }
 
@@ -171,8 +171,8 @@
 
 .input:focus {
   outline: none;
-  border-color: #03b87b;
-  box-shadow: 0 0 0 1px #03b87b;
+  border-color: #6366F1;
+  box-shadow: 0 0 0 1px #6366F1;
 }
 
 .input:disabled {
@@ -235,7 +235,7 @@
 }
 
 .forgotPasswordLink:hover {
-  color: #03b87b;
+  color: #6366F1;
 }
 
 /* ── Submit button ───────────────────────────────────────────────── */
@@ -252,7 +252,7 @@
 }
 
 .submitButtonActive {
-  background: #009DDF;
+  background: #6366F1;
   color: #ffffff;
 }
 
@@ -351,7 +351,7 @@
 }
 
 .signupLink {
-  color: #0ea5e9;
+  color: #6366F1;
   text-decoration: none;
 }
 

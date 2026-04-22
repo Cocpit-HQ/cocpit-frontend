@@ -15,6 +15,7 @@ interface InterestsStepProps {
   initialData: string[];
   actionLabel?: string;
   minSelection?: number;
+  initialSelected?: string[];
 }
 
 export default function InterestsStep({ 
@@ -27,10 +28,11 @@ export default function InterestsStep({
   placeholder,
   initialData,
   actionLabel = "Continue",
-  minSelection = 1
+  minSelection = 1,
+  initialSelected = []
 }: InterestsStepProps) {
   const [search, setSearch] = useState("");
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectedItems, setSelectedItems] = useState<string[]>(initialSelected);
   const [showError, setShowError] = useState(false);
 
   const toggleItem = (item: string) => {

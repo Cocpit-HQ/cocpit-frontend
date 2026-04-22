@@ -8,6 +8,7 @@ import AuthImagePanel from "@/components/auth/AuthImagePanel";
 import { register, requestOTP, verifyOTP } from "@/services/api/auth";
 import { registrationSchema } from "@/lib/validators";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import styles from "./SignUpForm.module.css";
 
 export default function SignUpForm() {
@@ -89,13 +90,26 @@ export default function SignUpForm() {
   const handleRegister = async (data: any) => {
     setIsVerifying(true);
     try {
-      const response = await register(data);
+      await register(data);
+      
+      // Auto-login after registration
+      const loginResult = await signIn("credentials", {
+        redirect: false,
+        email: data.email,
+        password: data.password,
+      });
+
+      if (loginResult?.error) {
+        throw new Error("Registration successful, but automatic login failed. Please sign in manually.");
+      }
+
       toast({
         title: "Account Created!",
-        description: "Welcome to Cocpit! Redirecting to login...",
+        description: "Welcome to Cocpit! Setting up your profile...",
       });
+      
       setTimeout(() => {
-        router.push("/");
+        router.push("/onboarding");
       }, 1500);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || "An unexpected error occurred.";
@@ -151,14 +165,21 @@ export default function SignUpForm() {
           {/* Header Title */}
           <div className={styles.header}>
             <h2 className={styles.title}>
-              {step === 1 ? (
-                <>Welcome to{" "}<span className={styles.titleGradient}>Cocpit</span></>
-              ) : (
+              {step === 2 ? (
                 <>Create{" "}<span className={styles.titleGradient}>password</span></>
+              ) : otpSent ? (
+                <>Verify your{" "}<span className={styles.titleGradient}>account</span></>
+              ) : (
+                <>Welcome to{" "}<span className={styles.titleGradient}>Cocpit</span></>
               )}
             </h2>
             <p className={styles.subtitle}>
-              {step === 1 ? "Find jobs, connect, grow" : "Set a password to continue"}
+              {step === 2 
+                ? "Set a password to continue" 
+                : otpSent 
+                  ? "Enter the code sent to your email" 
+                  : "Find jobs, connect, grow"
+              }
             </p>
           </div>
 
@@ -172,7 +193,7 @@ export default function SignUpForm() {
                   <label className={styles.label}>Email</label>
                   <input
                     type="email"
-                    placeholder="xyz@gmail.com"
+                    placeholder="Enter email"
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
@@ -190,21 +211,22 @@ export default function SignUpForm() {
                 <button
                   type="button"
                   onClick={handleSendOtp}
-                  disabled={isVerifying || !email || emailVerified}
-                  className={styles.verifyButton}
-                  style={{ display: emailVerified ? 'none' : 'block' }} // visually hide but keep layout stable if needed, actually better to just hide it
+                  disabled={isVerifying || !email || otpSent || emailVerified}
+                  className={`${styles.verifyButton} ${email && !emailVerified ? styles.verifyButtonActive : ""
+                    }`}
+                  style={{ display: otpSent ? 'none' : 'block' }}
                 >
-                  {isVerifying ? "Sending..." : otpSent ? "Resend" : "Verify"}
+                  {isVerifying ? "Sending..." : emailVerified ? "Verified" : "Verify"}
                 </button>
 
                 {/* OTP Input */}
                 {otpSent && (
                   <div className={styles.fieldGroup}>
-                    <label className={styles.label}>Enter OTP</label>
+                    <label className={styles.label}>Verification code</label>
                     <div className={styles.inputWrapper}>
                       <input
                         type="text"
-                        placeholder="223344"
+                        placeholder="Enter OTP"
                         value={otp}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -281,7 +303,7 @@ export default function SignUpForm() {
                   <div className={styles.inputWrapper}>
                     <input
                       type={showPassword ? "text" : "password"}
-                      placeholder="123456789"
+                      placeholder="Set password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className={`${styles.input} ${styles.inputWithIcon}`}
