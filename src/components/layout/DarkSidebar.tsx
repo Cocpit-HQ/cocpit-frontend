@@ -1,9 +1,10 @@
 "use client"
 
 import React from 'react'
-import { Home, Users, Calendar, User, Settings, Briefcase, BarChart3, Bot } from 'lucide-react'
+import { Home, Users, Compass, Sparkles, Briefcase, Calendar, BarChart3, User, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { useCompanyPermissions } from '@/components/organizations/hooks/use-company'
 import { useNavigationMemoryLink } from '@/hooks/use-navigation-memory'
@@ -27,107 +28,143 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
     ? `/organization/${activeProfile.slug}` 
     : '/profile';
 
-  const allNavItems = [
-    { icon: Home, label: 'Feed', subtext: 'Latest updates', href: '/feed', show: true },
-    { icon: Users, label: 'Showcase', subtext: 'Professional stories', href: '/showcase', show: true },
-    { icon: Bot, label: 'AI Assistant', subtext: 'Smart suggestions', href: '/ai-assistant', show: true },
-    { icon: Calendar, label: 'Events', subtext: 'Network & earn', href: '/events', show: true },
-    { icon: User, label: 'Profile', subtext: 'Your presence', href: profileHref, show: true },
-    { icon: Settings, label: 'Settings', subtext: 'Preferences', href: settingsHref, show: !isCompany || canEdit || checkPermission('MANAGE_SETTINGS') },
+  const sections = [
+    {
+      title: 'Core',
+      items: [
+        { icon: Home, label: 'Feed', href: '/feed', show: true },
+        { icon: Users, label: 'Connection', href: '/connections', show: true },
+        { icon: Compass, label: 'Explore', href: '/explore', show: true },
+        { icon: Sparkles, label: 'AI', href: '/ai-assistant', show: true },
+      ]
+    },
+    {
+      title: 'Work',
+      items: [
+        { icon: Briefcase, label: 'Jobs', href: '/jobs', show: !isCompany || checkPermission('POST_JOBS') || checkPermission('VIEW_APPLICANTS') },
+        { icon: Calendar, label: 'Events', href: '/events', show: true },
+      ]
+    },
+    {
+      title: 'Insights',
+      items: [
+        { icon: BarChart3, label: 'Analytics', href: analyticsHref, show: !isCompany || checkPermission('VIEW_ANALYTICS') },
+      ]
+    },
+    {
+      title: 'Account',
+      items: [
+        { icon: User, label: 'Profile', href: profileHref, show: true },
+        { icon: Settings, label: 'Settings', href: settingsHref, show: !isCompany || canEdit || checkPermission('MANAGE_SETTINGS') },
+      ]
+    }
   ];
-
-  const navItems = allNavItems.filter(item => item.show);
-
-  const allQuickActions = [
-    { icon: Briefcase, label: 'Jobs', badge: '12 new', href: '/jobs', show: !isCompany || checkPermission('POST_JOBS') || checkPermission('VIEW_APPLICANTS') },
-    { icon: BarChart3, label: 'Analytics', badge: 'Insights', href: analyticsHref, show: !isCompany || checkPermission('VIEW_ANALYTICS') },
-  ];
-
-  const quickActions = allQuickActions.filter(item => item.show);
 
   const isActive = (href: string) => {
     if (!pathname) return false
-
-    // Feed special case
-    if (href === '/feed') {
-      return pathname === '/feed' || pathname === '/'
-    }
-
-    // Profile special case
-    if (href === '/profile') {
-      return pathname === '/profile'
-    }
-
-    // Default behavior
-    
-    // For organization profile, ensure we don't match sub-paths like /settings
+    if (href === '/feed') return pathname === '/feed' || pathname === '/'
     if (href.startsWith('/organization/') && !href.endsWith('/settings') && !href.endsWith('/analytics')) {
         return pathname === href;
     }
-
     return pathname.startsWith(href)
   }
 
   return (
-    <aside className={`w-64 h-screen fixed left-0 top-0 flex flex-col border-r bg-sidebar border-sidebar-border ${className}`}>
-      <div className="px-6 py-6 border-b border-sidebar-border">
-        <h1 className="text-2xl text-primary">COCPIT</h1>
-      </div>
-
-      <div className="flex-1 py-6 overflow-auto">
-        <div className="px-3 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const active = isActive(item.href)
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, item.href)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${active ? 'bg-primary text-primary-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}>
-                <Icon className="w-5 h-5" />
-                <div className="flex-1 text-left">
-                  <div className={`${active ? 'text-primary-foreground' : 'text-sidebar-foreground'}`}>{item.label}</div>
-                  {item.subtext && <div className={`text-xs ${active ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>{item.subtext}</div>}
-                </div>
-              </Link>
-            )
-          })}
+    <aside className={`w-72 h-screen fixed left-0 top-0 flex flex-col bg-white border-r border-slate-100 ${className}`}>
+      {/* Header / Logo */}
+      <div className="px-8 py-8 flex items-center gap-3">
+        <div className="relative w-8 h-8">
+          <Image 
+            src="/assets/logo.PNG" 
+            alt="Cocpit" 
+            fill 
+            className="object-contain"
+          />
         </div>
+        <span className="sr-only">Cocpit</span>
+      </div>
 
-        {quickActions.length > 0 && (
-          <div className="mt-8 px-3">
-            <h3 className="text-xs text-muted-foreground px-3 mb-2">QUICK ACTIONS</h3>
-            <div className="space-y-1">
-              {quickActions.map((item) => {
-                const Icon = item.icon
-                const active = isActive(item.href)
-                return (
-                  <Link key={item.label} href={item.href} onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, item.href)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${active ? 'bg-primary/10 text-primary' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}>
-                    <Icon className="w-5 h-5" />
-                    <div className="flex-1 text-left">
-                      <div className="text-sidebar-foreground">{item.label}</div>
-                      <div className="text-xs text-muted-foreground">{item.badge}</div>
-                    </div>
-                  </Link>
-                )
-              })}
+      {/* Navigation Sections */}
+      <div className="flex-1 overflow-y-auto px-4 py-2 scrollbar-none">
+        {sections.map((section) => {
+          const visibleItems = section.items.filter(i => i.show);
+          if (visibleItems.length === 0) return null;
+
+          return (
+            <div key={section.title} className="mb-6">
+              <h3 className="px-4 mb-2 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
+                {section.title}
+              </h3>
+              <div className="space-y-0.5">
+                {visibleItems.map((item) => {
+                  const Icon = item.icon
+                  const active = isActive(item.href)
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, item.href)}
+                      className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                        active 
+                          ? 'bg-[#EEE9FF] text-[#6366F1]' 
+                          : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                      }`}
+                    >
+                      <Icon className={`w-[22px] h-[22px] ${active ? 'text-[#6366F1]' : 'text-slate-400 group-hover:text-slate-600'}`} strokeWidth={active ? 2.5 : 2} />
+                      <span className={`text-[15px] font-medium leading-none`}>
+                        {item.label}
+                      </span>
+                    </Link>
+                  )
+                })}
+              </div>
             </div>
+          )
+        })}
+
+        {/* Business Hub Card */}
+        <div className="mt-4 px-2">
+          <div className="bg-[#EEE9FF] rounded-[24px] p-6 relative overflow-hidden group transition-all hover:bg-[#E5DEFF] cursor-pointer">
+            <Link 
+              href={isCompany ? "/business/overview" : "/business/create-company"}
+              className="block"
+            >
+              <h4 className="text-[#6366F1] font-semibold text-[15px] mb-1">Business Hub</h4>
+              <p className="text-[#6366F1]/70 text-[12px] leading-snug">
+                Manage your business page here
+              </p>
+            </Link>
           </div>
-        )}
-
+        </div>
       </div>
 
-      <div className="p-3 border-t border-sidebar-border">
-        <Link 
-          href={isCompany ? "/business/overview" : "/business/create-company"}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-full bg-[#1e293b] border border-white/10 hover:bg-[#2d3a4f] transition-all group"
-        >
-          <Briefcase className="w-5 h-5 text-[#818cf8] group-hover:scale-110 transition-transform" strokeWidth={2.5} />
-          <span className="text-sm font-medium text-slate-100">Cocpit Business</span>
-        </Link>
+      {/* Profile Section */}
+      <div className="p-6 border-t border-slate-50">
+        <div className="flex items-center gap-3 px-2">
+          <div className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-slate-100 flex-shrink-0">
+            {activeProfile?.avatar_url ? (
+              <Image 
+                src={activeProfile.avatar_url} 
+                alt={activeProfile.name} 
+                fill 
+                className="object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-slate-200 flex items-center justify-center">
+                <User className="w-6 h-6 text-slate-400" />
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h5 className="font-bold text-slate-900 text-[15px] truncate">
+              {activeProfile?.name || 'Cocpit User'}
+            </h5>
+            <p className="text-slate-400 text-[13px] truncate">
+              @{activeProfile?.slug || activeProfile?.name?.toLowerCase().replace(/\s/g, '') || 'cocpit23'}
+            </p>
+          </div>
+        </div>
       </div>
-
     </aside>
   )
 }
