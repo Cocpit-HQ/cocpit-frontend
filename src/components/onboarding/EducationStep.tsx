@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronDown } from "lucide-react";
+import { useOnboardingStore } from "@/store/onboarding.store";
+import { saveOnboardingDetails } from "@/services/api/onboarding";
 import styles from "./EducationStep.module.css";
 
 interface EducationStepProps {
@@ -32,10 +34,30 @@ const SPECIALIZATIONS = [
 ];
 
 export default function EducationStep({ onNext, onBack, currentStep, totalSteps }: EducationStepProps) {
+  const { userRole } = useOnboardingStore();
   const [education, setEducation] = useState("");
   const [specialization, setSpecialization] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const isValid = education !== "" && specialization !== "";
+
+  const handleContinue = async () => {
+    if (!isValid || !userRole) return;
+
+    setIsSaving(true);
+    try {
+      await saveOnboardingDetails({
+        role: userRole,
+        school_name: education,
+        degree: specialization,
+      });
+      onNext();
+    } catch (error) {
+      console.error("Failed to save education details:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -112,10 +134,10 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
           <button
             type="button"
             className={styles.continueButton}
-            onClick={onNext}
-            disabled={!isValid}
+            onClick={handleContinue}
+            disabled={!isValid || isSaving}
           >
-            Continue
+            {isSaving ? "Saving..." : "Continue"}
           </button>
         </div>
       </div>

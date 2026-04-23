@@ -15,22 +15,26 @@ interface InterestsStepProps {
   initialData: string[];
   actionLabel?: string;
   minSelection?: number;
+  initialSelected?: string[];
+  isLoading?: boolean;
 }
 
-export default function InterestsStep({ 
-  onNext, 
-  onBack, 
-  currentStep, 
+export default function InterestsStep({
+  onNext,
+  onBack,
+  currentStep,
   totalSteps,
   title,
   subtitle,
   placeholder,
   initialData,
   actionLabel = "Continue",
-  minSelection = 1
+  minSelection = 1,
+  initialSelected = [],
+  isLoading = false
 }: InterestsStepProps) {
   const [search, setSearch] = useState("");
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectedItems, setSelectedItems] = useState<string[]>(initialSelected);
   const [showError, setShowError] = useState(false);
 
   const toggleItem = (item: string) => {
@@ -38,7 +42,7 @@ export default function InterestsStep({
       const next = prev.includes(item)
         ? prev.filter((i) => i !== item)
         : [...prev, item];
-      
+
       // Update error visibility based on the new selection count
       if (next.length > 0 && next.length < minSelection) {
         setShowError(true);
@@ -106,9 +110,8 @@ export default function InterestsStep({
             <button
               key={item}
               type="button"
-              className={`${styles.tag} ${
-                selectedItems.includes(item) ? styles.tagSelected : ""
-              }`}
+              className={`${styles.tag} ${selectedItems.includes(item) ? styles.tagSelected : ""
+                }`}
               onClick={() => toggleItem(item)}
             >
               {item}
@@ -126,11 +129,13 @@ export default function InterestsStep({
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
+            key="action-button"
             type="button"
             className={actionLabel === "Finish" ? styles.finishButton : styles.continueButton}
             onClick={handleAction}
+            disabled={isLoading}
           >
-            {actionLabel}
+            {isLoading ? "Saving..." : actionLabel}
           </button>
         </div>
       </div>
