@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronDown } from "lucide-react";
+import { useOnboardingStore } from "@/store/onboarding.store";
+import { saveOnboardingDetails } from "@/services/api/onboarding";
+import { useToast } from "@/hooks/use-toast";
 import styles from "./FreelancerStep.module.css";
 
 interface FreelancerStepProps {
-  onNext: () => void;
+  onNext: (data?: any) => void;
   onBack: () => void;
   currentStep: number;
   totalSteps: number;
@@ -25,9 +28,34 @@ const FREELANCE_ROLES = [
 ];
 
 export default function FreelancerStep({ onNext, onBack, currentStep, totalSteps }: FreelancerStepProps) {
+  const { userRole } = useOnboardingStore();
+  const { toast } = useToast();
   const [role, setRole] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const isValid = role !== "";
+
+  const handleContinue = async () => {
+    if (!isValid || !userRole) return;
+
+    setIsSaving(true);
+    try {
+      await saveOnboardingDetails({
+        role: userRole,
+        title: role,
+      });
+      onNext();
+    } catch (error) {
+      console.error("Failed to save freelancer details:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save your details. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -86,10 +114,10 @@ export default function FreelancerStep({ onNext, onBack, currentStep, totalSteps
           <button
             type="button"
             className={styles.continueButton}
-            onClick={onNext}
-            disabled={!isValid}
+            onClick={handleContinue}
+            disabled={!isValid || isSaving}
           >
-            Continue
+            {isSaving ? "Saving..." : "Continue"}
           </button>
         </div>
       </div>

@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronDown } from "lucide-react";
+import { useOnboardingStore } from "@/store/onboarding.store";
+import { saveOnboardingDetails } from "@/services/api/onboarding";
+import { useToast } from "@/hooks/use-toast";
 import styles from "./OpenToWorkStep.module.css";
 
 interface OpenToWorkStepProps {
-  onNext: () => void;
+  onNext: (data?: any) => void;
   onBack: () => void;
   currentStep: number;
   totalSteps: number;
@@ -23,9 +26,34 @@ const JOB_TYPES = [
 ];
 
 export default function OpenToWorkStep({ onNext, onBack, currentStep, totalSteps }: OpenToWorkStepProps) {
+  const { userRole } = useOnboardingStore();
+  const { toast } = useToast();
   const [jobType, setJobType] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const isValid = jobType !== "";
+
+  const handleContinue = async () => {
+    if (!isValid || !userRole) return;
+
+    setIsSaving(true);
+    try {
+      await saveOnboardingDetails({
+        role: userRole,
+        title: jobType,
+      });
+      onNext();
+    } catch (error) {
+      console.error("Failed to save open-to-work details:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save your details. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -84,10 +112,10 @@ export default function OpenToWorkStep({ onNext, onBack, currentStep, totalSteps
           <button
             type="button"
             className={styles.continueButton}
-            onClick={onNext}
-            disabled={!isValid}
+            onClick={handleContinue}
+            disabled={!isValid || isSaving}
           >
-            Continue
+            {isSaving ? "Saving..." : "Continue"}
           </button>
         </div>
       </div>

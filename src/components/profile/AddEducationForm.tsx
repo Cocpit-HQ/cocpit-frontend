@@ -31,10 +31,10 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
   useEffect(() => {
     if (initialData) {
       setFormData({
-        school_name: initialData.school_name,
-        degree: initialData.degree,
-        field_of_study: initialData.field_of_study,
-        start_date: dayjs(initialData.start_date).format("YYYY-MM-DD"),
+        school_name: initialData.school_name ?? "",
+        degree: initialData.degree ?? "",
+        field_of_study: initialData.field_of_study ?? "",
+        start_date: initialData.start_date ? dayjs(initialData.start_date).format("YYYY-MM-DD") : "",
         end_date: initialData.end_date ? dayjs(initialData.end_date).format("YYYY-MM-DD") : "",
         description: initialData.description ?? "",
       })
