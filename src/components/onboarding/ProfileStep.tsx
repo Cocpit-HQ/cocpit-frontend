@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
 import { Loader2, ChevronLeft, Check, X, Pencil } from "lucide-react";
-import { checkAccountNameAvailability, updateProfile } from "@/services/api/onboarding";
+import { checkAccountNameAvailability, updateOnboardingProfile } from "@/services/api/onboarding";
 import { getProfile, uploadAvatar } from "@/services/api/profile";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useOnboardingStore } from "@/store/onboarding.store";
+import { useMemo } from "react";
 import styles from "./ProfileStep.module.css";
 
 interface ProfileStepProps {
@@ -19,15 +21,18 @@ interface ProfileStepProps {
 }
 
 export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }: ProfileStepProps) {
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
-  const [fullName, setFullName] = useState("");
-  const [accountName, setAccountName] = useState("");
+  const { 
+    fullName, setFullName, 
+    accountName, setAccountName,
+    profileImage, setProfileImage,
+    profileImageFile, setProfileImageFile,
+    isInitialized
+  } = useOnboardingStore();
+
   const [nameAvailable, setNameAvailable] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [loadingInitial, setLoadingInitial] = useState(true);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [loadingInitial, setLoadingInitial] = useState(!isInitialized);
 
   const debouncedAccountName = useDebounce(accountName, 500);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,34 +46,13 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
     return regex.test(name);
   };
 
-  // Fetch initial profile data
+  // Set initial availability if account name was pre-filled
   useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const profile = await getProfile();
-        if (profile && profile.user) {
-          if (profile.user.name) setFullName(profile.user.name);
-          if (profile.user.account_name) {
-            setAccountName(profile.user.account_name);
-            // If they already have an account name, it's their own, so it's available
-            setNameAvailable(true);
-          }
-          if (profile.user.avatar) {
-            // Add base URL for local uploads if it's not a full URL
-            const url = profile.user.avatar.startsWith('http')
-              ? profile.user.avatar
-              : `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000'}/${profile.user.avatar}`;
-            setProfileImage(url);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch profile:", error);
-      } finally {
-        setLoadingInitial(false);
-      }
-    };
-    fetchInitialData();
-  }, []);
+    if (isInitialized && accountName && nameAvailable === null) {
+      setNameAvailable(true);
+      setLoadingInitial(false);
+    }
+  }, [isInitialized, accountName, nameAvailable]);
 
   useEffect(() => {
     const checkAvailability = async () => {
@@ -100,31 +84,15 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // 1. Show local preview immediately
+      // 1. Store the file for later submission
       setProfileImageFile(file);
+      
+      // 2. Show local preview immediately
       const reader = new FileReader();
       reader.onload = (event) => {
         setProfileImage(event.target?.result as string);
       };
       reader.readAsDataURL(file);
-
-      // 2. Upload to server immediately
-      setIsUploadingPhoto(true);
-      try {
-        const formData = new FormData();
-        formData.append("avatar", file);
-        const response = await uploadAvatar(formData);
-
-        // 3. Update state with actual server URL
-        const fullUrl = response.avatarUrl.startsWith('http')
-          ? response.avatarUrl
-          : `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000'}/${response.avatarUrl}`;
-        setProfileImage(fullUrl);
-      } catch (error) {
-        toast({ title: "Upload Failed", description: "Failed to save profile picture.", variant: "destructive" });
-      } finally {
-        setIsUploadingPhoto(false);
-      }
     }
   };
 
@@ -137,20 +105,22 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
   };
 
   const handleSubmit = async () => {
-    if ((!profileImage && !profileImageFile) || !accountName || nameAvailable !== true || !fullName.trim()) return;
+    if (!accountName || nameAvailable !== true || !fullName.trim()) return;
 
     setSubmitting(true);
     try {
+      // Use FormData to send both data and file
       const formData = new FormData();
+      formData.append("account_name", accountName);
+      formData.append("full_name", fullName);
+      
       if (profileImageFile) {
         formData.append("avatar", profileImageFile);
       }
-      formData.append("account_name", accountName);
-      formData.append("full_name", fullName);
 
-      await updateProfile(formData);
+      await updateOnboardingProfile(formData);
 
-      toast({ title: "Setup Complete", description: "Your profile has been set up successfully." });
+      toast({ title: "Profile Updated", description: "Your basic profile has been saved." });
       // Move to next step
       onNext();
       router.refresh();
@@ -163,7 +133,25 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
     }
   };
 
-  const isValid = (!!profileImage || !!profileImageFile) && !!accountName && nameAvailable === true && !checking && !isUploadingPhoto && validateAccountName(accountName) && !!fullName.trim();
+  // Memoized display URL for the profile photo
+  const displayImage = useMemo(() => {
+    if (!profileImage) return null;
+    if (profileImage.startsWith('data:') || profileImage.startsWith('http')) {
+      return profileImage;
+    }
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5001'; // Backend port is 5001
+    return `${baseUrl}/${profileImage}`;
+  }, [profileImage]);
+
+  // Memoized validation state
+  const isValid = useMemo(() => {
+    return (!!profileImage || !!profileImageFile) && 
+           !!accountName.trim() && 
+           nameAvailable === true && 
+           !checking && 
+           validateAccountName(accountName) && 
+           !!fullName.trim();
+  }, [profileImage, profileImageFile, accountName, nameAvailable, checking, fullName]);
 
   return (
     <div className={styles.container}>
@@ -196,33 +184,24 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
         {/* Profile photo circle */}
         <div className={styles.photoUploadContainer}>
           <div className={styles.photoWrapper}>
-            <button type="button" onClick={() => fileInputRef.current?.click()} className={styles.photoButton} disabled={isUploadingPhoto}>
-              {profileImage ? (
+            <button type="button" onClick={() => fileInputRef.current?.click()} className={styles.photoButton}>
+              {displayImage ? (
                 <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                  <img src={profileImage} alt="Profile" className={styles.photoImage} />
-                  {isUploadingPhoto && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
-                      <Loader2 className="w-8 h-8 animate-spin text-white" />
-                    </div>
-                  )}
+                  <img src={displayImage} alt="Profile" className={styles.photoImage} />
                 </div>
               ) : (
                 <div className={styles.photoPlaceholder} style={{ width: '100%', height: '100%' }}>
-                  {isUploadingPhoto ? (
-                    <Loader2 className="w-8 h-8 animate-spin text-white" />
-                  ) : (
-                    <img src="/assets/profilephoto.png" alt="Profile Placeholder" className={styles.photoImage} />
-                  )}
+                  <img src="/assets/profilephoto.png" alt="Profile Placeholder" className={styles.photoImage} />
                 </div>
               )}
             </button>
           </div>
-          {profileImage && (
+          {displayImage && (
             <div className={styles.editIconContainer} onClick={() => fileInputRef.current?.click()}>
               <Pencil className={styles.editIcon} strokeWidth={1.5} />
             </div>
           )}
-          {!profileImage && (
+          {!displayImage && (
             <span className={styles.photoText} onClick={() => fileInputRef.current?.click()} style={{ cursor: 'pointer' }}>
               Add your photo
             </span>

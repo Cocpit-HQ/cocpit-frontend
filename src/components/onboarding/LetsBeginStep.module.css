@@ -93,7 +93,7 @@
 }
 
 .selectedCard {
-  border-color: #0ea5e9;
+  border-color: #C7D2FE;
   background: #f0f9ff;
 }
 
@@ -122,7 +122,7 @@
 
 .selectedCard .icon,
 .selectedCard .iconElement {
-  color: #0ea5e9;
+  color: #C7D2FE;
 }
 
 .optionTitle {

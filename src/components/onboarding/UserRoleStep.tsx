@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronDown } from "lucide-react";
+import { useOnboardingStore } from "@/store/onboarding.store";
+import { saveOnboardingRole } from "@/services/api/onboarding";
 import styles from "./UserRoleStep.module.css";
 
 interface UserRoleStepProps {
@@ -13,17 +15,35 @@ interface UserRoleStepProps {
 
 const ROLES = [
   { id: "student", label: "Student" },
-  { id: "working", label: "Working" },
-  { id: "freelancer", label: "Freelancer" },
-  { id: "open_to_work", label: "Open to work" },
+  { id: "fresher", label: "Fresher" },
+  { id: "intern", label: "Intern" },
+  { id: "self_employed", label: "Self employed" },
+  { id: "employed", label: "Employed" },
+  { id: "unemployed", label: "Unemployed" },
 ];
 
 export default function UserRoleStep({ onNext, onBack, currentStep, totalSteps }: UserRoleStepProps) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { userRole, setUserRole } = useOnboardingStore();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const selectedId = userRole;
 
-  const handleContinue = () => {
-    if (selectedId) {
+  const handleSelect = (id: string) => {
+    setUserRole(id);
+    setIsOpen(false);
+  };
+
+  const handleContinue = async () => {
+    if (!selectedId) return;
+
+    setIsSaving(true);
+    try {
+      await saveOnboardingRole(selectedId);
       onNext(selectedId);
+    } catch (error) {
+      console.error("Failed to save role:", error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -51,20 +71,36 @@ export default function UserRoleStep({ onNext, onBack, currentStep, totalSteps }
           <p className={styles.subtitle}>This helps personalize your experience</p>
         </div>
 
-        {/* Options List */}
-        <div className={styles.optionsList}>
-          {ROLES.map((role) => (
+        {/* Selection Area */}
+        <div className={styles.selectionArea}>
+          <span className={styles.label}>Current status</span>
+          <div className={styles.dropdownContainer}>
             <div
-              key={role.id}
-              className={`${styles.card} ${selectedId === role.id ? styles.cardActive : ""}`}
-              onClick={() => setSelectedId(role.id)}
+              className={`${styles.card} ${isOpen ? styles.cardActive : ""}`}
+              onClick={() => setIsOpen(!isOpen)}
             >
-              <span className={styles.cardText}>{role.label}</span>
-              <div className={`${styles.radio} ${selectedId === role.id ? styles.radioActive : ""}`}>
-                <div className={styles.radioInner} />
+              <div className={styles.selectContent}>
+                <span className={`${styles.selectText} ${!selectedId ? styles.placeholder : ""}`}>
+                  {ROLES.find(r => r.id === selectedId)?.label || "Choose your status"}
+                </span>
               </div>
+              <ChevronDown className={`${styles.chevron} ${isOpen ? styles.chevronRotate : ""}`} size={20} />
             </div>
-          ))}
+
+            {isOpen && (
+              <div className={styles.optionsList}>
+                {ROLES.map((role) => (
+                  <div
+                    key={role.id}
+                    className={`${styles.option} ${selectedId === role.id ? styles.optionSelected : ""}`}
+                    onClick={() => handleSelect(role.id)}
+                  >
+                    {role.label}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Actions */}
@@ -80,9 +116,9 @@ export default function UserRoleStep({ onNext, onBack, currentStep, totalSteps }
             type="button"
             className={styles.continueButton}
             onClick={handleContinue}
-            disabled={!selectedId}
+            disabled={!selectedId || isSaving}
           >
-            Continue
+            {isSaving ? "Saving..." : "Continue"}
           </button>
         </div>
       </div>
