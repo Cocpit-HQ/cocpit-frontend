@@ -1,43 +1,75 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronDown } from "lucide-react";
 import { useOnboardingStore } from "@/store/onboarding.store";
-import { saveOnboardingDetails } from "@/services/api/onboarding";
+import { saveOnboardingDetails, getEducationList } from "@/services/api/onboarding";
+import { useToast } from "@/hooks/use-toast";
 import styles from "./EducationStep.module.css";
 
 interface EducationStepProps {
-  onNext: (data: any) => void;
+  onNext: (data?: any) => void;
   onBack: () => void;
   currentStep: number;
   totalSteps: number;
 }
 
-const EDUCATION_LEVELS = [
+// Static fallback options if API returns empty
+const FALLBACK_SCHOOLS = [
   "High School",
-  "Diploma",
-  "Bachelor's Degree",
-  "Master's Degree",
-  "PhD",
+  "Community College",
+  "State University",
+  "Private University",
+  "Technical Institute",
+  "Other",
 ];
 
-const SPECIALIZATIONS = [
-  "Computer Science",
-  "Information Technology",
-  "Graphic Design",
-  "Business Administration",
-  "Marketing",
-  "Finance",
-  "Mechanical Engineering",
-  "Civil Engineering",
+const FALLBACK_PROGRAMS = [
+  "B.Tech",
+  "M.Tech",
+  "BCA",
+  "MCA",
+  "MBA",
+  "B.Sc",
+  "M.Sc",
+  "B.Com",
+  "B.A",
+  "Diploma",
+  "PhD",
   "Other",
 ];
 
 export default function EducationStep({ onNext, onBack, currentStep, totalSteps }: EducationStepProps) {
   const { userRole } = useOnboardingStore();
+  const { toast } = useToast();
   const [education, setEducation] = useState("");
   const [specialization, setSpecialization] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [schoolOptions, setSchoolOptions] = useState<string[]>(FALLBACK_SCHOOLS);
+  const [programOptions, setProgramOptions] = useState<string[]>(FALLBACK_PROGRAMS);
+  const [loadingOptions, setLoadingOptions] = useState(true);
+
+  // Fetch school_names and degrees from the backend on mount
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const data = await getEducationList();
+        if (data.school_names && data.school_names.length > 0) {
+          setSchoolOptions(data.school_names);
+        }
+        if (data.degrees && data.degrees.length > 0) {
+          setProgramOptions(data.degrees);
+        }
+      } catch (error) {
+        // Keep fallback options on error — no crash
+        console.error("Failed to fetch education list:", error);
+      } finally {
+        setLoadingOptions(false);
+      }
+    };
+
+    fetchOptions();
+  }, []);
 
   const isValid = education !== "" && specialization !== "";
 
@@ -48,12 +80,17 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
     try {
       await saveOnboardingDetails({
         role: userRole,
-        school_name: education,
-        degree: specialization,
+        school_name: education,   // Selected school → school_name
+        degree: specialization,   // Selected program → degree
       });
       onNext();
     } catch (error) {
       console.error("Failed to save education details:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save your education details. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -87,28 +124,19 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
         <div className={styles.form}>
           <div className={styles.formGroup}>
             <label className={styles.label}>School / University</label>
-            <SchoolAutocomplete
-              selectedId={schoolOrgId}
-              selectedName={schoolName}
-              onSelect={(id, name) => {
-                setSchoolOrgId(id);
-                setSchoolName(name);
-              }}
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Degree</label>
             <div className={styles.selectWrapper}>
               <select
                 className={styles.select}
                 value={education}
                 onChange={(e) => setEducation(e.target.value)}
                 required
+                disabled={loadingOptions}
               >
-                <option value="" disabled hidden>Select your education</option>
-                {EDUCATION_LEVELS.map((level) => (
-                  <option key={level} value={level}>{level}</option>
+                <option value="" disabled hidden>
+                  {loadingOptions ? "Loading..." : "Select your school"}
+                </option>
+                {schoolOptions.map((school) => (
+                  <option key={school} value={school}>{school}</option>
                 ))}
               </select>
               <ChevronDown className={styles.selectIcon} size={18} />
@@ -116,17 +144,20 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>Specialization</label>
+            <label className={styles.label}>Program</label>
             <div className={styles.selectWrapper}>
               <select
                 className={styles.select}
                 value={specialization}
                 onChange={(e) => setSpecialization(e.target.value)}
                 required
+                disabled={loadingOptions}
               >
-                <option value="" disabled hidden>Select your specialization</option>
-                {SPECIALIZATIONS.map((spec) => (
-                  <option key={spec} value={spec}>{spec}</option>
+                <option value="" disabled hidden>
+                  {loadingOptions ? "Loading..." : "Select your program"}
+                </option>
+                {programOptions.map((program) => (
+                  <option key={program} value={program}>{program}</option>
                 ))}
               </select>
               <ChevronDown className={styles.selectIcon} size={18} />
@@ -147,7 +178,7 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
             type="button"
             className={styles.continueButton}
             onClick={handleContinue}
-            disabled={!isValid || isSaving}
+            disabled={!isValid || isSaving || loadingOptions}
           >
             {isSaving ? "Saving..." : "Continue"}
           </button>

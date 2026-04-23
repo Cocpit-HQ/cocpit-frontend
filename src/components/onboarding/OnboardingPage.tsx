@@ -7,13 +7,13 @@ import TellUsAboutYouStep from "@/components/onboarding/TellUsAboutYouStep";
 import UserRoleStep from "@/components/onboarding/UserRoleStep";
 import EducationStep from "@/components/onboarding/EducationStep";
 import WorkExperienceStep from "@/components/onboarding/WorkExperienceStep";
-import FreelancerStep from "@/components/onboarding/FreelancerStep";
 import OpenToWorkStep from "@/components/onboarding/OpenToWorkStep";
 import InterestsStep from "@/components/onboarding/InterestsStep";
-import { 
-  completeOnboarding, 
-  saveOnboardingInterests, 
-  saveOnboardingSkills 
+import {
+  completeOnboarding,
+  saveOnboardingInterests,
+  saveOnboardingSkills,
+  saveOnboardingDetails,
 } from "@/services/api/onboarding";
 import { useOnboardingStore } from "@/store/onboarding.store";
 import { getProfile } from "@/services/api/profile";
@@ -37,7 +37,7 @@ export default function OnboardingPage() {
     selectedInterests, setSelectedInterests,
     selectedSkills, setSelectedSkills,
     isInitialized, setInitialized,
-    setFullName, setAccountName, setProfileImage, setLocation
+    setFullName, setAccountName, setProfileImage
   } = useOnboardingStore();
 
   const [isCompleted, setIsCompleted] = useState(false);
@@ -56,13 +56,6 @@ export default function OnboardingPage() {
           if (profile.user.account_name) setAccountName(profile.user.account_name);
           if (profile.user.avatar) setProfileImage(profile.user.avatar);
 
-          // Set location if it exists (assuming backend might return it in a session or profile)
-          if (profile.user.location) {
-            // We use the location string as name, and mock or use ID if available
-            // For now, since UserData doesn't explicitly show ID, we initialize if we find a saved state
-            // But we need to keep the store consistent.
-          }
-
           setInitialized(true);
         }
       } catch (error) {
@@ -80,7 +73,8 @@ export default function OnboardingPage() {
       setStep(4);
     } else if (step === 4) {
       setStep(3);
-      setShowSubStep(true);
+      // Only show sub-step on back if the role actually has one
+      if (userRole !== "unemployed") setShowSubStep(true);
     } else if (step === 3 && showSubStep) {
       setShowSubStep(false);
     } else {
@@ -88,11 +82,18 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleRoleSelect = (role: string) => {
+  const handleRoleSelect = async (role: string) => {
     setUserRole(role);
     if (role === "unemployed") {
-      // Unemployed skips the sub-step and goes directly to Interests
+      // Unemployed skips the sub-step — but still call saveDetails to advance
+      // onboarding_step from DETAILS → INTERESTS on the backend
       setShowSubStep(false);
+      try {
+        await saveOnboardingDetails({ role: "unemployed" });
+      } catch (error) {
+        console.error("Failed to advance onboarding step for unemployed:", error);
+        // Non-fatal: role was already saved, proceed anyway
+      }
       setStep(4);
     } else {
       // All other roles have a sub-step to collect more info
@@ -100,18 +101,28 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleFinish = async (skills: string[]) => {
+  /**
+   * Called by EducationStep, WorkExperienceStep, FreelancerStep, OpenToWorkStep
+   * after their API call succeeds internally. We just advance to step 4.
+   */
+  const handleDetailsSubmit = () => {
+    setShowSubStep(false);
+    setStep(4);
+  };
+
+  /**
+   * Called by the Skills InterestsStep (step 5) with the selected skills array.
+   * Saves skills then completes onboarding.
+   */
+  const handleSkillsSubmit = async (skills: string[]) => {
     setIsSaving(true);
     try {
-      // 1. Save skills
       await saveOnboardingSkills(skills);
       setSelectedSkills(skills);
 
-      // 2. Complete onboarding
       await completeOnboarding();
 
       setIsCompleted(true);
-      // Automatically redirect after 2 seconds to feed
       setTimeout(() => {
         window.location.href = "/feed";
       }, 2000);
@@ -133,7 +144,7 @@ export default function OnboardingPage() {
             style={{ width: "200px", height: "200px" }}
           />
           <h1 className="text-[28px] leading-tight font-bold m-0 p-0 text-center">
-            <span className="text-[#6366F1]">You’re</span>{" "}
+            <span className="text-[#6366F1]">You're</span>{" "}
             <span className="text-[#10b981]">all set</span>
           </h1>
           <p className="text-[#71717A] text-[13px] m-0 p-0 font-normal animate-pulse text-center">
@@ -221,7 +232,7 @@ export default function OnboardingPage() {
           subtitle="Select a few to personalize your feed"
           placeholder="Search"
           initialData={INTERESTS_DATA}
-          minSelection={4}
+          minSelection={3}
           initialSelected={selectedInterests}
           isLoading={isSaving}
         />
@@ -237,7 +248,7 @@ export default function OnboardingPage() {
           placeholder="Search skills"
           initialData={SKILLS_DATA}
           actionLabel="Finish"
-          minSelection={4}
+          minSelection={3}
           initialSelected={selectedSkills}
           isLoading={isSaving}
         />

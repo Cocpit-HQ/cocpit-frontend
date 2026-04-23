@@ -1,5 +1,31 @@
 import api from "@/lib/axios";
 
+export interface EducationListResponse {
+  school_names: string[];
+  degrees: string[];
+}
+
+export const getEducationList = async (schoolSearch = "", degreeSearch = ""): Promise<EducationListResponse> => {
+  const params = new URLSearchParams();
+  if (schoolSearch) params.append("school_search", schoolSearch);
+  if (degreeSearch) params.append("degree_search", degreeSearch);
+  const response = await api.get<EducationListResponse>(`/profile/educations?${params.toString()}`);
+  return response.data;
+};
+
+export interface CompanyListResponse {
+  company_names: string[];
+  titles: string[];
+}
+
+export const getCompanyList = async (companySearch = "", titleSearch = ""): Promise<CompanyListResponse> => {
+  const params = new URLSearchParams();
+  if (companySearch) params.append("company_search", companySearch);
+  if (titleSearch) params.append("title_search", titleSearch);
+  const response = await api.get<CompanyListResponse>(`/profile/companies?${params.toString()}`);
+  return response.data;
+};
+
 export interface CheckAccountNameResponse {
   available: boolean;
   message?: string;
@@ -29,7 +55,9 @@ export const saveOnboardingRole = async (role: string): Promise<any> => {
 export interface SaveDetailsPayload {
   role: string;
   school_name?: string;
+  school_org_id?: string | null;
   degree?: string;
+  field_of_study?: string | null;
   title?: string;
   company_name?: string;
 }
