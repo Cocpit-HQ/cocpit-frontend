@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronDown } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+import { useOnboardingStore } from "@/store/onboarding.store";
+import { saveOnboardingDetails } from "@/services/api/onboarding";
+import { useToast } from "@/hooks/use-toast";
 import styles from "./OpenToWorkStep.module.css";
+import OnboardingDropdown from "./OnboardingDropdown";
 
 interface OpenToWorkStepProps {
-  onNext: () => void;
+  onNext: (data?: any) => void;
   onBack: () => void;
   currentStep: number;
   totalSteps: number;
@@ -23,9 +27,37 @@ const JOB_TYPES = [
 ];
 
 export default function OpenToWorkStep({ onNext, onBack, currentStep, totalSteps }: OpenToWorkStepProps) {
-  const [jobType, setJobType] = useState("");
+  const { userRole, jobTitle: storeTitle, setWorkExperience } = useOnboardingStore();
+  const { toast } = useToast();
+  const [jobType, setJobTypeLocal] = useState(storeTitle || "");
+  const [isSaving, setIsSaving] = useState(false);
 
   const isValid = jobType !== "";
+
+  const handleContinue = async () => {
+    if (!isValid || !userRole) return;
+
+    setIsSaving(true);
+    try {
+      await saveOnboardingDetails({
+        role: userRole,
+        title: jobType,
+      });
+      
+      // We use setWorkExperience for OpenToWork too, just without a company
+      setWorkExperience("", jobType);
+      onNext();
+    } catch (error) {
+      console.error("Failed to save open-to-work details:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save your details. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -53,23 +85,13 @@ export default function OpenToWorkStep({ onNext, onBack, currentStep, totalSteps
 
         {/* Form */}
         <div className={styles.form}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Role</label>
-            <div className={styles.selectWrapper}>
-              <select
-                className={styles.select}
-                value={jobType}
-                onChange={(e) => setJobType(e.target.value)}
-                required
-              >
-                <option value="" disabled hidden>What are you looking for?</option>
-                {JOB_TYPES.map((type) => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-              <ChevronDown className={styles.selectIcon} size={18} />
-            </div>
-          </div>
+          <OnboardingDropdown
+            label="Role"
+            placeholder="What are you looking for?"
+            options={JOB_TYPES}
+            value={jobType}
+            onChange={setJobTypeLocal}
+          />
         </div>
 
         {/* Actions */}
@@ -84,10 +106,10 @@ export default function OpenToWorkStep({ onNext, onBack, currentStep, totalSteps
           <button
             type="button"
             className={styles.continueButton}
-            onClick={onNext}
-            disabled={!isValid}
+            onClick={handleContinue}
+            disabled={!isValid || isSaving}
           >
-            Continue
+            {isSaving ? "Saving..." : "Continue"}
           </button>
         </div>
       </div>

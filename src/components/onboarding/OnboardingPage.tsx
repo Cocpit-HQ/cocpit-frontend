@@ -1,110 +1,235 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import LetsBeginStep from "@/components/onboarding/LetsBeginStep";
 import ProfileStep from "@/components/onboarding/ProfileStep";
 import TellUsAboutYouStep from "@/components/onboarding/TellUsAboutYouStep";
 import UserRoleStep from "@/components/onboarding/UserRoleStep";
-import EducationStep from "@/components/onboarding/EducationStep";
-import WorkExperienceStep from "@/components/onboarding/WorkExperienceStep";
-import FreelancerStep from "@/components/onboarding/FreelancerStep";
-import OpenToWorkStep from "@/components/onboarding/OpenToWorkStep";
 import InterestsStep from "@/components/onboarding/InterestsStep";
-import { completeOnboarding } from "@/services/api/onboarding";
+import {
+  completeOnboarding,
+  saveOnboardingInterests,
+  saveOnboardingSkills,
+  saveOnboardingDetails,
+  getOnboardingInterests,
+  getOnboardingSkills,
+} from "@/services/api/onboarding";
 import { useOnboardingStore } from "@/store/onboarding.store";
 import { getProfile } from "@/services/api/profile";
-import { useEffect } from "react";
+import { toast } from "sonner";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
-const INTERESTS_DATA = [
-  "Design", "Tech", "Marketing", "AI", "Startups",
-  "Finance", "Content", "Remote jobs", "Product", "Engineering"
-];
+const EducationStep = lazy(() => import("@/components/onboarding/EducationStep"));
+const WorkExperienceStep = lazy(() => import("@/components/onboarding/WorkExperienceStep"));
+const OpenToWorkStep = lazy(() => import("@/components/onboarding/OpenToWorkStep"));
 
-const SKILLS_DATA = [
-  "React.js", "Node.js", "TypeScript", "Figma", "Python",
-  "SQL", "OOPS", "UI Design", "UX Research", "DLDM"
-];
+const ONBOARDING_FLOW: Record<string | number, { next: any; prev: any }> = {
+  0: { next: 1, prev: null },
+  1: { next: 2, prev: 0 },
+  2: { next: 3, prev: 1 },
+  3: { 
+    next: (role: string) => role === "unemployed" ? 4 : "substep",
+    prev: 2 
+  },
+  "substep": { 
+    next: 4, 
+    prev: 3 
+  },
+  4: { 
+    next: 5, 
+    prev: (role: string) => role === "unemployed" ? 3 : "substep" 
+  },
+  5: { next: null, prev: 4 }
+};
 
 export default function OnboardingPage() {
-  const { 
-    step, setStep, 
-    userRole, setUserRole, 
+  const {
+    step, setStep,
+    userRole, setUserRole,
     showSubStep, setShowSubStep,
     selectedInterests, setSelectedInterests,
     selectedSkills, setSelectedSkills,
     isInitialized, setInitialized,
-    setFullName, setAccountName, setProfileImage, setLocation
+    setFullName, setAccountName, setInitialAccountName, setProfileImage
   } = useOnboardingStore();
-  
+
   const [isCompleted, setIsCompleted] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ── Search State ─────────────────────────────────────────────────────────
+  const [interestSearch, setInterestSearch] = useState("");
+  const [debouncedInterestSearch, setDebouncedInterestSearch] = useState("");
+  const [skillSearch, setSkillSearch] = useState("");
+  const [debouncedSkillSearch, setDebouncedSkillSearch] = useState("");
+
+  // Debounce interest search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedInterestSearch(interestSearch), 300);
+    return () => clearTimeout(timer);
+  }, [interestSearch]);
+
+  // Debounce skill search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSkillSearch(skillSearch), 300);
+    return () => clearTimeout(timer);
+  }, [skillSearch]);
+
   const totalSteps = 5;
+
+  // ── Interest Data Fetching (React Query) ──────────────────────────────────
+  const {
+    data: interestData,
+    fetchNextPage: fetchNextInterests,
+    hasNextPage: hasMoreInterests,
+    isLoading: isLoadingInterests,
+    isFetchingNextPage: isFetchingMoreInterests,
+  } = useInfiniteQuery({
+    queryKey: ["onboarding-interests", debouncedInterestSearch],
+    queryFn: ({ pageParam }) => getOnboardingInterests({ q: debouncedInterestSearch, cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.data.next_cursor || undefined,
+    enabled: step === 4,
+    refetchOnWindowFocus: false,
+  });
+
+  const interestItems = interestData?.pages.flatMap(page => page.data.items.map(i => i.name)) || [];
+
+  // ── Skill Data Fetching (React Query) ─────────────────────────────────────
+  const {
+    data: skillData,
+    fetchNextPage: fetchNextSkills,
+    hasNextPage: hasMoreSkills,
+    isLoading: isLoadingSkills,
+    isFetchingNextPage: isFetchingMoreSkills,
+  } = useInfiniteQuery({
+    queryKey: ["onboarding-skills", debouncedSkillSearch],
+    queryFn: ({ pageParam }) => getOnboardingSkills({ q: debouncedSkillSearch, cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.data.next_cursor || undefined,
+    enabled: step === 5,
+    refetchOnWindowFocus: false,
+  });
+
+  const skillItems = skillData?.pages.flatMap(page => page.data.items.map(i => i.name)) || [];
 
   // Initialize store from profile data once
   useEffect(() => {
     const initStore = async () => {
       if (isInitialized) return;
-      
+
       try {
         const profile = await getProfile();
         if (profile && profile.user) {
           if (profile.user.name) setFullName(profile.user.name);
-          if (profile.user.account_name) setAccountName(profile.user.account_name);
-          if (profile.user.avatar) setProfileImage(profile.user.avatar);
-          
-          // Set location if it exists (assuming backend might return it in a session or profile)
-          if (profile.user.location) {
-             // We use the location string as name, and mock or use ID if available
-             // For now, since UserData doesn't explicitly show ID, we initialize if we find a saved state
-             // But we need to keep the store consistent.
+          if (profile.user.account_name) {
+            setAccountName(profile.user.account_name);
+            setInitialAccountName(profile.user.account_name);
           }
-          
+          if (profile.user.avatar) setProfileImage(profile.user.avatar);
+
           setInitialized(true);
         }
       } catch (error) {
         console.error("Failed to initialize onboarding store:", error);
+        toast.error("Failed to load profile data");
       }
     };
 
     initStore();
   }, [isInitialized, setFullName, setAccountName, setProfileImage, setInitialized]);
 
-  const handleNext = () => setStep(Math.min(step + 1, totalSteps));
+  const navigate = (direction: "next" | "prev") => {
+    const currentState = showSubStep ? "substep" : step;
+    const config = ONBOARDING_FLOW[currentState];
+    if (!config) return;
 
-  const handleBack = () => {
-    if (step === 5) {
-      setStep(4);
-    } else if (step === 4) {
+    const target = typeof config[direction] === "function" 
+      ? config[direction](userRole || "") 
+      : config[direction];
+
+    if (target === null) return;
+
+    if (target === "substep") {
+      setShowSubStep(true);
       setStep(3);
-      setShowSubStep(true);
-    } else if (step === 3 && showSubStep) {
+    } else {
       setShowSubStep(false);
-    } else {
-      setStep(Math.max(step - 1, 0));
+      setStep(target);
     }
   };
 
-  const handleRoleSelect = (role: string) => {
+  const handleNext = () => navigate("next");
+  const handleBack = () => navigate("prev");
+
+  const handleRoleSelect = async (role: string) => {
     setUserRole(role);
-    if (role === "student" || role === "working" || role === "freelancer" || role === "open_to_work") {
-      setShowSubStep(true);
+    if (role === "unemployed") {
+      setShowSubStep(false);
+      try {
+        await saveOnboardingDetails({ role: "unemployed" });
+      } catch (error) {
+        console.error("Failed to advance onboarding step for unemployed:", error);
+        toast.error("Failed to save role. Please try again.");
+        return;
+      }
+      setStep(4);
     } else {
-      handleNext();
+      setShowSubStep(true);
     }
   };
 
-  const handleFinish = async () => {
+  const handleDetailsSubmit = () => {
+    setShowSubStep(false);
+    setStep(4);
+  };
+
+  const handleInterestsSubmit = async () => {
+    if (selectedInterests.length < 3) {
+      toast.error("Please select at least 3 interests");
+      return;
+    }
+    if (selectedInterests.length > 7) {
+      toast.error("Please select at most 7 interests");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      // Create empty FormData as expected by service (though backend doesn't use it yet)
-      const formData = new FormData();
-      await completeOnboarding(formData);
+      await saveOnboardingInterests(selectedInterests);
+      setStep(5);
+    } catch (error: any) {
+      console.error("Failed to save interests:", error);
+      const message = error.response?.data?.message || "Failed to save interests. Please try again.";
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSkillsSubmit = async () => {
+    if (selectedSkills.length < 3) {
+      toast.error("Please select at least 3 skills");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await saveOnboardingSkills(selectedSkills);
+      await completeOnboarding();
       
       setIsCompleted(true);
-      // Automatically redirect after 2 seconds to feed
+      toast.success("Onboarding completed!");
       setTimeout(() => {
         window.location.href = "/feed";
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to complete onboarding:", error);
+      const message = error.response?.data?.message || "Failed to complete onboarding. Please check your connection.";
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -119,7 +244,7 @@ export default function OnboardingPage() {
             style={{ width: "200px", height: "200px" }}
           />
           <h1 className="text-[28px] leading-tight font-bold m-0 p-0 text-center">
-            <span className="text-[#6366F1]">You’re</span>{" "}
+            <span className="text-[#6366F1]">You're</span>{" "}
             <span className="text-[#10b981]">all set</span>
           </h1>
           <p className="text-[#71717A] text-[13px] m-0 p-0 font-normal animate-pulse text-center">
@@ -131,103 +256,122 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {step === 0 && (
-        <LetsBeginStep
-          onNext={handleNext}
-        />
-      )}
-      {step === 1 && (
-        <ProfileStep
-          onNext={handleNext}
-          onBack={handleBack}
-          currentStep={1}
-          totalSteps={totalSteps}
-        />
-      )}
-      {step === 2 && (
-        <TellUsAboutYouStep
-          onNext={handleNext}
-          onBack={handleBack}
-          currentStep={2}
-          totalSteps={totalSteps}
-        />
-      )}
-      {step === 3 && (
-        !showSubStep ? (
-          <UserRoleStep
-            onNext={handleRoleSelect}
-            onBack={handleBack}
-            currentStep={3}
-            totalSteps={totalSteps}
-          />
-        ) : (
-          userRole === "student" ? (
-            <EducationStep
+    <div className="min-h-screen bg-white overflow-hidden relative">
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={showSubStep ? `substep-${userRole}` : `step-${step}`}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          className="min-h-screen"
+        >
+          {step === 0 && (
+            <LetsBeginStep onNext={handleNext} />
+          )}
+          {step === 1 && (
+            <ProfileStep
               onNext={handleNext}
               onBack={handleBack}
-              currentStep={3}
+              currentStep={1}
               totalSteps={totalSteps}
             />
-          ) : userRole === "working" ? (
-            <WorkExperienceStep
+          )}
+          {step === 2 && (
+            <TellUsAboutYouStep
               onNext={handleNext}
               onBack={handleBack}
-              currentStep={3}
+              currentStep={2}
               totalSteps={totalSteps}
             />
-          ) : userRole === "freelancer" ? (
-            <FreelancerStep
-              onNext={handleNext}
+          )}
+          {step === 3 && (
+            !showSubStep ? (
+              <UserRoleStep
+                onNext={handleRoleSelect}
+                onBack={handleBack}
+                currentStep={3}
+                totalSteps={totalSteps}
+              />
+            ) : (
+              <Suspense fallback={
+                <div className="flex items-center justify-center min-h-[400px]">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6366F1]"></div>
+                </div>
+              }>
+                {["student", "fresher", "intern"].includes(userRole || "") ? (
+                  <EducationStep
+                    onNext={handleDetailsSubmit}
+                    onBack={handleBack}
+                    currentStep={3}
+                    totalSteps={totalSteps}
+                  />
+                ) : userRole === "employed" || userRole === "self_employed" ? (
+                  <WorkExperienceStep
+                    onNext={handleDetailsSubmit}
+                    onBack={handleBack}
+                    currentStep={3}
+                    totalSteps={totalSteps}
+                  />
+                ) : (
+                  <OpenToWorkStep
+                    onNext={handleDetailsSubmit}
+                    onBack={handleBack}
+                    currentStep={3}
+                    totalSteps={totalSteps}
+                  />
+                )}
+              </Suspense>
+            )
+          )}
+          {step === 4 && (
+            <InterestsStep
+              onNext={handleInterestsSubmit}
               onBack={handleBack}
-              currentStep={3}
+              currentStep={4}
               totalSteps={totalSteps}
+              title="What are you interested in?"
+              subtitle="Select a few to personalize your feed"
+              placeholder="Search interests"
+              initialData={interestItems}
+              selectedItems={selectedInterests}
+              onChange={setSelectedInterests}
+              isLoading={isSubmitting}
+              isFetchingInitial={isLoadingInterests}
+              isLoadingMore={isFetchingMoreInterests}
+              hasMore={hasMoreInterests}
+              loadingText="Loading interests..."
+              onLoadMore={fetchNextInterests}
+              onSearchChange={setInterestSearch}
+              minSelection={3}
+              maxSelection={7}
             />
-          ) : (
-            <OpenToWorkStep
-              onNext={handleNext}
+          )}
+          {step === 5 && (
+            <InterestsStep
+              onNext={handleSkillsSubmit}
               onBack={handleBack}
-              currentStep={3}
+              currentStep={5}
               totalSteps={totalSteps}
+              title="What are your skills?"
+              subtitle="List your top skills to help you stand out"
+              placeholder="Search skills"
+              initialData={skillItems}
+              actionLabel="Finish"
+              selectedItems={selectedSkills}
+              onChange={setSelectedSkills}
+              isLoading={isSubmitting}
+              isFetchingInitial={isLoadingSkills}
+              isLoadingMore={isFetchingMoreSkills}
+              hasMore={hasMoreSkills}
+              loadingText="Loading skills..."
+              onLoadMore={fetchNextSkills}
+              onSearchChange={setSkillSearch}
+              minSelection={3}
             />
-          )
-        )
-      )}
-      {step === 4 && (
-        <InterestsStep
-          onNext={(interests) => {
-            setSelectedInterests(interests);
-            handleNext();
-          }}
-          onBack={handleBack}
-          currentStep={4}
-          totalSteps={totalSteps}
-          title="What are you interested in?"
-          subtitle="Select a few to personalize your feed"
-          placeholder="Search"
-          initialData={INTERESTS_DATA}
-          minSelection={4}
-          initialSelected={selectedInterests}
-        />
-      )}
-      {step === 5 && (
-        <InterestsStep
-          onNext={(skills) => {
-            setSelectedSkills(skills);
-            handleFinish();
-          }}
-          onBack={handleBack}
-          currentStep={5}
-          totalSteps={totalSteps}
-          title="What are your skills?"
-          subtitle="List your top skills to help you stand out"
-          placeholder="Search skills"
-          initialData={SKILLS_DATA}
-          actionLabel="Finish"
-          minSelection={4}
-          initialSelected={selectedSkills}
-        />
-      )}
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

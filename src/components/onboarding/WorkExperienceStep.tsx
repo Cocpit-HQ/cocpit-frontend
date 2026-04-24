@@ -1,43 +1,96 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronLeft, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronLeft } from "lucide-react";
+import { useOnboardingStore } from "@/store/onboarding.store";
+import { saveOnboardingDetails, getCompanyList } from "@/services/api/onboarding";
+import { useToast } from "@/hooks/use-toast";
 import styles from "./WorkExperienceStep.module.css";
+import OnboardingDropdown from "./OnboardingDropdown";
 
 interface WorkExperienceStepProps {
-  onNext: () => void;
+  onNext: (data?: any) => void;
   onBack: () => void;
   currentStep: number;
   totalSteps: number;
 }
 
-const COMPANIES = [
-  "Google",
-  "Amazon",
-  "Microsoft",
-  "Netflix",
-  "Apple",
-  "Meta",
-  "Uber",
-  "Other",
+// Static fallback if API returns no data
+const FALLBACK_COMPANIES = [
+  "Google", "Amazon", "Microsoft", "Netflix",
+  "Apple", "Meta", "Uber", "Other",
 ];
 
-const ROLES = [
-  "Software Engineer",
-  "Product Manager",
-  "UI/UX Designer",
-  "Data Scientist",
-  "Marketing Manager",
-  "Sales Representative",
-  "Project Manager",
-  "Other",
+const FALLBACK_ROLES = [
+  "Software Engineer", "Product Manager", "UI/UX Designer",
+  "Data Scientist", "Marketing Manager", "Sales Representative",
+  "Project Manager", "Other",
 ];
 
 export default function WorkExperienceStep({ onNext, onBack, currentStep, totalSteps }: WorkExperienceStepProps) {
-  const [company, setCompany] = useState("");
-  const [role, setRole] = useState("");
+  const { 
+    userRole, 
+    companyName: storeCompany, 
+    jobTitle: storeTitle, 
+    setWorkExperience 
+  } = useOnboardingStore();
+  
+  const { toast } = useToast();
+  const [company, setCompanyLocal] = useState(storeCompany || "");
+  const [role, setRoleLocal] = useState(storeTitle || "");
+  const [isSaving, setIsSaving] = useState(false);
+  const [companyOptions, setCompanyOptions] = useState<string[]>(FALLBACK_COMPANIES);
+  const [roleOptions, setRoleOptions] = useState<string[]>(FALLBACK_ROLES);
+  const [loadingOptions, setLoadingOptions] = useState(true);
+
+  // Fetch live company names and titles from the backend on mount
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const data = await getCompanyList();
+        if (data.company_names && data.company_names.length > 0) {
+          setCompanyOptions(data.company_names);
+        }
+        if (data.titles && data.titles.length > 0) {
+          setRoleOptions(data.titles);
+        }
+      } catch (error) {
+        // Keep fallback options on error — no crash
+        console.error("Failed to fetch company list:", error);
+      } finally {
+        setLoadingOptions(false);
+      }
+    };
+
+    fetchOptions();
+  }, []);
 
   const isValid = company !== "" && role !== "";
+
+  const handleContinue = async () => {
+    if (!isValid || !userRole) return;
+
+    setIsSaving(true);
+    try {
+      await saveOnboardingDetails({
+        role: userRole,
+        company_name: company,
+        title: role,
+      });
+      
+      setWorkExperience(company, role);
+      onNext();
+    } catch (error) {
+      console.error("Failed to save work details:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save your work details. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -65,41 +118,23 @@ export default function WorkExperienceStep({ onNext, onBack, currentStep, totalS
 
         {/* Form */}
         <div className={styles.form}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Company</label>
-            <div className={styles.selectWrapper}>
-              <select
-                className={styles.select}
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                required
-              >
-                <option value="" disabled hidden>Where do you work?</option>
-                {COMPANIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-              <ChevronDown className={styles.selectIcon} size={18} />
-            </div>
-          </div>
+          <OnboardingDropdown
+            label="Company"
+            placeholder="Where do you work?"
+            options={companyOptions}
+            value={company}
+            onChange={setCompanyLocal}
+            disabled={loadingOptions}
+          />
 
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Role</label>
-            <div className={styles.selectWrapper}>
-              <select
-                className={styles.select}
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                required
-              >
-                <option value="" disabled hidden>Your job title</option>
-                {ROLES.map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
-              <ChevronDown className={styles.selectIcon} size={18} />
-            </div>
-          </div>
+          <OnboardingDropdown
+            label="Role"
+            placeholder="Your job title"
+            options={roleOptions}
+            value={role}
+            onChange={setRoleLocal}
+            disabled={loadingOptions}
+          />
         </div>
 
         {/* Actions */}
@@ -114,10 +149,10 @@ export default function WorkExperienceStep({ onNext, onBack, currentStep, totalS
           <button
             type="button"
             className={styles.continueButton}
-            onClick={onNext}
-            disabled={!isValid}
+            onClick={handleContinue}
+            disabled={!isValid || isSaving || loadingOptions}
           >
-            Continue
+            {isSaving ? "Saving..." : "Continue"}
           </button>
         </div>
       </div>
