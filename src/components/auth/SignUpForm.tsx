@@ -10,6 +10,7 @@ import { registrationSchema } from "@/lib/validators";
 import { useRouter } from "next/navigation";
 import { signIn, getSession } from "next-auth/react";
 import { GoogleLogin } from "@react-oauth/google";
+
 import styles from "./SignUpForm.module.css";
 
 export default function SignUpForm() {
@@ -60,12 +61,15 @@ export default function SignUpForm() {
     try {
       const result = await signIn("credentials", {
         idToken,
+        // Explicitly pass role for new Google sign-ups.
+        // The backend will use this for account creation; existing users are unaffected.
+        accountType: "Student",
         redirect: false,
       });
 
       if (result?.error) {
         toast({
-          title: "Google login failed",
+          title: "Google sign-up failed",
           description: result.error,
           variant: "destructive",
         });
@@ -75,7 +79,7 @@ export default function SignUpForm() {
       }
     } catch (error: any) {
       toast({
-        title: "Google login error",
+        title: "Google sign-up error",
         description: error?.message || "An unexpected error occurred.",
         variant: "destructive",
       });
@@ -95,16 +99,17 @@ export default function SignUpForm() {
 
     setIsVerifying(true);
     try {
-      await requestOTP(email.toLowerCase());
+      await requestOTP(email.toLowerCase(), "signup");
       setOtpSent(true);
       toast({
         title: "OTP Sent!",
         description: "A verification code has been sent to your email.",
       });
     } catch (error: any) {
+      const message = error.response?.data?.message || "Please try again.";
       toast({
         title: "Failed to send OTP",
-        description: error.response?.data?.message || "Please try again.",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -114,7 +119,8 @@ export default function SignUpForm() {
 
   const handleVerifyOtp = async (value: string) => {
     setOtp(value);
-    if (value.length === 6) {
+    // In-flight guard — prevent double-fire if user types quickly or pastes
+    if (value.length === 6 && !isCheckingOtp) {
       setIsCheckingOtp(true);
       try {
         await verifyOTP(email.toLowerCase(), value);
@@ -336,6 +342,55 @@ export default function SignUpForm() {
                 )}
 
 
+                {/* Google Sign In Wrapper */}
+                <div className={styles.googleButtonWrapper} ref={containerRef}>
+                  {/* Custom Visual Button simulating designer mock exactly */}
+                  <div className={styles.googleButtonVisual}>
+                    <svg className={styles.googleIcon} viewBox="0 0 24 24">
+                      <path
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                        fill="#4285F4"
+                      />
+                      <path
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                        fill="#34A853"
+                      />
+                      <path
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+                        fill="#FBBC05"
+                      />
+                      <path
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                        fill="#EA4335"
+                      />
+                    </svg>
+                    <span className={styles.googleButtonText}>Continue with Google</span>
+                  </div>
+
+                  {/* Real Google Button layered invisibly on top */}
+                  <div className={styles.googleButtonReal}>
+                    {containerWidth !== undefined && (
+                      <GoogleLogin
+                        onSuccess={(credentialResponse) => {
+                          if (credentialResponse.credential) {
+                            handleGoogleLogin(credentialResponse.credential);
+                          }
+                        }}
+                        onError={() => {
+                          toast({
+                            title: "Google login failed",
+                            description: "Could not sign in with Google. Please try again.",
+                            variant: "destructive",
+                          });
+                        }}
+                        text="continue_with"
+                        shape="pill"
+                        size="large"
+                        width={String(containerWidth)}
+                      />
+                    )}
+                  </div>
+                </div>
                 {/* Google Sign In Wrapper */}
                 <div className={styles.googleButtonWrapper} ref={containerRef}>
                   {/* Custom Visual Button simulating designer mock exactly */}

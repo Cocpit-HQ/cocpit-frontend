@@ -43,11 +43,13 @@ export default function ForgotPasswordForm() {
     }
     setIsVerifying(true);
     try {
-      await requestOTP(email.toLowerCase());
+      // Always send purpose: "password_reset" — server returns 200 regardless
+      // of whether the account exists, preventing account enumeration.
+      await requestOTP(email.toLowerCase(), "password_reset");
       setOtpSent(true);
       toast({
         title: "OTP Sent!",
-        description: "A verification code has been sent to your email.",
+        description: "If an account exists with that email, a verification code has been sent.",
       });
     } catch (error: any) {
       toast({
@@ -62,15 +64,14 @@ export default function ForgotPasswordForm() {
 
   const handleVerifyOtp = async (value: string) => {
     setOtp(value);
-    if (value.length === 6) {
+    // In-flight guard — prevent double-fire if user types quickly or pastes
+    if (value.length === 6 && !isCheckingOtp) {
       setIsCheckingOtp(true);
       try {
         await verifyOTP(email.toLowerCase(), value);
         setShowVerified(true);
         setOtpError(false);
         setError(null);
-        
-        // Removed the auto-transition setTimeout to allow user to click 'Verify' to proceed
       } catch (error: any) {
         setShowVerified(false);
         setEmailVerified(false);
@@ -263,7 +264,8 @@ export default function ForgotPasswordForm() {
                       title: "Email Verified!",
                       description: "You may now set a new password.",
                     });
-                  } else {
+                  } else if (!isCheckingOtp) {
+                    // Guard: don't fire if a verify request is already in-flight
                     handleVerifyOtp(otp);
                   }
                 }}
