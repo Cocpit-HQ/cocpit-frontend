@@ -145,11 +145,6 @@ export default function SignUpForm() {
     }
   };
 
-  const handleGoToStep2 = () => {
-    if (emailVerified) {
-      setStep(2);
-    }
-  };
 
   const handleRegister = async (data: any) => {
     setIsVerifying(true);
