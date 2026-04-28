@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronDown } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useOnboardingStore } from "@/store/onboarding.store";
 import { saveOnboardingDetails } from "@/services/api/onboarding";
 import { useToast } from "@/hooks/use-toast";
 import styles from "./FreelancerStep.module.css";
+import OnboardingDropdown from "./OnboardingDropdown";
 
 interface FreelancerStepProps {
   onNext: (data?: any) => void;
@@ -28,9 +29,9 @@ const FREELANCE_ROLES = [
 ];
 
 export default function FreelancerStep({ onNext, onBack, currentStep, totalSteps }: FreelancerStepProps) {
-  const { userRole } = useOnboardingStore();
+  const { userRole, jobTitle: storeTitle, setWorkExperience } = useOnboardingStore();
   const { toast } = useToast();
-  const [role, setRole] = useState("");
+  const [role, setRoleLocal] = useState(storeTitle || "");
   const [isSaving, setIsSaving] = useState(false);
 
   const isValid = role !== "";
@@ -44,6 +45,8 @@ export default function FreelancerStep({ onNext, onBack, currentStep, totalSteps
         role: userRole,
         title: role,
       });
+      
+      setWorkExperience("", role);
       onNext();
     } catch (error) {
       console.error("Failed to save freelancer details:", error);
@@ -83,23 +86,13 @@ export default function FreelancerStep({ onNext, onBack, currentStep, totalSteps
 
         {/* Form */}
         <div className={styles.form}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Role</label>
-            <div className={styles.selectWrapper}>
-              <select
-                className={styles.select}
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                required
-              >
-                <option value="" disabled hidden>What do you do?</option>
-                {FREELANCE_ROLES.map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
-              <ChevronDown className={styles.selectIcon} size={18} />
-            </div>
-          </div>
+          <OnboardingDropdown
+            label="Role"
+            placeholder="What do you do?"
+            options={FREELANCE_ROLES}
+            value={role}
+            onChange={setRoleLocal}
+          />
         </div>
 
         {/* Actions */}

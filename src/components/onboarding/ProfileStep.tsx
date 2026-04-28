@@ -24,6 +24,7 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
   const { 
     fullName, setFullName, 
     accountName, setAccountName,
+    initialAccountName, setInitialAccountName,
     profileImage, setProfileImage,
     profileImageFile, setProfileImageFile,
     isInitialized
@@ -60,6 +61,11 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
         setNameAvailable(null);
         return;
       }
+      // If the name matches what we initially loaded (or just saved), it's available by default
+      if (initialAccountName && debouncedAccountName.toLowerCase() === initialAccountName.toLowerCase()) {
+        setNameAvailable(true);
+        return;
+      }
       if (!validateAccountName(debouncedAccountName)) {
         setNameAvailable(false);
         return;
@@ -75,19 +81,15 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
       }
     };
 
-    // Skip availability check if we're still loading or if the name hasn't changed from what we just fetched
     if (!loadingInitial) {
       checkAvailability();
     }
-  }, [debouncedAccountName, loadingInitial]);
+  }, [debouncedAccountName, loadingInitial, initialAccountName]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // 1. Store the file for later submission
       setProfileImageFile(file);
-      
-      // 2. Show local preview immediately
       const reader = new FileReader();
       reader.onload = (event) => {
         setProfileImage(event.target?.result as string);
@@ -109,7 +111,6 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
 
     setSubmitting(true);
     try {
-      // Use FormData to send both data and file
       const formData = new FormData();
       formData.append("account_name", accountName);
       formData.append("full_name", fullName);
@@ -119,9 +120,11 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
       }
 
       await updateOnboardingProfile(formData);
+      
+      // Update the initial name so if they come back, it's still marked as valid
+      setInitialAccountName(accountName);
 
       toast({ title: "Profile Updated", description: "Your basic profile has been saved." });
-      // Move to next step
       onNext();
       router.refresh();
     } catch (error: any) {
@@ -133,17 +136,15 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
     }
   };
 
-  // Memoized display URL for the profile photo
   const displayImage = useMemo(() => {
     if (!profileImage) return null;
     if (profileImage.startsWith('data:') || profileImage.startsWith('http')) {
       return profileImage;
     }
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5001'; // Backend port is 5001
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5001';
     return `${baseUrl}/${profileImage}`;
   }, [profileImage]);
 
-  // Memoized validation state
   const isValid = useMemo(() => {
     return (!!profileImage || !!profileImageFile) && 
            !!accountName.trim() && 
@@ -156,16 +157,11 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
   return (
     <div className={styles.container}>
       <div className={styles.content}>
-
-        {/* Header Group */}
         <div className={styles.headerGroup}>
-          {/* Logo */}
           <div className={styles.logoContainer}>
-            <Image src="/assets/logo.png" alt="Cocpit Logo" width={56} height={56} className={styles.logo} />
+            <Image src="/assets/logo.PNG" alt="Cocpit Logo" width={56} height={56} className={styles.logo} />
           </div>
-
           <div className={styles.stepContainer}>
-            {/* Top Header line */}
             <div className={styles.stepHeader}>
               <span className={styles.stepText}>Step {currentStep} Of {totalSteps}</span>
             </div>
@@ -175,13 +171,11 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
           </div>
         </div>
 
-        {/* Title & Subtitle Group */}
         <div className={styles.textGroup}>
           <h1 className={styles.title}>Set up your profile</h1>
           <p className={styles.subtitle}>This helps personalize your experience</p>
         </div>
 
-        {/* Profile photo circle */}
         <div className={styles.photoUploadContainer}>
           <div className={styles.photoWrapper}>
             <button type="button" onClick={() => fileInputRef.current?.click()} className={styles.photoButton}>
@@ -248,7 +242,6 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
           )}
         </div>
 
-        {/* Actions */}
         <div className={styles.actionRow}>
           {onBack && (
             <button type="button" className={styles.backButton} onClick={onBack}>
@@ -265,9 +258,7 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
             {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Continue"}
           </button>
         </div>
-
       </div>
     </div>
   );
 }
-

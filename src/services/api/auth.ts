@@ -23,8 +23,8 @@ export interface ActorContextResponse {
 }
 
 // 1. Request OTP (Public)
-export const requestOTP = async (email: string) => {
-  const response = await publicApi.post("/auth/request-otp", { email });
+export const requestOTP = async (email: string, purpose: "signup" | "password_reset" = "signup") => {
+  const response = await publicApi.post("/auth/request-otp", { email, purpose });
   return response.data;
 };
 

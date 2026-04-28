@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronDown } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useOnboardingStore } from "@/store/onboarding.store";
 import { saveOnboardingDetails, getCompanyList } from "@/services/api/onboarding";
 import { useToast } from "@/hooks/use-toast";
 import styles from "./WorkExperienceStep.module.css";
+import OnboardingDropdown from "./OnboardingDropdown";
 
 interface WorkExperienceStepProps {
   onNext: (data?: any) => void;
@@ -27,10 +28,16 @@ const FALLBACK_ROLES = [
 ];
 
 export default function WorkExperienceStep({ onNext, onBack, currentStep, totalSteps }: WorkExperienceStepProps) {
-  const { userRole } = useOnboardingStore();
+  const { 
+    userRole, 
+    companyName: storeCompany, 
+    jobTitle: storeTitle, 
+    setWorkExperience 
+  } = useOnboardingStore();
+  
   const { toast } = useToast();
-  const [company, setCompany] = useState("");
-  const [role, setRole] = useState("");
+  const [company, setCompanyLocal] = useState(storeCompany || "");
+  const [role, setRoleLocal] = useState(storeTitle || "");
   const [isSaving, setIsSaving] = useState(false);
   const [companyOptions, setCompanyOptions] = useState<string[]>(FALLBACK_COMPANIES);
   const [roleOptions, setRoleOptions] = useState<string[]>(FALLBACK_ROLES);
@@ -70,6 +77,8 @@ export default function WorkExperienceStep({ onNext, onBack, currentStep, totalS
         company_name: company,
         title: role,
       });
+      
+      setWorkExperience(company, role);
       onNext();
     } catch (error) {
       console.error("Failed to save work details:", error);
@@ -109,47 +118,23 @@ export default function WorkExperienceStep({ onNext, onBack, currentStep, totalS
 
         {/* Form */}
         <div className={styles.form}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Company</label>
-            <div className={styles.selectWrapper}>
-              <select
-                className={styles.select}
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                required
-                disabled={loadingOptions}
-              >
-                <option value="" disabled hidden>
-                  {loadingOptions ? "Loading..." : "Where do you work?"}
-                </option>
-                {companyOptions.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-              <ChevronDown className={styles.selectIcon} size={18} />
-            </div>
-          </div>
+          <OnboardingDropdown
+            label="Company"
+            placeholder="Where do you work?"
+            options={companyOptions}
+            value={company}
+            onChange={setCompanyLocal}
+            disabled={loadingOptions}
+          />
 
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Role</label>
-            <div className={styles.selectWrapper}>
-              <select
-                className={styles.select}
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                required
-                disabled={loadingOptions}
-              >
-                <option value="" disabled hidden>
-                  {loadingOptions ? "Loading..." : "Your job title"}
-                </option>
-                {roleOptions.map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
-              <ChevronDown className={styles.selectIcon} size={18} />
-            </div>
-          </div>
+          <OnboardingDropdown
+            label="Role"
+            placeholder="Your job title"
+            options={roleOptions}
+            value={role}
+            onChange={setRoleLocal}
+            disabled={loadingOptions}
+          />
         </div>
 
         {/* Actions */}

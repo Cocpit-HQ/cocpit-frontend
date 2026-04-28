@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronLeft, Search } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { ChevronLeft, Search, Loader2 } from "lucide-react";
 import styles from "./InterestsStep.module.css";
 
 interface InterestsStepProps {
@@ -15,8 +15,22 @@ interface InterestsStepProps {
   initialData: string[];
   actionLabel?: string;
   minSelection?: number;
-  initialSelected?: string[];
+  maxSelection?: number;
+  selectedItems?: string[];
+  onChange?: (items: string[]) => void;
   isLoading?: boolean;
+  /** True while the parent is fetching the first page */
+  isFetchingInitial?: boolean;
+  /** True while the parent is loading the next page */
+  isLoadingMore?: boolean;
+  /** Whether there are more pages to load */
+  hasMore?: boolean;
+  /** Text to show while loading (e.g. "Loading interests...") */
+  loadingText?: string;
+  /** Called when the scroll sentinel enters the viewport */
+  onLoadMore?: () => void;
+  /** Called on every keystroke so the parent can debounce & hit the API */
+  onSearchChange?: (q: string) => void;
 }
 
 export default function InterestsStep({
@@ -30,27 +44,37 @@ export default function InterestsStep({
   initialData,
   actionLabel = "Continue",
   minSelection = 1,
-  initialSelected = [],
-  isLoading = false
+  maxSelection,
+  selectedItems = [],
+  onChange,
+  isLoading = false,
+  isFetchingInitial = false,
+  isLoadingMore = false,
+  hasMore = false,
+  loadingText = "Loading...",
+  onLoadMore,
+  onSearchChange,
 }: InterestsStepProps) {
   const [search, setSearch] = useState("");
-  const [selectedItems, setSelectedItems] = useState<string[]>(initialSelected);
   const [showError, setShowError] = useState(false);
 
-  const toggleItem = (item: string) => {
-    setSelectedItems((prev) => {
-      const next = prev.includes(item)
-        ? prev.filter((i) => i !== item)
-        : [...prev, item];
+  // Sentinel ref for IntersectionObserver (infinite scroll trigger)
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-      // Update error visibility based on the new selection count
-      if (next.length > 0 && next.length < minSelection) {
-        setShowError(true);
-      } else {
-        setShowError(false);
-      }
-      return next;
-    });
+  const toggleItem = (item: string) => {
+    const isSelected = selectedItems.includes(item);
+    
+    if (!isSelected && maxSelection && selectedItems.length >= maxSelection) {
+      // Potentially show a toast or just ignore
+      return;
+    }
+
+    const next = isSelected
+      ? selectedItems.filter((i) => i !== item)
+      : [...selectedItems, item];
+    
+    onChange?.(next);
+    setShowError(next.length > 0 && next.length < minSelection);
   };
 
   const handleAction = () => {
@@ -61,9 +85,38 @@ export default function InterestsStep({
     onNext(selectedItems);
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearch(value);
+    onSearchChange?.(value);
+  };
+
+  // Client-side filter — instant feedback while server debounce is in-flight
   const filteredItems = initialData.filter((item) =>
     item.toLowerCase().includes(search.toLowerCase())
   );
+
+  // IntersectionObserver: fire onLoadMore when the sentinel enters view
+  const handleIntersection = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      if (entries[0].isIntersecting && hasMore && !isLoadingMore && onLoadMore) {
+        onLoadMore();
+      }
+    },
+    [hasMore, isLoadingMore, onLoadMore]
+  );
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !onLoadMore) return;
+    const observer = new IntersectionObserver(handleIntersection, {
+      root: el.closest(`.${styles.tagsScrollable}`),
+      rootMargin: "80px",
+      threshold: 0,
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [handleIntersection, onLoadMore]);
 
   return (
     <div className={styles.container}>
@@ -83,10 +136,16 @@ export default function InterestsStep({
           </div>
         </div>
 
-        {/* Title & Subtitle Group */}
+        {/* Title & Subtitle */}
         <div className={styles.textGroup}>
           <h1 className={styles.title}>{title}</h1>
-          <p className={styles.subtitle}>{subtitle}</p>
+          <p className={styles.subtitle}>
+            {selectedItems.length > 0 ? (
+              <span className={styles.countText}>
+                {selectedItems.length} {maxSelection ? `/ ${maxSelection}` : ""} selected
+              </span>
+            ) : subtitle}
+          </p>
         </div>
 
         {/* Search */}
@@ -96,36 +155,53 @@ export default function InterestsStep({
             className={styles.searchInput}
             placeholder={placeholder}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
           />
           <Search className={styles.searchIcon} size={20} />
           {showError && (
-            <p className={styles.errorText}>*Select more than {minSelection - 1}</p>
+            <p className={styles.errorText}>
+              *Select {maxSelection ? `${minSelection}-${maxSelection}` : `at least ${minSelection}`} items
+            </p>
           )}
         </div>
 
-        {/* Tags Grid */}
-        <div className={styles.tagsContainer}>
-          {filteredItems.map((item) => (
-            <button
-              key={item}
-              type="button"
-              className={`${styles.tag} ${selectedItems.includes(item) ? styles.tagSelected : ""
-                }`}
-              onClick={() => toggleItem(item)}
-            >
-              {item}
-            </button>
-          ))}
+        {/* Scrollable Tags Grid */}
+        <div className={styles.tagsScrollable}>
+          {isFetchingInitial ? (
+            <div className={styles.loadingCenter}>
+              <Loader2 size={24} className={styles.spinner} />
+              <span className={styles.loadingText}>{loadingText}</span>
+            </div>
+          ) : (
+            <>
+              <div className={styles.tagsContainer}>
+                {filteredItems.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    className={`${styles.tag} ${selectedItems.includes(item) ? styles.tagSelected : ""}`}
+                    onClick={() => toggleItem(item)}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+
+              {/* Sentinel — triggers next page when scrolled into view */}
+              {onLoadMore && (
+                <div ref={sentinelRef} className={styles.sentinel}>
+                  {isLoadingMore && (
+                    <Loader2 size={18} className={styles.spinner} />
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* Actions */}
         <div className={styles.actionRow}>
-          <button
-            type="button"
-            className={styles.backButton}
-            onClick={onBack}
-          >
+          <button type="button" className={styles.backButton} onClick={onBack}>
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button

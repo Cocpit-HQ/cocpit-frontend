@@ -125,3 +125,87 @@ export const saveSkills = async (data: { skills: string[] }): Promise<any> => {
   const response = await api.patch("/onboarding/skills", data);
   return response.data;
 };
+
+// ─── GET /onboarding/interests (cursor-based) ──────────────────────────────
+
+/** Number of interests fetched per page — hardcoded here, sent as `limit` query param */
+export const INTERESTS_PAGE_SIZE = 20;
+
+export interface Interest {
+  interest_id: string;
+  name: string;
+  slug: string;
+  category: string | null;
+  icon_url: string | null;
+  usage_count: number;
+}
+
+export interface GetInterestsParams {
+  /** Search term — filters name/slug server-side via ILIKE */
+  q?: string;
+  /** Opaque base64 cursor returned by the previous page */
+  cursor?: string;
+  /** Items per page (default: INTERESTS_PAGE_SIZE, backend caps at 50) */
+  limit?: number;
+}
+
+export interface GetInterestsResponse {
+  success: boolean;
+  data: {
+    items: Interest[];
+    /** Pass this as `cursor` on the next call. null = no more pages */
+    next_cursor: string | null;
+    has_more: boolean;
+  };
+}
+
+export const getOnboardingInterests = async (
+  params: GetInterestsParams = {}
+): Promise<GetInterestsResponse> => {
+  const { q, cursor, limit = INTERESTS_PAGE_SIZE } = params;
+  const response = await api.get<GetInterestsResponse>("/onboarding/interests", {
+    params: {
+      ...(q ? { q } : {}),
+      ...(cursor ? { cursor } : {}),
+      limit,
+    },
+  });
+  return response.data;
+};
+
+// ─── GET /onboarding/skills (cursor-based) ─────────────────────────────────
+
+export interface Skill {
+  skill_id: string;
+  name: string;
+}
+
+export interface GetSkillsParams {
+  q?: string;
+  cursor?: string;
+  limit?: number;
+}
+
+export interface GetSkillsResponse {
+  success: boolean;
+  data: {
+    items: Skill[];
+    next_cursor: string | null;
+    has_more: boolean;
+  };
+}
+
+export const getOnboardingSkills = async (
+  params: GetSkillsParams = {}
+): Promise<GetSkillsResponse> => {
+  const { q, cursor, limit = INTERESTS_PAGE_SIZE } = params;
+  const response = await api.get<GetSkillsResponse>("/onboarding/skills", {
+    params: {
+      ...(q ? { q } : {}),
+      ...(cursor ? { cursor } : {}),
+      limit,
+    },
+  });
+  return response.data;
+};
+

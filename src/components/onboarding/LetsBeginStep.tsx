@@ -57,7 +57,7 @@ export default function LetsBeginStep({
         {/* Header content holding Logo */}
         <div className={styles.headerGroup}>
           <div className={styles.logoContainer}>
-            <img src="/assets/logo.png" alt="Cocpit Logo" className={styles.logo} />
+            <img src="/assets/logo.PNG" alt="Cocpit Logo" className={styles.logo} />
           </div>
         </div>
 

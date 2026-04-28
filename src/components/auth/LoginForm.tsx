@@ -73,7 +73,7 @@ const LoginForm = () => {
       });
 
       if (result?.error) {
-        setError("Incorrect password");
+        setError("Invalid email or password");
         setIsLoading(false);
       } else {
         setError(null);

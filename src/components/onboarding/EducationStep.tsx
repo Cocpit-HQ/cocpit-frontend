@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronDown } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useOnboardingStore } from "@/store/onboarding.store";
 import { saveOnboardingDetails, getEducationList } from "@/services/api/onboarding";
 import { useToast } from "@/hooks/use-toast";
 import styles from "./EducationStep.module.css";
+import OnboardingDropdown from "./OnboardingDropdown";
 
 interface EducationStepProps {
   onNext: (data?: any) => void;
@@ -40,10 +41,10 @@ const FALLBACK_PROGRAMS = [
 ];
 
 export default function EducationStep({ onNext, onBack, currentStep, totalSteps }: EducationStepProps) {
-  const { userRole } = useOnboardingStore();
+  const { userRole, schoolName: storeSchool, degree: storeDegree, setEducation } = useOnboardingStore();
   const { toast } = useToast();
-  const [education, setEducation] = useState("");
-  const [specialization, setSpecialization] = useState("");
+  const [education, setEducationLocal] = useState(storeSchool || "");
+  const [specialization, setSpecializationLocal] = useState(storeDegree || "");
   const [isSaving, setIsSaving] = useState(false);
   const [schoolOptions, setSchoolOptions] = useState<string[]>(FALLBACK_SCHOOLS);
   const [programOptions, setProgramOptions] = useState<string[]>(FALLBACK_PROGRAMS);
@@ -83,6 +84,8 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
         school_name: education,   // Selected school → school_name
         degree: specialization,   // Selected program → degree
       });
+      
+      setEducation(education, specialization);
       onNext();
     } catch (error) {
       console.error("Failed to save education details:", error);
@@ -122,47 +125,23 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
 
         {/* Form */}
         <div className={styles.form}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>School / University</label>
-            <div className={styles.selectWrapper}>
-              <select
-                className={styles.select}
-                value={education}
-                onChange={(e) => setEducation(e.target.value)}
-                required
-                disabled={loadingOptions}
-              >
-                <option value="" disabled hidden>
-                  {loadingOptions ? "Loading..." : "Select your school"}
-                </option>
-                {schoolOptions.map((school) => (
-                  <option key={school} value={school}>{school}</option>
-                ))}
-              </select>
-              <ChevronDown className={styles.selectIcon} size={18} />
-            </div>
-          </div>
+          <OnboardingDropdown
+            label="School / University"
+            placeholder="Select your school"
+            options={schoolOptions}
+            value={education}
+            onChange={setEducationLocal}
+            disabled={loadingOptions}
+          />
 
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Program</label>
-            <div className={styles.selectWrapper}>
-              <select
-                className={styles.select}
-                value={specialization}
-                onChange={(e) => setSpecialization(e.target.value)}
-                required
-                disabled={loadingOptions}
-              >
-                <option value="" disabled hidden>
-                  {loadingOptions ? "Loading..." : "Select your program"}
-                </option>
-                {programOptions.map((program) => (
-                  <option key={program} value={program}>{program}</option>
-                ))}
-              </select>
-              <ChevronDown className={styles.selectIcon} size={18} />
-            </div>
-          </div>
+          <OnboardingDropdown
+            label="Program"
+            placeholder="Select your program"
+            options={programOptions}
+            value={specialization}
+            onChange={setSpecializationLocal}
+            disabled={loadingOptions}
+          />
         </div>
 
         {/* Actions */}
