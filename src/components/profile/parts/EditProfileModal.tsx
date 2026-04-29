@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"
 import { X, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { updateMemberRoleSettings } from "@/services/api/organization"
 import {
   Dialog,
   DialogContent,
@@ -31,9 +32,9 @@ interface EditProfileModalProps {
   onSave: (data: any) => void
 }
 
-const LOOKING_FOR_OPTIONS = ["Full-time", "Part-time", "Internship", "Freelance", "Connections"]
-const AVAILABILITY_OPTIONS = ["Immediately", "Weekdays", "Weekends", "15 to 30 days", "Flexible", "On-demand"]
-const WORK_SETUP_OPTIONS = ["Remote", "Hybrid", "On-site"]
+const LOOKING_FOR_OPTIONS = ["Full-time", "Freelance", "Mentorship", "Consulting"]
+const AVAILABILITY_OPTIONS = ["Immediate", "30 Days", "Casual Networking"]
+const WORK_SETUP_OPTIONS = ["Remote", "Hybrid", "Onsite"]
 
 export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileModalProps) {
   const [formData, setFormData] = useState({
@@ -43,9 +44,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
     status: "Student",
     location: "",
     website: "",
-    open_to: [] as string[],
-    availability: [] as string[],
-    work_preference: [] as string[],
+    open_to: "" as string,
+    availability: "" as string,
+    work_preference: "" as string,
     about: "",
     show_owner_badge: true,
     visible_role_ids: [] as string[],
@@ -60,9 +61,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
         status: "Student", // Defaulting for now
         location: user.location || "",
         website: user.website || "",
-        open_to: user.open_to ? user.open_to.split(",") : [],
-        availability: user.availability ? user.availability.split(",") : [],
-        work_preference: user.work_preference ? user.work_preference.split(",") : [],
+        open_to: user.open_to || "",
+        availability: user.availability || "",
+        work_preference: user.work_preference || "",
         about: user.about || "",
         show_owner_badge: true,
         visible_role_ids: user.company_roles
@@ -75,11 +76,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   const toggleOption = (field: "open_to" | "availability" | "work_preference", option: string) => {
     setFormData(prev => {
       const current = prev[field]
-      if (current.includes(option)) {
-        return { ...prev, [field]: current.filter(o => o !== option) }
-      } else {
-        return { ...prev, [field]: [...current, option] }
-      }
+      return { ...prev, [field]: current === option ? "" : option }
     })
   }
 
@@ -87,12 +84,22 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   const labelStyles = "text-[14px] font-normal text-[#111827] mb-[8px] font-[family-name:var(--font-poppins)] leading-[20px]"
   const getSelectTextColor = (value: string) => value ? "text-[#111827]" : "text-[#6B7280]";
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    // Handle role visibility changes independently
+    for (const role of (user?.company_roles || [])) {
+        const orgId = role.org_id || role.company_id;
+        const shouldBeVisible = formData.visible_role_ids.includes(orgId!);
+        if (role.is_role_visible !== shouldBeVisible) {
+            try {
+                await updateMemberRoleSettings(orgId!, { is_role_visible: shouldBeVisible });
+            } catch (err) {
+                console.error("Failed to update role visibility", err);
+            }
+        }
+    }
+
     onSave({
       ...formData,
-      open_to: formData.open_to.join(","),
-      availability: formData.availability.join(","),
-      work_preference: formData.work_preference.join(","),
     })
   }
 
@@ -195,7 +202,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     <button
                       key={opt}
                       onClick={() => toggleOption("open_to", opt)}
-                      className={`h-10 min-w-[89px] px-4 rounded-[8px] text-sm font-medium transition-all flex items-center justify-center border ${formData.open_to.includes(opt)
+                      className={`h-10 min-w-[89px] px-4 rounded-[8px] text-sm font-medium transition-all flex items-center justify-center border ${formData.open_to === opt
                           ? "bg-[#6366F1] border-[#6366F1] text-white shadow-sm"
                           : "bg-[#EEF2FF] border-[#EEF2FF] text-[#6366F1] hover:bg-[#E0E7FF]"
                         }`}
@@ -213,7 +220,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     <button
                       key={opt}
                       onClick={() => toggleOption("availability", opt)}
-                      className={`h-10 min-w-[89px] px-4 rounded-[8px] text-sm font-medium transition-all flex items-center justify-center border ${formData.availability.includes(opt)
+                      className={`h-10 min-w-[89px] px-4 rounded-[8px] text-sm font-medium transition-all flex items-center justify-center border ${formData.availability === opt
                           ? "bg-[#6366F1] border-[#6366F1] text-white shadow-sm"
                           : "bg-[#EEF2FF] border-[#EEF2FF] text-[#6366F1] hover:bg-[#E0E7FF]"
                         }`}
@@ -231,7 +238,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     <button
                       key={opt}
                       onClick={() => toggleOption("work_preference", opt)}
-                      className={`h-10 min-w-[89px] px-4 rounded-[8px] text-sm font-medium transition-all flex items-center justify-center border ${formData.work_preference.includes(opt)
+                      className={`h-10 min-w-[89px] px-4 rounded-[8px] text-sm font-medium transition-all flex items-center justify-center border ${formData.work_preference === opt
                           ? "bg-[#6366F1] border-[#6366F1] text-white shadow-sm"
                           : "bg-[#EEF2FF] border-[#EEF2FF] text-[#6366F1] hover:bg-[#E0E7FF]"
                         }`}

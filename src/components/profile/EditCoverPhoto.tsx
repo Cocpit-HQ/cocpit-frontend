@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { uploadCoverPhoto, deleteCoverPhoto } from "@/services/api/profile";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface EditCoverPhotoProps {
   coverImage: string | null;
@@ -35,6 +36,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -80,6 +82,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
       }
 
       setCoverImage(response.coverUrl || (response as any).url);
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
       toast({ title: "Success", description: "Cover photo updated successfully." });
 
       // Cleanup
@@ -108,6 +111,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
         await deleteCoverPhoto();
       }
       setCoverImage(null);
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
       toast({ title: "Success", description: "Cover photo removed." });
       setIsModalOpen(false);
     } catch (error) {

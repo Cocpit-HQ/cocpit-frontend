@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { Menu, LogOut, Edit2, CheckCircle, GraduationCap, Briefcase, Pencil, Plus, Building2, FileText, Copy, ChevronDown } from "lucide-react"
 import Link from "next/link"
 import { Icon } from "@iconify/react"
+import { cn } from "@/lib/utils"
 
 import SuggestionsPanel from "@/components/home/SuggestionsPanel"
 import type { Page } from "@/types/common"
@@ -45,7 +46,8 @@ import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { FeedPost } from "@/features/feed/components/FeedPost"
 import PostCard from "@/components/shared/PostCard"
 import { getUserPosts } from "@/services/api/profile"
-import { deletePost as apiDeletePost } from "@/services/api/posts"
+import { deletePost as apiDeletePost, toggleLike } from "@/services/api/posts"
+import { toggleSavePost } from "@/services/api/savedPost"
 import { UserData, Skill, AddSkillsPayload } from "@/types/user"
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
 import type { Post } from "@/types/entities"
@@ -75,10 +77,34 @@ const routes: Record<string, string> = {
 }
 
 const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: any, isOwnPost?: boolean, onDelete?: (id: string) => void }) => {
+  const [isLiked, setIsLiked] = useState(post.is_liked || false);
+  const [likesCount, setLikesCount] = useState(post.likes_count || post.stats?.likes || 0);
+  const [isSaved, setIsSaved] = useState(post.is_saved || false);
+
   const image = post.image_url ||
     post.imageSrc ||
     (post.media && post.media.length > 0 ? post.media[0].url : null) ||
     (post.images && post.images.length > 0 ? (typeof post.images[0] === 'string' ? post.images[0] : post.images[0].url) : null);
+
+  const handleLike = async () => {
+    try {
+      const res = await toggleLike(post.id || post.post_id);
+      setIsLiked(res.liked);
+      setLikesCount(res.likeCount);
+    } catch (err) {
+      toast.error("Failed to update like");
+    }
+  };
+
+  const handleBookmark = async () => {
+    try {
+      const res = await toggleSavePost(post.id || post.post_id);
+      setIsSaved(res.saved);
+      toast.success(res.saved ? "Post saved" : "Post removed from saves");
+    } catch (err) {
+      toast.error("Failed to update save status");
+    }
+  };
 
   return (
     <div className="w-[285.33px] h-[488px] bg-[#FFFFFF] border border-slate-100 rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] py-2 flex flex-col gap-2 relative flex-shrink-0">
@@ -98,7 +124,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: any, isOwnPost?:
               {post.author || "Anonymous"}
             </span>
             <span className="text-[10px] text-slate-500 truncate">
-              Kolhapur
+              {post.location || "Location"}
             </span>
           </div>
         </div>
@@ -117,19 +143,10 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: any, isOwnPost?:
               sideOffset={8}
             >
               <div className="flex flex-col gap-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center justify-between group">
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center justify-center flex-shrink-0">
-                        <Icon icon="solar:user-circle-linear" className="w-[24px] h-[24px] text-[#000000]" />
-                      </div>
-                      <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-[#000000]">xyz</span>
-                    </div>
-                    <button className="p-1 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors flex-shrink-0">
-                      <Icon icon="fluent:delete-32-regular" className="w-[24px] h-[24px]" />
-                    </button>
-                  </div>
-                ))}
+                {/* Tagged users would go here, fetching from API if possible */}
+                <div className="flex items-center gap-2 px-2 py-1">
+                   <span className="text-[12px] text-slate-400">No tags yet</span>
+                </div>
               </div>
             </PopoverContent>
           </Popover>
@@ -147,25 +164,37 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: any, isOwnPost?:
             >
               <div className="flex flex-col gap-3">
                 {/* Edit Post */}
-                <button className="flex items-center justify-between w-full group transition-colors">
-                  <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-[#000000]">Edit post</span>
-                  <Icon icon="eva:edit-outline" className="w-[24px] h-[24px] text-[#000000]" />
-                </button>
+                {isOwnPost && (
+                  <button 
+                    onClick={() => toast.info("Redirecting to editor...")}
+                    className="flex items-center justify-between w-full group transition-colors px-2"
+                  >
+                    <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-[#000000]">Edit post</span>
+                    <Icon icon="eva:edit-outline" className="w-[24px] h-[24px] text-[#000000]" />
+                  </button>
+                )}
 
                 {/* Make Private */}
-                <button className="flex items-center justify-between w-full group transition-colors">
-                  <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-[#000000]">Make private</span>
-                  <Icon icon="fluent:eye-hide-24-regular" className="w-[24px] h-[24px] text-[#000000]" />
-                </button>
+                {isOwnPost && (
+                  <button 
+                    onClick={() => toast.info("Privacy toggle coming soon")}
+                    className="flex items-center justify-between w-full group transition-colors px-2"
+                  >
+                    <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-[#000000]">Make private</span>
+                    <Icon icon="fluent:eye-hide-24-regular" className="w-[24px] h-[24px] text-[#000000]" />
+                  </button>
+                )}
 
                 {/* Delete Post */}
-                <button 
-                  onClick={() => onDelete?.(post.id || post.post_id)}
-                  className="flex items-center justify-between w-full group transition-colors"
-                >
-                  <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-red-400">Delete post</span>
-                  <Icon icon="fluent:delete-32-regular" className="w-[24px] h-[24px] text-red-400" />
-                </button>
+                {isOwnPost && (
+                  <button 
+                    onClick={() => onDelete?.(post.id || post.post_id)}
+                    className="flex items-center justify-between w-full group transition-colors px-2"
+                  >
+                    <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-red-400">Delete post</span>
+                    <Icon icon="fluent:delete-32-regular" className="w-[24px] h-[24px] text-red-400" />
+                  </button>
+                )}
               </div>
             </PopoverContent>
           </Popover>
@@ -200,22 +229,17 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: any, isOwnPost?:
 
       {/* Footer */}
       <div className="px-4 pb-4 pt-2 mt-auto border-t border-slate-50/50">
-        {post.likes > 0 && (
-          <div className="px-2 mb-3">
-            <p className="text-[14px] font-[family-name:var(--font-poppins)] text-slate-900">
-              Liked by <span className="font-semibold">{post.isLiked ? 'you' : 'someone'}</span>
-              {post.likes > 1 && (
-                <> and <span className="font-semibold">others</span></>
-              )}
-            </p>
-          </div>
-        )}
-
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-4">
-            <button className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group">
-              <Icon icon="solar:like-outline" className="w-[24px] h-[24px] text-[#6366F1] group-active:scale-110 transition-transform" />
-              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">{post.likes_count || post.stats?.likes || 0}</span>
+            <button 
+              onClick={handleLike}
+              className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group"
+            >
+              <Icon 
+                icon={isLiked ? "solar:like-bold" : "solar:like-outline"} 
+                className={cn("w-[24px] h-[24px] group-active:scale-110 transition-transform", isLiked ? "text-[#6366F1]" : "text-[#000000]")} 
+              />
+              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">{likesCount}</span>
             </button>
             <button className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group">
               <Icon icon="hugeicons:comment-01" className="w-[24px] h-[24px] text-[#000000] group-active:scale-110 transition-transform" />
@@ -223,18 +247,24 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: any, isOwnPost?:
             </button>
             <button className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group">
               <Icon icon="hugeicons:repost" className="w-[24px] h-[24px] text-[#000000] group-active:scale-110 transition-transform" />
-              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">3</span>
+              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">{post.share_count || 0}</span>
             </button>
           </div>
 
           <div className="flex items-center gap-4">
             <button className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group">
               <Icon icon="fluent:share-32-regular" className="w-[24px] h-[24px] text-[#000000] group-active:scale-110 transition-transform" />
-              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">3</span>
+              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">{post.share_count || 0}</span>
             </button>
-            <button className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group">
-              <Icon icon="solar:bookmark-outline" className="w-[24px] h-[24px] text-[#000000] group-active:scale-110 transition-transform" />
-              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">3</span>
+            <button 
+              onClick={handleBookmark}
+              className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group"
+            >
+              <Icon 
+                icon={isSaved ? "solar:bookmark-bold" : "solar:bookmark-outline"} 
+                className={cn("w-[24px] h-[24px] group-active:scale-110 transition-transform", isSaved ? "text-[#6366F1]" : "text-[#000000]")} 
+              />
+              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">{post.saves_count || 0}</span>
             </button>
           </div>
         </div>
@@ -747,7 +777,12 @@ export default function ProfilePage() {
 
             {/* Living Resume Section */}
             <div className="mt-[16px]">
-              <LivingResume experiences={experiences} skills={skills.map(s => s.name)} resumeName={profileData?.resume?.originalName} />
+              <LivingResume 
+                experiences={experiences} 
+                skills={skills.map(s => s.name)} 
+                resumeName={profileData?.resume?.originalName} 
+                resumeUrl={profileData?.resume?.url}
+              />
             </div>
 
             {/* Posts Section */}

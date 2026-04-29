@@ -79,7 +79,7 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
         setIsSaving(true);
         try {
             await updateProfile({ account_name: usernameInput } as any);
-            queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+            queryClient.invalidateQueries({ queryKey: ['my-profile'] });
             toast({ title: "Success", description: "Profile URL updated!" });
             setIsEditingUrl(false);
         } catch (error: any) {

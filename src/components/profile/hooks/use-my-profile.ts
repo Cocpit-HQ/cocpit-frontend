@@ -13,7 +13,9 @@ import {
     uploadAvatar,
     deleteAvatar,
     updateProfile,
-    updateIdentity
+    updateIdentity,
+    uploadResume,
+    deleteResume
 } from "@/services/api/profile";
 import { toast } from "sonner";
 import {
@@ -32,7 +34,11 @@ export function useMyProfile() {
         queryKey: ["my-profile"],
         queryFn: async () => {
             const data = await getProfile();
-            return data; // Returns UserProfile
+            // Flatten the grouped experiences array from backend if it's grouped
+            const flatExperiences = (data.experiences as any[]).flatMap(
+                (group) => (group && group.experiences && Array.isArray(group.experiences)) ? group.experiences : [group]
+            );
+            return { ...data, experiences: flatExperiences };
         },
         staleTime: 1000 * 60 * 5, // 5 minutes
     });
@@ -224,10 +230,11 @@ export function useProfileMutation() {
             });
 
             // Update identity
+            // Backend only accepts single enum values — send first item of each array if they are arrays
             await updateIdentity({
-                open_to: payload.open_to,
-                availability: payload.availability,
-                work_preference: payload.work_preference,
+                open_to: Array.isArray(payload.open_to) ? payload.open_to[0] : payload.open_to,
+                availability: Array.isArray(payload.availability) ? payload.availability[0] : payload.availability,
+                work_preference: Array.isArray(payload.work_preference) ? payload.work_preference[0] : payload.work_preference,
             });
         },
         onSuccess: () => {
@@ -238,4 +245,43 @@ export function useProfileMutation() {
     });
 
     return update;
+}
+
+export function useResumeMutations() {
+    const queryClient = useQueryClient();
+
+    const upload = useMutation({
+        mutationFn: (formData: FormData) => uploadResume(formData),
+        onSuccess: (response) => {
+            queryClient.setQueryData(["my-profile"], (old: UserProfile | undefined) => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    resume: {
+                        originalName: response.resume.originalName,
+                        url: response.resume.url
+                    }
+                };
+            });
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            toast.success("Resume uploaded successfully");
+        }
+    });
+
+    const remove = useMutation({
+        mutationFn: () => deleteResume(),
+        onSuccess: () => {
+            queryClient.setQueryData(["my-profile"], (old: UserProfile | undefined) => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    resume: null
+                };
+            });
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            toast.success("Resume deleted successfully");
+        }
+    });
+
+    return { upload, remove };
 }

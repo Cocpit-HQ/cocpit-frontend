@@ -4,6 +4,8 @@ import React, { useState, useEffect, useMemo } from "react"
 import { X, Search, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useQuery } from "@tanstack/react-query"
+import { searchSkills } from "@/services/api/profile"
 
 interface SkillModalProps {
   isOpen: boolean
@@ -13,17 +15,26 @@ interface SkillModalProps {
   loading?: boolean
 }
 
-const SUGGESTED_SKILLS = [
-  "Figma", "React", "Flutter", "Excel", "Photoshop",
-  "Illustrator", "Adobe XD", "Adobe effects", "Node.js", "TypeScript",
-  "Python", "SQL", "Git", "AWS", "Docker"
-]
 
 export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loading = false }: SkillModalProps) {
   const [selectedSkills, setSelectedSkills] = useState<string[]>(initialSkills)
   const [searchQuery, setSearchQuery] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const skillsPerPage = 8
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  const { data: suggestedSkills = [], isLoading: isSearching } = useQuery({
+    queryKey: ["skill-suggestions", debouncedSearch],
+    queryFn: () => searchSkills(debouncedSearch),
+    enabled: isOpen,
+  })
 
   useEffect(() => {
     if (isOpen) {
@@ -33,30 +44,22 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
     }
   }, [isOpen, initialSkills])
 
-  const allSkills = useMemo(() => {
-    const combined = [...SUGGESTED_SKILLS]
-    selectedSkills.forEach(skill => {
-      if (!combined.includes(skill)) {
-        combined.push(skill)
-      }
-    })
-    return combined
-  }, [selectedSkills])
-
   const filteredSkills = useMemo(() => {
-    const filtered = allSkills.filter(skill => 
-      skill.toLowerCase().includes(searchQuery.toLowerCase())
+    // Combine suggested skills with selected skills to ensure they are available to toggle
+    const combined = Array.from(new Set([...suggestedSkills, ...selectedSkills]))
+    
+    // Filter based on current search query (frontend filter for immediate feedback)
+    const filtered = combined.filter(skill => 
+      typeof skill === 'string' && skill.toLowerCase().includes(searchQuery.toLowerCase())
     )
     
     const query = searchQuery.trim()
-    const exactMatch = allSkills.some(s => s.toLowerCase() === query.toLowerCase())
-    
-    if (query && !exactMatch) {
-      return [query, ...filtered]
+    if (query && !filtered.some(s => typeof s === 'string' && s.toLowerCase() === query.toLowerCase())) {
+        return [query, ...filtered]
     }
     
     return filtered
-  }, [allSkills, searchQuery])
+  }, [suggestedSkills, selectedSkills, searchQuery])
 
   const paginatedSkills = useMemo(() => {
     const start = (currentPage - 1) * skillsPerPage
@@ -109,10 +112,8 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
                 if (e.key === 'Enter' && searchQuery.trim()) {
                   e.preventDefault()
                   const query = searchQuery.trim()
-                  const existing = allSkills.find(s => s.toLowerCase() === query.toLowerCase())
-                  const skillToAdd = existing || query
-                  if (!selectedSkills.includes(skillToAdd)) {
-                    setSelectedSkills(prev => [...prev, skillToAdd])
+                  if (!selectedSkills.some(s => typeof s === 'string' && s.toLowerCase() === query.toLowerCase())) {
+                    setSelectedSkills(prev => [...prev, query])
                   }
                   setSearchQuery("")
                 }
@@ -123,30 +124,36 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
           </div>
 
           {/* Skills Grid */}
-          <div className="w-full flex-1 flex flex-wrap justify-center content-start items-start gap-3 mb-4">
-            {paginatedSkills.map((skill) => {
-              const isSelected = selectedSkills.includes(skill)
-              const isCustom = !allSkills.includes(skill)
-              return (
-                <button
-                  key={skill}
-                  onClick={() => {
-                    toggleSkill(skill)
-                    if (isCustom) {
-                      setSearchQuery("")
-                    }
-                  }}
-                  className={cn(
-                    "h-fit px-6 py-2.5 rounded-[12px] text-sm font-medium transition-all duration-200 border",
-                    isSelected 
-                      ? "bg-[#818CF8] border-[#818CF8] text-white shadow-sm"
-                      : "bg-[#F3F7FF] border-[#F3F7FF] text-[#6366F1] hover:bg-[#E0E7FF]"
-                  )}
-                >
-                  {skill}
-                </button>
-              )
-            })}
+          <div className="w-full flex-1 flex flex-wrap justify-center content-start items-start gap-3 mb-4 overflow-y-auto">
+            {isSearching ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-sm text-slate-400">Searching...</span>
+              </div>
+            ) : paginatedSkills.length > 0 ? (
+              paginatedSkills.map((skill) => {
+                const isSelected = selectedSkills.includes(skill)
+                return (
+                  <button
+                    key={skill}
+                    onClick={() => {
+                      toggleSkill(skill)
+                    }}
+                    className={cn(
+                      "h-fit px-6 py-2.5 rounded-[12px] text-sm font-medium transition-all duration-200 border",
+                      isSelected 
+                        ? "bg-[#818CF8] border-[#818CF8] text-white shadow-sm"
+                        : "bg-[#F3F7FF] border-[#F3F7FF] text-[#6366F1] hover:bg-[#E0E7FF]"
+                    )}
+                  >
+                    {skill}
+                  </button>
+                )
+              })
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-sm text-slate-400">No skills found</span>
+              </div>
+            )}
           </div>
 
           {/* Pagination */}

@@ -5,6 +5,7 @@ import { Download, FileText, Upload, File, X, RefreshCw, Briefcase, Layers, Wren
 import { Icon } from "@iconify/react";
 import { Experience } from "@/types/entities";
 import { getResumeOverview } from "./ResumeOverview";
+import { useResumeMutations } from "./hooks/use-my-profile";
 import {
   Dialog,
   DialogContent,
@@ -18,12 +19,13 @@ interface LivingResumeProps {
   experiences: Experience[];
   skills: string[];
   resumeName?: string | null;
+  resumeUrl?: string | null;
 }
 
-export function LivingResume({ experiences, skills, resumeName }: LivingResumeProps) {
+export function LivingResume({ experiences, skills, resumeName, resumeUrl }: LivingResumeProps) {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [customResumeName, setCustomResumeName] = useState<string | null>(resumeName ?? "xyz.pdf");
   const [tempFile, setTempFile] = useState<File | null>(null);
+  const { upload, remove } = useResumeMutations();
 
   const overview = getResumeOverview(experiences);
 
@@ -39,9 +41,10 @@ export function LivingResume({ experiences, skills, resumeName }: LivingResumePr
   if (totalYears === 0) totalYears = 1;
 
   const handleDownload = () => {
-    const message = "Resume download will be available soon.";
-    if (typeof window !== 'undefined') {
-      alert(message);
+    if (resumeUrl) {
+      window.open(resumeUrl, '_blank');
+    } else {
+      alert("No resume uploaded yet.");
     }
   };
 
@@ -51,16 +54,21 @@ export function LivingResume({ experiences, skills, resumeName }: LivingResumePr
     }
   };
 
-  const saveCustomResume = () => {
+  const saveCustomResume = async () => {
     if (tempFile) {
-      setCustomResumeName(tempFile.name);
-      setTempFile(null);
-      setIsUploadModalOpen(false);
+      const formData = new FormData();
+      formData.append("resume", tempFile);
+      upload.mutate(formData, {
+        onSuccess: () => {
+          setTempFile(null);
+          setIsUploadModalOpen(false);
+        }
+      });
     }
   };
 
   const removeCustomResume = () => {
-    setCustomResumeName(null);
+    remove.mutate();
   };
 
   const metricsData = [
@@ -91,13 +99,14 @@ export function LivingResume({ experiences, skills, resumeName }: LivingResumePr
 
         <div className="flex items-center gap-3">
           {/* PDF File Chip */}
-          {customResumeName && (
+          {resumeName && (
             <div className="inline-flex items-center gap-[10px] w-[148px] h-[40px] px-[16px] py-[8px] rounded-[24px] border border-[#6B7280] bg-white hover:bg-[#F9FAFB] transition-colors box-border">
               <Icon icon="material-icon-theme:pdf" width={24} height={24} className="flex-shrink-0 text-[#6B7280] grayscale opacity-80" />
-              <span className="font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-[#6B7280] truncate flex-1 min-w-0">{customResumeName}</span>
+              <span className="font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-[#6B7280] truncate flex-1 min-w-0">{resumeName}</span>
               <button
                 onClick={removeCustomResume}
-                className="w-6 h-6 flex items-center justify-center transition-colors flex-shrink-0 text-[#EF4444] hover:opacity-80 cursor-pointer"
+                disabled={remove.isPending}
+                className="w-6 h-6 flex items-center justify-center transition-colors flex-shrink-0 text-[#EF4444] hover:opacity-80 cursor-pointer disabled:opacity-50"
                 title="Remove"
               >
                 <Icon icon="solar:close-circle-linear" width={24} height={24} />
@@ -105,14 +114,16 @@ export function LivingResume({ experiences, skills, resumeName }: LivingResumePr
             </div>
           )}
 
-          {/* Add Resume Button */}
-          <button
-            onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center justify-center gap-[10px] px-[16px] py-[8px] w-[152px] h-[40px] bg-white text-[#818CF8] rounded-[24px] border border-[#818CF8] hover:bg-slate-50 transition-all text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] whitespace-nowrap"
-          >
-            <Plus className="w-6 h-6 stroke-[2px]" />
-            <span>Add resume</span>
-          </button>
+          {/* Add Resume Button - Only show if no resume exists */}
+          {!resumeName && (
+            <button
+              onClick={() => setIsUploadModalOpen(true)}
+              className="flex items-center justify-center gap-[10px] px-[16px] py-[8px] w-[152px] h-[40px] bg-white text-[#818CF8] rounded-[24px] border border-[#818CF8] hover:bg-slate-50 transition-all text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] whitespace-nowrap"
+            >
+              <Plus className="w-6 h-6 stroke-[2px]" />
+              <span>Add resume</span>
+            </button>
+          )}
 
           {/* Download Icon Button */}
           <button
@@ -243,13 +254,13 @@ export function LivingResume({ experiences, skills, resumeName }: LivingResumePr
             </button>
             <button
               onClick={saveCustomResume}
-              disabled={!tempFile}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tempFile
+              disabled={!tempFile || upload.isPending}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tempFile && !upload.isPending
                   ? "bg-primary text-primary-foreground hover:opacity-90"
                   : "bg-muted text-muted-foreground cursor-not-allowed"
                 }`}
             >
-              Save
+              {upload.isPending ? "Uploading..." : "Save"}
             </button>
           </DialogFooter>
         </DialogContent>
