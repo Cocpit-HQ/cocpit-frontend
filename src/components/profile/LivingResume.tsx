@@ -136,77 +136,32 @@ export function LivingResume({ experiences, skills, resumeName, resumeUrl }: Liv
         </div>
       </div>
 
-      {/* Two Column Layout: Overview + Metrics */}
-      <div className="flex flex-col md:flex-row gap-[24px] w-full">
+      {/* Metrics Section */}
+      <div className="flex flex-col gap-4 w-full">
+        <h3 className="font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] text-[#000000]">
+          Metrics
+        </h3>
 
-        {/* Overview Section */}
-        <div className="w-full md:w-[444px] md:h-[340px] rounded-[24px] p-[16px] flex flex-col gap-[16px] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.05)]">
-          <h3 className="font-[family-name:var(--font-poppins)] font-medium text-[16px] leading-[24px] tracking-normal text-[#6366F1]">
-            Overview
-          </h3>
-
-          {/* Stat: Years Experience */}
-          <div className="flex flex-col gap-1">
-            <p className="font-[family-name:var(--font-poppins)] font-medium text-[16px] leading-[24px] text-[#000000]">
-              {overview.yearsOfExperience}
-            </p>
-            <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-[#6B7280]">
-              across product management &amp; strategy
-            </p>
-          </div>
-
-          {/* Divider */}
-          <div className="w-full h-px bg-slate-100" />
-
-          {/* Stat: Features Shipped */}
-          <div className="flex flex-col gap-1">
-            <p className="font-[family-name:var(--font-poppins)] font-medium text-[16px] leading-[24px] text-[#000000]">
-              {overview.featuresShipped}
-            </p>
-            <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-[#6B7280]">
-              driving user growth &amp; revenue
-            </p>
-          </div>
-
-          {/* Divider */}
-          <div className="w-full h-px bg-slate-100" />
-
-          {/* Summary */}
-          <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-[#000000] mt-auto">
-            &quot;{overview.summary}&quot;
-          </p>
-        </div>
-
-        {/* Metrics Section */}
-        <div className="w-full md:w-[444px] md:h-[340px] rounded-[24px] p-[16px] flex flex-col gap-[16px] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.05)]">
-          <h3 className="font-[family-name:var(--font-poppins)] font-medium text-[16px] leading-[24px] tracking-normal text-[#6366F1]">
-            Metrics
-          </h3>
-
-          <div className="flex flex-col gap-0 flex-1">
-            {metricsData.map((metric, index) => (
-              <React.Fragment key={metric.label}>
-                <div className="flex items-center justify-between py-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
-                      {metric.icon}
-                    </div>
-                    <span className="font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-[#6B7280]">
-                      {metric.label}
-                    </span>
-                  </div>
-                  <span className="font-[family-name:var(--font-poppins)] font-semibold text-[24px] leading-[32px] tracking-normal text-[#6366F1]">
-                    {metric.value}
-                  </span>
+        <div className="flex flex-col md:flex-row gap-4 w-full">
+          {metricsData.map((metric) => (
+            <div 
+              key={metric.label}
+              className="flex-1 h-[84px] bg-white rounded-[20px] border border-[#E2E8F0] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-[#6366F1]/30 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-8 h-8 bg-[#F8FAFC] rounded-[10px] flex items-center justify-center">
+                  {React.cloneElement(metric.icon as React.ReactElement, { className: "w-5 h-5 text-[#000000]" })}
                 </div>
-                {index < metricsData.length - 1 && (
-                  <div className="w-full h-px bg-slate-100" />
-                )}
-              </React.Fragment>
-            ))}
-          </div>
+                <span className="font-[family-name:var(--font-poppins)] font-bold text-[22px] text-[#6366F1] leading-none">
+                  {metric.value}
+                </span>
+              </div>
+              <span className="font-[family-name:var(--font-poppins)] font-normal text-[11px] text-slate-400 uppercase tracking-tight">
+                {metric.label}
+              </span>
+            </div>
+          ))}
         </div>
-
       </div>
 
       {/* Upload Modal */}
