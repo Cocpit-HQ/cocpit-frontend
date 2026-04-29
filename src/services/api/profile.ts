@@ -37,12 +37,12 @@ export interface ProfilePost {
   visibility: 'public' | 'private';
   author_id: string;
   author_name: string;
-  author_avatar: string;
-  category_name: string;
+  author_avatar: string | null;
+  category_name: string | null;
   media: ProfilePostMedia[];
-  like_count: string;
+  like_count: number;
   is_liked: boolean;
-  comment_count: string;
+  comment_count: number;
   poll: ProfilePostPoll | null;
   shared_post?: {
     is_accessible: boolean;
@@ -60,7 +60,7 @@ export interface ProfilePost {
     comment_count?: number;
     is_liked?: boolean;
     poll?: ProfilePostPoll | null;
-  };
+  } | null;
 }
 
 export interface GetUserPostsResponse {

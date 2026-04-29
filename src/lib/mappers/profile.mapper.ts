@@ -64,9 +64,9 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     imageSrc: images.length > 0 ? images[0] : undefined,
     images: images.length > 0 ? images : undefined,
     videoSrc: videoSrc,
-    likes: parseInt(backendPost.like_count) || 0,
+    likes: backendPost.like_count || 0,
     isLiked: backendPost.is_liked,
-    comments: backendPost.comment_count || "0",
+    comments: (backendPost.comment_count || 0).toString(),
     shares: "0", // Backend does not provide shares yet
     commentData: [],
     category: (backendPost.category_name as any) || undefined,
