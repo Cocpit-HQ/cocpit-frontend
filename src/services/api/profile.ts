@@ -37,12 +37,12 @@ export interface ProfilePost {
   visibility: 'public' | 'private';
   author_id: string;
   author_name: string;
-  author_avatar: string;
-  category_name: string;
+  author_avatar: string | null;
+  category_name: string | null;
   media: ProfilePostMedia[];
-  like_count: string;
+  like_count: number;
   is_liked: boolean;
-  comment_count: string;
+  comment_count: number;
   poll: ProfilePostPoll | null;
   shared_post?: {
     is_accessible: boolean;
@@ -60,7 +60,7 @@ export interface ProfilePost {
     comment_count?: number;
     is_liked?: boolean;
     poll?: ProfilePostPoll | null;
-  };
+  } | null;
 }
 
 export interface GetUserPostsResponse {
@@ -142,6 +142,11 @@ export const addSkills = async (payload: AddSkillsPayload): Promise<AddSkillsRes
   return response.data;
 };
 
+export const searchSkills = async (query: string): Promise<string[]> => {
+  const response = await api.get<{ id: string; name: string }[]>("/profile/skills", { params: { search: query } });
+  return response.data.map(s => s.name);
+};
+
 export const deleteSkill = async (id: string): Promise<void> => {
   await api.delete(`/profile/skills/${id}`);
 };
@@ -190,3 +195,26 @@ export const updateIdentity = async (identity: {
   return response.data;
 };
 
+// --- Resume ---
+
+export const uploadResume = async (formData: FormData): Promise<{ message: string; resume: { originalName: string; url: string } }> => {
+    const response = await api.post("/profile/resume", formData);
+    const { message, resume } = response.data;
+    return {
+        message,
+        resume: {
+            originalName: resume.file_name,
+            url: resume.file_url
+        }
+    };
+};
+
+export const getResume = async (): Promise<{ file_name: string; file_url: string } | null> => {
+    const response = await api.get("/profile/resume");
+    return response.data;
+};
+
+export const deleteResume = async (): Promise<{ message: string }> => {
+    const response = await api.delete("/profile/resume");
+    return response.data;
+};

@@ -190,7 +190,7 @@ export const HomeHeader = () => {
 
     return (
         <header
-            className={`sticky top-0 z-20 border-b p-3 md:py-2 bg-white border-indigo-50 transition-transform duration-300 ease-in-out ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
+            className={`sticky top-0 z-50 border-b p-3 md:py-2 bg-background/80 backdrop-blur-md border-border transition-transform duration-300 ease-in-out ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
                 } md:translate-y-0`}
         >
             <div className="max-w-[960px] mx-auto px-4 md:px-0">
@@ -210,10 +210,10 @@ export const HomeHeader = () => {
                                 setTimeout(() => setIsSearchFocused(false), 200);
                             }}
                             onKeyDown={handleKeyDown}
-                            className="w-full h-full px-4 rounded-[24px] border border-[#818CF8] focus:outline-none bg-white text-gray-900 placeholder-[#818CF8]/60 transition-all"
+                            className="w-full h-full px-4 rounded-[24px] border border-primary/50 focus:border-primary focus:outline-none bg-secondary text-foreground placeholder-muted-foreground transition-all"
                         />
                         <Search
-                            className="w-5 h-5 text-[#818CF8] absolute right-4 cursor-pointer hover:scale-110 transition-transform"
+                            className="w-5 h-5 text-primary absolute right-4 cursor-pointer hover:scale-110 transition-transform"
                             onClick={() => {
                                 if (searchQuery.trim()) {
                                     saveSearch(searchQuery);
@@ -448,10 +448,10 @@ export const HomeHeader = () => {
                             onFocus={() => setIsSearchFocused(true)}
                             onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                             onKeyDown={handleKeyDown}
-                            className="w-full pl-4 pr-10 py-2.5 bg-white border border-indigo-100 focus:border-indigo-400 rounded-full text-sm transition-all outline-none"
+                            className="w-full pl-4 pr-10 py-2.5 bg-secondary border border-border focus:border-primary rounded-full text-sm transition-all outline-none text-foreground"
                         />
                         <Search
-                            className="w-4 h-4 text-indigo-400 absolute right-3 cursor-pointer"
+                            className="w-4 h-4 text-primary absolute right-3 cursor-pointer"
                             onClick={() => {
                                 if (searchQuery.trim()) {
                                     saveSearch(searchQuery);

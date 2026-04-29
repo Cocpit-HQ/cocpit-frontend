@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import type { Education } from "@/types/entities"
 import { Checkbox } from "@/components/ui/checkbox"
 import { X } from "lucide-react"
+import { Icon } from '@iconify/react'
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
 import SchoolAutocomplete from "@/components/ui/SchoolAutocomplete"
@@ -95,10 +96,10 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     })
   }
 
-  const inputStyles = "bg-white border-[#E5E7EB] placeholder-[#6B7280] rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px]"
-  const labelStyles = "text-[14px] font-medium text-[#111827] mb-1.5"
+  const inputStyles = "bg-card border-border placeholder-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-foreground"
+  const labelStyles = "text-[14px] font-medium text-foreground mb-1.5"
   
-  const getSelectTextColor = (value: string) => value ? "text-[#111827]" : "text-[#6B7280]";
+  const getSelectTextColor = (value: string) => value ? "text-foreground" : "text-muted-foreground";
 
   const isFormValid = 
     formData.school_name.trim() !== "" && 
@@ -107,26 +108,45 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     formData.startYear !== "";
 
   return (
-    <div className="relative bg-white rounded-[24px] p-[16px] w-[800px] h-[678px] mx-auto shadow-sm flex flex-col overflow-hidden outline-none">
+    <div className="relative bg-card rounded-none sm:rounded-[24px] p-0 sm:p-[16px] w-full sm:w-[800px] h-[100dvh] sm:h-auto sm:max-h-[90vh] mx-auto shadow-sm flex flex-col overflow-hidden outline-none">
+      
+      {/* Mobile Header */}
+      <div className="sm:hidden flex items-center justify-between sticky top-0 bg-card z-50 px-4 py-4 border-b border-border">
+        <button type="button" onClick={onCancel} className="p-2 -ml-2 text-foreground hover:bg-secondary rounded-full transition-colors">
+          <Icon icon="hugeicons:arrow-left-01" className="w-6 h-6" />
+        </button>
+        <span className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
+          Add education
+        </span>
+        <button 
+          type="button"
+          onClick={handleSubmit}
+          disabled={!isFormValid}
+          className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all"
+        >
+          Save
+        </button>
+      </div>
+
       {/* Scrollable area with hidden scrollbar */}
-      <div className="flex-1 overflow-y-auto px-12 py-4 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-12 py-4 scrollbar-hide pb-20 sm:pb-4">
         {/* Close Button */}
         <button 
           onClick={onCancel}
-          className="absolute top-6 right-6 p-1 text-[#F87171] hover:bg-red-50 rounded-full transition-colors z-10"
+          className="hidden sm:block absolute top-6 right-6 p-1 text-destructive hover:bg-destructive/10 rounded-full transition-colors z-10"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-[18px] leading-[26px] font-medium font-[family-name:var(--font-poppins)] text-[#000000] mb-1">Add education</h2>
-          <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280]">Update your professional information</p>
+        <div className="hidden sm:block text-center mb-8">
+          <h2 className="text-[18px] leading-[26px] font-medium font-[family-name:var(--font-poppins)] text-foreground mb-1">Add education</h2>
+          <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">Update your professional information</p>
         </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Row 1: Education & Qualification */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div className="flex flex-col">
             <Label className={labelStyles}>Education</Label>
             <SchoolAutocomplete 
@@ -157,7 +177,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
         </div>
 
         {/* Row 2: Specialization & Location */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div className="flex flex-col">
             <Label className={labelStyles}>Specialization</Label>
             <Select 
@@ -267,32 +287,43 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
           <Textarea 
             value={formData.description} 
             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            className="w-[768px] h-[40px] min-h-[40px] bg-white border-[#E5E7EB] text-[#111827] placeholder-[#6B7280] rounded-[16px] px-[16px] py-[8px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus-visible:border-[#C7D2FE] focus-visible:outline-none transition-all shadow-none"
+            className="w-full h-[40px] min-h-[40px] bg-white border-[#E5E7EB] text-[#111827] placeholder-[#6B7280] rounded-[16px] px-[16px] py-[8px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus-visible:border-[#C7D2FE] focus-visible:outline-none transition-all shadow-none"
             placeholder="Describe your work, impact, or achievements"
           />
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-center gap-4 pt-4">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={onCancel}
-            className="w-[160px] h-[44px] rounded-[24px] border-[#818CF8] text-[#818CF8] hover:bg-[#818CF8] hover:text-white transition-all bg-transparent"
-          >
-            Cancel
-          </Button>
-          <Button 
-            type="submit" 
-            disabled={!isFormValid}
-            className={`w-[160px] h-[44px] rounded-[24px] transition-all shadow-sm border-0 text-white ${
-              isFormValid 
-                ? "bg-[#6366F1] hover:bg-[#4F46E5] cursor-pointer" 
-                : "bg-[#C7D2FE] opacity-70 cursor-not-allowed"
-            }`}
-          >
-            Save
-          </Button>
+        <div className="hidden sm:flex justify-between items-center pt-8 border-t border-[#E5E7EB] mt-8">
+          {initialData ? (
+            <Button 
+              type="button" 
+              variant="ghost" 
+              onClick={() => onDelete?.(initialData.education_id!)}
+              className="text-red-500 hover:text-red-600 hover:bg-red-50 font-medium px-4 h-10"
+            >
+              Delete record
+            </Button>
+          ) : (
+            <div /> // Spacer
+          )}
+          
+          <div className="flex gap-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onCancel}
+              className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-[#EEF2FF] bg-white font-medium w-[142px]"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={!isFormValid}
+              className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-50"
+            >
+              Save
+            </Button>
+          </div>
         </div>
       </form>
     </div>

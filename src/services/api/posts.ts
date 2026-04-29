@@ -91,3 +91,13 @@ export const toggleCommentPin = async (commentId: string | number, companyId?: s
   const response = await api.post(`/comments/${commentId}/pin`);
   return response.data;
 };
+
+export const createRepost = async (postId: string, content: string = "", category: string = "Professional"): Promise<BackendPost> => {
+  const response = await api.post<BackendPost>("/post", {
+    shared_post_id: postId,
+    content,
+    category,
+    visibility: 'public'
+  });
+  return response.data;
+};
