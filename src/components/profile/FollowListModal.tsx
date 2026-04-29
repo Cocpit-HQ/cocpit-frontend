@@ -21,6 +21,13 @@ interface FollowListModalProps {
     userId: string;
 }
 
+interface ConfirmAction {
+    type: "unfollow" | "remove_follower" | "remove_connection";
+    userId: string;
+    userName: string;
+    userType?: string;
+}
+
 export const FollowListModal: React.FC<FollowListModalProps> = ({
     isOpen,
     onClose,
@@ -29,6 +36,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 }) => {
     const [activeTab, setActiveTab] = useState(initialTab);
     const [search, setSearch] = useState("");
+    const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
     const queryClient = useQueryClient();
     const { toast } = useToast();
     const { user: currentUser } = useAuth();
@@ -222,17 +230,54 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         followMutation.mutate(id);
     };
 
-    const handleUnfollow = (id: string, type?: string) => {
-        if (type === 'company') {
-            unfollowCompanyMutation.mutate(id);
-        } else {
-            unfollowMutation.mutate(id);
-        }
+    const handleUnfollow = (id: string, name: string, type?: string) => {
+        setConfirmAction({
+            type: "unfollow",
+            userId: id,
+            userName: name,
+            userType: type
+        });
     };
 
-    const handleRemoveConnection = (id: string, type?: string) => {
-        removeConnectionMutation.mutate({ id, type });
+    const handleRemoveFollower = (id: string, name: string) => {
+        setConfirmAction({
+            type: "remove_follower",
+            userId: id,
+            userName: name
+        });
     }
+
+    const handleRemoveConnection = (id: string, name: string, type?: string) => {
+        setConfirmAction({
+            type: "remove_connection",
+            userId: id,
+            userName: name,
+            userType: type
+        });
+    }
+
+    const executeConfirmedAction = () => {
+        if (!confirmAction) return;
+
+        const { type, userId: targetId, userType } = confirmAction;
+
+        if (type === "unfollow") {
+            if (userType === 'company') {
+                unfollowCompanyMutation.mutate(targetId);
+            } else {
+                unfollowMutation.mutate(targetId);
+            }
+        } else if (type === "remove_follower") {
+            // Reusing unfollow as it essentially stops the follow relationship 
+            // from your side if it's mutual, but usually remove follower 
+            // would be a specific API. Assuming unfollow works for now based on previous logic.
+            unfollowMutation.mutate(targetId);
+        } else if (type === "remove_connection") {
+            removeConnectionMutation.mutate({ id: targetId, type: userType });
+        }
+
+        setConfirmAction(null);
+    };
 
     const renderUserList = (users: any[], type: "followers" | "following" | "connections") => {
         if (!users || users.length === 0) {
@@ -259,8 +304,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                     const linkHref = isCompany ? `/organization/${user.slug}` : `/profile/${user.account_name || id}`;
 
                     return (
-                        <div key={`${user.type || 'user'}-${id}`} className="flex items-center justify-between py-3 group">
-                            <Link href={linkHref} className="flex items-center gap-4 hover:opacity-80 transition-opacity min-w-0 flex-1" onClick={onClose}>
+                        <div key={`${user.type || 'user'}-${id}`} className="flex items-center justify-between py-4 group">
+                            <Link href={linkHref} className="flex items-center gap-5 hover:opacity-80 transition-opacity min-w-0 flex-1" onClick={onClose}>
                                 <div className="relative flex-shrink-0">
                                     <Avatar className="h-11 w-11 border border-slate-100">
                                         <AvatarImage src={user.avatar_url || user.avatar} />
@@ -273,8 +318,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                                     )}
                                 </div>
                                 <div className="min-w-0 flex flex-col">
-                                    <p className="font-semibold text-[14px] text-slate-900 font-[family-name:var(--font-poppins)] truncate">{user.full_name}</p>
-                                    <p className="text-[12px] text-slate-500 font-normal font-[family-name:var(--font-poppins)] line-clamp-1">{user.headline || "Connection"}</p>
+                                    <p className="font-bold text-[15px] text-[#000000] font-[family-name:var(--font-poppins)] truncate leading-tight">{user.full_name}</p>
+                                    <p className="text-[13px] text-slate-500 font-normal font-[family-name:var(--font-poppins)] line-clamp-1 mt-0.5">{user.headline || "Connection"}</p>
                                 </div>
                             </Link>
 
@@ -285,7 +330,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                                             className="text-[14px] font-medium text-[#7C8BFF] hover:text-[#6366F1] font-[family-name:var(--font-poppins)] transition-colors"
                                             onClick={(e) => {
                                                 e.preventDefault();
-                                                handleUnfollow(id, user.type);
+                                                handleUnfollow(id, user.full_name, user.type);
                                             }}
                                         >
                                             Unfollow
@@ -298,7 +343,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                                                     className="text-[14px] font-medium text-[#7C8BFF] hover:text-[#6366F1] font-[family-name:var(--font-poppins)]"
                                                     onClick={(e) => {
                                                         e.preventDefault();
-                                                        handleUnfollow(id, user.type);
+                                                        handleRemoveFollower(id, user.full_name);
                                                     }}
                                                 >
                                                     Remove follower
@@ -321,7 +366,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                                             className="text-[14px] font-medium text-[#7C8BFF] hover:text-[#6366F1] font-[family-name:var(--font-poppins)] transition-colors"
                                             onClick={(e) => {
                                                 e.preventDefault();
-                                                handleRemoveConnection(id, user.type);
+                                                handleRemoveConnection(id, user.full_name, user.type);
                                             }}
                                         >
                                             Remove connection
@@ -340,7 +385,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px] h-[80vh] flex flex-col p-0 gap-0 overflow-hidden bg-white border-none rounded-[32px] shadow-2xl">
                 <DialogHeader className="p-6 pt-8 text-center relative">
-                    <DialogTitle className="text-[24px] font-bold text-[#000000] font-[family-name:var(--font-poppins)]">
+                    <DialogTitle className="text-[24px] font-bold text-[#000000] font-[family-name:var(--font-poppins)] text-center w-full">
                         People
                     </DialogTitle>
                     <p className="text-[14px] text-slate-500 font-normal font-[family-name:var(--font-poppins)] mt-1">
@@ -351,24 +396,24 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                 <div className="flex-1 overflow-hidden flex flex-col">
                     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full h-full flex flex-col">
                         <div className="px-6">
-                            <TabsList className="w-full h-auto bg-[#F8FAFC] p-1 rounded-[24px] grid grid-cols-3 gap-1">
+                            <TabsList className="w-full h-auto bg-[#F8FAFC] p-1.5 rounded-[24px] grid grid-cols-3 gap-1.5">
                                 <TabsTrigger 
                                     value="following"
-                                    className="rounded-[20px] py-2 px-4 data-[state=active]:bg-[#EEF2FF] data-[state=active]:text-[#6366F1] data-[state=active]:shadow-none transition-all flex items-center justify-between"
+                                    className="rounded-[20px] py-2.5 px-5 data-[state=active]:bg-[#EEF2FF] data-[state=active]:text-[#6366F1] data-[state=active]:shadow-none transition-all flex items-center justify-between"
                                 >
                                     <span className="text-[13px] font-medium font-[family-name:var(--font-poppins)]">Following</span>
                                     <span className="text-[13px] font-semibold text-[#6366F1]/70">{stats?.following_count || 0}</span>
                                 </TabsTrigger>
                                 <TabsTrigger 
                                     value="followers"
-                                    className="rounded-[20px] py-2 px-4 data-[state=active]:bg-[#EEF2FF] data-[state=active]:text-[#6366F1] data-[state=active]:shadow-none transition-all flex items-center justify-between"
+                                    className="rounded-[20px] py-2.5 px-5 data-[state=active]:bg-[#EEF2FF] data-[state=active]:text-[#6366F1] data-[state=active]:shadow-none transition-all flex items-center justify-between"
                                 >
                                     <span className="text-[13px] font-medium font-[family-name:var(--font-poppins)]">Followers</span>
                                     <span className="text-[13px] font-semibold text-[#6366F1]/70">{stats?.followers_count || 0}</span>
                                 </TabsTrigger>
                                 <TabsTrigger 
                                     value="connections"
-                                    className="rounded-[20px] py-2 px-4 data-[state=active]:bg-[#EEF2FF] data-[state=active]:text-[#6366F1] data-[state=active]:shadow-none transition-all flex items-center justify-between"
+                                    className="rounded-[20px] py-2.5 px-5 data-[state=active]:bg-[#EEF2FF] data-[state=active]:text-[#6366F1] data-[state=active]:shadow-none transition-all flex items-center justify-between"
                                 >
                                     <span className="text-[13px] font-medium font-[family-name:var(--font-poppins)]">Connection</span>
                                     <span className="text-[13px] font-semibold text-[#6366F1]/70">{stats?.connections_count || 0}</span>
@@ -407,6 +452,39 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                         </div>
                     </Tabs>
                 </div>
+
+                {/* Confirmation Overlay */}
+                {confirmAction && (
+                    <div className="absolute inset-0 z-50 flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white w-full max-w-[400px] p-8 rounded-[24px] shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+                            <DialogTitle className="text-[20px] font-bold text-[#000000] font-[family-name:var(--font-poppins)] mb-2">
+                                {confirmAction.type === 'unfollow' ? "Unfollow this account?" : 
+                                 confirmAction.type === 'remove_follower' ? "Remove follower?" : 
+                                 "Remove connection?"}
+                            </DialogTitle>
+                            <p className="text-[14px] text-slate-500 font-normal font-[family-name:var(--font-poppins)] leading-relaxed mb-8">
+                                {confirmAction.type === 'unfollow' ? "You will stop seeing their posts in your feed." : 
+                                 confirmAction.type === 'remove_follower' ? "This person will no longer follow you or see your updates in their feed." : 
+                                 "You will no longer be connected with this person. They won't be notified."}
+                            </p>
+                            <div className="flex gap-4 w-full">
+                                <Button 
+                                    variant="outline" 
+                                    className="flex-1 h-[48px] rounded-full border-[#6366F1] text-[#6366F1] hover:bg-[#EEF2FF] font-semibold text-[15px] font-[family-name:var(--font-poppins)]"
+                                    onClick={() => setConfirmAction(null)}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button 
+                                    className="flex-1 h-[48px] rounded-full bg-[#FF7272] hover:bg-[#EF4444] text-white font-semibold text-[15px] font-[family-name:var(--font-poppins)] border-none"
+                                    onClick={executeConfirmedAction}
+                                >
+                                    Remove
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </DialogContent>
         </Dialog>
     );
