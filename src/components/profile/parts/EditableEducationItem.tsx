@@ -20,7 +20,7 @@ export function EditableEducationItem({
     };
 
     return (
-        <div className="flex gap-4 group relative w-full items-start">
+        <div className="flex gap-3 sm:gap-4 group relative w-full items-start">
             {/* School Icon */}
             <div className="flex-shrink-0 w-[56px] h-[40px] px-[16px] py-[8px] rounded-[24px] bg-[#E0E7FF] flex items-center justify-center">
                 <Icon icon="qlementine-icons:education-24" className="w-[24px] h-[24px] text-[#6366F1]" />
@@ -51,9 +51,9 @@ export function EditableEducationItem({
             </div>
 
             {/* Right Content: Dates, Edit Button */}
-            <div className="flex items-start gap-4 flex-shrink-0 w-[180px] justify-end">
-                <div className="flex flex-col items-end gap-1 text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280] whitespace-nowrap">
-                    <div className="flex items-center gap-1 whitespace-nowrap">
+            <div className="flex items-start gap-2 sm:gap-4 flex-shrink-0 w-auto sm:w-[180px] justify-end ml-auto">
+                <div className="flex flex-col items-end gap-1 text-[10px] sm:text-[12px] leading-[14px] sm:leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280] text-right">
+                    <div className="flex flex-wrap sm:flex-nowrap justify-end items-center gap-1">
                         <span>{formatDate(education.start_date)}</span>
                         <span>-</span>
                         <span>{education.end_date ? formatDate(education.end_date) : 'Present'}</span>

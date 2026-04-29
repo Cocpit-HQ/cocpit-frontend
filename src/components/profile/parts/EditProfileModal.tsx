@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { X, ChevronDown } from "lucide-react"
+import { Icon } from '@iconify/react'
 import { cn } from "@/lib/utils"
 import { updateMemberRoleSettings } from "@/services/api/organization"
 import {
@@ -119,16 +120,36 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[800px] w-full !rounded-[24px] p-0 gap-0 !border-none shadow-2xl bg-white overflow-hidden">
+      <DialogContent className="max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full rounded-none sm:rounded-[24px] p-0 gap-0 border-none shadow-2xl bg-white overflow-hidden data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
+        
+        {/* Mobile Header */}
+        <div className="sm:hidden flex items-center justify-between sticky top-0 bg-white z-50 px-4 py-4 border-b border-gray-100">
+          <button onClick={onClose} className="p-2 -ml-2 text-black hover:bg-gray-100 rounded-full transition-colors">
+            <Icon icon="hugeicons:arrow-left-01" className="w-6 h-6" />
+          </button>
+          <span className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-black">
+            Edit profile
+          </span>
+          <button 
+            onClick={handleSave}
+            disabled={isSaving}
+            className="px-4 py-1.5 rounded-full bg-[#EEF2FF] text-[#6366F1] font-medium text-[14px] disabled:opacity-50 transition-all"
+          >
+            {isSaving ? "..." : "Save"}
+          </button>
+        </div>
+
+        {/* Desktop Close Button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 w-[24px] h-[24px] flex items-center justify-center text-[#FF6B6B] hover:text-red-600 transition-all focus:outline-none focus-visible:ring-0 z-50"
+          className="hidden sm:flex absolute right-4 top-4 w-[24px] h-[24px] items-center justify-center text-[#FF6B6B] hover:text-red-600 transition-all focus:outline-none focus-visible:ring-0 z-50"
         >
           <X className="w-4 h-4" />
         </button>
-        <div className="bg-white p-4 !rounded-[24px] max-h-[90vh] overflow-y-auto scrollbar-hide">
 
-          <DialogHeader className="w-full flex flex-col items-center justify-center text-center mb-4 h-auto gap-0">
+        <div className="bg-white p-4 sm:p-6 rounded-none sm:rounded-[24px] h-[calc(100dvh-73px)] sm:h-auto sm:max-h-[90vh] overflow-y-auto scrollbar-hide">
+
+          <DialogHeader className="hidden sm:flex w-full flex-col items-center justify-center text-center mb-6 h-auto gap-0">
             <DialogTitle className="w-full text-[18px] leading-[26px] font-medium text-[#111827] font-[family-name:var(--font-poppins)] text-center p-0 m-0">
               Edit profile
             </DialogTitle>
@@ -137,8 +158,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-col gap-4 text-left pt-2">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-4 text-left pt-2 pb-10 sm:pb-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col">
                 <Label className={labelStyles}>Full name</Label>
                 <Input
@@ -159,7 +180,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col">
                 <Label className={labelStyles}>Headline</Label>
                 <Input
@@ -184,7 +205,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col">
                 <Label className={labelStyles}>Location</Label>
                 <div className="relative">
@@ -312,7 +333,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               </div>
             </div>
 
-            <div className="flex justify-center gap-4 pt-4">
+            <div className="hidden sm:flex justify-center gap-4 pt-6">
               <Button
                 variant="outline"
                 onClick={onClose}

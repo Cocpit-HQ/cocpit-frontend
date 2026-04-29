@@ -90,7 +90,7 @@ export function LivingResume({ experiences, skills, resumeName, resumeUrl }: Liv
   ];
 
   return (
-    <div className="w-full box-border" style={{ padding: "16px 16px 0 40px" }}>
+    <div className="w-full box-border px-4 md:pr-[16px] pb-[20px] md:pl-[40px] mt-[16px]">
       {/* Header Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <h2 className="font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] text-[#000000] flex items-center">
@@ -143,21 +143,21 @@ export function LivingResume({ experiences, skills, resumeName, resumeUrl }: Liv
         </h3>
 
         <div className="flex flex-col md:flex-row gap-4 w-full">
-          {metricsData.map((metric) => (
-            <div 
-              key={metric.label}
-              className="flex-1 h-[84px] bg-white rounded-[20px] border border-[#E2E8F0] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-[#6366F1]/30 transition-colors"
+          {metricsData.map((metric, idx) => (
+            <div
+              key={idx}
+              className="flex-1 min-h-[90px] bg-white border border-[#E2E8F0] rounded-[16px] sm:rounded-[24px] px-5 py-4 flex items-center justify-between"
             >
-              <div className="flex items-center justify-between">
-                <div className="w-8 h-8 bg-[#F8FAFC] rounded-[10px] flex items-center justify-center">
+              <div className="flex flex-col items-start justify-center gap-1">
+                <div className="flex items-center justify-center text-slate-600 mb-1">
                   {metric.icon}
                 </div>
-                <span className="font-[family-name:var(--font-poppins)] font-bold text-[22px] text-[#6366F1] leading-none">
-                  {metric.value}
+                <span className="font-[family-name:var(--font-poppins)] font-medium text-[10px] text-[#94A3B8] uppercase tracking-tight">
+                  {metric.label}
                 </span>
               </div>
-              <span className="font-[family-name:var(--font-poppins)] font-normal text-[11px] text-slate-400 uppercase tracking-tight">
-                {metric.label}
+              <span className="font-[family-name:var(--font-poppins)] font-bold text-[24px] text-[#6366F1]">
+                {metric.value}
               </span>
             </div>
           ))}

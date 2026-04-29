@@ -21,7 +21,7 @@ export function EditableExperienceItem({
     };
 
     return (
-        <div className="flex gap-4 group relative w-full items-start">
+        <div className="flex gap-3 sm:gap-4 group relative w-full items-start">
             {/* Company Logo */}
             <div className="flex-shrink-0 w-[56px] h-[40px] pt-[8px] pr-[16px] pb-[8px] pl-[16px] rounded-[24px] overflow-hidden bg-white border border-slate-100 flex items-center justify-center">
                 <img 
@@ -55,14 +55,14 @@ export function EditableExperienceItem({
             </div>
 
             {/* Right Content: Dates, Work Details, Edit Button */}
-            <div className="flex items-start gap-4 flex-shrink-0 w-[180px] justify-end">
-                <div className="flex flex-col items-end gap-1 text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280] whitespace-nowrap">
-                    <div className="flex items-center gap-1 whitespace-nowrap">
+            <div className="flex items-start gap-2 sm:gap-4 flex-shrink-0 w-auto sm:w-[180px] justify-end ml-auto">
+                <div className="flex flex-col items-end gap-1 text-[10px] sm:text-[12px] leading-[14px] sm:leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280] text-right">
+                    <div className="flex flex-wrap sm:flex-nowrap justify-end items-center gap-1">
                         <span>{formatDate(experience.start_date)}</span>
                         <span>-</span>
                         <span>{experience.end_date ? formatDate(experience.end_date) : 'Present'}</span>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex flex-wrap sm:flex-nowrap justify-end items-center gap-1">
                         <span>{experience.employment_type || 'Full time'}</span>
                         <span>-</span>
                         <span>Remote</span>

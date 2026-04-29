@@ -153,7 +153,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
   };
 
   return (
-    <div className="w-[285.33px] h-[488px] bg-[#FFFFFF] border border-slate-100 rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] py-2 flex flex-col gap-2 relative flex-shrink-0">
+    <div className="w-full sm:w-[285.33px] h-[488px] bg-[#FFFFFF] border border-slate-100 rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] py-2 flex flex-col gap-2 relative flex-shrink-0">
       {/* Header section - full width flex row */}
       <div className="w-full px-4 pt-2 flex items-center justify-between z-10">
         {/* Left section: Avatar + Text details */}
@@ -688,12 +688,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-[960px] mx-auto pt-0 md:pt-8 pb-20 md:pb-12 px-4 md:px-0">
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <div className="w-full md:max-w-[960px] mx-auto pt-0 md:pt-8 pb-[100px] md:pb-12 px-0 md:px-0">
         {isLoading ? (
           <ProfileSkeleton />
         ) : (
-          <div className="overflow-hidden relative" style={{ borderRadius: '24px', border: 'none', outline: 'none', background: '#FFFFFF' }}>
+          <div className="overflow-hidden relative bg-white md:rounded-[24px] rounded-none border-none outline-none pb-8 md:pb-0">
 
             <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage}>
               <div className="absolute top-3 right-3 md:hidden z-10">
@@ -727,10 +727,10 @@ export default function ProfilePage() {
             </EditCoverPhoto>
 
             <div className="px-0 pb-0">
-              <div className="flex items-start justify-between -mt-[40px]">
-                <div className="relative group ml-[38px]">
+              <div className="flex items-start justify-between -mt-[32px] md:-mt-[40px]">
+                <div className="relative group ml-4 md:ml-[38px]">
                   <div
-                    className="w-[80px] h-[80px] rounded-full border-4 border-white bg-card overflow-hidden flex-shrink-0 cursor-pointer shadow-sm"
+                    className="w-[64px] h-[64px] md:w-[80px] md:h-[80px] rounded-full border-[3px] md:border-4 border-white bg-card overflow-hidden flex-shrink-0 cursor-pointer shadow-sm"
                     onClick={() => setIsViewAvatarOpen(true)}
                   >
                     <img
@@ -747,14 +747,10 @@ export default function ProfilePage() {
                     className="absolute -bottom-1 -right-1 cursor-pointer transition-transform hover:scale-110 active:scale-95 z-10"
                     aria-label="Edit Profile Picture"
                   >
-                    <img src="/assets/edit.png" alt="Edit" className="w-[32px] h-[32px]" />
+                    <img src="/assets/edit.png" alt="Edit" className="w-[24px] h-[24px] md:w-[32px] md:h-[32px]" />
                   </button>
                 </div>
 
-                <div className="md:hidden mt-16 flex gap-2">
-
-
-                </div>
 
                 <div className="hidden md:flex flex-col items-end mt-16">
                   <button
@@ -767,7 +763,43 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Stats Section with exact spec-compliant dimensions and padding [between profile and profileidentitychip*/}
+              {/* Mobile Action Buttons */}
+              <div className="md:hidden flex items-center gap-3 px-4 mt-4">
+                <button 
+                  onClick={() => setIsEditProfileModalOpen(true)}
+                  className="flex-1 h-[40px] rounded-[24px] bg-[#EEF2FF] text-[#6366F1] font-medium font-[family-name:var(--font-poppins)] text-[14px] flex items-center justify-center transition-colors"
+                >
+                  Edit profile
+                </button>
+                <button 
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="w-[40px] h-[40px] rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center transition-colors flex-shrink-0"
+                >
+                  <Share2 className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Mobile Stats Section */}
+              <div className="md:hidden w-full px-4 mt-6">
+                <div className="flex justify-between items-center w-full px-2">
+                  <div onClick={() => openFollowList("following")} className="flex flex-col items-center cursor-pointer">
+                    <span className="text-[16px] font-semibold text-[#6366F1] font-[family-name:var(--font-poppins)]">{profileStats?.following_count || 0}</span>
+                    <span className="text-[12px] text-[#6B7280] font-[family-name:var(--font-poppins)]">Following</span>
+                  </div>
+                  <div className="w-[1px] h-8 bg-slate-200"></div>
+                  <div onClick={() => openFollowList("followers")} className="flex flex-col items-center cursor-pointer">
+                    <span className="text-[16px] font-semibold text-[#6366F1] font-[family-name:var(--font-poppins)]">{profileStats?.followers_count || 0}</span>
+                    <span className="text-[12px] text-[#6B7280] font-[family-name:var(--font-poppins)]">Followers</span>
+                  </div>
+                  <div className="w-[1px] h-8 bg-slate-200"></div>
+                  <div onClick={() => openFollowList("connections")} className="flex flex-col items-center cursor-pointer">
+                    <span className="text-[16px] font-semibold text-[#6366F1] font-[family-name:var(--font-poppins)]">{profileStats?.connections_count || 0}</span>
+                    <span className="text-[12px] text-[#6B7280] font-[family-name:var(--font-poppins)]">Connections</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop Stats Section with exact spec-compliant dimensions and padding */}
               <div className="hidden md:block w-full h-[90px] pt-[16px] pr-[16px] pb-[16px] pl-[40px] mt-[16px] mb-0">
                 <div className="flex gap-[24px] items-center">
                   <div
@@ -794,10 +826,10 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="flex justify-between items-start w-full min-h-[217px] pt-[16px] pr-[16px] pb-[16px] pl-[40px] gap-[100px]">
+              <div className="flex justify-between items-start w-full min-h-[217px] pt-[16px] px-4 md:pr-[16px] pb-[16px] md:pl-[40px] md:gap-[100px]">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-1 flex-nowrap">
-                    <h1 className="text-[24px] font-semibold text-[#000000] leading-[32px] font-[family-name:var(--font-poppins)] tracking-tight whitespace-nowrap">{user?.name}</h1>
+                  <div className="flex items-center gap-3 mb-1 flex-wrap md:flex-nowrap">
+                    <h1 className="text-[20px] md:text-[24px] font-semibold text-[#000000] leading-[28px] md:leading-[32px] font-[family-name:var(--font-poppins)] tracking-tight whitespace-nowrap">{user?.name}</h1>
 
                     {/* Company Roles Static Display */}
                     {(() => {
@@ -923,13 +955,13 @@ export default function ProfilePage() {
             </div>
 
             {/* About Section */}
-            <div className="w-full pr-[16px] pb-[20px] pl-[40px] flex flex-col gap-[12px] mt-[16px]">
+            <div className="w-full px-4 md:pr-[16px] pb-[20px] md:pl-[40px] flex flex-col gap-[12px] mt-[16px]">
               <h2 className="font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] text-[#000000]">About</h2>
-              <div className="relative max-w-[904px]">
+              <div className="relative w-full md:max-w-[904px]">
                 <p 
                   className={cn(
-                    "font-[family-name:var(--font-poppins)] font-normal text-[16px] leading-[24px] text-[#000000] transition-all duration-300",
-                    !isAboutExpanded && "line-clamp-2"
+                    "font-[family-name:var(--font-poppins)] font-normal text-[14px] md:text-[16px] leading-[20px] md:leading-[24px] text-[#000000] transition-all duration-300",
+                    !isAboutExpanded && "line-clamp-3 md:line-clamp-2"
                   )}
                 >
                   {user?.about}
@@ -937,7 +969,7 @@ export default function ProfilePage() {
                 {!isAboutExpanded && (user?.about?.length || 0) > 150 && (
                   <button 
                     onClick={() => setIsAboutExpanded(true)}
-                    className="absolute bottom-0 right-0 bg-white pl-2 text-slate-400 hover:text-[#6366F1] font-normal text-[16px] transition-colors"
+                    className="absolute bottom-0 right-0 bg-white pl-2 text-slate-400 hover:text-[#6366F1] font-normal text-[14px] md:text-[16px] transition-colors"
                   >
                     ....More
                   </button>
@@ -965,11 +997,11 @@ export default function ProfilePage() {
 
             {/* Posts Section */}
             <div
-              className="w-[960px] mx-auto bg-transparent mt-[16px] transition-all duration-500 ease-in-out overflow-hidden"
+              className="w-full md:w-[960px] mx-auto bg-transparent mt-[16px] transition-all duration-500 ease-in-out overflow-hidden"
               style={{ minHeight: isPostsExpanded ? 'auto' : '564px' }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between pt-4 pb-4 px-10">
+              <div className="flex items-center justify-between pt-4 pb-4 px-4 md:px-10">
                 <h2 className="text-[18px] leading-[26px] text-[#000000] font-medium font-[family-name:var(--font-poppins)]">Post</h2>
                 {previewPosts.length > 3 && (
                   <button
@@ -991,9 +1023,9 @@ export default function ProfilePage() {
 
               {/* Posts Wrapper */}
               <div
-                className={`pl-10 pr-4 transition-all duration-500 ease-in-out ${isPostsExpanded
-                    ? "grid grid-cols-3 gap-[24px] pb-10"
-                    : "flex flex-row gap-[24px]"
+                className={`px-4 md:pl-10 md:pr-4 transition-all duration-500 ease-in-out ${isPostsExpanded
+                    ? "grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-[24px] pb-10"
+                    : "flex flex-col md:flex-row gap-4 md:gap-[24px]"
                   }`}
               >
                 {(isPostsExpanded ? previewPosts : previewPosts.slice(0, 3)).map((post, index) => (
@@ -1014,7 +1046,7 @@ export default function ProfilePage() {
 
             {/* Skills Section */}
             <div 
-              className="w-[960px] mx-auto bg-white mt-[16px] rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] pr-[24px] pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
+              className="w-full md:w-[960px] mx-auto bg-white mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between">
@@ -1048,7 +1080,7 @@ export default function ProfilePage() {
             {/* Experience Section */}
             <div 
               id="experience-section"
-              className="w-[960px] mx-auto bg-white mt-[16px] rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] pr-[24px] pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
+              className="w-full md:w-[960px] mx-auto bg-white mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between">
@@ -1076,7 +1108,7 @@ export default function ProfilePage() {
             {/* Education Section */}
             <div 
               id="education-section" 
-              className="w-[960px] mx-auto bg-white mt-[16px] rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] pr-[24px] pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
+              className="w-full md:w-[960px] mx-auto bg-white mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between">
@@ -1121,7 +1153,7 @@ export default function ProfilePage() {
       />
 
       <Dialog open={isAddExperienceModalOpen} onOpenChange={setIsAddExperienceModalOpen}>
-        <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[800px] [&>button]:hidden outline-none">
+        <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full [&>button]:hidden outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
           <DialogTitle className="sr-only">Add Experience</DialogTitle>
           <DialogDescription className="sr-only">Fill in the details to add a new experience record to your profile.</DialogDescription>
           <AddExperienceForm
@@ -1134,7 +1166,7 @@ export default function ProfilePage() {
       </Dialog>
 
       <Dialog open={isAddEducationModalOpen} onOpenChange={setIsAddEducationModalOpen}>
-        <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[800px] [&>button]:hidden outline-none">
+        <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full [&>button]:hidden outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
           <DialogTitle className="sr-only">Add Education</DialogTitle>
           <DialogDescription className="sr-only">Fill in the details to add a new education record to your profile.</DialogDescription>
           <AddEducationForm

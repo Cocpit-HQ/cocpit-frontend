@@ -139,16 +139,35 @@ export function EditAvatarModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[600px] [&>button]:hidden outline-none">
-        <div className="relative bg-white rounded-[24px] p-[32px] w-full shadow-sm flex flex-col outline-none">
+      <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-none sm:max-w-[600px] h-[100dvh] sm:h-auto w-full [&>button]:hidden outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
+        <div className="relative bg-white rounded-none sm:rounded-[24px] p-4 sm:p-[32px] w-full h-full sm:h-auto shadow-sm flex flex-col outline-none overflow-y-auto overflow-x-hidden">
+          
+          {/* Mobile Header */}
+          <div className="sm:hidden flex items-center justify-between mb-8 sticky top-0 bg-white z-20 pt-2 pb-4">
+            <button onClick={onClose} className="p-2 -ml-2 text-black hover:bg-gray-100 rounded-full transition-colors">
+              <Icon icon="hugeicons:arrow-left-01" className="w-6 h-6" />
+            </button>
+            <DialogTitle className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-black m-0 p-0">
+              Profile image
+            </DialogTitle>
+            <button 
+              onClick={handleSave}
+              disabled={isUploading || isDeleting || (!previewUrl && !currentAvatarUrl)}
+              className="px-4 py-1.5 rounded-full bg-[#EEF2FF] text-[#6366F1] font-medium text-[14px] disabled:opacity-50 transition-all"
+            >
+              {isUploading ? "..." : "Save"}
+            </button>
+          </div>
+
+          {/* Desktop Header */}
           <button 
               onClick={onClose}
-              className="absolute top-6 right-6 p-1 text-[#F87171] hover:bg-red-50 rounded-full transition-colors z-10"
+              className="hidden sm:block absolute top-6 right-6 p-1 text-[#F87171] hover:bg-red-50 rounded-full transition-colors z-10"
           >
               <X className="w-6 h-6" strokeWidth={1.5} />
           </button>
 
-          <div className="text-center mb-6 relative px-4">
+          <div className="hidden sm:block text-center mb-6 relative px-4">
               <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-[#000000] mb-1">
                 Profile image
               </DialogTitle>
@@ -199,7 +218,7 @@ export function EditAvatarModal({
             </div>
           </div>
 
-          <div className="mt-8 max-w-[400px] mx-auto w-full">
+          <div className="mt-auto sm:mt-8 max-w-[400px] mx-auto w-full px-4 sm:px-0">
             <p className="text-[14px] font-medium text-[#000000] mb-3">Zoom</p>
             <input 
               type="range" 
@@ -211,7 +230,7 @@ export function EditAvatarModal({
             />
           </div>
 
-          <div className="flex justify-center gap-4 mt-10">
+          <div className="hidden sm:flex justify-center gap-4 mt-10">
               <Button 
                 type="button" 
                 variant="outline" 

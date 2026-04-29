@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import type { Experience } from "@/types/entities"
 import { Checkbox } from "@/components/ui/checkbox"
 import { X, Plus, ChevronDown } from "lucide-react"
+import { Icon } from '@iconify/react'
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
 import LocationAutocomplete from "@/components/ui/LocationAutocomplete"
@@ -112,16 +113,35 @@ export default function AddExperienceForm({ onCancel, onSave, onDelete, initialD
     formData.startYear !== "";
 
   return (
-    <div className="relative bg-white rounded-[24px] p-[16px] w-[800px] h-[918px] mx-auto shadow-sm flex flex-col overflow-hidden outline-none">
-      <div className="flex-1 overflow-y-auto px-12 py-4 scrollbar-hide">
+    <div className="relative bg-white rounded-none sm:rounded-[24px] p-0 sm:p-[16px] w-full sm:w-[800px] h-[100dvh] sm:h-auto sm:max-h-[90vh] mx-auto shadow-sm flex flex-col overflow-hidden outline-none">
+      
+      {/* Mobile Header */}
+      <div className="sm:hidden flex items-center justify-between sticky top-0 bg-white z-50 px-4 py-4 border-b border-gray-100">
+        <button onClick={onCancel} className="p-2 -ml-2 text-black hover:bg-gray-100 rounded-full transition-colors">
+          <Icon icon="hugeicons:arrow-left-01" className="w-6 h-6" />
+        </button>
+        <span className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-black">
+          Add experience
+        </span>
+        <button 
+          onClick={handleSubmit}
+          disabled={!isFormValid}
+          className="px-4 py-1.5 rounded-full bg-[#EEF2FF] text-[#6366F1] font-medium text-[14px] disabled:opacity-50 transition-all"
+        >
+          Save
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 sm:px-12 py-4 scrollbar-hide pb-20 sm:pb-4">
+        {/* Desktop Close Button */}
         <button 
           onClick={onCancel}
-          className="absolute top-6 right-6 p-1 text-[#F87171] hover:bg-red-50 rounded-full transition-colors z-10"
+          className="hidden sm:block absolute top-6 right-6 p-1 text-[#F87171] hover:bg-red-50 rounded-full transition-colors z-10"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="text-center mb-8 relative">
+        <div className="hidden sm:block text-center mb-8 relative">
           <h2 className="text-[18px] leading-[26px] font-medium font-[family-name:var(--font-poppins)] text-[#000000] mb-1">Add experience</h2>
           <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280]">Update your professional information</p>
           
@@ -135,7 +155,7 @@ export default function AddExperienceForm({ onCancel, onSave, onDelete, initialD
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-[72px]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-[72px]">
             <div className="flex flex-col">
               <Label className={labelStyles}>Role</Label>
               <div className="relative">
@@ -299,26 +319,37 @@ export default function AddExperienceForm({ onCancel, onSave, onDelete, initialD
             />
           </div>
 
-          <div className="flex justify-center gap-4 pt-6 pb-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onCancel}
-              className="w-[142px] h-[40px] rounded-[24px] bg-white border border-[#818CF8] text-[#818CF8] hover:bg-[#F9FAFB] font-medium transition-all"
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={!isFormValid}
-              className={`w-[142px] h-[40px] rounded-[24px] transition-all shadow-none border border-white font-medium text-white ${
-                isFormValid 
-                  ? "bg-[#6366F1] hover:bg-[#4F46E5] cursor-pointer" 
-                  : "bg-[#C7D2FE] opacity-80 cursor-not-allowed"
-              }`}
-            >
-              Save
-            </Button>
+          <div className="hidden sm:flex justify-between items-center pt-8 border-t border-[#E5E7EB]">
+            {initialData ? (
+              <Button 
+                type="button" 
+                variant="ghost" 
+                onClick={() => onDelete?.(initialData.experience_id!)}
+                className="text-red-500 hover:text-red-600 hover:bg-red-50 font-medium px-4 h-10"
+              >
+                Delete record
+              </Button>
+            ) : (
+              <div /> // Spacer
+            )}
+            
+            <div className="flex gap-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onCancel}
+                className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-[#EEF2FF] bg-white font-medium w-[142px]"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={!isFormValid}
+                className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-50"
+              >
+                Save
+              </Button>
+            </div>
           </div>
         </form>
       </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react"
 import { X, Search, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { Icon } from '@iconify/react'
 import { useQuery } from "@tanstack/react-query"
 import { searchSkills } from "@/services/api/profile"
 
@@ -79,22 +80,47 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="w-full max-w-[460px] h-[454px] rounded-[24px] bg-white shadow-2xl relative flex flex-col p-4">
-        {/* Close Button */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in-90">
+      <div className="w-full h-[100dvh] sm:h-[454px] max-w-none sm:max-w-[460px] rounded-none sm:rounded-[24px] bg-white shadow-2xl relative flex flex-col p-4 animate-in slide-in-from-right sm:slide-in-from-bottom-0">
+        
+        {/* Mobile Header */}
+        <div className="sm:hidden flex items-center justify-between mb-4 mt-2">
+          <button onClick={onClose} className="p-2 -ml-2 text-black hover:bg-gray-100 rounded-full transition-colors">
+            <Icon icon="hugeicons:arrow-left-01" className="w-6 h-6" />
+          </button>
+          <span className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-black">
+            Add skills
+          </span>
+          <button 
+            onClick={() => {
+              const finalSkills = [...selectedSkills]
+              const query = searchQuery.trim()
+              if (query && !finalSkills.some(s => s.toLowerCase() === query.toLowerCase())) {
+                finalSkills.push(query)
+              }
+              onSave(finalSkills)
+            }}
+            disabled={loading}
+            className="px-4 py-1.5 rounded-full bg-[#EEF2FF] text-[#6366F1] font-medium text-[14px] disabled:opacity-50 transition-all"
+          >
+            {loading ? "..." : "Save"}
+          </button>
+        </div>
+
+        {/* Desktop Close Button */}
         <button 
           onClick={onClose} 
-          className="absolute right-4 top-4 text-[#FF6B6B] hover:scale-110 transition-transform z-10"
+          className="hidden sm:block absolute right-4 top-4 text-[#FF6B6B] hover:scale-110 transition-transform z-10"
         >
           <X className="w-6 h-6" />
         </button>
 
-        <div className="flex-1 flex flex-col items-center pt-4 w-full">
+        <div className="flex-1 flex flex-col items-center pt-2 sm:pt-4 w-full">
           {/* Header */}
-          <h2 className="text-[18px] font-medium leading-[26px] text-black mb-1 font-[family-name:var(--font-poppins)] text-center">
+          <h2 className="hidden sm:block text-[18px] font-medium leading-[26px] text-black mb-1 font-[family-name:var(--font-poppins)] text-center">
             Add skills
           </h2>
-          <p className="text-[14px] text-[#6B7280] mb-5 font-[family-name:var(--font-poppins)]">
+          <p className="hidden sm:block text-[14px] text-[#6B7280] mb-5 font-[family-name:var(--font-poppins)] text-center">
             Help us match you with better opportunities
           </p>
 
@@ -179,8 +205,8 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
             </div>
           </div>
 
-          {/* Footer Buttons */}
-          <div className="w-full flex justify-center gap-4 mt-auto">
+          {/* Desktop Footer Buttons */}
+          <div className="hidden sm:flex w-full justify-center gap-4 mt-auto">
             <Button
               variant="outline"
               onClick={onClose}

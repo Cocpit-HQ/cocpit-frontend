@@ -383,8 +383,19 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[500px] h-[80vh] flex flex-col p-0 gap-0 overflow-hidden bg-white border-none rounded-[32px] shadow-2xl">
-                <DialogHeader className="p-6 pt-8 text-center relative">
+            <DialogContent className="max-w-none sm:max-w-[500px] w-full h-[100dvh] sm:h-[80vh] flex flex-col p-0 gap-0 overflow-hidden bg-white border-none rounded-none sm:rounded-[32px] shadow-2xl data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
+                {/* Mobile Header */}
+                <div className="sm:hidden flex items-center justify-between sticky top-0 bg-white z-50 px-4 py-4 border-b border-gray-100">
+                    <button onClick={onClose} className="p-2 -ml-2 text-black hover:bg-gray-100 rounded-full transition-colors">
+                        <Icon icon="hugeicons:arrow-left-01" className="w-6 h-6" />
+                    </button>
+                    <span className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-black">
+                        People
+                    </span>
+                    <div className="w-10"></div> {/* Spacer for centering */}
+                </div>
+
+                <DialogHeader className="hidden sm:flex p-6 pt-8 text-center relative">
                     <DialogTitle className="text-[24px] font-bold text-[#000000] font-[family-name:var(--font-poppins)] text-center w-full">
                         People
                     </DialogTitle>
@@ -393,35 +404,35 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                     </p>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-hidden flex flex-col">
+                <div className="flex-1 overflow-hidden flex flex-col mt-4 sm:mt-0">
                     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full h-full flex flex-col">
-                        <div className="px-6">
+                        <div className="px-4 sm:px-6">
                             <TabsList className="w-full h-auto bg-[#F8FAFC] p-1.5 rounded-[24px] grid grid-cols-3 gap-1.5">
                                 <TabsTrigger 
                                     value="following"
-                                    className="rounded-[20px] py-2.5 px-5 data-[state=active]:bg-[#EEF2FF] data-[state=active]:text-[#6366F1] data-[state=active]:shadow-none transition-all flex items-center justify-between"
+                                    className="rounded-[20px] py-2.5 px-1 sm:px-5 data-[state=active]:bg-[#EEF2FF] data-[state=active]:text-[#6366F1] data-[state=active]:shadow-none transition-all flex items-center justify-center sm:justify-between"
                                 >
-                                    <span className="text-[13px] font-medium font-[family-name:var(--font-poppins)]">Following</span>
-                                    <span className="text-[13px] font-semibold text-[#6366F1]/70">{stats?.following_count || 0}</span>
+                                    <span className="text-[12px] sm:text-[13px] font-medium font-[family-name:var(--font-poppins)]">Following</span>
+                                    <span className="hidden sm:inline text-[13px] font-semibold text-[#6366F1]/70">{stats?.following_count || 0}</span>
                                 </TabsTrigger>
                                 <TabsTrigger 
                                     value="followers"
-                                    className="rounded-[20px] py-2.5 px-5 data-[state=active]:bg-[#EEF2FF] data-[state=active]:text-[#6366F1] data-[state=active]:shadow-none transition-all flex items-center justify-between"
+                                    className="rounded-[20px] py-2.5 px-1 sm:px-5 data-[state=active]:bg-[#EEF2FF] data-[state=active]:text-[#6366F1] data-[state=active]:shadow-none transition-all flex items-center justify-center sm:justify-between"
                                 >
-                                    <span className="text-[13px] font-medium font-[family-name:var(--font-poppins)]">Followers</span>
-                                    <span className="text-[13px] font-semibold text-[#6366F1]/70">{stats?.followers_count || 0}</span>
+                                    <span className="text-[12px] sm:text-[13px] font-medium font-[family-name:var(--font-poppins)]">Followers</span>
+                                    <span className="hidden sm:inline text-[13px] font-semibold text-[#6366F1]/70">{stats?.followers_count || 0}</span>
                                 </TabsTrigger>
                                 <TabsTrigger 
                                     value="connections"
-                                    className="rounded-[20px] py-2.5 px-5 data-[state=active]:bg-[#EEF2FF] data-[state=active]:text-[#6366F1] data-[state=active]:shadow-none transition-all flex items-center justify-between"
+                                    className="rounded-[20px] py-2.5 px-1 sm:px-5 data-[state=active]:bg-[#EEF2FF] data-[state=active]:text-[#6366F1] data-[state=active]:shadow-none transition-all flex items-center justify-center sm:justify-between"
                                 >
-                                    <span className="text-[13px] font-medium font-[family-name:var(--font-poppins)]">Connection</span>
-                                    <span className="text-[13px] font-semibold text-[#6366F1]/70">{stats?.connections_count || 0}</span>
+                                    <span className="text-[12px] sm:text-[13px] font-medium font-[family-name:var(--font-poppins)]">Connection</span>
+                                    <span className="hidden sm:inline text-[13px] font-semibold text-[#6366F1]/70">{stats?.connections_count || 0}</span>
                                 </TabsTrigger>
                             </TabsList>
                         </div>
 
-                        <div className="p-6">
+                        <div className="p-4 sm:p-6 pb-2">
                             <div className="relative">
                                 <Input
                                     placeholder="Search"
