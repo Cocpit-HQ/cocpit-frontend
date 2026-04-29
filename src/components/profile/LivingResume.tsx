@@ -73,17 +73,17 @@ export function LivingResume({ experiences, skills, resumeName, resumeUrl }: Liv
 
   const metricsData = [
     {
-      icon: <Icon icon="hugeicons:job-search" className="w-6 h-6 text-[#000000]" />,
+      icon: <Icon icon="hugeicons:job-search" className="w-5 h-5 text-[#000000]" />,
       label: "Years experience",
       value: `${totalYears}+`,
     },
     {
-      icon: <Icon icon="cib:when-i-work" className="w-6 h-6 text-[#000000]" />,
+      icon: <Icon icon="cib:when-i-work" className="w-5 h-5 text-[#000000]" />,
       label: "Domains worked",
       value: `${domains}`,
     },
     {
-      icon: <Icon icon="carbon:tools-alt" className="w-6 h-6 text-[#000000]" />,
+      icon: <Icon icon="carbon:tools-alt" className="w-5 h-5 text-[#000000]" />,
       label: "Tools mastered",
       value: `${toolsCount}`,
     },
@@ -150,7 +150,7 @@ export function LivingResume({ experiences, skills, resumeName, resumeUrl }: Liv
             >
               <div className="flex items-center justify-between">
                 <div className="w-8 h-8 bg-[#F8FAFC] rounded-[10px] flex items-center justify-center">
-                  {React.cloneElement(metric.icon as React.ReactElement, { className: "w-5 h-5 text-[#000000]" })}
+                  {metric.icon}
                 </div>
                 <span className="font-[family-name:var(--font-poppins)] font-bold text-[22px] text-[#6366F1] leading-none">
                   {metric.value}
