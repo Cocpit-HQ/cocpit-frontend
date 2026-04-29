@@ -326,7 +326,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
         {/* Avatar Cutout */}
         <div className="absolute left-[38px] -bottom-[40px] w-[80px] h-[80px] bg-white rounded-full z-0" />
 
-        <div className="absolute bottom-4 right-4 flex gap-2 z-50 pointer-events-auto">
+        <div className="absolute bottom-4 right-4 flex gap-2 z-10 pointer-events-auto">
           {/* Minimal trigger buttons on the cover itself */}
           <button
             type="button"
