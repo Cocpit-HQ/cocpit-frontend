@@ -1,0 +1,121 @@
+@reference "tailwindcss";
+
+/* ============================================
+   Sidebar Styles — Cocpit Sidebar
+   ============================================ */
+
+/* Sidebar Container */
+.sidebar {
+  @apply w-[232px] h-screen fixed left-0 top-0 flex flex-col justify-between bg-white z-40;
+  padding: 20px 16px;
+  border-right: 1px solid #f0f0f5;
+}
+
+/* ---- Logo Area ---- */
+.sidebar__logo {
+  @apply pb-2 flex items-center;
+}
+
+.sidebar__logo-img {
+  @apply w-14 h-14 object-contain;
+  mix-blend-mode: difference;
+}
+
+/* ---- Navigation Container ---- */
+.sidebar__nav {
+  @apply flex-1 overflow-y-auto pt-1 pb-4;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar__nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---- Section Group ---- */
+.sidebar__section {
+  @apply mb-6;
+}
+
+/* ---- Section Title ---- */
+.sidebar__section-title {
+  @apply px-3 mb-4 text-[14px] font-normal leading-[20px];
+  font-family: var(--font-poppins), 'Poppins', sans-serif;
+  color: #A5B4FC;
+  letter-spacing: 0;
+}
+
+/* ---- Navigation Item (base) ---- */
+.sidebar__item {
+  @apply w-full flex items-center cursor-pointer transition-all duration-100 ease-out no-underline text-[16px] font-normal leading-[24px];
+  font-family: var(--font-poppins), 'Poppins', sans-serif;
+  color: #6B7280;
+  height: 40px;
+  width: 200px;
+  padding: 8px 16px;
+  gap: 8px;
+  border-radius: 8px;
+}
+
+/* Hover state */
+.sidebar__item:hover {
+  background-color: #f0f2f5;
+  color: #23233a;
+}
+
+/* ---- Active Item ---- */
+.sidebar__item--active {
+  background-color: #E0E7FF;
+  color: #6366F1;
+  border-right: 3px solid #6366F1;
+}
+
+.sidebar__item--active:hover {
+  background-color: #d6ddfa;
+  color: #6366F1;
+}
+
+.sidebar__item--active .sidebar__item-icon {
+  color: #6366F1;
+}
+
+/* ---- Item Icon ---- */
+.sidebar__item-icon {
+  @apply shrink-0 transition-all duration-100 ease-out;
+  width: 24px;
+  height: 24px;
+  color: #6B7280;
+  stroke-width: 1.5px;
+}
+
+/* ---- Item Label ---- */
+.sidebar__item-label {
+  @apply text-[16px] font-normal leading-[24px] whitespace-nowrap;
+}
+
+/* ---- Navigation Items Container ---- */
+.sidebar__items {
+  @apply flex flex-col gap-4;
+}
+
+/* ---- Business CTA Button ---- */
+.sidebar__business-cta {
+  @apply mt-4;
+}
+
+.sidebar__business-btn {
+  @apply w-full flex items-center justify-center py-3 rounded-2xl cursor-pointer transition-all duration-200 ease-out text-[13px] font-semibold no-underline;
+  background-color: #ebe6ff;
+  color: #6366f1;
+  border: 1.5px solid #d9d1ff;
+}
+
+.sidebar__business-btn:hover {
+  background-color: #e0d9ff;
+  border-color: #c5baff;
+  @apply -translate-y-px shadow-md;
+}
+
+.sidebar__business-btn:active {
+  @apply translate-y-0;
+}

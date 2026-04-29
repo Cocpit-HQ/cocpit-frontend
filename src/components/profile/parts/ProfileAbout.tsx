@@ -7,7 +7,7 @@ interface ProfileAboutProps {
     aboutText: string;
 }
 
-export function ProfileAbout({ aboutText }: ProfileAboutProps) {
+export const ProfileAbout = React.memo(function ProfileAbout({ aboutText }: ProfileAboutProps) {
     if (!aboutText) return null;
 
     return (
@@ -18,4 +18,4 @@ export function ProfileAbout({ aboutText }: ProfileAboutProps) {
             </p>
         </div>
     );
-}
+});

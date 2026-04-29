@@ -65,7 +65,7 @@ export default function CompanyPage() {
 
     return (
         <div className="flex flex-col min-h-screen bg-background pb-12">
-            <div className="container max-w-6xl px-0 md:px-6 mx-auto">
+            <div className="container max-w-[960px] px-0 md:px-6 mx-auto">
                 <OrganizationHeader company={company} isLoading={isLoading} />
 
                 <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">

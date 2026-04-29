@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MessageCircle, X, Clock, Trash2 } from 'lucide-react';
+import { Search, MessageCircle, X, Clock, Trash2, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { NotificationPopover } from '@/components/notifications/NotificationPopover';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -11,7 +11,7 @@ import { SearchedUser } from '@/types/user';
 import { ProfileSwitcher } from '@/components/layout/ProfileSwitcher';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useRouter } from 'next/navigation';
-import { Hash } from 'lucide-react';
+import { Hash, Plus } from 'lucide-react';
 
 export const HomeHeader = () => {
     const router = useRouter();
@@ -36,14 +36,14 @@ export const HomeHeader = () => {
         if (!query.trim()) return text;
         const cleanQuery = query.startsWith('#') ? query.slice(1) : query;
         if (!cleanQuery) return text;
-        
+
         try {
             const parts = text.split(new RegExp(`(${cleanQuery})`, 'gi'));
             return (
                 <span>
-                    {parts.map((part, i) => 
-                        part.toLowerCase() === cleanQuery.toLowerCase() 
-                            ? <b key={i} className="text-primary font-bold">{part}</b> 
+                    {parts.map((part, i) =>
+                        part.toLowerCase() === cleanQuery.toLowerCase()
+                            ? <b key={i} className="text-primary font-bold">{part}</b>
                             : part
                     )}
                 </span>
@@ -102,7 +102,7 @@ export const HomeHeader = () => {
             setSearchLoading(true);
             try {
                 const query = debouncedSearchQuery.trim();
-                
+
                 if (query.startsWith('#')) {
                     const data = await searchHashtags(query, abortControllerRef.current.signal);
                     setHashtagResults(data.tags);
@@ -152,7 +152,7 @@ export const HomeHeader = () => {
             if (searchQuery) {
                 const visibleHashtags = hashtagResults.slice(0, 5);
                 const hasSeeMore = hashtagResults.length > 5;
-                
+
                 if (activeIndex < visibleHashtags.length) {
                     const h = visibleHashtags[activeIndex];
                     saveSearch(`#${h.tag}`);
@@ -190,29 +190,19 @@ export const HomeHeader = () => {
 
     return (
         <header
-            className={`sticky top-0 z-20 border-b p-3 md:py-2 bg-background border-border transition-transform duration-300 ease-in-out ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
+            className={`sticky top-0 z-20 border-b p-3 md:py-2 bg-white border-indigo-50 transition-transform duration-300 ease-in-out ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
                 } md:translate-y-0`}
         >
-            <div className="max-w-5xl mx-auto px-1 md:px-0">
+            <div className="max-w-[960px] mx-auto px-4 md:px-0">
                 {/* --- Desktop Header (Visible from md screens up) --- */}
-                <div className="hidden md:flex items-center gap-4">
+                <div className="hidden md:flex items-center justify-between">
                     {/* Desktop Search Bar */}
                     <div
-                        className={`relative flex-1 flex items-center gap-3 max-w-2xl transition-all duration-300 ${isSearchFocused ? 'md:max-w-2xl' : ''
-                            }`}
+                        className="relative flex items-center w-[422px] h-10 transition-all duration-300"
                     >
-                        <Search 
-                            className="w-5 h-5 text-muted-foreground absolute left-3 cursor-pointer hover:text-primary transition-colors" 
-                            onClick={() => {
-                                if (searchQuery.trim()) {
-                                    saveSearch(searchQuery);
-                                    setIsSearchFocused(false);
-                                }
-                            }}
-                        />
                         <input
                             type="text"
-                            placeholder="Search posts, professionals..."
+                            placeholder="Search"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onFocus={() => setIsSearchFocused(true)}
@@ -220,7 +210,16 @@ export const HomeHeader = () => {
                                 setTimeout(() => setIsSearchFocused(false), 200);
                             }}
                             onKeyDown={handleKeyDown}
-                            className="w-full pl-10 pr-4 py-2.5 rounded-full border focus:outline-none focus:border-primary bg-card text-foreground placeholder-muted-foreground border-border transition-all"
+                            className="w-full h-full px-4 rounded-[24px] border border-[#818CF8] focus:outline-none bg-white text-gray-900 placeholder-[#818CF8]/60 transition-all"
+                        />
+                        <Search
+                            className="w-5 h-5 text-[#818CF8] absolute right-4 cursor-pointer hover:scale-110 transition-transform"
+                            onClick={() => {
+                                if (searchQuery.trim()) {
+                                    saveSearch(searchQuery);
+                                    setIsSearchFocused(false);
+                                }
+                            }}
                         />
 
                         {/* Search Dropdown */}
@@ -407,16 +406,31 @@ export const HomeHeader = () => {
                         )}
                     </div>
 
-                    {/* Desktop Icons */}
-                    <div className="flex items-center gap-1 sm:gap-2">
-                        <NotificationPopover />
-                        <Link
-                            href="/messaging"
-                            className="p-2 rounded-full transition-colors hover:bg-muted text-muted-foreground"
+                    {/* Desktop Icons & Create Button */}
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => router.push('/create-post')}
+                            className="flex items-center justify-center gap-[10px] w-[122px] h-10 rounded-[24px] bg-[#6366F1] hover:bg-[#5558e3] text-white text-sm font-semibold transition-all shadow-sm"
                         >
-                            <MessageCircle className="w-6 h-6" />
-                        </Link>
-                        <div className="ml-1">
+                            <span>Create</span>
+                            <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
+                                <Plus size={12} strokeWidth={3} />
+                            </div>
+                        </button>
+
+                        <div className="flex items-center gap-4 text-black">
+                            <NotificationPopover
+                                className="p-2 rounded-full transition-colors hover:bg-gray-100"
+                                icon={<Bell width={20} height={20} strokeWidth={1.5} color="#6B7280" />}
+                            />
+                            <Link
+                                href="/messaging"
+                                className="p-2 rounded-full transition-colors hover:bg-gray-100"
+                            >
+                                <MessageCircle width={20} height={20} strokeWidth={1.5} color="#6B7280" />
+                            </Link>
+                        </div>
+                        <div className="ml-2">
                             <ProfileSwitcher showArrow={true} />
                         </div>
                     </div>
@@ -426,8 +440,18 @@ export const HomeHeader = () => {
                 <div className="md:hidden flex items-center gap-2 relative">
                     {/* Mobile Search Bar */}
                     <div className="flex-1 flex items-center gap-3 relative">
-                        <Search 
-                            className="w-4 h-4 text-muted-foreground absolute left-3 cursor-pointer" 
+                        <input
+                            type="text"
+                            placeholder="Search"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onFocus={() => setIsSearchFocused(true)}
+                            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                            onKeyDown={handleKeyDown}
+                            className="w-full pl-4 pr-10 py-2.5 bg-white border border-indigo-100 focus:border-indigo-400 rounded-full text-sm transition-all outline-none"
+                        />
+                        <Search
+                            className="w-4 h-4 text-indigo-400 absolute right-3 cursor-pointer"
                             onClick={() => {
                                 if (searchQuery.trim()) {
                                     saveSearch(searchQuery);
@@ -435,16 +459,7 @@ export const HomeHeader = () => {
                                 }
                             }}
                         />
-                        <input
-                            type="text"
-                            placeholder="Search users..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onFocus={() => setIsSearchFocused(true)}
-                            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                            onKeyDown={handleKeyDown}
-                            className="w-full pl-10 pr-4 py-2.5 bg-muted/50 border border-transparent focus:border-primary/30 focus:bg-background rounded-xl text-sm transition-all outline-none"
-                        />                        {/* Mobile Search Dropdown */}
+                        {/* Mobile Search Dropdown */}
                         {isSearchFocused && searchQuery && (
                             <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
                                 {hashtagResults.length > 0 && (

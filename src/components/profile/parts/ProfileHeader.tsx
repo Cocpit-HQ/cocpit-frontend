@@ -51,7 +51,7 @@ import { useQuery } from "@tanstack/react-query";
 // ... existing component props ...
 
 // HMR Trigger 2
-export function ProfileHeader({
+export const ProfileHeader = React.memo(function ProfileHeader({
     user,
     isOwnProfile,
     isUserFollowing,
@@ -283,4 +283,4 @@ export function ProfileHeader({
             />
         </div>
     );
-}
+});

@@ -116,7 +116,7 @@ export default function TellUsAboutYouStep({ onNext, onBack, currentStep, totalS
         <div className={styles.formGroup}>
           <label className={styles.label}>Location</label>
           <LocationAutocomplete
-            selected={selectedLocation}
+            value={selectedLocation?.name || null}
             onSelect={setSelectedLocation}
           />
           <button

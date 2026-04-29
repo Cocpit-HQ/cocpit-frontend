@@ -11,8 +11,11 @@ import {
     addSkills,
     deleteSkill,
     uploadAvatar,
-    deleteAvatar
+    deleteAvatar,
+    updateProfile,
+    updateIdentity
 } from "@/services/api/profile";
+import { toast } from "sonner";
 import {
     UserData,
     UserProfile,
@@ -198,4 +201,41 @@ export function useAvatarMutations() {
     });
 
     return { upload, remove };
+}
+
+export function useProfileMutation() {
+    const queryClient = useQueryClient();
+
+    const update = useMutation({
+        mutationFn: async (payload: any) => {
+            // Update core profile
+            await updateProfile({
+                full_name: payload.name,
+                headline: payload.headline,
+                location: payload.location,
+                about_text: payload.about,
+                account_name: payload.account_name,
+                job_title: payload.job_title || "",
+                company_name: payload.company_name || "",
+                school: payload.school || "",
+                degree: payload.degree || "",
+                website: payload.website || "",
+                visible_role_ids: payload.visible_role_ids,
+            });
+
+            // Update identity
+            await updateIdentity({
+                open_to: payload.open_to,
+                availability: payload.availability,
+                work_preference: payload.work_preference,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            queryClient.invalidateQueries({ queryKey: ["profile-identity"] });
+            toast.success("Profile updated successfully");
+        }
+    });
+
+    return update;
 }

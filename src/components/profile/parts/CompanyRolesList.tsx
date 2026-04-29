@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Building2, ChevronDown, ChevronUp, Eye, EyeOff, Pin } from 'lucide-react';
 import { CompanyRole } from '@/types/user';
 import { updateMemberRoleSettings } from '@/services/api/organization';
@@ -10,7 +10,7 @@ interface CompanyRolesListProps {
     onRoleClick: (role: CompanyRole) => void;
 }
 
-export function CompanyRolesList({ roles, isOwnProfile, onRoleClick }: CompanyRolesListProps) {
+export const CompanyRolesList = React.memo(function CompanyRolesList({ roles, isOwnProfile, onRoleClick }: CompanyRolesListProps) {
     const [expanded, setExpanded] = useState(false);
     // Optimistic UI state could be managed here or by refreshing parent. For simplicity, let's use router.refresh() after update or local state mutation.
     // However, ProfileHeader receives `user` from parent which comes from React Query. We should ideally invalidate 'profile' query.
@@ -19,19 +19,18 @@ export function CompanyRolesList({ roles, isOwnProfile, onRoleClick }: CompanyRo
     // For now, let's just make the API call and maybe reload to reflect changes? Or better, accept a `onUpdate` callback from parent.
     // Given constraints, I'll implementing basic local mutation for UI responsiveness.
 
-    // Sort roles: Primary > Priority > Name
-    // But wait, the parent `user` object is immutable props. We should copy it to state if we want optimistic updates?
-    // Or just rely on props being refreshed by parent.
-    // Let's sort based on props.
-    const sortedRoles = [...roles].sort((a, b) => {
-        if (a.is_primary_display && !b.is_primary_display) return -1;
-        if (!a.is_primary_display && b.is_primary_display) return 1;
-        return (b.priority || 0) - (a.priority || 0); // Descending priority
-    });
+    const filteredRoles = useMemo(() => {
+        // Sort roles: Primary > Priority > Name
+        const sorted = [...roles].sort((a, b) => {
+            if (a.is_primary_display && !b.is_primary_display) return -1;
+            if (!a.is_primary_display && b.is_primary_display) return 1;
+            return (b.priority || 0) - (a.priority || 0); // Descending priority
+        });
 
-    const filteredRoles = isOwnProfile
-        ? sortedRoles
-        : sortedRoles.filter((r: CompanyRole) => r.is_role_visible !== false);
+        return isOwnProfile
+            ? sorted
+            : sorted.filter((r: CompanyRole) => r.is_role_visible !== false);
+    }, [roles, isOwnProfile]);
 
     const visibleRoles = expanded ? filteredRoles : [filteredRoles[0]];
     const hasVisibleRoles = filteredRoles.length > 0;
@@ -84,9 +83,9 @@ export function CompanyRolesList({ roles, isOwnProfile, onRoleClick }: CompanyRo
                         {/* Action Buttons for Owner */}
                         {isOwnProfile && (
                             <div className="absolute -right-1 -top-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-background shadow-sm border rounded-full p-0.5 scale-90 z-10">
-                                {!sortedRoles[0].is_primary_display && (
+                                {!filteredRoles[0].is_primary_display && (
                                     <button
-                                        onClick={(e) => handlePin(e, sortedRoles[0])}
+                                        onClick={(e) => handlePin(e, filteredRoles[0])}
                                         className="p-1 hover:bg-muted rounded-full text-muted-foreground hover:text-primary"
                                         title="Set as Primary"
                                     >
@@ -94,11 +93,11 @@ export function CompanyRolesList({ roles, isOwnProfile, onRoleClick }: CompanyRo
                                     </button>
                                 )}
                                 <button
-                                    onClick={(e) => handleVisibility(e, sortedRoles[0])}
+                                    onClick={(e) => handleVisibility(e, filteredRoles[0])}
                                     className="p-1 hover:bg-muted rounded-full text-muted-foreground hover:text-foreground"
-                                    title={sortedRoles[0].is_role_visible ? "Hide Role" : "Show Role"}
+                                    title={filteredRoles[0].is_role_visible ? "Hide Role" : "Show Role"}
                                 >
-                                    {sortedRoles[0].is_role_visible ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                                    {filteredRoles[0].is_role_visible ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                                 </button>
                             </div>
                         )}
@@ -162,4 +161,4 @@ export function CompanyRolesList({ roles, isOwnProfile, onRoleClick }: CompanyRo
             )}
         </div>
     );
-}
+});

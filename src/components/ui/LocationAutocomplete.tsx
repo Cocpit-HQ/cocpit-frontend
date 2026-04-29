@@ -7,12 +7,12 @@ import { useDebounce } from "@/hooks/use-debounce";
 import styles from "./LocationAutocomplete.module.css";
 
 interface LocationAutocompleteProps {
-  onSelect: (location: LocationSuggestion | null) => void;
-  selected: LocationSuggestion | null;
+  onSelect: (location: any) => void;
+  value: string | null;
 }
 
-export default function LocationAutocomplete({ onSelect, selected }: LocationAutocompleteProps) {
-  const [query, setQuery] = useState(selected?.name ?? "");
+export default function LocationAutocomplete({ onSelect, value }: LocationAutocompleteProps) {
+  const [query, setQuery] = useState(value ?? "");
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -21,7 +21,7 @@ export default function LocationAutocomplete({ onSelect, selected }: LocationAut
 
   // Fetch suggestions when debounced query changes
   useEffect(() => {
-    if (selected) return; // Don't re-search after valid selection
+    if (value && query === value) return; // Don't re-search if query matches value
     if (debouncedQuery.length < 2) {
       setSuggestions([]);
       setOpen(false);
@@ -42,7 +42,7 @@ export default function LocationAutocomplete({ onSelect, selected }: LocationAut
     };
 
     fetch();
-  }, [debouncedQuery, selected]);
+  }, [debouncedQuery, value]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -50,12 +50,13 @@ export default function LocationAutocomplete({ onSelect, selected }: LocationAut
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setOpen(false);
         // If user typed without selecting, revert to the last valid selection
-        if (!selected) setQuery("");
+        if (!value) setQuery("");
+        else setQuery(value);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [selected]);
+  }, [value]);
 
   const handleSelect = (loc: LocationSuggestion) => {
     onSelect(loc);
@@ -73,7 +74,7 @@ export default function LocationAutocomplete({ onSelect, selected }: LocationAut
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
-    if (selected) onSelect(null); // Clear selection when user starts re-typing
+    if (value) onSelect(""); // Clear selection when user starts re-typing
   };
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -109,7 +110,7 @@ export default function LocationAutocomplete({ onSelect, selected }: LocationAut
         <div className={styles.suffix}>
           {loading ? (
             <Loader2 className={styles.spinner} />
-          ) : selected ? (
+          ) : value ? (
             <button 
               type="button" 
               onClick={(e) => { e.stopPropagation(); handleClear(); }} 

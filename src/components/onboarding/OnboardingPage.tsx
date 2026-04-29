@@ -55,7 +55,6 @@ export default function OnboardingPage() {
   } = useOnboardingStore();
 
   const [isCompleted, setIsCompleted] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ── Search State ─────────────────────────────────────────────────────────

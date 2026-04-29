@@ -13,8 +13,8 @@
   border: 1px solid #DDE3EA;
   border-radius: 16px;
   padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(24px);
+  background: #ffffff;
+  backdrop-filter: none;
   transition: all 0.2s ease;
   box-sizing: border-box;
 }
@@ -29,7 +29,7 @@
   height: 100%;
   border: none;
   background: transparent;
-  color: #18181b;
+  color: #111827;
   font-family: var(--font-poppins), sans-serif;
   font-weight: 400;
   font-size: 16px;

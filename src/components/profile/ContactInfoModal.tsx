@@ -12,7 +12,7 @@ import { useQueryClient } from '@tanstack/react-query';
 interface ContactInfoModalProps {
     isOpen: boolean;
     onClose: () => void;
-    user: UserData | undefined;
+    user: UserData | null;
     isOwnProfile?: boolean;
 }
 
@@ -92,155 +92,152 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-card border-border sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold text-foreground">
-                        {user.name}&apos;s Contact Info
-                    </DialogTitle>
-                    <DialogDescription>
-                        Contact details provided by the user.
-                    </DialogDescription>
-                </DialogHeader>
+            <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[500px] [&>button]:hidden outline-none">
+                <div className="relative bg-white rounded-[24px] p-[24px] pt-[32px] w-full shadow-sm flex flex-col outline-none">
+                    <button 
+                        onClick={onClose}
+                        className="absolute top-6 right-6 p-1 text-[#F87171] hover:bg-red-50 rounded-full transition-colors z-10"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
 
-                <div className="space-y-6 py-4">
-
-                    {/* Email */}
-                    <div className="flex items-start gap-3">
-                        <div className="p-2 bg-primary/10 rounded-full">
-                            <Mail className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="flex-1 space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground">Email</p>
-                            <div className="flex items-center justify-between group">
-                                <a href={`mailto:${user.email}`} className="text-foreground hover:underline text-sm font-medium break-all">
-                                    {user.email || 'Not provided'}
-                                </a>
-                                {user.email && (
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        onClick={() => handleCopy(user.email, 'Email')}
-                                    >
-                                        {copiedField === 'Email' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
+                    <div className="text-center mb-8 relative px-4">
+                        <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-[#000000] mb-1">Contact info</DialogTitle>
+                        <p className="text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280]">Your contact details for professional connections</p>
                     </div>
 
-                    {/* Phone */}
-                    <div className="flex items-start gap-3">
-                        <div className="p-2 bg-primary/10 rounded-full">
-                            <Phone className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="flex-1 space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground">Phone</p>
-                            <div className="flex items-center justify-between group">
-                                <span className="text-foreground text-sm font-medium">
-                                    {user.mobile_number || 'Not provided'}
-                                </span>
-                                {user.mobile_number && (
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        onClick={() => handleCopy(user.mobile_number || '', 'Phone')}
-                                    >
-                                        {copiedField === 'Phone' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                                    </Button>
-                                )}
+                    <div className="space-y-6 px-4 pb-4">
+                        {/* Email */}
+                        <div className="flex items-start gap-4">
+                            <Mail className="w-6 h-6 text-[#6366F1] mt-0.5" strokeWidth={1.5} />
+                            <div className="flex-1 flex flex-col gap-1">
+                                <p className="text-[16px] font-medium text-[#000000]">Email</p>
+                                <div className="flex items-center justify-between group h-5">
+                                    <a href={`mailto:${user.email}`} className="text-[#6B7280] text-[14px] font-normal break-all">
+                                        {user.email || 'Not provided'}
+                                    </a>
+                                    {user.email && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onClick={() => handleCopy(user.email, 'Email')}
+                                        >
+                                            {copiedField === 'Email' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Profile Link */}
-                    <div className="flex items-start gap-3">
-                        <div className="p-2 bg-primary/10 rounded-full">
-                            <LinkIcon className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2">
-                                <p className="text-sm font-medium text-muted-foreground">Profile URL</p>
-                                {isOwnProfile && !isEditingUrl && (
-                                    <button
-                                        onClick={handleStartEdit}
-                                        className="p-1 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
-                                        title="Edit profile URL"
-                                    >
-                                        <Pencil className="w-3.5 h-3.5" />
-                                    </button>
-                                )}
+                        {/* Phone */}
+                        <div className="flex items-start gap-4">
+                            <Phone className="w-6 h-6 text-[#6366F1] mt-0.5" strokeWidth={1.5} />
+                            <div className="flex-1 flex flex-col gap-1">
+                                <p className="text-[16px] font-medium text-[#000000]">Phone</p>
+                                <div className="flex items-center justify-between group h-5">
+                                    <span className="text-[#6B7280] text-[14px] font-normal">
+                                        {user.mobile_number || 'Not provided'}
+                                    </span>
+                                    {user.mobile_number && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onClick={() => handleCopy(user.mobile_number || '', 'Phone')}
+                                        >
+                                            {copiedField === 'Phone' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
+                        </div>
 
-                            {isEditingUrl ? (
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-xs text-muted-foreground whitespace-nowrap">/profile/</span>
-                                        <div className="relative flex-1">
-                                            <input
-                                                type="text"
-                                                value={usernameInput}
-                                                onChange={(e) => handleUsernameChange(e.target.value)}
-                                                className={`w-full text-sm px-2.5 py-1.5 rounded-md border bg-background text-foreground outline-none transition-colors ${usernameStatus === 'available' ? 'border-green-500 focus:border-green-500' :
-                                                        usernameStatus === 'taken' || usernameStatus === 'invalid' ? 'border-destructive focus:border-destructive' :
-                                                            'border-border focus:border-primary'
-                                                    }`}
-                                                autoFocus
-                                                placeholder="your_username"
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') handleSave();
-                                                    if (e.key === 'Escape') setIsEditingUrl(false);
-                                                }}
-                                            />
-                                            <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                                                {usernameStatus === 'checking' && <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />}
-                                                {usernameStatus === 'available' && <Check className="w-4 h-4 text-green-500" />}
-                                                {usernameStatus === 'taken' && <X className="w-4 h-4 text-destructive" />}
-                                                {usernameStatus === 'invalid' && <X className="w-4 h-4 text-orange-500" />}
+                        {/* Profile Link */}
+                        <div className="flex items-start gap-4">
+                            <LinkIcon className="w-6 h-6 text-[#6366F1] mt-0.5" strokeWidth={1.5} />
+                            <div className="flex-1 flex flex-col gap-1">
+                                <div className="flex items-center gap-2 h-6">
+                                    <p className="text-[16px] font-medium text-[#000000]">Profile URL</p>
+                                    {isOwnProfile && !isEditingUrl && (
+                                        <button
+                                            onClick={handleStartEdit}
+                                            className="p-1 rounded-md text-[#000000] hover:text-[#6366F1] hover:bg-slate-50 transition-all"
+                                            title="Edit profile URL"
+                                        >
+                                            <Pencil className="w-4 h-4" strokeWidth={1.5} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                {isEditingUrl ? (
+                                    <div className="space-y-3 mt-1">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-[14px] text-[#6B7280] whitespace-nowrap">/profile/</span>
+                                            <div className="relative flex-1">
+                                                <input
+                                                    type="text"
+                                                    value={usernameInput}
+                                                    onChange={(e) => handleUsernameChange(e.target.value)}
+                                                    className={`w-full text-[14px] px-2.5 py-1.5 rounded-[8px] border bg-white text-[#000000] outline-none transition-colors ${usernameStatus === 'available' ? 'border-green-500 focus:border-green-500' :
+                                                            usernameStatus === 'taken' || usernameStatus === 'invalid' ? 'border-red-500 focus:border-red-500' :
+                                                                'border-[#E5E7EB] focus:border-[#6366F1]'
+                                                        }`}
+                                                    autoFocus
+                                                    placeholder="your_username"
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') handleSave();
+                                                        if (e.key === 'Escape') setIsEditingUrl(false);
+                                                    }}
+                                                />
+                                                <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                                    {usernameStatus === 'checking' && <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />}
+                                                    {usernameStatus === 'available' && <Check className="w-4 h-4 text-green-500" />}
+                                                    {usernameStatus === 'taken' && <X className="w-4 h-4 text-red-500" />}
+                                                    {usernameStatus === 'invalid' && <X className="w-4 h-4 text-orange-500" />}
+                                                </div>
                                             </div>
                                         </div>
+                                        {usernameStatus === 'available' && <p className="text-[12px] text-green-500">Username is available!</p>}
+                                        {usernameStatus === 'taken' && <p className="text-[12px] text-red-500">This username is already taken</p>}
+                                        {usernameStatus === 'invalid' && <p className="text-[12px] text-orange-500">3-30 characters: letters, numbers, _ and - only</p>}
+                                        <div className="flex gap-2">
+                                            <Button
+                                                size="sm"
+                                                onClick={handleSave}
+                                                disabled={isSaving || (usernameStatus !== 'available' && usernameInput !== currentUsername)}
+                                                className="h-[32px] px-4 rounded-[16px] text-[12px] bg-[#6366F1] text-white hover:bg-[#4F46E5] border-none shadow-none"
+                                            >
+                                                {isSaving ? 'Saving...' : 'Save'}
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => setIsEditingUrl(false)}
+                                                className="h-[32px] px-4 rounded-[16px] text-[12px] border-[#818CF8] text-[#818CF8] hover:bg-[#EEF2FF] bg-transparent"
+                                            >
+                                                Cancel
+                                            </Button>
+                                        </div>
                                     </div>
-                                    {usernameStatus === 'available' && <p className="text-xs text-green-500">Username is available!</p>}
-                                    {usernameStatus === 'taken' && <p className="text-xs text-destructive">This username is already taken</p>}
-                                    {usernameStatus === 'invalid' && <p className="text-xs text-orange-500">3-30 characters: letters, numbers, _ and - only</p>}
-                                    <div className="flex gap-2">
+                                ) : (
+                                    <div className="flex items-center justify-between group h-5 mt-1">
+                                        <a href={profileUrl} className="text-[#6366F1] text-[14px] font-normal break-all line-clamp-1">
+                                            {profileUrl}
+                                        </a>
                                         <Button
-                                            size="sm"
-                                            onClick={handleSave}
-                                            disabled={isSaving || (usernameStatus !== 'available' && usernameInput !== currentUsername)}
-                                            className="h-7 text-xs"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onClick={() => handleCopy(profileUrl, 'Profile URL')}
                                         >
-                                            {isSaving ? 'Saving...' : 'Save'}
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => setIsEditingUrl(false)}
-                                            className="h-7 text-xs"
-                                        >
-                                            Cancel
+                                            {copiedField === 'Profile URL' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
                                         </Button>
                                     </div>
-                                </div>
-                            ) : (
-                                <div className="flex items-center justify-between group">
-                                    <a href={profileUrl} className="text-primary hover:underline text-sm font-medium break-all line-clamp-1">
-                                        {profileUrl}
-                                    </a>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        onClick={() => handleCopy(profileUrl, 'Profile URL')}
-                                    >
-                                        {copiedField === 'Profile URL' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                                    </Button>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
-
                 </div>
             </DialogContent>
         </Dialog>

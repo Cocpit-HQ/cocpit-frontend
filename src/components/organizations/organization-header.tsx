@@ -98,7 +98,7 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
     if (isLoading) {
         return (
             <div className="space-y-6">
-                <Skeleton className="h-48 w-full rounded-b-lg" />
+                <Skeleton className="h-[160px] w-full rounded-b-lg" />
                 <div className="container px-4 md:px-6">
                     <div className="flex flex-col md:flex-row gap-6 relative">
                         <div className="-mt-16 relative">
@@ -248,7 +248,7 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
     return (
         <div className="bg-card border-b md:border border-border shadow-sm rounded-none md:rounded-xl mt-0 md:mt-6 mb-6 w-full relative group">
             {/* Cover Image */}
-            <div className="h-48 md:h-64 w-full relative bg-muted group/cover rounded-none md:rounded-t-xl overflow-hidden">
+            <div className="h-[160px] w-full relative bg-muted group/cover rounded-none md:rounded-t-xl overflow-hidden">
                 {canManageCompany ? (
                     <EditCoverPhoto
                         coverImage={company?.cover_url || null}
@@ -256,15 +256,15 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
                         onUpload={handleCoverUpload}
                         onDelete={handleCoverDelete}
                     >
-                        <div className="h-48 md:h-64 w-full bg-muted relative">
+                        <div className="h-[160px] w-full bg-muted relative">
                         </div>
                     </EditCoverPhoto>
                 ) : (
-                    <div className="h-48 md:h-64 w-full bg-muted relative">
+                    <div className="h-[160px] w-full bg-muted relative">
                         {company?.cover_url ? (
                             <img src={company.cover_url} alt="Cover" className="w-full h-full object-cover" />
                         ) : (
-                            <div className="w-full h-full bg-gradient-to-r from-blue-500/10 to-purple-500/10" />
+                            <img src="/assets/coverphoto.jpg" alt="Default Cover" className="w-full h-full object-cover" />
                         )}
                     </div>
                 )}
@@ -273,9 +273,9 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
             <div className="px-4 md:px-6">
                 <div className="flex flex-col md:flex-row gap-6 items-start">
                     {/* Logo & Mobile Actions - Row on mobile */}
-                    <div className="-mt-16 md:-mt-20 w-full md:w-auto flex justify-between items-end relative z-10">
-                        <div className="relative group">
-                            <Avatar className="h-32 w-32 md:h-40 md:w-40 rounded-xl border-4 border-background bg-background shadow-md cursor-pointer" onClick={() => canManageCompany && setIsEditAvatarOpen(true)}>
+                    <div className="-mt-[60px] w-full md:w-auto flex justify-between items-end relative z-10">
+                        <div className="relative group ml-[14px]">
+                            <Avatar className="h-[120px] w-[120px] rounded-xl border-4 border-background bg-background shadow-md cursor-pointer" onClick={() => canManageCompany && setIsEditAvatarOpen(true)}>
                                 <AvatarImage src={company?.logo_url} className="object-cover" />
                                 <AvatarFallback className="text-4xl font-bold rounded-xl text-primary/70 bg-muted">
                                     {company?.name?.slice(0, 2).toUpperCase()}

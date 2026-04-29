@@ -21,6 +21,7 @@ export interface Experience {
   start_date: string;
   end_date: string | null;
   employment_type: string;
+  work_mode?: string;
   location: string;
   description: string | null;
 }
@@ -33,6 +34,7 @@ export interface Education {
   field_of_study: string;
   start_date: string;
   end_date: string | null;
+  location?: string;
   description: string | null;
 }
 

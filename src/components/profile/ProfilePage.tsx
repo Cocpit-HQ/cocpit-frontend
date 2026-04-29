@@ -1,8 +1,9 @@
 "use client"
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Menu, LogOut, Edit2, CheckCircle, GraduationCap, Briefcase, Pencil, Plus, Building2 } from "lucide-react"
+import { Menu, LogOut, Edit2, CheckCircle, GraduationCap, Briefcase, Pencil, Plus, Building2, FileText, Copy, ChevronDown } from "lucide-react"
 import Link from "next/link"
+import { Icon } from "@iconify/react"
 
 import SuggestionsPanel from "@/components/home/SuggestionsPanel"
 import type { Page } from "@/types/common"
@@ -18,6 +19,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,8 +61,8 @@ import { getProfileStats } from "@/services/api/social"
 import { useQuery } from "@tanstack/react-query"
 import { ProfileSwitcher } from "@/components/layout/ProfileSwitcher"
 
-// New Hooks
-import { useMyProfile, useExperienceMutations, useEducationMutations, useSkillMutations, useAvatarMutations } from "@/components/profile/hooks/use-my-profile"
+import { EditProfileModal } from "@/components/profile/parts/EditProfileModal"
+import { useMyProfile, useExperienceMutations, useEducationMutations, useSkillMutations, useAvatarMutations, useProfileMutation } from "@/components/profile/hooks/use-my-profile"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -67,6 +73,176 @@ const routes: Record<string, string> = {
   jobs: "/jobs",
   analytics: "/analytics",
 }
+
+const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: any, isOwnPost?: boolean, onDelete?: (id: string) => void }) => {
+  const image = post.image_url ||
+    post.imageSrc ||
+    (post.media && post.media.length > 0 ? post.media[0].url : null) ||
+    (post.images && post.images.length > 0 ? (typeof post.images[0] === 'string' ? post.images[0] : post.images[0].url) : null);
+
+  return (
+    <div className="w-[285.33px] h-[488px] bg-[#FFFFFF] border border-slate-100 rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] py-2 flex flex-col gap-2 relative flex-shrink-0">
+      {/* Header section - full width flex row */}
+      <div className="w-full px-4 pt-2 flex items-center justify-between z-10">
+        {/* Left section: Avatar + Text details */}
+        <div className="flex items-center gap-2 overflow-hidden">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
+            <img
+              src={post.authorAvatar || post.userAvatar || "/assets/avatar.png"}
+              alt={post.author || "User"}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="flex flex-col overflow-hidden min-w-0">
+            <span className="text-sm font-semibold text-slate-900 truncate">
+              {post.author || "Anonymous"}
+            </span>
+            <span className="text-[10px] text-slate-500 truncate">
+              Kolhapur
+            </span>
+          </div>
+        </div>
+
+        {/* Right section: Actions */}
+        <div className="flex items-center gap-2 flex-shrink-0 z-20">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="p-1 hover:bg-slate-50 rounded-full transition-colors outline-none">
+                <Icon icon="la:user-tag" className="w-[24px] h-[24px] text-[#6366F1]" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent 
+              className="w-[180px] h-[136px] p-2 bg-white border-[#C7D2FE] rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+              align="end"
+              sideOffset={8}
+            >
+              <div className="flex flex-col gap-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center justify-between group">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center flex-shrink-0">
+                        <Icon icon="solar:user-circle-linear" className="w-[24px] h-[24px] text-[#000000]" />
+                      </div>
+                      <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-[#000000]">xyz</span>
+                    </div>
+                    <button className="p-1 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors flex-shrink-0">
+                      <Icon icon="fluent:delete-32-regular" className="w-[24px] h-[24px]" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="p-1 hover:bg-slate-50 rounded-full transition-colors outline-none">
+                <Icon icon="ph:dots-three-outline-vertical-light" className="w-[24px] h-[24px] text-[#000000]" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent 
+              className="w-[180px] h-[136px] p-2 bg-white border-[#C7D2FE] rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+              align="end"
+              sideOffset={8}
+            >
+              <div className="flex flex-col gap-3">
+                {/* Edit Post */}
+                <button className="flex items-center justify-between w-full group transition-colors">
+                  <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-[#000000]">Edit post</span>
+                  <Icon icon="eva:edit-outline" className="w-[24px] h-[24px] text-[#000000]" />
+                </button>
+
+                {/* Make Private */}
+                <button className="flex items-center justify-between w-full group transition-colors">
+                  <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-[#000000]">Make private</span>
+                  <Icon icon="fluent:eye-hide-24-regular" className="w-[24px] h-[24px] text-[#000000]" />
+                </button>
+
+                {/* Delete Post */}
+                <button 
+                  onClick={() => onDelete?.(post.id || post.post_id)}
+                  className="flex items-center justify-between w-full group transition-colors"
+                >
+                  <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-red-400">Delete post</span>
+                  <Icon icon="fluent:delete-32-regular" className="w-[24px] h-[24px] text-red-400" />
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
+      </div>
+    </div>
+
+      <div className="px-4 py-1">
+        <p className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)] line-clamp-2">
+          {post.content || "No content available"}
+        </p>
+        <p className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] mt-1">
+          {post.timeAgo || "Just now"}
+        </p>
+      </div>
+
+      {/* Image Section */}
+      <div className="px-4 flex-1 min-h-0">
+        <div className="w-full h-full bg-slate-50 rounded-2xl overflow-hidden relative border border-slate-100/50">
+          {image ? (
+            <img
+              src={image}
+              alt="Post media"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
+              <Icon icon="solar:gallery-linear" className="w-12 h-12 opacity-20" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="px-4 pb-4 pt-2 mt-auto border-t border-slate-50/50">
+        {post.likes > 0 && (
+          <div className="px-2 mb-3">
+            <p className="text-[14px] font-[family-name:var(--font-poppins)] text-slate-900">
+              Liked by <span className="font-semibold">{post.isLiked ? 'you' : 'someone'}</span>
+              {post.likes > 1 && (
+                <> and <span className="font-semibold">others</span></>
+              )}
+            </p>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-4">
+            <button className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group">
+              <Icon icon="solar:like-outline" className="w-[24px] h-[24px] text-[#6366F1] group-active:scale-110 transition-transform" />
+              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">{post.likes_count || post.stats?.likes || 0}</span>
+            </button>
+            <button className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group">
+              <Icon icon="hugeicons:comment-01" className="w-[24px] h-[24px] text-[#000000] group-active:scale-110 transition-transform" />
+              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">{post.comments_count || post.stats?.comments || 0}</span>
+            </button>
+            <button className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group">
+              <Icon icon="hugeicons:repost" className="w-[24px] h-[24px] text-[#000000] group-active:scale-110 transition-transform" />
+              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">3</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group">
+              <Icon icon="fluent:share-32-regular" className="w-[24px] h-[24px] text-[#000000] group-active:scale-110 transition-transform" />
+              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">3</span>
+            </button>
+            <button className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group">
+              <Icon icon="solar:bookmark-outline" className="w-[24px] h-[24px] text-[#000000] group-active:scale-110 transition-transform" />
+              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">3</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -79,6 +255,7 @@ export default function ProfilePage() {
   const eduMutations = useEducationMutations();
   const skillMutations = useSkillMutations();
   const avatarMutations = useAvatarMutations();
+  const updateProfileMutation = useProfileMutation();
 
   // Live profile stats (includes company follows in following_count)
   const { data: profileStats } = useQuery({
@@ -88,6 +265,7 @@ export default function ProfilePage() {
     staleTime: 1000 * 30,
   });
 
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const [isAddSkillModalOpen, setIsAddSkillModalOpen] = useState(false);
   const [isAddExperienceModalOpen, setIsAddExperienceModalOpen] = useState(false);
   const [isAddEducationModalOpen, setIsAddEducationModalOpen] = useState(false);
@@ -100,35 +278,45 @@ export default function ProfilePage() {
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
 
+  const handleUpdateProfile = useCallback(async (data: any) => {
+    try {
+      await updateProfileMutation.mutateAsync(data);
+      setIsEditProfileModalOpen(false);
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+    }
+  }, [updateProfileMutation]);
+
   const [selectedRole, setSelectedRole] = useState<import("@/types/user").CompanyRole | null>(null);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
-  const handleRoleClick = (role: import("@/types/user").CompanyRole) => {
+  const handleRoleClick = useCallback((role: import("@/types/user").CompanyRole) => {
     setSelectedRole(role);
     setIsRoleModalOpen(true);
-  };
+  }, []);
 
   const { togglePostVisibility } = useFeed(false);
   const { isCompany } = useActiveProfile();
   const [previewPosts, setPreviewPosts] = useState<Post[]>([]);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const [isPostsExpanded, setIsPostsExpanded] = useState(false);
   const { logout } = useAuth();
 
-  const experiences = profileData?.experiences || [];
-  const educations = profileData?.educations || [];
-  const skills = profileData?.skills || [];
+  const experiences = useMemo(() => profileData?.experiences || [], [profileData]);
+  const educations = useMemo(() => profileData?.educations || [], [profileData]);
+  const skills = useMemo(() => profileData?.skills || [], [profileData]);
 
   // Merge company_roles into user object for ProfileHeader
-  const user = profileData?.user ? {
+  const user = useMemo(() => profileData?.user ? {
     ...profileData.user,
     company_roles: profileData.company_roles || [],
-  } : undefined;
+  } : null, [profileData]);
 
   // Update cover image when profile loads
   useEffect(() => {
-    if (profileData?.user.cover_image) {
+    if (profileData?.user?.cover_image) {
       setCoverImage(profileData.user.cover_image);
     }
   }, [profileData]);
@@ -147,7 +335,7 @@ export default function ProfilePage() {
     fetchPosts();
   }, []);
 
-  const handleDeletePost = async (id: string) => {
+  const handleDeletePost = useCallback(async (id: string) => {
     const previousPosts = [...previewPosts];
     setPreviewPosts((prev) => prev.filter((post) => post.id !== id));
     try {
@@ -156,73 +344,72 @@ export default function ProfilePage() {
       console.error("Failed to delete post", error);
       setPreviewPosts(previousPosts);
     }
-  };
+  }, [previewPosts]);
 
-  const handleToggleVisibility = (id: string) => {
+  const handleToggleVisibility = useCallback((id: string) => {
     setPreviewPosts(prev => prev.map(post =>
       post.id === id
         ? { ...post, visibility: post.visibility === 'private' ? 'public' : 'private' }
         : post
     ));
     togglePostVisibility(id);
-  };
+  }, [togglePostVisibility]);
 
-  const handleAvatarUpload = async (file: File) => {
+  const handleAvatarUpload = useCallback(async (file: File) => {
     const formData = new FormData();
     formData.append("avatar", file);
     await avatarMutations.upload.mutateAsync(formData);
-  };
+  }, [avatarMutations.upload]);
 
-  const handleAvatarDelete = async () => {
+  const handleAvatarDelete = useCallback(async () => {
     await avatarMutations.remove.mutateAsync();
-  };
+  }, [avatarMutations.remove]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await logout();
     router.push("/");
-  };
+  }, [logout, router]);
 
   const [isSavingSkills, setIsSavingSkills] = useState(false);
 
-  const handleSaveSkills = async (newSkills: string[]) => {
+  const handleSaveSkills = useCallback(async (newSkills: string[]) => {
     setIsSavingSkills(true);
     try {
-    const normalizedNewSkills = newSkills.map(s => s.trim()).filter(s => s !== "");
-    const currentSkillNames = skills.map(s => s.name);
+      const normalizedNewSkills = newSkills.map(s => s.trim()).filter(s => s !== "");
+      const currentSkillNames = skills.map(s => s.name);
 
-    const skillsToAdd = normalizedNewSkills.filter(newSkill =>
-      !currentSkillNames.some(curr => curr.toLowerCase() === newSkill.toLowerCase())
-    );
+      const skillsToAdd = normalizedNewSkills.filter(newSkill =>
+        !currentSkillNames.some(curr => curr.toLowerCase() === newSkill.toLowerCase())
+      );
 
-    const skillsToRemove = skills.filter(curr =>
-      !normalizedNewSkills.some(newSkill => newSkill.toLowerCase() === curr.name.toLowerCase())
-    );
+      const skillsToRemove = skills.filter(curr =>
+        !normalizedNewSkills.some(newSkill => newSkill.toLowerCase() === curr.name.toLowerCase())
+      );
 
-    if (skillsToAdd.length > 0) {
-      await skillMutations.add.mutateAsync({ name: skillsToAdd });
-    }
+      if (skillsToAdd.length > 0) {
+        await skillMutations.add.mutateAsync({ name: skillsToAdd });
+      }
 
-    if (skillsToRemove.length > 0) {
-      // Execute serially or parallel? Parallel is fine.
-      await Promise.all(skillsToRemove.map(s => skillMutations.remove.mutateAsync(s.skill_id)));
-    }
+      if (skillsToRemove.length > 0) {
+        await Promise.all(skillsToRemove.map(s => skillMutations.remove.mutateAsync(s.skill_id)));
+      }
 
-    setIsAddSkillModalOpen(false);
-    toast.success("Skills updated successfully");
+      setIsAddSkillModalOpen(false);
+      toast.success("Skills updated successfully");
     } catch (error: any) {
       console.error("Failed to save skills", error);
       toast.error(error.response?.data?.message || "Failed to save skills. Please try again.");
     } finally {
       setIsSavingSkills(false);
     }
-  };
+  }, [skills, skillMutations.add, skillMutations.remove]);
 
-  const handleDeleteSkill = (skillName: string) => {
+  const handleDeleteSkill = useCallback((skillName: string) => {
     const skill = skills.find(s => s.name === skillName);
     if (skill) {
       skillMutations.remove.mutate(skill.skill_id);
     }
-  }
+  }, [skills, skillMutations.remove]);
 
   const handleSaveExperience = async (data: Partial<Experience>) => {
     if (editingExperience) {
@@ -316,327 +503,401 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto pt-0 md:pt-8 pb-20 md:pb-12 px-4 md:px-0">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-[960px] mx-auto pt-0 md:pt-8 pb-20 md:pb-12 px-4 md:px-0">
         {isLoading ? (
           <ProfileSkeleton />
         ) : (
-          <div className="flex flex-col gap-6 md:gap-8">
-            <div className="flex flex-col gap-1 md:gap-2">
-              <div className="w-full">
-                <div className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border">
+          <div className="overflow-hidden relative" style={{ borderRadius: '24px', border: 'none', outline: 'none', background: '#FFFFFF' }}>
 
-                  <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage}>
-                    <div className="absolute top-3 right-3 md:hidden z-10">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="bg-white/20 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/30 transition-all border border-white/20 flex items-center justify-center">
-                            <MoreVertical className="w-5 h-5" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-black/50 backdrop-blur-sm border-white/20 text-white">
-                          <DropdownMenuItem onSelect={() => router.push("/settings")}>
-                            Settings
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => router.push("/analytics")}>
-                            Analytics
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={handleLogout}>
-                            <LogOut className="w-4 h-4 mr-2" />
-                            Log out
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    <div className="hidden md:flex absolute top-3 right-3 gap-2 z-10">
-                      <button onClick={() => router.push('/analytics')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
-                        View Analytics
-                      </button>
-                      <button onClick={() => router.push('/profile/edit')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
-                        Edit Profile
-                      </button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="bg-white/20 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/30 transition-all border border-white/20 flex items-center justify-center">
-                            <MoreVertical className="w-5 h-5" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setIsShareModalOpen(true)} className="cursor-pointer">
-                            <Share2 className="w-4 h-4 mr-2" />
-                            Share Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              navigator.clipboard.writeText(window.location.href);
-                              toast.success("Profile link copied");
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <LinkIcon className="w-4 h-4 mr-2" />
-                            Copy Profile Link
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </EditCoverPhoto>
-
-                  <div className="px-6 pb-6">
-                    <div className="flex items-start justify-between -mt-14 mb-4">
-                      <div className="relative group">
-                        <div
-                          className="w-32 h-32 rounded-full border-4 border-background bg-card overflow-hidden flex-shrink-0 cursor-pointer"
-                          onClick={() => setIsViewAvatarOpen(true)}
-                        >
-                          <img
-                            src={user?.avatar ?? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop"}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsEditAvatarOpen(true);
-                          }}
-                          className="absolute bottom-1 right-1 p-2 bg-background border border-border rounded-full text-muted-foreground hover:text-foreground shadow-sm md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-                          aria-label="Edit Profile Picture"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      <div className="md:hidden mt-16 flex gap-2">
-                        <button onClick={() => router.push('/profile/edit')} className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center gap-2 text-sm">
-                          <Edit2 className="w-4 h-4" />
-                          Edit Profile
-                        </button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="bg-background border border-border p-2 rounded-lg flex items-center justify-center">
-                              <MoreVertical className="w-5 h-5" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setIsShareModalOpen(true)} className="cursor-pointer">
-                              <Share2 className="w-4 h-4 mr-2" />
-                              Share Profile
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                navigator.clipboard.writeText(window.location.href);
-                                toast.success("Profile link copied");
-                              }}
-                              className="cursor-pointer"
-                            >
-                              <LinkIcon className="w-4 h-4 mr-2" />
-                              Copy Profile Link
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
-                      <div className="hidden md:flex flex-col items-end mt-16">
-                        <button
-                          onClick={() => setIsContactInfoModalOpen(true)}
-                          className="text-primary hover:underline font-medium text-sm"
-                        >
-                          Contact info
-                        </button>
-                      </div>
-                    </div>
+            <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage}>
+              <div className="absolute top-3 right-3 md:hidden z-10">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="bg-white/20 backdrop-blur-md text-white p-2 rounded-lg hover:bg-white/30 transition-all border border-white/20 flex items-center justify-center">
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-black/50 backdrop-blur-sm border-white/20 text-white">
+                    <DropdownMenuItem onSelect={() => router.push("/settings")}>
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => router.push("/analytics")}>
+                      Analytics
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={handleLogout}>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="hidden md:flex absolute top-3 right-3 gap-2 z-10">
+                <button onClick={() => router.push('/analytics')} className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all flex items-center gap-2 text-sm border border-white/20">
+                  View Analytics
+                </button>
 
 
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1 min-w-0 mr-4">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <h1 className="text-2xl font-semibold text-foreground">{user?.name}</h1>
-                          <CheckCircle className="w-5 h-5 text-primary fill-primary/10 flex-shrink-0" />
-                          <span className="text-sm text-muted-foreground">· 2nd</span>
-                        </div>
+              </div>
+            </EditCoverPhoto>
 
-                        {user?.account_name && (
-                          <p className="text-sm text-muted-foreground mb-1.5 truncate max-w-xs">@{user.account_name}</p>
-                        )}
+            <div className="px-0 pb-0">
+              <div className="flex items-start justify-between -mt-[40px]">
+                <div className="relative group ml-[38px]">
+                  <div
+                    className="w-[80px] h-[80px] rounded-full border-4 border-white bg-card overflow-hidden flex-shrink-0 cursor-pointer shadow-sm"
+                    onClick={() => setIsViewAvatarOpen(true)}
+                  >
+                    <img
+                      src={user?.avatar ?? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop"}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsEditAvatarOpen(true);
+                    }}
+                    className="absolute -bottom-1 -right-1 cursor-pointer transition-transform hover:scale-110 active:scale-95 z-10"
+                    aria-label="Edit Profile Picture"
+                  >
+                    <img src="/assets/edit.png" alt="Edit" className="w-[32px] h-[32px]" />
+                  </button>
+                </div>
 
-                        {/* Company Roles */}
-                        {user?.company_roles && user.company_roles.length > 0 && (
-                          <div className="mb-3">
-                            <CompanyRolesList
-                              roles={user.company_roles}
-                              isOwnProfile={true}
-                              onRoleClick={handleRoleClick}
-                            />
+                <div className="md:hidden mt-16 flex gap-2">
+
+
+                </div>
+
+                <div className="hidden md:flex flex-col items-end mt-16">
+                  <button
+                    onClick={() => setIsContactInfoModalOpen(true)}
+                    className="absolute top-[170px] right-[10px] w-[87px] h-[20px] text-[#6B7280] hover:text-[#4B5563] transition-colors flex items-center justify-center"
+                    style={{ fontFamily: "'Poppins', sans-serif", fontSize: "14px", fontWeight: 400, lineHeight: "20px" }}
+                  >
+                    Contact info
+                  </button>
+                </div>
+              </div>
+
+              {/* Stats Section with exact spec-compliant dimensions and padding [between profile and profileidentitychip*/}
+              <div className="hidden md:block w-full h-[90px] pt-[16px] pr-[16px] pb-[16px] pl-[40px] mt-[16px] mb-0">
+                <div className="flex gap-[24px] items-center">
+                  <div
+                    onClick={() => openFollowList("following")}
+                    className="w-[290.67px] h-[58px] flex items-center justify-between px-6 bg-[#EEF2FF] rounded-[24px] cursor-pointer hover:bg-[#E0E7FF] transition-all border border-transparent"
+                  >
+                    <span className="text-[14px] text-[#111827] font-[family-name:var(--font-poppins)]">Following</span>
+                    <span className="text-[16px] font-semibold text-[#6366F1] font-[family-name:var(--font-poppins)]">{profileStats?.following_count || 0}</span>
+                  </div>
+                  <div
+                    onClick={() => openFollowList("followers")}
+                    className="w-[290.67px] h-[58px] flex items-center justify-between px-6 bg-[#EEF2FF] rounded-[24px] cursor-pointer hover:bg-[#E0E7FF] transition-all border border-transparent"
+                  >
+                    <span className="text-[14px] text-[#111827] font-[family-name:var(--font-poppins)]">Followers</span>
+                    <span className="text-[16px] font-semibold text-[#6366F1] font-[family-name:var(--font-poppins)]">{profileStats?.followers_count || 0}</span>
+                  </div>
+                  <div
+                    onClick={() => openFollowList("connections")}
+                    className="w-[290.67px] h-[58px] flex items-center justify-between px-6 bg-[#EEF2FF] rounded-[24px] cursor-pointer hover:bg-[#E0E7FF] transition-all border border-transparent"
+                  >
+                    <span className="text-[14px] text-[#111827] font-[family-name:var(--font-poppins)]">Connection</span>
+                    <span className="text-[16px] font-semibold text-[#6366F1] font-[family-name:var(--font-poppins)]">{profileStats?.connections_count || 0}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-start w-full min-h-[217px] pt-[16px] pr-[16px] pb-[16px] pl-[40px] gap-[100px]">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-1 flex-nowrap">
+                    <h1 className="text-[24px] font-semibold text-[#000000] leading-[32px] font-[family-name:var(--font-poppins)] tracking-tight whitespace-nowrap">{user?.name}</h1>
+
+                    {/* Company Roles Static Display */}
+                    {(() => {
+                      const visibleRoles = user?.company_roles?.filter(r => r.is_role_visible) || [];
+                      if (visibleRoles.length === 0) return null;
+
+                      return (
+                        <div className="flex items-center gap-2 flex-nowrap">
+                          <div className="flex items-center gap-[10px] px-[16px] py-[8px] bg-[#E0E7FF] rounded-[24px] border border-[#C7D2FE] flex-shrink-0 w-fit h-[36px]">
+                            <Icon icon="solar:buildings-linear" className="w-5 h-5 text-[#6366F1]" />
+                            <span className="text-[12px] font-normal text-[#6366F1] leading-[16px] font-[family-name:var(--font-poppins)] whitespace-nowrap">
+                              {visibleRoles[0].role} at {visibleRoles[0].name}
+                            </span>
                           </div>
-                        )}
 
-                        <p className="text-base mb-2 text-foreground">
-                          {user?.headline}
-                        </p>
-
-                        <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
-                          <span className="text-muted-foreground">{user?.location}</span>
+                          {visibleRoles.length > 1 && (
+                            <span className="text-[12px] font-medium text-slate-500 whitespace-nowrap bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">
+                              + {visibleRoles.length - 1} more
+                            </span>
+                          )}
                         </div>
+                      );
+                    })()}
+                  </div>
 
-                        <button onClick={() => openFollowList("connections")} className="text-sm text-primary hover:underline font-medium mb-4">
-                          {(user?.connections_count || 0) > 500 ? "500+" : user?.connections_count} connections
-                        </button>
+                  <p className="text-[16px] font-normal text-[#000000] leading-[24px] font-[family-name:var(--font-poppins)] mb-4">
+                    {user?.headline}
+                  </p>
+
+                  <div className="flex flex-col gap-0.5 mb-4">
+                    {user?.location && (
+                      <div className="flex items-center gap-2 text-[12px] font-normal text-[#6B7280] leading-[16px] font-[family-name:var(--font-poppins)]">
+                        <span>{user?.location}</span>
                       </div>
+                    )}
+                    {user?.website && (
+                      <div className="flex items-center gap-2 text-[12px] font-normal text-[#6366F1] leading-[16px] font-[family-name:var(--font-poppins)] hover:underline">
+                        <a href={user.website} target="_blank" rel="noopener noreferrer">{user.website}</a>
+                      </div>
+                    )}
+                  </div>
 
-                      <div className="flex flex-col gap-2 pt-2">
-                        {/* Latest Education/Experience display logic */}
-                        {latestEducation && (
-                          <div onClick={scrollToEducation} className="hidden md:flex items-center gap-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors max-w-[280px]">
-                            <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
-                              <GraduationCap className="w-6 h-6 text-yellow-600" />
-                            </div>
-                            <span className="text-sm font-semibold text-foreground hover:underline line-clamp-2">
+                  <ProfileIdentityChips initialIdentity={profileIdentity} />
+                </div>
+
+                <div className="hidden md:flex items-start gap-[24px] pt-0 shrink-0 w-[308px] h-[185px]">
+                  <div className="flex flex-col gap-4">
+                    {/* Latest Education/Experience display logic with refined styling */}
+                    {latestExperience && (
+                      <div onClick={scrollToExperience} className="flex items-center group cursor-pointer relative w-[260px] h-[40px] hover:bg-slate-50 rounded-xl transition-colors">
+                        <div className="flex items-center gap-[10px]">
+                          <div className="w-[56px] h-[40px] px-[16px] py-[8px] rounded-[24px] bg-[#E0E7FF] flex items-center justify-center flex-shrink-0">
+                            <Icon icon="hugeicons:job-search" className="w-6 h-6 text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[16px] font-normal text-[#000000] leading-[24px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestExperience.company_name}</span>
+                            <span className="text-[12px] font-normal text-[#6B7280] leading-[16px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestExperience.title}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {latestEducation && (
+                      <div onClick={scrollToEducation} className="flex items-center group cursor-pointer relative w-[260px] h-[40px] hover:bg-slate-50 rounded-xl transition-colors">
+                        <div className="flex items-center gap-[10px]">
+                          <div className="w-[56px] h-[40px] px-[16px] py-[8px] rounded-[24px] bg-[#E0E7FF] flex items-center justify-center flex-shrink-0">
+                            <Icon icon="qlementine-icons:education-24" className="w-6 h-6 text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[16px] font-normal text-[#000000] leading-[24px] font-[family-name:var(--font-poppins)] truncate w-[180px]">
                               {/* @ts-ignore */}
                               {latestEducation.school_name || latestEducation.school || 'University'}
                             </span>
+                            <span className="text-[12px] font-normal text-[#6B7280] leading-[16px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestEducation.degree}</span>
                           </div>
-                        )}
-
-                        {latestExperience && (
-                          <div onClick={scrollToExperience} className="hidden md:flex items-center gap-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-lg transition-colors max-w-[280px]">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                              <Briefcase className="w-6 h-6 text-blue-600" />
-                            </div>
-                            <span className="text-sm font-semibold text-foreground hover:underline line-clamp-2">
-                              {latestExperience.company_name}
-                            </span>
-                          </div>
-                        )}
+                        </div>
                       </div>
-                    </div>
-
-                    <ProfileIdentityChips initialIdentity={profileIdentity} />
+                    )}
                   </div>
-                </div>
 
-                {/* Stats & Resume */}
-                <div className="rounded-xl border p-4 mb-6 bg-card border-border">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors" onClick={() => openFollowList("followers")}>
-                      <p className="text-xl font-semibold mb-1 text-foreground">{profileStats?.followers_count ?? user?.followers_count ?? 0}</p>
-                      <p className="text-xs text-muted-foreground">Followers</p>
-                    </div>
-                    <div className="text-center border-l border-r border-border cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors" onClick={() => openFollowList("following")}>
-                      <p className="text-xl font-semibold mb-1 text-foreground">{profileStats?.following_count ?? user?.following_count ?? 0}</p>
-                      <p className="text-xs text-muted-foreground">Following</p>
-                    </div>
-                    <div className="text-center cursor-pointer hover:bg-muted/50 rounded-lg p-2 transition-colors" onClick={() => openFollowList("connections")}>
-                      <p className="text-xl font-semibold mb-1 text-foreground">{profileStats?.connections_count ?? user?.connections_count ?? 0}</p>
-                      <p className="text-xs text-muted-foreground">Connections</p>
-                    </div>
-                  </div>
-                </div>
-
-
-
-                <LivingResume experiences={experiences} skills={skills.map(s => s.name)} />
-
-                {/* About */}
-                <div className="rounded-xl border p-6 mb-4 bg-card border-border">
-                  <h2 className="text-xl text-foreground mb-4">About</h2>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {user?.about}
-                  </p>
-                </div>
-
-                {/* Experience Section */}
-                <div id="experience-section" className="rounded-xl border p-6 mb-4 bg-card border-border">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl text-foreground">Experience</h2>
-                    <button onClick={() => { setEditingExperience(null); setIsAddExperienceModalOpen(true); }} className="text-primary hover:underline text-sm">Add</button>
-                  </div>
-                  <div className="space-y-6">
-                    {experiences.map((exp, index) => (
-                      <EditableExperienceItem
-                        key={`${exp.experience_id}-${index}`}
-                        experience={exp}
-                        onEdit={() => { setEditingExperience(exp); setIsAddExperienceModalOpen(true); }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Skills Section */}
-                <div className="rounded-xl border p-6 mb-4 bg-card border-border">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl text-foreground">Skills</h2>
-                    <button onClick={() => setIsAddSkillModalOpen(true)} className="text-primary hover:underline text-sm">Add</button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {skills.map((skill: any, index) => {
-                      const skillName = skill.name || (typeof skill === 'string' ? skill : '');
-                      if (!skillName) return null;
-                      return (
-                        <SkillProofPill
-                          key={skill.skill_id || `skill-${index}`}
-                          skill={skillName}
-                          experiences={experiences}
-                          posts={previewPosts}
-                          onDelete={handleDeleteSkill}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Education Section */}
-                <div id="education-section" className="rounded-xl border p-6 bg-card border-border">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl text-foreground">Education</h2>
-                    <button onClick={() => { setEditingEducation(null); setIsAddEducationModalOpen(true); }} className="text-primary hover:underline text-sm">Add</button>
-                  </div>
-                  <div className="space-y-6">
-                    {educations.map((edu, index) => (
-                      <EditableEducationItem
-                        key={`${edu.education_id}-${index}`}
-                        education={edu}
-                        onEdit={() => { setEditingEducation(edu); setIsAddEducationModalOpen(true); }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Posts Section */}
-                <div className="mt-8">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl text-foreground font-semibold">Latest Posts</h2>
-                    <Link href="/profile/posts" className="text-sm text-primary hover:underline">
-                      See all posts
-                    </Link>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    {previewPosts.map((post, index) => (
-                      isMobile ? (
-                        <PostCard
-                          key={`${post.id}-${index}`}
-                          post={post}
-                          isOwnPost={!isCompany}
-                          onDelete={handleDeletePost}
-                        />
-                      ) : (
-                        <FeedPost
-                          key={`${post.id}-${index}`}
-                          {...post}
-                          initialComments={post.commentData}
-                          isOwnPost={!isCompany}
-                          onDelete={handleDeletePost}
-                          onToggleVisibility={handleToggleVisibility}
-                          isProfileView={true}
-                        />
-                      )
-                    ))}
+                  <div className="ml-auto">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="flex items-center justify-center w-6 h-6 text-[#6366F1] outline-none border-none focus:outline-none">
+                          <Icon icon="ph:dots-three-outline-vertical-light" className="w-6 h-6" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        sideOffset={8}
+                        alignOffset={0}
+                        className="w-[180px] h-[136px] !rounded-tl-[24px] !rounded-tr-none !rounded-br-[24px] !rounded-bl-[24px] border border-[#C7D2FE] p-[8px] bg-[#FFFFFF] flex flex-col gap-1"
+                      >
+                        <DropdownMenuItem
+                          onClick={() => setIsEditProfileModalOpen(true)}
+                          className="flex items-center justify-between px-3 py-2 cursor-pointer focus:bg-[#6366F1] focus:text-white rounded-xl outline-none group transition-colors"
+                        >
+                          <span className="text-sm font-medium text-[#6B7280] group-focus:text-white">Edit profile</span>
+                          <Edit2 className="w-4 h-4 text-[#6B7280] group-focus:text-white transition-colors" />
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setIsShareModalOpen(true)}
+                          className="flex items-center justify-between px-3 py-2 cursor-pointer focus:bg-[#6366F1] focus:text-white rounded-xl outline-none group transition-colors"
+                        >
+                          <span className="text-sm font-medium text-[#6B7280] group-focus:text-white">Share profile</span>
+                          <Share2 className="w-4 h-4 text-[#6B7280] group-focus:text-white transition-colors" />
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            navigator.clipboard.writeText(window.location.href);
+                            toast.success("Profile link copied");
+                          }}
+                          className="flex items-center justify-between px-3 py-2 cursor-pointer focus:bg-[#6366F1] focus:text-white rounded-xl outline-none group transition-colors"
+                        >
+                          <span className="text-sm font-medium text-[#6B7280] group-focus:text-white">Copy profile</span>
+                          <Copy className="w-4 h-4 text-[#6B7280] group-focus:text-white transition-colors" />
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* About Section */}
+            <div className="w-full min-h-[110px] pr-[16px] pb-[20px] pl-[40px] flex flex-col gap-[16px] mt-[16px]">
+              <h2 className="w-[904px] h-[26px] font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] tracking-normal text-[#000000] flex items-center m-0 p-0">About</h2>
+              <p className="w-[904px] h-[48px] font-[family-name:var(--font-poppins)] font-normal text-[16px] leading-[24px] tracking-normal text-[#000000] overflow-hidden m-0 p-0">
+                {user?.about}
+              </p>
+            </div>
+
+            {/* Living Resume Section */}
+            <div className="mt-[16px]">
+              <LivingResume experiences={experiences} skills={skills.map(s => s.name)} resumeName={profileData?.resume?.originalName} />
+            </div>
+
+            {/* Posts Section */}
+            <div
+              className="w-[960px] mx-auto bg-transparent mt-[16px] transition-all duration-500 ease-in-out overflow-hidden"
+              style={{ minHeight: isPostsExpanded ? 'auto' : '564px' }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between pt-4 pb-4 px-10">
+                <h2 className="text-[18px] leading-[26px] text-[#000000] font-medium font-[family-name:var(--font-poppins)]">Post</h2>
+                {previewPosts.length > 3 && (
+                  <button
+                    onClick={() => {
+                      setIsPostsExpanded(!isPostsExpanded);
+                      if (isPostsExpanded) {
+                        document.getElementById('posts-section-top')?.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    className="w-[78px] h-[36px] flex items-center justify-center px-4 py-2 border border-[#818CF8] rounded-[24px] bg-white text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-[#818CF8] whitespace-nowrap hover:bg-slate-50 transition-all duration-200"
+                  >
+                    {isPostsExpanded ? 'Show less' : 'See all'}
+                  </button>
+                )}
+              </div>
+
+              {/* Anchor for scroll to top */}
+              <div id="posts-section-top" />
+
+              {/* Posts Wrapper */}
+              <div
+                className={`pl-10 pr-4 transition-all duration-500 ease-in-out ${isPostsExpanded
+                    ? "grid grid-cols-3 gap-[24px] pb-10"
+                    : "flex flex-row gap-[24px]"
+                  }`}
+              >
+                {(isPostsExpanded ? previewPosts : previewPosts.slice(0, 3)).map((post, index) => (
+                  <div
+                    key={post.id || index}
+                    className="animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <ProfilePostCard
+                      post={post}
+                      isOwnPost={!isCompany}
+                      onDelete={handleDeletePost}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Skills Section */}
+            <div 
+              className="w-[960px] mx-auto bg-white mt-[16px] rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] pr-[24px] pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-[18px] leading-[26px] text-[#000000] font-medium font-[family-name:var(--font-poppins)]">Skills</h2>
+                <button 
+                  onClick={() => setIsAddSkillModalOpen(true)}
+                  className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-[#818CF8] bg-white flex items-center justify-center text-[#818CF8] hover:bg-slate-50 transition-all flex-shrink-0"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Skills Row */}
+              <div className="flex flex-wrap gap-[24px]">
+                {skills.map((skill: any, index) => {
+                  const skillName = skill.name || (typeof skill === 'string' ? skill : '');
+                  if (!skillName) return null;
+                  return (
+                    <SkillProofPill
+                      key={skill.skill_id || `skill-${index}`}
+                      skill={skillName}
+                      experiences={experiences}
+                      posts={previewPosts}
+                      onDelete={handleDeleteSkill}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Experience Section */}
+            <div 
+              id="experience-section"
+              className="w-[960px] mx-auto bg-white mt-[16px] rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] pr-[24px] pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-[18px] leading-[26px] text-[#000000] font-medium font-[family-name:var(--font-poppins)]">Experience</h2>
+                <button 
+                  onClick={() => { setEditingExperience(null); setIsAddExperienceModalOpen(true); }}
+                  className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-[#818CF8] bg-white flex items-center justify-center text-[#818CF8] hover:bg-slate-50 transition-all flex-shrink-0"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Experience List */}
+              <div className="flex flex-col gap-[32px]">
+                {experiences.map((exp, index) => (
+                  <EditableExperienceItem
+                    key={`${exp.experience_id}-${index}`}
+                    experience={exp}
+                    onEdit={() => { setEditingExperience(exp); setIsAddExperienceModalOpen(true); }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Education Section */}
+            <div 
+              id="education-section" 
+              className="w-[960px] mx-auto bg-white mt-[16px] rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] pr-[24px] pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-[18px] leading-[26px] text-[#000000] font-medium font-[family-name:var(--font-poppins)]">Education</h2>
+                <button 
+                  onClick={() => { setEditingEducation(null); setIsAddEducationModalOpen(true); }}
+                  className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-[#818CF8] bg-white flex items-center justify-center text-[#818CF8] hover:bg-slate-50 transition-all flex-shrink-0"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Education List */}
+              <div className="flex flex-col gap-[32px]">
+                {educations.map((edu, index) => (
+                  <EditableEducationItem
+                    key={`${edu.education_id}-${index}`}
+                    education={edu}
+                    onEdit={() => { setEditingEducation(edu); setIsAddEducationModalOpen(true); }}
+                  />
+                ))}
+              </div>
+            </div>
+
           </div>
         )}
       </div>
+
+      <EditProfileModal
+        isOpen={isEditProfileModalOpen}
+        onClose={() => setIsEditProfileModalOpen(false)}
+        user={user}
+        onSave={handleUpdateProfile}
+      />
 
       <SkillModal
         isOpen={isAddSkillModalOpen}
@@ -647,15 +908,9 @@ export default function ProfilePage() {
       />
 
       <Dialog open={isAddExperienceModalOpen} onOpenChange={setIsAddExperienceModalOpen}>
-        <DialogContent className="bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">
-              {editingExperience ? "Edit Experience" : "Add Experience"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingExperience ? "Edit the details of your experience." : "Add a new experience to your profile."}
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[800px] [&>button]:hidden outline-none">
+          <DialogTitle className="sr-only">Add Experience</DialogTitle>
+          <DialogDescription className="sr-only">Fill in the details to add a new experience record to your profile.</DialogDescription>
           <AddExperienceForm
             onSave={handleSaveExperience}
             onCancel={() => setIsAddExperienceModalOpen(false)}
@@ -666,15 +921,9 @@ export default function ProfilePage() {
       </Dialog>
 
       <Dialog open={isAddEducationModalOpen} onOpenChange={setIsAddEducationModalOpen}>
-        <DialogContent className="bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">
-              {editingEducation ? "Edit Education" : "Add Education"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingEducation ? "Edit the details of your education." : "Add a new education to your profile."}
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[800px] [&>button]:hidden outline-none">
+          <DialogTitle className="sr-only">Add Education</DialogTitle>
+          <DialogDescription className="sr-only">Fill in the details to add a new education record to your profile.</DialogDescription>
           <AddEducationForm
             onSave={handleSaveEducation}
             onCancel={() => setIsAddEducationModalOpen(false)}

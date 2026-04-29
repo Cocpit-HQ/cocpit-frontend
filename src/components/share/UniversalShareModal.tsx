@@ -1,6 +1,6 @@
 "use client"
-
 import React, { useState, useEffect } from "react"
+import { Icon } from "@iconify/react"
 import { Send, X, Check, Search, Rss, PlusCircle, Link as LinkIcon, Bell, ArrowLeft, CheckCircle2, MessageSquare } from "lucide-react"
 import {
     Dialog,
@@ -238,86 +238,69 @@ export function UniversalShareModal({
     }
 
     const OptionsView = (
-        <div className="p-5 space-y-4">
-            {(entityType === 'profile' || entityType === 'company' || entityType === 'job') && entityName && (
-                <>
-                    <div className="flex items-center gap-4">
-                        <Avatar className="w-14 h-14 border rounded-full shrink-0">
-                            <AvatarImage src={entityAvatar} className="object-cover" />
-                            <AvatarFallback>{entityName.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col flex-1 min-w-0">
-                            <span className="font-bold text-base text-foreground truncate">{entityName}</span>
-                            {entityHeadline && (
-                                <span className="text-sm text-foreground/90 truncate">{entityHeadline}</span>
-                            )}
-                            {entityLocation && (
-                                <span className="text-xs text-muted-foreground truncate">{entityLocation}</span>
-                            )}
-                        </div>
-                    </div>
-                    <div className="h-px bg-border w-full" />
-                </>
-            )}
+        <div className="flex flex-col pt-2">
+            <div className="text-center mb-6 relative px-4">
+                <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-[#000000] mb-1">
+                    Share
+                </DialogTitle>
+                <p className="text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280]">
+                    Share your {entityType} your way
+                </p>
+            </div>
 
-            <div className="space-y-3">
+            <div className="flex flex-col gap-4 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {(entityType === 'post' || entityType === 'job') && (
-                    <>
-                        <div
-                            className={`flex flex-row items-center cursor-pointer p-4 rounded-xl border border-border/50 transition-all duration-200 ${postCategory === 'Personal' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted/60'}`}
-                            onClick={handleRepost}
-                        >
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 text-primary shrink-0">
-                                <Rss className="w-5 h-5" />
-                            </div>
-                            <div className="flex flex-col text-left">
-                                <span className="font-bold text-sm text-foreground">Share to Feed</span>
-                                <span className="text-xs text-muted-foreground mt-0.5">
-                                    {postCategory === 'Personal' ? 'Personal posts cannot be reposted' : 'Repost this to your feed'}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div
-                            className="flex flex-row items-center cursor-pointer p-4 rounded-xl border border-border/50 hover:bg-muted/60 transition-all duration-200"
-                            onClick={handleShareToStory}
-                        >
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 text-primary shrink-0">
-                                <PlusCircle className="w-5 h-5" />
-                            </div>
-                            <div className="flex flex-col text-left">
-                                <span className="font-bold text-sm text-foreground">Share to Story</span>
-                                <span className="text-xs text-muted-foreground mt-0.5">Add to your daily story</span>
-                            </div>
-                        </div>
-                    </>
+                    <button 
+                        onClick={handleRepost}
+                        disabled={postCategory === 'Personal'}
+                        className={`flex items-center gap-4 w-full h-[56px] px-6 rounded-[24px] bg-white border border-[#F8FAFC] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50 transition-colors ${postCategory === 'Personal' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        <Icon icon="solar:feed-linear" className="w-[24px] h-[24px] text-[#6366F1]" />
+                        <span className="text-[14px] leading-[20px] font-medium font-[family-name:var(--font-poppins)] text-[#000000]">Share to Feed</span>
+                    </button>
                 )}
 
-                <div
-                    className="flex flex-row items-center cursor-pointer p-4 rounded-xl border border-border/50 hover:bg-muted/60 transition-all duration-200"
-                    onClick={() => setMode('message')}
+                <button 
+                    onClick={handleShareToStory}
+                    className="flex items-center gap-4 w-full h-[56px] px-6 rounded-[24px] bg-white border border-[#F8FAFC] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50 transition-colors"
                 >
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 text-primary shrink-0">
-                        <MessageSquare className="w-5 h-5" />
-                    </div>
-                    <div className="flex flex-col text-left">
-                        <span className="font-bold text-sm text-foreground">Send via Message</span>
-                        <span className="text-xs text-muted-foreground mt-0.5">Send to friends or groups</span>
-                    </div>
-                </div>
+                    <Icon icon="solar:add-circle-linear" className="w-[24px] h-[24px] text-[#6366F1]" />
+                    <span className="text-[14px] leading-[20px] font-medium font-[family-name:var(--font-poppins)] text-[#000000]">Share in story</span>
+                </button>
 
-                <div
-                    className="flex flex-row items-center cursor-pointer p-4 rounded-xl border border-border/50 hover:bg-muted/60 transition-all duration-200"
-                    onClick={() => setMode('notification')}
+                <button 
+                    onClick={() => setMode('message')}
+                    className="flex items-center gap-4 w-full h-[56px] px-6 rounded-[24px] bg-white border border-[#F8FAFC] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50 transition-colors"
                 >
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mr-4 text-primary shrink-0">
-                        <Bell className="w-5 h-5" />
-                    </div>
-                    <div className="flex flex-col text-left">
-                        <span className="font-bold text-sm text-foreground">Share via Notification</span>
-                        <span className="text-xs text-muted-foreground mt-0.5">Send a notification to a user</span>
-                    </div>
-                </div>
+                    <Icon icon="solar:chat-line-linear" className="w-[24px] h-[24px] text-[#6366F1]" />
+                    <span className="text-[14px] leading-[20px] font-medium font-[family-name:var(--font-poppins)] text-[#000000]">Share in chat</span>
+                </button>
+
+                {(entityType === 'profile' || entityType === 'post') && (
+                    <button 
+                        onClick={() => toast({ title: "Coming soon", description: "Sharing to business page will be available soon." })}
+                        className="flex items-center gap-4 w-full h-[56px] px-6 rounded-[24px] bg-white border border-[#F8FAFC] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50 transition-colors"
+                    >
+                        <Icon icon="solar:case-linear" className="w-[24px] h-[24px] text-[#6366F1]" />
+                        <span className="text-[14px] leading-[20px] font-medium font-[family-name:var(--font-poppins)] text-[#000000]">Share on business page</span>
+                    </button>
+                )}
+
+                <button 
+                    onClick={() => setMode('notification')}
+                    className="flex items-center gap-4 w-full h-[56px] px-6 rounded-[24px] bg-white border border-[#F8FAFC] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50 transition-colors"
+                >
+                    <Icon icon="solar:bell-linear" className="w-[24px] h-[24px] text-[#6366F1]" />
+                    <span className="text-[14px] leading-[20px] font-medium font-[family-name:var(--font-poppins)] text-[#000000]">Share via Notification</span>
+                </button>
+
+                <button 
+                    onClick={handleCopyLink}
+                    className="flex items-center gap-4 w-full h-[56px] px-6 rounded-[24px] bg-white border border-[#F8FAFC] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50 transition-colors"
+                >
+                    <Icon icon="solar:copy-linear" className="w-[24px] h-[24px] text-[#6366F1]" />
+                    <span className="text-[14px] leading-[20px] font-medium font-[family-name:var(--font-poppins)] text-[#000000]">Copy link</span>
+                </button>
             </div>
         </div>
     )
@@ -522,13 +505,18 @@ export function UniversalShareModal({
     if (isMobile) {
         return (
             <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-                <DrawerContent className="max-h-[85vh] p-0">
-                    {mode === 'options' && (
-                        <DrawerHeader className="text-left border-b border-border pb-4 px-5 pt-5 relative">
-                            <DrawerTitle className="text-lg">Share {entityType === 'profile' ? 'Profile' : entityType === 'company' ? 'Company' : String(entityType)}</DrawerTitle>
-                        </DrawerHeader>
-                    )}
-                    <Content />
+                <DrawerContent className="max-h-[85vh] p-0 bg-transparent border-none shadow-none outline-none">
+                    <div className="relative bg-white rounded-t-[24px] p-[24px] w-full shadow-sm flex flex-col outline-none max-h-[85vh] overflow-hidden">
+                        {mode === 'options' && (
+                            <button 
+                                onClick={() => onClose()}
+                                className="absolute top-6 right-6 p-1 text-[#F87171] hover:bg-red-50 rounded-full transition-colors z-10"
+                            >
+                                <X className="w-5 h-5" strokeWidth={1.5} />
+                            </button>
+                        )}
+                        <Content />
+                    </div>
                 </DrawerContent>
             </Drawer>
         )
@@ -536,16 +524,18 @@ export function UniversalShareModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[420px] sm:rounded-2xl p-0 gap-0 overflow-hidden">
-                {mode === 'options' && (
-                    <DialogHeader className="px-5 pt-5 pb-4 border-b border-border relative">
-                        <DialogTitle className="text-lg">Share {entityType === 'profile' ? 'Profile' : entityType === 'company' ? 'Company' : String(entityType)}</DialogTitle>
-                        <div className="sr-only">
-                            <DialogDescription>Select an option to share this {entityType}.</DialogDescription>
-                        </div>
-                    </DialogHeader>
-                )}
-                <Content />
+            <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[400px] sm:rounded-[24px] [&>button]:hidden outline-none">
+                <div className="relative bg-white rounded-[24px] p-[24px] sm:p-[32px] w-full shadow-sm flex flex-col outline-none max-h-[85vh] overflow-hidden">
+                    {mode === 'options' && (
+                        <button 
+                            onClick={() => onClose()}
+                            className="absolute top-6 right-6 p-1 text-[#F87171] hover:bg-red-50 rounded-full transition-colors z-10"
+                        >
+                            <X className="w-5 h-5" strokeWidth={1.5} />
+                        </button>
+                    )}
+                    <Content />
+                </div>
             </DialogContent>
         </Dialog>
     )

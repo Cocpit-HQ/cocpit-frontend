@@ -79,12 +79,14 @@ export interface UserData {
   company_name?: string;
   school?: string;
   degree?: string;
+  website?: string | null;
   about_text?: string;
   is_following?: boolean;
   is_followed_by?: boolean;
   connection_request_status?: 'connected' | 'pending' | 'rejected' | 'blocked' | null;
   connection_request_id?: string | null;
   connection_request_sender?: 'me' | 'them' | null;
+  company_roles?: CompanyRole[];
 }
 
 export interface UpdateProfilePayload {
@@ -98,6 +100,8 @@ export interface UpdateProfilePayload {
   about_text: string;
   mobile_number?: string;
   account_name?: string;
+  website?: string;
+  visible_role_ids?: string[];
 }
 
 export interface Skill {
@@ -158,4 +162,5 @@ export interface SearchedUser {
   type?: 'USER' | 'COMPANY';
   slug?: string;
   industry?: string | null;
+  website?: string | null;
 }

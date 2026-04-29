@@ -10,7 +10,7 @@ interface ProfileStatsProps {
     followingCount?: number;
 }
 
-export function ProfileStats({
+export const ProfileStats = React.memo(function ProfileStats({
     connectionsCount,
     profileViewsCount,
     postsCount,
@@ -86,4 +86,4 @@ export function ProfileStats({
             </div>
         </div>
     );
-}
+});

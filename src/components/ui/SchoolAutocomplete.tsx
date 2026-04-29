@@ -174,7 +174,7 @@ export default function SchoolAutocomplete({ onSelect, selectedId, selectedName 
         </div>
       </div>
 
-      {open && (suggestions.length > 0 || showCustomAdd) && (
+      {open && suggestions.length > 0 && (
         <ul className={styles.dropdown}>
           {suggestions.map((org) => (
             <li key={org.org_id} className={styles.item} onMouseDown={() => handleSelect(org)}>
@@ -182,12 +182,6 @@ export default function SchoolAutocomplete({ onSelect, selectedId, selectedName 
               <span>{org.name}</span>
             </li>
           ))}
-          {showCustomAdd && (
-            <li className={styles.item} onMouseDown={handleCustomAdd} style={{ color: '#2563eb', fontWeight: 500, borderTop: suggestions.length > 0 ? '1px solid #f3f4f6' : 'none' }}>
-              <Plus className={styles.itemIcon} style={{ color: '#2563eb' }} />
-              <span>Add "{query.trim()}"</span>
-            </li>
-          )}
         </ul>
       )}
     </div>

@@ -4,6 +4,7 @@ import React from "react";
 import { DarkSidebar } from "@/components/layout/DarkSidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { useUIStore } from "@/store/ui.store";
+import { HomeHeader } from "@/components/home/HomeHeader";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -24,7 +25,10 @@ export function AppShell({
       </div>
 
       {/* Main content */}
-      <main className={`flex-1 w-full md:ml-64 ${hideBottomNav ? "" : "pb-16"} md:pb-0`}>{children}</main>
+      <main className={`flex-1 w-full md:ml-[232px] ${hideBottomNav ? "" : "pb-16"} md:pb-0`}>
+        <HomeHeader />
+        {children}
+      </main>
 
       {/* Mobile bottom navigation */}
       {!hideBottomNav && (

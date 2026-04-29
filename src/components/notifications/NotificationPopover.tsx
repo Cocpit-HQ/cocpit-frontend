@@ -17,7 +17,13 @@ import { useSocket } from "@/context/SocketContext"
 import Avatar from "@/components/shared/Avatar"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 
-export function NotificationPopover() {
+export function NotificationPopover({ 
+  className = "relative p-2 rounded-full transition-colors hover:bg-muted text-muted-foreground",
+  icon = <Bell className="w-6 h-6" />
+}: { 
+  className?: string;
+  icon?: React.ReactNode;
+}) {
   const router = useRouter()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [isOpen, setIsOpen] = useState(false)
@@ -94,9 +100,9 @@ export function NotificationPopover() {
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <button
-          className="relative p-2 rounded-full transition-colors hover:bg-muted text-muted-foreground"
+          className={className}
         >
-          <Bell className="w-6 h-6" />
+          {icon}
           {unreadCount > 0 && (
             <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background" />
           )}

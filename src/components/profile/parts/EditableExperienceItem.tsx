@@ -2,8 +2,8 @@
 "use client";
 
 import React from "react";
-import { Briefcase, Edit2 } from "lucide-react";
 import { Experience } from "@/types/entities";
+import { Icon } from "@iconify/react";
 
 interface EditableExperienceItemProps {
     experience: Experience;
@@ -14,24 +14,67 @@ export function EditableExperienceItem({
     experience,
     onEdit,
 }: EditableExperienceItemProps) {
+    const formatDate = (dateStr: string) => {
+        if (!dateStr) return "";
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    };
+
     return (
-        <div className="flex gap-4 group relative">
-            <div className="flex-shrink-0 w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-                <Briefcase className="w-6 h-6 text-primary-foreground" />
+        <div className="flex gap-4 group relative w-full items-start">
+            {/* Company Logo */}
+            <div className="flex-shrink-0 w-[56px] h-[40px] pt-[8px] pr-[16px] pb-[8px] pl-[16px] rounded-[24px] overflow-hidden bg-white border border-slate-100 flex items-center justify-center">
+                <img 
+                    src="/assets/company-placeholder.png" 
+                    alt={experience.company_name} 
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png";
+                    }}
+                />
             </div>
-            <div className="flex-1">
-                <h3 className="font-semibold mb-1 text-foreground">{experience.title}</h3>
-                <p className="text-sm mb-1 text-muted-foreground">{experience.company_name}</p>
-                <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
-                    <span>{new Date(experience.start_date).getFullYear()} - {experience.end_date ? new Date(experience.end_date).getFullYear() : 'Present'}</span>
-                    <span>•</span>
-                    <span>{experience.location}</span>
+
+            {/* Center Content: Title, Description, Company, Location */}
+            <div className="flex-1 min-w-0">
+                <div className="flex flex-col gap-1">
+                    <h3 className="text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] text-[#000000]">
+                        {experience.title}
+                    </h3>
+                    <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#000000] line-clamp-2">
+                        {experience.description}
+                    </p>
+                    <div className="mt-1 flex flex-col gap-0.5">
+                        <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280]">
+                            {experience.company_name}
+                        </p>
+                        <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280]">
+                            {experience.location}
+                        </p>
+                    </div>
                 </div>
-                <p className="text-sm text-muted-foreground">{experience.description}</p>
             </div>
-            <button onClick={onEdit} className="absolute top-0 right-0 p-2 text-muted-foreground hover:text-foreground transition-opacity">
-                <Edit2 className="w-4 h-4" />
-            </button>
+
+            {/* Right Content: Dates, Work Details, Edit Button */}
+            <div className="flex items-start gap-4 flex-shrink-0 w-[180px] justify-end">
+                <div className="flex flex-col items-end gap-1 text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280] whitespace-nowrap">
+                    <div className="flex items-center gap-1 whitespace-nowrap">
+                        <span>{formatDate(experience.start_date)}</span>
+                        <span>-</span>
+                        <span>{experience.end_date ? formatDate(experience.end_date) : 'Present'}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <span>{experience.employment_type || 'Full time'}</span>
+                        <span>-</span>
+                        <span>Remote</span>
+                    </div>
+                </div>
+                <button 
+                  onClick={onEdit} 
+                  className="flex-shrink-0 mt-0.5"
+                >
+                    <Icon icon="eva:edit-outline" className="w-[24px] h-[24px] text-[#94A3B8] hover:text-[#6366F1] transition-colors" />
+                </button>
+            </div>
         </div>
     )
 }

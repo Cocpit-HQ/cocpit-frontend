@@ -63,9 +63,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <HomeHeader />
-
-      <main className="pt-4 md:pt-6 pb-4 md:pb-8">
+      <div className="pt-4 md:pt-6 pb-4 md:pb-8">
         <div className="max-w-5xl mx-auto px-0 md:px-4">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
             {/* Feed Section */}
@@ -87,7 +85,7 @@ export default function HomePage() {
             </aside>
           </div>
         </div>
-      </main>
+      </div>
 
       {/* Modals & Overlays */}
       {mobileSelectedGroupId !== null && (
