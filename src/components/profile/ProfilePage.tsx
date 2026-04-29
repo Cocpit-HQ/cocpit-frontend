@@ -486,6 +486,7 @@ export default function ProfilePage() {
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const [isPostsExpanded, setIsPostsExpanded] = useState(false);
+  const [isAboutExpanded, setIsAboutExpanded] = useState(false);
   const { logout } = useAuth();
 
   const experiences = useMemo(() => profileData?.experiences || [], [profileData]);
@@ -922,11 +923,34 @@ export default function ProfilePage() {
             </div>
 
             {/* About Section */}
-            <div className="w-full min-h-[110px] pr-[16px] pb-[20px] pl-[40px] flex flex-col gap-[16px] mt-[16px]">
-              <h2 className="w-[904px] h-[26px] font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] tracking-normal text-[#000000] flex items-center m-0 p-0">About</h2>
-              <p className="w-[904px] h-[48px] font-[family-name:var(--font-poppins)] font-normal text-[16px] leading-[24px] tracking-normal text-[#000000] overflow-hidden m-0 p-0">
-                {user?.about}
-              </p>
+            <div className="w-full pr-[16px] pb-[20px] pl-[40px] flex flex-col gap-[12px] mt-[16px]">
+              <h2 className="font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] text-[#000000]">About</h2>
+              <div className="relative max-w-[904px]">
+                <p 
+                  className={cn(
+                    "font-[family-name:var(--font-poppins)] font-normal text-[16px] leading-[24px] text-[#000000] transition-all duration-300",
+                    !isAboutExpanded && "line-clamp-2"
+                  )}
+                >
+                  {user?.about}
+                </p>
+                {!isAboutExpanded && (user?.about?.length || 0) > 150 && (
+                  <button 
+                    onClick={() => setIsAboutExpanded(true)}
+                    className="absolute bottom-0 right-0 bg-white pl-2 text-slate-400 hover:text-[#6366F1] font-normal text-[16px] transition-colors"
+                  >
+                    ....More
+                  </button>
+                )}
+                {isAboutExpanded && (
+                  <button 
+                    onClick={() => setIsAboutExpanded(false)}
+                    className="text-[#6366F1] hover:underline font-normal text-[14px] mt-2 block"
+                  >
+                    Show less
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Living Resume Section */}
