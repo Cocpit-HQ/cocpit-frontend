@@ -13,6 +13,11 @@ export const unfollowUser = async (userId: string) => {
     return response.data;
 };
 
+export const removeFollower = async (followerId: string) => {
+    const response = await api.delete(`/users/followers/${followerId}`);
+    return response.data;
+};
+
 export const getFollowers = async (userId: string, search?: string): Promise<Follower[]> => {
     const params = search ? { search } : {};
     const response = await api.get(`/users/${userId}/followers`, { params });

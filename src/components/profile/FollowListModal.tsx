@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Search, UserMinus, UserPlus, X, Building2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getFollowers, getFollowing, getMyConnections, followUser, unfollowUser, removeConnection, getProfileStats } from "@/services/api/social";
+import { getFollowers, getFollowing, getMyConnections, followUser, unfollowUser, removeFollower, removeConnection, getProfileStats } from "@/services/api/social";
 import { companyService } from "@/services/organization.service";
 import { Follower, Following, Connection } from "@/types/social";
 import { useToast } from "@/components/ui/use-toast";
@@ -226,6 +226,39 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         }
     });
 
+    const removeFollowerMutation = useMutation({
+        mutationFn: removeFollower,
+        onMutate: async (targetId) => {
+            await queryClient.cancelQueries({ queryKey: ["profileStats", userId] });
+            await queryClient.cancelQueries({ queryKey: ["followers", userId] });
+
+            const previousStats = queryClient.getQueryData(["profileStats", userId]);
+            const previousFollowers = queryClient.getQueryData(["followers", userId, search]);
+
+            // Optimistically update stats
+            queryClient.setQueryData(["profileStats", userId], (old: any) => ({
+                ...old,
+                followers_count: Math.max(0, (old?.followers_count || 0) - 1)
+            }));
+
+            // Optimistically remove from followers list
+            queryClient.setQueryData(["followers", userId, search], (old: any[]) => 
+                old?.filter(u => (u.user_id || u.follower_id) !== targetId)
+            );
+
+            return { previousStats, previousFollowers };
+        },
+        onError: (err, targetId, context: any) => {
+            queryClient.setQueryData(["profileStats", userId], context.previousStats);
+            queryClient.setQueryData(["followers", userId, search], context.previousFollowers);
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ["followers", userId] });
+            queryClient.invalidateQueries({ queryKey: ["profileStats", userId] });
+            queryClient.invalidateQueries({ queryKey: ["connections", userId] });
+        }
+    });
+
     const handleFollow = (id: string) => {
         followMutation.mutate(id);
     };
@@ -268,10 +301,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                 unfollowMutation.mutate(targetId);
             }
         } else if (type === "remove_follower") {
-            // Reusing unfollow as it essentially stops the follow relationship 
-            // from your side if it's mutual, but usually remove follower 
-            // would be a specific API. Assuming unfollow works for now based on previous logic.
-            unfollowMutation.mutate(targetId);
+            removeFollowerMutation.mutate(targetId);
         } else if (type === "remove_connection") {
             removeConnectionMutation.mutate({ id: targetId, type: userType });
         }
