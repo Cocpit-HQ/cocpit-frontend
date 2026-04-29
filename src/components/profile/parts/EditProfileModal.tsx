@@ -52,6 +52,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
     visible_role_ids: [] as string[],
   })
 
+  const [isSaving, setIsSaving] = useState(false)
+  const [lastClickTime, setLastClickTime] = useState(0)
+
   useEffect(() => {
     if (user) {
       setFormData({
@@ -85,22 +88,33 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   const getSelectTextColor = (value: string) => value ? "text-[#111827]" : "text-[#6B7280]";
 
   const handleSave = async () => {
-    // Handle role visibility changes independently
-    for (const role of (user?.company_roles || [])) {
-        const orgId = role.org_id || role.company_id;
-        const shouldBeVisible = formData.visible_role_ids.includes(orgId!);
-        if (role.is_role_visible !== shouldBeVisible) {
-            try {
-                await updateMemberRoleSettings(orgId!, { is_role_visible: shouldBeVisible });
-            } catch (err) {
-                console.error("Failed to update role visibility", err);
-            }
-        }
-    }
+    const now = Date.now()
+    if (now - lastClickTime < 2000 || isSaving) return
+    setLastClickTime(now)
+    setIsSaving(true)
 
-    onSave({
-      ...formData,
-    })
+    try {
+      // Handle role visibility changes independently
+      for (const role of (user?.company_roles || [])) {
+          const orgId = role.org_id || role.company_id;
+          const shouldBeVisible = formData.visible_role_ids.includes(orgId!);
+          if (role.is_role_visible !== shouldBeVisible) {
+              try {
+                  await updateMemberRoleSettings(orgId!, { is_role_visible: shouldBeVisible });
+              } catch (err) {
+                  console.error("Failed to update role visibility", err);
+              }
+          }
+      }
+
+      await onSave({
+        ...formData,
+      })
+    } catch (err) {
+      console.error("Save failed", err)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -308,9 +322,10 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               </Button>
               <Button
                 onClick={handleSave}
-                className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] hover:bg-[#4F46E5] text-white font-semibold transition-all shadow-sm"
+                disabled={isSaving}
+                className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] hover:bg-[#4F46E5] text-white font-semibold transition-all shadow-sm disabled:opacity-50"
               >
-                Save
+                {isSaving ? "Saving..." : "Save"}
               </Button>
             </div>
           </div>
