@@ -84,9 +84,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
     })
   }
 
-  const inputStyles = "h-[48px] w-full px-4 py-3 !rounded-[16px] border-[#DDE3EA] bg-white text-[16px] leading-[24px] text-black text-left font-[family-name:var(--font-poppins)] font-normal placeholder:text-[#6B7280] focus:border-[#C7D2FE] focus:ring-0 transition-all"
-  const labelStyles = "text-[14px] font-normal text-[#111827] mb-[8px] font-[family-name:var(--font-poppins)] leading-[20px]"
-  const getSelectTextColor = (value: string) => value ? "text-[#111827]" : "text-[#6B7280]";
+  const inputStyles = "h-[48px] w-full px-4 py-3 !rounded-[16px] border-border bg-card text-[16px] leading-[24px] text-foreground text-left font-[family-name:var(--font-poppins)] font-normal placeholder:text-muted-foreground focus:border-primary focus:ring-0 transition-all"
+  const labelStyles = "text-[14px] font-normal text-foreground mb-[8px] font-[family-name:var(--font-poppins)] leading-[20px]"
+  const getSelectTextColor = (value: string) => value ? "text-foreground" : "text-muted-foreground";
 
   const handleSave = async () => {
     const now = Date.now()
@@ -120,20 +120,20 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full rounded-none sm:rounded-[24px] p-0 gap-0 border-none shadow-2xl bg-white overflow-hidden data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
+      <DialogContent className="max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full rounded-none sm:rounded-[24px] p-0 gap-0 border-none shadow-2xl bg-card overflow-hidden data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
         
         {/* Mobile Header */}
-        <div className="sm:hidden flex items-center justify-between sticky top-0 bg-white z-50 px-4 py-4 border-b border-gray-100">
-          <button onClick={onClose} className="p-2 -ml-2 text-black hover:bg-gray-100 rounded-full transition-colors">
+        <div className="sm:hidden flex items-center justify-between sticky top-0 bg-card z-50 px-4 py-4 border-b border-border">
+          <button onClick={onClose} className="p-2 -ml-2 text-foreground hover:bg-secondary rounded-full transition-colors">
             <Icon icon="hugeicons:arrow-left-01" className="w-6 h-6" />
           </button>
-          <span className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-black">
+          <span className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
             Edit profile
           </span>
           <button 
             onClick={handleSave}
             disabled={isSaving}
-            className="px-4 py-1.5 rounded-full bg-[#EEF2FF] text-[#6366F1] font-medium text-[14px] disabled:opacity-50 transition-all"
+            className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all"
           >
             {isSaving ? "..." : "Save"}
           </button>
@@ -142,18 +142,18 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
         {/* Desktop Close Button */}
         <button
           onClick={onClose}
-          className="hidden sm:flex absolute right-4 top-4 w-[24px] h-[24px] items-center justify-center text-[#FF6B6B] hover:text-red-600 transition-all focus:outline-none focus-visible:ring-0 z-50"
+          className="hidden sm:flex absolute right-4 top-4 w-[24px] h-[24px] items-center justify-center text-destructive hover:opacity-80 transition-all focus:outline-none focus-visible:ring-0 z-50"
         >
           <X className="w-4 h-4" />
         </button>
 
-        <div className="bg-white p-4 sm:p-6 rounded-none sm:rounded-[24px] h-[calc(100dvh-73px)] sm:h-auto sm:max-h-[90vh] overflow-y-auto scrollbar-hide">
+        <div className="bg-card p-4 sm:p-6 rounded-none sm:rounded-[24px] h-[calc(100dvh-73px)] sm:h-auto sm:max-h-[90vh] overflow-y-auto scrollbar-hide">
 
           <DialogHeader className="hidden sm:flex w-full flex-col items-center justify-center text-center mb-6 h-auto gap-0">
-            <DialogTitle className="w-full text-[18px] leading-[26px] font-medium text-[#111827] font-[family-name:var(--font-poppins)] text-center p-0 m-0">
+            <DialogTitle className="w-full text-[18px] leading-[26px] font-medium text-foreground font-[family-name:var(--font-poppins)] text-center p-0 m-0">
               Edit profile
             </DialogTitle>
-            <DialogDescription className="w-full text-[14px] leading-[20px] text-[#6B7280] font-[family-name:var(--font-poppins)] text-center p-0 m-0 mt-[6px]">
+            <DialogDescription className="w-full text-[14px] leading-[20px] text-muted-foreground font-[family-name:var(--font-poppins)] text-center p-0 m-0 mt-[6px]">
               Update your personal and professional information
             </DialogDescription>
           </DialogHeader>
@@ -196,7 +196,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                   <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.status))}>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border-border">
+                  <SelectContent className="bg-card border-border">
                     <SelectItem value="Student">Student</SelectItem>
                     <SelectItem value="Professional">Professional</SelectItem>
                     <SelectItem value="Freelancer">Freelancer</SelectItem>
@@ -215,7 +215,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     className={cn(inputStyles, "pr-10")}
                     placeholder="Location"
                   />
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 text-[#6B7280]" />
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 text-muted-foreground" />
                 </div>
               </div>
               <div className="flex flex-col">
@@ -238,8 +238,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       key={opt}
                       onClick={() => toggleOption("open_to", opt)}
                       className={`h-10 min-w-[89px] px-4 rounded-[8px] text-sm font-medium transition-all flex items-center justify-center border ${formData.open_to === opt
-                          ? "bg-[#6366F1] border-[#6366F1] text-white shadow-sm"
-                          : "bg-[#EEF2FF] border-[#EEF2FF] text-[#6366F1] hover:bg-[#E0E7FF]"
+                          ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                          : "bg-secondary border-border text-primary hover:opacity-80"
                         }`}
                     >
                       {opt}
@@ -256,8 +256,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       key={opt}
                       onClick={() => toggleOption("availability", opt)}
                       className={`h-10 min-w-[89px] px-4 rounded-[8px] text-sm font-medium transition-all flex items-center justify-center border ${formData.availability === opt
-                          ? "bg-[#6366F1] border-[#6366F1] text-white shadow-sm"
-                          : "bg-[#EEF2FF] border-[#EEF2FF] text-[#6366F1] hover:bg-[#E0E7FF]"
+                          ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                          : "bg-secondary border-border text-primary hover:opacity-80"
                         }`}
                     >
                       {opt}
@@ -274,8 +274,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       key={opt}
                       onClick={() => toggleOption("work_preference", opt)}
                       className={`h-10 min-w-[89px] px-4 rounded-[8px] text-sm font-medium transition-all flex items-center justify-center border ${formData.work_preference === opt
-                          ? "bg-[#6366F1] border-[#6366F1] text-white shadow-sm"
-                          : "bg-[#EEF2FF] border-[#EEF2FF] text-[#6366F1] hover:bg-[#E0E7FF]"
+                          ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                          : "bg-secondary border-border text-primary hover:opacity-80"
                         }`}
                     >
                       {opt}
@@ -290,7 +290,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               <Textarea
                 value={formData.about}
                 onChange={(e) => setFormData(prev => ({ ...prev, about: e.target.value }))}
-                className="w-full min-h-[100px] bg-white border-[#DDE3EA] text-black placeholder-[#6B7280] rounded-[16px] px-[16px] py-[10px] font-[family-name:var(--font-poppins)] text-[14px] leading-[20px] resize-none focus-visible:border-[#C7D2FE] focus-visible:outline-none transition-all shadow-none"
+                className="w-full min-h-[100px] bg-card border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[10px] font-[family-name:var(--font-poppins)] text-[14px] leading-[20px] resize-none focus-visible:border-primary focus-visible:outline-none transition-all shadow-none"
                 placeholder="Tell us about yourself..."
               />
             </div>
@@ -299,7 +299,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               <Label className={labelStyles}>Display Roles</Label>
               <div className="space-y-3">
                 {user?.company_roles?.map((role) => (
-                  <div key={role.org_id} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors">
+                  <div key={role.org_id} className="flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-secondary transition-colors">
                     <Checkbox
                       id={`role-${role.org_id}`}
                       checked={formData.visible_role_ids.includes(role.org_id!)}
@@ -310,11 +310,11 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                           setFormData(prev => ({ ...prev, visible_role_ids: [] }));
                         }
                       }}
-                      className="w-[24px] h-[24px] bg-white rounded-[6px] border-[1.5px] border-[#000000] data-[state=checked]:bg-[#6366F1] data-[state=checked]:border-[#6366F1]"
+                      className="w-[24px] h-[24px] bg-card rounded-[6px] border-[1.5px] border-foreground data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
                     <Label htmlFor={`role-${role.org_id}`} className="flex flex-col cursor-pointer">
-                      <span className="text-[14px] leading-[20px] font-medium text-[#111827] font-[family-name:var(--font-poppins)]">{role.role}</span>
-                      <span className="text-[12px] leading-[16px] text-[#6B7280] font-[family-name:var(--font-poppins)]">at {role.name}</span>
+                      <span className="text-[14px] leading-[20px] font-medium text-foreground font-[family-name:var(--font-poppins)]">{role.role}</span>
+                      <span className="text-[12px] leading-[16px] text-muted-foreground font-[family-name:var(--font-poppins)]">at {role.name}</span>
                     </Label>
                   </div>
                 ))}
@@ -325,10 +325,10 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                   id="show_owner_badge"
                   checked={formData.show_owner_badge}
                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, show_owner_badge: checked as boolean }))}
-                  className="w-[24px] h-[24px] bg-white rounded-[6px] border-[1.5px] border-[#000000] data-[state=checked]:bg-[#6366F1] data-[state=checked]:border-[#6366F1]"
+                  className="w-[24px] h-[24px] bg-card rounded-[6px] border-[1.5px] border-foreground data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
-                <Label htmlFor="show_owner_badge" className="text-[14px] leading-[20px] font-normal text-[#111827] font-[family-name:var(--font-poppins)] cursor-pointer">
-                  Show <span className="text-[#6366F1] font-normal">"Owner at cocpit"</span> on profile
+                <Label htmlFor="show_owner_badge" className="text-[14px] leading-[20px] font-normal text-foreground font-[family-name:var(--font-poppins)] cursor-pointer">
+                  Show <span className="text-primary font-normal">"Owner at cocpit"</span> on profile
                 </Label>
               </div>
             </div>
@@ -337,14 +337,14 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               <Button
                 variant="outline"
                 onClick={onClose}
-                className="w-[142px] h-[40px] rounded-[24px] border-[#818CF8] text-[#818CF8] hover:bg-[#EEF2FF] transition-all bg-white font-semibold"
+                className="w-[142px] h-[40px] rounded-[24px] border-primary text-primary hover:bg-secondary transition-all bg-card font-semibold"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] hover:bg-[#4F46E5] text-white font-semibold transition-all shadow-sm disabled:opacity-50"
+                className="w-[142px] h-[40px] rounded-[24px] bg-primary hover:opacity-90 text-primary-foreground font-semibold transition-all shadow-sm disabled:opacity-50"
               >
                 {isSaving ? "Saving..." : "Save"}
               </Button>

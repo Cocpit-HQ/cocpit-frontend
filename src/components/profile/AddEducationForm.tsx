@@ -96,10 +96,10 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     })
   }
 
-  const inputStyles = "bg-white border-[#E5E7EB] placeholder-[#6B7280] rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px]"
-  const labelStyles = "text-[14px] font-medium text-[#111827] mb-1.5"
+  const inputStyles = "bg-card border-border placeholder-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-foreground"
+  const labelStyles = "text-[14px] font-medium text-foreground mb-1.5"
   
-  const getSelectTextColor = (value: string) => value ? "text-[#111827]" : "text-[#6B7280]";
+  const getSelectTextColor = (value: string) => value ? "text-foreground" : "text-muted-foreground";
 
   const isFormValid = 
     formData.school_name.trim() !== "" && 
@@ -108,21 +108,21 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     formData.startYear !== "";
 
   return (
-    <div className="relative bg-white rounded-none sm:rounded-[24px] p-0 sm:p-[16px] w-full sm:w-[800px] h-[100dvh] sm:h-auto sm:max-h-[90vh] mx-auto shadow-sm flex flex-col overflow-hidden outline-none">
+    <div className="relative bg-card rounded-none sm:rounded-[24px] p-0 sm:p-[16px] w-full sm:w-[800px] h-[100dvh] sm:h-auto sm:max-h-[90vh] mx-auto shadow-sm flex flex-col overflow-hidden outline-none">
       
       {/* Mobile Header */}
-      <div className="sm:hidden flex items-center justify-between sticky top-0 bg-white z-50 px-4 py-4 border-b border-gray-100">
-        <button type="button" onClick={onCancel} className="p-2 -ml-2 text-black hover:bg-gray-100 rounded-full transition-colors">
+      <div className="sm:hidden flex items-center justify-between sticky top-0 bg-card z-50 px-4 py-4 border-b border-border">
+        <button type="button" onClick={onCancel} className="p-2 -ml-2 text-foreground hover:bg-secondary rounded-full transition-colors">
           <Icon icon="hugeicons:arrow-left-01" className="w-6 h-6" />
         </button>
-        <span className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-black">
+        <span className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
           Add education
         </span>
         <button 
           type="button"
           onClick={handleSubmit}
           disabled={!isFormValid}
-          className="px-4 py-1.5 rounded-full bg-[#EEF2FF] text-[#6366F1] font-medium text-[14px] disabled:opacity-50 transition-all"
+          className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all"
         >
           Save
         </button>
@@ -133,15 +133,15 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
         {/* Close Button */}
         <button 
           onClick={onCancel}
-          className="hidden sm:block absolute top-6 right-6 p-1 text-[#F87171] hover:bg-red-50 rounded-full transition-colors z-10"
+          className="hidden sm:block absolute top-6 right-6 p-1 text-destructive hover:bg-destructive/10 rounded-full transition-colors z-10"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Header */}
         <div className="hidden sm:block text-center mb-8">
-          <h2 className="text-[18px] leading-[26px] font-medium font-[family-name:var(--font-poppins)] text-[#000000] mb-1">Add education</h2>
-          <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280]">Update your professional information</p>
+          <h2 className="text-[18px] leading-[26px] font-medium font-[family-name:var(--font-poppins)] text-foreground mb-1">Add education</h2>
+          <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">Update your professional information</p>
         </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

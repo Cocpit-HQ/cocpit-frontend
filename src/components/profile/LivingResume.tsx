@@ -73,17 +73,17 @@ export function LivingResume({ experiences, skills, resumeName, resumeUrl }: Liv
 
   const metricsData = [
     {
-      icon: <Icon icon="hugeicons:job-search" className="w-5 h-5 text-[#000000]" />,
+      icon: <Icon icon="hugeicons:job-search" className="w-5 h-5 text-foreground" />,
       label: "Years experience",
       value: `${totalYears}+`,
     },
     {
-      icon: <Icon icon="cib:when-i-work" className="w-5 h-5 text-[#000000]" />,
+      icon: <Icon icon="cib:when-i-work" className="w-5 h-5 text-foreground" />,
       label: "Domains worked",
       value: `${domains}`,
     },
     {
-      icon: <Icon icon="carbon:tools-alt" className="w-5 h-5 text-[#000000]" />,
+      icon: <Icon icon="carbon:tools-alt" className="w-5 h-5 text-foreground" />,
       label: "Tools mastered",
       value: `${toolsCount}`,
     },
@@ -93,16 +93,16 @@ export function LivingResume({ experiences, skills, resumeName, resumeUrl }: Liv
     <div className="w-full box-border px-4 md:pr-[16px] pb-[20px] md:pl-[40px] mt-[16px]">
       {/* Header Row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-        <h2 className="font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] text-[#000000] flex items-center">
+        <h2 className="font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] text-foreground flex items-center">
           Living resume
         </h2>
 
         <div className="flex items-center gap-3">
           {/* PDF File Chip */}
           {resumeName && (
-            <div className="inline-flex items-center gap-[10px] w-[148px] h-[40px] px-[16px] py-[8px] rounded-[24px] border border-[#6B7280] bg-white hover:bg-[#F9FAFB] transition-colors box-border">
-              <Icon icon="material-icon-theme:pdf" width={24} height={24} className="flex-shrink-0 text-[#6B7280] grayscale opacity-80" />
-              <span className="font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-[#6B7280] truncate flex-1 min-w-0">{resumeName}</span>
+            <div className="inline-flex items-center gap-[10px] w-[148px] h-[40px] px-[16px] py-[8px] rounded-[24px] border border-border bg-card hover:bg-secondary transition-colors box-border">
+              <Icon icon="material-icon-theme:pdf" width={24} height={24} className="flex-shrink-0 text-muted-foreground grayscale opacity-80" />
+              <span className="font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-muted-foreground truncate flex-1 min-w-0">{resumeName}</span>
               <button
                 onClick={removeCustomResume}
                 disabled={remove.isPending}
@@ -118,7 +118,7 @@ export function LivingResume({ experiences, skills, resumeName, resumeUrl }: Liv
           {!resumeName && (
             <button
               onClick={() => setIsUploadModalOpen(true)}
-              className="flex items-center justify-center gap-[10px] px-[16px] py-[8px] w-[152px] h-[40px] bg-white text-[#818CF8] rounded-[24px] border border-[#818CF8] hover:bg-slate-50 transition-all text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] whitespace-nowrap"
+              className="flex items-center justify-center gap-[10px] px-[16px] py-[8px] w-[152px] h-[40px] bg-card text-primary rounded-[24px] border border-primary hover:bg-secondary transition-all text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] whitespace-nowrap"
             >
               <Plus className="w-6 h-6 stroke-[2px]" />
               <span>Add resume</span>
@@ -128,17 +128,17 @@ export function LivingResume({ experiences, skills, resumeName, resumeUrl }: Liv
           {/* Download Icon Button */}
           <button
             onClick={handleDownload}
-            className="flex items-center justify-center gap-[10px] px-[16px] py-[8px] w-[56px] h-[40px] rounded-[24px] border border-[#818CF8] bg-white hover:bg-slate-50 transition-all"
+            className="flex items-center justify-center gap-[10px] px-[16px] py-[8px] w-[56px] h-[40px] rounded-[24px] border border-primary bg-card hover:bg-secondary transition-all"
             title="Download PDF"
           >
-            <Download className="w-6 h-6 text-[#818CF8] stroke-[2px]" />
+            <Download className="w-6 h-6 text-primary stroke-[2px]" />
           </button>
         </div>
       </div>
 
       {/* Metrics Section */}
       <div className="flex flex-col gap-4 w-full">
-        <h3 className="font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] text-[#000000]">
+        <h3 className="font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] text-foreground">
           Metrics
         </h3>
 
@@ -146,17 +146,17 @@ export function LivingResume({ experiences, skills, resumeName, resumeUrl }: Liv
           {metricsData.map((metric, idx) => (
             <div
               key={idx}
-              className="flex-1 min-h-[90px] bg-white border border-[#E2E8F0] rounded-[16px] sm:rounded-[24px] px-5 py-4 flex items-center justify-between"
+              className="flex-1 min-h-[90px] bg-card border border-border rounded-[16px] sm:rounded-[24px] px-5 py-4 flex items-center justify-between"
             >
               <div className="flex flex-col items-start justify-center gap-1">
-                <div className="flex items-center justify-center text-slate-600 mb-1">
+                <div className="flex items-center justify-center text-muted-foreground mb-1">
                   {metric.icon}
                 </div>
-                <span className="font-[family-name:var(--font-poppins)] font-medium text-[10px] text-[#94A3B8] uppercase tracking-tight">
+                <span className="font-[family-name:var(--font-poppins)] font-medium text-[10px] text-muted-foreground uppercase tracking-tight">
                   {metric.label}
                 </span>
               </div>
-              <span className="font-[family-name:var(--font-poppins)] font-bold text-[24px] text-[#6366F1]">
+              <span className="font-[family-name:var(--font-poppins)] font-bold text-[24px] text-primary">
                 {metric.value}
               </span>
             </div>

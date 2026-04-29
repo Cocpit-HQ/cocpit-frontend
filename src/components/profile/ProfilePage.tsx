@@ -153,12 +153,12 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
   };
 
   return (
-    <div className="w-full sm:w-[285.33px] h-[488px] bg-[#FFFFFF] border border-slate-100 rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] py-2 flex flex-col gap-2 relative flex-shrink-0">
+    <div className="w-full sm:w-[285.33px] h-[488px] bg-card border border-border rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] py-2 flex flex-col gap-2 relative flex-shrink-0">
       {/* Header section - full width flex row */}
       <div className="w-full px-4 pt-2 flex items-center justify-between z-10">
         {/* Left section: Avatar + Text details */}
         <div className="flex items-center gap-2 overflow-hidden">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-secondary flex-shrink-0">
             <img
               src={localPost.authorAvatar || "/assets/profilephoto.png"}
               alt={localPost.author || "User"}
@@ -166,10 +166,10 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
             />
           </div>
           <div className="flex flex-col overflow-hidden min-w-0">
-            <span className="text-sm font-semibold text-slate-900 truncate">
+            <span className="text-sm font-semibold text-foreground truncate">
               {localPost.author || "Anonymous"}
             </span>
-            <span className="text-[10px] text-slate-500 truncate">
+            <span className="text-[10px] text-muted-foreground truncate">
               {localPost.category || "Location"}
             </span>
           </div>
@@ -179,8 +179,8 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
         <div className="flex items-center gap-2 flex-shrink-0 z-20">
           <Popover>
             <PopoverTrigger asChild>
-              <button className="p-1 hover:bg-slate-50 rounded-full transition-colors outline-none">
-                <Icon icon="la:user-tag" className="w-[24px] h-[24px] text-[#6366F1]" />
+              <button className="p-1 hover:bg-secondary rounded-full transition-colors outline-none">
+                <Icon icon="la:user-tag" className="w-[24px] h-[24px] text-primary" />
               </button>
             </PopoverTrigger>
             <PopoverContent 
@@ -199,12 +199,12 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
 
           <Popover>
             <PopoverTrigger asChild>
-              <button className="p-1 hover:bg-slate-50 rounded-full transition-colors outline-none">
-                <Icon icon="ph:dots-three-outline-vertical-light" className="w-[24px] h-[24px] text-[#000000]" />
+              <button className="p-1 hover:bg-secondary rounded-full transition-colors outline-none">
+                <Icon icon="ph:dots-three-outline-vertical-light" className="w-[24px] h-[24px] text-foreground" />
               </button>
             </PopoverTrigger>
             <PopoverContent 
-              className="w-[180px] h-[136px] p-2 bg-white border-[#C7D2FE] rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+              className="w-[180px] h-[136px] p-2 bg-card border-border rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
               align="end"
               sideOffset={8}
             >
@@ -215,8 +215,8 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
                     onClick={() => setIsEditModalOpen(true)}
                     className="flex items-center justify-between w-full group transition-colors px-2 py-1.5"
                   >
-                    <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-[#000000]">Edit post</span>
-                    <Icon icon="lucide:pencil" className="w-[18px] h-[18px] text-[#000000]" />
+                    <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-foreground">Edit post</span>
+                    <Icon icon="lucide:pencil" className="w-[18px] h-[18px] text-foreground" />
                   </button>
                 )}
 
@@ -226,12 +226,12 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
                     onClick={handleTogglePrivacy}
                     className="flex items-center justify-between w-full group transition-colors px-2 py-1.5"
                   >
-                    <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-[#000000]">
+                    <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
                       {localPost.visibility === 'private' ? 'Make public' : 'Make private'}
                     </span>
                     <Icon 
                       icon={localPost.visibility === 'private' ? "fluent:eye-24-regular" : "fluent:eye-hide-24-regular"} 
-                      className="w-[18px] h-[18px] text-[#000000]" 
+                      className="w-[18px] h-[18px] text-foreground" 
                     />
                   </button>
                 )}
@@ -253,42 +253,42 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
     </div>
 
       <div className="px-4 py-2 h-[48px] overflow-hidden">
-        <p className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)] line-clamp-1">
+        <p className="text-[12px] leading-[16px] text-foreground font-normal font-[family-name:var(--font-poppins)] line-clamp-1">
           {(() => {
             const content = localPost.content || "";
             return content.split(/(@\[[^\]]+\]\([^)]+\)|#\w+)/g).map((part, i) => {
               if (part.startsWith('#')) {
-                return <span key={i} className="text-[#6366F1] hover:underline cursor-pointer">{part}</span>;
+                return <span key={i} className="text-primary hover:underline cursor-pointer">{part}</span>;
               }
               const mentionMatch = part.match(/@\[([^\]]+)\]\(([^)]+)\)/);
               if (mentionMatch) {
-                return <span key={i} className="text-[#6366F1] font-medium hover:underline cursor-pointer">{mentionMatch[1]}</span>;
+                return <span key={i} className="text-primary font-medium hover:underline cursor-pointer">{mentionMatch[1]}</span>;
               }
               return part;
             });
           })()}
         </p>
-        <p className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] mt-1">
+        <p className="text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)] mt-1">
           {localPost.timeAgo || "Just now"}
         </p>
       </div>
 
       {/* Content Section */}
       <div className="px-0 h-[300px] flex-shrink-0">
-        <div className="w-full h-full bg-white overflow-hidden relative border-y border-slate-100/50">
+        <div className="w-full h-full bg-card overflow-hidden relative border-y border-border">
           {/* Shared Post (Repost) */}
           {localPost.shared_post ? (
-            <div className="p-4 h-full bg-slate-50 flex flex-col gap-3">
+            <div className="p-4 h-full bg-secondary flex flex-col gap-3">
               <div className="flex items-center gap-2">
                 <Avatar className="w-6 h-6">
                   <AvatarImage src={localPost.shared_post.authorAvatar || "/assets/profilephoto.png"} />
                   <AvatarFallback><User className="w-3 h-3" /></AvatarFallback>
                 </Avatar>
-                <span className="text-[11px] font-semibold text-slate-900 truncate">
+                <span className="text-[11px] font-semibold text-foreground truncate">
                   {localPost.shared_post.author}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-700 line-clamp-3">
+              <p className="text-[11px] text-muted-foreground line-clamp-3">
                 {localPost.shared_post.content}
               </p>
               {localPost.shared_post.imageSrc && (
@@ -300,21 +300,21 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
           ) : localPost.poll ? (
             /* Poll Section */
             <div className="p-4 h-full flex flex-col gap-3 justify-center">
-              <p className="text-[12px] font-semibold text-slate-900 mb-1">{localPost.poll.total_votes || 0} votes</p>
+              <p className="text-[12px] font-semibold text-foreground mb-1">{localPost.poll.total_votes || 0} votes</p>
               <div className="space-y-2">
                 {localPost.poll.options.map((option, idx) => {
                   const percentage = localPost.poll!.total_votes > 0 
                     ? Math.round((option.vote_count / localPost.poll!.total_votes) * 100) 
                     : 0;
                   return (
-                    <div key={option.option_id} className="relative h-9 w-full bg-slate-50 border border-slate-200 rounded-lg overflow-hidden group">
+                    <div key={option.option_id} className="relative h-9 w-full bg-secondary border border-border rounded-lg overflow-hidden group">
                       <div 
-                        className="absolute inset-y-0 left-0 bg-[#6366F1]/10 transition-all duration-500" 
+                        className="absolute inset-y-0 left-0 bg-primary/10 transition-all duration-500" 
                         style={{ width: `${percentage}%` }}
                       />
                       <div className="relative h-full flex items-center justify-between px-3 text-[11px]">
-                        <span className="font-medium text-slate-700">{option.option_text}</span>
-                        <span className="text-slate-400">{percentage}%</span>
+                        <span className="font-medium text-foreground">{option.option_text}</span>
+                        <span className="text-muted-foreground">{percentage}%</span>
                       </div>
                     </div>
                   );
@@ -325,9 +325,9 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
              /* Article Section */
              <div className="h-full flex flex-col">
                 {image && <img src={image} className="w-full h-40 object-cover" />}
-                <div className="p-4 flex-1 bg-white">
-                  <h3 className="text-sm font-bold text-slate-900 line-clamp-2 mb-2">{localPost.title || "Untitled Article"}</h3>
-                  <p className="text-[11px] text-slate-500 line-clamp-2">Click to read full article on Cocpit Insight</p>
+                <div className="p-4 flex-1 bg-card">
+                  <h3 className="text-sm font-bold text-foreground line-clamp-2 mb-2">{localPost.title || "Untitled Article"}</h3>
+                  <p className="text-[11px] text-muted-foreground line-clamp-2">Click to read full article on Cocpit Insight</p>
                 </div>
              </div>
           ) : image ? (
@@ -339,7 +339,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
             />
           ) : (
             /* Fallback Placeholder */
-            <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
+            <div className="w-full h-full flex items-center justify-center bg-secondary text-muted-foreground">
               <Icon icon="solar:gallery-linear" className="w-12 h-12 opacity-20" />
             </div>
           )}
@@ -350,8 +350,8 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
       <div className="px-4 pb-4 pt-2 mt-auto">
         {/* Liked by Section */}
         <div className="px-1 mb-2">
-          <p className="text-[11px] text-slate-900 font-normal font-[family-name:var(--font-poppins)]">
-            Liked by <span className="font-semibold">Jhon</span> and <span className="font-semibold">others</span>
+          <p className="text-[11px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
+            Liked by <span className="font-semibold text-foreground">Jhon</span> and <span className="font-semibold text-foreground">others</span>
           </p>
         </div>
 
@@ -359,47 +359,47 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
           <div className="flex items-center gap-5">
             <button 
               onClick={handleLike}
-              className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group"
+              className="flex items-center gap-1.5 hover:text-primary transition-colors group"
             >
               <Icon 
                 icon={isLiked ? "solar:like-bold" : "solar:like-outline"} 
-                className={cn("w-[22px] h-[22px] group-active:scale-110 transition-transform", isLiked ? "text-[#6366F1]" : "text-[#000000]")} 
+                className={cn("w-[22px] h-[22px] group-active:scale-110 transition-transform", isLiked ? "text-primary" : "text-foreground")} 
               />
-              <span className="text-[12px] leading-[1] text-[#000000] font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{likesCount}</span>
+              <span className="text-[12px] leading-[1] text-foreground font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{likesCount}</span>
             </button>
             <button 
               onClick={() => setIsCommentModalOpen(true)}
-              className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group"
+              className="flex items-center gap-1.5 hover:text-primary transition-colors group"
             >
-              <Icon icon="hugeicons:comment-01" className="w-[22px] h-[22px] text-[#000000] group-active:scale-110 transition-transform" />
-              <span className="text-[12px] leading-[1] text-[#000000] font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{localPost.comments || 0}</span>
+              <Icon icon="hugeicons:comment-01" className="w-[22px] h-[22px] text-foreground group-active:scale-110 transition-transform" />
+              <span className="text-[12px] leading-[1] text-foreground font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{localPost.comments || 0}</span>
             </button>
             <button 
               onClick={handleRepost}
-              className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group"
+              className="flex items-center gap-1.5 hover:text-primary transition-colors group"
             >
-              <Icon icon="hugeicons:repost" className="w-[22px] h-[22px] text-[#000000] group-active:scale-110 transition-transform" />
-              <span className="text-[12px] leading-[1] text-[#000000] font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{localPost.shares || 0}</span>
+              <Icon icon="hugeicons:repost" className="w-[22px] h-[22px] text-foreground group-active:scale-110 transition-transform" />
+              <span className="text-[12px] leading-[1] text-foreground font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{localPost.shares || 0}</span>
             </button>
           </div>
 
           <div className="flex items-center gap-5">
             <button 
               onClick={handleShare}
-              className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group"
+              className="flex items-center gap-1.5 hover:text-primary transition-colors group"
             >
-              <Icon icon="fluent:share-32-regular" className="w-[22px] h-[22px] text-[#000000] group-active:scale-110 transition-transform" />
-              <span className="text-[12px] leading-[1] text-[#000000] font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{localPost.shares || 0}</span>
+              <Icon icon="fluent:share-32-regular" className="w-[22px] h-[22px] text-foreground group-active:scale-110 transition-transform" />
+              <span className="text-[12px] leading-[1] text-foreground font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{localPost.shares || 0}</span>
             </button>
             <button 
               onClick={handleBookmark}
-              className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group"
+              className="flex items-center gap-1.5 hover:text-primary transition-colors group"
             >
               <Icon 
                 icon={isSaved ? "solar:bookmark-bold" : "solar:bookmark-outline"} 
-                className={cn("w-[22px] h-[22px] group-active:scale-110 transition-transform", isSaved ? "text-[#6366F1]" : "text-[#000000]")} 
+                className={cn("w-[22px] h-[22px] group-active:scale-110 transition-transform", isSaved ? "text-primary" : "text-foreground")} 
               />
-              <span className="text-[12px] leading-[1] text-[#000000] font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">0</span>
+              <span className="text-[12px] leading-[1] text-foreground font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{localPost.shares || 0}</span>
             </button>
           </div>
         </div>
@@ -688,12 +688,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-background">
       <div className="w-full md:max-w-[960px] mx-auto pt-0 md:pt-8 pb-[100px] md:pb-12 px-0 md:px-0">
         {isLoading ? (
           <ProfileSkeleton />
         ) : (
-          <div className="overflow-hidden relative bg-white md:rounded-[24px] rounded-none border-none outline-none pb-8 md:pb-0">
+          <div className="overflow-hidden relative bg-card md:rounded-[24px] rounded-none border-none outline-none pb-8 md:pb-0">
 
             <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage}>
               <div className="absolute top-3 right-3 md:hidden z-10">
@@ -703,7 +703,7 @@ export default function ProfilePage() {
                       <MoreVertical className="w-5 h-5" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-black/50 backdrop-blur-sm border-white/20 text-white">
+                  <DropdownMenuContent className="bg-card border-border text-foreground">
                     <DropdownMenuItem onSelect={() => router.push("/settings")}>
                       Settings
                     </DropdownMenuItem>
@@ -730,7 +730,7 @@ export default function ProfilePage() {
               <div className="flex items-start justify-between -mt-[32px] md:-mt-[40px]">
                 <div className="relative group ml-4 md:ml-[38px]">
                   <div
-                    className="w-[64px] h-[64px] md:w-[80px] md:h-[80px] rounded-full border-[3px] md:border-4 border-white bg-card overflow-hidden flex-shrink-0 cursor-pointer shadow-sm"
+                    className="w-[64px] h-[64px] md:w-[80px] md:h-[80px] rounded-full border-[3px] md:border-4 border-card bg-card overflow-hidden flex-shrink-0 cursor-pointer shadow-sm"
                     onClick={() => setIsViewAvatarOpen(true)}
                   >
                     <img
@@ -752,14 +752,8 @@ export default function ProfilePage() {
                 </div>
 
 
-                <div className="hidden md:flex flex-col items-end mt-16">
-                  <button
-                    onClick={() => setIsContactInfoModalOpen(true)}
-                    className="absolute top-[170px] right-[10px] w-[87px] h-[20px] text-[#6B7280] hover:text-[#4B5563] transition-colors flex items-center justify-center"
-                    style={{ fontFamily: "'Poppins', sans-serif", fontSize: "14px", fontWeight: 400, lineHeight: "20px" }}
-                  >
-                    Contact info
-                  </button>
+                <div className="hidden md:flex flex-col items-end mt-16 pr-[16px]">
+                  {/* Space reserved for alignment */}
                 </div>
               </div>
 
@@ -767,13 +761,13 @@ export default function ProfilePage() {
               <div className="md:hidden flex items-center gap-3 px-4 mt-4">
                 <button 
                   onClick={() => setIsEditProfileModalOpen(true)}
-                  className="flex-1 h-[40px] rounded-[24px] bg-[#EEF2FF] text-[#6366F1] font-medium font-[family-name:var(--font-poppins)] text-[14px] flex items-center justify-center transition-colors"
+                  className="flex-1 h-[40px] rounded-[24px] bg-secondary text-primary font-medium font-[family-name:var(--font-poppins)] text-[14px] flex items-center justify-center transition-colors"
                 >
                   Edit profile
                 </button>
                 <button 
                   onClick={() => setIsShareModalOpen(true)}
-                  className="w-[40px] h-[40px] rounded-full bg-[#EEF2FF] text-[#6366F1] flex items-center justify-center transition-colors flex-shrink-0"
+                  className="w-[40px] h-[40px] rounded-full bg-secondary text-primary flex items-center justify-center transition-colors flex-shrink-0"
                 >
                   <Share2 className="w-5 h-5" />
                 </button>
@@ -783,18 +777,18 @@ export default function ProfilePage() {
               <div className="md:hidden w-full px-4 mt-6">
                 <div className="flex justify-between items-center w-full px-2">
                   <div onClick={() => openFollowList("following")} className="flex flex-col items-center cursor-pointer">
-                    <span className="text-[16px] font-semibold text-[#6366F1] font-[family-name:var(--font-poppins)]">{profileStats?.following_count || 0}</span>
-                    <span className="text-[12px] text-[#6B7280] font-[family-name:var(--font-poppins)]">Following</span>
+                    <span className="text-[16px] font-semibold text-primary font-[family-name:var(--font-poppins)]">{profileStats?.following_count || 0}</span>
+                    <span className="text-[12px] text-muted-foreground font-[family-name:var(--font-poppins)]">Following</span>
                   </div>
-                  <div className="w-[1px] h-8 bg-slate-200"></div>
+                  <div className="w-[1px] h-8 bg-border"></div>
                   <div onClick={() => openFollowList("followers")} className="flex flex-col items-center cursor-pointer">
-                    <span className="text-[16px] font-semibold text-[#6366F1] font-[family-name:var(--font-poppins)]">{profileStats?.followers_count || 0}</span>
-                    <span className="text-[12px] text-[#6B7280] font-[family-name:var(--font-poppins)]">Followers</span>
+                    <span className="text-[16px] font-semibold text-primary font-[family-name:var(--font-poppins)]">{profileStats?.followers_count || 0}</span>
+                    <span className="text-[12px] text-muted-foreground font-[family-name:var(--font-poppins)]">Followers</span>
                   </div>
-                  <div className="w-[1px] h-8 bg-slate-200"></div>
+                  <div className="w-[1px] h-8 bg-border"></div>
                   <div onClick={() => openFollowList("connections")} className="flex flex-col items-center cursor-pointer">
-                    <span className="text-[16px] font-semibold text-[#6366F1] font-[family-name:var(--font-poppins)]">{profileStats?.connections_count || 0}</span>
-                    <span className="text-[12px] text-[#6B7280] font-[family-name:var(--font-poppins)]">Connections</span>
+                    <span className="text-[16px] font-semibold text-primary font-[family-name:var(--font-poppins)]">{profileStats?.connections_count || 0}</span>
+                    <span className="text-[12px] text-muted-foreground font-[family-name:var(--font-poppins)]">Connections</span>
                   </div>
                 </div>
               </div>
@@ -804,163 +798,171 @@ export default function ProfilePage() {
                 <div className="flex gap-[24px] items-center">
                   <div
                     onClick={() => openFollowList("following")}
-                    className="w-[290.67px] h-[58px] flex items-center justify-between px-6 bg-[#EEF2FF] rounded-[24px] cursor-pointer hover:bg-[#E0E7FF] transition-all border border-transparent"
+                    className="w-[290.67px] h-[58px] flex items-center justify-between px-6 bg-secondary rounded-[24px] cursor-pointer hover:opacity-80 transition-all border border-transparent"
                   >
-                    <span className="text-[14px] text-[#111827] font-[family-name:var(--font-poppins)]">Following</span>
-                    <span className="text-[16px] font-semibold text-[#6366F1] font-[family-name:var(--font-poppins)]">{profileStats?.following_count || 0}</span>
+                    <div className="flex flex-col">
+                      <span className="text-[12px] leading-[18px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">Following</span>
+                      <span className="text-[16px] leading-[24px] text-primary font-semibold font-[family-name:var(--font-poppins)]">{profileStats?.following_count || 0}</span>
+                    </div>
+                    <Icon icon="hugeicons:arrow-right-01" className="w-5 h-5 text-muted-foreground" />
                   </div>
                   <div
                     onClick={() => openFollowList("followers")}
-                    className="w-[290.67px] h-[58px] flex items-center justify-between px-6 bg-[#EEF2FF] rounded-[24px] cursor-pointer hover:bg-[#E0E7FF] transition-all border border-transparent"
+                    className="w-[290.67px] h-[58px] flex items-center justify-between px-6 bg-secondary rounded-[24px] cursor-pointer hover:opacity-80 transition-all border border-transparent"
                   >
-                    <span className="text-[14px] text-[#111827] font-[family-name:var(--font-poppins)]">Followers</span>
-                    <span className="text-[16px] font-semibold text-[#6366F1] font-[family-name:var(--font-poppins)]">{profileStats?.followers_count || 0}</span>
+                    <div className="flex flex-col">
+                      <span className="text-[12px] leading-[18px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">Followers</span>
+                      <span className="text-[16px] leading-[24px] text-primary font-semibold font-[family-name:var(--font-poppins)]">{profileStats?.followers_count || 0}</span>
+                    </div>
+                    <Icon icon="hugeicons:arrow-right-01" className="w-5 h-5 text-muted-foreground" />
                   </div>
                   <div
                     onClick={() => openFollowList("connections")}
-                    className="w-[290.67px] h-[58px] flex items-center justify-between px-6 bg-[#EEF2FF] rounded-[24px] cursor-pointer hover:bg-[#E0E7FF] transition-all border border-transparent"
+                    className="w-[290.67px] h-[58px] flex items-center justify-between px-6 bg-secondary rounded-[24px] cursor-pointer hover:opacity-80 transition-all border border-transparent"
                   >
-                    <span className="text-[14px] text-[#111827] font-[family-name:var(--font-poppins)]">Connection</span>
-                    <span className="text-[16px] font-semibold text-[#6366F1] font-[family-name:var(--font-poppins)]">{profileStats?.connections_count || 0}</span>
-                  </div>
+                    <div className="flex flex-col">
+                      <span className="text-[12px] leading-[18px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">Connection</span>
+                      <span className="text-[16px] leading-[24px] text-primary font-semibold font-[family-name:var(--font-poppins)]">{profileStats?.connections_count || 0}</span>
+                    </div>
+                    <Icon icon="hugeicons:arrow-right-01" className="w-5 h-5 text-muted-foreground" />
+                  </div></div>
                 </div>
               </div>
 
-              <div className="flex justify-between items-start w-full min-h-[217px] pt-[16px] px-4 md:pr-[16px] pb-[16px] md:pl-[40px] md:gap-[100px]">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-1 flex-wrap md:flex-nowrap">
-                    <h1 className="text-[20px] md:text-[24px] font-semibold text-[#000000] leading-[28px] md:leading-[32px] font-[family-name:var(--font-poppins)] tracking-tight whitespace-nowrap">{user?.name}</h1>
+            <div className="flex justify-between items-start w-full min-h-[217px] pt-[16px] px-4 md:pr-[16px] pb-[16px] md:pl-[40px] md:gap-[100px]">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-1 flex-wrap md:flex-nowrap">
+                  <h1 className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[28px] md:leading-[32px] font-[family-name:var(--font-poppins)] tracking-tight whitespace-nowrap">{user?.name}</h1>
 
-                    {/* Company Roles Static Display */}
-                    {(() => {
-                      const visibleRoles = user?.company_roles?.filter(r => r.is_role_visible) || [];
-                      if (visibleRoles.length === 0) return null;
+                  {/* Company Roles Static Display */}
+                  {(() => {
+                    const visibleRoles = user?.company_roles?.filter(r => r.is_role_visible) || [];
+                    if (visibleRoles.length === 0) return null;
 
-                      return (
-                        <div className="flex items-center gap-2 flex-nowrap">
-                          <div className="flex items-center gap-[10px] px-[16px] py-[8px] bg-[#E0E7FF] rounded-[24px] border border-[#C7D2FE] flex-shrink-0 w-fit h-[36px]">
-                            <Icon icon="solar:buildings-linear" className="w-5 h-5 text-[#6366F1]" />
-                            <span className="text-[12px] font-normal text-[#6366F1] leading-[16px] font-[family-name:var(--font-poppins)] whitespace-nowrap">
-                              {visibleRoles[0].role} at {visibleRoles[0].name}
-                            </span>
-                          </div>
-
-                          {visibleRoles.length > 1 && (
-                            <span className="text-[12px] font-medium text-slate-500 whitespace-nowrap bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">
-                              + {visibleRoles.length - 1} more
-                            </span>
-                          )}
+                    return (
+                      <div className="flex items-center gap-2 flex-nowrap">
+                        <div className="flex items-center gap-[10px] px-[16px] py-[8px] bg-secondary rounded-[24px] border border-primary/20 flex-shrink-0 w-fit h-[36px]">
+                          <Icon icon="solar:buildings-linear" className="w-5 h-5 text-primary" />
+                          <span className="text-[12px] font-normal text-primary leading-[16px] font-[family-name:var(--font-poppins)] whitespace-nowrap">
+                            {visibleRoles[0].role} at {visibleRoles[0].name}
+                          </span>
                         </div>
-                      );
-                    })()}
-                  </div>
 
-                  <p className="text-[16px] font-normal text-[#000000] leading-[24px] font-[family-name:var(--font-poppins)] mb-4">
-                    {user?.headline}
-                  </p>
-
-                  <div className="flex flex-col gap-0.5 mb-4">
-                    {user?.location && (
-                      <div className="flex items-center gap-2 text-[12px] font-normal text-[#6B7280] leading-[16px] font-[family-name:var(--font-poppins)]">
-                        <span>{user?.location}</span>
+                        {visibleRoles.length > 1 && (
+                          <span className="text-[12px] font-medium text-muted-foreground whitespace-nowrap bg-muted px-2 py-0.5 rounded-full border border-border">
+                            + {visibleRoles.length - 1} more
+                          </span>
+                        )}
                       </div>
-                    )}
-                    {user?.website && (
-                      <div className="flex items-center gap-2 text-[12px] font-normal text-[#6366F1] leading-[16px] font-[family-name:var(--font-poppins)] hover:underline">
-                        <a href={user.website} target="_blank" rel="noopener noreferrer">{user.website}</a>
-                      </div>
-                    )}
-                  </div>
-
-                  <ProfileIdentityChips initialIdentity={profileIdentity} />
+                    );
+                  })()}
                 </div>
 
-                <div className="hidden md:flex items-start gap-[24px] pt-0 shrink-0 w-[308px] h-[185px]">
-                  <div className="flex flex-col gap-4">
-                    {/* Latest Education/Experience display logic with refined styling */}
-                    {latestExperience && (
-                      <div onClick={scrollToExperience} className="flex items-center group cursor-pointer relative w-[260px] h-[40px] hover:bg-slate-50 rounded-xl transition-colors">
-                        <div className="flex items-center gap-[10px]">
-                          <div className="w-[56px] h-[40px] px-[16px] py-[8px] rounded-[24px] bg-[#E0E7FF] flex items-center justify-center flex-shrink-0">
-                            <Icon icon="hugeicons:job-search" className="w-6 h-6 text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[16px] font-normal text-[#000000] leading-[24px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestExperience.company_name}</span>
-                            <span className="text-[12px] font-normal text-[#6B7280] leading-[16px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestExperience.title}</span>
-                          </div>
+                <p className="text-[16px] font-normal text-foreground leading-[24px] font-[family-name:var(--font-poppins)] mb-4">
+                  {user?.headline}
+                </p>
+
+                <div className="flex flex-col gap-0.5 mb-4">
+                  {user?.location && (
+                    <div className="flex items-center gap-2 text-[12px] font-normal text-muted-foreground leading-[16px] font-[family-name:var(--font-poppins)]">
+                      <span>{user?.location}</span>
+                    </div>
+                  )}
+                  {user?.website && (
+                    <div className="flex items-center gap-2 text-[12px] font-normal text-primary leading-[16px] font-[family-name:var(--font-poppins)] hover:underline">
+                      <a href={user.website} target="_blank" rel="noopener noreferrer">{user.website}</a>
+                    </div>
+                  )}
+                </div>
+
+                <ProfileIdentityChips initialIdentity={profileIdentity} />
+              </div>
+
+              <div className="hidden md:flex items-start gap-[24px] pt-0 shrink-0 w-[308px] h-[185px]">
+                <div className="flex flex-col gap-4">
+                  {/* Latest Education/Experience display logic with refined styling */}
+                  {latestExperience && (
+                    <div onClick={scrollToExperience} className="flex items-center group cursor-pointer relative w-[260px] h-[40px] hover:bg-secondary/50 rounded-xl transition-colors">
+                      <div className="flex items-center gap-[10px]">
+                        <div className="w-[56px] h-[40px] px-[16px] py-[8px] rounded-[24px] bg-secondary flex items-center justify-center flex-shrink-0">
+                          <Icon icon="hugeicons:job-search" className="w-6 h-6 text-primary" style={{ strokeWidth: '1.5px' }} />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[16px] font-normal text-foreground leading-[24px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestExperience.company_name}</span>
+                          <span className="text-[12px] font-normal text-muted-foreground leading-[16px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestExperience.title}</span>
                         </div>
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    {latestEducation && (
-                      <div onClick={scrollToEducation} className="flex items-center group cursor-pointer relative w-[260px] h-[40px] hover:bg-slate-50 rounded-xl transition-colors">
-                        <div className="flex items-center gap-[10px]">
-                          <div className="w-[56px] h-[40px] px-[16px] py-[8px] rounded-[24px] bg-[#E0E7FF] flex items-center justify-center flex-shrink-0">
-                            <Icon icon="qlementine-icons:education-24" className="w-6 h-6 text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[16px] font-normal text-[#000000] leading-[24px] font-[family-name:var(--font-poppins)] truncate w-[180px]">
-                              {/* @ts-ignore */}
-                              {latestEducation.school_name || latestEducation.school || 'University'}
-                            </span>
-                            <span className="text-[12px] font-normal text-[#6B7280] leading-[16px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestEducation.degree}</span>
-                          </div>
+                  {latestEducation && (
+                    <div onClick={scrollToEducation} className="flex items-center group cursor-pointer relative w-[260px] h-[40px] hover:bg-secondary/50 rounded-xl transition-colors">
+                      <div className="flex items-center gap-[10px]">
+                        <div className="w-[56px] h-[40px] px-[16px] py-[8px] rounded-[24px] bg-secondary flex items-center justify-center flex-shrink-0">
+                          <Icon icon="qlementine-icons:education-24" className="w-6 h-6 text-primary" style={{ strokeWidth: '1.5px' }} />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[16px] font-normal text-foreground leading-[24px] font-[family-name:var(--font-poppins)] truncate w-[180px]">
+                            {/* @ts-ignore */}
+                            {latestEducation.school_name || latestEducation.school || 'University'}
+                          </span>
+                          <span className="text-[12px] font-normal text-muted-foreground leading-[16px] font-[family-name:var(--font-poppins)] truncate w-[180px]">{latestEducation.degree}</span>
                         </div>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                </div>
 
-                  <div className="ml-auto">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="flex items-center justify-center w-6 h-6 text-[#6366F1] outline-none border-none focus:outline-none">
-                          <Icon icon="ph:dots-three-outline-vertical-light" className="w-6 h-6" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="end"
-                        sideOffset={8}
-                        alignOffset={0}
-                        className="w-[180px] h-[136px] !rounded-tl-[24px] !rounded-tr-none !rounded-br-[24px] !rounded-bl-[24px] border border-[#C7D2FE] p-[8px] bg-[#FFFFFF] flex flex-col gap-1"
+                <div className="ml-auto">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center justify-center w-6 h-6 text-primary outline-none border-none focus:outline-none hover:bg-secondary rounded-full transition-colors">
+                        <Icon icon="ph:dots-three-outline-vertical-light" className="w-6 h-6" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      sideOffset={8}
+                      alignOffset={0}
+                      className="w-[180px] h-[136px] !rounded-tl-[24px] !rounded-tr-none !rounded-br-[24px] !rounded-bl-[24px] border border-border p-[8px] bg-card flex flex-col gap-1"
+                    >
+                      <DropdownMenuItem
+                        onClick={() => setIsEditProfileModalOpen(true)}
+                        className="flex items-center justify-between px-3 py-2 cursor-pointer focus:bg-primary focus:text-white rounded-xl outline-none group transition-colors"
                       >
-                        <DropdownMenuItem
-                          onClick={() => setIsEditProfileModalOpen(true)}
-                          className="flex items-center justify-between px-3 py-2 cursor-pointer focus:bg-[#6366F1] focus:text-white rounded-xl outline-none group transition-colors"
-                        >
-                          <span className="text-sm font-medium text-[#6B7280] group-focus:text-white">Edit profile</span>
-                          <Edit2 className="w-4 h-4 text-[#6B7280] group-focus:text-white transition-colors" />
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setIsShareModalOpen(true)}
-                          className="flex items-center justify-between px-3 py-2 cursor-pointer focus:bg-[#6366F1] focus:text-white rounded-xl outline-none group transition-colors"
-                        >
-                          <span className="text-sm font-medium text-[#6B7280] group-focus:text-white">Share profile</span>
-                          <Share2 className="w-4 h-4 text-[#6B7280] group-focus:text-white transition-colors" />
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            navigator.clipboard.writeText(window.location.href);
-                            toast.success("Profile link copied");
-                          }}
-                          className="flex items-center justify-between px-3 py-2 cursor-pointer focus:bg-[#6366F1] focus:text-white rounded-xl outline-none group transition-colors"
-                        >
-                          <span className="text-sm font-medium text-[#6B7280] group-focus:text-white">Copy profile</span>
-                          <Copy className="w-4 h-4 text-[#6B7280] group-focus:text-white transition-colors" />
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+                        <span className="text-sm font-medium text-foreground group-focus:text-white">Edit profile</span>
+                        <Edit2 className="w-4 h-4 text-foreground group-focus:text-white transition-colors" />
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setIsShareModalOpen(true)}
+                        className="flex items-center justify-between px-3 py-2 cursor-pointer focus:bg-primary focus:text-white rounded-xl outline-none group transition-colors"
+                      >
+                        <span className="text-sm font-medium text-foreground group-focus:text-white">Share profile</span>
+                        <Share2 className="w-4 h-4 text-foreground group-focus:text-white transition-colors" />
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          navigator.clipboard.writeText(window.location.href);
+                          toast.success("Profile link copied");
+                        }}
+                        className="flex items-center justify-between px-3 py-2 cursor-pointer focus:bg-primary focus:text-white rounded-xl outline-none group transition-colors"
+                      >
+                        <span className="text-sm font-medium text-foreground group-focus:text-white">Copy profile</span>
+                        <Copy className="w-4 h-4 text-foreground group-focus:text-white transition-colors" />
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </div>
 
             {/* About Section */}
             <div className="w-full px-4 md:pr-[16px] pb-[20px] md:pl-[40px] flex flex-col gap-[12px] mt-[16px]">
-              <h2 className="font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] text-[#000000]">About</h2>
+              <h2 className="font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] text-foreground">About</h2>
               <div className="relative w-full md:max-w-[904px]">
                 <p 
                   className={cn(
-                    "font-[family-name:var(--font-poppins)] font-normal text-[14px] md:text-[16px] leading-[20px] md:leading-[24px] text-[#000000] transition-all duration-300",
+                    "font-[family-name:var(--font-poppins)] font-normal text-[14px] md:text-[16px] leading-[20px] md:leading-[24px] text-foreground transition-all duration-300",
                     !isAboutExpanded && "line-clamp-3 md:line-clamp-2"
                   )}
                 >
@@ -969,7 +971,7 @@ export default function ProfilePage() {
                 {!isAboutExpanded && (user?.about?.length || 0) > 150 && (
                   <button 
                     onClick={() => setIsAboutExpanded(true)}
-                    className="absolute bottom-0 right-0 bg-white pl-2 text-slate-400 hover:text-[#6366F1] font-normal text-[14px] md:text-[16px] transition-colors"
+                    className="absolute bottom-0 right-0 bg-card pl-2 text-muted-foreground hover:text-primary font-normal text-[14px] md:text-[16px] transition-colors"
                   >
                     ....More
                   </button>
@@ -1002,7 +1004,7 @@ export default function ProfilePage() {
             >
               {/* Header */}
               <div className="flex items-center justify-between pt-4 pb-4 px-4 md:px-10">
-                <h2 className="text-[18px] leading-[26px] text-[#000000] font-medium font-[family-name:var(--font-poppins)]">Post</h2>
+                <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Post</h2>
                 {previewPosts.length > 3 && (
                   <button
                     onClick={() => {
@@ -1011,7 +1013,7 @@ export default function ProfilePage() {
                         document.getElementById('posts-section-top')?.scrollIntoView({ behavior: 'smooth' });
                       }
                     }}
-                    className="w-[78px] h-[36px] flex items-center justify-center px-4 py-2 border border-[#818CF8] rounded-[24px] bg-white text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-[#818CF8] whitespace-nowrap hover:bg-slate-50 transition-all duration-200"
+                    className="w-[78px] h-[36px] flex items-center justify-center px-4 py-2 border border-primary rounded-[24px] bg-card text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-primary whitespace-nowrap hover:bg-secondary transition-all duration-200"
                   >
                     {isPostsExpanded ? 'Show less' : 'See all'}
                   </button>
@@ -1046,14 +1048,14 @@ export default function ProfilePage() {
 
             {/* Skills Section */}
             <div 
-              className="w-full md:w-[960px] mx-auto bg-white mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
+              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between">
-                <h2 className="text-[18px] leading-[26px] text-[#000000] font-medium font-[family-name:var(--font-poppins)]">Skills</h2>
+                <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Skills</h2>
                 <button 
                   onClick={() => setIsAddSkillModalOpen(true)}
-                  className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-[#818CF8] bg-white flex items-center justify-center text-[#818CF8] hover:bg-slate-50 transition-all flex-shrink-0"
+                  className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-primary bg-card flex items-center justify-center text-primary hover:bg-secondary transition-all flex-shrink-0"
                 >
                   <Plus className="w-5 h-5" />
                 </button>
@@ -1080,14 +1082,14 @@ export default function ProfilePage() {
             {/* Experience Section */}
             <div 
               id="experience-section"
-              className="w-full md:w-[960px] mx-auto bg-white mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
+              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between">
-                <h2 className="text-[18px] leading-[26px] text-[#000000] font-medium font-[family-name:var(--font-poppins)]">Experience</h2>
+                <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Experience</h2>
                 <button 
                   onClick={() => { setEditingExperience(null); setIsAddExperienceModalOpen(true); }}
-                  className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-[#818CF8] bg-white flex items-center justify-center text-[#818CF8] hover:bg-slate-50 transition-all flex-shrink-0"
+                  className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-primary bg-card flex items-center justify-center text-primary hover:bg-secondary transition-all flex-shrink-0"
                 >
                   <Plus className="w-5 h-5" />
                 </button>
@@ -1108,14 +1110,14 @@ export default function ProfilePage() {
             {/* Education Section */}
             <div 
               id="education-section" 
-              className="w-full md:w-[960px] mx-auto bg-white mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
+              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between">
-                <h2 className="text-[18px] leading-[26px] text-[#000000] font-medium font-[family-name:var(--font-poppins)]">Education</h2>
+                <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Education</h2>
                 <button 
                   onClick={() => { setEditingEducation(null); setIsAddEducationModalOpen(true); }}
-                  className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-[#818CF8] bg-white flex items-center justify-center text-[#818CF8] hover:bg-slate-50 transition-all flex-shrink-0"
+                  className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-primary bg-card flex items-center justify-center text-primary hover:bg-secondary transition-all flex-shrink-0"
                 >
                   <Plus className="w-5 h-5" />
                 </button>

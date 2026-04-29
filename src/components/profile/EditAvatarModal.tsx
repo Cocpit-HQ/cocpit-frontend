@@ -140,20 +140,20 @@ export function EditAvatarModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-none sm:max-w-[600px] h-[100dvh] sm:h-auto w-full [&>button]:hidden outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
-        <div className="relative bg-white rounded-none sm:rounded-[24px] p-4 sm:p-[32px] w-full h-full sm:h-auto shadow-sm flex flex-col outline-none overflow-y-auto overflow-x-hidden">
+        <div className="relative bg-card rounded-none sm:rounded-[24px] p-4 sm:p-[32px] w-full h-full sm:h-auto shadow-sm flex flex-col outline-none overflow-y-auto overflow-x-hidden">
           
           {/* Mobile Header */}
-          <div className="sm:hidden flex items-center justify-between mb-8 sticky top-0 bg-white z-20 pt-2 pb-4">
-            <button onClick={onClose} className="p-2 -ml-2 text-black hover:bg-gray-100 rounded-full transition-colors">
+          <div className="sm:hidden flex items-center justify-between mb-8 sticky top-0 bg-card z-20 pt-2 pb-4">
+            <button onClick={onClose} className="p-2 -ml-2 text-foreground hover:bg-secondary rounded-full transition-colors">
               <Icon icon="hugeicons:arrow-left-01" className="w-6 h-6" />
             </button>
-            <DialogTitle className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-black m-0 p-0">
+            <DialogTitle className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-foreground m-0 p-0">
               Profile image
             </DialogTitle>
             <button 
               onClick={handleSave}
               disabled={isUploading || isDeleting || (!previewUrl && !currentAvatarUrl)}
-              className="px-4 py-1.5 rounded-full bg-[#EEF2FF] text-[#6366F1] font-medium text-[14px] disabled:opacity-50 transition-all"
+              className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all"
             >
               {isUploading ? "..." : "Save"}
             </button>
@@ -162,16 +162,16 @@ export function EditAvatarModal({
           {/* Desktop Header */}
           <button 
               onClick={onClose}
-              className="hidden sm:block absolute top-6 right-6 p-1 text-[#F87171] hover:bg-red-50 rounded-full transition-colors z-10"
+              className="hidden sm:block absolute top-6 right-6 p-1 text-destructive hover:bg-destructive/10 rounded-full transition-colors z-10"
           >
               <X className="w-6 h-6" strokeWidth={1.5} />
           </button>
 
           <div className="hidden sm:block text-center mb-6 relative px-4">
-              <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-[#000000] mb-1">
+              <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-foreground mb-1">
                 Profile image
               </DialogTitle>
-              <p className="text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280]">
+              <p className="text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
                 Square image works best for profile display
               </p>
           </div>
@@ -179,32 +179,32 @@ export function EditAvatarModal({
           <div className="flex justify-center items-center gap-4 mb-6">
             <button 
               onClick={() => setFlipV(!flipV)}
-              className={cn("p-1.5 rounded-md transition-colors", flipV ? "bg-[#6366F1] text-white" : "text-[#000000] hover:bg-gray-100")}
+              className={cn("p-1.5 rounded-md transition-colors", flipV ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
             >
               <Icon icon="hugeicons:flip-top" className="w-6 h-6" />
             </button>
             <button 
               onClick={() => setFlipH(!flipH)}
-              className={cn("p-1.5 rounded-md transition-colors", flipH ? "bg-[#6366F1] text-white" : "text-[#000000] hover:bg-gray-100")}
+              className={cn("p-1.5 rounded-md transition-colors", flipH ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
             >
               <Icon icon="hugeicons:flip-left" className="w-6 h-6" />
             </button>
             <button 
               onClick={() => setRotation((prev) => (prev + 90) % 360)}
-              className="p-1.5 text-[#000000] hover:bg-gray-100 rounded-md transition-colors"
+              className="p-1.5 text-foreground hover:bg-secondary rounded-md transition-colors"
             >
               <Icon icon="wordpress:rotate-left" className="w-6 h-6" />
             </button>
             <button 
               onClick={handleDelete}
               disabled={isDeleting || !currentAvatarUrl}
-              className="p-1.5 text-[#F87171] hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+              className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-50"
             >
               {isDeleting ? <Loader2 className="w-6 h-6 animate-spin" strokeWidth={1.5} /> : <Trash2 className="w-6 h-6" strokeWidth={1.5} />}
             </button>
           </div>
 
-          <div className="w-[240px] h-[240px] mx-auto relative overflow-hidden bg-gray-100 rounded-md cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+          <div className="w-[240px] h-[240px] mx-auto relative overflow-hidden bg-muted rounded-md cursor-pointer" onClick={() => fileInputRef.current?.click()}>
              <img
               src={displayUrl}
               alt="Current Profile"
@@ -219,14 +219,14 @@ export function EditAvatarModal({
           </div>
 
           <div className="mt-auto sm:mt-8 max-w-[400px] mx-auto w-full px-4 sm:px-0">
-            <p className="text-[14px] font-medium text-[#000000] mb-3">Zoom</p>
+            <p className="text-[14px] font-medium text-foreground mb-3">Zoom</p>
             <input 
               type="range" 
               min="0" 
               max="100" 
               value={zoom} 
               onChange={(e) => setZoom(Number(e.target.value))}
-              className="w-full h-1.5 bg-[#EEF2FF] rounded-full accent-[#6366F1] cursor-pointer"
+              className="w-full h-1.5 bg-secondary rounded-full accent-primary cursor-pointer"
             />
           </div>
 
@@ -236,14 +236,14 @@ export function EditAvatarModal({
                 variant="outline" 
                 onClick={onClose} 
                 disabled={isUploading || isDeleting}
-                className="w-[160px] h-[40px] rounded-[24px] border-[#818CF8] text-[#818CF8] hover:bg-[#EEF2FF] bg-transparent text-[14px]"
+                className="w-[160px] h-[40px] rounded-[24px] border-primary text-primary hover:bg-secondary bg-transparent text-[14px]"
               >
                 Cancel
               </Button>
               <Button 
                 onClick={handleSave}
                 disabled={isUploading || isDeleting || (!previewUrl && !currentAvatarUrl)}
-                className="w-[160px] h-[40px] rounded-[24px] bg-[#6366F1] text-white hover:bg-[#4F46E5] border-none text-[14px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground hover:opacity-90 border-none text-[14px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {isUploading ? "Saving..." : "Save"}
               </Button>

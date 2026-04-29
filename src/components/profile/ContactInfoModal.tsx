@@ -93,27 +93,27 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[500px] [&>button]:hidden outline-none">
-                <div className="relative bg-white rounded-[24px] p-[24px] pt-[32px] w-full shadow-sm flex flex-col outline-none">
+                <div className="relative bg-card rounded-[24px] p-[24px] pt-[32px] w-full shadow-sm flex flex-col outline-none">
                     <button 
                         onClick={onClose}
-                        className="absolute top-6 right-6 p-1 text-[#F87171] hover:bg-red-50 rounded-full transition-colors z-10"
+                        className="absolute top-6 right-6 p-1 text-destructive hover:bg-destructive/10 rounded-full transition-colors z-10"
                     >
                         <X className="w-5 h-5" />
                     </button>
 
                     <div className="text-center mb-8 relative px-4">
-                        <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-[#000000] mb-1">Contact info</DialogTitle>
-                        <p className="text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280]">Your contact details for professional connections</p>
+                        <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-foreground mb-1">Contact info</DialogTitle>
+                        <p className="text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">Your contact details for professional connections</p>
                     </div>
 
                     <div className="space-y-6 px-4 pb-4">
                         {/* Email */}
                         <div className="flex items-start gap-4">
-                            <Mail className="w-6 h-6 text-[#6366F1] mt-0.5" strokeWidth={1.5} />
+                            <Mail className="w-6 h-6 text-primary mt-0.5" strokeWidth={1.5} />
                             <div className="flex-1 flex flex-col gap-1">
-                                <p className="text-[16px] font-medium text-[#000000]">Email</p>
+                                <p className="text-[16px] font-medium text-foreground">Email</p>
                                 <div className="flex items-center justify-between group h-5">
-                                    <a href={`mailto:${user.email}`} className="text-[#6B7280] text-[14px] font-normal break-all">
+                                    <a href={`mailto:${user.email}`} className="text-muted-foreground text-[14px] font-normal break-all">
                                         {user.email || 'Not provided'}
                                     </a>
                                     {user.email && (
@@ -132,11 +132,11 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
 
                         {/* Phone */}
                         <div className="flex items-start gap-4">
-                            <Phone className="w-6 h-6 text-[#6366F1] mt-0.5" strokeWidth={1.5} />
+                            <Phone className="w-6 h-6 text-primary mt-0.5" strokeWidth={1.5} />
                             <div className="flex-1 flex flex-col gap-1">
-                                <p className="text-[16px] font-medium text-[#000000]">Phone</p>
+                                <p className="text-[16px] font-medium text-foreground">Phone</p>
                                 <div className="flex items-center justify-between group h-5">
-                                    <span className="text-[#6B7280] text-[14px] font-normal">
+                                    <span className="text-muted-foreground text-[14px] font-normal">
                                         {user.mobile_number || 'Not provided'}
                                     </span>
                                     {user.mobile_number && (
@@ -155,14 +155,14 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
 
                         {/* Profile Link */}
                         <div className="flex items-start gap-4">
-                            <LinkIcon className="w-6 h-6 text-[#6366F1] mt-0.5" strokeWidth={1.5} />
+                            <LinkIcon className="w-6 h-6 text-primary mt-0.5" strokeWidth={1.5} />
                             <div className="flex-1 flex flex-col gap-1">
                                 <div className="flex items-center gap-2 h-6">
-                                    <p className="text-[16px] font-medium text-[#000000]">Profile URL</p>
+                                    <p className="text-[16px] font-medium text-foreground">Profile URL</p>
                                     {isOwnProfile && !isEditingUrl && (
                                         <button
                                             onClick={handleStartEdit}
-                                            className="p-1 rounded-md text-[#000000] hover:text-[#6366F1] hover:bg-slate-50 transition-all"
+                                            className="p-1 rounded-md text-foreground hover:text-primary hover:bg-secondary transition-all"
                                             title="Edit profile URL"
                                         >
                                             <Pencil className="w-4 h-4" strokeWidth={1.5} />
@@ -173,15 +173,15 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
                                 {isEditingUrl ? (
                                     <div className="space-y-3 mt-1">
                                         <div className="flex items-center gap-1.5">
-                                            <span className="text-[14px] text-[#6B7280] whitespace-nowrap">/profile/</span>
+                                            <span className="text-[14px] text-muted-foreground whitespace-nowrap">/profile/</span>
                                             <div className="relative flex-1">
                                                 <input
                                                     type="text"
                                                     value={usernameInput}
                                                     onChange={(e) => handleUsernameChange(e.target.value)}
-                                                    className={`w-full text-[14px] px-2.5 py-1.5 rounded-[8px] border bg-white text-[#000000] outline-none transition-colors ${usernameStatus === 'available' ? 'border-green-500 focus:border-green-500' :
+                                                    className={`w-full text-[14px] px-2.5 py-1.5 rounded-[8px] border bg-card text-foreground outline-none transition-colors ${usernameStatus === 'available' ? 'border-green-500 focus:border-green-500' :
                                                             usernameStatus === 'taken' || usernameStatus === 'invalid' ? 'border-red-500 focus:border-red-500' :
-                                                                'border-[#E5E7EB] focus:border-[#6366F1]'
+                                                                'border-border focus:border-primary'
                                                         }`}
                                                     autoFocus
                                                     placeholder="your_username"
@@ -206,7 +206,7 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
                                                 size="sm"
                                                 onClick={handleSave}
                                                 disabled={isSaving || (usernameStatus !== 'available' && usernameInput !== currentUsername)}
-                                                className="h-[32px] px-4 rounded-[16px] text-[12px] bg-[#6366F1] text-white hover:bg-[#4F46E5] border-none shadow-none"
+                                                className="h-[32px] px-4 rounded-[16px] text-[12px] bg-primary text-primary-foreground hover:opacity-90 border-none shadow-none"
                                             >
                                                 {isSaving ? 'Saving...' : 'Save'}
                                             </Button>
@@ -214,7 +214,7 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
                                                 size="sm"
                                                 variant="outline"
                                                 onClick={() => setIsEditingUrl(false)}
-                                                className="h-[32px] px-4 rounded-[16px] text-[12px] border-[#818CF8] text-[#818CF8] hover:bg-[#EEF2FF] bg-transparent"
+                                                className="h-[32px] px-4 rounded-[16px] text-[12px] border-primary text-primary hover:bg-secondary bg-transparent"
                                             >
                                                 Cancel
                                             </Button>
@@ -222,7 +222,7 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
                                     </div>
                                 ) : (
                                     <div className="flex items-center justify-between group h-5 mt-1">
-                                        <a href={profileUrl} className="text-[#6366F1] text-[14px] font-normal break-all line-clamp-1">
+                                        <a href={profileUrl} className="text-primary text-[14px] font-normal break-all line-clamp-1">
                                             {profileUrl}
                                         </a>
                                         <Button
