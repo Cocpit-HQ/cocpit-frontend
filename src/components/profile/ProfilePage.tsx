@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Menu, LogOut, Edit2, CheckCircle, GraduationCap, Briefcase, Pencil, Plus, Building2, FileText, Copy, ChevronDown } from "lucide-react"
+import { Menu, LogOut, Edit2, CheckCircle, GraduationCap, Briefcase, Pencil, Plus, Building2, FileText, Copy, ChevronDown, User } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 import { Icon } from "@iconify/react"
@@ -58,6 +58,7 @@ import { ViewAvatarModal } from "@/components/profile/ViewAvatarModal"
 import { EditAvatarModal } from "@/components/profile/EditAvatarModal"
 import EditCoverPhoto from "@/components/profile/EditCoverPhoto"
 import { ProfileSkeleton } from "@/components/profile/ProfileSkeleton"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { EditableExperienceItem } from "@/components/profile/parts/EditableExperienceItem"
 import { EditableEducationItem } from "@/components/profile/parts/EditableEducationItem"
 import { ContactInfoModal } from "@/components/profile/ContactInfoModal"
@@ -251,25 +252,93 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
       </div>
     </div>
 
-      <div className="px-4 py-1">
-        <p className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)] line-clamp-2">
-          {localPost.content || "No content available"}
+      <div className="px-4 py-2 h-[48px] overflow-hidden">
+        <p className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)] line-clamp-1">
+          {(() => {
+            const content = localPost.content || "";
+            return content.split(/(@\[[^\]]+\]\([^)]+\)|#\w+)/g).map((part, i) => {
+              if (part.startsWith('#')) {
+                return <span key={i} className="text-[#6366F1] hover:underline cursor-pointer">{part}</span>;
+              }
+              const mentionMatch = part.match(/@\[([^\]]+)\]\(([^)]+)\)/);
+              if (mentionMatch) {
+                return <span key={i} className="text-[#6366F1] font-medium hover:underline cursor-pointer">{mentionMatch[1]}</span>;
+              }
+              return part;
+            });
+          })()}
         </p>
         <p className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] mt-1">
           {localPost.timeAgo || "Just now"}
         </p>
       </div>
 
-      {/* Image Section */}
-      <div className="px-0 flex-1 min-h-0">
-        <div className="w-full h-full bg-slate-50 overflow-hidden relative border-y border-slate-100/50">
-          {image ? (
+      {/* Content Section */}
+      <div className="px-0 h-[300px] flex-shrink-0">
+        <div className="w-full h-full bg-white overflow-hidden relative border-y border-slate-100/50">
+          {/* Shared Post (Repost) */}
+          {localPost.shared_post ? (
+            <div className="p-4 h-full bg-slate-50 flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <Avatar className="w-6 h-6">
+                  <AvatarImage src={localPost.shared_post.authorAvatar || "/assets/profilephoto.png"} />
+                  <AvatarFallback><User className="w-3 h-3" /></AvatarFallback>
+                </Avatar>
+                <span className="text-[11px] font-semibold text-slate-900 truncate">
+                  {localPost.shared_post.author}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-700 line-clamp-3">
+                {localPost.shared_post.content}
+              </p>
+              {localPost.shared_post.imageSrc && (
+                <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-slate-200">
+                  <img src={localPost.shared_post.imageSrc} alt="Shared content" className="w-full h-full object-cover" />
+                </div>
+              )}
+            </div>
+          ) : localPost.poll ? (
+            /* Poll Section */
+            <div className="p-4 h-full flex flex-col gap-3 justify-center">
+              <p className="text-[12px] font-semibold text-slate-900 mb-1">{localPost.poll.total_votes || 0} votes</p>
+              <div className="space-y-2">
+                {localPost.poll.options.map((option, idx) => {
+                  const percentage = localPost.poll!.total_votes > 0 
+                    ? Math.round((option.vote_count / localPost.poll!.total_votes) * 100) 
+                    : 0;
+                  return (
+                    <div key={option.option_id} className="relative h-9 w-full bg-slate-50 border border-slate-200 rounded-lg overflow-hidden group">
+                      <div 
+                        className="absolute inset-y-0 left-0 bg-[#6366F1]/10 transition-all duration-500" 
+                        style={{ width: `${percentage}%` }}
+                      />
+                      <div className="relative h-full flex items-center justify-between px-3 text-[11px]">
+                        <span className="font-medium text-slate-700">{option.option_text}</span>
+                        <span className="text-slate-400">{percentage}%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : localPost.category === 'Article' ? (
+             /* Article Section */
+             <div className="h-full flex flex-col">
+                {image && <img src={image} className="w-full h-40 object-cover" />}
+                <div className="p-4 flex-1 bg-white">
+                  <h3 className="text-sm font-bold text-slate-900 line-clamp-2 mb-2">{localPost.title || "Untitled Article"}</h3>
+                  <p className="text-[11px] text-slate-500 line-clamp-2">Click to read full article on Cocpit Insight</p>
+                </div>
+             </div>
+          ) : image ? (
+            /* Standard Image Post */
             <img
               src={image}
               alt="Post media"
               className="w-full h-full object-cover"
             />
           ) : (
+            /* Fallback Placeholder */
             <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
               <Icon icon="solar:gallery-linear" className="w-12 h-12 opacity-20" />
             </div>
@@ -287,7 +356,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
         </div>
 
         <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-5">
             <button 
               onClick={handleLike}
               className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group"
@@ -296,31 +365,31 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
                 icon={isLiked ? "solar:like-bold" : "solar:like-outline"} 
                 className={cn("w-[22px] h-[22px] group-active:scale-110 transition-transform", isLiked ? "text-[#6366F1]" : "text-[#000000]")} 
               />
-              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">{likesCount}</span>
+              <span className="text-[12px] leading-[1] text-[#000000] font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{likesCount}</span>
             </button>
             <button 
               onClick={() => setIsCommentModalOpen(true)}
               className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group"
             >
               <Icon icon="hugeicons:comment-01" className="w-[22px] h-[22px] text-[#000000] group-active:scale-110 transition-transform" />
-              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">{localPost.comments || 0}</span>
+              <span className="text-[12px] leading-[1] text-[#000000] font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{localPost.comments || 0}</span>
             </button>
             <button 
               onClick={handleRepost}
               className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group"
             >
               <Icon icon="hugeicons:repost" className="w-[22px] h-[22px] text-[#000000] group-active:scale-110 transition-transform" />
-              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">{localPost.shares || 0}</span>
+              <span className="text-[12px] leading-[1] text-[#000000] font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{localPost.shares || 0}</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-5">
             <button 
               onClick={handleShare}
               className="flex items-center gap-1.5 hover:text-[#6366F1] transition-colors group"
             >
               <Icon icon="fluent:share-32-regular" className="w-[22px] h-[22px] text-[#000000] group-active:scale-110 transition-transform" />
-              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">{localPost.shares || 0}</span>
+              <span className="text-[12px] leading-[1] text-[#000000] font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{localPost.shares || 0}</span>
             </button>
             <button 
               onClick={handleBookmark}
@@ -330,7 +399,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
                 icon={isSaved ? "solar:bookmark-bold" : "solar:bookmark-outline"} 
                 className={cn("w-[22px] h-[22px] group-active:scale-110 transition-transform", isSaved ? "text-[#6366F1]" : "text-[#000000]")} 
               />
-              <span className="text-[12px] leading-[16px] text-[#000000] font-normal font-[family-name:var(--font-poppins)]">0</span>
+              <span className="text-[12px] leading-[1] text-[#000000] font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">0</span>
             </button>
           </div>
         </div>
