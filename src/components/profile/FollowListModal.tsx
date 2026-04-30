@@ -368,17 +368,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                                     )}
                                     {type === 'followers' && (
                                         <div className="flex items-center gap-3">
-                                            {user.is_following_back ? (
-                                                <button 
-                                                    className="text-[14px] font-medium text-primary hover:opacity-80 font-[family-name:var(--font-poppins)]"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        handleRemoveFollower(id, user.full_name);
-                                                    }}
-                                                >
-                                                    Remove follower
-                                                </button>
-                                            ) : (
+                                            {!user.is_following_back && (
                                                 <button 
                                                     className="h-[36px] px-6 bg-primary text-primary-foreground text-[14px] font-medium rounded-full hover:opacity-90 transition-all shadow-sm font-[family-name:var(--font-poppins)]"
                                                     onClick={(e) => {
@@ -389,6 +379,17 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                                                     Follow back
                                                 </button>
                                             )}
+                                            
+                                            <button 
+                                                className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-full transition-all"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    handleRemoveFollower(id, user.full_name);
+                                                }}
+                                                title="Remove follower"
+                                            >
+                                                <X className="w-5 h-5" />
+                                            </button>
                                         </div>
                                     )}
                                     {type === 'connections' && (

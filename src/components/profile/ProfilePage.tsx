@@ -752,8 +752,13 @@ export default function ProfilePage() {
                 </div>
 
 
-                <div className="hidden md:flex flex-col items-end mt-16 pr-[16px]">
-                  {/* Space reserved for alignment */}
+                <div className="hidden md:flex flex-col items-end mt-12 pr-[16px]">
+                  <button 
+                    onClick={() => setIsContactInfoModalOpen(true)}
+                    className="text-[14px] font-medium text-muted-foreground hover:text-primary transition-colors font-[family-name:var(--font-poppins)]"
+                  >
+                    Contact Info
+                  </button>
                 </div>
               </div>
 
