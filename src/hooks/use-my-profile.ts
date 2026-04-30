@@ -1,5 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
     getProfile,
     addExperience,
@@ -11,7 +12,11 @@ import {
     addSkills,
     deleteSkill,
     uploadAvatar,
-    deleteAvatar
+    deleteAvatar,
+    updateProfile,
+    updateIdentity,
+    uploadResume,
+    deleteResume,
 } from "@/services/api/profile";
 import {
     UserData,
@@ -21,9 +26,25 @@ import {
     AddEducationPayload,
     AddSkillsPayload
 } from "@/types/user";
-import { Experience, Education } from "@/types/entities";
+import { Education, ExperienceGroup } from "@/types/entities";
 
-// --- Query --
+// ─── Cache helper (used only for optimistic remove) ───────────────────────────
+
+/** Removes a single experience from its group; removes the group if it becomes empty */
+function removeExperienceFromGroups(
+    groups: ExperienceGroup[],
+    id: string
+): ExperienceGroup[] {
+    return groups
+        .map(g => ({
+            ...g,
+            experiences: g.experiences.filter(e => e.experience_id !== id),
+        }))
+        .filter(g => g.experiences.length > 0);
+}
+
+// ─── Query ────────────────────────────────────────────────────────────────────
+
 export function useMyProfile() {
     return useQuery({
         queryKey: ["my-profile"],
@@ -35,51 +56,62 @@ export function useMyProfile() {
     });
 }
 
-// --- Mutations ---
+// ─── Mutations ────────────────────────────────────────────────────────────────
 
 export function useExperienceMutations() {
     const queryClient = useQueryClient();
 
     const add = useMutation({
         mutationFn: (payload: AddExperiencePayload) => addExperience(payload),
-        onSuccess: (newItem) => {
-            queryClient.setQueryData(["my-profile"], (old: UserProfile | undefined) => {
-                if (!old) return old;
-                return {
-                    ...old,
-                    experiences: [...old.experiences, newItem.experience]
-                };
-            });
-        }
+        onSuccess: () => {
+            // Always refetch so the backend's consecutive groupByCompany logic
+            // determines the correct group structure — client can't replicate this.
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+        },
     });
 
     const update = useMutation({
         mutationFn: ({ id, payload }: { id: string; payload: Partial<AddExperiencePayload> }) =>
             updateExperience(id, payload),
-        onSuccess: (updatedItem) => {
-            queryClient.setQueryData(["my-profile"], (old: UserProfile | undefined) => {
-                if (!old) return old;
-                return {
-                    ...old,
-                    experiences: old.experiences.map(exp =>
-                        exp.experience_id === updatedItem.experience.experience_id ? updatedItem.experience : exp
-                    )
-                };
-            });
-        }
+        onSuccess: () => {
+            // Refetch so group recalculation is server-authoritative.
+            // Updating a role's company_name or dates can change which group it
+            // belongs to — manual patching cannot handle that correctly.
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+        },
+        onError: () => {
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+        },
     });
 
     const remove = useMutation({
         mutationFn: (id: string) => deleteExperience(id),
-        onSuccess: (_, id) => {
+        onMutate: async (id: string) => {
+            // Optimistic removal is safe — deleting a role can only shrink or
+            // eliminate a group, never create or reorder groups.
+            await queryClient.cancelQueries({ queryKey: ["my-profile"] });
+            const previous = queryClient.getQueryData<UserProfile>(["my-profile"]);
             queryClient.setQueryData(["my-profile"], (old: UserProfile | undefined) => {
                 if (!old) return old;
                 return {
                     ...old,
-                    experiences: old.experiences.filter(exp => exp.experience_id !== id)
+                    experiences: removeExperienceFromGroups(old.experiences, id),
                 };
             });
-        }
+            return { previous };
+        },
+        onError: (_err, _vars, context: any) => {
+            if (context?.previous) {
+                queryClient.setQueryData(["my-profile"], context.previous);
+            }
+        },
+        onSettled: () => {
+            // Always confirm final state from server after delete
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+        },
     });
 
     return { add, update, remove };
@@ -141,7 +173,6 @@ export function useSkillMutations() {
         onSuccess: (response) => {
             queryClient.setQueryData(["my-profile"], (old: UserProfile | undefined) => {
                 if (!old) return old;
-                // response.skills is the list of ADDED skills. Merge them.
                 return {
                     ...old,
                     skills: [...old.skills, ...response.skills]
@@ -193,6 +224,80 @@ export function useAvatarMutations() {
                 };
             });
         }
+    });
+
+    return { upload, remove };
+}
+
+// ─── Profile Update (core fields + identity) ──────────────────────────────────
+
+export function useProfileMutation() {
+    const queryClient = useQueryClient();
+
+    const update = useMutation({
+        mutationFn: async (payload: any) => {
+            await updateProfile({
+                full_name: payload.name,
+                headline: payload.headline,
+                location: payload.location,
+                about_text: payload.about,
+                account_name: payload.account_name,
+                job_title: payload.job_title || "",
+                company_name: payload.company_name || "",
+                school: payload.school || "",
+                degree: payload.degree || "",
+                website: payload.website || "",
+                visible_role_ids: payload.visible_role_ids,
+            });
+            await updateIdentity({
+                open_to: Array.isArray(payload.open_to) ? payload.open_to[0] : payload.open_to,
+                availability: Array.isArray(payload.availability) ? payload.availability[0] : payload.availability,
+                work_preference: Array.isArray(payload.work_preference) ? payload.work_preference[0] : payload.work_preference,
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            queryClient.invalidateQueries({ queryKey: ["profile-identity"] });
+            toast.success("Profile updated successfully");
+        },
+    });
+
+    return update;
+}
+
+// ─── Resume ───────────────────────────────────────────────────────────────────
+
+export function useResumeMutations() {
+    const queryClient = useQueryClient();
+
+    const upload = useMutation({
+        mutationFn: (formData: FormData) => uploadResume(formData),
+        onSuccess: (response) => {
+            queryClient.setQueryData(["my-profile"], (old: UserProfile | undefined) => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    resume: {
+                        originalName: response.resume.originalName,
+                        url: response.resume.url,
+                    },
+                };
+            });
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            toast.success("Resume uploaded successfully");
+        },
+    });
+
+    const remove = useMutation({
+        mutationFn: () => deleteResume(),
+        onSuccess: () => {
+            queryClient.setQueryData(["my-profile"], (old: UserProfile | undefined) => {
+                if (!old) return old;
+                return { ...old, resume: null };
+            });
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            toast.success("Resume deleted successfully");
+        },
     });
 
     return { upload, remove };

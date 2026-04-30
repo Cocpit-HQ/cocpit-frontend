@@ -32,7 +32,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import AddExperienceForm from "@/components/profile/AddExperienceForm"
+import AddExperienceForm, { type SavedRole } from "@/components/profile/AddExperienceForm"
 import AddEducationForm from "@/components/profile/AddEducationForm"
 import { SkillModal } from "@/components/profile/SkillModal"
 import type { Experience, Education } from "@/types/entities"
@@ -60,6 +60,7 @@ import EditCoverPhoto from "@/components/profile/EditCoverPhoto"
 import { ProfileSkeleton } from "@/components/profile/ProfileSkeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { EditableExperienceItem } from "@/components/profile/parts/EditableExperienceItem"
+import { EditableExperienceGroup } from "@/components/profile/parts/EditableExperienceGroup"
 import { EditableEducationItem } from "@/components/profile/parts/EditableEducationItem"
 import { ContactInfoModal } from "@/components/profile/ContactInfoModal"
 import { FollowListModal } from "@/components/profile/FollowListModal"
@@ -68,7 +69,7 @@ import { useQuery } from "@tanstack/react-query"
 import { ProfileSwitcher } from "@/components/layout/ProfileSwitcher"
 
 import { EditProfileModal } from "@/components/profile/parts/EditProfileModal"
-import { useMyProfile, useExperienceMutations, useEducationMutations, useSkillMutations, useAvatarMutations, useProfileMutation } from "@/components/profile/hooks/use-my-profile"
+import { useMyProfile, useExperienceMutations, useEducationMutations, useSkillMutations, useAvatarMutations, useProfileMutation } from "@/hooks/use-my-profile"
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -458,6 +459,7 @@ export default function ProfilePage() {
   const [isContactInfoModalOpen, setIsContactInfoModalOpen] = useState(false);
   const [isFollowListModalOpen, setIsFollowListModalOpen] = useState(false);
   const [activeFollowTab, setActiveFollowTab] = useState<"followers" | "following" | "connections">("followers");
+  const [isSavingExperience, setIsSavingExperience] = useState(false);
 
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
@@ -490,6 +492,14 @@ export default function ProfilePage() {
   const { logout } = useAuth();
 
   const experiences = useMemo(() => profileData?.experiences || [], [profileData]);
+  // Flat list sorted descending by start_date — used for display, LivingResume, SkillProofPill, and cross-session validation
+  const flatExperiences = useMemo(
+    () =>
+      experiences
+        .flatMap((g) => g.experiences)
+        .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime()),
+    [experiences]
+  );
   const educations = useMemo(() => profileData?.educations || [], [profileData]);
   const skills = useMemo(() => profileData?.skills || [], [profileData]);
 
@@ -596,33 +606,77 @@ export default function ProfilePage() {
     }
   }, [skills, skillMutations.remove]);
 
-  const handleSaveExperience = async (data: Partial<Experience>) => {
-    if (editingExperience) {
-      await expMutations.update.mutateAsync({
-        id: editingExperience.experience_id,
-        payload: {
-          title: data.title,
-          company_name: data.company_name,
-          location: data.location,
-          start_date: data.start_date,
-          end_date: data.end_date,
-          is_current: !data.end_date,
-          description: data.description,
+  const handleSaveExperience = async (roles: SavedRole[]) => {
+    setIsSavingExperience(true);
+    try {
+      let previousRoleId: string | undefined = undefined;
+
+      for (const role of roles) {
+        let currentSavedId = role.experience_id;
+
+        if (role.experience_id) {
+          // Update existing role
+          await expMutations.update.mutateAsync({
+            id: role.experience_id,
+            payload: {
+              title: role.title,
+              company_name: role.company_name,
+              location: role.location,
+              work_type: role.work_type,
+              work_mode: role.work_mode,
+              start_date: role.start_date,
+              end_date: role.end_date,
+              is_current: role.is_current,
+              description: role.description,
+              org_id: role.org_id,
+            },
+          });
+        } else {
+          // Create new role
+          const res = await expMutations.add.mutateAsync({
+            title: role.title,
+            company_name: role.company_name,
+            location: role.location,
+            work_type: role.work_type,
+            work_mode: role.work_mode,
+            start_date: role.start_date,
+            end_date: role.end_date,
+            is_current: role.is_current,
+            description: role.description ?? null,
+            org_id: role.org_id,
+          });
+          // Track ID of newly created role so next role can end it if needed
+          currentSavedId = (res as any)?.experience?.experience_id || currentSavedId;
         }
-      });
-    } else {
-      await expMutations.add.mutateAsync({
-        title: data.title!,
-        company_name: data.company_name!,
-        location: data.location!,
-        start_date: data.start_date!,
-        end_date: data.end_date!,
-        is_current: !data.end_date,
-        description: data.description!,
-      });
+
+        // If user checked "End current role", patch the previous role's end_date
+        if (role.shouldEndPreviousRole) {
+          // Use explicitly passed ID (from index 0) OR the tracked ID of the previous role in loop
+          const idToEnd = role.experienceIdToEnd || previousRoleId || editingExperience?.experience_id;
+          
+          if (idToEnd) {
+            await expMutations.update.mutateAsync({
+              id: idToEnd,
+              payload: {
+                end_date: role.start_date, // previous role ends when new one starts
+                is_current: false,
+              },
+            });
+          }
+        }
+        
+        previousRoleId = currentSavedId;
+      }
+      setIsAddExperienceModalOpen(false);
+      setEditingExperience(null);
+      toast.success("Experience saved");
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "Failed to save experience. Please try again."
+      );
+    } finally {
+      setIsSavingExperience(false);
     }
-    setIsAddExperienceModalOpen(false);
-    setEditingExperience(null);
   };
 
   const handleDeleteExperience = async (id: string) => {
@@ -672,7 +726,7 @@ export default function ProfilePage() {
   };
 
   const latestEducation = user?.latest_education || educations[0] || null;
-  const latestExperience = experiences[0] || null;
+  const latestExperience = flatExperiences[0] || null;
 
   const scrollToEducation = () => {
     document.getElementById("education-section")?.scrollIntoView({ behavior: "smooth" });
@@ -994,10 +1048,10 @@ export default function ProfilePage() {
 
             {/* Living Resume Section */}
             <div className="mt-[16px]">
-              <LivingResume 
-                experiences={experiences} 
-                skills={skills.map(s => s.name)} 
-                resumeName={profileData?.resume?.originalName} 
+              <LivingResume
+                experiences={flatExperiences}
+                skills={skills.map(s => s.name)}
+                resumeName={profileData?.resume?.originalName}
                 resumeUrl={profileData?.resume?.url}
               />
             </div>
@@ -1075,7 +1129,7 @@ export default function ProfilePage() {
                     <SkillProofPill
                       key={skill.skill_id || `skill-${index}`}
                       skill={skillName}
-                      experiences={experiences}
+                      experiences={flatExperiences}
                       posts={previewPosts}
                       onDelete={handleDeleteSkill}
                     />
@@ -1100,13 +1154,16 @@ export default function ProfilePage() {
                 </button>
               </div>
 
-              {/* Experience List */}
+              {/* Experience List — grouped by company */}
               <div className="flex flex-col gap-[32px]">
-                {experiences.map((exp, index) => (
-                  <EditableExperienceItem
-                    key={`${exp.experience_id}-${index}`}
-                    experience={exp}
-                    onEdit={() => { setEditingExperience(exp); setIsAddExperienceModalOpen(true); }}
+                {experiences.map((group, gIdx) => (
+                  <EditableExperienceGroup
+                    key={`${group.company_name}-${gIdx}`}
+                    group={group}
+                    onEdit={(exp) => {
+                      setEditingExperience(exp);
+                      setIsAddExperienceModalOpen(true);
+                    }}
                   />
                 ))}
               </div>
@@ -1165,9 +1222,18 @@ export default function ProfilePage() {
           <DialogDescription className="sr-only">Fill in the details to add a new experience record to your profile.</DialogDescription>
           <AddExperienceForm
             onSave={handleSaveExperience}
-            onCancel={() => setIsAddExperienceModalOpen(false)}
+            onCancel={() => {
+              setIsAddExperienceModalOpen(false);
+              setEditingExperience(null);
+            }}
             initialData={editingExperience}
-            onDelete={() => editingExperience && handleDeleteExperience(editingExperience.experience_id)}
+            onDelete={() =>
+              editingExperience &&
+              handleDeleteExperience(editingExperience.experience_id)
+            }
+            companyName={editingExperience?.company_name}
+            isSaving={isSavingExperience}
+            existingExperiences={flatExperiences}
           />
         </DialogContent>
       </Dialog>

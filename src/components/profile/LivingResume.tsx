@@ -5,7 +5,7 @@ import { Download, FileText, Upload, File, X, RefreshCw, Briefcase, Layers, Wren
 import { Icon } from "@iconify/react";
 import { Experience } from "@/types/entities";
 import { getResumeOverview } from "./ResumeOverview";
-import { useResumeMutations } from "./hooks/use-my-profile";
+import { useResumeMutations } from "@/hooks/use-my-profile";
 import {
   Dialog,
   DialogContent,

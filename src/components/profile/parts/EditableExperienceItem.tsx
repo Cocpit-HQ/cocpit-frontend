@@ -63,9 +63,13 @@ export function EditableExperienceItem({
                         <span>{experience.end_date ? formatDate(experience.end_date) : 'Present'}</span>
                     </div>
                     <div className="flex flex-wrap sm:flex-nowrap justify-end items-center gap-1">
-                        <span>{experience.employment_type || 'Full time'}</span>
-                        <span>-</span>
-                        <span>Remote</span>
+                        <span>{experience.work_type || '—'}</span>
+                        {experience.work_mode && (
+                          <>
+                            <span>-</span>
+                            <span>{experience.work_mode}</span>
+                          </>
+                        )}
                     </div>
                 </div>
                 <button 

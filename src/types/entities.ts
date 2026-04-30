@@ -16,14 +16,24 @@ export interface User {
 export interface Experience {
   experience_id: string;
   profile_id: string;
+  org_id: string | null;      // Link to organization
+  logo_url: string | null;    // Logo from linked organization
   title: string;
   company_name: string;
+  location: string;
+  work_type: string | null;
+  work_mode: string | null;
   start_date: string;
   end_date: string | null;
-  employment_type: string;
-  work_mode?: string;
-  location: string;
+  is_current: boolean;
   description: string | null;
+}
+
+/** Grouped structure returned by backend getExperiences() via groupByCompany() */
+export interface ExperienceGroup {
+  company_name: string;
+  logo_url: string | null;
+  experiences: Experience[];
 }
 
 export interface Education {
