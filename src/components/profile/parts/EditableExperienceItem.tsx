@@ -24,9 +24,9 @@ export function EditableExperienceItem({
         <div className="flex gap-3 sm:gap-4 group relative w-full items-start">
             {/* Company Logo */}
             <div className="flex-shrink-0 w-[56px] h-[40px] pt-[8px] pr-[16px] pb-[8px] pl-[16px] rounded-[24px] overflow-hidden bg-card border border-border flex items-center justify-center">
-                <img 
-                    src="/assets/company-placeholder.png" 
-                    alt={experience.company_name} 
+                <img
+                    src="/assets/company-placeholder.png"
+                    alt={experience.company_name}
                     className="w-full h-full object-contain"
                     onError={(e) => {
                         (e.target as HTMLImageElement).src = "https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png";
@@ -65,16 +65,16 @@ export function EditableExperienceItem({
                     <div className="flex flex-wrap sm:flex-nowrap justify-end items-center gap-1">
                         <span>{experience.work_type || '—'}</span>
                         {experience.work_mode && (
-                          <>
-                            <span>-</span>
-                            <span>{experience.work_mode}</span>
-                          </>
+                            <>
+                                <span>-</span>
+                                <span>{experience.work_mode}</span>
+                            </>
                         )}
                     </div>
                 </div>
-                <button 
-                  onClick={onEdit} 
-                  className="flex-shrink-0 mt-0.5"
+                <button
+                    onClick={onEdit}
+                    className="flex-shrink-0 mt-0.5"
                 >
                     <Icon icon="eva:edit-outline" className="w-[24px] h-[24px] text-muted-foreground hover:text-primary transition-colors" />
                 </button>

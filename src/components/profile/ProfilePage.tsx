@@ -89,6 +89,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [localPost, setLocalPost] = useState(post);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const image = localPost.imageSrc || (localPost.images && localPost.images.length > 0 ? localPost.images[0] : null);
 
@@ -167,44 +168,62 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
             />
           </div>
           <div className="flex flex-col overflow-hidden min-w-0">
-            <span className="text-sm font-semibold text-foreground truncate">
-              {localPost.author || "Anonymous"}
-            </span>
+            <div className="flex items-center gap-1">
+              <span className="text-sm font-semibold text-foreground truncate">
+                {localPost.author || "Anonymous"}
+              </span>
+              {localPost.isCompanyPost && (
+                <Icon icon="solar:check-circle-bold" className="w-4 h-4 text-primary flex-shrink-0" />
+              )}
+            </div>
             <span className="text-[10px] text-muted-foreground truncate">
-              {localPost.category || "Location"}
+              {localPost.location || localPost.category || "Professional"}
             </span>
           </div>
         </div>
 
         {/* Right section: Actions */}
         <div className="flex items-center gap-2 flex-shrink-0 z-20">
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="p-1 hover:bg-secondary rounded-full transition-colors outline-none">
-                <Icon icon="la:user-tag" className="w-[24px] h-[24px] text-primary" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent 
-              className="w-[180px] h-[136px] p-2 bg-white border-[#C7D2FE] rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-              align="end"
-              sideOffset={8}
-            >
-              <div className="flex flex-col gap-3">
-                {/* Tagged users would go here, fetching from API if possible */}
-                <div className="flex items-center gap-2 px-2 py-1">
-                   <span className="text-[12px] text-slate-400">No tags yet</span>
+          {/* Tag icon — show only when tags exist */}
+          {localPost.tags && localPost.tags.length > 0 && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="p-1 hover:bg-secondary rounded-full transition-colors outline-none text-black data-[state=open]:text-[#6366F1]">
+                  <Icon icon="la:user-tag" className="w-[24px] h-[24px]" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-[180px] h-[136px] p-2 bg-white border border-[#C7D2FE] rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] z-[210]"
+                align="end"
+                sideOffset={8}
+              >
+                <div className="flex flex-col gap-1">
+                  {localPost.tags.map((tag: any, idx: number) => (
+                    <div key={idx} className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-[12px] transition-colors cursor-pointer group">
+                      <div className="w-6 h-6 rounded-full border border-slate-200 flex items-center justify-center overflow-hidden bg-slate-50">
+                        {tag.avatar_url || tag.avatar ? (
+                          <img src={tag.avatar_url || tag.avatar} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <Icon icon="solar:user-linear" className="w-3 h-3 text-slate-400" />
+                        )}
+                      </div>
+                      <span className="text-[14px] leading-[20px] font-normal text-black font-[family-name:var(--font-poppins)] transition-colors">
+                        {tag.full_name || tag.name}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+              </PopoverContent>
+            </Popover>
+          )}
 
           <Popover>
             <PopoverTrigger asChild>
-              <button className="p-1 hover:bg-secondary rounded-full transition-colors outline-none">
-                <Icon icon="ph:dots-three-outline-vertical-light" className="w-[24px] h-[24px] text-foreground" />
+              <button className="p-1 hover:bg-secondary rounded-full transition-colors outline-none text-black data-[state=open]:text-primary">
+                <Icon icon="ph:dots-three-outline-vertical-light" className="w-[24px] h-[24px]" />
               </button>
             </PopoverTrigger>
-            <PopoverContent 
+            <PopoverContent
               className="w-[180px] h-[136px] p-2 bg-card border-border rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
               align="end"
               sideOffset={8}
@@ -212,7 +231,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
               <div className="flex flex-col gap-3">
                 {/* Edit Post */}
                 {isOwnPost && (
-                  <button 
+                  <button
                     onClick={() => setIsEditModalOpen(true)}
                     className="flex items-center justify-between w-full group transition-colors px-2 py-1.5"
                   >
@@ -223,23 +242,23 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
 
                 {/* Visibility Toggle */}
                 {isOwnPost && (
-                  <button 
+                  <button
                     onClick={handleTogglePrivacy}
                     className="flex items-center justify-between w-full group transition-colors px-2 py-1.5"
                   >
                     <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
                       {localPost.visibility === 'private' ? 'Make public' : 'Make private'}
                     </span>
-                    <Icon 
-                      icon={localPost.visibility === 'private' ? "fluent:eye-24-regular" : "fluent:eye-hide-24-regular"} 
-                      className="w-[18px] h-[18px] text-foreground" 
+                    <Icon
+                      icon={localPost.visibility === 'private' ? "fluent:eye-24-regular" : "fluent:eye-hide-24-regular"}
+                      className="w-[18px] h-[18px] text-foreground"
                     />
                   </button>
                 )}
 
                 {/* Delete Post */}
                 {isOwnPost && (
-                  <button 
+                  <button
                     onClick={() => onDelete?.(localPost.id)}
                     className="flex items-center justify-between w-full group transition-colors px-2 py-1.5"
                   >
@@ -250,23 +269,40 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
               </div>
             </PopoverContent>
           </Popover>
+        </div>
       </div>
-    </div>
 
-      <div className="px-4 py-2 h-[48px] overflow-hidden">
-        <p className="text-[12px] leading-[16px] text-foreground font-normal font-[family-name:var(--font-poppins)] line-clamp-1">
+      <div className={`px-4 py-2 transition-all duration-300 ${isExpanded ? 'h-auto' : 'h-[24px] overflow-hidden'}`}>
+        <p className="text-[12px] leading-[16px] text-black font-normal font-[family-name:var(--font-poppins)]">
           {(() => {
             const content = localPost.content || "";
-            return content.split(/(@\[[^\]]+\]\([^)]+\)|#\w+)/g).map((part, i) => {
-              if (part.startsWith('#')) {
-                return <span key={i} className="text-primary hover:underline cursor-pointer">{part}</span>;
-              }
-              const mentionMatch = part.match(/@\[([^\]]+)\]\(([^)]+)\)/);
-              if (mentionMatch) {
-                return <span key={i} className="text-primary font-medium hover:underline cursor-pointer">{mentionMatch[1]}</span>;
-              }
-              return part;
-            });
+            const isLong = content.length > 40;
+            const displayContent = (!isExpanded && isLong) ? content.slice(0, 35) + "..." : content;
+
+            return (
+              <span className={!isExpanded ? "whitespace-nowrap" : ""}>
+                <span>
+                  {displayContent.split(/(@\[[^\]]+\]\([^)]+\)|#\w+)/g).map((part, i) => {
+                    if (part.startsWith('#')) {
+                      return <span key={i} className="text-primary hover:underline cursor-pointer">{part}</span>;
+                    }
+                    const mentionMatch = part.match(/@\[([^\]]+)\]\(([^)]+)\)/);
+                    if (mentionMatch) {
+                      return <span key={i} className="text-primary font-medium hover:underline cursor-pointer">{mentionMatch[1]}</span>;
+                    }
+                    return part;
+                  })}
+                </span>
+                {isLong && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
+                    className="text-primary font-semibold hover:underline focus:outline-none ml-1 inline"
+                  >
+                    {isExpanded ? 'See less' : 'see more'}
+                  </button>
+                )}
+              </span>
+            );
           })()}
         </p>
         <p className="text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)] mt-1">
@@ -304,13 +340,13 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
               <p className="text-[12px] font-semibold text-foreground mb-1">{localPost.poll.total_votes || 0} votes</p>
               <div className="space-y-2">
                 {localPost.poll.options.map((option, idx) => {
-                  const percentage = localPost.poll!.total_votes > 0 
-                    ? Math.round((option.vote_count / localPost.poll!.total_votes) * 100) 
+                  const percentage = localPost.poll!.total_votes > 0
+                    ? Math.round((option.vote_count / localPost.poll!.total_votes) * 100)
                     : 0;
                   return (
                     <div key={option.option_id} className="relative h-9 w-full bg-secondary border border-border rounded-lg overflow-hidden group">
-                      <div 
-                        className="absolute inset-y-0 left-0 bg-primary/10 transition-all duration-500" 
+                      <div
+                        className="absolute inset-y-0 left-0 bg-primary/10 transition-all duration-500"
                         style={{ width: `${percentage}%` }}
                       />
                       <div className="relative h-full flex items-center justify-between px-3 text-[11px]">
@@ -323,14 +359,14 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
               </div>
             </div>
           ) : localPost.category === 'Article' ? (
-             /* Article Section */
-             <div className="h-full flex flex-col">
-                {image && <img src={image} className="w-full h-40 object-cover" />}
-                <div className="p-4 flex-1 bg-card">
-                  <h3 className="text-sm font-bold text-foreground line-clamp-2 mb-2">{localPost.title || "Untitled Article"}</h3>
-                  <p className="text-[11px] text-muted-foreground line-clamp-2">Click to read full article on Cocpit Insight</p>
-                </div>
-             </div>
+            /* Article Section */
+            <div className="h-full flex flex-col">
+              {image && <img src={image} className="w-full h-40 object-cover" />}
+              <div className="p-4 flex-1 bg-card">
+                <h3 className="text-sm font-bold text-foreground line-clamp-2 mb-2">{localPost.title || "Untitled Article"}</h3>
+                <p className="text-[11px] text-muted-foreground line-clamp-2">Click to read full article on Cocpit Insight</p>
+              </div>
+            </div>
           ) : image ? (
             /* Standard Image Post */
             <img
@@ -358,24 +394,24 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
 
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-5">
-            <button 
+            <button
               onClick={handleLike}
               className="flex items-center gap-1.5 hover:text-primary transition-colors group"
             >
-              <Icon 
-                icon={isLiked ? "solar:like-bold" : "solar:like-outline"} 
-                className={cn("w-[22px] h-[22px] group-active:scale-110 transition-transform", isLiked ? "text-primary" : "text-foreground")} 
+              <Icon
+                icon={isLiked ? "solar:like-bold" : "solar:like-outline"}
+                className={cn("w-[22px] h-[22px] group-active:scale-110 transition-transform", isLiked ? "text-primary" : "text-foreground")}
               />
               <span className="text-[12px] leading-[1] text-foreground font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{likesCount}</span>
             </button>
-            <button 
+            <button
               onClick={() => setIsCommentModalOpen(true)}
               className="flex items-center gap-1.5 hover:text-primary transition-colors group"
             >
               <Icon icon="hugeicons:comment-01" className="w-[22px] h-[22px] text-foreground group-active:scale-110 transition-transform" />
               <span className="text-[12px] leading-[1] text-foreground font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{localPost.comments || 0}</span>
             </button>
-            <button 
+            <button
               onClick={handleRepost}
               className="flex items-center gap-1.5 hover:text-primary transition-colors group"
             >
@@ -385,20 +421,20 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
           </div>
 
           <div className="flex items-center gap-5">
-            <button 
+            <button
               onClick={handleShare}
               className="flex items-center gap-1.5 hover:text-primary transition-colors group"
             >
               <Icon icon="fluent:share-32-regular" className="w-[22px] h-[22px] text-foreground group-active:scale-110 transition-transform" />
               <span className="text-[12px] leading-[1] text-foreground font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{localPost.shares || 0}</span>
             </button>
-            <button 
+            <button
               onClick={handleBookmark}
               className="flex items-center gap-1.5 hover:text-primary transition-colors group"
             >
-              <Icon 
-                icon={isSaved ? "solar:bookmark-bold" : "solar:bookmark-outline"} 
-                className={cn("w-[22px] h-[22px] group-active:scale-110 transition-transform", isSaved ? "text-primary" : "text-foreground")} 
+              <Icon
+                icon={isSaved ? "solar:bookmark-bold" : "solar:bookmark-outline"}
+                className={cn("w-[22px] h-[22px] group-active:scale-110 transition-transform", isSaved ? "text-primary" : "text-foreground")}
               />
               <span className="text-[12px] leading-[1] text-foreground font-normal font-[family-name:var(--font-poppins)] translate-y-[1px]">{localPost.shares || 0}</span>
             </button>
@@ -406,7 +442,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
         </div>
       </div>
 
-      <CommentModal 
+      <CommentModal
         isOpen={isCommentModalOpen}
         onClose={() => setIsCommentModalOpen(false)}
         postId={localPost.id}
@@ -422,7 +458,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         post={localPost}
-        onSuccess={(updated) => setLocalPost(mapProfilePostToPost(updated))}
+        onSuccess={(updated) => setLocalPost(updated)}
       />
     </div>
   );
@@ -492,6 +528,7 @@ export default function ProfilePage() {
   const { logout } = useAuth();
 
   const experiences = useMemo(() => profileData?.experiences || [], [profileData]);
+
   // Flat list sorted descending by start_date — used for display, LivingResume, SkillProofPill, and cross-session validation
   const flatExperiences = useMemo(
     () =>
@@ -653,7 +690,7 @@ export default function ProfilePage() {
         if (role.shouldEndPreviousRole) {
           // Use explicitly passed ID (from index 0) OR the tracked ID of the previous role in loop
           const idToEnd = role.experienceIdToEnd || previousRoleId || editingExperience?.experience_id;
-          
+
           if (idToEnd) {
             await expMutations.update.mutateAsync({
               id: idToEnd,
@@ -664,7 +701,7 @@ export default function ProfilePage() {
             });
           }
         }
-        
+
         previousRoleId = currentSavedId;
       }
       setIsAddExperienceModalOpen(false);
@@ -807,7 +844,7 @@ export default function ProfilePage() {
 
 
                 <div className="hidden md:flex flex-col items-end mt-12 pr-[16px]">
-                  <button 
+                  <button
                     onClick={() => setIsContactInfoModalOpen(true)}
                     className="text-[14px] font-medium text-muted-foreground hover:text-primary transition-colors font-[family-name:var(--font-poppins)]"
                   >
@@ -818,13 +855,13 @@ export default function ProfilePage() {
 
               {/* Mobile Action Buttons */}
               <div className="md:hidden flex items-center gap-3 px-4 mt-4">
-                <button 
+                <button
                   onClick={() => setIsEditProfileModalOpen(true)}
                   className="flex-1 h-[40px] rounded-[24px] bg-secondary text-primary font-medium font-[family-name:var(--font-poppins)] text-[14px] flex items-center justify-center transition-colors"
                 >
                   Edit profile
                 </button>
-                <button 
+                <button
                   onClick={() => setIsShareModalOpen(true)}
                   className="w-[40px] h-[40px] rounded-full bg-secondary text-primary flex items-center justify-center transition-colors flex-shrink-0"
                 >
@@ -852,41 +889,36 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Desktop Stats Section with exact spec-compliant dimensions and padding */}
-              <div className="hidden md:block w-full h-[90px] pt-[16px] pr-[16px] pb-[16px] pl-[40px] mt-[16px] mb-0">
-                <div className="flex gap-[24px] items-center">
-                  <div
+              {/* Desktop Stats Section — 960 Fill × 90 Hug */}
+              <div className="hidden md:flex w-full h-[90px] items-center pt-[16px] pr-[16px] pb-[16px] pl-[40px] mt-[16px] mb-0">
+                <div className="flex gap-[16px] items-center w-full">
+                  <button
                     onClick={() => openFollowList("following")}
-                    className="w-[290.67px] h-[58px] flex items-center justify-between px-6 bg-secondary rounded-[24px] cursor-pointer hover:opacity-80 transition-all border border-transparent"
+                    className="flex-1 h-[58px] flex items-center justify-between p-[16px] rounded-[24px] cursor-pointer hover:opacity-90 transition-all"
+                    style={{ background: '#EEF2FF', boxShadow: '0px 0px 4px 0px #6366F10D' }}
                   >
-                    <div className="flex flex-col">
-                      <span className="text-[12px] leading-[18px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">Following</span>
-                      <span className="text-[16px] leading-[24px] text-primary font-semibold font-[family-name:var(--font-poppins)]">{profileStats?.following_count || 0}</span>
-                    </div>
-                    <Icon icon="hugeicons:arrow-right-01" className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                  <div
+                    <span className="text-[14px] leading-[20px] text-black font-normal font-[family-name:var(--font-poppins)]">Following</span>
+                    <span className="text-[18px] leading-[26px] text-[#6366F1] font-medium font-[family-name:var(--font-poppins)]">{profileStats?.following_count || 0}</span>
+                  </button>
+                  <button
                     onClick={() => openFollowList("followers")}
-                    className="w-[290.67px] h-[58px] flex items-center justify-between px-6 bg-secondary rounded-[24px] cursor-pointer hover:opacity-80 transition-all border border-transparent"
+                    className="flex-1 h-[58px] flex items-center justify-between p-[16px] rounded-[24px] cursor-pointer hover:opacity-90 transition-all"
+                    style={{ background: '#EEF2FF', boxShadow: '0px 0px 4px 0px #6366F10D' }}
                   >
-                    <div className="flex flex-col">
-                      <span className="text-[12px] leading-[18px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">Followers</span>
-                      <span className="text-[16px] leading-[24px] text-primary font-semibold font-[family-name:var(--font-poppins)]">{profileStats?.followers_count || 0}</span>
-                    </div>
-                    <Icon icon="hugeicons:arrow-right-01" className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                  <div
+                    <span className="text-[14px] leading-[20px] text-black font-normal font-[family-name:var(--font-poppins)]">Followers</span>
+                    <span className="text-[18px] leading-[26px] text-[#6366F1] font-medium font-[family-name:var(--font-poppins)]">{profileStats?.followers_count || 0}</span>
+                  </button>
+                  <button
                     onClick={() => openFollowList("connections")}
-                    className="w-[290.67px] h-[58px] flex items-center justify-between px-6 bg-secondary rounded-[24px] cursor-pointer hover:opacity-80 transition-all border border-transparent"
+                    className="flex-1 h-[58px] flex items-center justify-between p-[16px] rounded-[24px] cursor-pointer hover:opacity-90 transition-all"
+                    style={{ background: '#EEF2FF', boxShadow: '0px 0px 4px 0px #6366F10D' }}
                   >
-                    <div className="flex flex-col">
-                      <span className="text-[12px] leading-[18px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">Connection</span>
-                      <span className="text-[16px] leading-[24px] text-primary font-semibold font-[family-name:var(--font-poppins)]">{profileStats?.connections_count || 0}</span>
-                    </div>
-                    <Icon icon="hugeicons:arrow-right-01" className="w-5 h-5 text-muted-foreground" />
-                  </div></div>
+                    <span className="text-[14px] leading-[20px] text-black font-normal font-[family-name:var(--font-poppins)]">Connection</span>
+                    <span className="text-[18px] leading-[26px] text-[#6366F1] font-medium font-[family-name:var(--font-poppins)]">{profileStats?.connections_count || 0}</span>
+                  </button>
                 </div>
               </div>
+            </div>
 
             <div className="flex justify-between items-start w-full min-h-[217px] pt-[16px] px-4 md:pr-[16px] pb-[16px] md:pl-[40px] md:gap-[100px]">
               <div className="flex-1 min-w-0">
@@ -975,7 +1007,7 @@ export default function ProfilePage() {
                 <div className="ml-auto">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="flex items-center justify-center w-6 h-6 text-primary outline-none border-none focus:outline-none hover:bg-secondary rounded-full transition-colors">
+                      <button className="flex items-center justify-center w-6 h-6 text-black data-[state=open]:text-primary outline-none border-none focus:outline-none hover:bg-secondary rounded-full transition-colors">
                         <Icon icon="ph:dots-three-outline-vertical-light" className="w-6 h-6" />
                       </button>
                     </DropdownMenuTrigger>
@@ -1019,7 +1051,7 @@ export default function ProfilePage() {
             <div className="w-full px-4 md:pr-[16px] pb-[20px] md:pl-[40px] flex flex-col gap-[12px] mt-[16px]">
               <h2 className="font-[family-name:var(--font-poppins)] font-medium text-[18px] leading-[26px] text-foreground">About</h2>
               <div className="relative w-full md:max-w-[904px]">
-                <p 
+                <p
                   className={cn(
                     "font-[family-name:var(--font-poppins)] font-normal text-[14px] md:text-[16px] leading-[20px] md:leading-[24px] text-foreground transition-all duration-300",
                     !isAboutExpanded && "line-clamp-3 md:line-clamp-2"
@@ -1028,7 +1060,7 @@ export default function ProfilePage() {
                   {user?.about}
                 </p>
                 {!isAboutExpanded && (user?.about?.length || 0) > 150 && (
-                  <button 
+                  <button
                     onClick={() => setIsAboutExpanded(true)}
                     className="absolute bottom-0 right-0 bg-card pl-2 text-muted-foreground hover:text-primary font-normal text-[14px] md:text-[16px] transition-colors"
                   >
@@ -1036,7 +1068,7 @@ export default function ProfilePage() {
                   </button>
                 )}
                 {isAboutExpanded && (
-                  <button 
+                  <button
                     onClick={() => setIsAboutExpanded(false)}
                     className="text-[#6366F1] hover:underline font-normal text-[14px] mt-2 block"
                   >
@@ -1085,8 +1117,8 @@ export default function ProfilePage() {
               {/* Posts Wrapper */}
               <div
                 className={`px-4 md:pl-10 md:pr-4 transition-all duration-500 ease-in-out ${isPostsExpanded
-                    ? "grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-[24px] pb-10"
-                    : "flex flex-col md:flex-row gap-4 md:gap-[24px]"
+                  ? "grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-[24px] pb-10"
+                  : "flex flex-col md:flex-row gap-4 md:gap-[24px]"
                   }`}
               >
                 {(isPostsExpanded ? previewPosts : previewPosts.slice(0, 3)).map((post, index) => (
@@ -1106,13 +1138,13 @@ export default function ProfilePage() {
             </div>
 
             {/* Skills Section */}
-            <div 
-              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
+            <div
+              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[32px] overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between">
                 <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Skills</h2>
-                <button 
+                <button
                   onClick={() => setIsAddSkillModalOpen(true)}
                   className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-primary bg-card flex items-center justify-center text-primary hover:bg-secondary transition-all flex-shrink-0"
                 >
@@ -1120,33 +1152,35 @@ export default function ProfilePage() {
                 </button>
               </div>
 
-              {/* Skills Row */}
-              <div className="flex flex-wrap gap-[24px]">
-                {skills.map((skill: any, index) => {
-                  const skillName = skill.name || (typeof skill === 'string' ? skill : '');
-                  if (!skillName) return null;
-                  return (
-                    <SkillProofPill
-                      key={skill.skill_id || `skill-${index}`}
-                      skill={skillName}
-                      experiences={flatExperiences}
-                      posts={previewPosts}
-                      onDelete={handleDeleteSkill}
-                    />
-                  );
-                })}
+              {/* Skills Nested Card */}
+              <div className="bg-white rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.051)] border border-border/50 min-h-[72px] flex items-center pl-[40px] py-4">
+                <div className="flex flex-wrap gap-[16px]">
+                  {skills.map((skill: any, index) => {
+                    const skillName = skill.name || (typeof skill === 'string' ? skill : '');
+                    if (!skillName) return null;
+                    return (
+                      <SkillProofPill
+                        key={skill.skill_id || `skill-${index}`}
+                        skill={skillName}
+                        experiences={flatExperiences}
+                        posts={previewPosts}
+                        onDelete={handleDeleteSkill}
+                      />
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
             {/* Experience Section */}
-            <div 
+            <div
               id="experience-section"
-              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
+              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[32px] overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between">
                 <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Experience</h2>
-                <button 
+                <button
                   onClick={() => { setEditingExperience(null); setIsAddExperienceModalOpen(true); }}
                   className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-primary bg-card flex items-center justify-center text-primary hover:bg-secondary transition-all flex-shrink-0"
                 >
@@ -1154,30 +1188,32 @@ export default function ProfilePage() {
                 </button>
               </div>
 
-              {/* Experience List — grouped by company */}
-              <div className="flex flex-col gap-[32px]">
-                {experiences.map((group, gIdx) => (
-                  <EditableExperienceGroup
-                    key={`${group.company_name}-${gIdx}`}
-                    group={group}
-                    onEdit={(exp) => {
-                      setEditingExperience(exp);
-                      setIsAddExperienceModalOpen(true);
-                    }}
-                  />
-                ))}
+              {/* Experience Nested Card */}
+              <div className="bg-white rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.051)] border border-border/50 min-h-[72px] pl-[40px] py-8 pr-6">
+                <div className="flex flex-col gap-[16px]">
+                  {experiences.map((group, gIdx) => (
+                    <EditableExperienceGroup
+                      key={`${group.company_name}-${gIdx}`}
+                      group={group}
+                      onEdit={(exp) => {
+                        setEditingExperience(exp);
+                        setIsAddExperienceModalOpen(true);
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
 
             {/* Education Section */}
-            <div 
-              id="education-section" 
-              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[24px] overflow-hidden"
+            <div
+              id="education-section"
+              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[32px] overflow-hidden"
             >
               {/* Header */}
               <div className="flex items-center justify-between">
                 <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Education</h2>
-                <button 
+                <button
                   onClick={() => { setEditingEducation(null); setIsAddEducationModalOpen(true); }}
                   className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-primary bg-card flex items-center justify-center text-primary hover:bg-secondary transition-all flex-shrink-0"
                 >
@@ -1185,15 +1221,17 @@ export default function ProfilePage() {
                 </button>
               </div>
 
-              {/* Education List */}
-              <div className="flex flex-col gap-[32px]">
-                {educations.map((edu, index) => (
-                  <EditableEducationItem
-                    key={`${edu.education_id}-${index}`}
-                    education={edu}
-                    onEdit={() => { setEditingEducation(edu); setIsAddEducationModalOpen(true); }}
-                  />
-                ))}
+              {/* Education Nested Card */}
+              <div className="bg-white rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.051)] border border-border/50 min-h-[72px] pl-[40px] py-8 pr-6">
+                <div className="flex flex-col gap-[16px]">
+                  {educations.map((edu, index) => (
+                    <EditableEducationItem
+                      key={`${edu.education_id}-${index}`}
+                      education={edu}
+                      onEdit={() => { setEditingEducation(edu); setIsAddEducationModalOpen(true); }}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
 

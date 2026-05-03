@@ -420,6 +420,7 @@ export default function AddExperienceForm({
   const [roles, setRoles] = useState<RoleFormState[]>(() =>
     initialData ? [mapToRole(initialData)] : [emptyRole()]
   )
+  const [activeRoleIndex, setActiveRoleIndex] = useState(0)
 
   // Per-role field errors — map of index → { field: message }
   const [fieldErrors, setFieldErrors] = useState<Record<number, Record<string, string>>>({})
@@ -432,6 +433,7 @@ export default function AddExperienceForm({
     setLocation(initialData?.location ?? "")
     setRoles(initialData ? [mapToRole(initialData)] : [emptyRole()])
     setFieldErrors({})
+    setActiveRoleIndex(0)
   }, [initialData, companyName])
 
   const updateRole = useCallback(
@@ -444,11 +446,23 @@ export default function AddExperienceForm({
   )
 
   const removeRole = useCallback(
-    (index: number) => setRoles((prev) => prev.filter((_, i) => i !== index)),
+    (index: number) => {
+      setRoles((prev) => prev.filter((_, i) => i !== index))
+      setActiveRoleIndex((prev) => {
+        if (prev >= index && prev > 0) return prev - 1
+        return prev
+      })
+    },
     []
   )
 
-  const addNewRole = () => setRoles((prev) => [...prev, emptyRole()])
+  const addNewRole = () => {
+    setRoles((prev) => {
+      const newRoles = [...prev, emptyRole()]
+      setActiveRoleIndex(newRoles.length - 1)
+      return newRoles
+    })
+  }
 
   // ── Validation ────────────────────────────────────────────────────────────────
 
@@ -479,51 +493,58 @@ export default function AddExperienceForm({
         }
 
         // End date checks (only if not current)
-      if (!role.is_current) {
-        if (!role.endMonth || !role.endYear) {
-          roleErrors.endDate = "End date is required when not currently working here"
-          valid = false
-        } else {
-          const endDate = buildDate(role.endMonth, role.endYear)
-          if (endDate <= startDate) {
-            roleErrors.endDate = "End date must be after start date"
+        if (!role.is_current) {
+          if (!role.endMonth || !role.endYear) {
+            roleErrors.endDate = "End date is required when not currently working here"
             valid = false
-          }
-        }
-      }
-
-      // Check for overlaps within this session (same company)
-      const endDate = role.is_current ? null : buildDate(role.endMonth, role.endYear)
-      roles.forEach((other, oIdx) => {
-        if (index === oIdx) return
-        const otherStart = buildDate(other.startMonth, other.startYear)
-        const otherEnd = other.is_current ? null : buildDate(other.endMonth, other.endYear)
-        if (otherStart && datesOverlap(startDate, endDate, otherStart, otherEnd)) {
-          roleErrors.startDate = `Overlaps with "${other.title || 'another role'}"`
-          valid = false
-        }
-      })
-
-      // Check for overlaps with existing database records (same company)
-      const companyNorm = company.trim().toLowerCase()
-      if (companyNorm) {
-        existingExperiences
-          .filter(e => {
-            if (e.experience_id === role.experience_id) return false
-            return (orgId && e.org_id === orgId) || 
-                   (!orgId && !e.org_id && e.company_name.toLowerCase().trim() === companyNorm)
-          })
-          .forEach(e => {
-            if (datesOverlap(startDate, endDate, e.start_date, e.end_date)) {
-              roleErrors.startDate = `Overlaps with existing role: "${e.title}"`
+          } else {
+            const endDate = buildDate(role.endMonth, role.endYear)
+            if (endDate <= startDate) {
+              roleErrors.endDate = "End date must be after start date"
               valid = false
             }
-          })
+          }
+        }
+
+        // Check for overlaps within this session (same company)
+        const endDate = role.is_current ? null : buildDate(role.endMonth, role.endYear)
+        roles.forEach((other, oIdx) => {
+          if (index === oIdx) return
+          const otherStart = buildDate(other.startMonth, other.startYear)
+          const otherEnd = other.is_current ? null : buildDate(other.endMonth, other.endYear)
+          if (otherStart && datesOverlap(startDate, endDate, otherStart, otherEnd)) {
+            roleErrors.startDate = `Overlaps with "${other.title || 'another role'}"`
+            valid = false
+          }
+        })
+
+        // Check for overlaps with existing database records (same company)
+        const companyNorm = company.trim().toLowerCase()
+        if (companyNorm) {
+          existingExperiences
+            .filter(e => {
+              if (e.experience_id === role.experience_id) return false
+              return (orgId && e.org_id === orgId) ||
+                (!orgId && !e.org_id && e.company_name.toLowerCase().trim() === companyNorm)
+            })
+            .forEach(e => {
+              if (datesOverlap(startDate, endDate, e.start_date, e.end_date)) {
+                roleErrors.startDate = `Overlaps with existing role: "${e.title}"`
+                valid = false
+              }
+            })
+        }
+      }
+
+      if (Object.keys(roleErrors).length > 0) errors[index] = roleErrors
+    })
+
+    if (!valid) {
+      const firstErrorIdx = Number(Object.keys(errors)[0])
+      if (!isNaN(firstErrorIdx)) {
+        setActiveRoleIndex(firstErrorIdx)
       }
     }
-
-    if (Object.keys(roleErrors).length > 0) errors[index] = roleErrors
-  })
 
     setFieldErrors(errors)
     return valid
@@ -674,7 +695,10 @@ export default function AddExperienceForm({
         <form onSubmit={handleSubmit} className="space-y-6">
 
           {/* Company + Location — shared across roles */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-[72px]">
+          <div className={cn(
+            "grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-[72px]",
+            activeRoleIndex !== 0 && "hidden"
+          )}>
             <div className="flex flex-col">
               <Label className={labelStyles}>Company</Label>
               <CompanyAutocomplete
@@ -700,7 +724,7 @@ export default function AddExperienceForm({
           </div>
 
           {/* Multiple current roles warning */}
-          {multipleCurrentRoles && (
+          {multipleCurrentRoles && activeRoleIndex === 0 && (
             <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-[12px]">
               <Icon icon="mdi:alert-outline" className="w-4 h-4 text-amber-600 flex-shrink-0" />
               <p className="text-[12px] text-amber-700 font-[family-name:var(--font-poppins)]">
@@ -712,7 +736,7 @@ export default function AddExperienceForm({
 
           {/* Role sections — array-driven */}
           {roles.map((role, index) => (
-            <React.Fragment key={index}>
+            <div key={index} className={index !== activeRoleIndex ? "hidden" : "block"}>
               <RoleSection
                 role={role}
                 index={index}
@@ -740,7 +764,7 @@ export default function AddExperienceForm({
                   </p>
                 </div>
               )}
-            </React.Fragment>
+            </div>
           ))}
 
           {/* Mobile: Add new role button */}

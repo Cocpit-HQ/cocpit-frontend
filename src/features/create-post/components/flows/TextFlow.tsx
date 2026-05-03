@@ -29,7 +29,7 @@ const TextFlow = ({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className="w-full flex-grow p-4 text-lg bg-background text-foreground placeholder:text-muted-foreground resize-none focus:outline-none"
+            className="w-full flex-grow p-4 text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] bg-background text-black placeholder:text-muted-foreground resize-none focus:outline-none"
           />
           <div className="p-2 border-t bg-muted/10 flex items-center justify-between">
             <button
@@ -51,7 +51,7 @@ const TextFlow = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={`w-full ${sharedPost ? 'min-h-[80px] max-h-[200px] overflow-y-auto' : 'min-h-[280px]'} text-lg resize-none border-none focus:ring-0 p-0 pr-10 placeholder:text-muted-foreground/70 bg-transparent focus:outline-none`}
+        className={`w-full ${sharedPost ? 'min-h-[80px] max-h-[200px] overflow-y-auto' : 'min-h-[280px]'} text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-black resize-none border-none focus:ring-0 p-0 pr-10 placeholder:text-muted-foreground/70 bg-transparent focus:outline-none`}
       />
       <div className="absolute top-0 right-0 z-20">
         <button

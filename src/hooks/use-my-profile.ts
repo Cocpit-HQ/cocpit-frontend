@@ -253,6 +253,7 @@ export function useProfileMutation() {
                 open_to: Array.isArray(payload.open_to) ? payload.open_to[0] : payload.open_to,
                 availability: Array.isArray(payload.availability) ? payload.availability[0] : payload.availability,
                 work_preference: Array.isArray(payload.work_preference) ? payload.work_preference[0] : payload.work_preference,
+                account_type: payload.status,
             });
         },
         onSuccess: () => {

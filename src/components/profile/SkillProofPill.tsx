@@ -36,8 +36,8 @@ export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly =
     <TooltipProvider>
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>
-          <div className="group relative min-w-[72px] h-[40px] px-4 rounded-[8px] border border-secondary bg-secondary transition-all flex items-center justify-center gap-2 cursor-pointer">
-            <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-medium text-foreground group-hover:text-red-400">
+          <div className="group relative h-[40px] px-4 rounded-[8px] border border-[#EEF2FF] bg-[#EEF2FF] transition-all flex items-center justify-center gap-2 cursor-pointer">
+            <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-medium text-[#6366F1] group-hover:text-red-400">
               {skill}
             </span>
 

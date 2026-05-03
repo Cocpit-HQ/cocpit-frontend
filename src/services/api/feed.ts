@@ -24,6 +24,8 @@ export interface BackendPost {
   author_company_id?: string;
   is_organization_post?: boolean;
   category_name: 'Personal' | 'Professional' | 'Achievement' | 'Update' | 'Hiring' | 'Milestone' | 'Insight' | 'Article' | null;
+  location?: string | null;
+  tags?: any[];
   media: BackendMedia[];
   poll: BackendPoll | null;
   title?: string;

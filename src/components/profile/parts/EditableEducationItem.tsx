@@ -32,7 +32,7 @@ export function EditableEducationItem({
                     <h3 className="text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
                         {education.school_name}
                     </h3>
-                    
+
                     <div className="flex flex-col gap-0.5">
                         <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
                             {education.degree}
@@ -59,9 +59,9 @@ export function EditableEducationItem({
                         <span>{education.end_date ? formatDate(education.end_date) : 'Present'}</span>
                     </div>
                 </div>
-                <button 
-                  onClick={onEdit} 
-                  className="flex-shrink-0 mt-0.5"
+                <button
+                    onClick={onEdit}
+                    className="flex-shrink-0 mt-0.5"
                 >
                     <Icon icon="eva:edit-outline" className="w-[24px] h-[24px] text-muted-foreground hover:text-primary transition-colors" />
                 </button>

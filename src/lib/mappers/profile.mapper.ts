@@ -131,6 +131,8 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
       }
 
       return undefined;
-    })()
+    })(),
+    location: backendPost.location || undefined,
+    tags: backendPost.tags || [],
   };
 };
