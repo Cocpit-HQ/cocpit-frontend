@@ -24,7 +24,9 @@ export const PostContent = ({
     <div className="flex-1 flex flex-col justify-center w-full">
       {content && (
         <div className="px-4 mb-3">
-          <div className={`leading-normal text-sm text-foreground/90 whitespace-pre-wrap ${!isFullContent && !isExpanded ? 'line-clamp-5' : ''}`}>
+          <div 
+            className={`font-normal font-[family-name:var(--font-poppins)] text-[12px] leading-[16px] text-black whitespace-pre-wrap ${!isFullContent && !isExpanded ? 'line-clamp-2' : ''}`}
+          >
             <RichTextRenderer content={content} authorName={author} authorSlug={authorSlug} />
           </div>
           {!isFullContent && (content.length > 300 || content.split('\n').length > 4) && (

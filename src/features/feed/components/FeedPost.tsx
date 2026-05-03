@@ -24,7 +24,7 @@ const UniversalShareModal = dynamic(() => import('@/components/share/UniversalSh
 const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 
 export const FeedPost = (props: FeedPostProps) => {
-  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost } = props;
+  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags } = props;
   const { activeProfile, isCompany } = useActiveProfile();
   
   // Custom Hooks
@@ -81,6 +81,8 @@ export const FeedPost = (props: FeedPostProps) => {
           onToggleVisibility={handleToggleVisibility}
           onShowAnalytics={() => setShowPollAnalytics(true)}
           onReport={() => setIsReportModalOpen(true)}
+          location={location}
+          tags={tags}
         />
 
         <PostContent 

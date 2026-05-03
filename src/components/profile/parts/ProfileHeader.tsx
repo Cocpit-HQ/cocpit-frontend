@@ -93,7 +93,7 @@ export const ProfileHeader = React.memo(function ProfileHeader({
     };
 
     return (
-        <div className="rounded-xl overflow-hidden border mb-4 relative bg-card border-border">
+        <div className="max-w-[960px] w-full mx-auto rounded-[24px] overflow-hidden border mb-4 relative bg-card border-border">
 
             {/* Block Confirmation Dialog */}
             <AlertDialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
@@ -113,7 +113,13 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                 </AlertDialogContent>
             </AlertDialog>
 
-            <div className="h-36 bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899] relative"></div>
+            <div className="h-[160px] relative rounded-b-[24px] overflow-hidden">
+                {user.cover_image ? (
+                    <img src={user.cover_image} alt="Cover" className="w-full h-full object-cover" />
+                ) : (
+                    <div className="w-full h-full bg-gradient-to-r from-[#4169E1] via-[#A855F7] to-[#EC4899]"></div>
+                )}
+            </div>
 
             <div className="px-6 pb-6">
                 <div className="flex items-start justify-between -mt-10 sm:-mt-14 mb-4 relative z-10">

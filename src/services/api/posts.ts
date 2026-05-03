@@ -12,6 +12,7 @@ export interface UpdatePostRequest {
   category?: string;
   visibility?: 'public' | 'private';
   media_urls?: string[];
+  location?: string | null;
 }
 
 export const deletePost = async (postId: string): Promise<DeletePostResponse> => {
@@ -100,4 +101,12 @@ export const createRepost = async (postId: string, content: string = "", categor
     visibility: 'public'
   });
   return response.data;
+};
+
+export const syncPostTags = async (postId: string, userIds: string[]): Promise<{ message: string }> => {
+    const response = await api.post<{ message: string }>(`/posts/tags/sync`, {
+        postId,
+        tags: userIds
+    });
+    return response.data;
 };

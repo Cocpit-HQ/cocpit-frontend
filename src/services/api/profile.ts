@@ -39,6 +39,8 @@ export interface ProfilePost {
   author_name: string;
   author_avatar: string | null;
   category_name: string | null;
+  location?: string | null;
+  tags?: any[];
   media: ProfilePostMedia[];
   like_count: number;
   is_liked: boolean;
@@ -190,6 +192,7 @@ export const updateIdentity = async (identity: {
   open_to: string;
   availability: string;
   work_preference: string;
+  account_type?: string;
 }): Promise<any> => {
   const response = await api.put("/profile/identity", identity);
   return response.data;
@@ -198,23 +201,23 @@ export const updateIdentity = async (identity: {
 // --- Resume ---
 
 export const uploadResume = async (formData: FormData): Promise<{ message: string; resume: { originalName: string; url: string } }> => {
-    const response = await api.post("/profile/resume", formData);
-    const { message, resume } = response.data;
-    return {
-        message,
-        resume: {
-            originalName: resume.file_name,
-            url: resume.file_url
-        }
-    };
+  const response = await api.post("/profile/resume", formData);
+  const { message, resume } = response.data;
+  return {
+    message,
+    resume: {
+      originalName: resume.file_name,
+      url: resume.file_url
+    }
+  };
 };
 
 export const getResume = async (): Promise<{ file_name: string; file_url: string } | null> => {
-    const response = await api.get("/profile/resume");
-    return response.data;
+  const response = await api.get("/profile/resume");
+  return response.data;
 };
 
 export const deleteResume = async (): Promise<{ message: string }> => {
-    const response = await api.delete("/profile/resume");
-    return response.data;
+  const response = await api.delete("/profile/resume");
+  return response.data;
 };

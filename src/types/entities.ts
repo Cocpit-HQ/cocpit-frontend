@@ -140,4 +140,6 @@ export interface Post {
   // Broadcast fields
   is_broadcast?: boolean;
   broadcastOrgName?: string;
+  tags?: any[];
+  location?: string;
 }

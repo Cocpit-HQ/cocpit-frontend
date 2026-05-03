@@ -229,6 +229,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     authorSlug: backendPost.author_slug,
     isCompanyPost: backendPost.is_organization_post,
     shared_post: sharedPost,
+    location: backendPost.location || undefined,
+    tags: backendPost.tags || [],
   };
 };
 

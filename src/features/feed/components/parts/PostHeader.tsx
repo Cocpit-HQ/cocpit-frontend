@@ -4,6 +4,9 @@ import { MoreHorizontal, Globe, EyeOff, Star, Link2, Flag, Edit2, BarChart2, Tra
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Icon } from "@iconify/react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface PostHeaderProps {
   id: string | number;
@@ -28,13 +31,16 @@ interface PostHeaderProps {
   onToggleVisibility: () => void;
   onShowAnalytics: () => void;
   onReport: () => void;
+  location?: string;
+  tags?: any[];
 }
 
 export const PostHeader = ({
   id, author, authorId, authorAvatar, authorSlug, timeAgo, visibility,
   isMe, isOwnPost, isCompanyPost, poll, shared_post,
   optionsBtnRef, showOptions, setShowOptions, optionsPos, setOptionsPos,
-  onEdit, onDelete, onToggleVisibility, onShowAnalytics, onReport
+  onEdit, onDelete, onToggleVisibility, onShowAnalytics, onReport,
+  location, tags
 }: PostHeaderProps) => {
   const avatarSrc = authorAvatar || '/assets/pngegg.png';
 
@@ -68,16 +74,23 @@ export const PostHeader = ({
           </Link>
         )}
         <div>
-          {isMe || (!isCompanyPost && !authorId) ? (
-            <h3 className="text-foreground text-sm font-semibold cursor-default leading-tight">{author}</h3>
-          ) : (
-            <Link href={authorLink} className="hover:underline block">
-              <h3 className="text-foreground text-sm font-semibold leading-tight">{author}</h3>
-            </Link>
-          )}
+          <div className="flex items-center gap-1">
+            {isMe || (!isCompanyPost && !authorId) ? (
+              <h3 className="text-foreground text-sm font-semibold cursor-default leading-tight">{author}</h3>
+            ) : (
+              <Link href={authorLink} className="hover:underline block">
+                <h3 className="text-foreground text-sm font-semibold leading-tight">{author}</h3>
+              </Link>
+            )}
+            {isCompanyPost && (
+              <Icon icon="solar:check-circle-bold" className="w-4 h-4 text-primary" />
+            )}
+          </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-1">
-              <p className="text-[11px] leading-tight text-muted-foreground">{timeAgo} •</p>
+              <p className="text-[11px] leading-tight text-muted-foreground">
+                {location ? `${location} • ` : ""}{timeAgo} •
+              </p>
               {visibility === 'private' ? (
                 <EyeOff className="w-3 h-3 text-muted-foreground" />
               ) : (
@@ -88,7 +101,40 @@ export const PostHeader = ({
         </div>
       </div>
 
-      <div className="flex items-center">
+      <div className="flex items-center gap-1">
+        {/* Tag icon — show only when tags exist */}
+        {tags && tags.length > 0 && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="p-1 hover:bg-secondary rounded-full transition-colors outline-none text-muted-foreground hover:text-foreground data-[state=open]:text-[#6366F1]">
+                <Icon icon="la:user-tag" className="w-[24px] h-[24px]" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-[180px] h-[136px] p-2 bg-white border border-[#C7D2FE] rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] z-[210]"
+              align="end"
+              sideOffset={8}
+            >
+              <div className="flex flex-col gap-1">
+                {tags.map((tag: any, idx: number) => (
+                  <div key={idx} className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-[12px] transition-colors cursor-pointer group">
+                    <div className="w-6 h-6 rounded-full border border-slate-200 flex items-center justify-center overflow-hidden bg-slate-50">
+                      {tag.avatar_url || tag.avatar ? (
+                        <img src={tag.avatar_url || tag.avatar} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <Icon icon="solar:user-linear" className="w-3 h-3 text-slate-400" />
+                      )}
+                    </div>
+                    <span className="text-[14px] leading-[20px] font-normal text-black font-[family-name:var(--font-poppins)] transition-colors">
+                      {tag.full_name || tag.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+
         <div className="relative">
           <button
             ref={optionsBtnRef}

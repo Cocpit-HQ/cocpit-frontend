@@ -1,9 +1,9 @@
 import { Experience } from "@/types/entities";
 
 export interface ProfileIdentity {
-  openTo: "Full-time" | "Freelance" | "Consulting" | "Mentorship";
-  availability: "Immediate" | "30 Days" | "Casual Networking";
-  workPreference: "Remote" | "Hybrid" | "Onsite";
+  openTo: "Full-time" | "Part-time" | "Internship" | "Freelance" | "Connections";
+  availability: "Immediately" | "Weekdays" | "Weekends" | "15 to 30 days" | "Flexible" | "On-demand" | "Immediate" | "30 Days";
+  workPreference: "Remote" | "Hybrid" | "On-site";
 }
 
 export interface ProfileInsights {

@@ -33,16 +33,25 @@ interface EditProfileModalProps {
   onSave: (data: any) => void
 }
 
-const LOOKING_FOR_OPTIONS = ["Full-time", "Freelance", "Mentorship", "Consulting"]
-const AVAILABILITY_OPTIONS = ["Immediate", "30 Days", "Casual Networking"]
-const WORK_SETUP_OPTIONS = ["Remote", "Hybrid", "Onsite"]
+const LOOKING_FOR_OPTIONS = ["Full-time", "Part-time", "Internship", "Freelance", "Connections"]
+const AVAILABILITY_OPTIONS = ["Immediately", "Weekdays", "Weekends", "15 to 30 days", "Flexible", "On-demand"]
+const WORK_SETUP_OPTIONS = ["Remote", "Hybrid", "On-site"]
+
+const ROLES = [
+  { id: "student", label: "Student" },
+  { id: "fresher", label: "Fresher" },
+  { id: "intern", label: "Intern" },
+  { id: "self_employed", label: "Self employed" },
+  { id: "employed", label: "Employed" },
+  { id: "unemployed", label: "Unemployed" },
+];
 
 export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     account_name: "",
     headline: "",
-    status: "Student",
+    status: "",
     location: "",
     website: "",
     open_to: "" as string,
@@ -58,11 +67,17 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
 
   useEffect(() => {
     if (user) {
+      let initialStatus = (user as any).account_type || "student";
+      initialStatus = initialStatus.toLowerCase().replace(" ", "_");
+      if (!ROLES.find(r => r.id === initialStatus)) {
+        initialStatus = "student";
+      }
+
       setFormData({
         name: user.name || "",
         account_name: user.account_name || "",
         headline: user.headline || "",
-        status: "Student", // Defaulting for now
+        status: initialStatus,
         location: user.location || "",
         website: user.website || "",
         open_to: user.open_to || "",
@@ -139,14 +154,6 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
           </button>
         </div>
 
-        {/* Desktop Close Button */}
-        <button
-          onClick={onClose}
-          className="hidden sm:flex absolute right-4 top-4 w-[24px] h-[24px] items-center justify-center text-destructive hover:opacity-80 transition-all focus:outline-none focus-visible:ring-0 z-50"
-        >
-          <X className="w-4 h-4" />
-        </button>
-
         <div className="bg-card p-4 sm:p-6 rounded-none sm:rounded-[24px] h-[calc(100dvh-73px)] sm:h-auto sm:max-h-[90vh] overflow-y-auto scrollbar-hide">
 
           <DialogHeader className="hidden sm:flex w-full flex-col items-center justify-center text-center mb-6 h-auto gap-0">
@@ -197,9 +204,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
-                    <SelectItem value="Student">Student</SelectItem>
-                    <SelectItem value="Professional">Professional</SelectItem>
-                    <SelectItem value="Freelancer">Freelancer</SelectItem>
+                    {ROLES.map(role => (
+                      <SelectItem key={role.id} value={role.id}>{role.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

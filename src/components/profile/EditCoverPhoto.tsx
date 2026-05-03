@@ -1,23 +1,22 @@
 
 "use client";
 
-import React, { useState, useRef, ReactNode } from "react";
-import { Camera, Trash2, Upload, Image as ImageIcon, Crop, Contrast, X, Loader2 } from "lucide-react";
+import React, { useState, useRef, useCallback, useEffect, ReactNode } from "react";
+import { Trash2, X, Loader2 } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { uploadCoverPhoto, deleteCoverPhoto } from "@/services/api/profile";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+
+type ModalState = "edit" | "upload";
 
 interface EditCoverPhotoProps {
   coverImage: string | null;
@@ -37,39 +36,94 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
   const [rotation, setRotation] = useState(0);
   const [flipH, setFlipH] = useState(false);
   const [flipV, setFlipV] = useState(false);
+  const [modalState, setModalState] = useState<ModalState>("edit");
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const displayImage = previewUrl || coverImage || null;
+  const hasImage = !!displayImage;
 
+  // Determine initial state when modal opens
+  useEffect(() => {
+    if (isModalOpen) {
+      if (coverImage || previewUrl) {
+        setModalState("edit");
+      } else {
+        setModalState("upload");
+      }
+    }
+  }, [isModalOpen]);
+
+  const resetTransforms = () => {
+    setZoom(0);
+    setRotation(0);
+    setFlipH(false);
+    setFlipV(false);
+  };
+
+  const handleCancelPreview = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setSelectedFile(null);
+    resetTransforms();
+  };
+
+  const handleFileProcess = useCallback((file: File) => {
     // Validate type
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/jpg'];
     if (!validTypes.includes(file.type)) {
       toast({ title: "Error", description: "Invalid file type. Please upload an image.", variant: "destructive" });
       return;
     }
-
-    // Validate size (e.g. 5MB)
+    // Validate size (5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast({ title: "Error", description: "File size exceeds 5MB.", variant: "destructive" });
       return;
     }
 
-    // Create preview
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
     setSelectedFile(file);
+    resetTransforms();
+    setModalState("edit");
+  }, [toast]);
 
-    // Reset input
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    handleFileProcess(file);
+    // Reset input so same file can be re-selected
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleFileProcess(file);
+    }
+  }, [handleFileProcess]);
 
   const handleSave = async () => {
     const sourceUrl = previewUrl || coverImage;
@@ -152,16 +206,6 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
     }
   };
 
-  const handleCancelPreview = () => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(null);
-    setSelectedFile(null);
-    setZoom(0);
-    setRotation(0);
-    setFlipH(false);
-    setFlipV(false);
-  };
-
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
@@ -173,7 +217,10 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
       setCoverImage(null);
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
       toast({ title: "Success", description: "Cover photo removed." });
-      setIsModalOpen(false);
+      setPreviewUrl(null);
+      setSelectedFile(null);
+      resetTransforms();
+      setModalState("upload");
     } catch (error) {
       console.error("Delete error:", error);
       toast({ title: "Error", description: "Failed to remove cover photo.", variant: "destructive" });
@@ -182,19 +229,21 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
     }
   };
 
-  const openFileDialog = () => {
-    fileInputRef.current?.click();
+  const switchToUpload = () => {
+    setModalState("upload");
   };
 
-  const displayImage = previewUrl || coverImage || null;
+  const openFilePicker = () => {
+    fileInputRef.current?.click();
+  };
 
   const CoverPhotoModal = (
     <Dialog open={isModalOpen} onOpenChange={(open) => {
       setIsModalOpen(open);
       if (!open) handleCancelPreview();
     }}>
-      <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[600px] [&>button]:hidden outline-none">
-        <div className="relative bg-card rounded-[24px] p-[32px] w-full shadow-sm flex flex-col outline-none">
+      <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[800px] [&>button]:hidden outline-none">
+        <div className="relative bg-card rounded-[24px] p-[16px] w-[800px] max-w-full shadow-sm flex flex-col outline-none">
           <button 
               onClick={() => setIsModalOpen(false)}
               className="absolute top-6 right-6 p-1 text-destructive hover:bg-destructive/10 rounded-full transition-colors z-10"
@@ -211,75 +260,133 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
               </p>
           </div>
 
-          <div className="flex justify-center items-center gap-4 mb-6">
-            <button 
-              onClick={() => setFlipV(!flipV)}
-              className={cn("p-1.5 rounded-md transition-colors", flipV ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
-            >
-              <Icon icon="hugeicons:flip-top" className="w-6 h-6" />
-            </button>
-            <button 
-              onClick={() => setFlipH(!flipH)}
-              className={cn("p-1.5 rounded-md transition-colors", flipH ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
-            >
-              <Icon icon="hugeicons:flip-left" className="w-6 h-6" />
-            </button>
-            <button 
-              onClick={() => setRotation((prev) => (prev + 90) % 360)}
-              className="p-1.5 text-foreground hover:bg-secondary rounded-md transition-colors"
-            >
-              <Icon icon="wordpress:rotate-left" className="w-6 h-6" />
-            </button>
-            <button 
-              onClick={handleDelete}
-              disabled={isDeleting || !coverImage}
-              className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-50"
-            >
-              {isDeleting ? <Loader2 className="w-6 h-6 animate-spin" strokeWidth={1.5} /> : <Trash2 className="w-6 h-6" strokeWidth={1.5} />}
-            </button>
-          </div>
+          {/* ─── Content Area with Smooth Transition ─── */}
+          <div className="relative min-h-[340px] flex flex-col items-center justify-center">
 
-          <div 
-            className="w-full h-[200px] mx-auto relative overflow-hidden bg-secondary rounded-[24px]" 
-          >
-             <img
-              src={displayImage || "/assets/coverphoto.jpg"}
-              alt="Current Cover"
-              className="absolute inset-0 w-full h-full object-cover transition-all duration-200"
-              style={{ transform: `scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})` }}
-            />
-            <div 
-              className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/10 transition-colors cursor-pointer group"
-              onClick={openFileDialog}
+            {/* ═══ EDIT STATE ═══ */}
+            <div
+              className={cn(
+                "absolute inset-0 flex flex-col items-center transition-all duration-300 ease-in-out",
+                modalState === "edit"
+                  ? "opacity-100 scale-100 pointer-events-auto"
+                  : "opacity-0 scale-95 pointer-events-none"
+              )}
             >
-              {!displayImage && <ImageIcon className="w-8 h-8 text-muted-foreground group-hover:text-foreground" />}
+              {/* Transform Toolbar */}
+              <div className="flex justify-center items-center gap-4 mb-6">
+                <button 
+                  onClick={() => setFlipV(!flipV)}
+                  className={cn("p-1.5 rounded-md transition-colors", flipV ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
+                >
+                  <Icon icon="hugeicons:flip-top" className="w-6 h-6" />
+                </button>
+                <button 
+                  onClick={() => setFlipH(!flipH)}
+                  className={cn("p-1.5 rounded-md transition-colors", flipH ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
+                >
+                  <Icon icon="hugeicons:flip-left" className="w-6 h-6" />
+                </button>
+                <button 
+                  onClick={() => setRotation((prev) => (prev + 90) % 360)}
+                  className="p-1.5 text-foreground hover:bg-secondary rounded-md transition-colors"
+                >
+                  <Icon icon="wordpress:rotate-left" className="w-6 h-6" />
+                </button>
+                <button 
+                  onClick={handleDelete}
+                  disabled={isDeleting || !coverImage}
+                  className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-50"
+                >
+                  {isDeleting ? <Loader2 className="w-6 h-6 animate-spin" strokeWidth={1.5} /> : <Trash2 className="w-6 h-6" strokeWidth={1.5} />}
+                </button>
+              </div>
+
+              {/* Image Preview with Hover Overlay */}
+              <div 
+                className="w-full h-[200px] mx-auto relative overflow-hidden bg-secondary rounded-[24px] cursor-pointer group"
+                onClick={switchToUpload}
+              >
+                <img
+                  src={displayImage || "/assets/coverphoto.jpg"}
+                  alt="Current Cover"
+                  className="absolute inset-0 w-full h-full object-cover transition-all duration-200"
+                  style={{ transform: `scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})` }}
+                />
+
+                {/* ─── Hover Overlay ─── */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 z-10">
+                  {/* Upload icon */}
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm">
+                    <Icon icon="solar:upload-linear" className="w-5 h-5 text-white" />
+                  </div>
+                  {/* Text */}
+                  <span className="text-white text-[13px] font-medium font-[family-name:var(--font-poppins)] mt-1 tracking-wide">
+                    Change image
+                  </span>
+                </div>
+              </div>
+
+              {/* Zoom Slider */}
+              <div className="mt-8 max-w-[400px] mx-auto w-full">
+                <p className="text-[14px] font-medium text-foreground mb-3">Zoom</p>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="100" 
+                  value={zoom} 
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                  className="w-full h-1.5 bg-secondary rounded-full accent-primary cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {/* ═══ UPLOAD STATE ═══ */}
+            <div
+              className={cn(
+                "absolute inset-0 flex flex-col items-center justify-center transition-all duration-300 ease-in-out",
+                modalState === "upload"
+                  ? "opacity-100 scale-100 pointer-events-auto"
+                  : "opacity-0 scale-95 pointer-events-none"
+              )}
+            >
+              {/* Centered Upload Box */}
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={openFilePicker}
+                className={cn(
+                  "w-[320px] sm:w-[380px] cursor-pointer rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center py-12 px-6 gap-4",
+                  isDragOver
+                    ? "border-primary bg-primary/5 scale-[1.02]"
+                    : "border-border hover:border-primary/50 hover:bg-secondary/50"
+                )}
+              >
+                {/* Upload Icon */}
+                <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mb-2">
+                  <Icon icon="solar:upload-linear" className="w-8 h-8 text-primary" />
+                </div>
+
+                {/* Text Content */}
+                <div className="text-center space-y-2">
+                  <p className="text-[15px] font-semibold text-foreground font-[family-name:var(--font-poppins)]">
+                    Click or drag to upload
+                  </p>
+                  <p className="text-[13px] text-muted-foreground font-[family-name:var(--font-poppins)] leading-relaxed">
+                    JPG, PNG, WEBP – Max 5MB
+                  </p>
+                  <p className="text-[12px] text-muted-foreground/70 font-[family-name:var(--font-poppins)]">
+                    Recommended size: 1500 × 480 px
+                  </p>
+                </div>
+              </div>
+
+
             </div>
           </div>
 
-          <div className="mt-8 max-w-[400px] mx-auto w-full">
-            <p className="text-[14px] font-medium text-foreground mb-3">Zoom</p>
-            <input 
-              type="range" 
-              min="0" 
-              max="100" 
-              value={zoom} 
-              onChange={(e) => setZoom(Number(e.target.value))}
-              className="w-full h-1.5 bg-secondary rounded-full accent-primary cursor-pointer"
-            />
-          </div>
-
+          {/* ─── Footer Buttons ─── */}
           <div className="flex justify-center gap-4 mt-10">
-              {coverImage && (
-                <Button 
-                  type="button"
-                  variant="outline"
-                  onClick={handleDelete}
-                  disabled={isUploading || isDeleting}
-                  className="w-[160px] h-[40px] rounded-[24px] border-destructive/50 text-destructive hover:bg-destructive/10 bg-transparent text-[14px]"
-                >
-                  {isDeleting ? "Removing..." : "Remove"}
-                </Button>
-              )}
               <Button 
                 type="button" 
                 variant="outline" 
@@ -293,11 +400,11 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
                 Cancel
               </Button>
               <Button 
-                onClick={displayImage ? handleSave : openFileDialog}
-                disabled={isUploading || isDeleting}
-                className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground hover:opacity-90 border-none text-[14px]"
+                onClick={handleSave}
+                disabled={isUploading || isDeleting || !hasImage}
+                className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground hover:opacity-90 border-none text-[14px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                {isUploading ? "Saving..." : displayImage ? "Save" : "Upload"}
+                {isUploading ? "Saving..." : "Save"}
               </Button>
           </div>
 
@@ -305,7 +412,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
             type="file"
             ref={fileInputRef}
             onChange={handleFileSelect}
-            accept="image/png, image/jpeg, image/gif"
+            accept="image/jpeg,image/png,image/webp,image/jpg"
             className="hidden"
           />
         </div>
@@ -315,7 +422,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
 
   return (
     <>
-      <div className="relative w-full h-[200px] bg-muted rounded-t-[24px] group overflow-hidden">
+      <div className="relative w-full h-[160px] bg-muted rounded-[24px] group overflow-hidden">
         {coverImage ? (
           <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
         ) : (
