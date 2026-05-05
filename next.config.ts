@@ -26,6 +26,15 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        source: '/.well-known/:path*',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/json',
+          },
+        ],
+      },
+      {
         // Cache static fonts, images, and other assets aggressively (but NOT css/js to prevent breaking Next.js hydration and HMR)
         source: '/:all*(svg|jpg|png|webp|avif|woff2|woff|ttf)',
         headers: [

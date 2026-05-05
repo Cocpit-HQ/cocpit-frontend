@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.cocpit.app",
+      "sha256_cert_fingerprints": [
+        "A6:A9:08:09:E6:40:66:94:CC:0E:7B:D1:4F:92:73:36:54:70:CD:FA:5D:AC:BB:8D:08:2E:DD:88:0A:A6:AF:F7"
+      ]
+    }
+  }
+]
