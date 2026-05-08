@@ -1,6 +1,7 @@
 "use client"
 import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import dayjs from "dayjs"
 import { Menu, LogOut, Edit2, CheckCircle, GraduationCap, Briefcase, Pencil, Plus, Building2, FileText, Copy, ChevronDown, User } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
@@ -497,7 +498,7 @@ export default function ProfilePage() {
   const [activeFollowTab, setActiveFollowTab] = useState<"followers" | "following" | "connections">("followers");
   const [isSavingExperience, setIsSavingExperience] = useState(false);
 
-  const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
+  const [editingExperiences, setEditingExperiences] = useState<Experience[] | null>(null);
   const [editingEducation, setEditingEducation] = useState<Education | null>(null);
 
   const handleUpdateProfile = useCallback(async (data: any) => {
@@ -521,9 +522,9 @@ export default function ProfilePage() {
   const { togglePostVisibility } = useFeed(false);
   const { isCompany } = useActiveProfile();
   const [previewPosts, setPreviewPosts] = useState<Post[]>([]);
+  const [isPostsExpanded, setIsPostsExpanded] = useState(false);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const isMobile = useIsMobile();
-  const [isPostsExpanded, setIsPostsExpanded] = useState(false);
   const [isAboutExpanded, setIsAboutExpanded] = useState(false);
   const { logout } = useAuth();
 
@@ -643,83 +644,109 @@ export default function ProfilePage() {
     }
   }, [skills, skillMutations.remove]);
 
-  const handleSaveExperience = async (roles: SavedRole[]) => {
-    setIsSavingExperience(true);
+  const handleSaveExperience = async (roles: SavedRole[], deletedIds: string[] = []) => {
+    setIsSavingExperience(true)
     try {
-      let previousRoleId: string | undefined = undefined;
+      const operations: any[] = []
+
+      // ── Handle Explicit Deletions ─────────────────────
+      for (const id of deletedIds) {
+        operations.push({ type: 'DELETE', id })
+      }
+
+      const updateMap = new Map<string, any>()
+      const createOps: any[] = []
+
+      console.log("[Batch Save] Constructing operations for batch update...", { roles, deletedIds });
 
       for (const role of roles) {
-        let currentSavedId = role.experience_id;
+        // Prepare the base data for the operation
+        const data = {
+          title: role.title,
+          company_name: role.company_name,
+          location: role.location,
+          work_type: role.work_type,
+          work_mode: role.work_mode,
+          start_date: role.start_date,
+          end_date: role.end_date,
+          is_current: role.is_current,
+          description: role.description ?? null,
+          org_id: role.org_id || null, // Ensure empty string becomes null
+        }
 
         if (role.experience_id) {
-          // Update existing role
-          await expMutations.update.mutateAsync({
-            id: role.experience_id,
-            payload: {
-              title: role.title,
-              company_name: role.company_name,
-              location: role.location,
-              work_type: role.work_type,
-              work_mode: role.work_mode,
-              start_date: role.start_date,
-              end_date: role.end_date,
-              is_current: role.is_current,
-              description: role.description,
-              org_id: role.org_id,
-            },
-          });
+          // ── Editing an existing role ─────────────────────
+          const existing = updateMap.get(role.experience_id) || {}
+          updateMap.set(role.experience_id, { ...existing, ...data })
         } else {
-          // Create new role
-          const res = await expMutations.add.mutateAsync({
-            title: role.title,
-            company_name: role.company_name,
-            location: role.location,
-            work_type: role.work_type,
-            work_mode: role.work_mode,
-            start_date: role.start_date,
-            end_date: role.end_date,
-            is_current: role.is_current,
-            description: role.description ?? null,
-            org_id: role.org_id,
-          });
-          // Track ID of newly created role so next role can end it if needed
-          currentSavedId = (res as any)?.experience?.experience_id || currentSavedId;
+          // ── Adding a new role ────────────────────────────
+          // Generate a tempId for optimistic cache mapping
+          const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
+          createOps.push({
+            type: 'CREATE',
+            tempId,
+            data
+          })
         }
 
-        // If user checked "End current role", patch the previous role's end_date
-        if (role.shouldEndPreviousRole) {
-          // Use explicitly passed ID (from index 0) OR the tracked ID of the previous role in loop
-          const idToEnd = role.experienceIdToEnd || previousRoleId || editingExperience?.experience_id;
-
-          if (idToEnd) {
-            await expMutations.update.mutateAsync({
-              id: idToEnd,
-              payload: {
-                end_date: role.start_date, // previous role ends when new one starts
-                is_current: false,
-              },
-            });
-          }
+        // ── Handle atomic role termination ───────────────
+        // If this role was set to end a previous one, add an extra update operation
+        if (role.shouldEndPreviousRole && role.experienceIdToEnd) {
+          console.log(`[Batch Save] Queuing termination for role ID: ${role.experienceIdToEnd}`);
+          const existing = updateMap.get(role.experienceIdToEnd) || {}
+          updateMap.set(role.experienceIdToEnd, {
+            ...existing,
+            is_current: false,
+            end_date: role.start_date
+          })
         }
-
-        previousRoleId = currentSavedId;
       }
-      setIsAddExperienceModalOpen(false);
-      setEditingExperience(null);
-      toast.success("Experience saved");
-    } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message || "Failed to save experience. Please try again."
-      );
-    } finally {
-      setIsSavingExperience(false);
-    }
-  };
 
-  const handleDeleteExperience = async (id: string) => {
-    await expMutations.remove.mutateAsync(id);
+      // Finalize operations array from map
+      for (const [id, data] of updateMap.entries()) {
+        operations.push({ type: 'UPDATE', id, data })
+      }
+      operations.push(...createOps)
+
+
+      console.log("[Batch Save] Executing batch update with operations:", operations);
+
+      // Execute the unified atomic batch update
+      const result = await expMutations.batchUpdate.mutateAsync({
+        operations,
+        version: profileData?.user?.version ?? 0
+      })
+
+      console.log("[Batch Save] Batch update successful:", result);
+
+      setIsAddExperienceModalOpen(false)
+      setEditingExperiences(null)
+      // Success toast is handled by the useExperienceMutations.batchUpdate hook
+    } catch (err: any) {
+      // Error toast is handled by the useExperienceMutations.batchUpdate hook
+      console.error("Failed to save experience batch:", err)
+      throw err
+    } finally {
+      setIsSavingExperience(false)
+    }
+  }
+
+  const handleDeleteExperience = async (idOrIds: string | string[]) => {
+    const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
+
+    if (ids.length === 0) return;
+
+    if (ids.length === 1) {
+      await expMutations.remove.mutateAsync(ids[0]);
+    } else {
+      await expMutations.batchUpdate.mutateAsync({
+        requestId: crypto.randomUUID(),
+        operations: ids.map(id => ({ type: 'DELETE', id })),
+        version: profileData?.user?.version ?? 0
+      });
+    }
     setIsAddExperienceModalOpen(false);
-    setEditingExperience(null);
+    setEditingExperiences(null);
   }
 
   const handleSaveEducation = async (data: Partial<Education>) => {
@@ -818,17 +845,20 @@ export default function ProfilePage() {
             </EditCoverPhoto>
 
             <div className="px-0 pb-0">
-              <div className="flex items-start justify-between -mt-[32px] md:-mt-[40px]">
-                <div className="relative group ml-4 md:ml-[38px]">
-                  <div
-                    className="w-[64px] h-[64px] md:w-[80px] md:h-[80px] rounded-full border-[3px] md:border-4 border-card bg-card overflow-hidden flex-shrink-0 cursor-pointer shadow-sm"
-                    onClick={() => setIsViewAvatarOpen(true)}
-                  >
-                    <img
-                      src={user?.avatar ?? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop"}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
+              <div className="flex items-start justify-between -mt-[49px] md:-mt-[49px]">
+                <div className="relative group ml-[12px] md:ml-[34px]">
+                  <div className="w-[98px] h-[98px] relative cursor-pointer" onClick={() => setIsViewAvatarOpen(true)}>
+                    {/* Top Half Border Only */}
+                    <div className="absolute inset-0 rounded-full border-4 border-white shadow-sm [mask-image:linear-gradient(to_bottom,black_50%,transparent_50%)]" />
+                    
+                    {/* Avatar Logo */}
+                    <div className="absolute inset-[4px] rounded-full overflow-hidden bg-card">
+                      <img
+                        src={profileData?.user?.avatar || "/assets/avatar.png"}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   </div>
                   <button
                     onClick={(e) => {
@@ -838,7 +868,9 @@ export default function ProfilePage() {
                     className="absolute -bottom-1 -right-1 cursor-pointer transition-transform hover:scale-110 active:scale-95 z-10"
                     aria-label="Edit Profile Picture"
                   >
-                    <img src="/assets/edit.png" alt="Edit" className="w-[24px] h-[24px] md:w-[32px] md:h-[32px]" />
+                    <div className="w-[28px] h-[28px] md:w-[36px] md:h-[36px] rounded-full bg-[#6366F1] flex items-center justify-center border-[3px] md:border-4 border-white shadow-sm transition-transform group-hover:scale-110">
+                      <Icon icon="solar:pen-2-linear" className="w-[14px] h-[14px] md:w-[18px] md:h-[18px] text-white" />
+                    </div>
                   </button>
                 </div>
 
@@ -1091,19 +1123,14 @@ export default function ProfilePage() {
             {/* Posts Section */}
             <div
               className="w-full md:w-[960px] mx-auto bg-transparent mt-[16px] transition-all duration-500 ease-in-out overflow-hidden"
-              style={{ minHeight: isPostsExpanded ? 'auto' : '564px' }}
+              style={{ minHeight: '564px' }}
             >
               {/* Header */}
               <div className="flex items-center justify-between pt-4 pb-4 px-4 md:px-10">
                 <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Post</h2>
                 {previewPosts.length > 3 && (
                   <button
-                    onClick={() => {
-                      setIsPostsExpanded(!isPostsExpanded);
-                      if (isPostsExpanded) {
-                        document.getElementById('posts-section-top')?.scrollIntoView({ behavior: 'smooth' });
-                      }
-                    }}
+                    onClick={() => setIsPostsExpanded(!isPostsExpanded)}
                     className="w-[78px] h-[36px] flex items-center justify-center px-4 py-2 border border-primary rounded-[24px] bg-card text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-primary whitespace-nowrap hover:bg-secondary transition-all duration-200"
                   >
                     {isPostsExpanded ? 'Show less' : 'See all'}
@@ -1111,16 +1138,12 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Anchor for scroll to top */}
-              <div id="posts-section-top" />
-
-              {/* Posts Wrapper */}
-              <div
-                className={`px-4 md:pl-10 md:pr-4 transition-all duration-500 ease-in-out ${isPostsExpanded
-                  ? "grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-[24px] pb-10"
+              <div className={cn(
+                "px-4 md:pl-10 md:pr-4",
+                isPostsExpanded
+                  ? "grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-[24px]"
                   : "flex flex-col md:flex-row gap-4 md:gap-[24px]"
-                  }`}
-              >
+              )}>
                 {(isPostsExpanded ? previewPosts : previewPosts.slice(0, 3)).map((post, index) => (
                   <div
                     key={post.id || index}
@@ -1181,7 +1204,7 @@ export default function ProfilePage() {
               <div className="flex items-center justify-between">
                 <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Experience</h2>
                 <button
-                  onClick={() => { setEditingExperience(null); setIsAddExperienceModalOpen(true); }}
+                  onClick={() => { setEditingExperiences(null); setIsAddExperienceModalOpen(true); }}
                   className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-primary bg-card flex items-center justify-center text-primary hover:bg-secondary transition-all flex-shrink-0"
                 >
                   <Plus className="w-5 h-5" />
@@ -1195,8 +1218,8 @@ export default function ProfilePage() {
                     <EditableExperienceGroup
                       key={`${group.company_name}-${gIdx}`}
                       group={group}
-                      onEdit={(exp) => {
-                        setEditingExperience(exp);
+                      onEdit={() => {
+                        setEditingExperiences(group.experiences);
                         setIsAddExperienceModalOpen(true);
                       }}
                     />
@@ -1257,19 +1280,18 @@ export default function ProfilePage() {
       <Dialog open={isAddExperienceModalOpen} onOpenChange={setIsAddExperienceModalOpen}>
         <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full [&>button]:hidden outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
           <DialogTitle className="sr-only">Add Experience</DialogTitle>
-          <DialogDescription className="sr-only">Fill in the details to add a new experience record to your profile.</DialogDescription>
+          <DialogDescription className="sr-only">Fill in the details to add or edit experience records on your profile.</DialogDescription>
           <AddExperienceForm
             onSave={handleSaveExperience}
             onCancel={() => {
               setIsAddExperienceModalOpen(false);
-              setEditingExperience(null);
+              setEditingExperiences(null);
             }}
-            initialData={editingExperience}
-            onDelete={() =>
-              editingExperience &&
-              handleDeleteExperience(editingExperience.experience_id)
-            }
-            companyName={editingExperience?.company_name}
+            initialExperiences={editingExperiences || undefined}
+            onDelete={(ids) => {
+              handleDeleteExperience(ids);
+            }}
+            companyName={editingExperiences?.[0]?.company_name}
             isSaving={isSavingExperience}
             existingExperiences={flatExperiences}
           />

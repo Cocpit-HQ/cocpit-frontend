@@ -21,12 +21,12 @@ export function ProfileIdentityChips({ initialIdentity }: ProfileIdentityChipsPr
         <div className="flex items-center justify-center py-2 px-4 rounded-full border border-[#818CF8] bg-[#FFFFFF] whitespace-nowrap text-[14px] font-normal text-[#818CF8] leading-[20px] font-[family-name:var(--font-poppins)]">
           {identity.openTo}
         </div>
-        
+
         {/* Availability Chip */}
         <div className="flex items-center justify-center py-2 px-4 rounded-full border border-[#818CF8] bg-[#FFFFFF] whitespace-nowrap text-[14px] font-normal text-[#818CF8] leading-[20px] font-[family-name:var(--font-poppins)]">
           {identity.availability}
         </div>
-        
+
         {/* Preference Chip */}
         <div className="flex items-center justify-center py-2 px-4 rounded-full border border-[#818CF8] bg-[#FFFFFF] whitespace-nowrap text-[14px] font-normal text-[#818CF8] leading-[20px] font-[family-name:var(--font-poppins)]">
           {identity.workPreference}

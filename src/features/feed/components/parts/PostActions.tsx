@@ -1,6 +1,10 @@
+'use client';
+
 import React from 'react';
-import { ThumbsUp, MessageCircle, Share2 } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Repeat2 } from 'lucide-react';
 import { SaveButton } from '@/components/home/SaveButton';
+import { cn } from '@/lib/utils';
+import { Icon } from '@iconify/react';
 
 interface PostActionsProps {
   id: string | number;
@@ -25,32 +29,59 @@ export const PostActions = ({
   shares, handleShare, isSaved, setIsSaved, handleSaveToggle
 }: PostActionsProps) => {
   return (
-    <div className="px-4 py-1 border-t border-border/40 mt-auto">
-      <div className="flex items-center justify-between gap-1">
-        <button
-          onClick={handleLike}
-          className={`flex items-center justify-center gap-2 ${isLiked ? 'text-red-500' : 'text-muted-foreground hover:bg-muted/50'} transition-all duration-200 flex-1 py-1.5 rounded-md`}
+    <div className="flex flex-row justify-between items-center px-[16px] py-[8px] gap-[8px] w-full h-[40px]">
+      {/* Frame 2608620 (Action Icons Group) - Left Aligned */}
+      <div className="flex flex-row items-center gap-[16px]">
+        {/* Like (Frame 2608593) */}
+        <button 
+          onClick={(e) => { e.stopPropagation(); handleLike(); }}
+          className="flex flex-row items-center gap-[8px] h-[24px]"
         >
-          <ThumbsUp className="w-4 h-4" fill={isLiked ? "currentColor" : "none"} />
-          {likeCount > 0 && <span className="text-xs font-medium">{likeCount}</span>}
+          {isLiked ? (
+            <Icon icon="solar:heart-bold" className="w-[24px] h-[24px] text-[#6366F1]" />
+          ) : (
+            <Icon icon="solar:heart-linear" className="w-[24px] h-[24px] text-black" />
+          )}
+          <span className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-black">
+            {likeCount}
+          </span>
         </button>
 
-        <button
-          onClick={handleToggleCommentSection}
-          className={`flex items-center justify-center gap-2 ${isCommentSectionOpen || isMobileDrawerOpen || isCommented ? 'text-green-500' : 'text-muted-foreground hover:bg-muted/50'} transition-all duration-200 flex-1 py-1.5 rounded-md`}
+        {/* Comment (Frame 2608594) */}
+        <button 
+          onClick={(e) => { e.stopPropagation(); handleToggleCommentSection(); }}
+          className="flex flex-row items-center gap-[8px] h-[24px]"
         >
-          <MessageCircle className="w-4 h-4" fill={isCommented ? "currentColor" : "none"} />
-          {commentsCount > 0 && <span className="text-xs font-medium">{commentsCount}</span>}
+          <Icon icon="solar:chat-round-dots-linear" className="w-[24px] h-[24px] text-black" />
+          <span className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-black">
+            {commentsCount}
+          </span>
         </button>
 
-        <button
-          onClick={handleShare}
-          className="flex items-center justify-center gap-2 text-muted-foreground hover:bg-muted/50 transition-all duration-200 flex-1 py-1.5 rounded-md"
+        {/* Repost (Frame 2608595) */}
+        <button 
+          className="flex flex-row items-center gap-[8px] h-[24px]"
         >
-          <Share2 className="w-4 h-4" />
-          {parseInt(shares?.toString() || '0') > 0 && <span className="text-xs font-medium">{shares}</span>}
+          <Icon icon="solar:repeat-linear" className="w-[24px] h-[24px] text-black" />
+          <span className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-black">
+            3
+          </span>
         </button>
 
+        {/* Share (Frame 2608597) */}
+        <button 
+          onClick={(e) => { e.stopPropagation(); handleShare(); }}
+          className="flex flex-row items-center gap-[8px] h-[24px]"
+        >
+          <Icon icon="solar:share-linear" className="w-[24px] h-[24px] text-black" />
+          <span className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-black">
+            {shares}
+          </span>
+        </button>
+      </div>
+
+      {/* Save (Frame 2608596) - Right Aligned */}
+      <div className="flex-shrink-0">
         <SaveButton
           postId={id.toString()}
           initialIsSaved={isSaved}
@@ -61,4 +92,3 @@ export const PostActions = ({
     </div>
   );
 };
-

@@ -244,7 +244,15 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                         </div>
                     )}
 
-                    <p className="text-base mb-2 text-foreground">{user.headline}</p>
+                    <p className="text-base mb-2 text-foreground">
+                        {(() => {
+                            const words = (user.headline || "").split(/\s+/).filter(Boolean);
+                            if (words.length > 200) {
+                                return words.slice(0, 200).join(" ") + "...";
+                            }
+                            return user.headline;
+                        })()}
+                    </p>
 
                     <div className="flex items-center gap-2 text-xs mb-2 text-muted-foreground">
                         <span>{user.location}</span>

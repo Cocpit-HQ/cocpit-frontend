@@ -133,7 +133,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
     try {
       const img = new Image();
       img.crossOrigin = "anonymous";
-      
+
       await new Promise((resolve, reject) => {
         img.onload = resolve;
         img.onerror = reject;
@@ -152,11 +152,11 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
 
       ctx.clearRect(0, 0, width, height);
       ctx.save();
-      
+
       ctx.translate(width / 2, height / 2);
       ctx.rotate((rotation * Math.PI) / 180);
       ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
-      
+
       const imgAspect = img.width / img.height;
       const canvasAspect = width / height;
       let drawWidth, drawHeight;
@@ -244,20 +244,20 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
     }}>
       <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[800px] [&>button]:hidden outline-none">
         <div className="relative bg-card rounded-[24px] p-[16px] w-[800px] max-w-full shadow-sm flex flex-col outline-none">
-          <button 
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-6 right-6 p-1 text-destructive hover:bg-destructive/10 rounded-full transition-colors z-10"
+          <button
+            onClick={() => setIsModalOpen(false)}
+            className="absolute top-6 right-6 p-1 text-destructive hover:bg-destructive/10 rounded-full transition-colors z-10"
           >
-              <X className="w-6 h-6" strokeWidth={1.5} />
+            <X className="w-6 h-6" strokeWidth={1.5} />
           </button>
 
           <div className="text-center mb-6 relative px-4">
-              <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-foreground mb-1">
-                Cover image
-              </DialogTitle>
-              <p className="text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
-                This will appear at the top of your profile
-              </p>
+            <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-foreground mb-1">
+              Cover image
+            </DialogTitle>
+            <p className="text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+              This will appear at the top of your profile
+            </p>
           </div>
 
           {/* ─── Content Area with Smooth Transition ─── */}
@@ -274,25 +274,25 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
             >
               {/* Transform Toolbar */}
               <div className="flex justify-center items-center gap-4 mb-6">
-                <button 
+                <button
                   onClick={() => setFlipV(!flipV)}
                   className={cn("p-1.5 rounded-md transition-colors", flipV ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
                 >
                   <Icon icon="hugeicons:flip-top" className="w-6 h-6" />
                 </button>
-                <button 
+                <button
                   onClick={() => setFlipH(!flipH)}
                   className={cn("p-1.5 rounded-md transition-colors", flipH ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
                 >
                   <Icon icon="hugeicons:flip-left" className="w-6 h-6" />
                 </button>
-                <button 
+                <button
                   onClick={() => setRotation((prev) => (prev + 90) % 360)}
                   className="p-1.5 text-foreground hover:bg-secondary rounded-md transition-colors"
                 >
                   <Icon icon="wordpress:rotate-left" className="w-6 h-6" />
                 </button>
-                <button 
+                <button
                   onClick={handleDelete}
                   disabled={isDeleting || !coverImage}
                   className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-50"
@@ -302,9 +302,9 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
               </div>
 
               {/* Image Preview with Hover Overlay */}
-              <div 
+              <div
                 className="w-full h-[200px] mx-auto relative overflow-hidden bg-secondary rounded-[24px] cursor-pointer group"
-                onClick={switchToUpload}
+                onClick={openFilePicker}
               >
                 <img
                   src={displayImage || "/assets/coverphoto.jpg"}
@@ -329,11 +329,11 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
               {/* Zoom Slider */}
               <div className="mt-8 max-w-[400px] mx-auto w-full">
                 <p className="text-[14px] font-medium text-foreground mb-3">Zoom</p>
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="100" 
-                  value={zoom} 
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={zoom}
                   onChange={(e) => setZoom(Number(e.target.value))}
                   className="w-full h-1.5 bg-secondary rounded-full accent-primary cursor-pointer"
                 />
@@ -387,25 +387,25 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
 
           {/* ─── Footer Buttons ─── */}
           <div className="flex justify-center gap-4 mt-10">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => {
-                  handleCancelPreview();
-                  setIsModalOpen(false);
-                }} 
-                disabled={isUploading || isDeleting}
-                className="w-[160px] h-[40px] rounded-[24px] border-primary text-primary hover:bg-primary/5 bg-transparent text-[14px]"
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSave}
-                disabled={isUploading || isDeleting || !hasImage}
-                className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground hover:opacity-90 border-none text-[14px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                {isUploading ? "Saving..." : "Save"}
-              </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                handleCancelPreview();
+                setIsModalOpen(false);
+              }}
+              disabled={isUploading || isDeleting}
+              className="w-[160px] h-[40px] rounded-[24px] border-primary text-primary hover:bg-primary/5 bg-transparent text-[14px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={isUploading || isDeleting || !hasImage}
+              className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground hover:opacity-90 border-none text-[14px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {isUploading ? "Saving..." : "Save"}
+            </Button>
           </div>
 
           <input
@@ -429,9 +429,9 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
           <img src="/assets/coverphoto.jpg" alt="Default Cover" className="w-full h-full object-cover" />
         )}
         {children}
-        
+
         {/* Avatar Cutout */}
-        <div className="absolute left-4 md:left-[38px] -bottom-[32px] md:-bottom-[40px] w-[64px] h-[64px] md:w-[80px] md:h-[80px] bg-card rounded-full z-0" />
+        <div className="absolute left-[12px] md:left-[34px] -bottom-[49px] w-[98px] h-[98px] bg-[#ffffff] rounded-full z-0" />
 
         <div className="absolute bottom-4 right-4 flex gap-2 z-10 pointer-events-auto">
           {/* Minimal trigger buttons on the cover itself */}

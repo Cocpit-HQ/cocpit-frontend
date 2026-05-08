@@ -25,8 +25,8 @@ export interface User {
   connection_request_status?: 'connected' | 'pending' | 'rejected' | 'blocked' | null;
   connection_request_id?: string | null;
   connection_request_sender?: 'me' | 'them' | null;
-
   company_roles?: CompanyRole[];
+  version?: number;
 }
 
 export interface CompanyRole {
@@ -76,6 +76,7 @@ export interface UserData {
   latest_education: {
     school: string;
     degree: string;
+    school_logo?: string | null;
   } | null;
   job_title?: string;
   company_name?: string;
@@ -89,6 +90,7 @@ export interface UserData {
   connection_request_id?: string | null;
   connection_request_sender?: 'me' | 'them' | null;
   company_roles?: CompanyRole[];
+  version: number;
 }
 
 export interface UpdateProfilePayload {
@@ -136,11 +138,16 @@ export interface AddExperiencePayload {
   end_date: string | null;
   is_current: boolean;
   description: string | null;
+  // ── Atomic end-role fields (optional) ────────────────────────────────────
+  end_current_role?: boolean;       // if true, end an existing active role atomically
+  end_current_role_id?: string;     // UUID of the experience to end (required when flag is true)
 }
 
 export interface AddExperienceResponse {
   message: string;
   experience: Experience;
+  ended_experience?: Experience;  // present when end_current_role was true
+  warning?: string;               // non-blocking advisory from backend
 }
 
 export interface AddEducationPayload {

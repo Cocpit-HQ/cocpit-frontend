@@ -100,7 +100,7 @@ export function LivingResume({ experiences, skills, resumeName, resumeUrl }: Liv
         <div className="flex items-center gap-3">
           {/* PDF File Chip */}
           {resumeName && (
-            <div className="inline-flex items-center gap-[10px] w-[148px] h-[40px] px-[16px] py-[8px] rounded-[24px] border border-border bg-card hover:bg-secondary transition-colors box-border">
+            <div className="flex flex-row items-center justify-center gap-[10px] w-[148px] h-[40px] px-[16px] py-[8px] rounded-[24px] border border-[#6B7280] bg-[#FFFFFF] transition-colors box-border flex-none order-0 flex-grow-0">
               <Icon icon="material-icon-theme:pdf" width={24} height={24} className="flex-shrink-0 text-muted-foreground grayscale opacity-80" />
               <span className="font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-muted-foreground truncate flex-1 min-w-0">{resumeName}</span>
               <button
@@ -125,14 +125,16 @@ export function LivingResume({ experiences, skills, resumeName, resumeUrl }: Liv
             </button>
           )}
 
-          {/* Download Icon Button */}
-          <button
-            onClick={handleDownload}
-            className="flex items-center justify-center gap-[10px] px-[16px] py-[8px] w-[56px] h-[40px] rounded-[24px] border border-primary bg-card hover:bg-secondary transition-all"
-            title="Download PDF"
-          >
-            <Download className="w-6 h-6 text-primary stroke-[2px]" />
-          </button>
+          {/* Download Icon Button - Only show if resume exists */}
+          {resumeUrl && (
+            <button
+              onClick={handleDownload}
+              className="flex items-center justify-center gap-[10px] px-[16px] py-[8px] w-[56px] h-[40px] rounded-[24px] border border-primary bg-card hover:bg-secondary transition-all"
+              title="Download PDF"
+            >
+              <Download className="w-6 h-6 text-primary stroke-[2px]" />
+            </button>
+          )}
         </div>
       </div>
 

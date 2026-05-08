@@ -3,6 +3,7 @@ import type { UserProfile, AddExperiencePayload, AddExperienceResponse, AddEduca
 
 export interface GetUserPostsParams {
   category?: 'All' | 'Personal' | 'Professional';
+  filter?: 'Post' | 'Repost' | 'Comments' | 'Private post' | 'Save';
   limit?: number;
   cursorCreatedAt?: string;
   cursorPostId?: string;
@@ -104,6 +105,7 @@ export const updateProfile = async (payload: UpdateProfilePayload): Promise<{ me
 export const getUserPosts = async (params: GetUserPostsParams): Promise<GetUserPostsResponse> => {
   const queryParams = new URLSearchParams();
   if (params.category && params.category !== 'All') queryParams.append('category', params.category);
+  if (params.filter) queryParams.append('filter', params.filter);
   if (params.limit) queryParams.append('limit', params.limit.toString());
   if (params.cursorCreatedAt) queryParams.append('cursorCreatedAt', params.cursorCreatedAt);
   if (params.cursorPostId) queryParams.append('cursorPostId', params.cursorPostId);
@@ -122,8 +124,38 @@ export const updateExperience = async (id: string, payload: Partial<AddExperienc
   return response.data;
 }
 
+/** Partial update using the correct HTTP PATCH semantics — prefer this over PUT for field-only updates */
+export const patchExperience = async (id: string, payload: Partial<AddExperiencePayload>): Promise<AddExperienceResponse> => {
+  const response = await api.patch(`/profile/experiences/${id}`, payload);
+  return response.data;
+}
+
 export const deleteExperience = async (id: string): Promise<void> => {
   await api.delete(`/profile/experiences/${id}`);
+}
+
+export interface BatchExperienceOperation {
+  type: 'CREATE' | 'UPDATE' | 'DELETE';
+  tempId?: string;
+  id?: string;
+  data?: Partial<AddExperiencePayload>;
+}
+
+export interface BatchExperiencePayload {
+  requestId: string;
+  version: number;
+  operations: BatchExperienceOperation[];
+}
+
+export interface BatchExperienceResponse {
+  message: string;
+  idMap: Record<string, string>;
+  newVersion: number;
+}
+
+export const batchUpdateExperiences = async (payload: BatchExperiencePayload): Promise<BatchExperienceResponse> => {
+  const response = await api.post("/profile/experiences/batch", payload);
+  return response.data;
 }
 
 export const addEducation = async (payload: AddEducationPayload): Promise<AddEducationResponse> => {

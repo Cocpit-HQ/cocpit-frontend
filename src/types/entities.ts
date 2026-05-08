@@ -18,6 +18,7 @@ export interface Experience {
   profile_id: string;
   org_id: string | null;      // Link to organization
   logo_url: string | null;    // Logo from linked organization
+  company_logo?: string | null;
   title: string;
   company_name: string;
   location: string;
@@ -46,6 +47,7 @@ export interface Education {
   end_date: string | null;
   location?: string;
   description: string | null;
+  school_logo?: string | null;
 }
 
 export interface Comment {

@@ -38,8 +38,7 @@ export const FeedPost = (props: FeedPostProps) => {
     isEditModalOpen, setIsEditModalOpen, isReportModalOpen, setIsReportModalOpen,
     handleToggleVisibility, handleDelete
   } = usePostOptions(props, (id, data) => {
-    // This would typically involve a feed update logic, 
-    // but here we rely on the parent's props if it re-renders.
+    // Parent handle refresh logic
   });
 
   const { videoRef, finalAspectRatio, isVerticalVideo, handleMediaLoad } = usePostMediaObserver(id, videoSrc, props.aspectRatio);
@@ -63,8 +62,9 @@ export const FeedPost = (props: FeedPostProps) => {
   };
 
   return (
-    <div className="bg-card/30 backdrop-blur-md border border-border/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
-      <div className="p-4">
+    <div className="bg-white border border-[#EEF2FF] rounded-[24px] overflow-hidden shadow-[0px_0px_4px_rgba(99,102,241,0.05)] transition-all duration-300 hover:shadow-md flex flex-col py-[16px] gap-[16px] w-full">
+      {/* Header & Content (Frame 2608598) */}
+      <div className="flex flex-col gap-[16px] px-[16px]">
         <PostHeader 
           {...props}
           isMe={props.isOwnPost || false}
@@ -94,9 +94,11 @@ export const FeedPost = (props: FeedPostProps) => {
           shared_post={shared_post}
           sharedPollData={shared_post?.poll}
           isProfileView={isProfileView}
+          postId={id}
         />
       </div>
 
+      {/* Media (Rectangle 14) */}
       <PostMedia 
         imageSrc={imageSrc}
         images={props.images}
@@ -108,12 +110,23 @@ export const FeedPost = (props: FeedPostProps) => {
         isVerticalVideo={isVerticalVideo}
       />
 
+      {/* Social Proof (Frame 2608624) */}
+      {likeCount > 0 && (
+        <div className="px-[16px] h-[20px] flex items-center">
+          <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-black">
+            Liked by {isLiked ? 'you' : (author === 'Anushri' ? 'John' : 'Anushri')} and {likeCount - 1} others
+          </p>
+        </div>
+      )}
+
+      {/* Poll */}
       <PostPoll 
         pollData={pollData}
         isVoting={isVoting}
         handleVote={(optId) => handleVote(optId, isCompany, activeProfile?.id)}
       />
 
+      {/* Actions (Frame 2608574) */}
       <PostActions 
         id={id}
         isLiked={isLiked}

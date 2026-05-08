@@ -123,10 +123,10 @@ export function EditAvatarModal({
 
     try {
       setIsUploading(true);
-      
+
       const img = new Image();
       img.crossOrigin = "anonymous";
-      
+
       await new Promise((resolve, reject) => {
         img.onload = resolve;
         img.onerror = reject;
@@ -143,11 +143,11 @@ export function EditAvatarModal({
 
       ctx.clearRect(0, 0, size, size);
       ctx.save();
-      
+
       ctx.translate(size / 2, size / 2);
       ctx.rotate((rotation * Math.PI) / 180);
       ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
-      
+
       const imgAspect = img.width / img.height;
       let drawWidth, drawHeight;
 
@@ -207,7 +207,7 @@ export function EditAvatarModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-none sm:max-w-[600px] h-[100dvh] sm:h-auto w-full [&>button]:hidden outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
         <div className="relative bg-card rounded-none sm:rounded-[24px] p-4 sm:p-[32px] w-full h-full sm:h-auto shadow-sm flex flex-col outline-none overflow-y-auto overflow-x-hidden">
-          
+
           {/* ─── Mobile Header ─── */}
           <div className="sm:hidden flex items-center justify-between mb-8 sticky top-0 bg-card z-20 pt-2 pb-4">
             <button onClick={onClose} className="p-2 -ml-2 text-foreground hover:bg-secondary rounded-full transition-colors">
@@ -216,7 +216,7 @@ export function EditAvatarModal({
             <DialogTitle className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-foreground m-0 p-0">
               Profile image
             </DialogTitle>
-            <button 
+            <button
               onClick={handleSave}
               disabled={isUploading || isDeleting || !hasImage}
               className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all"
@@ -226,25 +226,25 @@ export function EditAvatarModal({
           </div>
 
           {/* ─── Desktop Header ─── */}
-          <button 
-              onClick={onClose}
-              className="hidden sm:block absolute top-6 right-6 p-1 text-destructive hover:bg-destructive/10 rounded-full transition-colors z-10"
+          <button
+            onClick={onClose}
+            className="hidden sm:block absolute top-6 right-6 p-1 text-destructive hover:bg-destructive/10 rounded-full transition-colors z-10"
           >
-              <X className="w-6 h-6" strokeWidth={1.5} />
+            <X className="w-6 h-6" strokeWidth={1.5} />
           </button>
 
           <div className="hidden sm:block text-center mb-6 relative px-4">
-              <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-foreground mb-1">
-                Profile image
-              </DialogTitle>
-              <p className="text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
-                Square image works best for profile display
-              </p>
+            <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-foreground mb-1">
+              Profile image
+            </DialogTitle>
+            <p className="text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+              Square image works best for profile display
+            </p>
           </div>
 
           {/* ─── Content Area with Smooth Transition ─── */}
           <div className="relative min-h-[320px] sm:min-h-[360px] flex flex-col items-center justify-center">
-            
+
             {/* ═══ EDIT STATE ═══ */}
             <div
               className={cn(
@@ -256,25 +256,25 @@ export function EditAvatarModal({
             >
               {/* Transform Toolbar */}
               <div className="flex justify-center items-center gap-4 mb-6">
-                <button 
+                <button
                   onClick={() => setFlipV(!flipV)}
                   className={cn("p-1.5 rounded-md transition-colors", flipV ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
                 >
                   <Icon icon="hugeicons:flip-top" className="w-6 h-6" />
                 </button>
-                <button 
+                <button
                   onClick={() => setFlipH(!flipH)}
                   className={cn("p-1.5 rounded-md transition-colors", flipH ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
                 >
                   <Icon icon="hugeicons:flip-left" className="w-6 h-6" />
                 </button>
-                <button 
+                <button
                   onClick={() => setRotation((prev) => (prev + 90) % 360)}
                   className="p-1.5 text-foreground hover:bg-secondary rounded-md transition-colors"
                 >
                   <Icon icon="wordpress:rotate-left" className="w-6 h-6" />
                 </button>
-                <button 
+                <button
                   onClick={handleDelete}
                   disabled={isDeleting || !currentAvatarUrl}
                   className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-50"
@@ -284,32 +284,41 @@ export function EditAvatarModal({
               </div>
 
               {/* Image Preview with Hover Overlay */}
-              <div 
-                className="w-[240px] h-[240px] mx-auto relative overflow-hidden bg-muted rounded-md cursor-pointer group"
-                onClick={switchToUpload}
+              <div
+                className="w-[200px] h-[200px] aspect-square flex-shrink-0 mx-auto relative bg-muted cursor-pointer group flex items-center justify-center border-4 border-card shadow-lg"
+                onClick={openFilePicker}
               >
                 {hasImage && (
                   <img
                     src={displayUrl!}
                     alt="Current Profile"
-                    className="absolute inset-0 w-full h-full object-cover transition-all duration-200"
-                    style={{ 
-                      transform: `scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})` 
+                    className="absolute inset-0 w-full h-full object-cover transition-all duration-200 z-[1]"
+                    style={{
+                      transform: `scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`
                     }}
                   />
                 )}
 
-                {/* Circular crop overlay */}
-                <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                  <div className="w-full h-full rounded-full ring-[200px] ring-black/40"></div>
+                {/* Perfect Circle Crop Overlay */}
+                <div 
+                  className="absolute inset-0 pointer-events-none z-[2] overflow-hidden"
+                >
+                   <div 
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full rounded-full"
+                    style={{
+                      boxShadow: '0 0 0 999px rgba(217, 217, 217, 0.5)'
+                    }}
+                  />
                 </div>
 
-                {/* ─── Hover Overlay ─── */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 z-10">
+                {/* Hover Overlay */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 z-[3]">
+                  
                   {/* Upload icon */}
                   <div className="w-9 h-9 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm">
                     <Icon icon="solar:upload-linear" className="w-5 h-5 text-white" />
                   </div>
+
                   {/* Text */}
                   <span className="text-white text-[13px] font-medium font-[family-name:var(--font-poppins)] mt-1 tracking-wide">
                     Change image
@@ -320,11 +329,11 @@ export function EditAvatarModal({
               {/* Zoom Slider */}
               <div className="mt-auto sm:mt-8 max-w-[400px] mx-auto w-full px-4 sm:px-0">
                 <p className="text-[14px] font-medium text-foreground mb-3">Zoom</p>
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="100" 
-                  value={zoom} 
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={zoom}
                   onChange={(e) => setZoom(Number(e.target.value))}
                   className="w-full h-1.5 bg-secondary rounded-full accent-primary cursor-pointer"
                 />
@@ -378,22 +387,21 @@ export function EditAvatarModal({
 
           {/* ─── Desktop Footer Buttons ─── */}
           <div className="hidden sm:flex justify-center gap-4 mt-10">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={onClose} 
-                disabled={isUploading || isDeleting}
-                className="w-[160px] h-[40px] rounded-[24px] border-primary text-primary hover:bg-secondary bg-transparent text-[14px]"
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSave}
-                disabled={isUploading || isDeleting || !hasImage}
-                className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground hover:opacity-90 border-none text-[14px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                {isUploading ? "Saving..." : "Save"}
-              </Button>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isUploading || isDeleting}
+              className="w-[160px] h-[40px] rounded-[24px] border border-primary text-primary bg-transparent text-[14px] flex items-center justify-center transition-all disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isUploading || isDeleting || !hasImage}
+              className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+            >
+              {isUploading ? "Saving..." : "Save"}
+            </button>
           </div>
 
           {/* Hidden file input */}

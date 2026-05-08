@@ -26,7 +26,7 @@ export const PostMedia = ({
   return (
     <div
       className={`w-full overflow-hidden bg-gray-100 dark:bg-zinc-900 relative group flex flex-col justify-center ${
-        isProfileView ? 'aspect-square' : (isVerticalVideo ? '' : (aspectRatio ? '' : 'min-h-[300px] md:min-h-[400px]'))
+        isProfileView ? 'aspect-square' : (isVerticalVideo ? '' : (aspectRatio ? '' : 'h-[501px]'))
       }`}
       style={
         !isProfileView

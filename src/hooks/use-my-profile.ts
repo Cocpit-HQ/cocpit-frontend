@@ -6,6 +6,7 @@ import {
     addExperience,
     updateExperience,
     deleteExperience,
+    batchUpdateExperiences,
     addEducation,
     updateEducation,
     deleteEducation,
@@ -57,6 +58,12 @@ export function useMyProfile() {
 }
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
+
+export interface BatchUpdatePayload {
+    operations: any[];
+    version: number;
+    requestId?: string;
+}
 
 export function useExperienceMutations() {
     const queryClient = useQueryClient();
@@ -114,7 +121,50 @@ export function useExperienceMutations() {
         },
     });
 
-    return { add, update, remove };
+    const batchUpdate = useMutation({
+        mutationFn: (payload: BatchUpdatePayload) => {
+            const requestId = payload.requestId ?? crypto.randomUUID();
+            return batchUpdateExperiences({ ...payload, requestId } as any);
+        },
+        onSuccess: (data) => {
+            // Surgical cache update: replace tempIds and update version
+            queryClient.setQueryData(["my-profile"], (old: UserProfile | undefined) => {
+                if (!old) return old;
+
+                // 1. Update version
+                const next = { ...old, user: { ...old.user, version: data.newVersion } };
+
+                // 2. Map tempIds to real IDs in grouped experiences
+                if (data.idMap) {
+                    next.experiences = next.experiences.map(group => ({
+                        ...group,
+                        experiences: group.experiences.map(exp => {
+                            const realId = data.idMap[exp.experience_id];
+                            if (realId) return { ...exp, experience_id: realId };
+                            return exp;
+                        })
+                    }));
+                }
+
+                return next;
+            });
+
+            // Still invalidate to ensure grouping and final state are correct
+            queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+            toast.success("Experience updated successfully");
+        },
+        onError: (err: any) => {
+            const msg = err.response?.data?.message || "Failed to update experiences";
+            if (err.response?.status === 409 && err.response?.data?.code === "VERSION_CONFLICT") {
+                toast.error("Version conflict: someone else updated this profile. Please refresh.", { duration: 5000 });
+            } else {
+                toast.error(msg);
+            }
+            console.error("Batch update error:", err);
+        },
+    });
+
+    return { add, update, remove, batchUpdate };
 }
 
 export function useEducationMutations() {

@@ -47,6 +47,8 @@ const ROLES = [
 ];
 
 export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileModalProps) {
+  const getWordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
+
   const [formData, setFormData] = useState({
     name: "",
     account_name: "",
@@ -106,6 +108,10 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   const handleSave = async () => {
     const now = Date.now()
     if (now - lastClickTime < 2000 || isSaving) return
+    if (getWordCount(formData.headline) > 200) {
+      alert("Headline cannot exceed 200 words");
+      return;
+    }
     setLastClickTime(now)
     setIsSaving(true)
 
@@ -193,9 +199,12 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                 <Input
                   value={formData.headline}
                   onChange={(e) => setFormData(prev => ({ ...prev, headline: e.target.value }))}
-                  className={inputStyles}
+                  className={cn(inputStyles, getWordCount(formData.headline) > 200 && "border-destructive focus:border-destructive")}
                   placeholder="Headline"
                 />
+                <span className={cn("text-[10px] mt-1 text-right", getWordCount(formData.headline) > 200 ? "text-destructive" : "text-muted-foreground")}>
+                  {getWordCount(formData.headline)}/200 words
+                </span>
               </div>
               <div className="flex flex-col">
                 <Label className={labelStyles}>Status</Label>

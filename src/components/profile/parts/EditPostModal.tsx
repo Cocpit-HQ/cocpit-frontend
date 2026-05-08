@@ -202,7 +202,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="What's on your mind?"
-                className="min-h-[80px] border-none focus-visible:ring-0 text-[12px] leading-[16px] font-normal text-black resize-none p-0 mb-4 placeholder:text-slate-400 font-[family-name:var(--font-poppins)]"
+                className="min-h-[100px] border-none focus-visible:ring-0 text-[12px] leading-[16px] font-normal text-black resize-none p-3 mb-4 placeholder:text-slate-400 font-[family-name:var(--font-poppins)] bg-[#ffffff] rounded-xl"
             />
 
             {image && (
@@ -245,20 +245,19 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
             </div>
 
             <div className="flex gap-[10px] justify-center mt-4">
-                <Button
-                    variant="outline"
-                    className="w-[142px] h-[40px] rounded-[24px] border border-[#818CF8] text-[#818CF8] font-semibold hover:bg-slate-50 text-[14px] px-4 py-2"
+                <button
+                    className="w-[142px] h-[40px] rounded-[24px] border border-[#818CF8] text-[#818CF8] font-semibold text-[14px] px-4 py-2 flex items-center justify-center transition-all"
                     onClick={onClose}
                 >
                     Cancel
-                </Button>
-                <Button
-                    className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] hover:bg-[#4F46E5] text-white font-semibold text-[14px] px-4 py-2 shadow-md shadow-indigo-100"
+                </button>
+                <button
+                    className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] text-white font-semibold text-[14px] px-4 py-2 shadow-md shadow-indigo-100 flex items-center justify-center transition-all disabled:opacity-50"
                     onClick={handleSave}
                     disabled={loading || !content.trim()}
                 >
                     {loading ? "Saving..." : "Save"}
-                </Button>
+                </button>
             </div>
         </div>
     );
@@ -353,19 +352,18 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
             </div>
 
             <div className="border-t flex gap-[10px] justify-center mt-auto pt-4">
-                <Button
-                    variant="outline"
-                    className="w-[142px] h-[40px] rounded-[24px] border border-[#818CF8] text-[#818CF8] font-semibold hover:bg-slate-50 text-[14px]"
+                <button
+                    className="w-[142px] h-[40px] rounded-[24px] border border-[#818CF8] text-[#818CF8] font-semibold text-[14px] flex items-center justify-center transition-all"
                     onClick={() => setActiveView('edit')}
                 >
                     Cancel
-                </Button>
-                <Button
-                    className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] hover:bg-[#4F46E5] text-white font-semibold text-[14px]"
+                </button>
+                <button
+                    className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] text-white font-semibold text-[14px] flex items-center justify-center transition-all"
                     onClick={() => setActiveView('edit')}
                 >
                     Add people
-                </Button>
+                </button>
             </div>
         </div>
     );
@@ -443,19 +441,18 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                 </div>
 
                 <div className="border-t flex gap-[10px] justify-center mt-auto pt-4">
-                    <Button
-                        variant="outline"
-                        className="w-[142px] h-[40px] rounded-[24px] border border-[#818CF8] text-[#818CF8] font-semibold hover:bg-slate-50 text-[14px]"
+                    <button
+                        className="w-[142px] h-[40px] rounded-[24px] border border-[#818CF8] text-[#818CF8] font-semibold text-[14px] flex items-center justify-center transition-all"
                         onClick={() => setActiveView('edit')}
                     >
                         Cancel
-                    </Button>
-                    <Button
-                        className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] hover:bg-[#4F46E5] text-white font-semibold text-[14px]"
+                    </button>
+                    <button
+                        className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] text-white font-semibold text-[14px] flex items-center justify-center transition-all"
                         onClick={() => setActiveView('edit')}
                     >
                         Save
-                    </Button>
+                    </button>
                 </div>
             </div>
         );

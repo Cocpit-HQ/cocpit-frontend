@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useEffect, useState, use } from "react"
-import { AppShell } from "@/components/layout/AppShell"
 import { getPostById } from "@/services/api/posts"
 import { FeedPost } from "@/features/feed/components/FeedPost"
 import { mapBackendPostToFrontend } from "@/lib/mappers/feed.mapper"
@@ -9,6 +8,7 @@ import { Post } from "@/types/entities"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
+import { ArrowLeft, Loader2 } from "lucide-react"
 
 interface PageProps {
     params: Promise<{
@@ -17,9 +17,7 @@ interface PageProps {
 }
 
 export default function SinglePostPage({ params }: PageProps) {
-    // Use React.use() to unwrap params
     const { id } = use(params)
-
     const router = useRouter()
     const { data: session } = useSession()
     const [post, setPost] = useState<Post | null>(null)
@@ -46,52 +44,55 @@ export default function SinglePostPage({ params }: PageProps) {
         }
     }, [id])
 
-    const navigateTo = (page: string) => {
-        const routes: Record<string, string> = {
-            home: '/feed',
-            network: '/showcase',
-            events: '/events',
-            profile: '/profile',
-            settings: '/settings',
-            jobs: '/jobs',
-            analytics: '/analytics',
-        }
-        router.push(routes[page] ?? '/feed')
-    }
-
-    // Determine if current user is the post owner,
-    // respecting the active account context (personal vs company)
     const isOwnPost = post
         ? post.isCompanyPost
-            // Company post: owner only when acting as the same company
             ? isCompany && !!activeProfile && post.authorId?.toString() === activeProfile.id?.toString()
-            // Personal post: owner only when acting as personal account
             : !isCompany && !!session?.user?.id && post.authorId?.toString() === session.user.id.toString()
         : false
 
     return (
-        <div className="min-h-screen bg-background text-foreground">
-            <div className="max-w-2xl mx-auto py-6 px-0 md:px-4">
-                <div className="mb-6 flex items-center gap-4 px-4">
+        <div className="min-h-screen bg-[#F8FAFC]">
+            <div className="max-w-[592px] mx-auto px-4 py-10">
+                {/* Navigation Header */}
+                <div className="flex items-center gap-4 mb-8">
                     <button
                         onClick={() => router.back()}
-                        className="text-sm text-primary hover:underline"
+                        className="p-2 rounded-full hover:bg-white transition-colors text-foreground"
                     >
-                        &larr; Back
+                        <ArrowLeft className="w-5 h-5" />
                     </button>
-                    <h1 className="text-2xl font-bold">Post Details</h1>
+                    <h1 className="text-2xl font-bold text-foreground font-[family-name:var(--font-poppins)]">Post Details</h1>
                 </div>
 
-                {loading ? (
-                    <div className="text-center py-10">Loading...</div>
-                ) : error ? (
-                    <div className="text-center py-10 text-destructive">{error}</div>
-                ) : post ? (
-                    <FeedPost
-                        {...post}
-                        isOwnPost={isOwnPost}
-                    />
-                ) : null}
+                <div className="flex flex-col gap-[24px]">
+                    {/* Main Content Area */}
+                    <div className="space-y-[24px]">
+                        {loading ? (
+                            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[24px] border border-border/40">
+                                <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+                                <p className="text-muted-foreground font-[family-name:var(--font-poppins)]">Loading post details...</p>
+                            </div>
+                        ) : error ? (
+                            <div className="text-center py-20 bg-white rounded-[24px] border border-destructive/20">
+                                <p className="text-destructive font-medium font-[family-name:var(--font-poppins)]">{error}</p>
+                                <button 
+                                    onClick={() => router.back()}
+                                    className="mt-4 px-6 py-2 bg-primary text-white rounded-full text-sm font-medium"
+                                >
+                                    Go Back
+                                </button>
+                            </div>
+                        ) : post ? (
+                            <div className="w-full bg-white border border-[#EEF2FF] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] rounded-[24px] overflow-hidden">
+                                <FeedPost
+                                    {...post}
+                                    isOwnPost={isOwnPost}
+                                    isFullContent={true}
+                                />
+                            </div>
+                        ) : null}
+                    </div>
+                </div>
             </div>
         </div>
     )

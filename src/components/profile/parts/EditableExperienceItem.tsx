@@ -21,55 +21,57 @@ export function EditableExperienceItem({
     };
 
     return (
-        <div className="flex gap-3 sm:gap-4 group relative w-full items-start">
-            {/* Company Logo */}
-            <div className="flex-shrink-0 w-[56px] h-[40px] pt-[8px] pr-[16px] pb-[8px] pl-[16px] rounded-[24px] overflow-hidden bg-card border border-border flex items-center justify-center">
-                <img
-                    src="/assets/company-placeholder.png"
-                    alt={experience.company_name}
-                    className="w-full h-full object-contain"
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).src = "https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png";
-                    }}
-                />
-            </div>
+        <div className="flex group relative w-full items-start justify-between gap-6">
+            {/* Left/Center Content: Logo + Info */}
+            <div className="flex gap-4 flex-1 min-w-0">
+                {/* Company Logo */}
+                <div className={`flex-shrink-0 w-[56px] h-[40px] rounded-[20px] overflow-hidden flex items-center justify-center ${experience.company_logo ? 'bg-transparent' : 'bg-[#EEF2FF]'}`}>
+                    <img
+                        src="/assets/company-placeholder.png"
+                        alt={experience.company_name}
+                        className="w-full h-full object-contain p-2"
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = "https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png";
+                        }}
+                    />
+                </div>
 
-            {/* Center Content: Title, Description, Company, Location */}
-            <div className="flex-1 min-w-0">
-                <div className="flex flex-col gap-1">
-                    <h3 className="text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
-                        {experience.title}
-                    </h3>
-                    <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground line-clamp-2">
-                        {experience.description}
-                    </p>
-                    <div className="mt-1 flex flex-col gap-0.5">
-                        <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
-                            {experience.company_name}
+                {/* Info block */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex flex-col gap-1">
+                        <h3 className="text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
+                            {experience.title}
+                        </h3>
+                        <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground line-clamp-2">
+                            {experience.description}
                         </p>
-                        <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
-                            {experience.location}
-                        </p>
+                        <div className="mt-1 flex flex-col gap-0.5">
+                            <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+                                {experience.company_name}
+                            </p>
+                            <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+                                {experience.location}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Right Content: Dates, Work Details, Edit Button */}
-            <div className="flex items-start gap-2 sm:gap-4 flex-shrink-0 w-auto sm:w-[180px] justify-end ml-auto">
-                <div className="flex flex-col items-end gap-1 text-[10px] sm:text-[12px] leading-[14px] sm:leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground text-right">
-                    <div className="flex flex-wrap sm:flex-nowrap justify-end items-center gap-1">
-                        <span>{formatDate(experience.start_date)}</span>
-                        <span>-</span>
-                        <span>{experience.end_date ? formatDate(experience.end_date) : 'Present'}</span>
-                    </div>
-                    <div className="flex flex-wrap sm:flex-nowrap justify-end items-center gap-1">
-                        <span>{experience.work_type || '—'}</span>
-                        {experience.work_mode && (
-                            <>
-                                <span>-</span>
-                                <span>{experience.work_mode}</span>
-                            </>
-                        )}
+            {/* Right Column: Metadata + Edit Button (Fixed 240px) */}
+            <div className="flex items-start flex-shrink-0 w-[240px] justify-between">
+                <div className="w-full">
+                    <div className="grid grid-cols-[75px_9px_auto] gap-x-[6px] items-center w-full text-[10px] sm:text-[12px] leading-[14px] sm:leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+                        <span className="whitespace-nowrap text-left">{formatDate(experience.start_date)}</span>
+                        <span className="flex items-center justify-center w-[9px] h-[16px]">
+                            <span className="text-center">-</span>
+                        </span>
+                        <span className="whitespace-nowrap text-left">{experience.end_date ? formatDate(experience.end_date) : 'Present'}</span>
+                        
+                        <span className="whitespace-nowrap text-left">{experience.work_type || ''}</span>
+                        <span className="flex items-center justify-center w-[9px] h-[16px]">
+                            {experience.work_mode ? <span className="text-center">—</span> : null}
+                        </span>
+                        <span className="whitespace-nowrap text-left">{experience.work_mode || ''}</span>
                     </div>
                 </div>
                 <button

@@ -68,8 +68,8 @@ export const CompanyRolesList = React.memo(function CompanyRolesList({ roles, is
                         <button
                             onClick={() => onRoleClick(filteredRoles[0])}
                             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors border 
-                                ${filteredRoles[0].is_primary_display
-                                    ? "bg-primary/15 text-primary border-primary/30"
+                                ${filteredRoles[0].is_role_visible || isOwnProfile
+                                    ? "bg-[#EEF2FF] text-[#6366F1] border-[#E0E7FF]"
                                     : "bg-muted text-muted-foreground border-border hover:bg-muted/80"}
                                 ${!filteredRoles[0].is_role_visible && isOwnProfile ? "opacity-60 dashed border-dashed" : ""}
                             `}
@@ -122,8 +122,8 @@ export const CompanyRolesList = React.memo(function CompanyRolesList({ roles, is
                             <button
                                 onClick={() => onRoleClick(role)}
                                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors border max-w-full text-left
-                                    ${role.is_primary_display
-                                        ? "bg-primary/15 text-primary border-primary/30"
+                                    ${role.is_role_visible || isOwnProfile
+                                        ? "bg-[#EEF2FF] text-[#6366F1] border-[#E0E7FF]"
                                         : "bg-muted text-muted-foreground border-border hover:bg-muted/80"}
                                     ${!role.is_role_visible && isOwnProfile ? "opacity-60 dashed border-dashed" : ""}
                                 `}

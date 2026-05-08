@@ -150,7 +150,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
           </div>
 
           {/* Skills Grid */}
-          <div className="w-full flex-1 flex flex-wrap justify-center content-start items-start gap-3 mb-4 overflow-y-auto">
+          <div className="w-full flex-1 flex flex-wrap justify-start content-start items-start gap-3 mb-4 overflow-y-auto">
             {isSearching ? (
               <div className="w-full h-full flex items-center justify-center">
                 <span className="text-sm text-slate-400">Searching...</span>
@@ -207,14 +207,13 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
 
           {/* Desktop Footer Buttons */}
           <div className="hidden sm:flex w-full justify-center gap-4 mt-auto">
-            <Button
-              variant="outline"
+            <button
               onClick={onClose}
-              className="w-[142px] h-[40px] rounded-[24px] bg-card border border-primary text-primary hover:bg-secondary font-semibold transition-all flex items-center justify-center gap-[10px] px-[16px] py-[8px]"
+              className="w-[142px] h-[40px] rounded-[24px] bg-card border border-primary text-primary font-semibold transition-all flex items-center justify-center gap-[10px] px-[16px] py-[8px]"
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={() => {
                 const finalSkills = [...selectedSkills]
                 const query = searchQuery.trim()
@@ -224,10 +223,10 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
                 onSave(finalSkills)
               }}
               disabled={loading}
-              className="w-[142px] h-[40px] rounded-[24px] bg-primary border border-transparent hover:opacity-90 text-primary-foreground font-semibold shadow-md transition-all flex items-center justify-center gap-[10px] px-[16px] py-[8px]"
+              className="w-[142px] h-[40px] rounded-[24px] bg-primary border border-transparent text-primary-foreground font-semibold shadow-md transition-all flex items-center justify-center gap-[10px] px-[16px] py-[8px] disabled:opacity-50"
             >
               {loading ? "Saving..." : "Save"}
-            </Button>
+            </button>
           </div>
         </div>
       </div>
