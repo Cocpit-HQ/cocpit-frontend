@@ -59,6 +59,7 @@ export interface Comment {
     account_name?: string; // Added for mentions
     authorSlug?: string;
     isCompanyPost?: boolean;
+    headline?: string;
   };
   text: string;
   timeAgo: string;
@@ -70,6 +71,7 @@ export interface Comment {
   pinned_at?: string | null; // When it was pinned
   pinned_by?: string | null; // Who pinned it
   isPending?: boolean; // For optimistic UI
+  reply_count?: number; // Added for UI display
 }
 
 export interface PollOption {

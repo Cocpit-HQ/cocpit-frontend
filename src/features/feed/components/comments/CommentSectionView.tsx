@@ -14,6 +14,7 @@ interface CommentSectionViewProps {
   isLoading?: boolean;
   isPostOwner?: boolean;
   postId: string | number;
+  onEditComment?: (commentId: string | number, newText: string) => void;
 }
 
 export default function CommentSectionView({
@@ -23,14 +24,27 @@ export default function CommentSectionView({
   currentUserId,
   isLoading,
   isPostOwner,
-  postId
+  postId,
+  onEditComment
 }: CommentSectionViewProps) {
   // Local UI State only
   const [replyingTo, setReplyingTo] = useState<{ name: string; id: string | number; account_name?: string } | null>(null);
   const [reportTargetId, setReportTargetId] = useState<string | number | null>(null);
+  const [editingComment, setEditingComment] = useState<{ id: string | number, text: string } | null>(null);
 
   const handleReply = (authorName: string, commentId: string | number, accountName?: string) => {
+    setEditingComment(null);
     setReplyingTo({ name: authorName, id: commentId, account_name: accountName });
+  };
+
+  const handleEditInitiate = (commentId: string | number, text: string) => {
+    setReplyingTo(null);
+    setEditingComment({ id: commentId, text });
+  };
+
+  const handleCancelAll = () => {
+    setReplyingTo(null);
+    setEditingComment(null);
   };
 
   const handleCancelReply = () => {
@@ -52,6 +66,7 @@ export default function CommentSectionView({
           <CommentList
             comments={comments}
             onDelete={onDeleteComment}
+            onEdit={handleEditInitiate}
             currentUserId={currentUserId}
             onReply={handleReply}
             onReport={setReportTargetId}
@@ -64,11 +79,17 @@ export default function CommentSectionView({
       <div className="p-3 md:p-4 border-t border-border bg-card z-10 sticky bottom-0">
         <CommentInput
           onAddComment={(text) => {
-            onAddComment(text, replyingTo?.id);
-            handleCancelReply();
+            if (editingComment) {
+              onEditComment?.(editingComment.id, text);
+            } else {
+              onAddComment(text, replyingTo?.id);
+            }
+            handleCancelAll();
           }}
           replyingTo={replyingTo}
-          onCancelReply={handleCancelReply}
+          onCancelReply={handleCancelAll}
+          editingComment={editingComment}
+          onCancelEdit={handleCancelAll}
           currentUserAvatar="/assets/pngegg.png"
         />
       </div>

@@ -79,7 +79,7 @@ export default function SchoolAutocomplete({ onSelect, selectedId, selectedName 
         setOpen(false);
         // If user typed a custom string but didn't click "Add custom", we treat the text input as a custom school automatically on blur
         if (query.trim() && query !== selectedName) {
-           onSelect(null, query.trim());
+          onSelect(null, query.trim());
         }
       }
     };
@@ -114,7 +114,7 @@ export default function SchoolAutocomplete({ onSelect, selectedId, selectedName 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
-    
+
     // If the user starts typing and edits an already selected recognized school, reset the selected ID
     if (selectedId) {
       onSelect(null, newQuery);
@@ -141,8 +141,8 @@ export default function SchoolAutocomplete({ onSelect, selectedId, selectedName 
 
   return (
     <div ref={wrapperRef} className={styles.wrapper}>
-      <div 
-        className={styles.inputWrapper} 
+      <div
+        className={styles.inputWrapper}
         onClick={handleWrapperClick}
         style={{ cursor: "pointer" }}
       >
@@ -160,17 +160,15 @@ export default function SchoolAutocomplete({ onSelect, selectedId, selectedName 
           {loading ? (
             <Loader2 className={styles.spinner} />
           ) : query ? (
-            <button 
-              type="button" 
-              onClick={(e) => { e.stopPropagation(); handleClear(); }} 
-              className={styles.clearBtn} 
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); handleClear(); }}
+              className={styles.clearBtn}
               title="Clear"
             >
               <X className={styles.clearIcon} />
             </button>
-          ) : (
-            <ChevronDown className="w-4 h-4 text-gray-400" />
-          )}
+          ) : null}
         </div>
       </div>
 

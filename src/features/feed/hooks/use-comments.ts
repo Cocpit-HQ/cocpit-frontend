@@ -1,7 +1,7 @@
 // TODO: Migrate to React Query (useQuery) when comment caching/deduplication is needed.
 // Current architecture: manual fetch lifecycle with optimistic updates.
 import { useState, useEffect, useCallback } from 'react';
-import { getComments, addComment, deleteComment } from '@/services/api/posts';
+import { getComments, addComment, deleteComment, updateComment } from '@/services/api/posts';
 import { Comment as CommentType } from '@/types/entities';
 import { mapBackendCommentToFrontend } from '@/lib/mappers/feed.mapper';
 import { useSession } from 'next-auth/react';
@@ -118,12 +118,32 @@ export const useComments = (postId: string) => {
     }
   }, [comments, isCompany, activeProfile?.id]);
 
+  const handleUpdateComment = useCallback(async (commentId: string | number, newText: string) => {
+    const prevComments = [...comments];
+    
+    // Optimistic update
+    setComments(prev => prev.map(c => c.id === commentId ? { ...c, text: newText } : c));
+
+    try {
+      const companyId = isCompany ? activeProfile?.id : undefined;
+      await updateComment(commentId.toString(), newText, companyId);
+      toast.success('Comment updated');
+      return true;
+    } catch (error) {
+      console.error('Failed to update comment:', error);
+      toast.error('Failed to update comment');
+      setComments(prevComments); // Revert
+      return false;
+    }
+  }, [comments, isCompany, activeProfile?.id]);
+
   return {
     comments,
     isLoading,
     fetchComments,
     handleAddComment,
     handleDeleteComment,
-    currentUserId: session?.user?.id
+    handleUpdateComment,
+    currentUserId: isCompany ? activeProfile?.id : session?.user?.id
   };
 };

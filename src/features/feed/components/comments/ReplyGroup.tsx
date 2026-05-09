@@ -12,9 +12,10 @@ interface ReplyGroupProps {
     isPostOwner?: boolean;
     postId?: string | number;
     onReport?: (commentId: string | number) => void;
+    onEdit?: (commentId: string | number, currentText: string) => void;
 }
 
-export default function ReplyGroup({ replies, onReply, onDelete, currentUserId, isDark, isPostOwner, postId, onReport }: ReplyGroupProps) {
+export default function ReplyGroup({ replies, onReply, onDelete, onEdit, currentUserId, isDark, isPostOwner, postId, onReport }: ReplyGroupProps) {
     const [isOpen, setIsOpen] = useState(false);
     const searchParams = useSearchParams();
     const targetCommentId = searchParams.get('commentId');
@@ -46,6 +47,7 @@ export default function ReplyGroup({ replies, onReply, onDelete, currentUserId, 
                             variant="reply"
                             onReply={onReply}
                             onDelete={onDelete}
+                            onEdit={onEdit}
                             currentUserId={currentUserId}
                             isPostOwner={isPostOwner}
                             postId={postId}

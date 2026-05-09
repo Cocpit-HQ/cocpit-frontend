@@ -27,7 +27,7 @@ export const PostContent = ({
     <div className="flex-1 flex flex-col justify-center w-full">
       {content && (
         <div className="w-full">
-          <div 
+          <div
             className={`font-normal font-[family-name:var(--font-poppins)] text-[12px] leading-[16px] text-black whitespace-pre-wrap ${!isFullContent && !isExpanded ? 'line-clamp-2' : ''}`}
           >
             <RichTextRenderer content={content} authorName={author} authorSlug={authorSlug} />
@@ -45,7 +45,7 @@ export const PostContent = ({
       )}
 
       {shared_post && (
-        <PostSharedContent 
+        <PostSharedContent
           shared_post={shared_post}
           sharedPollData={sharedPollData}
           handleSharedVote={handleSharedVote}

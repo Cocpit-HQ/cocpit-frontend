@@ -27,6 +27,7 @@ export default function CommentSection({
     isLoading, 
     handleAddComment, 
     handleDeleteComment, 
+    handleUpdateComment,
     currentUserId 
   } = useComments(postId.toString());
 
@@ -50,6 +51,7 @@ export default function CommentSection({
       isLoading={isLoading}
       onAddComment={handleAdd}
       onDeleteComment={handleDelete}
+      onEditComment={handleUpdateComment}
       currentUserId={currentUserId}
       isPostOwner={isPostOwner}
     />

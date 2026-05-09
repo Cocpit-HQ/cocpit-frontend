@@ -271,7 +271,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
             id="stillStudying"
             checked={stillStudying}
             onCheckedChange={(checked) => setStillStudying(checked as boolean)}
-            className="w-[18px] h-[18px] rounded-[4px] border-2 border-[#000000] data-[state=checked]:bg-[#000000] data-[state=checked]:border-[#000000]"
+            className="w-[18px] h-[18px] rounded-[4px] border-2 border-[#000000] data-[state=checked]:bg-[#6366F1] data-[state=checked]:border-[#6366F1]"
           />
           <label
             htmlFor="stillStudying"

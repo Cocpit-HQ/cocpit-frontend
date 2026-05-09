@@ -17,6 +17,8 @@ export interface BackendComment {
   is_liked?: boolean;
   is_pinned?: boolean;
   pinned_at?: string | null;
+  headline?: string;
+  reply_count?: number;
 }
 
 dayjs.extend(relativeTime);
@@ -260,6 +262,7 @@ export const mapBackendCommentToFrontend = (backendComment: BackendComment): Com
       avatar: backendComment.avatar_url || "/assets/pngegg.png",
       authorSlug: backendComment.author_slug,
       isCompanyPost: backendComment.is_organization_comment,
+      headline: backendComment.headline,
     },
     text: backendComment.content,
     timeAgo: shortTimeAgo,
@@ -269,5 +272,6 @@ export const mapBackendCommentToFrontend = (backendComment: BackendComment): Com
     parent_id: backendComment.parent_id,
     is_pinned: backendComment.is_pinned,
     pinned_at: backendComment.pinned_at,
+    reply_count: backendComment.reply_count || 0,
   };
 };

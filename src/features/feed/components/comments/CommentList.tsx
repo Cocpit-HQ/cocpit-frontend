@@ -9,13 +9,14 @@ interface CommentListProps {
   isDark?: boolean;
   onReply?: (authorName: string, commentId: string | number, accountName?: string) => void;
   onDelete?: (commentId: string | number) => void;
+  onEdit?: (commentId: string | number, currentText: string) => void;
   currentUserId?: string;
   isPostOwner?: boolean;
   postId?: string | number;
   onReport?: (commentId: string | number) => void;
 }
 
-export default function CommentList({ comments, onReply, onDelete, currentUserId, isPostOwner, postId, onReport }: CommentListProps) {
+export default function CommentList({ comments, onReply, onDelete, onEdit, currentUserId, isPostOwner, postId, onReport }: CommentListProps) {
 
   // ✅ CORRECTED: Use parent_id, not heuristics
   const { rootComments, replyMap } = useMemo(() => {
@@ -84,6 +85,7 @@ export default function CommentList({ comments, onReply, onDelete, currentUserId
             comment={root}
             onReply={onReply}
             onDelete={onDelete}
+            onEdit={onEdit}
             currentUserId={currentUserId}
             variant="root"
             isPostOwner={isPostOwner}
@@ -96,6 +98,7 @@ export default function CommentList({ comments, onReply, onDelete, currentUserId
               replies={replyMap.get(root.id)!}
               onReply={onReply}
               onDelete={onDelete}
+              onEdit={onEdit}
               currentUserId={currentUserId}
               isDark={false}
               isPostOwner={isPostOwner}

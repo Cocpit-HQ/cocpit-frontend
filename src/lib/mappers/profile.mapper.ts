@@ -32,11 +32,11 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
   if (diffMinutes <= 0) {
     shortTimeAgo = "Just now";
   } else if (diffMinutes < 60) {
-    shortTimeAgo = `${diffMinutes}m`;
+    shortTimeAgo = `${diffMinutes} ${diffMinutes === 1 ? 'minute' : 'minutes'} ago`;
   } else if (diffHours < 24) {
-    shortTimeAgo = `${diffHours}h`;
+    shortTimeAgo = `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
   } else {
-    shortTimeAgo = `${diffDays}d`;
+    shortTimeAgo = `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
   }
 
   // Handle poll mapping (snake_case required for Poll)
@@ -66,6 +66,8 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     videoSrc: videoSrc,
     likes: backendPost.like_count || 0,
     isLiked: backendPost.is_liked,
+    is_commented: backendPost.is_commented,
+    is_saved: backendPost.is_saved,
     comments: (backendPost.comment_count || 0).toString(),
     shares: "0", // Backend does not provide shares yet
     commentData: [],

@@ -12,7 +12,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { useSocial } from '@/context/SocialContext';
+import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { Icon } from '@iconify/react';
+import { cn } from '@/lib/utils';
 
 interface CommentProps {
   comment: CommentType;
@@ -25,6 +28,7 @@ interface CommentProps {
   isPostOwner?: boolean;
   postId?: string | number;
   onReport?: (commentId: string | number) => void;
+  onEdit?: (commentId: string | number, currentText: string) => void;
 }
 
 const formatCommentText = (text: string, postId?: string | number, currentCommentId?: string | number) => {
@@ -55,20 +59,28 @@ const formatCommentText = (text: string, postId?: string | number, currentCommen
   });
 };
 
-export default function Comment({ comment, onReply, onDelete, currentUserId, variant = 'root', isGrouped = false, isPostOwner, postId, onReport }: CommentProps) {
+export default function Comment({ comment, onReply, onDelete, onEdit, currentUserId, variant = 'root', isGrouped = false, isPostOwner, postId, onReport }: CommentProps) {
   const { author, text, timeAgo, like_count, is_liked, is_pinned, authorId, id, isPending } = comment;
+  const { data: session } = useSession();
+  const { isCompany, activeProfile } = useActiveProfile();
+  const { blockUser } = useSocial();
+
   const [isLiked, setIsLiked] = useState(is_liked);
   const [likes, setLikes] = useState(like_count);
   const [isPinned, setIsPinned] = useState(is_pinned || false);
-  const { blockUser } = useSocial();
-  const { isCompany, activeProfile } = useActiveProfile();
+
+  const currentActorId = isCompany ? activeProfile?.id : (session?.user as any)?.id || session?.user?.id;
+  const currentActorName = isCompany ? activeProfile?.name : session?.user?.name;
+
+  const isOwner = (currentActorId && String(authorId) === String(currentActorId)) || 
+                  (currentActorName && author?.name === currentActorName);
+
 
   const handleBlock = async () => {
     try {
       await blockUser(String(authorId));
       toast.success(`You have blocked ${author?.name || 'User'}`);
     } catch (err: any) {
-      // blockUser handles error toast usually, but just in case
       console.error("Block failed", err);
     }
   };
@@ -108,36 +120,27 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
       setIsPinned(result.pinned);
       toast.success(result.message);
     } catch (error: any) {
-      // Revert on error
       console.error('Failed to toggle comment pin:', error);
       setIsPinned(prevPinned);
       toast.error(error.response?.data?.message || 'Failed to pin comment');
     }
   };
 
-  const isOwner = currentUserId && (String(authorId) === String(currentUserId));
-
-  // Style config based on variant
   const isReply = variant === 'reply';
-  const avatarSize = isReply ? "w-6 h-6 md:w-6 md:h-6" : "w-8 h-8 md:w-10 md:h-10";
-  const textSize = isReply ? "text-xs" : "text-sm";
-  const nameSize = isReply ? "text-xs" : "text-sm";
+  const avatarSize = isReply ? "w-8 h-8" : "w-10 h-10";
 
   const authorLink = author?.isCompanyPost ? `/organization/${author?.authorSlug}` : `/profile/${author?.authorSlug || authorId}${postId ? `?openPost=${postId}&commentId=${id}` : ''}`;
+
 
   return (
     <div 
       id={`comment-${id}`} 
-      className={`flex gap-3 relative group ${isReply ? 'mt-2' : 'mt-4'} transition-all duration-300 ${isPending ? 'opacity-60 pointer-events-none' : ''}`}
+      className={`flex gap-3 relative group ${isReply ? 'mt-3 pl-4 border-l-2 border-border/30' : 'mt-6'} transition-all duration-300 ${isPending ? 'opacity-60 pointer-events-none' : ''}`}
     >
-
       {/* Avatar Column */}
-      <div className="flex flex-col items-center flex-shrink-0">
-        <Link
-          href={authorLink}
-          className="block"
-        >
-          <div className={`${avatarSize} rounded-full bg-gradient-to-br from-gray-400 to-gray-500 overflow-hidden ring-1 ring-border/50`}>
+      <div className="flex-shrink-0">
+        <Link href={authorLink} className="block">
+          <div className={`${avatarSize} rounded-full bg-muted overflow-hidden ring-1 ring-border/50`}>
             <img src={author?.avatar || '/assets/pngegg.png'} alt={author?.name || 'User'} className="w-full h-full object-cover" />
           </div>
         </Link>
@@ -145,116 +148,110 @@ export default function Comment({ comment, onReply, onDelete, currentUserId, var
 
       {/* Content Column */}
       <div className="flex-1 min-w-0">
-        <div className="bg-card/50 rounded-2xl px-3 py-2">
-          <div className="flex items-center gap-2 mb-1">
-            <Link
-              href={authorLink}
-              className="hover:underline"
-            >
-              <span className={`${nameSize} font-semibold text-foreground`}>{author?.name || 'Anonymous'}</span>
+        {/* Top Info Row */}
+        <div className="flex justify-between items-start mb-1">
+          <div className="flex flex-col">
+            <Link href={authorLink} className="hover:underline leading-tight">
+              <span className="text-sm font-bold text-black">{author?.name || 'Anonymous'}</span>
             </Link>
-            {isPinned && (
-              <div className="flex items-center gap-1 text-xs text-primary">
-                <Pin className="w-3 h-3 fill-current" />
-                <span className="font-medium">Pinned</span>
-              </div>
+            {author?.headline && (
+              <span className="text-[12px] text-muted-foreground font-normal leading-tight mt-0.5">
+                {author.headline}
+              </span>
             )}
-            <span className={`${textSize} text-muted-foreground`}>• {timeAgo}</span>
           </div>
+          
+          <div className="flex items-center gap-4 pt-1">
+            <span className="text-[12px] text-muted-foreground whitespace-nowrap">{timeAgo}</span>
+            {!isPending && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="text-black hover:bg-muted p-0.5 rounded-full transition-colors flex items-center justify-center">
+                    <Icon icon="lucide:more-vertical" className="w-[18px] h-[18px]" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className={cn(
+                    "w-[210px] p-2 bg-white border border-[#C7D2FE] rounded-[24px_0px_24px_24px] shadow-[0px_4px_12px_rgba(0,0,0,0.05)]",
+                    isOwner || isPostOwner ? "h-auto" : "h-auto"
+                  )}
+                >
+                  {isOwner && (
+                    <DropdownMenuItem
+                      onClick={(e) => { e.stopPropagation(); onEdit?.(id, text); }}
+                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-slate-50"
+                    >
+                      <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Edit comment</span>
+                      <Icon icon="fluent:edit-24-regular" width="24" height="24" className="text-black" />
+                    </DropdownMenuItem>
+                  )}
 
-          {/* Comment Body */}
-          <div className={`${textSize} text-foreground/90 leading-relaxed break-words`}>
-            {formatCommentText(text, postId, id)}
+                  {(isOwner || isPostOwner) && (
+                    <DropdownMenuItem
+                      onClick={() => onDelete?.(id)}
+                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none group/delete data-[highlighted]:bg-red-50"
+                    >
+                      <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-[#FF6B6B]">Delete comment</span>
+                      <Icon icon="fluent:delete-24-regular" width="24" height="24" className="text-[#FF6B6B]" />
+                    </DropdownMenuItem>
+                  )}
+
+                  {!isOwner && (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => onReport?.(id)}
+                        className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-slate-50"
+                      >
+                        <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Report comment</span>
+                        <Icon icon="fluent:info-24-regular" width="24" height="24" className="text-black" />
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem
+                        onClick={() => {
+                          toast.success("Comment hidden");
+                        }}
+                        className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-slate-50"
+                      >
+                        <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Hide comment</span>
+                        <Icon icon="fluent:eye-hide-24-regular" width="24" height="24" className="text-black" />
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
 
-        {/* Actions Row */}
-        <div className="flex items-center gap-4 mt-1 opacity-90 group-hover:opacity-100 transition-opacity">
+        {/* Comment Body */}
+        <div className="text-[14px] text-black/90 leading-normal mb-2 break-words">
+          {formatCommentText(text, postId, id)}
+        </div>
+
+        {/* Action Bar (Styled like Figma) */}
+        <div className="flex items-center gap-2 text-[12px] font-semibold text-black">
           <button
             onClick={handleLike}
-            className={`text-[10px] font-semibold flex items-center gap-1 transition-colors ${isLiked ? 'text-red-500' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`hover:underline transition-colors ${isLiked ? 'text-primary' : ''}`}
           >
-            {isLiked ? 'Liked' : 'Like'}
-            {likes > 0 && <span className="font-normal text-muted-foreground/80">({likes})</span>}
+            Like
           </button>
+          <span className="font-normal text-muted-foreground">—</span>
+          <span className="font-normal text-muted-foreground">{likes} {likes === 1 ? 'like' : 'likes'}</span>
+          
+          <div className="w-[1px] h-3 bg-border/60 mx-1"></div>
 
-          {!isPending && (
-            <button
-              onClick={() => onReply?.(author?.name || 'User', id, author?.account_name)}
-              className="text-[10px] font-semibold text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Reply
-            </button>
-          )}
-
-          {/* More Options Menu */}
-          {!isPending && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="text-muted-foreground hover:text-foreground transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 p-0.5">
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
-              </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48">
-              <DropdownMenuItem onClick={() => {
-                navigator.clipboard.writeText(window.location.href);
-                toast.success("Link copied");
-              }}>
-                <LinkIcon className="w-4 h-4 mr-2" />
-                Copy link
-              </DropdownMenuItem>
-
-              {/* Pin/Unpin Option - Only for post owner */}
-              {isPostOwner && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handlePin}>
-                    <Pin className="w-4 h-4 mr-2" />
-                    {isPinned ? 'Unpin Comment' : 'Pin Comment'}
-                  </DropdownMenuItem>
-                </>
-              )}
-
-              {/* Block User - Hide if it's my own comment */}
-              {!isOwner && (
-                <DropdownMenuItem onClick={handleBlock}>
-                  <Ban className="w-4 h-4 mr-2" />
-                  Block User
-                </DropdownMenuItem>
-              )}
-
-              {!isOwner && (
-                <DropdownMenuItem onClick={() => onReport?.(id)}>
-                  <Flag className="w-4 h-4 mr-2" />
-                  Report
-                </DropdownMenuItem>
-              )}
-
-              {(isOwner || isPostOwner) && onDelete && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => onDelete(id)}
-                    className="text-red-500 focus:text-red-500 focus:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          )}
+          <button
+            onClick={() => onReply?.(author?.name || 'User', id, author?.account_name)}
+            className="hover:underline transition-colors"
+          >
+            Reply
+          </button>
+          <span className="font-normal text-muted-foreground">—</span>
+          <span className="font-normal text-muted-foreground">{comment.reply_count || 0} {comment.reply_count === 1 ? 'reply' : 'replies'}</span>
         </div>
       </div>
-
-      {/* Right Side Heart Icon (Mobile) - Optional, keeping it subtle */}
-      <div className="pt-2 px-1 block md:hidden">
-        <button onClick={handleLike} className="p-1 text-muted-foreground hover:text-red-500 transition-colors">
-          <Heart className={`w-3 h-3 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
-        </button>
-      </div>
-
     </div>
   );
 }

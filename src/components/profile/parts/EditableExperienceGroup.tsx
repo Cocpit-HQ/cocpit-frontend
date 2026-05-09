@@ -167,9 +167,13 @@ export function EditableExperienceGroup({
   group,
   onEdit,
 }: EditableExperienceGroupProps) {
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  const hasMore = group.experiences.length > 2;
+  const displayedExperiences = isExpanded ? group.experiences : group.experiences.slice(0, 2);
+
   return (
     <div className="flex flex-col py-8">
-      {group.experiences.map((exp, index) => (
+      {displayedExperiences.map((exp, index) => (
         <React.Fragment key={exp.experience_id}>
           {index > 0 && (
             <div className="relative h-12 w-full">
@@ -194,6 +198,17 @@ export function EditableExperienceGroup({
           </div>
         </React.Fragment>
       ))}
+
+      {hasMore && (
+        <div className="flex pl-[72px] mt-4">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-[58px] h-[16px] flex items-center justify-center text-[12px] leading-[16px] font-medium text-[#6366F1] font-[family-name:var(--font-poppins)] transition-all flex-none"
+          >
+            {isExpanded ? "See less" : "See more"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

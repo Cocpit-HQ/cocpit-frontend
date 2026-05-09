@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { X, Search, ChevronLeft, UserPlus, MapPin, Trash2 } from "lucide-react";
 import { Icon } from "@iconify/react";
+import useEmblaCarousel from "embla-carousel-react";
 import {
     Dialog,
     DialogContent,
@@ -36,7 +37,28 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
     const [activeView, setActiveView] = useState<ModalView>('edit');
     const [content, setContent] = useState("");
     const [loading, setLoading] = useState(false);
-    const [image, setImage] = useState<string | null>(null);
+    const [localImages, setLocalImages] = useState<string[]>([]);
+    
+    // Carousel State
+    const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    const onSelect = useCallback(() => {
+        if (!emblaApi) return;
+        setCurrentIndex(emblaApi.selectedScrollSnap());
+    }, [emblaApi]);
+
+    useEffect(() => {
+        if (!emblaApi) return;
+        onSelect();
+        emblaApi.on("select", onSelect);
+        emblaApi.on("reInit", onSelect);
+    }, [emblaApi, onSelect]);
+
+    // Re-initialize carousel when slides change
+    useEffect(() => {
+        if (emblaApi) emblaApi.reInit();
+    }, [localImages.length, emblaApi]);
     
     // Tagging State
     const [taggedUsers, setTaggedUsers] = useState<UserMention[]>([]);
@@ -51,7 +73,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
     useEffect(() => {
         if (isOpen && post) {
             setContent(post.content || "");
-            setImage(post.imageSrc || (post.images && post.images.length > 0 ? post.images[0] : null));
+            setLocalImages(post.images || (post.imageSrc ? [post.imageSrc] : []));
             setTaggedUsers((post.tags || []).map(t => ({
                 id: t.id || t.user_id,
                 full_name: t.full_name || t.name,
@@ -107,8 +129,8 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
     );
 
     const handleSave = async () => {
-        if (!content.trim()) {
-            toast.error("Content cannot be empty");
+        if (!content.trim() && localImages.length === 0) {
+            toast.error("Post must have content or images");
             return;
         }
 
@@ -116,10 +138,11 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
             setLoading(true);
             const postId = post.id || (post as any).post_id;
             
-            // 1. Update Post Content & Location
+            // 1. Update Post Content & Location & Media
             const res = await updatePost(postId, {
                 content,
-                location: selectedLocation?.name || null
+                location: selectedLocation?.name || null,
+                media_urls: localImages
             });
 
             // 2. Sync Tags
@@ -205,23 +228,46 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                 className="min-h-[100px] border-none focus-visible:ring-0 text-[12px] leading-[16px] font-normal text-black resize-none p-3 mb-4 placeholder:text-slate-400 font-[family-name:var(--font-poppins)] bg-[#ffffff] rounded-xl"
             />
 
-            {image && (
-                <div className="relative w-full rounded-2xl overflow-hidden mb-2">
-                    <img src={image} alt="Post content" className="w-full aspect-[4/3] object-cover" />
-                    <button 
-                        onClick={() => setImage(null)}
-                        className="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-slate-50 transition-colors"
-                    >
-                        <Trash2 className="w-5 h-5 text-red-400" />
-                    </button>
-                </div>
-            )}
+            {localImages.length > 0 && (
+                <div className="relative w-full rounded-2xl overflow-hidden mb-4 group">
+                    <div className="overflow-hidden" ref={emblaRef}>
+                        <div className="flex">
+                            {localImages.map((img, idx) => (
+                                <div key={idx} className="relative flex-[0_0_100%] min-w-0">
+                                    <div className="relative w-full aspect-[4/3] overflow-hidden border border-slate-50">
+                                        <img src={img} alt={`Post content ${idx + 1}`} className="w-full h-full object-cover" />
+                                        <button 
+                                            onClick={() => setLocalImages(prev => prev.filter((_, i) => i !== idx))}
+                                            className="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-slate-50 transition-colors z-10"
+                                        >
+                                            <Trash2 className="w-5 h-5 text-[#FF6B6B]" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
 
-            {image && post.images && post.images.length > 1 && (
-                <div className="flex justify-center gap-1.5 mb-4">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-100" />
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-100" />
+                    {/* Pagination Dots */}
+                    {localImages.length > 1 && (
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-1.5 transition-opacity duration-300">
+                            {localImages.map((_, index) => (
+                                <button
+                                    key={index}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        emblaApi?.scrollTo(index);
+                                    }}
+                                    className={cn(
+                                        "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                                        currentIndex === index
+                                            ? "bg-white scale-125 shadow-[0_0_8px_rgba(255,255,255,0.5)]"
+                                            : "bg-white/40 hover:bg-white/60"
+                                    )}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -251,13 +297,27 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                 >
                     Cancel
                 </button>
-                <button
-                    className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] text-white font-semibold text-[14px] px-4 py-2 shadow-md shadow-indigo-100 flex items-center justify-center transition-all disabled:opacity-50"
-                    onClick={handleSave}
-                    disabled={loading || !content.trim()}
-                >
-                    {loading ? "Saving..." : "Save"}
-                </button>
+                {(() => {
+                    const originalImages = post.images || (post.imageSrc ? [post.imageSrc] : []);
+                    const imagesChanged = JSON.stringify(localImages) !== JSON.stringify(originalImages);
+                    const contentChanged = content !== (post.content || "");
+                    const locationChanged = (selectedLocation?.name || null) !== (post.location || null);
+                    const tagsChanged = taggedUsers.length !== (post.tags?.length || 0) || 
+                                        taggedUsers.some((u, i) => u.id !== (post.tags?.[i]?.id || post.tags?.[i]?.user_id));
+                    
+                    const hasChanges = contentChanged || imagesChanged || locationChanged || tagsChanged;
+                    const isValid = content.trim() !== "" || localImages.length > 0;
+
+                    return (
+                        <button
+                            className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] text-white font-semibold text-[14px] px-4 py-2 shadow-md shadow-indigo-100 flex items-center justify-center transition-all disabled:opacity-50"
+                            onClick={handleSave}
+                            disabled={loading || !hasChanges || !isValid}
+                        >
+                            {loading ? "Saving..." : "Save"}
+                        </button>
+                    );
+                })()}
             </div>
         </div>
     );

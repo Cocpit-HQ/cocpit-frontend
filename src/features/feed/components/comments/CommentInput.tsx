@@ -10,6 +10,11 @@ interface CommentInputProps {
         account_name?: string;
     } | null;
     onCancelReply?: () => void;
+    editingComment?: {
+        id: string | number;
+        text: string;
+    } | null;
+    onCancelEdit?: () => void;
     currentUserAvatar?: string;
     className?: string;
     autoFocus?: boolean;
@@ -21,6 +26,8 @@ export default function CommentInput({
     onAddComment,
     replyingTo,
     onCancelReply,
+    editingComment,
+    onCancelEdit,
     currentUserAvatar = "/assets/pngegg.png",
     className = "",
     autoFocus = false,
@@ -43,19 +50,25 @@ export default function CommentInput({
         }
     }, [autoFocus]);
 
-    // Focus when replying
+    // Focus when replying or editing
     useEffect(() => {
         if (replyingTo && textareaRef.current) {
             textareaRef.current.focus();
             // Automatically add reply mention if not present
-            // Prioritize account_name as requested. If missing, use name but replace spaces.
             const mentionHandle = replyingTo.account_name || replyingTo.name.replace(/\s+/g, '_').toLowerCase();
             const mention = `@${mentionHandle} `;
             if (!text.startsWith(mention)) {
                 setText(prev => mention + prev);
             }
         }
-    }, [replyingTo]);
+        if (editingComment && textareaRef.current) {
+            setText(editingComment.text);
+            textareaRef.current.focus();
+            // Trigger auto-resize
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 128)}px`;
+        }
+    }, [replyingTo, editingComment]);
 
     // Handle user search for mentions
     useEffect(() => {
@@ -142,6 +155,7 @@ export default function CommentInput({
         setMentionQuery('');
         setShowMentionDropdown(false);
         onCancelReply?.();
+        onCancelEdit?.();
 
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
@@ -220,6 +234,21 @@ export default function CommentInput({
                 </div>
             )}
 
+            {/* Edit Context Bar */}
+            {editingComment && (
+                <div className="flex items-center justify-between px-4 py-2 bg-primary/5 border-t border-x border-primary/20 rounded-t-lg mx-0.5 text-sm">
+                    <span className="text-primary font-medium">
+                        Editing comment
+                    </span>
+                    <button
+                        onClick={onCancelEdit}
+                        className="p-1 hover:bg-primary/10 rounded-full transition-colors text-primary"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
+
             <div className={`relative flex items-end gap-2 p-1 sm:p-2 border border-border bg-muted/20 ${replyingTo ? 'rounded-b-xl border-t-0' : 'rounded-xl'} focus-within:ring-1 focus-within:ring-primary/50 transition-all`}>
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 overflow-hidden flex-shrink-0 mb-1 hidden sm:block">
                     <img src={currentUserAvatar} alt="User" className="w-full h-full object-cover" />
@@ -231,7 +260,7 @@ export default function CommentInput({
                         value={text}
                         onChange={handleTextChange}
                         onKeyDown={handleKeyDown}
-                        placeholder={replyingTo ? `Reply to ${replyingTo.name}...` : "Add a comment..."}
+                        placeholder={editingComment ? "Edit your comment..." : replyingTo ? `Reply to ${replyingTo.name}...` : "Add a comment..."}
                         className="w-full bg-transparent border-none focus:ring-0 p-1.5 sm:p-2 min-h-[36px] max-h-32 resize-none text-sm sm:text-base placeholder:text-muted-foreground/60 scrollbar-hide focus:outline-none"
                         rows={1}
                         style={{ height: 'auto' }}

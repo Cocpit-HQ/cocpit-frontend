@@ -254,8 +254,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       key={opt}
                       onClick={() => toggleOption("open_to", opt)}
                       className={`h-10 min-w-[89px] px-4 rounded-[8px] text-sm font-medium transition-all flex items-center justify-center border ${formData.open_to === opt
-                          ? "bg-primary border-primary text-primary-foreground shadow-sm"
-                          : "bg-secondary border-border text-primary hover:opacity-80"
+                          ? "bg-[#6366F1] border-[#6366F1] text-white shadow-sm"
+                          : "bg-[#EEF2FF] border-[#EEF2FF] text-[#6366F1] hover:opacity-80"
                         }`}
                     >
                       {opt}
@@ -272,8 +272,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       key={opt}
                       onClick={() => toggleOption("availability", opt)}
                       className={`h-10 min-w-[89px] px-4 rounded-[8px] text-sm font-medium transition-all flex items-center justify-center border ${formData.availability === opt
-                          ? "bg-primary border-primary text-primary-foreground shadow-sm"
-                          : "bg-secondary border-border text-primary hover:opacity-80"
+                          ? "bg-[#6366F1] border-[#6366F1] text-white shadow-sm"
+                          : "bg-[#EEF2FF] border-[#EEF2FF] text-[#6366F1] hover:opacity-80"
                         }`}
                     >
                       {opt}
@@ -290,8 +290,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       key={opt}
                       onClick={() => toggleOption("work_preference", opt)}
                       className={`h-10 min-w-[89px] px-4 rounded-[8px] text-sm font-medium transition-all flex items-center justify-center border ${formData.work_preference === opt
-                          ? "bg-primary border-primary text-primary-foreground shadow-sm"
-                          : "bg-secondary border-border text-primary hover:opacity-80"
+                          ? "bg-[#6366F1] border-[#6366F1] text-white shadow-sm"
+                          : "bg-[#EEF2FF] border-[#EEF2FF] text-[#6366F1] hover:opacity-80"
                         }`}
                     >
                       {opt}
@@ -311,56 +311,42 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               />
             </div>
 
-            <div className="flex flex-col">
-              <Label className={labelStyles}>Display Roles</Label>
-              <div className="space-y-3">
-                {user?.company_roles?.map((role) => (
-                  <div key={role.org_id} className="flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-secondary transition-colors">
+            <div className="flex flex-col gap-3 pt-2">
+              {user?.company_roles?.map((role) => {
+                const orgId = role.org_id || role.company_id;
+                return (
+                  <div key={orgId} className="flex items-center gap-3">
                     <Checkbox
-                      id={`role-${role.org_id}`}
-                      checked={formData.visible_role_ids.includes(role.org_id!)}
+                      id={`role-${orgId}`}
+                      checked={formData.visible_role_ids.includes(orgId!)}
                       onCheckedChange={(checked) => {
-                        if (checked) {
-                          setFormData(prev => ({ ...prev, visible_role_ids: [role.org_id!] }));
-                        } else {
-                          setFormData(prev => ({ ...prev, visible_role_ids: [] }));
-                        }
+                        setFormData(prev => ({
+                          ...prev,
+                          visible_role_ids: checked ? [orgId!] : []
+                        }));
                       }}
-                      className="w-[24px] h-[24px] bg-card rounded-[6px] border-[1.5px] border-foreground data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                      className="w-[18px] h-[18px] bg-card rounded-[4px] border-[1.5px] border-[#000000] data-[state=checked]:bg-[#6366F1] data-[state=checked]:border-[#6366F1]"
                     />
-                    <Label htmlFor={`role-${role.org_id}`} className="flex flex-col cursor-pointer">
-                      <span className="text-[14px] leading-[20px] font-medium text-foreground font-[family-name:var(--font-poppins)]">{role.role}</span>
-                      <span className="text-[12px] leading-[16px] text-muted-foreground font-[family-name:var(--font-poppins)]">at {role.name}</span>
+                    <Label htmlFor={`role-${orgId}`} className="text-[14px] leading-[20px] font-normal text-foreground font-[family-name:var(--font-poppins)] cursor-pointer">
+                      Show <span className="text-primary font-normal">"{role.role} at {role.name}"</span> on profile
                     </Label>
                   </div>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-3 mt-4">
-                <Checkbox
-                  id="show_owner_badge"
-                  checked={formData.show_owner_badge}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, show_owner_badge: checked as boolean }))}
-                  className="w-[24px] h-[24px] bg-card rounded-[6px] border-[1.5px] border-foreground data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                />
-                <Label htmlFor="show_owner_badge" className="text-[14px] leading-[20px] font-normal text-foreground font-[family-name:var(--font-poppins)] cursor-pointer">
-                  Show <span className="text-primary font-normal">"Owner at cocpit"</span> on profile
-                </Label>
-              </div>
+                );
+              })}
             </div>
 
             <div className="hidden sm:flex justify-center gap-4 pt-6">
               <Button
                 variant="outline"
                 onClick={onClose}
-                className="w-[142px] h-[40px] rounded-[24px] border-primary text-primary hover:bg-secondary transition-all bg-card font-semibold"
+                className="w-[142px] h-[40px] rounded-[24px] border-[#6366F1] text-[#6366F1] hover:bg-secondary transition-all bg-card font-medium"
               >
-                Cancel
+                Delete
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="w-[142px] h-[40px] rounded-[24px] bg-primary hover:opacity-90 text-primary-foreground font-semibold transition-all shadow-sm disabled:opacity-50"
+                className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] hover:opacity-90 text-white font-medium transition-all shadow-sm disabled:opacity-50"
               >
                 {isSaving ? "Saving..." : "Save"}
               </Button>

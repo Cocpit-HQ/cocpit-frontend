@@ -234,7 +234,7 @@ function RoleSection({
                 experienceIdToEnd: isChecked ? existingCurrentRoleId : undefined,
               })
             }}
-            className="mt-0.5 w-[18px] h-[18px] rounded-[4px] border-2 border-[#000000] data-[state=checked]:bg-[#000000] data-[state=checked]:border-[#000000]"
+            className="mt-0.5 w-[18px] h-[18px] rounded-[4px] border-2 border-[#000000] data-[state=checked]:bg-[#6366F1] data-[state=checked]:border-[#6366F1]"
           />
           <label
             htmlFor={`endCurrentRole-${index}`}
@@ -276,7 +276,7 @@ function RoleSection({
                 "h-[32px] px-4 rounded-[8px] text-[12px] font-medium transition-all duration-200 border border-transparent",
                 role.work_type === type
                   ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-secondary text-primary hover:opacity-80"
+                  : "bg-[#EEF2FF] text-[#6366F1] hover:opacity-80"
               )}
             >
               {type}
@@ -298,7 +298,7 @@ function RoleSection({
                 "h-[32px] px-4 rounded-[8px] text-[12px] font-medium transition-all duration-200 border border-transparent",
                 role.work_mode === mode
                   ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-secondary text-primary hover:opacity-80"
+                  : "bg-[#EEF2FF] text-[#6366F1] hover:opacity-80"
               )}
             >
               {mode}
@@ -405,7 +405,7 @@ function RoleSection({
               ...update,
             })
           }}
-          className="w-[18px] h-[18px] rounded-[4px] border-2 border-[#000000] data-[state=checked]:bg-[#000000] data-[state=checked]:border-[#000000]"
+          className="w-[18px] h-[18px] rounded-[4px] border-2 border-[#000000] data-[state=checked]:bg-[#6366F1] data-[state=checked]:border-[#6366F1]"
         />
         <label
           htmlFor={`currentlyWorking-${index}`}

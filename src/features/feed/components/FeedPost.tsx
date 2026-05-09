@@ -26,11 +26,11 @@ const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal'
 export const FeedPost = (props: FeedPostProps) => {
   const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags } = props;
   const { activeProfile, isCompany } = useActiveProfile();
-  
+
   // Custom Hooks
-  const { 
+  const {
     isLiked, likeCount, isCommented, isSaved, pollData, isVoting, commentCount,
-    handleLike, handleVote, setIsSaved, setIsCommented, incrementCommentCount, decrementCommentCount 
+    handleLike, handleVote, setIsSaved, setIsCommented, incrementCommentCount, decrementCommentCount
   } = usePostInteractions(props);
 
   const {
@@ -50,7 +50,7 @@ export const FeedPost = (props: FeedPostProps) => {
   const [showPollAnalytics, setShowPollAnalytics] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
-  
+
   const optionsBtnRef = useRef<HTMLButtonElement>(null);
 
   const handleToggleCommentSection = () => {
@@ -65,7 +65,7 @@ export const FeedPost = (props: FeedPostProps) => {
     <div className="bg-white border border-[#EEF2FF] rounded-[24px] overflow-hidden shadow-[0px_0px_4px_rgba(99,102,241,0.05)] transition-all duration-300 hover:shadow-md flex flex-col py-[16px] gap-[16px] w-full">
       {/* Header & Content (Frame 2608598) */}
       <div className="flex flex-col gap-[16px] px-[16px]">
-        <PostHeader 
+        <PostHeader
           {...props}
           isMe={props.isOwnPost || false}
           author={author}
@@ -85,7 +85,7 @@ export const FeedPost = (props: FeedPostProps) => {
           tags={tags}
         />
 
-        <PostContent 
+        <PostContent
           content={content}
           author={author}
           isExpanded={isExpanded}
@@ -99,7 +99,7 @@ export const FeedPost = (props: FeedPostProps) => {
       </div>
 
       {/* Media (Rectangle 14) */}
-      <PostMedia 
+      <PostMedia
         imageSrc={imageSrc}
         images={props.images}
         videoSrc={videoSrc}
@@ -120,14 +120,14 @@ export const FeedPost = (props: FeedPostProps) => {
       )}
 
       {/* Poll */}
-      <PostPoll 
+      <PostPoll
         pollData={pollData}
         isVoting={isVoting}
         handleVote={(optId) => handleVote(optId, isCompany, activeProfile?.id)}
       />
 
       {/* Actions (Frame 2608574) */}
-      <PostActions 
+      <PostActions
         id={id}
         isLiked={isLiked}
         likeCount={likeCount}
@@ -146,17 +146,17 @@ export const FeedPost = (props: FeedPostProps) => {
 
       {/* Lazy Modals */}
       {isCommentSectionOpen && (
-        <CommentSection 
-          postId={id.toString()} 
+        <CommentSection
+          postId={id.toString()}
           incrementCommentCount={incrementCommentCount}
           decrementCommentCount={decrementCommentCount}
         />
       )}
 
       {isMobileDrawerOpen && (
-        <MobileCommentDrawer 
-          postId={id.toString()} 
-          isOpen={isMobileDrawerOpen} 
+        <MobileCommentDrawer
+          postId={id.toString()}
+          isOpen={isMobileDrawerOpen}
           onClose={() => setIsMobileDrawerOpen(false)}
           incrementCommentCount={incrementCommentCount}
           decrementCommentCount={decrementCommentCount}
@@ -164,19 +164,19 @@ export const FeedPost = (props: FeedPostProps) => {
       )}
 
       {isReportModalOpen && (
-        <ReportModal 
-          isOpen={isReportModalOpen} 
-          onClose={() => setIsReportModalOpen(false)} 
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
           targetType="POST"
-          targetId={id.toString()} 
+          targetId={id.toString()}
         />
       )}
 
       {showPollAnalytics && (
-        <PollAnalyticsModal 
-          isOpen={showPollAnalytics} 
-          onClose={() => setShowPollAnalytics(false)} 
-          postId={id.toString()} 
+        <PollAnalyticsModal
+          isOpen={showPollAnalytics}
+          onClose={() => setShowPollAnalytics(false)}
+          postId={id.toString()}
         />
       )}
 

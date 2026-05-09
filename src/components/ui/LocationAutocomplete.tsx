@@ -92,8 +92,8 @@ export default function LocationAutocomplete({ onSelect, value }: LocationAutoco
 
   return (
     <div ref={wrapperRef} className={styles.wrapper}>
-      <div 
-        className={styles.inputWrapper} 
+      <div
+        className={styles.inputWrapper}
         onClick={handleWrapperClick}
         style={{ cursor: "pointer" }}
       >
@@ -111,10 +111,10 @@ export default function LocationAutocomplete({ onSelect, value }: LocationAutoco
           {loading ? (
             <Loader2 className={styles.spinner} />
           ) : value ? (
-            <button 
-              type="button" 
-              onClick={(e) => { e.stopPropagation(); handleClear(); }} 
-              className={styles.clearBtn} 
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); handleClear(); }}
+              className={styles.clearBtn}
               title="Clear location"
             >
               <X className={styles.clearIcon} />

@@ -45,6 +45,8 @@ export interface ProfilePost {
   media: ProfilePostMedia[];
   like_count: number;
   is_liked: boolean;
+  is_commented: boolean;
+  is_saved?: boolean;
   comment_count: number;
   poll: ProfilePostPoll | null;
   shared_post?: {
