@@ -44,7 +44,7 @@ export const FeedPost = (props: FeedPostProps) => {
   const { videoRef, finalAspectRatio, isVerticalVideo, handleMediaLoad } = usePostMediaObserver(id, videoSrc, props.aspectRatio);
 
   // Local UI State
-  const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(false);
+  const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(props.initialShowComments || false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showPollAnalytics, setShowPollAnalytics] = useState(false);

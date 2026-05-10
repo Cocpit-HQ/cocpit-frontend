@@ -327,7 +327,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         }
 
         return (
-            <div className="space-y-1 mt-2 px-6 pb-6 h-full overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div className="space-y-1 mt-4 px-0 pb-6 h-full overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 {users.map((user) => {
                     const id = user.user_id || user.follower_id || user.following_id;
                     const isCompany = user.type === 'company';
@@ -347,24 +347,28 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                                         </div>
                                     )}
                                 </div>
-                                <div className="min-w-0 flex flex-col">
-                                    <p className="font-bold text-[15px] text-foreground font-[family-name:var(--font-poppins)] truncate leading-tight">{user.full_name}</p>
-                                    <p className="text-[13px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)] line-clamp-1 mt-0.5">{user.headline || "Connection"}</p>
+                                <div className="min-w-0 flex flex-col justify-center">
+                                    <p className="font-medium text-[16px] text-black font-[family-name:var(--font-poppins)] truncate leading-[24px]">
+                                        {user.full_name}
+                                    </p>
+                                    <p className="text-[12px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] line-clamp-1 leading-[16px]">
+                                        {user.headline || "Connection"}
+                                    </p>
                                 </div>
                             </Link>
 
                             {isOwnProfile && (
                                 <div className="flex-shrink-0 ml-4">
                                     {type === 'following' && (
-                                        <button
-                                            className="text-[14px] font-medium text-primary hover:opacity-80 font-[family-name:var(--font-poppins)] transition-colors"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                handleUnfollow(id, user.full_name, user.type);
-                                            }}
-                                        >
-                                            Unfollow
-                                        </button>
+                                            <button
+                                                className="h-[36px] px-4 rounded-[24px] bg-white text-[14px] font-normal text-[#818CF8] font-[family-name:var(--font-poppins)] hover:bg-secondary/50 transition-colors"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    handleUnfollow(id, user.full_name, user.type);
+                                                }}
+                                            >
+                                                Unfollow
+                                            </button>
                                     )}
                                     {type === 'followers' && (
                                         <div className="flex items-center gap-3">
@@ -380,27 +384,18 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                                                 </button>
                                             )}
                                             
-                                            <button 
-                                                className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-full transition-all"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    handleRemoveFollower(id, user.full_name);
-                                                }}
-                                                title="Remove follower"
-                                            >
-                                                <X className="w-5 h-5" />
-                                            </button>
-                                        </div>
+                                             {/* Removed Remove Follower button */}
+                                         </div>
                                     )}
                                     {type === 'connections' && (
                                         <button 
-                                            className="text-[14px] font-medium text-primary hover:opacity-80 font-[family-name:var(--font-poppins)] transition-colors"
+                                            className="h-[36px] px-4 rounded-[24px] bg-white text-[14px] font-normal text-[#818CF8] font-[family-name:var(--font-poppins)] hover:bg-secondary/50 transition-colors"
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 handleRemoveConnection(id, user.full_name, user.type);
                                             }}
                                         >
-                                            Remove connection
+                                            Unfollow
                                         </button>
                                     )}
                                 </div>
@@ -414,7 +409,14 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-none sm:max-w-[500px] w-full h-[100dvh] sm:h-[80vh] flex flex-col p-0 gap-0 overflow-hidden bg-card border-none rounded-none sm:rounded-[32px] shadow-2xl data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
+            <DialogContent className="max-w-none sm:max-w-[600px] w-full h-[100dvh] sm:h-[498px] flex flex-col p-4 sm:p-4 gap-0 overflow-hidden bg-white border-none rounded-none sm:rounded-[24px] shadow-2xl [&>button]:hidden data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
+                {/* Desktop Close Button */}
+                <button
+                    onClick={onClose}
+                    className="hidden sm:block absolute top-4 right-4 p-1 text-[#FF6B6B] hover:bg-[#FF6B6B]/10 rounded-full transition-colors z-50"
+                >
+                    <X className="w-6 h-6" strokeWidth={2} />
+                </button>
                 {/* Mobile Header */}
                 <div className="sm:hidden flex items-center justify-between sticky top-0 bg-card z-50 px-4 py-4 border-b border-border">
                     <button onClick={onClose} className="p-2 -ml-2 text-foreground hover:bg-secondary rounded-full transition-colors">
@@ -426,52 +428,52 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                     <div className="w-10"></div> {/* Spacer for centering */}
                 </div>
 
-                <DialogHeader className="hidden sm:flex p-6 pt-8 text-center relative">
-                    <DialogTitle className="text-[24px] font-bold text-foreground font-[family-name:var(--font-poppins)] text-center w-full">
+                <DialogHeader className="hidden sm:flex p-0 pt-4 text-center relative flex-col items-center gap-2">
+                    <DialogTitle className="text-[18px] font-medium text-black font-[family-name:var(--font-poppins)] text-center w-full leading-[26px]">
                         People
                     </DialogTitle>
-                    <p className="text-[14px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)] mt-1">
+                    <p className="text-[12px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] leading-[16px]">
                         Manage your followers, following, and professional connections
                     </p>
                 </DialogHeader>
 
                 <div className="flex-1 overflow-hidden flex flex-col mt-4 sm:mt-0">
                     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full h-full flex flex-col">
-                        <div className="px-4 sm:px-6">
-                            <TabsList className="w-full h-auto bg-secondary p-1.5 rounded-[24px] grid grid-cols-3 gap-1.5">
+                        <div className="px-4 sm:px-0 mt-4">
+                            <TabsList className="w-full h-[48px] bg-transparent p-0 rounded-none grid grid-cols-3 gap-4">
                                 <TabsTrigger 
                                     value="following"
-                                    className="rounded-[20px] py-2.5 px-1 sm:px-5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none transition-all flex items-center justify-center sm:justify-between"
+                                    className="h-[48px] rounded-[24px] px-4 data-[state=active]:bg-[#EEF2FF] data-[state=inactive]:bg-white data-[state=active]:text-black shadow-[0px_0px_4px_rgba(99,102,241,0.05)] transition-all flex items-center justify-between border-none"
                                 >
-                                    <span className="text-[12px] sm:text-[13px] font-medium font-[family-name:var(--font-poppins)]">Following</span>
-                                    <span className="hidden sm:inline text-[13px] font-semibold text-inherit opacity-70">{stats?.following_count || 0}</span>
+                                    <span className="text-[14px] font-normal font-[family-name:var(--font-poppins)]">Following</span>
+                                    <span className="text-[14px] font-normal text-[#6366F1] font-[family-name:var(--font-poppins)]">{stats?.following_count || 0}</span>
                                 </TabsTrigger>
                                 <TabsTrigger 
                                     value="followers"
-                                    className="rounded-[20px] py-2.5 px-1 sm:px-5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none transition-all flex items-center justify-center sm:justify-between"
+                                    className="h-[48px] rounded-[24px] px-4 data-[state=active]:bg-[#EEF2FF] data-[state=inactive]:bg-white data-[state=active]:text-black shadow-[0px_0px_4px_rgba(99,102,241,0.05)] transition-all flex items-center justify-between border-none"
                                 >
-                                    <span className="text-[12px] sm:text-[13px] font-medium font-[family-name:var(--font-poppins)]">Followers</span>
-                                    <span className="hidden sm:inline text-[13px] font-semibold text-inherit opacity-70">{stats?.followers_count || 0}</span>
+                                    <span className="text-[14px] font-normal font-[family-name:var(--font-poppins)]">Followers</span>
+                                    <span className="text-[14px] font-normal text-[#6366F1] font-[family-name:var(--font-poppins)]">{stats?.followers_count || 0}</span>
                                 </TabsTrigger>
                                 <TabsTrigger 
                                     value="connections"
-                                    className="rounded-[20px] py-2.5 px-1 sm:px-5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none transition-all flex items-center justify-center sm:justify-between"
+                                    className="h-[48px] rounded-[24px] px-4 data-[state=active]:bg-[#EEF2FF] data-[state=inactive]:bg-white data-[state=active]:text-black shadow-[0px_0px_4px_rgba(99,102,241,0.05)] transition-all flex items-center justify-between border-none"
                                 >
-                                    <span className="text-[12px] sm:text-[13px] font-medium font-[family-name:var(--font-poppins)]">Connection</span>
-                                    <span className="hidden sm:inline text-[13px] font-semibold text-inherit opacity-70">{stats?.connections_count || 0}</span>
+                                    <span className="text-[14px] font-normal font-[family-name:var(--font-poppins)]">Connection</span>
+                                    <span className="text-[14px] font-normal text-[#6366F1] font-[family-name:var(--font-poppins)]">{stats?.connections_count || 0}</span>
                                 </TabsTrigger>
                             </TabsList>
                         </div>
 
-                        <div className="p-4 sm:p-6 pb-2">
+                        <div className="p-4 sm:p-0 mt-4">
                             <div className="relative">
                                 <Input
                                     placeholder="Search"
-                                    className="h-[44px] rounded-[32px] border-border pl-6 pr-12 text-[14px] font-[family-name:var(--font-poppins)] placeholder:text-muted-foreground bg-card shadow-sm focus-visible:ring-primary"
+                                    className="h-[40px] rounded-[24px] border-[#6B7280] pl-6 pr-12 text-[16px] font-medium font-[family-name:var(--font-poppins)] placeholder:text-[#6B7280] bg-white focus-visible:ring-0"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
-                                <Search className="absolute right-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                <Search className="absolute right-5 top-1/2 -translate-y-1/2 h-5 w-5 text-[#6B7280]" />
                             </div>
                         </div>
 

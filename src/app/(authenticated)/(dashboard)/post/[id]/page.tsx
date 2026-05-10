@@ -5,7 +5,7 @@ import { getPostById } from "@/services/api/posts"
 import { FeedPost } from "@/features/feed/components/FeedPost"
 import { mapBackendPostToFrontend } from "@/lib/mappers/feed.mapper"
 import { Post } from "@/types/entities"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { ArrowLeft, Loader2 } from "lucide-react"
@@ -19,6 +19,8 @@ interface PageProps {
 export default function SinglePostPage({ params }: PageProps) {
     const { id } = use(params)
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const showComments = searchParams.get("comments") === "true"
     const { data: session } = useSession()
     const [post, setPost] = useState<Post | null>(null)
     const [loading, setLoading] = useState(true)
@@ -88,6 +90,7 @@ export default function SinglePostPage({ params }: PageProps) {
                                     {...post}
                                     isOwnPost={isOwnPost}
                                     isFullContent={true}
+                                    initialShowComments={showComments}
                                 />
                             </div>
                         ) : null}

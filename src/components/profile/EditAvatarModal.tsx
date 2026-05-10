@@ -27,12 +27,17 @@ export function EditAvatarModal({
   onDelete,
 }: EditAvatarModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastPointer = useRef({ x: 0, y: 0 });
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [zoom, setZoom] = useState(0);
   const [rotation, setRotation] = useState(0);
   const [flipH, setFlipH] = useState(false);
   const [flipV, setFlipV] = useState(false);
+  const [positionX, setPositionX] = useState(0);
+  const [positionY, setPositionY] = useState(0);
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [modalState, setModalState] = useState<ModalState>("edit");
   const [isDragOver, setIsDragOver] = useState(false);
@@ -57,6 +62,56 @@ export function EditAvatarModal({
     setRotation(0);
     setFlipH(false);
     setFlipV(false);
+    setPositionX(0);
+    setPositionY(0);
+  };
+
+  // Document-level mouse/touch move & up for smooth dragging
+  const hasMoved = useRef(false);
+
+  useEffect(() => {
+    if (!isDraggingImage) return;
+
+    const handleMove = (clientX: number, clientY: number) => {
+      const dx = clientX - lastPointer.current.x;
+      const dy = clientY - lastPointer.current.y;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+        hasMoved.current = true;
+      }
+      lastPointer.current = { x: clientX, y: clientY };
+      setPositionX(prev => prev + dx);
+      setPositionY(prev => prev + dy);
+    };
+
+    const onMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
+    const onTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      handleMove(touch.clientX, touch.clientY);
+    };
+    const onEnd = () => {
+      setIsDraggingImage(false);
+      if (!hasMoved.current) {
+        openFilePicker();
+      }
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onEnd);
+    document.addEventListener("touchmove", onTouchMove, { passive: true });
+    document.addEventListener("touchend", onEnd);
+
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onEnd);
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onEnd);
+    };
+  }, [isDraggingImage]);
+
+  const handlePointerDown = (clientX: number, clientY: number) => {
+    lastPointer.current = { x: clientX, y: clientY };
+    hasMoved.current = false;
+    setIsDraggingImage(true);
   };
 
   const handleFileProcess = useCallback((file: File) => {
@@ -163,7 +218,14 @@ export function EditAvatarModal({
       drawWidth *= zoomScale;
       drawHeight *= zoomScale;
 
-      ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+      // Apply position offset scaled to canvas resolution
+      const containerEl = containerRef.current;
+      const previewSize = containerEl ? containerEl.offsetWidth : 200;
+      const scaleRatio = size / previewSize;
+      const canvasPosX = positionX * scaleRatio;
+      const canvasPosY = positionY * scaleRatio;
+
+      ctx.drawImage(img, -drawWidth / 2 + canvasPosX, -drawHeight / 2 + canvasPosY, drawWidth, drawHeight);
       ctx.restore();
 
       canvas.toBlob(async (blob) => {
@@ -283,18 +345,30 @@ export function EditAvatarModal({
                 </button>
               </div>
 
-              {/* Image Preview with Hover Overlay */}
+              {/* Image Preview with Drag-to-Reposition */}
               <div
-                className="w-[200px] h-[200px] aspect-square flex-shrink-0 mx-auto relative bg-muted cursor-pointer group flex items-center justify-center border-4 border-card shadow-lg"
-                onClick={openFilePicker}
+                ref={containerRef}
+                className={cn(
+                  "w-[200px] h-[200px] aspect-square flex-shrink-0 mx-auto relative bg-muted group flex items-center justify-center border-4 border-card shadow-lg overflow-hidden select-none",
+                  isDraggingImage ? "cursor-grabbing" : "cursor-grab"
+                )}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handlePointerDown(e.clientX, e.clientY);
+                }}
+                onTouchStart={(e) => {
+                  const touch = e.touches[0];
+                  handlePointerDown(touch.clientX, touch.clientY);
+                }}
               >
                 {hasImage && (
                   <img
                     src={displayUrl!}
                     alt="Current Profile"
-                    className="absolute inset-0 w-full h-full object-cover transition-all duration-200 z-[1]"
+                    className="absolute inset-0 w-full h-full object-cover pointer-events-none z-[1]"
+                    draggable={false}
                     style={{
-                      transform: `scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`
+                      transform: `translate(${positionX}px, ${positionY}px) scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`
                     }}
                   />
                 )}
@@ -311,19 +385,19 @@ export function EditAvatarModal({
                   />
                 </div>
 
-                {/* Hover Overlay */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 z-[3]">
-                  
-                  {/* Upload icon */}
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm">
-                    <Icon icon="solar:upload-linear" className="w-5 h-5 text-white" />
+                {/* Hover Overlay (hidden while dragging) */}
+                {!isDraggingImage && (
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 z-[3] pointer-events-none">
+                    {/* Upload icon */}
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm">
+                      <Icon icon="solar:upload-linear" className="w-5 h-5 text-white" />
+                    </div>
+                    {/* Text */}
+                    <span className="text-white text-[13px] font-medium font-[family-name:var(--font-poppins)] mt-1 tracking-wide">
+                      Change image
+                    </span>
                   </div>
-
-                  {/* Text */}
-                  <span className="text-white text-[13px] font-medium font-[family-name:var(--font-poppins)] mt-1 tracking-wide">
-                    Change image
-                  </span>
-                </div>
+                )}
               </div>
 
               {/* Zoom Slider */}

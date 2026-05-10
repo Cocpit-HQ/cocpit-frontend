@@ -128,7 +128,7 @@ export default function ProfilePostsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-white">
       <div className="max-w-[592px] mx-auto px-4 py-10">
         {/* Navigation Header */}
         <div className="flex items-center gap-4 mb-8">

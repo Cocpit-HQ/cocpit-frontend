@@ -769,6 +769,19 @@ export default function AddExperienceForm({
     return null;
   };
 
+  /** Check if the company currently entered exists in the user's current profile */
+  const isExistingCompany = useMemo(() => {
+    if (!company.trim()) return false;
+    const norm = company.toLowerCase().trim();
+    return existingExperiences.some(e => 
+      (orgId && e.org_id === orgId) || 
+      (!orgId && !e.org_id && e.company_name.toLowerCase().trim() === norm)
+    );
+  }, [company, orgId, existingExperiences]);
+
+  /** Disable "Add new role" if it's a brand new company record (not editing, not existing) */
+  const canAddRole = isEditing || isExistingCompany;
+
   // Form requires at minimum: company + each role has title + start date + (end date if not current)
   const isFormValid =
     company.trim() !== "" &&
@@ -881,7 +894,12 @@ export default function AddExperienceForm({
           <button
             type="button"
             onClick={addNewRole}
-            className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-4 py-2 rounded-full border border-border hover:bg-secondary transition-all text-primary font-[family-name:var(--font-poppins)] text-[14px] font-medium"
+            disabled={!canAddRole}
+            className={cn(
+              "absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-4 py-2 rounded-full border border-border transition-all text-primary font-[family-name:var(--font-poppins)] text-[14px] font-medium",
+              canAddRole ? "hover:bg-secondary" : "opacity-30 cursor-not-allowed border-dashed"
+            )}
+            title={!canAddRole ? "You can only add multiple roles to an existing company" : "Add another role at this company"}
           >
             <Plus className="w-4 h-4" />
             Add new role
@@ -955,7 +973,13 @@ export default function AddExperienceForm({
           <button
             type="button"
             onClick={addNewRole}
-            className="sm:hidden flex items-center gap-2 w-full justify-center py-3 rounded-[16px] border border-dashed border-[#6366F1] text-[#6366F1] text-[14px] font-medium font-[family-name:var(--font-poppins)] hover:bg-[#EEF2FF] transition-all"
+            disabled={!canAddRole}
+            className={cn(
+              "sm:hidden flex items-center gap-2 w-full justify-center py-3 rounded-[16px] border border-dashed text-[14px] font-medium font-[family-name:var(--font-poppins)] transition-all",
+              canAddRole 
+                ? "border-[#6366F1] text-[#6366F1] hover:bg-[#EEF2FF]" 
+                : "border-gray-300 text-gray-400 opacity-50 cursor-not-allowed"
+            )}
           >
             <Plus className="w-4 h-4" />
             Add new role

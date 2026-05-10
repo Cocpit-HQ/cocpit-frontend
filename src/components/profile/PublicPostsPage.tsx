@@ -440,10 +440,8 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
   }, [userId, activeTab, profileData, isProfileLoading])
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex justify-center py-10 px-4">
-      <div
-        className="flex flex-col w-[592px] h-[877px] bg-white rounded-[24px] shadow-[0px_4px_20px_rgba(0,0,0,0.05)] overflow-hidden"
-      >
+    <div className="min-h-screen bg-white flex justify-center py-10 px-4">
+      <div className="flex flex-col w-[592px]">
         {/* Fixed Header Section (Non-scrollable) */}
         <div className="w-full bg-white z-20 p-4 pb-6 flex flex-col gap-6 border-b border-slate-50">
           {/* Navigation Header */}
@@ -472,7 +470,7 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
         </div>
 
         {/* Scrollable Post Section */}
-        <div className="flex-1 overflow-y-auto p-4 pt-6 scrollbar-hide flex flex-col items-center">
+        <div className="flex-1 p-4 pt-6 flex flex-col items-center">
           {/* Posts List */}
           <div className="w-full flex flex-col items-center">
             {loading ? (

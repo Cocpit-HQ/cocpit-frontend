@@ -237,9 +237,12 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
       {/* Content Section (Frame 2608605) */}
       <div className="w-full flex flex-col gap-[4px] mb-2 px-4">
         {/* Text Content (Frame 2608573) */}
-        <p className="text-[12px] leading-[20px] text-[#000000] font-[family-name:var(--font-poppins)] line-clamp-1 h-[20px]">
+        <Link
+          href={`/post/${localPost.id}`}
+          className="text-[12px] leading-[20px] text-[#000000] font-[family-name:var(--font-poppins)] truncate h-[20px] cursor-pointer"
+        >
           {localPost.content}
-        </p>
+        </Link>
         {/* Metadata (Frame 2608604) */}
         <div className="flex items-center gap-1 h-[16px]">
           <span className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] flex-none">
@@ -299,10 +302,10 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
             <Icon icon={isLiked ? "solar:like-bold" : "solar:like-broken"} className={cn("w-5 h-5", isLiked ? "text-[#6366F1]" : "text-[#000000]")} />
             <span className="text-[12px] leading-[16px] text-[#000000] font-[family-name:var(--font-poppins)]">{likesCount}</span>
           </button>
-          <button onClick={() => setIsCommentModalOpen(true)} className="flex items-center gap-1 min-w-0 flex-shrink-0">
+          <Link href={`/post/${localPost.id}?comments=true`} className="flex items-center gap-1 min-w-0 flex-shrink-0">
             <Icon icon="hugeicons:comment-01" className="w-5 h-5 text-[#000000]" />
             <span className="text-[12px] leading-[16px] text-[#000000] font-[family-name:var(--font-poppins)]">{localPost.comments || 0}</span>
-          </button>
+          </Link>
           <button onClick={handleRepost} className="flex items-center gap-1 min-w-0 flex-shrink-0">
             <Icon icon="hugeicons:repost" className="w-5 h-5 text-[#000000]" />
             <span className="text-[12px] leading-[16px] text-[#000000] font-[family-name:var(--font-poppins)]">{localPost.shares || 0}</span>

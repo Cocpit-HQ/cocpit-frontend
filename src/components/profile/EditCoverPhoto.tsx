@@ -36,10 +36,15 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
   const [rotation, setRotation] = useState(0);
   const [flipH, setFlipH] = useState(false);
   const [flipV, setFlipV] = useState(false);
+  const [positionX, setPositionX] = useState(0);
+  const [positionY, setPositionY] = useState(0);
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
   const [modalState, setModalState] = useState<ModalState>("edit");
   const [isDragOver, setIsDragOver] = useState(false);
 
+  const lastPointer = useRef({ x: 0, y: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -63,6 +68,56 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
     setRotation(0);
     setFlipH(false);
     setFlipV(false);
+    setPositionX(0);
+    setPositionY(0);
+  };
+
+  // Document-level mouse/touch move & up for smooth dragging
+  const hasMoved = useRef(false);
+
+  useEffect(() => {
+    if (!isDraggingImage) return;
+
+    const handleMove = (clientX: number, clientY: number) => {
+      const dx = clientX - lastPointer.current.x;
+      const dy = clientY - lastPointer.current.y;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+        hasMoved.current = true;
+      }
+      lastPointer.current = { x: clientX, y: clientY };
+      setPositionX(prev => prev + dx);
+      setPositionY(prev => prev + dy);
+    };
+
+    const onMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
+    const onTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      handleMove(touch.clientX, touch.clientY);
+    };
+    const onEnd = () => {
+      setIsDraggingImage(false);
+      if (!hasMoved.current) {
+        openFilePicker();
+      }
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onEnd);
+    document.addEventListener("touchmove", onTouchMove, { passive: true });
+    document.addEventListener("touchend", onEnd);
+
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onEnd);
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onEnd);
+    };
+  }, [isDraggingImage]);
+
+  const handlePointerDown = (clientX: number, clientY: number) => {
+    lastPointer.current = { x: clientX, y: clientY };
+    hasMoved.current = false;
+    setIsDraggingImage(true);
   };
 
   const handleCancelPreview = () => {
@@ -173,7 +228,14 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
       drawWidth *= zoomScale;
       drawHeight *= zoomScale;
 
-      ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+      // Apply position offset scaled to canvas resolution
+      const containerEl = containerRef.current;
+      const previewWidth = containerEl ? containerEl.offsetWidth : 800;
+      const scaleRatio = width / previewWidth;
+      const canvasPosX = positionX * scaleRatio;
+      const canvasPosY = positionY * scaleRatio;
+
+      ctx.drawImage(img, -drawWidth / 2 + canvasPosX, -drawHeight / 2 + canvasPosY, drawWidth, drawHeight);
       ctx.restore();
 
       canvas.toBlob(async (blob) => {
@@ -301,29 +363,43 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
                 </button>
               </div>
 
-              {/* Image Preview with Hover Overlay */}
+              {/* Image Preview with Drag-to-Reposition */}
               <div
-                className="w-full h-[200px] mx-auto relative overflow-hidden bg-secondary rounded-[24px] cursor-pointer group"
-                onClick={openFilePicker}
+                ref={containerRef}
+                className={cn(
+                  "w-full h-[200px] mx-auto relative overflow-hidden bg-secondary rounded-[24px] select-none group",
+                  isDraggingImage ? "cursor-grabbing" : "cursor-grab"
+                )}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handlePointerDown(e.clientX, e.clientY);
+                }}
+                onTouchStart={(e) => {
+                  const touch = e.touches[0];
+                  handlePointerDown(touch.clientX, touch.clientY);
+                }}
               >
                 <img
                   src={displayImage || "/assets/coverphoto.jpg"}
                   alt="Current Cover"
-                  className="absolute inset-0 w-full h-full object-cover transition-all duration-200"
-                  style={{ transform: `scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})` }}
+                  className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                  draggable={false}
+                  style={{ transform: `translate(${positionX}px, ${positionY}px) scale(${1 + (zoom / 100)}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})` }}
                 />
 
-                {/* ─── Hover Overlay ─── */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 z-10">
-                  {/* Upload icon */}
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm">
-                    <Icon icon="solar:upload-linear" className="w-5 h-5 text-white" />
+                {/* ─── Hover Overlay (hidden while dragging) ─── */}
+                {!isDraggingImage && (
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 z-10 pointer-events-none">
+                    {/* Upload icon */}
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm">
+                      <Icon icon="solar:upload-linear" className="w-5 h-5 text-white" />
+                    </div>
+                    {/* Text */}
+                    <span className="text-white text-[13px] font-medium font-[family-name:var(--font-poppins)] mt-1 tracking-wide">
+                      Change image
+                    </span>
                   </div>
-                  {/* Text */}
-                  <span className="text-white text-[13px] font-medium font-[family-name:var(--font-poppins)] mt-1 tracking-wide">
-                    Change image
-                  </span>
-                </div>
+                )}
               </div>
 
               {/* Zoom Slider */}
@@ -402,7 +478,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
             <Button
               onClick={handleSave}
               disabled={isUploading || isDeleting || !hasImage}
-              className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground hover:opacity-90 border-none text-[14px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:bg-primary"
             >
               {isUploading ? "Saving..." : "Save"}
             </Button>

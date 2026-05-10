@@ -19,6 +19,7 @@ export interface FeedPostProps extends Omit<Post, 'commentData'> {
   isFullContent?: boolean;
   is_broadcast?: boolean;
   broadcastOrgName?: string;
+  initialShowComments?: boolean;
 }
 
 export type FeedInteraction = {
