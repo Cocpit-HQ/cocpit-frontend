@@ -38,6 +38,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 const CommentSection = dynamic(() => import('@/features/feed/components/comments/CommentSection'), { ssr: false });
 
@@ -101,71 +106,105 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
           </div>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="text-black cursor-pointer p-1 rounded-full transition-colors outline-none">
-              <MoreVertical size={24} />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className={cn(
-              "rounded-[24px_0px_24px_24px] border border-[#C7D2FE] p-2 bg-white shadow-[0px_4px_12px_rgba(0,0,0,0.05)]",
-              activeTab === 'Save' ? "w-[206px]" : "w-[180px]"
-            )}
-          >
-            {activeTab === 'Save' ? (
-              <>
-                <DropdownMenuItem className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-white">
-                  <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Unfollow</span>
-                  <Icon icon="fluent:dismiss-24-regular" width="24" height="24" className="text-black flex-none" />
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-white">
-                  <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Report post</span>
-                  <Icon icon="fluent:info-24-regular" width="24" height="24" className="text-black flex-none" />
-                </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-white">
-                  <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Hide post</span>
-                  <Icon icon="fluent:eye-hide-24-regular" width="24" height="24" className="text-black flex-none" />
-                </DropdownMenuItem>
-              </>
-            ) : (
-              <>
-                <DropdownMenuItem
-                  onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
-                  className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-white"
-                >
-                  <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Edit post</span>
-                  <Icon icon="fluent:edit-24-regular" width="24" height="24" className="text-black" />
-                </DropdownMenuItem>
+        <div className="flex items-center gap-2">
+          {post.tags && post.tags.length > 0 && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="p-1 hover:bg-[#EEF2FF] rounded-full transition-colors outline-none text-[#6B7280] hover:text-[#6366F1] data-[state=open]:text-[#6366F1]">
+                  <Icon icon="la:user-tag" className="w-[24px] h-[24px]" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-[180px] p-2 bg-white border border-[#C7D2FE] rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto z-[210]"
+                align="end"
+                sideOffset={8}
+              >
+                <div className="flex flex-col gap-1">
+                  {post.tags.map((tag: any, idx: number) => (
+                    <div key={idx} className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-[12px] transition-colors cursor-pointer">
+                      <div className="w-6 h-6 rounded-full border border-slate-200 flex items-center justify-center overflow-hidden bg-slate-50">
+                        {tag.avatar_url || tag.avatar ? (
+                          <img src={tag.avatar_url || tag.avatar} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <Icon icon="solar:user-linear" className="w-3 h-3 text-slate-400" />
+                        )}
+                      </div>
+                      <span className="text-[14px] leading-[20px] font-normal text-black font-[family-name:var(--font-poppins)]">
+                        {tag.full_name || tag.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
 
-                {!post.shared_post && activeTab !== 'Like' && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="text-black cursor-pointer p-1 rounded-full transition-colors outline-none">
+                <MoreVertical size={24} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className={cn(
+                "rounded-[24px_0px_24px_24px] border border-[#C7D2FE] p-2 bg-white shadow-[0px_4px_12px_rgba(0,0,0,0.05)]",
+                activeTab === 'Save' ? "w-[206px]" : "w-[180px]"
+              )}
+            >
+              {activeTab === 'Save' ? (
+                <>
+                  <DropdownMenuItem className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-white">
+                    <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Unfollow</span>
+                    <Icon icon="fluent:dismiss-24-regular" width="24" height="24" className="text-black flex-none" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-white">
+                    <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Report post</span>
+                    <Icon icon="fluent:info-24-regular" width="24" height="24" className="text-black flex-none" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-white">
+                    <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Hide post</span>
+                    <Icon icon="fluent:eye-hide-24-regular" width="24" height="24" className="text-black flex-none" />
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
                   <DropdownMenuItem
-                    onClick={(e) => { e.stopPropagation(); onTogglePrivacy?.(); }}
+                    onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
                     className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-white"
                   >
-                    <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">
-                      {post.visibility === 'private' ? 'Make public' : 'Make private'}
-                    </span>
-                    {post.visibility === 'private' ? (
-                      <Icon icon="fluent:eye-24-regular" width="24" height="24" className="text-black" />
-                    ) : (
-                      <Icon icon="fluent:eye-hide-24-regular" width="24" height="24" className="text-black" />
-                    )}
+                    <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Edit post</span>
+                    <Icon icon="fluent:edit-24-regular" width="24" height="24" className="text-black" />
                   </DropdownMenuItem>
-                )}
 
-                <DropdownMenuItem
-                  onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
-                  className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none group/delete data-[highlighted]:bg-white"
-                >
-                  <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-[#FF6B6B]">Delete post</span>
-                  <Icon icon="fluent:delete-24-regular" width="24" height="24" className="text-[#FF6B6B]" />
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                  {!post.shared_post && activeTab !== 'Like' && (
+                    <DropdownMenuItem
+                      onClick={(e) => { e.stopPropagation(); onTogglePrivacy?.(); }}
+                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-white"
+                    >
+                      <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">
+                        {post.visibility === 'private' ? 'Make public' : 'Make private'}
+                      </span>
+                      {post.visibility === 'private' ? (
+                        <Icon icon="fluent:eye-24-regular" width="24" height="24" className="text-black" />
+                      ) : (
+                        <Icon icon="fluent:eye-hide-24-regular" width="24" height="24" className="text-black" />
+                      )}
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuItem
+                    onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
+                    className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none group/delete data-[highlighted]:bg-white"
+                  >
+                    <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-[#FF6B6B]">Delete post</span>
+                    <Icon icon="fluent:delete-24-regular" width="24" height="24" className="text-[#FF6B6B]" />
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <div className="w-full mt-4">

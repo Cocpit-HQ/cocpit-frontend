@@ -204,7 +204,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
     };
 
     const renderEditView = () => (
-        <div className="flex flex-col h-full relative pt-2">
+        <div className="flex flex-col flex-1 relative pt-2 min-h-0">
             <button onClick={onClose} className="absolute -top-2 right-0 p-1 hover:bg-slate-100 rounded-full transition-colors z-50">
                 <X className="w-5 h-5 text-red-400" />
             </button>
@@ -306,7 +306,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                                         taggedUsers.some((u, i) => u.id !== (post.tags?.[i]?.id || post.tags?.[i]?.user_id));
                     
                     const hasChanges = contentChanged || imagesChanged || locationChanged || tagsChanged;
-                    const isValid = content.trim() !== "" || localImages.length > 0;
+                    const isValid = content.trim() !== "" || localImages.length > 0 || taggedUsers.length > 0 || !!selectedLocation;
 
                     return (
                         <button
@@ -323,7 +323,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
     );
 
     const renderTagView = () => (
-        <div className="flex flex-col h-full relative">
+        <div className="flex flex-col flex-1 relative min-h-0">
             <button onClick={onClose} className="absolute -top-2 right-0 p-1 hover:bg-slate-100 rounded-full transition-colors z-50">
                 <X className="w-5 h-5 text-red-400" />
             </button>
@@ -378,7 +378,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                 )}
             </div>
 
-            <div className="flex-1 overflow-y-auto scrollbar-hide px-2">
+            <div className="flex-1 overflow-y-auto min-h-0 px-2 mt-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <div className="flex flex-col gap-1">
                     {userSearchResults.map(user => {
                         const isSelected = taggedUsers.some(u => u.id === user.id);
@@ -400,7 +400,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                                 <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
                                     <div className={cn(
                                         "w-6 h-6 rounded-md border flex items-center justify-center transition-colors",
-                                        isSelected ? "bg-blue-600 border-blue-600" : "bg-white border-slate-300"
+                                        isSelected ? "bg-[#6366F1] border-[#6366F1]" : "bg-white border-slate-300"
                                     )}>
                                         {isSelected && <Icon icon="ph:check-bold" className="w-3.5 h-3.5 text-white" />}
                                     </div>
@@ -411,7 +411,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                 </div>
             </div>
 
-            <div className="border-t flex gap-[10px] justify-center mt-auto pt-4">
+            <div className="border-t flex gap-[10px] justify-center pt-4">
                 <button
                     className="w-[142px] h-[40px] rounded-[24px] border border-[#818CF8] text-[#818CF8] font-semibold text-[14px] flex items-center justify-center transition-all"
                     onClick={() => setActiveView('edit')}
@@ -435,7 +435,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
         );
 
         return (
-            <div className="flex flex-col h-full relative">
+            <div className="flex flex-col flex-1 relative min-h-0">
                 <button onClick={onClose} className="absolute -top-2 right-0 p-1 hover:bg-slate-100 rounded-full transition-colors z-50">
                     <X className="w-5 h-5 text-red-400" />
                 </button>
@@ -472,7 +472,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto mt-2 scrollbar-hide px-2">
+                <div className="flex-1 overflow-y-auto min-h-0 mt-2 px-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     <div className="flex flex-col gap-1">
                         {uniqueResults.map(loc => {
                             const isSelected = selectedLocation?.name === loc.name;
@@ -489,7 +489,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                                     <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
                                         <div className={cn(
                                             "w-6 h-6 rounded-md border flex items-center justify-center transition-colors",
-                                            isSelected ? "bg-blue-600 border-blue-600" : "bg-white border-slate-300"
+                                            isSelected ? "bg-[#6366F1] border-[#6366F1]" : "bg-white border-slate-300"
                                         )}>
                                             {isSelected && <Icon icon="ph:check-bold" className="w-3.5 h-3.5 text-white" />}
                                         </div>
@@ -500,7 +500,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                     </div>
                 </div>
 
-                <div className="border-t flex gap-[10px] justify-center mt-auto pt-4">
+                <div className="border-t flex gap-[10px] justify-center pt-4">
                     <button
                         className="w-[142px] h-[40px] rounded-[24px] border border-[#818CF8] text-[#818CF8] font-semibold text-[14px] flex items-center justify-center transition-all"
                         onClick={() => setActiveView('edit')}
@@ -520,7 +520,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="p-4 sm:max-w-[400px] h-[624px] overflow-hidden rounded-[24px] border-none shadow-2xl [&>button]:hidden bg-white">
+            <DialogContent className="p-4 sm:max-w-[400px] h-[624px] overflow-hidden rounded-[24px] border-none shadow-2xl [&>button]:hidden bg-white flex flex-col gap-0">
                 {activeView === 'edit' && renderEditView()}
                 {activeView === 'tag' && renderTagView()}
                 {activeView === 'location' && renderLocationView()}
