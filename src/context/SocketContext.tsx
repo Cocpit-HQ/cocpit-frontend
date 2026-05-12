@@ -114,7 +114,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     const newSocket = io(SOCKET_URL, {
       auth: { token },
-      transports: ["websocket"],
+      path: "/socket.io",
+      transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
@@ -132,7 +133,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     newSocket.on("connect_error", (err) => {
-      console.error("Socket connection error:", err.message);
+      console.error("Socket connection error:", {
+        message: err.message,
+        description: (err as Error & { description?: unknown }).description,
+        context: (err as Error & { context?: unknown }).context,
+        type: (err as Error & { type?: unknown }).type,
+        socketUrl: SOCKET_URL,
+        socketPath: "/socket.io",
+        transports: ["websocket", "polling"],
+      });
       if (err.message.includes("Authentication error") || err.message.includes("Invalid token") || err.message.includes("jwt expired")) {
         console.log("Authentication failed for socket. Forcefully signing out to prevent loop.");
         newSocket.disconnect();
