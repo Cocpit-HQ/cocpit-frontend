@@ -40,6 +40,7 @@ const SocketContext = createContext<SocketContextType>({
 });
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
+const SOCKET_TRANSPORT_MODE = process.env.NEXT_PUBLIC_SOCKET_TRANSPORT_MODE || "auto";
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session } = useSession();
@@ -112,10 +113,16 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       socketRef.current.removeAllListeners();
     }
 
+    const usePollingOnly = SOCKET_TRANSPORT_MODE === "polling";
+    const selectedTransports: ("websocket" | "polling")[] = usePollingOnly
+      ? ["polling"]
+      : ["websocket", "polling"];
+
     const newSocket = io(SOCKET_URL, {
       auth: { token },
       path: "/socket.io",
-      transports: ["websocket", "polling"],
+      transports: selectedTransports,
+      upgrade: !usePollingOnly,
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
@@ -140,7 +147,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         type: (err as Error & { type?: unknown }).type,
         socketUrl: SOCKET_URL,
         socketPath: "/socket.io",
-        transports: ["websocket", "polling"],
+        transportMode: SOCKET_TRANSPORT_MODE,
+        transports: selectedTransports,
       });
       if (err.message.includes("Authentication error") || err.message.includes("Invalid token") || err.message.includes("jwt expired")) {
         console.log("Authentication failed for socket. Forcefully signing out to prevent loop.");
