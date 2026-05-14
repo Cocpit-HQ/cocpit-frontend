@@ -4,6 +4,7 @@
 import React from "react";
 import { Experience } from "@/types/entities";
 import { Icon } from "@iconify/react";
+import { cn } from "@/lib/utils";
 
 interface EditableExperienceItemProps {
     experience: Experience;
@@ -25,15 +26,19 @@ export function EditableExperienceItem({
             {/* Left/Center Content: Logo + Info */}
             <div className="flex gap-4 flex-1 min-w-0">
                 {/* Company Logo */}
-                <div className={`flex-shrink-0 w-[56px] h-[40px] rounded-[20px] overflow-hidden flex items-center justify-center ${experience.company_logo ? 'bg-transparent' : 'bg-[#EEF2FF]'}`}>
-                    <img
-                        src="/assets/company-placeholder.png"
-                        alt={experience.company_name}
-                        className="w-full h-full object-contain p-2"
-                        onError={(e) => {
-                            (e.target as HTMLImageElement).src = "https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png";
-                        }}
-                    />
+                <div className={cn(
+                    "entity-placeholder",
+                    experience.company_logo && "bg-transparent border-none"
+                )}>
+                    {experience.company_logo ? (
+                        <img
+                            src={experience.company_logo}
+                            alt={experience.company_name}
+                            className="w-full h-full object-contain p-2"
+                        />
+                    ) : (
+                        <Icon icon="lucide:briefcase" className="entity-placeholder-icon" />
+                    )}
                 </div>
 
                 {/* Info block */}
@@ -66,7 +71,7 @@ export function EditableExperienceItem({
                             <span className="text-center">-</span>
                         </span>
                         <span className="whitespace-nowrap text-left">{experience.end_date ? formatDate(experience.end_date) : 'Present'}</span>
-                        
+
                         <span className="whitespace-nowrap text-left">{experience.work_type || ''}</span>
                         <span className="flex items-center justify-center w-[9px] h-[16px]">
                             {experience.work_mode ? <span className="text-center">—</span> : null}

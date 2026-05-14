@@ -27,7 +27,7 @@ export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly =
     post &&
     skill &&
     ((post.content && post.content.toLowerCase().includes(skill.toLowerCase())) ||
-    (post.title && post.title.toLowerCase().includes(skill.toLowerCase())))
+      (post.title && post.title.toLowerCase().includes(skill.toLowerCase())))
   );
 
   const hasProof = mentionedInPosts.length > 0;
@@ -36,17 +36,17 @@ export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly =
     <TooltipProvider>
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>
-          <div className="group relative h-[40px] px-4 rounded-[8px] border border-[#EEF2FF] bg-[#EEF2FF] transition-all flex items-center justify-center gap-2 cursor-pointer">
-            <span className="text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] font-medium text-[#6366F1] group-hover:text-red-400">
+          <div className="skill-chip group relative cursor-pointer gap-2">
+            <span className="group-hover:text-destructive">
               {skill}
             </span>
 
             {/* Default Proof Indicator */}
             {hasProof && (
               <div className="absolute -top-3 -right-3 w-6 h-6 rounded-full border-2 border-card overflow-hidden shadow-sm group-hover:hidden">
-                <img 
-                  src={mentionedInPosts[0]?.authorAvatar || "/assets/avatar.png"} 
-                  alt="Proof" 
+                <img
+                  src={mentionedInPosts[0]?.authorAvatar || "/assets/avatar.png"}
+                  alt="Proof"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -54,14 +54,14 @@ export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly =
 
             {/* Hover Delete Icon */}
             {onDelete && (
-              <div 
+              <div
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete(skill);
                 }}
                 className="hidden group-hover:flex items-center justify-center ml-1"
               >
-                <Icon icon="fluent:delete-32-regular" className="w-[24px] h-[24px] text-red-400" />
+                <Icon icon="fluent:delete-32-regular" className="w-[24px] h-[24px] text-destructive" />
               </div>
             )}
           </div>
@@ -71,18 +71,18 @@ export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly =
             <p className="font-semibold text-sm">{skill}</p>
 
             {mentionedInPosts.length > 0 && (
-                <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                        <MessageSquare className="w-3 h-3" /> Mentioned in Posts:
-                    </p>
-                    <p className="text-xs text-foreground">
-                         Referenced in {mentionedInPosts.length} post{mentionedInPosts.length !== 1 ? 's' : ''}.
-                    </p>
-                </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                  <MessageSquare className="w-3 h-3" /> Mentioned in Posts:
+                </p>
+                <p className="text-xs text-foreground">
+                  Referenced in {mentionedInPosts.length} post{mentionedInPosts.length !== 1 ? 's' : ''}.
+                </p>
+              </div>
             )}
 
             {!hasProof && (
-                <p className="text-xs text-muted-foreground italic">No proof detected yet.</p>
+              <p className="text-xs text-muted-foreground italic">No proof detected yet.</p>
             )}
           </div>
         </TooltipContent>

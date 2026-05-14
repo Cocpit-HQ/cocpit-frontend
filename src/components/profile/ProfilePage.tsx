@@ -158,7 +158,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="flex flex-col items-start py-4 w-[285.33px] h-[504px] bg-white border border-[#EEF2FF] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] rounded-[24px] relative flex-shrink-0">
+    <div className="flex flex-col items-start py-4 w-[285.33px] h-[504px] bg-card border border-[#EEF2FF] dark:border-card-border-inner shadow-card-inner rounded-[24px] relative flex-shrink-0">
       {/* Header section (Frame 2608569) */}
       <div className="w-full h-[40px] flex items-center justify-between px-4 z-10 mb-2">
         {/* Author Info (Frame 2608571) */}
@@ -173,7 +173,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
           </div>
           {/* Text Info (Frame 2608568) */}
           <div className="flex flex-col justify-center overflow-hidden min-w-0">
-            <span className="text-[16px] leading-[24px] font-normal text-[#000000] truncate font-[family-name:var(--font-poppins)]">
+            <span className="text-[16px] leading-[24px] font-normal text-foreground truncate font-[family-name:var(--font-poppins)]">
               {localPost.author || "Anonymous"}
             </span>
             <span className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)]">
@@ -191,7 +191,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
                 </button>
               </PopoverTrigger>
               <PopoverContent
-                className="w-[180px] p-2 bg-white border border-[#C7D2FE] rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto z-[210]"
+                className="w-[180px] p-2 bg-card border border-border rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto z-[210]"
                 align="end"
                 sideOffset={8}
               >
@@ -219,13 +219,13 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
             <DropdownMenuTrigger asChild>
               <button className={cn(
                 "p-1 rounded-full transition-colors outline-none",
-                isMenuOpen ? "bg-[#EEF2FF] text-[#6366F1]" : "text-[#000000]"
+                isMenuOpen ? "bg-[#EEF2FF] text-[#6366F1]" : "text-foreground"
               )}>
                 <Icon icon="ph:dots-three-outline-vertical-light" className="w-[24px] h-[24px]" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="w-[180px] p-2 bg-white border border-[#C7D2FE] rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg"
+              className="w-[180px] p-2 bg-card border border-border rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg"
               align="end"
             >
               <div className="flex flex-col gap-1">
@@ -235,7 +235,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
                     className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"
                   >
                     <span className="text-[14px] font-[family-name:var(--font-poppins)]">Edit post</span>
-                    <Pencil className="w-[18px] h-[18px]" />
+                    <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-black" style={{ strokeWidth: '1.5px' }} />
                   </DropdownMenuItem>
                 )}
 
@@ -247,7 +247,11 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
                     <span className="text-[14px] font-[family-name:var(--font-poppins)]">
                       {localPost.visibility === 'private' ? 'Make public' : 'Make private'}
                     </span>
-                    {localPost.visibility === 'private' ? <Eye className="w-[18px] h-[18px]" /> : <EyeOff className="w-[18px] h-[18px]" />}
+                    {localPost.visibility === 'private' ? (
+                      <Icon icon="hugeicons:view" className="w-6 h-6 text-black" style={{ strokeWidth: '1.5px' }} />
+                    ) : (
+                      <Icon icon="hugeicons:view-off-slash" className="w-6 h-6 text-black" style={{ strokeWidth: '1.5px' }} />
+                    )}
                   </DropdownMenuItem>
                 )}
 
@@ -257,7 +261,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
                     className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-red-50 focus:text-red-600 text-red-500 rounded-xl outline-none transition-colors"
                   >
                     <span className="text-[14px] font-[family-name:var(--font-poppins)]">Delete post</span>
-                    <Trash2 className="w-[18px] h-[18px]" />
+                    <Icon icon="hugeicons:delete-02" className="w-6 h-6 text-red-500" style={{ strokeWidth: '1.5px' }} />
                   </DropdownMenuItem>
                 )}
               </div>
@@ -267,11 +271,11 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
       </div>
 
       {/* Content Section (Frame 2608605) */}
-      <div className="w-full flex flex-col gap-[4px] mb-2 px-4">
+      <div className="w-full flex flex-col gap-[8px] mb-2 px-4">
         {/* Text Content (Frame 2608573) */}
         <Link
           href={`/post/${localPost.id}`}
-          className="text-[12px] leading-[20px] text-[#000000] font-[family-name:var(--font-poppins)] truncate h-[20px] cursor-pointer"
+          className="text-[12px] leading-[20px] text-foreground font-[family-name:var(--font-poppins)] truncate h-[20px] cursor-pointer"
         >
           {localPost.content}
         </Link>
@@ -288,9 +292,9 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
       </div>
 
       {/* Main Image/Shared Content (Rectangle 14) */}
-      <div className="w-full h-[300px] mb-2 bg-white relative">
+      <div className="w-full h-[300px] mb-2 bg-muted relative overflow-hidden">
         {localPost.shared_post ? (
-          <div className="w-full h-full p-3 bg-white overflow-hidden flex flex-col">
+          <div className="w-full h-full p-3 bg-card overflow-hidden flex flex-col">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100">
                 <img src={localPost.shared_post.authorAvatar || "/assets/pngegg.png"} className="w-full h-full object-cover" />
@@ -321,35 +325,35 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
 
       {/* Liked by Section (Frame 2608622) */}
       <div className="w-full h-[20px] px-4 mb-2 flex items-center">
-        <p className="text-[12px] leading-[16px] text-[#000000] font-[family-name:var(--font-poppins)] truncate">
+        <p className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)] truncate">
           Liked by <span className="font-medium">Jhon</span> and others
         </p>
       </div>
 
       {/* Interaction Footer (Frame 2608574) */}
-      <div className="w-full h-[40px] px-4 py-2 mt-auto border-t border-[#EEF2FF]">
+      <div className="w-full h-[40px] px-4 py-2 mt-auto border-t border-border">
         {/* Frame 2608620 */}
         <div className="flex items-center justify-between gap-1 h-[24px]">
           <button onClick={handleLike} className="flex items-center gap-1 min-w-0 flex-shrink-0">
-            <Icon icon={isLiked ? "solar:like-bold" : "solar:like-broken"} className={cn("w-5 h-5", isLiked ? "text-[#6366F1]" : "text-[#000000]")} />
-            <span className="text-[12px] leading-[16px] text-[#000000] font-[family-name:var(--font-poppins)]">{likesCount}</span>
+            <Icon icon={isLiked ? "solar:like-bold" : "solar:like-broken"} className={cn("w-5 h-5", isLiked ? "text-[#6366F1]" : "text-foreground")} />
+            <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{likesCount}</span>
           </button>
           <Link href={`/post/${localPost.id}?comments=true`} className="flex items-center gap-1 min-w-0 flex-shrink-0">
-            <Icon icon="hugeicons:comment-01" className="w-5 h-5 text-[#000000]" />
-            <span className="text-[12px] leading-[16px] text-[#000000] font-[family-name:var(--font-poppins)]">{localPost.comments || 0}</span>
+            <Icon icon="hugeicons:comment-01" className="w-5 h-5 text-foreground" />
+            <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.comments || 0}</span>
           </Link>
           <button onClick={handleRepost} className="flex items-center gap-1 min-w-0 flex-shrink-0">
-            <Icon icon="hugeicons:repost" className="w-5 h-5 text-[#000000]" />
-            <span className="text-[12px] leading-[16px] text-[#000000] font-[family-name:var(--font-poppins)]">{localPost.shares || 0}</span>
+            <Icon icon="hugeicons:repost" className="w-5 h-5 text-foreground" />
+            <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.shares || 0}</span>
           </button>
           <button onClick={handleShare} className="flex items-center gap-1 min-w-0 flex-shrink-0">
-            <Icon icon="fluent:share-16-regular" className="w-5 h-5 text-[#000000]" />
-            <span className="text-[12px] leading-[16px] text-[#000000] font-[family-name:var(--font-poppins)]">3</span>
+            <Icon icon="fluent:share-16-regular" className="w-5 h-5 text-foreground" />
+            <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">3</span>
           </button>
           <button onClick={handleBookmark} className="flex-shrink-0">
             <Icon
               icon={isSaved ? "solar:bookmark-bold" : "solar:bookmark-linear"}
-              className={cn("w-5 h-5", isSaved ? "text-[#6366F1]" : "text-[#000000]")}
+              className={cn("w-5 h-5", isSaved ? "text-[#6366F1]" : "text-foreground")}
             />
           </button>
         </div>
@@ -522,14 +526,23 @@ export default function ProfilePage() {
     setIsSavingSkills(true);
     try {
       const normalizedNewSkills = newSkills.map(s => s.trim()).filter(s => s !== "");
+      
+      // Deduplicate new skills case-insensitively to prevent any accidental duplicates
+      const uniqueNewSkills: string[] = [];
+      for (const skill of normalizedNewSkills) {
+        if (!uniqueNewSkills.some(s => s.toLowerCase() === skill.toLowerCase())) {
+          uniqueNewSkills.push(skill);
+        }
+      }
+
       const currentSkillNames = skills.map(s => s.name);
 
-      const skillsToAdd = normalizedNewSkills.filter(newSkill =>
+      const skillsToAdd = uniqueNewSkills.filter(newSkill =>
         !currentSkillNames.some(curr => curr.toLowerCase() === newSkill.toLowerCase())
       );
 
       const skillsToRemove = skills.filter(curr =>
-        !normalizedNewSkills.some(newSkill => newSkill.toLowerCase() === curr.name.toLowerCase())
+        !uniqueNewSkills.some(newSkill => newSkill.toLowerCase() === curr.name.toLowerCase())
       );
 
       if (skillsToAdd.length > 0) {
@@ -719,7 +732,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-card">
       <div className="w-full md:max-w-[960px] mx-auto pt-0 md:pt-8 pb-[100px] md:pb-12 px-0 md:px-0">
         {isLoading ? (
           <ProfileSkeleton />
@@ -781,8 +794,8 @@ export default function ProfilePage() {
                     className="absolute -bottom-1 -right-1 cursor-pointer transition-transform hover:scale-110 active:scale-95 z-10"
                     aria-label="Edit Profile Picture"
                   >
-                    <div className="w-[28px] h-[28px] md:w-[36px] md:h-[36px] rounded-full bg-[#6366F1] flex items-center justify-center border-[3px] md:border-4 border-white shadow-sm transition-transform group-hover:scale-110">
-                      <Icon icon="solar:pen-2-linear" className="w-[14px] h-[14px] md:w-[18px] md:h-[18px] text-white" />
+                    <div className="w-[28px] h-[28px] md:w-[36px] md:h-[36px] rounded-full bg-[#6366F1] flex items-center justify-center transition-transform group-hover:scale-110">
+                      <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-white" style={{ strokeWidth: '1.5px' }} />
                     </div>
                   </button>
                 </div>
@@ -839,27 +852,27 @@ export default function ProfilePage() {
                 <div className="flex gap-[16px] items-center w-full">
                   <button
                     onClick={() => openFollowList("following")}
-                    className="flex-1 h-[58px] flex items-center justify-between p-[16px] rounded-[24px] cursor-pointer hover:opacity-90 transition-all"
-                    style={{ background: '#EEF2FF', boxShadow: '0px 0px 4px 0px #6366F10D' }}
+                    className="flex-1 h-[58px] flex items-center justify-between p-[16px] rounded-[24px] cursor-pointer hover:opacity-90 transition-all bg-primary-tint"
+                    style={{ boxShadow: '0px 0px 4px 0px #6366F10D' }}
                   >
-                    <span className="text-[14px] leading-[20px] text-black font-normal font-[family-name:var(--font-poppins)]">Following</span>
-                    <span className="text-[18px] leading-[26px] text-[#6366F1] font-medium font-[family-name:var(--font-poppins)]">{profileStats?.following_count || 0}</span>
+                    <span className="text-[14px] leading-[20px] text-foreground font-normal font-[family-name:var(--font-poppins)]">Following</span>
+                    <span className="text-[18px] leading-[26px] text-primary-tint-foreground font-medium font-[family-name:var(--font-poppins)]">{profileStats?.following_count || 0}</span>
                   </button>
                   <button
                     onClick={() => openFollowList("followers")}
-                    className="flex-1 h-[58px] flex items-center justify-between p-[16px] rounded-[24px] cursor-pointer hover:opacity-90 transition-all"
-                    style={{ background: '#EEF2FF', boxShadow: '0px 0px 4px 0px #6366F10D' }}
+                    className="flex-1 h-[58px] flex items-center justify-between p-[16px] rounded-[24px] cursor-pointer hover:opacity-90 transition-all bg-primary-tint"
+                    style={{ boxShadow: '0px 0px 4px 0px #6366F10D' }}
                   >
-                    <span className="text-[14px] leading-[20px] text-black font-normal font-[family-name:var(--font-poppins)]">Followers</span>
-                    <span className="text-[18px] leading-[26px] text-[#6366F1] font-medium font-[family-name:var(--font-poppins)]">{profileStats?.followers_count || 0}</span>
+                    <span className="text-[14px] leading-[20px] text-foreground font-normal font-[family-name:var(--font-poppins)]">Followers</span>
+                    <span className="text-[18px] leading-[26px] text-primary-tint-foreground font-medium font-[family-name:var(--font-poppins)]">{profileStats?.followers_count || 0}</span>
                   </button>
                   <button
                     onClick={() => openFollowList("connections")}
-                    className="flex-1 h-[58px] flex items-center justify-between p-[16px] rounded-[24px] cursor-pointer hover:opacity-90 transition-all"
-                    style={{ background: '#EEF2FF', boxShadow: '0px 0px 4px 0px #6366F10D' }}
+                    className="flex-1 h-[58px] flex items-center justify-between p-[16px] rounded-[24px] cursor-pointer hover:opacity-90 transition-all bg-primary-tint"
+                    style={{ boxShadow: '0px 0px 4px 0px #6366F10D' }}
                   >
-                    <span className="text-[14px] leading-[20px] text-black font-normal font-[family-name:var(--font-poppins)]">Connection</span>
-                    <span className="text-[18px] leading-[26px] text-[#6366F1] font-medium font-[family-name:var(--font-poppins)]">{profileStats?.connections_count || 0}</span>
+                    <span className="text-[14px] leading-[20px] text-foreground font-normal font-[family-name:var(--font-poppins)]">Connection</span>
+                    <span className="text-[18px] leading-[26px] text-primary-tint-foreground font-medium font-[family-name:var(--font-poppins)]">{profileStats?.connections_count || 0}</span>
                   </button>
                 </div>
               </div>
@@ -877,9 +890,9 @@ export default function ProfilePage() {
 
                     return (
                       <div className="flex items-center gap-2 flex-nowrap">
-                        <div className="flex items-center gap-[10px] px-[16px] py-[8px] bg-[#E0E7FF] rounded-[24px] border border-primary/20 flex-shrink-0 w-fit h-[36px]">
-                          <Icon icon="solar:buildings-linear" className="w-5 h-5 text-primary" />
-                          <span className="text-[12px] font-normal text-primary leading-[16px] font-[family-name:var(--font-poppins)] whitespace-nowrap">
+                        <div className="flex items-center gap-[10px] px-[16px] py-[8px] bg-primary-tint rounded-[24px] border border-primary/20 flex-shrink-0 w-fit h-[36px]">
+                          <Icon icon="solar:buildings-linear" className="w-5 h-5 text-primary-tint-foreground" />
+                          <span className="text-[12px] font-normal text-primary-tint-foreground leading-[16px] font-[family-name:var(--font-poppins)] whitespace-nowrap">
                             {visibleRoles[0].role} at {visibleRoles[0].name}
                           </span>
                         </div>
@@ -898,7 +911,7 @@ export default function ProfilePage() {
                   {user?.headline}
                 </p>
 
-                <div className="flex flex-col gap-0.5 mb-4">
+                <div className="flex flex-col gap-2 mb-4">
                   {user?.location && (
                     <div className="flex items-center gap-2 text-[12px] font-normal text-muted-foreground leading-[16px] font-[family-name:var(--font-poppins)]">
                       <span>{user?.location}</span>
@@ -974,7 +987,7 @@ export default function ProfilePage() {
                 <div className="ml-auto">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="flex items-center justify-center w-6 h-6 text-black data-[state=open]:text-[#6366F1] data-[state=open]:bg-[#EEF2FF] outline-none border-none focus:outline-none rounded-full transition-colors">
+                      <button className="flex items-center justify-center w-6 h-6 text-foreground data-[state=open]:text-primary-tint-foreground data-[state=open]:bg-primary-tint outline-none border-none focus:outline-none rounded-full transition-colors">
                         <Icon icon="ph:dots-three-outline-vertical-light" className="w-6 h-6" />
                       </button>
                     </DropdownMenuTrigger>
@@ -986,27 +999,27 @@ export default function ProfilePage() {
                     >
                       <DropdownMenuItem
                         onClick={() => setIsEditProfileModalOpen(true)}
-                        className="flex items-center justify-between px-3 py-2 cursor-pointer focus:bg-primary focus:text-white rounded-xl outline-none group transition-colors"
+                        className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-primary-tint focus:text-primary-tint-foreground rounded-xl outline-none group transition-colors"
                       >
-                        <span className="text-sm font-medium text-foreground group-focus:text-white">Edit profile</span>
-                        <Edit2 className="w-4 h-4 text-foreground group-focus:text-white transition-colors" />
+                        <span className="text-sm font-medium text-foreground group-focus:text-primary-tint-foreground">Edit profile</span>
+                        <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-foreground group-focus:text-primary-tint-foreground transition-colors" style={{ strokeWidth: '1.5px' }} />
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => setIsShareModalOpen(true)}
-                        className="flex items-center justify-between px-3 py-2 cursor-pointer focus:bg-primary focus:text-white rounded-xl outline-none group transition-colors"
+                        className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors"
                       >
-                        <span className="text-sm font-medium text-foreground group-focus:text-white">Share profile</span>
-                        <Share2 className="w-4 h-4 text-foreground group-focus:text-white transition-colors" />
+                        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Share profile</span>
+                        <Icon icon="fluent:share-16-regular" className="w-6 h-6 text-black group-focus:text-[#6366F1] transition-colors" style={{ strokeWidth: '1.5px' }} />
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => {
                           navigator.clipboard.writeText(window.location.href);
                           toast.success("Profile link copied");
                         }}
-                        className="flex items-center justify-between px-3 py-2 cursor-pointer focus:bg-primary focus:text-white rounded-xl outline-none group transition-colors"
+                        className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors"
                       >
-                        <span className="text-sm font-medium text-foreground group-focus:text-white">Copy profile</span>
-                        <Copy className="w-4 h-4 text-foreground group-focus:text-white transition-colors" />
+                        <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Copy profile</span>
+                        <Icon icon="solar:copy-outline" className="w-6 h-6 text-black group-focus:text-[#6366F1] transition-colors" style={{ strokeWidth: '1.5px' }} />
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -1029,7 +1042,7 @@ export default function ProfilePage() {
                 {!isAboutExpanded && (user?.about?.length || 0) > 150 && (
                   <button
                     onClick={() => setIsAboutExpanded(true)}
-                    className="absolute bottom-0 right-0 bg-card pl-2 text-muted-foreground hover:text-primary font-normal text-[14px] md:text-[16px] transition-colors"
+                    className="absolute bottom-0 right-0 bg-card pl-2 text-muted-foreground hover:text-primary font-normal text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] transition-colors"
                   >
                     ....More
                   </button>
@@ -1076,7 +1089,7 @@ export default function ProfilePage() {
               <div className="px-4 md:pl-10 md:pr-4 flex flex-row md:flex-row gap-4 md:gap-[24px] overflow-x-auto md:overflow-x-visible pb-4 md:pb-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 {previewPosts.slice(0, 3).map((post, index) => (
                   <div
-                    key={post.id || index}
+                    key={`${post.id || 'post'}-${index}`}
                     className="animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both flex-shrink-0"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
@@ -1092,35 +1105,39 @@ export default function ProfilePage() {
 
             {/* Skills Section */}
             <div
-              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[32px] overflow-hidden"
+              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-card-inner border border-card-border-inner transition-all duration-500 ease-in-out overflow-hidden"
             >
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Skills</h2>
-                <button
-                  onClick={() => setIsAddSkillModalOpen(true)}
-                  className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-primary bg-card flex items-center justify-center text-primary hover:bg-secondary transition-all flex-shrink-0"
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
-              </div>
+              <div className="pt-[16px] pb-[40px] flex flex-col gap-[32px]">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 md:px-10">
+                  <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Skills</h2>
+                  <button
+                    onClick={() => setIsAddSkillModalOpen(true)}
+                    className="add-button-chip"
+                  >
+                    <Plus className="w-6 h-6" />
+                  </button>
+                </div>
 
-              {/* Skills Nested Card */}
-              <div className="bg-card rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] min-h-[72px] flex items-center pl-[40px] py-4">
-                <div className="flex flex-wrap gap-[16px]">
-                  {skills.map((skill: any, index) => {
-                    const skillName = skill.name || (typeof skill === 'string' ? skill : '');
-                    if (!skillName) return null;
-                    return (
-                      <SkillProofPill
-                        key={skill.skill_id || `skill-${index}`}
-                        skill={skillName}
-                        experiences={flatExperiences}
-                        posts={previewPosts}
-                        onDelete={handleDeleteSkill}
-                      />
-                    );
-                  })}
+                {/* Skills Nested Card Wrapper */}
+                <div className="px-4 md:px-10">
+                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[100px] flex items-center p-8">
+                    <div className="flex flex-wrap gap-[16px]">
+                      {skills.map((skill: any, index) => {
+                        const skillName = skill.name || (typeof skill === 'string' ? skill : '');
+                        if (!skillName) return null;
+                        return (
+                          <SkillProofPill
+                            key={`${skill.skill_id || 'skill'}-${index}`}
+                            skill={skillName}
+                            experiences={flatExperiences}
+                            posts={previewPosts}
+                            onDelete={handleDeleteSkill}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1128,85 +1145,93 @@ export default function ProfilePage() {
             {/* Experience Section */}
             <div
               id="experience-section"
-              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[32px] overflow-hidden"
+              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-card-inner border border-card-border-inner transition-all duration-500 ease-in-out overflow-hidden"
             >
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Experience</h2>
-                <button
-                  onClick={() => { setEditingExperiences(null); setIsAddExperienceModalOpen(true); }}
-                  className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-primary bg-card flex items-center justify-center text-primary hover:bg-secondary transition-all flex-shrink-0"
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Experience Nested Card */}
-              <div className="bg-card rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] min-h-[72px] pl-[40px] py-8 pr-6">
-                <div className="flex flex-col gap-[16px]">
-                  {(isExperienceExpanded ? experiences : experiences.slice(0, 2)).map((group, gIdx) => (
-                    <EditableExperienceGroup
-                      key={`${group.company_name}-${gIdx}`}
-                      group={group}
-                      onEdit={() => {
-                        setEditingExperiences(group.experiences);
-                        setIsAddExperienceModalOpen(true);
-                      }}
-                    />
-                  ))}
+              <div className="pt-[16px] pb-[40px] flex flex-col gap-[32px]">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 md:px-10">
+                  <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Experience</h2>
+                  <button
+                    onClick={() => { setEditingExperiences(null); setIsAddExperienceModalOpen(true); }}
+                    className="add-button-chip"
+                  >
+                    <Plus className="w-6 h-6" />
+                  </button>
                 </div>
 
-                {experiences.length > 2 && (
-                  <div className="flex justify-center mt-6">
-                    <button
-                      onClick={() => setIsExperienceExpanded(!isExperienceExpanded)}
-                      className="w-[86px] h-[24px] flex items-center justify-center text-[16px] font-medium text-primary transition-all flex-none"
-                    >
-                      {isExperienceExpanded ? "View less" : "View more"}
-                    </button>
+                {/* Experience Nested Card Wrapper */}
+                <div className="px-4 md:px-10">
+                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[72px] pl-[40px] py-8 pr-6">
+                    <div className="flex flex-col gap-[16px]">
+                      {(isExperienceExpanded ? experiences : experiences.slice(0, 2)).map((group, gIdx) => (
+                        <EditableExperienceGroup
+                          key={`${group.company_name}-${gIdx}`}
+                          group={group}
+                          onEdit={() => {
+                            setEditingExperiences(group.experiences);
+                            setIsAddExperienceModalOpen(true);
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    {experiences.length > 2 && (
+                      <div className="flex justify-center mt-6">
+                        <button
+                          onClick={() => setIsExperienceExpanded(!isExperienceExpanded)}
+                          className="w-[86px] h-[24px] flex items-center justify-center text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-primary transition-all flex-none"
+                        >
+                          {isExperienceExpanded ? "View less" : "View more"}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
             {/* Education Section */}
             <div
               id="education-section"
-              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] pt-[16px] px-4 md:pr-[24px] md:pl-[40px] pb-[40px] flex flex-col gap-[32px] overflow-hidden"
+              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-card-inner border border-card-border-inner transition-all duration-500 ease-in-out overflow-hidden"
             >
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Education</h2>
-                <button
-                  onClick={() => { setEditingEducation(null); setIsAddEducationModalOpen(true); }}
-                  className="w-[56px] h-[40px] px-4 py-2 rounded-[24px] border border-primary bg-card flex items-center justify-center text-primary hover:bg-secondary transition-all flex-shrink-0"
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Education Nested Card */}
-              <div className="bg-card rounded-[24px] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] min-h-[72px] pl-[40px] py-8 pr-6">
-                <div className="flex flex-col gap-[16px]">
-                  {(isEducationExpanded ? educations : educations.slice(0, 2)).map((edu, index) => (
-                    <EditableEducationItem
-                      key={`${edu.education_id}-${index}`}
-                      education={edu}
-                      onEdit={() => { setEditingEducation(edu); setIsAddEducationModalOpen(true); }}
-                    />
-                  ))}
+              <div className="pt-[16px] pb-[40px] flex flex-col gap-[32px]">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 md:px-10">
+                  <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Education</h2>
+                  <button
+                    onClick={() => { setEditingEducation(null); setIsAddEducationModalOpen(true); }}
+                    className="add-button-chip"
+                  >
+                    <Plus className="w-6 h-6" />
+                  </button>
                 </div>
 
-                {educations.length > 2 && (
-                  <div className="flex justify-center mt-6">
-                    <button
-                      onClick={() => setIsEducationExpanded(!isEducationExpanded)}
-                      className="w-[86px] h-[24px] flex items-center justify-center text-[16px] font-medium text-primary transition-all flex-none"
-                    >
-                      {isEducationExpanded ? "View less" : "View more"}
-                    </button>
+                {/* Education Nested Card Wrapper */}
+                <div className="px-4 md:px-10">
+                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[72px] pl-[40px] py-8 pr-6">
+                    <div className="flex flex-col gap-[16px]">
+                      {(isEducationExpanded ? educations : educations.slice(0, 2)).map((edu, index) => (
+                        <EditableEducationItem
+                          key={`${edu.education_id}-${index}`}
+                          education={edu}
+                          onEdit={() => { setEditingEducation(edu); setIsAddEducationModalOpen(true); }}
+                        />
+                      ))}
+                    </div>
+
+                    {educations.length > 2 && (
+                      <div className="flex justify-center mt-6">
+                        <button
+                          onClick={() => setIsEducationExpanded(!isEducationExpanded)}
+                          className="w-[86px] h-[24px] flex items-center justify-center text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-primary transition-all flex-none"
+                        >
+                          {isEducationExpanded ? "View less" : "View more"}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
@@ -1224,13 +1249,13 @@ export default function ProfilePage() {
       <SkillModal
         isOpen={isAddSkillModalOpen}
         onClose={() => setIsAddSkillModalOpen(false)}
-        initialSkills={skills.map(s => s.name)}
+        initialSkills={skills?.map(s => s.name) || []}
         onSave={handleSaveSkills}
         loading={isSavingSkills}
       />
 
       <Dialog open={isAddExperienceModalOpen} onOpenChange={setIsAddExperienceModalOpen}>
-        <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full [&>button]:hidden outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
+        <DialogContent className="p-0 shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
           <DialogTitle className="sr-only">Add Experience</DialogTitle>
           <DialogDescription className="sr-only">Fill in the details to add or edit experience records on your profile.</DialogDescription>
           <AddExperienceForm
@@ -1251,7 +1276,7 @@ export default function ProfilePage() {
       </Dialog>
 
       <Dialog open={isAddEducationModalOpen} onOpenChange={setIsAddEducationModalOpen}>
-        <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full [&>button]:hidden outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
+        <DialogContent className="p-0 shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
           <DialogTitle className="sr-only">Add Education</DialogTitle>
           <DialogDescription className="sr-only">Fill in the details to add a new education record to your profile.</DialogDescription>
           <AddEducationForm

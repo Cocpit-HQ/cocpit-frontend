@@ -65,6 +65,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   })
 
   const [isSaving, setIsSaving] = useState(false)
+  const [initialFormData, setInitialFormData] = useState<any>(null)
   const [lastClickTime, setLastClickTime] = useState(0)
 
   useEffect(() => {
@@ -75,7 +76,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
         initialStatus = "student";
       }
 
-      setFormData({
+      const data = {
         name: user.name || "",
         account_name: user.account_name || "",
         headline: user.headline || "",
@@ -90,7 +91,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
         visible_role_ids: user.company_roles
           ? user.company_roles.filter(r => r.is_role_visible).map(r => r.org_id!)
           : [],
-      })
+      }
+      setFormData(data)
+      setInitialFormData(data)
     }
   }, [user])
 
@@ -105,9 +108,14 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   const labelStyles = "text-[14px] font-normal text-foreground mb-[8px] font-[family-name:var(--font-poppins)] leading-[20px]"
   const getSelectTextColor = (value: string) => value ? "text-foreground" : "text-muted-foreground";
 
+  const hasChanges = () => {
+    if (!initialFormData) return false;
+    return JSON.stringify(formData) !== JSON.stringify(initialFormData);
+  };
+
   const handleSave = async () => {
     const now = Date.now()
-    if (now - lastClickTime < 2000 || isSaving) return
+    if (now - lastClickTime < 2000 || isSaving || !hasChanges()) return
     if (getWordCount(formData.headline) > 200) {
       alert("Headline cannot exceed 200 words");
       return;
@@ -118,15 +126,15 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
     try {
       // Handle role visibility changes independently
       for (const role of (user?.company_roles || [])) {
-          const orgId = role.org_id || role.company_id;
-          const shouldBeVisible = formData.visible_role_ids.includes(orgId!);
-          if (role.is_role_visible !== shouldBeVisible) {
-              try {
-                  await updateMemberRoleSettings(orgId!, { is_role_visible: shouldBeVisible });
-              } catch (err) {
-                  console.error("Failed to update role visibility", err);
-              }
+        const orgId = role.org_id || role.company_id;
+        const shouldBeVisible = formData.visible_role_ids.includes(orgId!);
+        if (role.is_role_visible !== shouldBeVisible) {
+          try {
+            await updateMemberRoleSettings(orgId!, { is_role_visible: shouldBeVisible });
+          } catch (err) {
+            console.error("Failed to update role visibility", err);
           }
+        }
       }
 
       await onSave({
@@ -141,8 +149,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full rounded-none sm:rounded-[24px] p-0 gap-0 border-none shadow-2xl bg-card overflow-hidden data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
-        
+      <DialogContent className="max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full rounded-none sm:rounded-[24px] p-0 gap-0 shadow-none bg-card overflow-hidden data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
+
         {/* Mobile Header */}
         <div className="sm:hidden flex items-center justify-between sticky top-0 bg-card z-50 px-4 py-4 border-b border-border">
           <button onClick={onClose} className="p-2 -ml-2 text-foreground hover:bg-secondary rounded-full transition-colors">
@@ -151,10 +159,10 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
           <span className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
             Edit profile
           </span>
-          <button 
+          <button
             onClick={handleSave}
-            disabled={isSaving}
-            className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all"
+            disabled={isSaving || !hasChanges()}
+            className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             {isSaving ? "..." : "Save"}
           </button>
@@ -254,8 +262,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       key={opt}
                       onClick={() => toggleOption("open_to", opt)}
                       className={`h-10 min-w-[89px] px-4 rounded-[8px] text-sm font-medium transition-all flex items-center justify-center border ${formData.open_to === opt
-                          ? "bg-[#6366F1] border-[#6366F1] text-white shadow-sm"
-                          : "bg-[#EEF2FF] border-[#EEF2FF] text-[#6366F1] hover:opacity-80"
+                        ? "bg-[#6366F1] border-[#6366F1] text-white shadow-sm"
+                        : "bg-[#EEF2FF] border-[#EEF2FF] text-[#6366F1] hover:opacity-80"
                         }`}
                     >
                       {opt}
@@ -272,8 +280,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       key={opt}
                       onClick={() => toggleOption("availability", opt)}
                       className={`h-10 min-w-[89px] px-4 rounded-[8px] text-sm font-medium transition-all flex items-center justify-center border ${formData.availability === opt
-                          ? "bg-[#6366F1] border-[#6366F1] text-white shadow-sm"
-                          : "bg-[#EEF2FF] border-[#EEF2FF] text-[#6366F1] hover:opacity-80"
+                        ? "bg-[#6366F1] border-[#6366F1] text-white shadow-sm"
+                        : "bg-[#EEF2FF] border-[#EEF2FF] text-[#6366F1] hover:opacity-80"
                         }`}
                     >
                       {opt}
@@ -290,8 +298,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       key={opt}
                       onClick={() => toggleOption("work_preference", opt)}
                       className={`h-10 min-w-[89px] px-4 rounded-[8px] text-sm font-medium transition-all flex items-center justify-center border ${formData.work_preference === opt
-                          ? "bg-[#6366F1] border-[#6366F1] text-white shadow-sm"
-                          : "bg-[#EEF2FF] border-[#EEF2FF] text-[#6366F1] hover:opacity-80"
+                        ? "bg-[#6366F1] border-[#6366F1] text-white shadow-sm"
+                        : "bg-[#EEF2FF] border-[#EEF2FF] text-[#6366F1] hover:opacity-80"
                         }`}
                     >
                       {opt}
@@ -339,14 +347,14 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               <Button
                 variant="outline"
                 onClick={onClose}
-                className="w-[142px] h-[40px] rounded-[24px] border-[#6366F1] text-[#6366F1] hover:bg-secondary transition-all bg-card font-medium"
+                className="w-[142px] h-[40px] rounded-[24px] border-[#6366F1] text-[#6366F1] hover:bg-transparent transition-all bg-card font-medium"
               >
-                Delete
+                Cancel
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={isSaving}
-                className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] hover:opacity-90 text-white font-medium transition-all shadow-sm disabled:opacity-50"
+                disabled={isSaving || !hasChanges()}
+                className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] hover:opacity-90 text-white font-medium transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {isSaving ? "Saving..." : "Save"}
               </Button>

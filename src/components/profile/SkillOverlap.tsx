@@ -17,9 +17,9 @@ export function SkillOverlap({ currentUserSkills, profileUserSkills }: SkillOver
     <div className="rounded-xl border p-4 mb-6 bg-card border-border">
       <div className="flex items-center gap-2 mb-2">
         <div className="flex -space-x-2">
-           {/* Abstract "overlap" visualization using simple circles if no avatars */}
-           <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center border-2 border-background text-[10px] text-primary font-bold">You</div>
-           <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center border-2 border-background text-[10px] text-muted-foreground font-bold">User</div>
+          {/* Abstract "overlap" visualization using simple circles if no avatars */}
+          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center border-2 border-background text-[10px] text-primary font-bold">You</div>
+          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center border-2 border-background text-[10px] text-muted-foreground font-bold">User</div>
         </div>
         <h3 className="text-sm font-medium text-foreground">You both have shared skills</h3>
       </div>

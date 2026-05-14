@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/layout/providers";
 import { Toaster } from "@/components/ui/toaster";
@@ -15,11 +15,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-import { Poppins, Roboto } from "next/font/google";
+import { Roboto } from "next/font/google";
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const roboto = Roboto({

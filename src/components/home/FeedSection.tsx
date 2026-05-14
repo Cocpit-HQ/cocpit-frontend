@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useMemo, useEffect, useRef } from 'react';
-import dynamic from 'next/dynamic';
+import React, { useMemo, useEffect } from 'react';
 import FeedPost from '@/features/feed/components/FeedPost';
 import PostSkeleton from './PostSkeleton';
 import { useFeed } from '@/hooks/use-feed';
@@ -9,19 +8,15 @@ import { useInView } from '@/hooks/use-in-view';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { StoryRail } from './StoryRail';
 import { FeedSortDropdown } from './FeedSortDropdown';
-import { PostType } from '@/features/create-post/types';
-import { StoryGroup } from '@/types/showcase';
-import { useWindowVirtualizer } from '@tanstack/react-virtual';
-import { useUIStore } from '@/store/ui.store';
-
-// Lazy-load CreatePost (hidden on mobile, only visible on desktop)
-const CreatePost = dynamic(() => import('./CreatePost'), { ssr: false });
+import { StoryDetail, StoryGroup } from '@/types/showcase';
+import { ApplicantInsightCard, CompactJobRecommendation, JobMatchesCard } from './FeedInsights';
 
 interface FeedSectionProps {
     groups: StoryGroup[];
     storyLoading: boolean;
     setShowCreateStory: (show: boolean) => void;
     setMobileSelectedGroupId: (id: string | number) => void;
+    setSelectedStory: (story: StoryDetail | null) => void;
     activeTab: string;
     setActiveTab: (tab: string) => void;
 }
@@ -31,12 +26,12 @@ export const FeedSection = ({
     storyLoading,
     setShowCreateStory,
     setMobileSelectedGroupId,
+    setSelectedStory,
     activeTab,
     setActiveTab
 }: FeedSectionProps) => {
     const { posts, currentUser, deletePost, togglePostVisibility, loadMorePosts, hasMore, loading: feedLoading } = useFeed();
     const { activeProfile, isCompany } = useActiveProfile();
-    const { setActiveModal } = useUIStore();
 
     const activeAccount = useMemo(() => (
         isCompany && activeProfile
@@ -63,19 +58,20 @@ export const FeedSection = ({
         return sorted;
     }, [posts, activeTab]);
 
-    const listRef = useRef<HTMLDivElement>(null);
-
-    // Initialize the window virtualizer
-    const virtualizer = useWindowVirtualizer({
-        count: sortedPosts.length,
-        estimateSize: () => 350, // estimated height of a post
-        overscan: 20, // pre-render 20 posts outside of viewport to mitigate gray screen on fast scroll
-        scrollMargin: listRef.current?.offsetTop ?? 0,
-        initialOffset: typeof window !== 'undefined' ? parseInt(sessionStorage.getItem('scroll-/feed') || '0', 10) : 0,
-    });
-
     return (
         <section className="lg:col-span-8 max-w-[560px] mx-auto w-full">
+            {/* Desktop Showcase Rail */}
+            <div className="hidden md:block">
+                <StoryRail
+                    groups={groups}
+                    isLoading={storyLoading}
+                    activeAccount={activeAccount}
+                    variant="desktop-showcase"
+                    onCreateClick={() => setShowCreateStory(true)}
+                    onStoryClick={(story) => setSelectedStory(story)}
+                />
+            </div>
+
             {/* Mobile Story/Suggested Rail */}
             <div className="md:hidden min-h-[120px] transition-all duration-500 overflow-hidden">
                 <div className="animate-in fade-in duration-500">
@@ -94,48 +90,23 @@ export const FeedSection = ({
                 </div>
             </div>
 
-            {/* Create Post */}
-            <div className="hidden md:block">
-                <CreatePost onOpenModal={(type) => setActiveModal('create-post', type)} />
-            </div>
-
             {/* Sort Dropdown */}
-            <div className="flex justify-end mb-2 px-1 mt-1 md:mt-0">
+            {/* <div className="flex justify-end mb-2 px-1 mt-1 md:mt-0">
                 <FeedSortDropdown activeTab={activeTab} setActiveTab={setActiveTab} />
-            </div>
+            </div> */}
 
             {/* Posts */}
-            <div className="md:space-y-2">
+            <div className="md:space-y-4">
                 {/* Skeletons appear when initial load is happening */}
                 {feedLoading && posts.length === 0 &&
                     Array.from({ length: 3 }).map((_, i) => (
                         <PostSkeleton key={i} />
                     ))}
 
-                <div
-                    ref={listRef}
-                    style={{
-                        height: `${virtualizer.getTotalSize()}px`,
-                        width: '100%',
-                        position: 'relative',
-                    }}
-                >
-                    {virtualizer.getVirtualItems().map((virtualItem) => {
-                        const post = sortedPosts[virtualItem.index];
+                <div className="space-y-4">
+                    {sortedPosts.map((post, index) => {
                         return (
-                            <div
-                                key={virtualItem.key}
-                                data-index={virtualItem.index}
-                                ref={virtualizer.measureElement}
-                                style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    transform: `translateY(${virtualItem.start - virtualizer.options.scrollMargin}px)`,
-                                    paddingBottom: '8px', // spacing between posts (equivalent to space-y-2)
-                                }}
-                            >
+                            <div key={post.id}>
                                 <FeedPost
                                     {...post}
                                     initialComments={post.commentData}
@@ -148,8 +119,23 @@ export const FeedSection = ({
                                     }
                                     onDelete={deletePost}
                                     onToggleVisibility={togglePostVisibility}
-                                    priority={virtualItem.index < 4}
+                                    priority={index < 4}
                                 />
+                                {index === 0 && (
+                                    <div className="mt-4">
+                                        <ApplicantInsightCard />
+                                    </div>
+                                )}
+                                {index === 1 && (
+                                    <div className="mt-4">
+                                        <JobMatchesCard />
+                                    </div>
+                                )}
+                                {index === 2 && (
+                                    <div className="mt-4">
+                                        <CompactJobRecommendation />
+                                    </div>
+                                )}
                             </div>
                         );
                     })}

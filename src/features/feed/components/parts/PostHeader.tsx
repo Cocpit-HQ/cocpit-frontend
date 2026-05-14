@@ -35,6 +35,7 @@ interface PostHeaderProps {
   location?: string;
   tags?: any[];
   authorRole?: string;
+  title?: string | null;
 }
 
 export const PostHeader = ({
@@ -42,7 +43,7 @@ export const PostHeader = ({
   isMe, isOwnPost, isCompanyPost, poll, shared_post,
   optionsBtnRef, showOptions, setShowOptions, optionsPos, setOptionsPos,
   onEdit, onDelete, onToggleVisibility, onShowAnalytics, onReport,
-  location, tags, authorRole
+  location, tags, authorRole, title
 }: PostHeaderProps) => {
   const avatarSrc = authorAvatar || '/assets/pngegg.png';
 
@@ -60,11 +61,11 @@ export const PostHeader = ({
   const authorLink = isCompanyPost ? `/organization/${authorSlug}` : `/profile/${authorSlug || authorId}`;
 
   return (
-    <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-full h-[40px]">
+    <div className="flex flex-row justify-between items-start p-0 gap-[8px] w-full">
       {/* Author Info (Frame 2608571) */}
       <div className="flex flex-row items-center p-0 gap-[8px]">
         {/* Avatar (Ellipse 10) */}
-        <div className="w-[32px] h-[32px] rounded-full overflow-hidden flex-shrink-0 bg-[#D9D9D9]">
+        <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0 bg-muted">
           <img src={avatarSrc} alt={author} className="w-full h-full object-cover" />
         </div>
 
@@ -72,12 +73,12 @@ export const PostHeader = ({
         <div className="flex flex-col items-start p-0">
           <div className="flex items-center gap-1 h-[24px]">
             {isMe || (!isCompanyPost && !authorId) ? (
-              <h3 className="text-black text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] cursor-default">
+              <h3 className="text-foreground text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] cursor-default">
                 {author}
               </h3>
             ) : (
               <Link href={authorLink} className="hover:underline block">
-                <h3 className="text-black text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)]">
+                <h3 className="text-foreground text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)]">
                   {author}
                 </h3>
               </Link>
@@ -85,51 +86,52 @@ export const PostHeader = ({
             {isCompanyPost && (
               <Icon icon="solar:check-circle-bold" className="w-4 h-4 text-primary" />
             )}
+            {shared_post && (
+              <span className="text-muted-foreground text-[14px] leading-[24px] font-normal font-[family-name:var(--font-poppins)] ml-1">
+                reposted
+              </span>
+            )}
           </div>
-          <p className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280] h-[16px]">
-            {authorRole || 'Designer'}
+          <p className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+            {authorRole || title || 'Designer'}
           </p>
+          {(location || timeAgo) && (
+            <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
+              {location && <span>{location}</span>}
+              {location && timeAgo && <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />}
+              {timeAgo && <span>{timeAgo}</span>}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Metadata & Menu (Right side) */}
-      <div className="flex flex-row items-center gap-[12px]">
-        {/* Metadata (Frame 2608604) */}
-        <div className="hidden md:flex flex-row items-center gap-[8px] h-[16px]">
-          <p className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280]">
-            {location || 'Kolhapur'}
-          </p>
-          <div className="w-[4px] h-[4px] rounded-full bg-[#DADADA]"></div>
-          <p className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280]">
-            {timeAgo}
-          </p>
-        </div>
-
+      <div className="flex flex-row items-center gap-[12px] h-[40px]">
         <div className="flex items-center gap-1">
           {/* Tag icon */}
           {tags && tags.length > 0 && (
             <Popover>
               <PopoverTrigger asChild>
-                <button className="p-1 hover:bg-secondary rounded-full transition-colors outline-none text-muted-foreground hover:text-foreground data-[state=open]:text-[#6366F1]">
+                <button className="p-1 hover:bg-secondary rounded-full transition-colors outline-none text-muted-foreground hover:text-foreground data-[state=open]:text-primary">
                   <Icon icon="la:user-tag" className="w-[24px] h-[24px]" />
                 </button>
               </PopoverTrigger>
               <PopoverContent
-                className="w-[180px] h-[136px] p-2 bg-white border border-[#C7D2FE] rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] z-[210]"
+                className="w-[180px] h-[136px] p-2 bg-card border border-border rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] z-[210]"
                 align="end"
                 sideOffset={8}
               >
                 <div className="flex flex-col gap-1">
                   {tags.map((tag: any, idx: number) => (
-                    <div key={idx} className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-[12px] transition-colors cursor-pointer group">
-                      <div className="w-6 h-6 rounded-full border border-slate-200 flex items-center justify-center overflow-hidden bg-slate-50">
+                    <div key={idx} className="flex items-center gap-3 px-3 py-2 hover:bg-muted rounded-[12px] transition-colors cursor-pointer group">
+                      <div className="w-6 h-6 rounded-full border border-border flex items-center justify-center overflow-hidden bg-muted">
                         {tag.avatar_url || tag.avatar ? (
                           <img src={tag.avatar_url || tag.avatar} alt="" className="w-full h-full object-cover" />
                         ) : (
-                          <Icon icon="solar:user-linear" className="w-3 h-3 text-slate-400" />
+                          <Icon icon="solar:user-linear" className="w-3 h-3 text-muted-foreground" />
                         )}
                       </div>
-                      <span className="text-[14px] leading-[20px] font-normal text-black font-[family-name:var(--font-poppins)] transition-colors">
+                      <span className="text-[14px] leading-[20px] font-normal text-foreground font-[family-name:var(--font-poppins)] transition-colors">
                         {tag.full_name || tag.name}
                       </span>
                     </div>
@@ -143,11 +145,11 @@ export const PostHeader = ({
             <button
               ref={optionsBtnRef}
               onClick={handleOptionsClick}
-              className="text-[#6B7280] hover:text-black transition-colors p-1"
+              className="text-muted-foreground hover:text-foreground transition-colors p-1"
             >
               <Icon icon="solar:menu-dots-bold" className="w-[24px] h-[24px] rotate-90" />
             </button>
-            
+
             {showOptions && optionsPos && typeof document !== 'undefined' && createPortal(
               <>
                 <div className="fixed inset-0 z-[199]" onClick={() => setShowOptions(false)} />

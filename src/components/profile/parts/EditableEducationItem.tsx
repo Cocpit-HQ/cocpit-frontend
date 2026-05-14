@@ -24,8 +24,8 @@ export function EditableEducationItem({
             {/* Left/Center Content: Icon + Info */}
             <div className="flex gap-4 flex-1 min-w-0">
                 {/* School Icon */}
-                <div className="flex-shrink-0 w-[56px] h-[40px] rounded-[20px] bg-[#EEF2FF] flex items-center justify-center">
-                    <Icon icon="qlementine-icons:education-24" className="w-[24px] h-[24px] text-[#6366F1]" />
+                <div className="entity-placeholder">
+                    <Icon icon="qlementine-icons:education-24" className="entity-placeholder-icon" />
                 </div>
 
                 {/* Info block */}
@@ -56,7 +56,7 @@ export function EditableEducationItem({
             {/* Right Column: Metadata + Edit Button (Fixed 220px) */}
             <div className="flex items-start flex-shrink-0 w-[220px] ml-auto">
                 <div className="flex flex-col items-end w-full">
-                    <div className="grid grid-cols-[75px_9px_auto] gap-x-[6px] items-center w-full text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280]">
+                    <div className="grid grid-cols-[75px_9px_auto] gap-x-[6px] items-center w-full text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
                         <span className="whitespace-nowrap text-left">{formatDate(education.start_date)}</span>
                         <span className="flex items-center justify-center w-[9px] h-[16px]">
                             <span className="text-center">—</span>
@@ -68,9 +68,9 @@ export function EditableEducationItem({
                     onClick={onEdit}
                     className="flex-shrink-0 mt-0.5 ml-2"
                 >
-                    <Icon 
-                        icon="eva:edit-outline" 
-                        className="w-[24px] h-[24px] text-[#6B7280] stroke-[1.5px] hover:text-primary transition-colors" 
+                    <Icon
+                        icon="eva:edit-outline"
+                        className="w-[24px] h-[24px] text-muted-foreground stroke-[1.5px] hover:text-primary transition-colors"
                     />
                 </button>
             </div>

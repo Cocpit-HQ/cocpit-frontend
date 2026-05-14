@@ -34,6 +34,17 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --shadow-indigo-xs: var(--feed-card-shadow);
+  --shadow-indigo-sm: var(--feed-card-shadow-sm);
+
+  --shadow-card-inner: var(--card-shadow-inner);
+  --color-card-border-inner: var(--card-border-inner);
+  --color-primary-tint: var(--primary-tint);
+  --color-primary-tint-foreground: var(--primary-tint-foreground);
+
+  --radius-card: 24px;
+  --radius-feed-card: 24px;
 }
 
 @layer base {
@@ -89,6 +100,23 @@
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
     --shadow-purple: 0 10px 40px -10px rgba(91, 124, 255, 0.3);
     --shadow-glow: 0 0 60px rgba(255, 255, 255, 0.1);
+
+    /* Feed redesign tokens */
+    --feed-primary: #6366F1;
+    --feed-light: #E0E7FF;
+    --feed-ultra-light: #EEF2FF;
+    --feed-button: #A5B4FC;
+    --feed-secondary-text: #6B7280;
+    --feed-card-border: #EEF2FF;
+    --feed-card-shadow: 0px 0px 4px rgba(99, 102, 241, 0.05);
+    --feed-card-shadow-sm: 0px 2px 4px rgba(99, 102, 241, 0.05);
+    --feed-sidebar-border: rgba(199, 210, 254, 0.2);
+
+    --primary-tint: #EEF2FF;
+    --primary-tint-foreground: #6366F1;
+
+    --card-shadow-inner: 0px 0px 4px rgba(99, 102, 241, 0.05);
+    --card-border-inner: transparent;
   }
 
   [data-theme="navy"] {
@@ -121,11 +149,13 @@
     --sidebar-accent-foreground: #ffffff;
     --sidebar-border: #2d3548;
     --sidebar-ring: #6366F1;
+
+    --card-shadow-inner: 0px 0px 4px 0px rgba(99, 102, 241, 0.05);
+    --card-border-inner: transparent;
   }
 
   [data-theme="light"] {
-    --background: #f3f4f6;
-    /* Updated for desktop */
+    --background: #ffffff;
     --foreground: #1A1A1A;
 
     --card: #ffffff;
@@ -161,47 +191,97 @@
     --sidebar-accent-foreground: #1f2937;
     --sidebar-border: #e5e7eb;
     --sidebar-ring: #6366F1;
+
+    --primary-tint: #EEF2FF;
+    --primary-tint-foreground: #6366F1;
+
+    --card-shadow-inner: 0px 0px 4px 0px #6366F10D;
+    --card-border-inner: transparent;
   }
 
   [data-theme="dark"] {
-    /* Neutral Dark Theme */
-    --background: #020817;
-    --foreground: #f8fafc;
+    /* ═══════════════════════════════════════════════════
+       Dark Theme — Base: #0B0F19
+       Full color system derived from #0B0F19
+       ═══════════════════════════════════════════════════ */
 
-    --card: #101112;
-    ;
-    --card-foreground: #f8fafc;
+    /* ── Custom Dark Palette Variables ──────────────── */
+    --bg-base: #0B0F19;
+    --surface-1: #111827;
+    --surface-2: #161D2E;
+    --surface-3: #1A2236;
+    --accent-primary: #6366F1;
+    --accent-secondary: #818CF8;
+    --text-heading: #F9FAFB;
+    --text-body: #94A3B8;
+    --text-muted: #4B607A;
+    --border-subtle: #1C2840;
+    --border-card: #232F45;
+    --border-skill: #2A3A55;
+    --border-menu: #1E2B42;
+    --tag-bg: rgba(20, 26, 43, 0.8);
+    --tag-border: rgba(20, 26, 43, 0.8);
+    --tag-text: #818CF8;
+    --skill-text: #A5B4FC;
+    --menu-surface: #131C2E;
+    --menu-text: #CBD5E1;
+    --nav-inactive: #3D5066;
+    --company-text: #64748B;
+    --add-btn-bg: #1A2236;
 
-    --popover: #1e293b;
-    --popover-foreground: #f8fafc;
+    /* ── Core Design Tokens ─────────────────────────── */
+    --background: #0B0F19;
+    --foreground: #F1F5F9;
+
+    --card: #0B0F19;
+    --card-foreground: #F1F5F9;
+
+    --popover: #161D2E;
+    --popover-foreground: #F1F5F9;
 
     --primary: #6366F1;
     --primary-foreground: #ffffff;
 
-    --secondary: #1e293b;
-    --secondary-foreground: #f8fafc;
+    --secondary: #1A2236;
+    --secondary-foreground: #F1F5F9;
 
-    --muted: #1e293b;
-    --muted-foreground: #94a3b8;
+    --muted: #1A2236;
+    --muted-foreground: #94A3B8;
 
-    --accent: #1e293b;
-    --accent-foreground: #f8fafc;
+    --accent: #1A2236;
+    --accent-foreground: #F1F5F9;
 
     --destructive: #991b1b;
     --destructive-foreground: #f8fafc;
 
-    --border: #1e293b;
-    --input: #1e293b;
+    --border: #1C2840;
+    --input: #1A2236;
     --ring: #6366F1;
 
-    --sidebar-background: #0f172a;
-    --sidebar-foreground: #f8fafc;
-    --sidebar-primary: #5B7CFF;
+    /* ── Sidebar ────────────────────────────────────── */
+    --sidebar-background: #0B0F19;
+    --sidebar-foreground: #F1F5F9;
+    --sidebar-primary: #6366F1;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #1e293b;
-    --sidebar-accent-foreground: #f8fafc;
-    --sidebar-border: #1e293b;
+    --sidebar-accent: #1A2236;
+    --sidebar-accent-foreground: #F1F5F9;
+    --sidebar-border: #1C2840;
     --sidebar-ring: #6366F1;
+
+    /* ── Gradients & Shadows ────────────────────────── */
+    --gradient-primary: linear-gradient(120deg, #6366F1 0%, #818CF8 100%);
+    --gradient-subtle: linear-gradient(180deg, #111827 0%, #0B0F19 100%);
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+    --shadow-purple: 0 10px 40px -10px rgba(99, 102, 241, 0.25);
+    --shadow-glow: 0 0 60px rgba(99, 102, 241, 0.08);
+
+    --primary-tint: #1A2236;
+    --primary-tint-foreground: #818CF8;
+
+    --card-shadow-inner: 0px 0px 4px 0px rgba(99, 102, 241, 0.05);
+    --card-border-inner: transparent;
   }
 }
 
@@ -227,6 +307,39 @@
 }
 
 @layer components {
+
+  .feed-card-shell {
+    background-color: #ffffff;
+    border: 1px solid var(--feed-card-border, #EEF2FF);
+    border-radius: var(--radius-feed-card, 24px);
+    box-shadow: var(--feed-card-shadow, 0px 0px 4px rgba(99, 102, 241, 0.05));
+  }
+
+  [data-theme="dark"] .feed-card-shell,
+  [data-theme="navy"] .feed-card-shell {
+    background-color: var(--card);
+    border-color: var(--border);
+  }
+
+  .feed-card-input {
+    background-color: color-mix(in srgb, var(--feed-ultra-light, #EEF2FF) 50%, transparent);
+    border-color: var(--feed-card-border, #EEF2FF);
+  }
+
+  .feed-card-input:hover {
+    background-color: var(--feed-ultra-light, #EEF2FF);
+  }
+
+  [data-theme="dark"] .feed-card-input,
+  [data-theme="navy"] .feed-card-input {
+    background-color: color-mix(in srgb, var(--muted) 50%, transparent);
+    border-color: var(--border);
+  }
+
+  [data-theme="dark"] .feed-card-input:hover,
+  [data-theme="navy"] .feed-card-input:hover {
+    background-color: var(--muted);
+  }
 
   /* Gradient helpers from old globals */
   .bg-onboard {
@@ -274,9 +387,123 @@
       box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.4);
     }
   }
+
+  /* ── Skill/Tag Chip (Figma Assistive Chip) ─────────── */
+  .skill-chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    height: 40px;
+    border-radius: 8px;
+    font-family: var(--font-poppins);
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.1px;
+    background-color: #EEF2FF;
+    border: 1px solid #EEF2FF;
+    color: #6366F1;
+    transition: all 0.2s ease-in-out;
+  }
+
+  [data-theme="dark"] .skill-chip {
+    background-color: var(--tag-bg) !important;
+    border: 1px solid var(--tag-border) !important;
+    color: var(--tag-text) !important;
+  }
+
+  /* ── Entity Placeholder (Exp/Edu Icons) ───────────── */
+  .entity-placeholder {
+    flex-shrink: 0;
+    width: 56px;
+    height: 40px;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #EEF2FF;
+    overflow: hidden;
+    transition: all 0.2s ease-in-out;
+    border: 1px solid transparent;
+  }
+
+  [data-theme="dark"] .entity-placeholder {
+    background-color: var(--tag-bg) !important;
+    border: 1px solid var(--tag-border) !important;
+  }
+
+  .entity-placeholder-icon {
+    width: 24px;
+    height: 24px;
+    color: #6366F1;
+  }
+
+  [data-theme="dark"] .entity-placeholder-icon {
+    color: var(--tag-text) !important;
+  }
+
+  /* ── Add Button Chip (56x40 Squircle) ─────────────── */
+  .add-button-chip {
+    width: 56px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 24px;
+    border: 1px solid #6366F1;
+    background-color: transparent;
+    color: #6366F1;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  [data-theme="dark"] .add-button-chip {
+    border-color: #818CF8 !important;
+    color: #818CF8 !important;
+    background-color: rgba(20, 26, 43, 0.8) !important;
+  }
+
+  .add-button-chip:hover {
+    background-color: #EEF2FF;
+  }
+
+  [data-theme="dark"] .add-button-chip:hover {
+    background-color: rgba(20, 26, 43, 0.9) !important;
+  }
+
+  /* ── Stats Button (Header Metrics) ────────────────── */
+  .stats-button {
+    flex: 1;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    background-color: #EEF2FF;
+    box-shadow: 0px 0px 4px 0px rgba(99, 102, 241, 0.05);
+  }
+
+  [data-theme="dark"] .stats-button {
+    background-color: var(--surface-3) !important;
+    border: 1px solid var(--border-subtle) !important;
+    box-shadow: none !important;
+  }
+
+  .stats-button:hover {
+    opacity: 0.9;
+  }
 }
 
 @layer utilities {
+  .font-poppins {
+    font-family: var(--font-poppins), 'Poppins', sans-serif;
+  }
+
   .gradient-primary {
     background: var(--gradient-primary);
   }
@@ -528,8 +755,257 @@
 
 @media (max-width: 768px) {
   [data-theme="dark"] {
-    --background: #101112;
+    --background: #0B0F19;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Dark Theme — Component-Level Color Overrides
+   Override all hardcoded light-mode colors for dark mode.
+   These rules ONLY apply under [data-theme="dark"].
+   NO layout, spacing, font, or structure changes.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Page-level backgrounds ─────────────────────────────── */
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .bg-\[\#FFFFFF\],
+[data-theme="dark"] .bg-\[\#FFFFFFFF\],
+[data-theme="dark"] .bg-\[\#ffffff\] {
+  background-color: var(--bg-base) !important;
+}
+
+/* ── Text: black → heading text ─────────────────────────── */
+[data-theme="dark"] .text-black,
+[data-theme="dark"] .text-\[\#000000\] {
+  color: #F9FAFB !important;
+}
+
+/* ── Specific Section Text ──────────────────────────────── */
+[data-theme="dark"] .text-\[\#111827\] {
+  color: #F9FAFB !important;
+}
+
+[data-theme="dark"] button.text-\[\#111827\] {
+  color: #9CA3AF !important;
+}
+
+[data-theme="dark"] .text-muted-foreground {
+  color: var(--text-body) !important;
+}
+
+[data-theme="dark"] .text-\[\#6B7280\] {
+  color: var(--text-body) !important;
+}
+
+[data-theme="dark"] .text-\[\#64748B\] {
+  color: var(--company-text) !important;
+}
+
+/* ── Primary accent → Secondary accent ──────────────────── */
+[data-theme="dark"] .text-primary,
+[data-theme="dark"] a,
+[data-theme="dark"] [icon*="dots-three"],
+[data-theme="dark"] svg[data-icon*="dots-three"],
+[data-theme="dark"] button[data-state] svg {
+  color: #818CF8 !important;
+}
+
+/* ── Indigo primary text → accent secondary ────────────── */
+[data-theme="dark"] .text-\[\#6366F1\] {
+  color: #818CF8 !important;
+}
+
+/* ── Indigo tint backgrounds → dark surfaces ────────────── */
+[data-theme="dark"] .bg-\[\#EEF2FF\] {
+  background-color: var(--surface-3) !important;
+}
+
+[data-theme="dark"] .bg-\[\#E0E7FF\] {
+  background-color: var(--surface-3) !important;
+}
+
+[data-theme="dark"] .bg-\[\#E0E7FF\] span,
+[data-theme="dark"] .bg-\[\#E0E7FF\] .text-primary {
+  color: #818CF8 !important;
+}
+
+/* ── Borders: indigo tints → dark borders ───────────────── */
+[data-theme="dark"] .border-\[\#EEF2FF\] {
+  border-color: var(--border-subtle) !important;
+}
+
+[data-theme="dark"] .border-\[\#C7D2FE\] {
+  border-color: var(--border-menu) !important;
+}
+
+[data-theme="dark"] .border-\[\#E5E7EB\] {
+  border-color: var(--border-subtle) !important;
+}
+
+[data-theme="dark"] .border-\[\#DADADA\] {
+  border-color: var(--border-subtle) !important;
+}
+
+/* ── Dot separator ──────────────────────────────────────── */
+[data-theme="dark"] .bg-\[\#DADADA\] {
+  background-color: var(--text-muted) !important;
+}
+
+/* ── Identity Chips (Freelance, Immediate, Hybrid) ──────── */
+[data-theme="dark"] .border-\[\#818CF8\].bg-\[\#FFFFFF\] {
+  background-color: #111827CC !important;
+  border-color: var(--accent-secondary) !important;
+  color: var(--tag-text) !important;
+}
+
+[data-theme="dark"] .text-\[\#818CF8\] {
+  color: var(--tag-text) !important;
+}
+
+/* ── Stats buttons (Metric Boxes & Living Resume Metrics) ── */
+[data-theme="dark"] .flex-1.min-h-\[90px\].bg-card.border.border-border {
+  background: #0B0F19 !important;
+  box-shadow: 0px 2px 4px 0px #818CF899 !important;
+  border-radius: 24px !important;
+  border: 1.5px solid rgba(129, 140, 248, 0.15) !important;
+  padding: 16px !important;
+  gap: 8px !important;
+}
+
+[data-theme="dark"] .flex-1.min-h-\[90px\].bg-card.border.border-border .text-muted-foreground {
+  color: #9CA3AF !important;
+  font-size: 12px !important;
+}
+
+[data-theme="dark"] .flex-1.min-h-\[90px\].bg-card.border.border-border .text-foreground {
+  color: #F9FAFB !important;
+}
+
+[data-theme="dark"] .flex-1.min-h-\[90px\].bg-card.border.border-border .text-primary {
+  color: #818CF8 !important;
+  font-size: 24px !important;
+}
+
+[data-theme="dark"] .flex-1.min-h-\[90px\].bg-card.border.border-border .text-black {
+  color: #9CA3AF !important;
+  font-size: 12px !important;
+}
+
+[data-theme="dark"] .flex-1.min-h-\[90px\].bg-card.border.border-border .text-\[\#6366F1\] {
+  color: #818CF8 !important;
+  font-size: 24px !important;
+}
+
+[data-theme="dark"] [style*="background: rgb(238, 242, 255)"],
+[data-theme="dark"] [style*="background: #EEF2FF"] {
+  background: var(--surface-3) !important;
+  box-shadow: 0px 0px 4px 0px rgba(99, 102, 241, 0.12) !important;
+}
+
+/* ── Post card backgrounds ──────────────────────────────── */
+[data-theme="dark"] .bg-white.border.border-\[\#EEF2FF\] {
+  background-color: var(--surface-1) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+/* ── Profile action dropdown menu ───────────────────────── */
+[data-theme="dark"] .bg-card.border-\[\#C7D2FE\],
+[data-theme="dark"] .bg-white.border-\[\#C7D2FE\],
+[data-theme="dark"] [role="menu"],
+[data-theme="dark"] [data-radix-popper-content-wrapper] .bg-card {
+  background-color: var(--menu-surface) !important;
+  border-color: #818CF8 !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
+/* ── Dropdown hover states ──────────────────────────────── */
+[data-theme="dark"] [role="menuitem"]:hover,
+[data-theme="dark"] [role="menuitem"][data-highlighted],
+[data-theme="dark"] .focus\:bg-\[\#EEF2FF\]:focus,
+[data-theme="dark"] [class*="focus:bg-[#EEF2FF]"]:focus,
+[data-theme="dark"] .hover\:bg-\[\#EEF2FF\]:hover,
+[data-theme="dark"] .data-\[highlighted\]\:bg-\[\#EEF2FF\][data-highlighted],
+[data-theme="dark"] .data-\[highlighted\]\:bg-white[data-highlighted] {
+  background-color: #A5B4FC !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] [role="menuitem"]:hover *,
+[data-theme="dark"] [role="menuitem"][data-highlighted] *,
+[data-theme="dark"] [class*="hover:bg-[#EEF2FF]"]:hover *,
+[data-theme="dark"] [class*="data-[highlighted]:bg-[#EEF2FF]"][data-highlighted] * {
+  color: #FFFFFF !important;
+}
+
+/* ── Remove Open State Background Effect ───────────────── */
+[data-theme="dark"] button[data-state="open"] {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* ── Hover states ───────────────────────────────────────── */
+[data-theme="dark"] .hover\:bg-slate-50:hover {
+  background-color: var(--surface-2) !important;
+}
+
+[data-theme="dark"] .bg-slate-50 {
+  background-color: var(--surface-2) !important;
+}
+
+[data-theme="dark"] .bg-slate-100 {
+  background-color: var(--surface-2) !important;
+}
+
+/* ── Avatar ring: match dark base background ────────────── */
+[data-theme="dark"] .border-white.shadow-sm {
+  border-color: var(--bg-base) !important;
+}
+
+/* ── Cover banner gradient overlay ──────────────────────── */
+[data-theme="dark"] .bg-white\/20 {
+  background-color: rgba(11, 15, 25, 0.3) !important;
+}
+
+[data-theme="dark"] .bg-white\/30 {
+  background-color: rgba(11, 15, 25, 0.4) !important;
+}
+
+/* ── Section shadows → darker for dark mode ─────────────── */
+[data-theme="dark"] .shadow-\[0px_0px_4px_rgba\(99\,102\,241\,0\.05\)\] {
+  box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ── Resume chip ────────────────────────────────────────── */
+[data-theme="dark"] .border-\[\#6B7280\].bg-\[\#FFFFFF\] {
+  background-color: var(--surface-3) !important;
+  border-color: var(--border-skill) !important;
+}
+
+/* ── Form inputs in dark mode ───────────────────────────── */
+[data-theme="dark"] .bg-white.border-\[\#E5E7EB\] {
+  background-color: var(--surface-2) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-heading) !important;
+}
+
+[data-theme="dark"] .placeholder-\[\#6B7280\]::placeholder {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="dark"] .focus-visible\:border-\[\#C7D2FE\]:focus-visible {
+  border-color: var(--accent-primary) !important;
+}
+
+/* ── Border for "+ Add" buttons: keep accent ────────────── */
+[data-theme="dark"] .border-primary.bg-card {
+  background-color: var(--add-btn-bg) !important;
+}
+
+/* ── Spinner ────────────────────────────────────────────── */
+[data-theme="dark"] .border-\[\#EEF2FF\].border-t-\[\#6366F1\] {
+  border-color: var(--border-subtle) !important;
+  border-top-color: var(--accent-primary) !important;
 }
 
 @media (max-width: 768px) {

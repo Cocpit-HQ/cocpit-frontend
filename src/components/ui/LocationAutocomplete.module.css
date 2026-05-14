@@ -10,17 +10,17 @@
   justify-content: space-between;
   width: 100%;
   height: 48px;
-  border: 1px solid #DDE3EA;
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 8px 16px;
-  background: #ffffff;
+  background: var(--card);
   backdrop-filter: none;
   transition: all 0.2s ease;
   box-sizing: border-box;
 }
 
 .inputWrapper:focus-within {
-  border-color: #C7D2FE;
+  border-color: var(--primary);
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
 }
 
@@ -29,7 +29,7 @@
   height: 100%;
   border: none;
   background: transparent;
-  color: #111827;
+  color: var(--foreground);
   font-family: var(--font-poppins), sans-serif;
   font-weight: 400;
   font-size: 16px;
@@ -42,7 +42,7 @@
 .input::placeholder {
   font-family: var(--font-poppins), sans-serif;
   font-weight: 400;
-  color: #6B7280;
+  color: var(--muted-foreground);
 }
 
 .suffix {
@@ -88,8 +88,8 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: #ffffff;
-  border: 1px solid #e4e4e7;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
   z-index: 9999; /* High z-index to ensure it's on top */
@@ -106,13 +106,13 @@
   gap: 0.6rem;
   padding: 0.6rem 0.9rem;
   font-size: 0.875rem;
-  color: #18181b; /* Explicit dark color */
+  color: var(--foreground); /* Explicit dark color */
   cursor: pointer;
   transition: background 0.15s ease;
 }
 
 .item:hover {
-  background: #f4f4f5;
+  background: var(--secondary);
 }
 
 .itemIcon {

@@ -11,7 +11,7 @@ export const PostPoll = ({ pollData, handleVote, isVoting }: PostPollProps) => {
   if (!pollData) return null;
 
   return (
-    <div className="mb-4 px-4" onClick={(e) => e.stopPropagation()}>
+    <div className="px-[16px]" onClick={(e) => e.stopPropagation()}>
       <PollCard 
         poll={pollData} 
         onVote={handleVote} 

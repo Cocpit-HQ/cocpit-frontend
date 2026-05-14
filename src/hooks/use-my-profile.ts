@@ -225,7 +225,7 @@ export function useSkillMutations() {
                 if (!old) return old;
                 return {
                     ...old,
-                    skills: [...old.skills, ...response.skills]
+                    skills: response.skills
                 };
             });
         }

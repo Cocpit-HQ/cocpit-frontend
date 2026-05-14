@@ -2,14 +2,11 @@
 
 import React, { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
-import SuggestionsPanel from '@/components/home/SuggestionsPanel'
-import { StoryGroup } from '@/types/showcase'
 import { X } from 'lucide-react'
-import { HomeHeader } from './HomeHeader'
 import { FeedSection } from './FeedSection'
-import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { useStories } from '@/context/StoriesContext'
 import TrendingHashtags from './TrendingHashtags'
+import UpdatesPanel from './UpdatesPanel'
 
 // Lazy-load heavy modal/overlay components (saves ~230KB from initial bundle)
 const MobileStoryViewer = dynamic(
@@ -52,7 +49,8 @@ export default function HomePage() {
   } = useStories()
 
   useEffect(() => {
-    setMounted(true)
+    const frame = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(frame)
   }, [])
 
 
@@ -62,25 +60,26 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="pt-4 md:pt-6 pb-4 md:pb-8">
-        <div className="max-w-5xl mx-auto px-0 md:px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+        <div className="mx-auto w-full max-w-[1128px] px-0 md:px-4 xl:px-0">
+          <div className="flex w-full flex-col gap-6 md:gap-8 lg:flex-row lg:items-start lg:justify-center">
             {/* Feed Section */}
             <FeedSection
               groups={groups}
               storyLoading={storyLoading}
               setShowCreateStory={setShowCreateStory}
               setMobileSelectedGroupId={setMobileSelectedGroupId}
+              setSelectedStory={setSelectedStory}
               activeTab={activeTab}
               setActiveTab={setActiveTab}
             />
 
             {/* Sideboards */}
-            <aside className="lg:col-span-4 space-y-6">
-              <div className="sticky top-24 md:top-28 space-y-6">
+            <aside className="w-full min-w-0 space-y-6 px-0 md:px-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:w-[406px] lg:shrink-0 lg:self-start lg:overflow-y-auto">
+              <div className="space-y-6">
+                <UpdatesPanel />
                 <TrendingHashtags />
-                <SuggestionsPanel />
               </div>
             </aside>
           </div>

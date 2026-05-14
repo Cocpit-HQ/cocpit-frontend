@@ -171,34 +171,34 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
                 <>
                   <DropdownMenuItem
                     onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
-                    className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-white"
+                    className="flex items-center justify-between cursor-pointer rounded-xl px-4 py-1.5 h-10 outline-none data-[highlighted]:bg-[#EEF2FF] data-[highlighted]:text-[#6366F1] transition-colors group"
                   >
-                    <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Edit post</span>
-                    <Icon icon="fluent:edit-24-regular" width="24" height="24" className="text-black" />
+                    <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black group-data-[highlighted]:text-[#6366F1]">Edit post</span>
+                    <Icon icon="hugeicons:edit-03" width="24" height="24" className="text-black group-data-[highlighted]:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
                   </DropdownMenuItem>
 
                   {!post.shared_post && activeTab !== 'Like' && (
                     <DropdownMenuItem
                       onClick={(e) => { e.stopPropagation(); onTogglePrivacy?.(); }}
-                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-white"
+                      className="flex items-center justify-between cursor-pointer rounded-xl px-4 py-1.5 h-10 outline-none data-[highlighted]:bg-[#EEF2FF] data-[highlighted]:text-[#6366F1] transition-colors group"
                     >
-                      <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">
+                      <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black group-data-[highlighted]:text-[#6366F1]">
                         {post.visibility === 'private' ? 'Make public' : 'Make private'}
                       </span>
                       {post.visibility === 'private' ? (
-                        <Icon icon="fluent:eye-24-regular" width="24" height="24" className="text-black" />
+                        <Icon icon="hugeicons:view" width="24" height="24" className="text-black group-data-[highlighted]:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
                       ) : (
-                        <Icon icon="fluent:eye-hide-24-regular" width="24" height="24" className="text-black" />
+                        <Icon icon="hugeicons:view-off-slash" width="24" height="24" className="text-black group-data-[highlighted]:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
                       )}
                     </DropdownMenuItem>
                   )}
 
                   <DropdownMenuItem
                     onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
-                    className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none group/delete data-[highlighted]:bg-white"
+                    className="flex items-center justify-between cursor-pointer rounded-xl px-4 py-1.5 h-10 outline-none group/delete data-[highlighted]:bg-red-50 data-[highlighted]:text-red-600 transition-colors"
                   >
-                    <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-[#FF6B6B]">Delete post</span>
-                    <Icon icon="fluent:delete-24-regular" width="24" height="24" className="text-[#FF6B6B]" />
+                    <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-[#FF6B6B] data-[highlighted]:text-red-600">Delete post</span>
+                    <Icon icon="hugeicons:delete-02" width="24" height="24" className="text-[#FF6B6B] data-[highlighted]:text-red-600" style={{ strokeWidth: '1.5px' }} />
                   </DropdownMenuItem>
                 </>
               )}

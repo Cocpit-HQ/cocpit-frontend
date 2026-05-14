@@ -158,10 +158,10 @@ function RoleSection({
   existingCurrentRoleId,
 }: RoleSectionProps) {
   const inputStyles =
-    "bg-white border-[#E5E7EB] placeholder-[#6B7280] rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left"
-  const labelStyles = "text-[14px] font-medium text-[#111827] mb-1.5"
+    "bg-card border-border placeholder-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left"
+  const labelStyles = "text-[14px] font-medium text-foreground mb-1.5"
   const getSelectTextColor = (value: string) =>
-    value ? "text-[#111827]" : "text-[#6B7280]"
+    value ? "text-foreground" : "text-muted-foreground"
 
   const set = (field: keyof RoleFormState, value: any) =>
     onChange({ ...role, [field]: value })
@@ -187,248 +187,248 @@ function RoleSection({
           </div>
         )}
 
-      {/* Title */}
-      <div className="flex flex-col">
-        <div className="flex items-center justify-between mb-1.5">
-          <Label className={labelStyles}>{isFirst ? "Role" : "New role"}</Label>
-          <span className={cn(
-            "text-[11px]",
-            role.title.length > 90 ? "text-amber-500" : "text-[#9CA3AF]"
-          )}>
-            {role.title.length}/100
-          </span>
+        {/* Title */}
+        <div className="flex flex-col">
+          <div className="flex items-center justify-between mb-1.5">
+            <Label className={labelStyles}>{isFirst ? "Role" : "New role"}</Label>
+            <span className={cn(
+              "text-[11px]",
+              role.title.length > 90 ? "text-amber-500" : "text-[#9CA3AF]"
+            )}>
+              {role.title.length}/100
+            </span>
+          </div>
+          <div className="relative">
+            <Input
+              value={role.title}
+              onChange={(e) => set("title", e.target.value)}
+              className={cn(
+                inputStyles, "pr-10 w-full",
+                fieldErrors.title && "border-red-400 focus-visible:border-red-400"
+              )}
+              placeholder="e.g. Designer"
+              maxLength={100}
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+              <ChevronDown className="w-4 h-4 text-gray-400" />
+            </div>
+          </div>
+          {fieldErrors.title && (
+            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" />{fieldErrors.title}
+            </p>
+          )}
         </div>
-        <div className="relative">
-          <Input
-            value={role.title}
-            onChange={(e) => set("title", e.target.value)}
-            className={cn(
-              inputStyles, "pr-10 w-full",
-              fieldErrors.title && "border-red-400 focus-visible:border-red-400"
-            )}
-            placeholder="e.g. Designer"
-            maxLength={100}
-          />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <ChevronDown className="w-4 h-4 text-gray-400" />
+
+        {/* "End current role" checkbox — shown for new roles when an existing active role exists */}
+        {showEndCurrentRole && (
+          <div className="flex items-start space-x-2 bg-muted/50 border border-border rounded-[12px] px-4 py-3">
+            <Checkbox
+              id={`endCurrentRole-${index}`}
+              checked={role.endCurrentRole}
+              onCheckedChange={(checked) => {
+                const isChecked = checked as boolean
+                onChange({
+                  ...role,
+                  endCurrentRole: isChecked,
+                  experienceIdToEnd: isChecked ? existingCurrentRoleId : undefined,
+                })
+              }}
+              className="mt-0.5 w-[18px] h-[18px] rounded-[4px] border-2 border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+            />
+            <label
+              htmlFor={`endCurrentRole-${index}`}
+              className="text-[13px] font-medium text-foreground cursor-pointer leading-[20px]"
+            >
+              End current role
+              {previousRoleTitle && (
+                <span className="text-muted-foreground font-normal">
+                  {" "}"{previousRoleTitle}"
+                </span>
+              )}
+            </label>
+          </div>
+        )}
+
+        {/* Details textarea (only for non-first roles shown before dates) */}
+        {!isFirst && (
+          <div className="flex flex-col">
+            <Label className={labelStyles}>Details</Label>
+            <Textarea
+              value={role.description}
+              onChange={(e) => set("description", e.target.value)}
+              className="w-full min-h-[48px] bg-card border-border text-foreground placeholder-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus-visible:border-primary/50 focus-visible:outline-none transition-all shadow-none"
+              placeholder="Describe your work, impact, or achievements"
+            />
+          </div>
+        )}
+
+        {/* Work type */}
+        <div className="space-y-2">
+          <Label className={labelStyles}>Work type</Label>
+          <div className="flex flex-wrap gap-3">
+            {WORK_TYPES.map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => set("work_type", role.work_type === type ? "" : type)}
+                className={cn(
+                  "h-[32px] px-4 rounded-[8px] text-[12px] font-medium transition-all duration-200 border border-transparent",
+                  role.work_type === type
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "skill-chip hover:opacity-80"
+                )}
+              >
+                {type}
+              </button>
+            ))}
           </div>
         </div>
-        {fieldErrors.title && (
-          <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" />{fieldErrors.title}
-          </p>
-        )}
-      </div>
 
-      {/* "End current role" checkbox — shown for new roles when an existing active role exists */}
-      {showEndCurrentRole && (
-        <div className="flex items-start space-x-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-[12px] px-4 py-3">
+        {/* Work mode */}
+        <div className="space-y-2">
+          <Label className={labelStyles}>Work mode</Label>
+          <div className="flex flex-wrap gap-3">
+            {WORK_MODES.map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => set("work_mode", role.work_mode === mode ? "" : mode)}
+                className={cn(
+                  "h-[32px] px-4 rounded-[8px] text-[12px] font-medium transition-all duration-200 border border-transparent",
+                  role.work_mode === mode
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "skill-chip hover:opacity-80"
+                )}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Start date */}
+        <div className="space-y-1.5">
+          <Label className={labelStyles}>Start date</Label>
+          <div className="grid grid-cols-2 gap-6">
+            <Select value={role.startMonth} onValueChange={(v) => set("startMonth", v)}>
+              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.startMonth), fieldErrors.startDate && "border-red-400")}>
+                <SelectValue placeholder="Month" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                {months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={role.startYear} onValueChange={(v) => set("startYear", v)}>
+              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.startYear), fieldErrors.startDate && "border-red-400")}>
+                <SelectValue placeholder="Year" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                {years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          {fieldErrors.startDate && (
+            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" />{fieldErrors.startDate}
+            </p>
+          )}
+          {!fieldErrors.startDate && fieldWarnings.startDate && (
+            <p className="text-[11px] text-amber-600 mt-1 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" />{fieldWarnings.startDate}
+            </p>
+          )}
+        </div>
+
+        {/* End date */}
+        <div className="space-y-1.5">
+          <Label className={labelStyles}>End date</Label>
+          <div className="grid grid-cols-2 gap-6">
+            <Select
+              value={role.endMonth}
+              onValueChange={(v) => set("endMonth", v)}
+              disabled={role.is_current}
+            >
+              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.endMonth), fieldErrors.endDate && "border-red-400")}>
+                <SelectValue placeholder="Month" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                {months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select
+              value={role.endYear}
+              onValueChange={(v) => set("endYear", v)}
+              disabled={role.is_current}
+            >
+              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.endYear), fieldErrors.endDate && "border-red-400")}>
+                <SelectValue placeholder="Year" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                {years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          {fieldErrors.endDate && (
+            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" />{fieldErrors.endDate}
+            </p>
+          )}
+        </div>
+
+        {/* Currently working */}
+        <div className="flex items-center space-x-2">
           <Checkbox
-            id={`endCurrentRole-${index}`}
-            checked={role.endCurrentRole}
+            id={`currentlyWorking-${index}`}
+            checked={role.is_current}
             onCheckedChange={(checked) => {
               const isChecked = checked as boolean
+              const update: Partial<RoleFormState> = {
+                is_current: isChecked,
+                endMonth: isChecked ? "" : role.endMonth,
+                endYear: isChecked ? "" : role.endYear,
+              }
+
+              // Automatic toggle: If checking "Currently work here" and there's a candidate role to end,
+              // set endCurrentRole to true automatically.
+              if (isChecked && showEndCurrentRole && existingCurrentRoleId) {
+                update.endCurrentRole = true
+                update.experienceIdToEnd = existingCurrentRoleId
+              } else if (!isChecked) {
+                // If unchecking "Currently work here", reset the termination state
+                update.endCurrentRole = false
+                update.experienceIdToEnd = undefined
+              }
+
               onChange({
                 ...role,
-                endCurrentRole: isChecked,
-                experienceIdToEnd: isChecked ? existingCurrentRoleId : undefined,
+                ...update,
               })
             }}
-            className="mt-0.5 w-[18px] h-[18px] rounded-[4px] border-2 border-[#000000] data-[state=checked]:bg-[#6366F1] data-[state=checked]:border-[#6366F1]"
+            className="w-[18px] h-[18px] rounded-[4px] border-2 border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
           />
           <label
-            htmlFor={`endCurrentRole-${index}`}
-            className="text-[13px] font-medium text-[#111827] cursor-pointer leading-[20px]"
+            htmlFor={`currentlyWorking-${index}`}
+            className="text-[14px] font-medium text-foreground"
           >
-            End current role
-            {previousRoleTitle && (
-              <span className="text-[#6B7280] font-normal">
-                {" "}"{previousRoleTitle}"
-              </span>
-            )}
+            I currently work here
           </label>
         </div>
-      )}
 
-      {/* Details textarea (only for non-first roles shown before dates) */}
-      {!isFirst && (
-        <div className="flex flex-col">
-          <Label className={labelStyles}>Details</Label>
-          <Textarea
-            value={role.description}
-            onChange={(e) => set("description", e.target.value)}
-            className="w-full min-h-[48px] bg-white border-[#E5E7EB] text-[#111827] placeholder-[#6B7280] rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus-visible:border-[#C7D2FE] focus-visible:outline-none transition-all shadow-none"
-            placeholder="Describe your work, impact, or achievements"
-          />
-        </div>
-      )}
-
-      {/* Work type */}
-      <div className="space-y-2">
-        <Label className={labelStyles}>Work type</Label>
-        <div className="flex flex-wrap gap-3">
-          {WORK_TYPES.map((type) => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => set("work_type", role.work_type === type ? "" : type)}
-              className={cn(
-                "h-[32px] px-4 rounded-[8px] text-[12px] font-medium transition-all duration-200 border border-transparent",
-                role.work_type === type
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-[#EEF2FF] text-[#6366F1] hover:opacity-80"
-              )}
-            >
-              {type}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Work mode */}
-      <div className="space-y-2">
-        <Label className={labelStyles}>Work mode</Label>
-        <div className="flex flex-wrap gap-3">
-          {WORK_MODES.map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => set("work_mode", role.work_mode === mode ? "" : mode)}
-              className={cn(
-                "h-[32px] px-4 rounded-[8px] text-[12px] font-medium transition-all duration-200 border border-transparent",
-                role.work_mode === mode
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-[#EEF2FF] text-[#6366F1] hover:opacity-80"
-              )}
-            >
-              {mode}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Start date */}
-      <div className="space-y-1.5">
-        <Label className={labelStyles}>Start date</Label>
-        <div className="grid grid-cols-2 gap-6">
-          <Select value={role.startMonth} onValueChange={(v) => set("startMonth", v)}>
-            <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.startMonth), fieldErrors.startDate && "border-red-400")}>
-              <SelectValue placeholder="Month" />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              {months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={role.startYear} onValueChange={(v) => set("startYear", v)}>
-            <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.startYear), fieldErrors.startDate && "border-red-400")}>
-              <SelectValue placeholder="Year" />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              {years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        {fieldErrors.startDate && (
-          <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" />{fieldErrors.startDate}
-          </p>
-        )}
-        {!fieldErrors.startDate && fieldWarnings.startDate && (
-          <p className="text-[11px] text-amber-600 mt-1 flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" />{fieldWarnings.startDate}
-          </p>
+        {/* Details — only for first role, shown at the bottom */}
+        {isFirst && (
+          <div className="flex flex-col">
+            <Label className={labelStyles}>Details</Label>
+            <Textarea
+              value={role.description}
+              onChange={(e) => set("description", e.target.value)}
+              className="w-full min-h-[48px] bg-card border-border text-foreground placeholder-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus-visible:border-primary/50 focus-visible:outline-none transition-all shadow-none"
+              placeholder="Describe your work, impact, or achievements"
+            />
+          </div>
         )}
       </div>
-
-      {/* End date */}
-      <div className="space-y-1.5">
-        <Label className={labelStyles}>End date</Label>
-        <div className="grid grid-cols-2 gap-6">
-          <Select
-            value={role.endMonth}
-            onValueChange={(v) => set("endMonth", v)}
-            disabled={role.is_current}
-          >
-            <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.endMonth), fieldErrors.endDate && "border-red-400")}>
-              <SelectValue placeholder="Month" />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              {months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select
-            value={role.endYear}
-            onValueChange={(v) => set("endYear", v)}
-            disabled={role.is_current}
-          >
-            <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.endYear), fieldErrors.endDate && "border-red-400")}>
-              <SelectValue placeholder="Year" />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              {years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        {fieldErrors.endDate && (
-          <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" />{fieldErrors.endDate}
-          </p>
-        )}
-      </div>
-
-      {/* Currently working */}
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id={`currentlyWorking-${index}`}
-          checked={role.is_current}
-          onCheckedChange={(checked) => {
-            const isChecked = checked as boolean
-            const update: Partial<RoleFormState> = {
-              is_current: isChecked,
-              endMonth: isChecked ? "" : role.endMonth,
-              endYear: isChecked ? "" : role.endYear,
-            }
-
-            // Automatic toggle: If checking "Currently work here" and there's a candidate role to end,
-            // set endCurrentRole to true automatically.
-            if (isChecked && showEndCurrentRole && existingCurrentRoleId) {
-              update.endCurrentRole = true
-              update.experienceIdToEnd = existingCurrentRoleId
-            } else if (!isChecked) {
-              // If unchecking "Currently work here", reset the termination state
-              update.endCurrentRole = false
-              update.experienceIdToEnd = undefined
-            }
-
-            onChange({
-              ...role,
-              ...update,
-            })
-          }}
-          className="w-[18px] h-[18px] rounded-[4px] border-2 border-[#000000] data-[state=checked]:bg-[#6366F1] data-[state=checked]:border-[#6366F1]"
-        />
-        <label
-          htmlFor={`currentlyWorking-${index}`}
-          className="text-[14px] font-medium text-[#111827]"
-        >
-          I currently work here
-        </label>
-      </div>
-
-      {/* Details — only for first role, shown at the bottom */}
-      {isFirst && (
-        <div className="flex flex-col">
-          <Label className={labelStyles}>Details</Label>
-          <Textarea
-            value={role.description}
-            onChange={(e) => set("description", e.target.value)}
-            className="w-full min-h-[48px] bg-white border-[#E5E7EB] text-[#111827] placeholder-[#6B7280] rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus-visible:border-[#C7D2FE] focus-visible:outline-none transition-all shadow-none"
-            placeholder="Describe your work, impact, or achievements"
-          />
-        </div>
-      )}
     </div>
-  </div>
   )
 }
 
@@ -773,8 +773,8 @@ export default function AddExperienceForm({
   const isExistingCompany = useMemo(() => {
     if (!company.trim()) return false;
     const norm = company.toLowerCase().trim();
-    return existingExperiences.some(e => 
-      (orgId && e.org_id === orgId) || 
+    return existingExperiences.some(e =>
+      (orgId && e.org_id === orgId) ||
       (!orgId && !e.org_id && e.company_name.toLowerCase().trim() === norm)
     );
   }, [company, orgId, existingExperiences]);
@@ -873,13 +873,7 @@ export default function AddExperienceForm({
       {/* ── Scrollable Body ── */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-12 py-4 scrollbar-hide pb-20 sm:pb-4">
 
-        {/* Desktop close button */}
-        <button
-          onClick={onCancel}
-          className="hidden sm:block absolute top-6 right-6 p-1 text-destructive hover:bg-destructive/10 rounded-full transition-colors z-10"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {/* Close button handled by global DialogPrimitive.Close in ProfilePage */}
 
         {/* Desktop header */}
         <div className="hidden sm:block text-left mb-8 relative">
@@ -976,8 +970,8 @@ export default function AddExperienceForm({
             disabled={!canAddRole}
             className={cn(
               "sm:hidden flex items-center gap-2 w-full justify-center py-3 rounded-[16px] border border-dashed text-[14px] font-medium font-[family-name:var(--font-poppins)] transition-all",
-              canAddRole 
-                ? "border-[#6366F1] text-[#6366F1] hover:bg-[#EEF2FF]" 
+              canAddRole
+                ? "border-[#6366F1] text-[#6366F1] hover:bg-[#EEF2FF]"
                 : "border-gray-300 text-gray-400 opacity-50 cursor-not-allowed"
             )}
           >
@@ -986,11 +980,11 @@ export default function AddExperienceForm({
           </button>
 
           {/* Desktop footer actions */}
-          <div className="hidden sm:flex justify-between items-center pt-8 border-t border-[#E5E7EB]">
+          <div className="hidden sm:flex justify-center items-center gap-4 pt-8 border-t border-[#E5E7EB]">
             {isEditing ? (
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 onClick={() => {
                   if (initialExperiences && initialExperiences.length > 0) {
                     const allIds = initialExperiences
@@ -1000,32 +994,28 @@ export default function AddExperienceForm({
                   }
                 }}
                 disabled={isSaving}
-                className="text-red-500 hover:text-red-600 hover:bg-red-50 font-medium px-4 h-10"
+                className="h-10 px-8 rounded-full border-red-200 text-red-500 hover:bg-transparent bg-transparent font-medium w-[142px]"
               >
-                Delete entire record
+                Delete
               </Button>
             ) : (
-              <div />
-            )}
-
-            <div className="flex gap-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onCancel}
                 disabled={isSaving}
-                className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-[#EEF2FF] bg-white font-medium w-[142px]"
+                className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-transparent bg-white font-medium w-[142px]"
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={!isFormValid || isSaving}
-                className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-50"
-              >
-                {isSaving ? "Saving..." : "Save"}
-              </Button>
-            </div>
+            )}
+            <Button
+              type="submit"
+              disabled={!isFormValid || isSaving}
+              className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
           </div>
         </form>
       </div>

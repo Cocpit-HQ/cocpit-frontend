@@ -32,6 +32,7 @@ export interface BackendPost {
   post_type?: string;
   like_count: number;
   comment_count: number;
+  share_count: number;
   is_liked: boolean;
   is_commented: boolean;
   is_saved: boolean;
@@ -47,16 +48,19 @@ export interface BackendPost {
       avatar_url: string | null;
       author_slug?: string;
       is_organization_post?: boolean;
+      headline?: string;
     };
     media?: BackendMedia[];
     like_count?: number;
     comment_count?: number;
+    share_count?: number;
     is_liked?: boolean;
     is_commented?: boolean;
     is_saved?: boolean;
     poll?: BackendPoll | null;
     shared_entity_type?: 'job' | 'post';
     job_id?: string;
+    category_name?: string | null;
     title?: string;
     company_name?: string;
     location?: string;
@@ -139,9 +143,7 @@ export const getFeed = async (cursorCreatedAt?: string, cursorPostId?: string, c
 };
 
 export const createPost = async (data: CreatePostRequest): Promise<CreatePostResponse> => {
-  const { companyId, ...payload } = data;
-  void companyId;
-  const response = await api.post<CreatePostResponse>("/post", payload);
+  const response = await api.post<CreatePostResponse>("/post", data);
   return response.data;
 };
 

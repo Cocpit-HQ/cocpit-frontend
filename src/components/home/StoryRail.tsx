@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Plus, Play, Check } from 'lucide-react'
+import { Plus, Play, Check, ChevronRight } from 'lucide-react'
 import { StoryDetail, StoryGroup } from '@/types/showcase'
 import { UserMention, getSuggestedUsers } from '@/services/api/users'
 import { followUser } from '@/services/api/social'
@@ -16,6 +16,7 @@ type StoryRailProps = {
   onStoryClick: (story: StoryDetail) => void
   isLoading?: boolean
   activeAccount?: { name: string; image?: string | null }
+  variant?: 'mobile' | 'desktop-showcase'
 }
 
 // Helper to determine image source
@@ -32,14 +33,14 @@ function getStoryImage(story: StoryDetail): string | null {
   return story.image || null;
 }
 
-export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, activeAccount }: StoryRailProps) {
+export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, activeAccount, variant = 'mobile' }: StoryRailProps) {
   const [suggestedUsers, setSuggestedUsers] = useState<UserMention[]>([]);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const { isStoryViewerOpen, setIsStoryViewerOpen } = useStories();
   const [frozenGroups, setFrozenGroups] = useState<StoryGroup[] | null>(null);
 
   const myGroup = useMemo(() => groups.find(g => g.is_current_user), [groups]);
+  const isDesktopShowcase = variant === 'desktop-showcase';
   
   const otherGroups = useMemo(() => {
     const filtered = groups.filter(g => !g.is_current_user);
@@ -71,6 +72,7 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
   }, [groups, isStoryViewerOpen, frozenGroups]);
 
   useEffect(() => {
+    const frame = requestAnimationFrame(() => {
     if (isStoryViewerOpen) {
       if (!frozenGroups) {
         setFrozenGroups(otherGroups);
@@ -78,19 +80,18 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
     } else {
       setFrozenGroups(null);
     }
+    });
+    return () => cancelAnimationFrame(frame);
   }, [isStoryViewerOpen, frozenGroups, otherGroups]);
 
   useEffect(() => {
     if (!isLoading && otherGroups.length === 0) {
       const fetchSuggestions = async () => {
-        setIsLoadingSuggestions(true);
         try {
           const data = await getSuggestedUsers();
           setSuggestedUsers(data);
         } catch (error) {
           console.error("Failed to fetch suggestions", error);
-        } finally {
-          setIsLoadingSuggestions(false);
         }
       };
       fetchSuggestions();
@@ -119,16 +120,23 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
   };
 
   return (
-    <div className="mb-2 md:mb-4">
-      <div className="flex items-center justify-between mb-1 md:mb-3 px-4 md:px-0">
-        <h2 className="font-semibold text-lg text-foreground">Stories</h2>
-        <Link href="/showcase" className="text-primary text-sm hover:underline hidden md:block">
-          View All
-        </Link>
+    <div className={isDesktopShowcase ? "mb-6" : "mb-2 md:mb-4"}>
+      <div className={isDesktopShowcase ? "mb-5 flex items-center justify-between px-0" : "mb-1 flex items-center justify-between px-4 md:mb-3 md:px-0"}>
+        <h2 className={isDesktopShowcase ? "text-[15px] font-medium leading-6 text-foreground" : "text-lg font-semibold text-foreground"}>
+          {isDesktopShowcase ? "Showcase" : "Stories"}
+        </h2>
+        {!isDesktopShowcase && (
+          <Link
+            href="/showcase"
+            className="hidden text-sm text-primary hover:underline md:block"
+          >
+            View All
+          </Link>
+        )}
       </div>
 
       <div className="stories-scroll-container">
-        <div className="flex gap-3 overflow-x-auto pt-2 pb-2 scrollbar-hide px-4 md:px-0">
+        <div className={isDesktopShowcase ? "flex items-center gap-4 overflow-x-auto px-0 pb-1 pt-0 scrollbar-hide" : "flex gap-3 overflow-x-auto px-4 pb-2 pt-2 scrollbar-hide md:px-0"}>
           {isLoading ? (
             // Skeleton Loader
             Array.from({ length: 5 }).map((_, i) => (
@@ -136,10 +144,10 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
                 key={i}
                 className="flex-shrink-0 flex flex-col items-center gap-2"
               >
-                <div className="w-14 h-14 md:w-28 md:h-40 rounded-full md:rounded-xl bg-muted animate-pulse border border-border overflow-hidden relative">
-                  <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/20 to-transparent hidden md:block" />
+                <div className={isDesktopShowcase ? "relative h-[60px] w-[60px] overflow-hidden rounded-full border border-border bg-muted animate-pulse" : "relative h-14 w-14 overflow-hidden rounded-full border border-border bg-muted animate-pulse md:h-40 md:w-28 md:rounded-xl"}>
+                  <div className={isDesktopShowcase ? "hidden" : "absolute inset-x-0 bottom-0 hidden h-1/3 bg-gradient-to-t from-black/20 to-transparent md:block"} />
                 </div>
-                <div className="w-12 h-2 md:absolute md:bottom-3 md:left-1/2 md:-translate-x-1/2 md:w-16 bg-muted-foreground/20 rounded-full" />
+                <div className={isDesktopShowcase ? "hidden" : "h-2 w-12 rounded-full bg-muted-foreground/20 md:absolute md:bottom-3 md:left-1/2 md:w-16 md:-translate-x-1/2"} />
               </div>
             ))
           ) : (
@@ -152,26 +160,26 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
                   const displayImage = getStoryImage(story);
 
                   return (
-                    <div key="my-story" className="flex-shrink-0 flex flex-col items-center gap-2 group relative">
+                    <div key="my-story" className="group relative flex flex-shrink-0 flex-col items-center gap-2">
                       <div className="relative">
                         <button
                           onClick={() => onStoryClick(story)}
-                          className="w-14 h-14 md:w-28 md:h-40 rounded-full md:rounded-xl border-2 border-primary overflow-hidden bg-black relative p-0.5"
+                          className={isDesktopShowcase ? "relative h-[60px] w-[60px] overflow-hidden rounded-full border-2 border-primary bg-black p-0.5" : "relative h-14 w-14 overflow-hidden rounded-full border-2 border-primary bg-black p-0.5 md:h-40 md:w-28 md:rounded-xl"}
                         >
                           {displayImage ? (
                             <img
                               src={displayImage}
                               alt={story.title}
-                              className="w-full h-full rounded-full md:rounded-lg object-cover transition-transform duration-300 group-hover:scale-110"
+                              className={isDesktopShowcase ? "h-full w-full rounded-full object-cover transition-transform duration-300 group-hover:scale-110" : "h-full w-full rounded-full object-cover transition-transform duration-300 group-hover:scale-110 md:rounded-lg"}
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
                               }}
                             />
                           ) : (
-                            <div className="w-full h-full rounded-full md:rounded-lg bg-gray-800" />
+                            <div className={isDesktopShowcase ? "h-full w-full rounded-full bg-gray-800" : "h-full w-full rounded-full bg-gray-800 md:rounded-lg"} />
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent hidden md:block" />
-                          <span className="absolute bottom-2 left-0 w-full text-white text-xs font-medium truncate text-center shadow-black drop-shadow-md hidden md:block">
+                          <div className={isDesktopShowcase ? "hidden" : "absolute inset-0 hidden bg-gradient-to-t from-black/60 to-transparent md:block"} />
+                          <span className={isDesktopShowcase ? "hidden" : "absolute bottom-2 left-0 hidden w-full truncate text-center text-xs font-medium text-white shadow-black drop-shadow-md md:block"}>
                             Your Story
                           </span>
                         </button>
@@ -181,13 +189,13 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
                             e.stopPropagation();
                             onCreateClick();
                           }}
-                          className="absolute bottom-0 right-0 translate-x-1 translate-y-1 md:translate-y-0 md:translate-x-[-50%] md:top-auto md:bottom-8 md:right-auto md:left-1/2 w-5 h-5 md:w-10 md:h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center border-2 md:border-4 border-background z-10 hover:bg-primary/90 transition-colors"
+                          className={isDesktopShowcase ? "hidden" : "absolute bottom-0 right-0 z-10 flex h-5 w-5 translate-x-1 translate-y-1 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground transition-colors hover:bg-primary/90 md:bottom-8 md:left-1/2 md:right-auto md:top-auto md:h-10 md:w-10 md:translate-x-[-50%] md:translate-y-0 md:border-4"}
                           aria-label="Add new story"
                         >
-                          <Plus className="w-3.5 h-3.5 md:w-6 md:h-6" />
+                          <Plus className={isDesktopShowcase ? "h-3.5 w-3.5" : "h-3.5 w-3.5 md:h-6 md:w-6"} />
                         </button>
                       </div>
-                      <span className="text-foreground text-[10px] md:text-xs font-medium md:hidden">Your Story</span>
+                      <span className={isDesktopShowcase ? "hidden" : "text-[10px] font-medium text-foreground md:hidden"}>Your Story</span>
                     </div>
                   );
                 }
@@ -197,10 +205,10 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
                   <button
                     key="my-empty"
                     onClick={onCreateClick}
-                    className="flex-shrink-0 flex flex-col items-center gap-2 group text-left relative"
+                    className="group relative flex flex-shrink-0 flex-col items-center gap-2 text-left"
                   >
                     <div className="relative">
-                      <div className="w-14 h-14 md:w-28 md:h-40 rounded-full md:rounded-xl bg-muted hover:bg-muted/80 flex items-center justify-center border border-border transition-colors relative overflow-hidden">
+                      <div className={isDesktopShowcase ? "relative flex h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-full border border-primary bg-background text-primary transition-colors hover:bg-primary/10" : "relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-border bg-muted transition-colors hover:bg-muted/80 md:h-40 md:w-28 md:rounded-xl"}>
                         {activeAccount?.image ? (
                           <>
                             <img
@@ -209,16 +217,16 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
                               className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity"
                             />
                             {/* Desktop Overlay */}
-                            <div className="absolute inset-0 hidden md:flex items-center justify-center">
-                              <div className="w-10 h-10 rounded-full bg-primary/80 backdrop-blur-sm flex items-center justify-center shadow-sm">
-                                <Plus className="w-6 h-6 text-primary-foreground" />
+                            <div className={isDesktopShowcase ? "absolute inset-0 flex items-center justify-center bg-background" : "absolute inset-0 hidden items-center justify-center md:flex"}>
+                              <div className={isDesktopShowcase ? "flex h-full w-full items-center justify-center rounded-full bg-transparent" : "flex h-10 w-10 items-center justify-center rounded-full bg-primary/80 shadow-sm backdrop-blur-sm"}>
+                                <Plus className={isDesktopShowcase ? "h-5 w-5 text-primary" : "h-6 w-6 text-primary-foreground"} />
                               </div>
                             </div>
                           </>
                         ) : (
                           /* Fallback Empty State / Desktop Default */
                           <div className="w-full h-full flex items-center justify-center">
-                            <Plus className="hidden md:block w-6 h-6 text-primary" />
+                            <Plus className={isDesktopShowcase ? "h-5 w-5 text-primary" : "hidden h-6 w-6 text-primary md:block"} />
                             {/* Mobile fallback icon inside circle if no image */}
                             <Plus className="md:hidden w-6 h-6 text-muted-foreground/30" />
                           </div>
@@ -226,13 +234,13 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
                       </div>
 
                       {/* Mobile Badge - Positioned Absolute Outside Overflow Container */}
-                      <div className="absolute bottom-0 right-0 translate-x-1 translate-y-1 md:hidden z-10">
+                      <div className={isDesktopShowcase ? "hidden" : "absolute bottom-0 right-0 z-10 translate-x-1 translate-y-1 md:hidden"}>
                         <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center border-2 border-background shadow-sm">
                           <Plus className="w-3.5 h-3.5 text-primary-foreground" />
                         </div>
                       </div>
                     </div>
-                    <span className="text-foreground text-[10px] md:text-xs font-medium md:absolute md:bottom-2 md:left-0 md:w-full md:text-center">Add Story</span>
+                    <span className={isDesktopShowcase ? "hidden" : "text-[10px] font-medium text-foreground md:absolute md:bottom-2 md:left-0 md:w-full md:text-center md:text-xs"}>Add Story</span>
                   </button>
                 );
               })()}
@@ -252,14 +260,14 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
                         setIsStoryViewerOpen(true);
                         onStoryClick(story);
                       }}
-                      className={`w-14 h-14 md:w-28 md:h-40 rounded-full md:rounded-xl relative overflow-hidden bg-black ${hasUnviewed ? 'ring-2 ring-primary ring-offset-2' : 'border border-border'
+                      className={`${isDesktopShowcase ? 'h-[60px] w-[60px] rounded-full border-2 border-primary p-0.5' : 'h-14 w-14 rounded-full md:h-40 md:w-28 md:rounded-xl'} relative overflow-hidden bg-black ${hasUnviewed && !isDesktopShowcase ? 'ring-2 ring-primary ring-offset-2' : 'border border-border'
                         }`}
                     >
                       {displayImage ? (
                         <img
                           src={displayImage}
                           alt={story.title}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                          className={isDesktopShowcase ? "h-full w-full rounded-full object-cover transition-transform duration-300 group-hover:scale-110" : "h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"}
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                           }}
@@ -267,7 +275,7 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
                       ) : (
                         <div className="absolute inset-0 bg-gray-800" />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent hidden md:block" />
+                      <div className={isDesktopShowcase ? "hidden" : "absolute inset-0 hidden bg-gradient-to-t from-black/60 to-transparent md:block"} />
 
                       {story.media_type === 'video' && (
                         <div className="absolute top-1 right-1 md:top-2 md:right-2">
@@ -275,7 +283,7 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
                         </div>
                       )}
 
-                      <div className="absolute bottom-2 left-2 right-2 hidden md:flex flex-col items-center">
+                      <div className={isDesktopShowcase ? "hidden" : "absolute bottom-2 left-2 right-2 hidden flex-col items-center md:flex"}>
                         <div className={`w-8 h-8 rounded-full p-0.5 bg-gradient-to-br from-blue-400 to-purple-500 mb-1 ${hasUnviewed ? 'animate-pulse' : ''}`}>
                           {group.author.avatar ? (
                             <img
@@ -294,12 +302,22 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
                         </span>
                       </div>
                     </button>
-                    <span className="text-foreground text-[10px] md:text-xs font-medium truncate w-16 text-center md:hidden">
+                    <span className={isDesktopShowcase ? "hidden" : "w-16 truncate text-center text-[10px] font-medium text-foreground md:hidden md:text-xs"}>
                       {group.author.name}
                     </span>
                   </div>
                 )
               })}
+
+              {isDesktopShowcase && (
+                <Link
+                  href="/showcase"
+                  className="ml-auto flex h-[60px] w-8 shrink-0 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary/10"
+                  aria-label="View all showcase"
+                >
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              )}
 
               {/* 3. Suggested People Fallback (Mobile Only) */}
               {otherGroups.length === 0 && suggestedUsers.length > 0 && (

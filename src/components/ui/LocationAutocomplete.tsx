@@ -22,7 +22,7 @@ export default function LocationAutocomplete({ onSelect, value }: LocationAutoco
   // Fetch suggestions when debounced query changes
   useEffect(() => {
     if (value && query === value) return; // Don't re-search if query matches value
-    if (debouncedQuery.length < 2) {
+    if (debouncedQuery.length < 1) {
       setSuggestions([]);
       setOpen(false);
       return;

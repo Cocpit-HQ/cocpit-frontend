@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { Image, Video, FileText, BarChart3 } from 'lucide-react'
 import { PostType } from '@/features/create-post/types'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
@@ -14,10 +14,10 @@ function PostButton({ icon, label, onClick }: { icon: React.ReactNode; label: st
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-4 py-1 hover:bg-muted rounded-lg transition-colors"
+      className="flex min-w-0 items-center gap-2 rounded-xl px-3 py-2 transition-colors hover:bg-muted"
     >
       {icon}
-      <span className="text-muted-foreground hidden sm:block">{label}</span>
+      <span className="hidden text-sm text-muted-foreground sm:block">{label}</span>
     </button>
   )
 }
@@ -32,7 +32,7 @@ export function CreatePost({ onOpenModal }: CreatePostProps) {
 
   return (
     <div
-      className="rounded-lg border p-4 mb-3 bg-card border-border shadow-sm"
+      className="feed-card-shell mb-4 w-full p-4 transition-shadow duration-300 hover:shadow-md"
     >
       <div className="flex gap-3 mb-3 items-center">
         <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex-shrink-0 overflow-hidden">
@@ -47,11 +47,11 @@ export function CreatePost({ onOpenModal }: CreatePostProps) {
           type="text"
           placeholder="Start a post"
           onClick={() => onOpenModal('text')}
-          className="flex-1 h-10 px-4 border rounded-full hover:bg-muted cursor-pointer focus:outline-none transition-colors bg-muted/50 text-foreground placeholder-muted-foreground border-border hover:border-primary text-sm"
+          className="feed-card-input h-10 min-w-0 flex-1 cursor-pointer rounded-full border px-4 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:border-primary focus:outline-none"
         />
       </div>
 
-      <div className="flex items-center justify-between px-2">
+      <div className="flex flex-wrap items-center justify-between gap-1 px-1">
         <PostButton
           icon={<Image className="w-4 h-4 text-primary" />}
           label="Photo"

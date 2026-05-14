@@ -4,7 +4,7 @@ import { CategoryType } from '../../types';
 interface CategorySelectorProps {
   isCompanyPost: boolean;
   currentPoster: any;
-  postCategory: CategoryType;
+  postCategory: string;
   onCategoryChange: (category: CategoryType) => void;
   className?: string;
 }
@@ -18,12 +18,12 @@ const CategorySelector = ({
 }: CategorySelectorProps) => {
   const getCategories = (): string[] => {
     if (!isCompanyPost) {
-      return ['Professional', 'Personal', 'Achievement', 'Article'];
+      return ['Professional', 'Personal', 'Achievement'];
     }
     if ((currentPoster as any)?.entity_type === 'INSTITUTION') {
       return ['Announcement', 'Academic', 'Admission', 'Campus Life', 'Research', 'Club Activity', 'General'];
     }
-    return ['Update', 'Hiring', 'Milestone', 'Insight', 'Article'];
+    return ['Update', 'Hiring', 'Milestone', 'Insight'];
   };
 
   return (

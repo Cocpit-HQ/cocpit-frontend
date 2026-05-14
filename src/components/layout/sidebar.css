@@ -6,9 +6,12 @@
 
 /* Sidebar Container */
 .sidebar {
-  @apply w-[232px] h-screen fixed left-0 top-0 flex flex-col justify-between bg-white z-40;
+  @apply w-[232px] h-screen fixed left-0 top-0 flex flex-col justify-between z-40;
   padding: 20px 16px;
-  border-right: 1px solid #f0f0f5;
+  background-color: #ffffff;
+  border-right: 1px solid var(--feed-sidebar-border, rgba(199, 210, 254, 0.2));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 /* ---- Logo Area ---- */
@@ -59,24 +62,24 @@
 
 /* Hover state */
 .sidebar__item:hover {
-  background-color: #f0f2f5;
-  color: #23233a;
+  background-color: var(--feed-ultra-light, #EEF2FF);
+  color: var(--feed-primary, #6366F1);
 }
 
 /* ---- Active Item ---- */
 .sidebar__item--active {
-  background-color: #E0E7FF;
-  color: #6366F1;
-  border-right: 3px solid #6366F1;
+  background-color: var(--feed-light, #E0E7FF);
+  color: var(--feed-primary, #6366F1);
+  border-right: 3px solid var(--feed-primary, #6366F1);
 }
 
 .sidebar__item--active:hover {
-  background-color: #d6ddfa;
-  color: #6366F1;
+  background-color: var(--feed-light, #E0E7FF);
+  color: var(--feed-primary, #6366F1);
 }
 
 .sidebar__item--active .sidebar__item-icon {
-  color: #6366F1;
+  color: var(--feed-primary, #6366F1);
 }
 
 /* ---- Item Icon ---- */

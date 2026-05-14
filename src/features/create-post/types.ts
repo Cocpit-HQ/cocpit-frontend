@@ -37,4 +37,18 @@ export interface PollOption {
   text: string;
 }
 
-export type CategoryType = 'Personal' | 'Professional' | 'Achievement' | 'Update' | 'Hiring' | 'Milestone' | 'Insight' | 'Article';
+export type CategoryType =
+  | 'Personal'
+  | 'Professional'
+  | 'Achievement'
+  | 'Update'
+  | 'Hiring'
+  | 'Milestone'
+  | 'Insight'
+  | 'Announcement'
+  | 'Academic'
+  | 'Admission'
+  | 'Campus Life'
+  | 'Research'
+  | 'Club Activity'
+  | 'General';

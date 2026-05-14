@@ -38,7 +38,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
     const [content, setContent] = useState("");
     const [loading, setLoading] = useState(false);
     const [localImages, setLocalImages] = useState<string[]>([]);
-    
+
     // Carousel State
     const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -59,7 +59,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
     useEffect(() => {
         if (emblaApi) emblaApi.reInit();
     }, [localImages.length, emblaApi]);
-    
+
     // Tagging State
     const [taggedUsers, setTaggedUsers] = useState<UserMention[]>([]);
     const [userSearchResults, setUserSearchResults] = useState<UserMention[]>([]);
@@ -137,7 +137,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
         try {
             setLoading(true);
             const postId = post.id || (post as any).post_id;
-            
+
             // 1. Update Post Content & Location & Media
             const res = await updatePost(postId, {
                 content,
@@ -150,10 +150,10 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
 
             toast.success("Post updated successfully");
             const updatedPost = mapBackendPostToFrontend(res);
-            onSuccess({ 
-                ...updatedPost, 
-                tags: taggedUsers, 
-                location: selectedLocation?.name || undefined 
+            onSuccess({
+                ...updatedPost,
+                tags: taggedUsers,
+                location: selectedLocation?.name || undefined
             });
             onClose();
         } catch (err) {
@@ -205,27 +205,25 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
 
     const renderEditView = () => (
         <div className="flex flex-col flex-1 relative pt-2 min-h-0">
-            <button onClick={onClose} className="absolute -top-2 right-0 p-1 hover:bg-slate-100 rounded-full transition-colors z-50">
-                <X className="w-5 h-5 text-red-400" />
-            </button>
+
             <DialogHeader className="sr-only">
                 <DialogTitle>Edit Post</DialogTitle>
                 <DialogDescription>Modify your post content, tags, and location.</DialogDescription>
             </DialogHeader>
 
             <div className="flex items-center gap-3 mb-4">
-                <Avatar className="w-10 h-10 border border-slate-100">
+                <Avatar className="w-10 h-10">
                     <AvatarImage src={post.authorAvatar} />
                     <AvatarFallback>{post.author?.[0]}</AvatarFallback>
                 </Avatar>
-                <span className="font-bold text-base text-slate-800">{post.author}</span>
+                <span className="font-bold text-base text-foreground">{post.author}</span>
             </div>
 
             <Textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="What's on your mind?"
-                className="min-h-[100px] border-none focus-visible:ring-0 text-[12px] leading-[16px] font-normal text-black resize-none p-3 mb-4 placeholder:text-slate-400 font-[family-name:var(--font-poppins)] bg-[#ffffff] rounded-xl"
+                className="min-h-[100px] border-none focus-visible:ring-0 text-[12px] leading-[16px] font-normal text-foreground resize-none p-3 mb-4 placeholder:text-muted-foreground font-[family-name:var(--font-poppins)] bg-card rounded-xl"
             />
 
             {localImages.length > 0 && (
@@ -234,13 +232,13 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                         <div className="flex">
                             {localImages.map((img, idx) => (
                                 <div key={idx} className="relative flex-[0_0_100%] min-w-0">
-                                    <div className="relative w-full aspect-[4/3] overflow-hidden border border-slate-50">
+                                    <div className="relative w-full aspect-[4/3] overflow-hidden">
                                         <img src={img} alt={`Post content ${idx + 1}`} className="w-full h-full object-cover" />
-                                        <button 
+                                        <button
                                             onClick={() => setLocalImages(prev => prev.filter((_, i) => i !== idx))}
-                                            className="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-slate-50 transition-colors z-10"
+                                            className="absolute bottom-4 right-4 w-10 h-10 bg-card rounded-full flex items-center justify-center shadow-lg hover:bg-secondary transition-colors z-10"
                                         >
-                                            <Trash2 className="w-5 h-5 text-[#FF6B6B]" />
+                                            <Trash2 className="w-5 h-5 text-destructive" />
                                         </button>
                                     </div>
                                 </div>
@@ -272,27 +270,27 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
             )}
 
             <div className="flex items-center justify-between py-2 mb-4">
-                <button 
+                <button
                     onClick={() => setActiveView('tag')}
-                    className="flex items-center gap-2 text-slate-700 hover:text-[#6366F1] transition-colors group"
+                    className="flex items-center gap-2 text-foreground hover:text-primary transition-colors group"
                 >
-                    <Icon icon="la:user-tag" className="w-6 h-6 text-[#6366F1]" />
+                    <Icon icon="la:user-tag" className="w-6 h-6 text-primary" />
                     <span className="text-sm font-semibold">Tag people</span>
-                    {taggedUsers.length > 0 && <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{taggedUsers.length}</span>}
+                    {taggedUsers.length > 0 && <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{taggedUsers.length}</span>}
                 </button>
 
-                <button 
+                <button
                     onClick={() => setActiveView('location')}
-                    className="flex items-center gap-2 text-slate-700 hover:text-[#6366F1] transition-colors group"
+                    className="flex items-center gap-2 text-foreground hover:text-primary transition-colors group"
                 >
-                    <Icon icon="hugeicons:location-05" className="w-6 h-6 text-[#6366F1]" />
+                    <Icon icon="hugeicons:location-05" className="w-6 h-6 text-primary" />
                     <span className="text-sm font-semibold">Location</span>
                 </button>
             </div>
 
             <div className="flex gap-[10px] justify-center mt-4">
                 <button
-                    className="w-[142px] h-[40px] rounded-[24px] border border-[#818CF8] text-[#818CF8] font-semibold text-[14px] px-4 py-2 flex items-center justify-center transition-all"
+                    className="w-[142px] h-[40px] rounded-[24px] text-[#818CF8] font-semibold text-[14px] px-4 py-2 flex items-center justify-center transition-all hover:bg-slate-50"
                     onClick={onClose}
                 >
                     Cancel
@@ -302,9 +300,9 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                     const imagesChanged = JSON.stringify(localImages) !== JSON.stringify(originalImages);
                     const contentChanged = content !== (post.content || "");
                     const locationChanged = (selectedLocation?.name || null) !== (post.location || null);
-                    const tagsChanged = taggedUsers.length !== (post.tags?.length || 0) || 
-                                        taggedUsers.some((u, i) => u.id !== (post.tags?.[i]?.id || post.tags?.[i]?.user_id));
-                    
+                    const tagsChanged = taggedUsers.length !== (post.tags?.length || 0) ||
+                        taggedUsers.some((u, i) => u.id !== (post.tags?.[i]?.id || post.tags?.[i]?.user_id));
+
                     const hasChanges = contentChanged || imagesChanged || locationChanged || tagsChanged;
                     const isValid = content.trim() !== "" || localImages.length > 0 || taggedUsers.length > 0 || !!selectedLocation;
 
@@ -324,9 +322,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
 
     const renderTagView = () => (
         <div className="flex flex-col flex-1 relative min-h-0">
-            <button onClick={onClose} className="absolute -top-2 right-0 p-1 hover:bg-slate-100 rounded-full transition-colors z-50">
-                <X className="w-5 h-5 text-red-400" />
-            </button>
+
             <DialogHeader className="sr-only">
                 <DialogTitle>Tag People</DialogTitle>
                 <DialogDescription>Search and select people to tag in your post.</DialogDescription>
@@ -341,14 +337,14 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                             setUserSearchQuery(e.target.value);
                             debouncedUserSearch(e.target.value);
                         }}
-                        className="w-[368px] h-[40px] bg-white border border-[#6B7280] rounded-[24px] px-4 py-2 text-[16px] font-normal font-[family-name:var(--font-poppins)] focus:outline-none placeholder:text-slate-400"
+                        className="w-[368px] h-[40px] bg-card border border-border rounded-[24px] px-4 py-2 text-[16px] font-normal font-[family-name:var(--font-poppins)] focus:outline-none placeholder:text-muted-foreground"
                     />
-                    <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
                 </div>
 
                 {taggedUsers.length > 0 && (
                     <div className="w-[368px] overflow-hidden">
-                        <div 
+                        <div
                             ref={scrollContainerRef}
                             onMouseDown={handleMouseDown}
                             onMouseLeave={handleMouseLeave}
@@ -357,17 +353,17 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                             className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide flex-nowrap scroll-smooth cursor-grab active:cursor-grabbing"
                         >
                             {taggedUsers.map(user => (
-                                <div 
-                                    key={user.id} 
-                                    className="flex-shrink-0 bg-[#EEF2FF] px-4 h-[40px] rounded-[8px] flex items-center gap-2 text-sm border border-[#EEF2FF] select-none"
+                                <div
+                                    key={user.id}
+                                    className="flex-shrink-0 bg-primary-tint px-4 h-[40px] rounded-[8px] flex items-center gap-2 text-sm border border-primary-tint select-none"
                                 >
-                                    <span className="text-[#6366F1] font-medium font-[family-name:var(--font-poppins)]">{user.full_name.split(' ')[0]}</span>
-                                    <button 
+                                    <span className="text-primary-tint-foreground font-medium font-[family-name:var(--font-poppins)]">{user.full_name.split(' ')[0]}</span>
+                                    <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             toggleUserTag(user);
-                                        }} 
-                                        className="w-6 h-6 flex items-center justify-center text-[#6366F1] hover:text-indigo-700 transition-colors ml-1"
+                                        }}
+                                        className="w-6 h-6 flex items-center justify-center text-primary-tint-foreground hover:opacity-80 transition-colors ml-1"
                                     >
                                         <Icon icon="ph:x-circle" className="w-5 h-5" />
                                     </button>
@@ -383,24 +379,24 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                     {userSearchResults.map(user => {
                         const isSelected = taggedUsers.some(u => u.id === user.id);
                         return (
-                            <div 
-                                key={user.id} 
+                            <div
+                                key={user.id}
                                 onClick={() => toggleUserTag(user)}
                                 className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors group"
                             >
                                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    <Avatar className="w-10 h-10 border border-slate-100 flex-shrink-0">
+                                    <Avatar className="w-10 h-10 flex-shrink-0">
                                         <AvatarImage src={user.avatar_url} />
                                         <AvatarFallback>{user.full_name?.[0]}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex flex-col min-w-0">
-                                        <span className="text-[15px] font-semibold text-slate-900 font-[family-name:var(--font-poppins)] truncate">{user.full_name}</span>
+                                        <span className="text-[15px] font-semibold text-foreground font-[family-name:var(--font-poppins)] truncate">{user.full_name}</span>
                                     </div>
                                 </div>
                                 <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
                                     <div className={cn(
                                         "w-6 h-6 rounded-md border flex items-center justify-center transition-colors",
-                                        isSelected ? "bg-[#6366F1] border-[#6366F1]" : "bg-white border-slate-300"
+                                        isSelected ? "bg-primary border-primary" : "bg-card border-border"
                                     )}>
                                         {isSelected && <Icon icon="ph:check-bold" className="w-3.5 h-3.5 text-white" />}
                                     </div>
@@ -413,14 +409,15 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
 
             <div className="border-t flex gap-[10px] justify-center pt-4">
                 <button
-                    className="w-[142px] h-[40px] rounded-[24px] border border-[#818CF8] text-[#818CF8] font-semibold text-[14px] flex items-center justify-center transition-all"
+                    className="w-[142px] h-[40px] rounded-[24px] text-[#818CF8] font-semibold text-[14px] flex items-center justify-center transition-all hover:bg-slate-50"
                     onClick={() => setActiveView('edit')}
                 >
                     Cancel
                 </button>
                 <button
-                    className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] text-white font-semibold text-[14px] flex items-center justify-center transition-all"
+                    className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] text-white font-semibold text-[14px] flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => setActiveView('edit')}
+                    disabled={taggedUsers.length === 0}
                 >
                     Add people
                 </button>
@@ -436,27 +433,25 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
 
         return (
             <div className="flex flex-col flex-1 relative min-h-0">
-                <button onClick={onClose} className="absolute -top-2 right-0 p-1 hover:bg-slate-100 rounded-full transition-colors z-50">
-                    <X className="w-5 h-5 text-red-400" />
-                </button>
+
                 <DialogHeader className="sr-only">
                     <DialogTitle>Add Location</DialogTitle>
                     <DialogDescription>Search and select a location for your post.</DialogDescription>
                 </DialogHeader>
-                
+
                 <div className="flex flex-col gap-4 pt-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <button onClick={() => setActiveView('edit')} className="p-1 hover:bg-slate-100 rounded-full transition-colors">
-                                <ChevronLeft className="w-6 h-6 text-slate-600" />
+                            <button onClick={() => setActiveView('edit')} className="p-1 hover:bg-secondary rounded-full transition-colors">
+                                <ChevronLeft className="w-6 h-6 text-foreground" />
                             </button>
                             <div className="flex items-center gap-2 ml-2">
-                                <Icon icon="hugeicons:location-05" className="w-6 h-6 text-[#6366F1]" />
-                                <span className="text-[16px] font-bold text-slate-800">Location</span>
+                                <Icon icon="hugeicons:location-05" className="w-6 h-6 text-primary" />
+                                <span className="text-[16px] font-bold text-foreground">Location</span>
                             </div>
                         </div>
                     </div>
- 
+
                     <div className="relative">
                         <input
                             type="text"
@@ -466,9 +461,9 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                                 setLocationSearchQuery(e.target.value);
                                 debouncedLocationSearch(e.target.value);
                             }}
-                            className="w-[368px] h-[40px] bg-white border border-[#6B7280] rounded-[24px] px-4 py-2 text-[16px] font-normal font-[family-name:var(--font-poppins)] focus:outline-none placeholder:text-slate-400"
+                            className="w-[368px] h-[40px] bg-card border border-border rounded-[24px] px-4 py-2 text-[16px] font-normal font-[family-name:var(--font-poppins)] focus:outline-none placeholder:text-muted-foreground"
                         />
-                        <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                        <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
                     </div>
                 </div>
 
@@ -477,19 +472,19 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                         {uniqueResults.map(loc => {
                             const isSelected = selectedLocation?.name === loc.name;
                             return (
-                                <div 
-                                    key={loc.id} 
+                                <div
+                                    key={loc.id}
                                     onClick={() => setSelectedLocation(loc)}
                                     className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors group"
                                 >
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <Icon icon="hugeicons:location-05" className="w-5 h-5 text-[#6366F1] flex-shrink-0" />
-                                        <span className="text-[15px] font-semibold text-slate-900 font-[family-name:var(--font-poppins)] truncate">{loc.name}</span>
+                                        <Icon icon="hugeicons:location-05" className="w-5 h-5 text-primary flex-shrink-0" />
+                                        <span className="text-[15px] font-semibold text-foreground font-[family-name:var(--font-poppins)] truncate">{loc.name}</span>
                                     </div>
                                     <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
                                         <div className={cn(
                                             "w-6 h-6 rounded-md border flex items-center justify-center transition-colors",
-                                            isSelected ? "bg-[#6366F1] border-[#6366F1]" : "bg-white border-slate-300"
+                                            isSelected ? "bg-primary border-primary" : "bg-card border-border"
                                         )}>
                                             {isSelected && <Icon icon="ph:check-bold" className="w-3.5 h-3.5 text-white" />}
                                         </div>
@@ -502,7 +497,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
 
                 <div className="border-t flex gap-[10px] justify-center pt-4">
                     <button
-                        className="w-[142px] h-[40px] rounded-[24px] border border-[#818CF8] text-[#818CF8] font-semibold text-[14px] flex items-center justify-center transition-all"
+                        className="w-[142px] h-[40px] rounded-[24px] text-[#818CF8] font-semibold text-[14px] flex items-center justify-center transition-all hover:bg-slate-50"
                         onClick={() => setActiveView('edit')}
                     >
                         Cancel
@@ -520,7 +515,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="p-4 sm:max-w-[400px] h-[624px] overflow-hidden rounded-[24px] border-none shadow-2xl [&>button]:hidden bg-white flex flex-col gap-0">
+            <DialogContent className="p-4 sm:max-w-[400px] h-[624px] overflow-hidden rounded-[24px] shadow-none bg-card flex flex-col gap-0">
                 {activeView === 'edit' && renderEditView()}
                 {activeView === 'tag' && renderTagView()}
                 {activeView === 'location' && renderLocationView()}

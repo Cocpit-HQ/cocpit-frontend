@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MessageCircle, X, Clock, Trash2, Bell } from 'lucide-react';
+import { Search, MessageCircle, Clock, Trash2, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { NotificationPopover } from '@/components/notifications/NotificationPopover';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -12,9 +12,11 @@ import { ProfileSwitcher } from '@/components/layout/ProfileSwitcher';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useRouter } from 'next/navigation';
 import { Hash, Plus } from 'lucide-react';
+import { useUIStore } from '@/store/ui.store';
 
 export const HomeHeader = () => {
     const router = useRouter();
+    const { setActiveModal } = useUIStore();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<SearchedUser[]>([]);
     const [hashtagResults, setHashtagResults] = useState<HashtagSuggestion[]>([]);
@@ -23,7 +25,6 @@ export const HomeHeader = () => {
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
     const [activeIndex, setActiveIndex] = useState(-1);
-    const [activeSection, setActiveSection] = useState<'hashtags' | 'results' | 'history' | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
     const { history, saveSearch, removeSearch, clearAll } = useSearchHistory();
 
@@ -48,7 +49,7 @@ export const HomeHeader = () => {
                     )}
                 </span>
             );
-        } catch (e) {
+        } catch {
             return text;
         }
     };
@@ -107,16 +108,14 @@ export const HomeHeader = () => {
                     const data = await searchHashtags(query, abortControllerRef.current.signal);
                     setHashtagResults(data.tags);
                     setSearchResults([]);
-                    setActiveSection('hashtags');
                 } else {
                     const users = await searchUsers(query); // Note: searchUsers might need signal too if updated
                     setSearchResults(users);
                     setHashtagResults([]);
-                    setActiveSection('results');
                 }
                 setActiveIndex(0);
-            } catch (error: any) {
-                if (error.name !== 'AbortError') {
+            } catch (error: unknown) {
+                if (!(error instanceof DOMException && error.name === 'AbortError')) {
                     console.error('Error fetching search results:', error);
                     setSearchResults([]);
                     setHashtagResults([]);
@@ -190,12 +189,12 @@ export const HomeHeader = () => {
 
     return (
         <header
-            className={`sticky top-0 z-50 border-b p-3 md:py-2 bg-background/80 backdrop-blur-md border-border transition-transform duration-300 ease-in-out ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
+            className={`sticky top-0 z-50 border-b border-border bg-background/85 px-3 py-2 backdrop-blur-md transition-transform duration-300 ease-in-out supports-[backdrop-filter]:bg-background/70 md:px-4 md:py-0 ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
                 } md:translate-y-0`}
         >
-            <div className="max-w-[960px] mx-auto px-4 md:px-0">
+            <div className="mx-auto flex min-h-12 w-full max-w-[1128px] items-center px-1 md:min-h-14 md:px-0">
                 {/* --- Desktop Header (Visible from md screens up) --- */}
-                <div className="hidden md:flex items-center justify-between">
+                <div className="hidden w-full items-center justify-between md:flex">
                     {/* Desktop Search Bar */}
                     <div
                         className="relative flex items-center w-[422px] h-10 transition-all duration-300"
@@ -409,7 +408,7 @@ export const HomeHeader = () => {
                     {/* Desktop Icons & Create Button */}
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={() => router.push('/create-post')}
+                            onClick={() => setActiveModal('create-post')}
                             className="flex items-center justify-center gap-[10px] w-[122px] h-10 rounded-[24px] bg-[#6366F1] hover:bg-[#5558e3] text-white text-sm font-semibold transition-all shadow-sm"
                         >
                             <span>Create</span>
@@ -418,16 +417,16 @@ export const HomeHeader = () => {
                             </div>
                         </button>
 
-                        <div className="flex items-center gap-4 text-black">
+                        <div className="flex items-center gap-4 text-muted-foreground">
                             <NotificationPopover
-                                className="p-2 rounded-full transition-colors hover:bg-gray-100"
-                                icon={<Bell width={20} height={20} strokeWidth={1.5} color="#6B7280" />}
+                                className="relative rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                icon={<Bell width={20} height={20} strokeWidth={1.5} />}
                             />
                             <Link
                                 href="/messaging"
-                                className="p-2 rounded-full transition-colors hover:bg-gray-100"
+                                className="p-2 rounded-full transition-colors hover:bg-muted hover:text-foreground"
                             >
-                                <MessageCircle width={20} height={20} strokeWidth={1.5} color="#6B7280" />
+                                <MessageCircle width={20} height={20} strokeWidth={1.5} />
                             </Link>
                         </div>
                         <div className="ml-2">
@@ -437,7 +436,7 @@ export const HomeHeader = () => {
                 </div>
 
                 {/* --- Mobile Header (Hidden from md screens up) --- */}
-                <div className="md:hidden flex items-center gap-2 relative">
+                <div className="relative flex w-full items-center gap-2 md:hidden">
                     {/* Mobile Search Bar */}
                     <div className="flex-1 flex items-center gap-3 relative">
                         <input

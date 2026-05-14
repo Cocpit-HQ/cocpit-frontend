@@ -41,7 +41,7 @@ export default function CompanyAutocomplete({
       return;
     }
 
-    if (debouncedQuery.length < 2) {
+    if (debouncedQuery.length < 1) {
       setSuggestions([]);
       setOpen(false);
       return;
@@ -116,14 +116,14 @@ export default function CompanyAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFocus = () => {
-    if (query.trim().length >= 2) {
+    if (query.trim().length >= 1) {
       setOpen(true);
     }
   };
 
   const handleWrapperClick = () => {
     inputRef.current?.focus();
-    if (query.trim().length >= 2) setOpen(true);
+    if (query.trim().length >= 1) setOpen(true);
   };
 
   return (
@@ -164,16 +164,16 @@ export default function CompanyAutocomplete({
         <ul className={styles.dropdown}>
           {suggestions.map((org) => (
             <li key={org.org_id} className={styles.item} onMouseDown={() => handleSelect(org)}>
-              <div className="w-8 h-8 rounded border flex-shrink-0 flex items-center justify-center bg-gray-50">
+              <div className="w-8 h-8 rounded border border-border flex-shrink-0 flex items-center justify-center bg-muted">
                 {org.logo_url ? (
                   <img src={org.logo_url} alt="" className="w-full h-full object-contain p-0.5" />
                 ) : (
-                  <Building2 className="w-4 h-4 text-gray-400" />
+                  <Building2 className="w-4 h-4 text-muted-foreground" />
                 )}
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="font-medium truncate">{org.name}</span>
-                {org.location && <span className="text-xs text-gray-500 truncate">{org.location}</span>}
+                {org.location && <span className="text-xs text-muted-foreground truncate">{org.location}</span>}
               </div>
             </li>
           ))}

@@ -127,7 +127,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   };
 
   const isReply = variant === 'reply';
-  const avatarSize = isReply ? "w-8 h-8" : "w-10 h-10";
+  const avatarSize = "w-8 h-8";
 
   const authorLink = author?.isCompanyPost ? `/organization/${author?.authorSlug}` : `/profile/${author?.authorSlug || authorId}${postId ? `?openPost=${postId}&commentId=${id}` : ''}`;
 

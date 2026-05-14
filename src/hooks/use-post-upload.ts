@@ -4,6 +4,7 @@ import { useFeed } from '@/hooks/use-feed';
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { postApi } from '@/features/create-post/api/post.api';
+import { AxiosError } from 'axios';
 
 type PendingUploadPost = {
     id: string;
@@ -61,11 +62,17 @@ export const usePostUpload = () => {
             }, 3000);
 
         } catch (error) {
+            const message = error instanceof AxiosError
+                ? ((error.response?.data as { message?: string; error?: string } | undefined)?.message ||
+                    (error.response?.data as { message?: string; error?: string } | undefined)?.error ||
+                    error.message)
+                : 'Failed to upload';
+
             console.error("Upload failed", error);
             setPendingPosts(prev => prev.map(p =>
-                p.id === id ? { ...p, status: 'error', error: 'Failed to upload' } : p
+                p.id === id ? { ...p, status: 'error', error: message } : p
             ));
-            toast.error("Failed to publish post");
+            toast.error(message || "Failed to publish post");
         }
     }, [addPost, setPendingPosts]);
 

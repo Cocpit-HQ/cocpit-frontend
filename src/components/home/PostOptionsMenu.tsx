@@ -3,7 +3,8 @@
 
 // Refactored to use standalone useFeed hook
 import React, { useState } from 'react';
-import { MoreHorizontal, Trash2, Edit2, Eye, EyeOff, Flag } from 'lucide-react';
+import { MoreHorizontal, Trash2, Eye, EyeOff, Flag } from 'lucide-react';
+import { Icon } from '@iconify/react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -96,16 +97,20 @@ export function PostOptionsMenu({
                         e.stopPropagation();
                         setIsEditModalOpen(true);
                       }}
-                      className="cursor-pointer"
+                      className="cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl px-3 py-1.5 transition-colors group"
                     >
-                      <Edit2 className="w-4 h-4 mr-2" />
+                      <Icon icon="hugeicons:edit-03" className="w-6 h-6 mr-2 text-black group-focus:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
                       <span>Edit Post</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={handleToggleVisibility}
-                      className="cursor-pointer"
+                      className="cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl px-3 py-1.5 transition-colors group"
                     >
-                      {visibility === 'private' ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+                      {visibility === 'private' ? (
+                        <Icon icon="hugeicons:view" className="w-6 h-6 mr-2 text-black group-focus:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
+                      ) : (
+                        <Icon icon="hugeicons:view-off-slash" className="w-6 h-6 mr-2 text-black group-focus:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
+                      )}
                       <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -116,9 +121,9 @@ export function PostOptionsMenu({
                     e.stopPropagation();
                     setIsDeleteDialogOpen(true);
                   }}
-                  className="text-red-500 focus:text-red-500 cursor-pointer focus:bg-red-50 dark:focus:bg-red-950/20"
+                  className="text-red-500 focus:text-red-600 cursor-pointer focus:bg-red-50 rounded-xl px-3 py-1.5 transition-colors group"
                 >
-                  <Trash2 className="w-4 h-4 mr-2" />
+                  <Icon icon="hugeicons:delete-02" className="w-6 h-6 mr-2 text-red-500 group-focus:text-red-600" style={{ strokeWidth: '1.5px' }} />
                   <span>Delete Post</span>
                 </DropdownMenuItem>
               </>

@@ -82,7 +82,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
   }
 
   return (
-    <aside className={`sidebar ${className || ''}`}>
+    <aside className={`sidebar ${className || ''}`} aria-label="Primary navigation">
       {/* Logo */}
       <div className="sidebar__logo">
         <div className="relative w-14 h-14">
@@ -96,7 +96,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
       </div>
 
       {/* Navigation Sections */}
-      <nav className="sidebar__nav">
+      <nav className="sidebar__nav" aria-label="Main sections">
         {sections.map((section) => {
           const visibleItems = section.items.filter(i => i.show);
           if (visibleItems.length === 0) return null;
@@ -137,7 +137,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
       </nav>
 
       {/* Cocpit Business CTA */}
-      <div className="sidebar__business-cta">
+      <div className="sidebar__business-cta" aria-label="Business navigation">
         <Link
           href={isCompany ? "/business/overview" : "/business/create-company"}
           className="sidebar__business-btn"

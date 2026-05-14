@@ -22,6 +22,7 @@ const ReportModal = dynamic(() => import('@/components/shared/ReportModal').then
 const PollAnalyticsModal = dynamic(() => import('@/components/home/PollAnalyticsModal').then(m => m.PollAnalyticsModal), { ssr: false });
 const UniversalShareModal = dynamic(() => import('@/components/share/UniversalShareModal').then(m => m.UniversalShareModal), { ssr: false });
 const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
+const CreatePostModal = dynamic(() => import('@/features/create-post/components/CreatePostModal').then(m => m.CreatePostModal), { ssr: false });
 
 export const FeedPost = (props: FeedPostProps) => {
   const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags } = props;
@@ -29,8 +30,8 @@ export const FeedPost = (props: FeedPostProps) => {
 
   // Custom Hooks
   const {
-    isLiked, likeCount, isCommented, isSaved, pollData, isVoting, commentCount,
-    handleLike, handleVote, setIsSaved, setIsCommented, incrementCommentCount, decrementCommentCount
+    isLiked, likeCount, isCommented, isSaved, pollData, isVoting, commentCount, shareCount,
+    handleLike, handleVote, setIsSaved, setIsCommented, incrementCommentCount, decrementCommentCount, incrementShareCount
   } = usePostInteractions(props);
 
   const {
@@ -50,6 +51,7 @@ export const FeedPost = (props: FeedPostProps) => {
   const [showPollAnalytics, setShowPollAnalytics] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [isRepostModalOpen, setIsRepostModalOpen] = useState(false);
 
   const optionsBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -62,7 +64,7 @@ export const FeedPost = (props: FeedPostProps) => {
   };
 
   return (
-    <div className="bg-white border border-[#EEF2FF] rounded-[24px] overflow-hidden shadow-[0px_0px_4px_rgba(99,102,241,0.05)] transition-all duration-300 hover:shadow-md flex flex-col py-[16px] gap-[16px] w-full">
+    <div className="feed-card-shell flex w-full flex-col gap-[16px] overflow-hidden py-[16px] transition-all duration-300 hover:shadow-md">
       {/* Header & Content (Frame 2608598) */}
       <div className="flex flex-col gap-[16px] px-[16px]">
         <PostHeader
@@ -89,12 +91,14 @@ export const FeedPost = (props: FeedPostProps) => {
           content={content}
           author={author}
           isExpanded={isExpanded}
-          setIsExpanded={setIsExpanded}
           isFullContent={props.isFullContent}
           shared_post={shared_post}
           sharedPollData={shared_post?.poll}
           isProfileView={isProfileView}
           postId={id}
+          location={location}
+          timeAgo={timeAgo}
+          onToggleExpand={() => setIsExpanded(!isExpanded)}
         />
       </div>
 
@@ -110,21 +114,21 @@ export const FeedPost = (props: FeedPostProps) => {
         isVerticalVideo={isVerticalVideo}
       />
 
-      {/* Social Proof (Frame 2608624) */}
-      {likeCount > 0 && (
-        <div className="px-[16px] h-[20px] flex items-center">
-          <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-black">
-            Liked by {isLiked ? 'you' : (author === 'Anushri' ? 'John' : 'Anushri')} and {likeCount - 1} others
-          </p>
-        </div>
-      )}
-
       {/* Poll */}
       <PostPoll
         pollData={pollData}
         isVoting={isVoting}
         handleVote={(optId) => handleVote(optId, isCompany, activeProfile?.id)}
       />
+
+      {/* Social Proof (Frame 2608624) */}
+      {likeCount > 0 && (
+        <div className="px-[16px] h-[20px] flex items-center">
+          <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
+            Liked by {isLiked ? 'you' : (author === 'Anushri' ? 'John' : 'Anushri')} and others
+          </p>
+        </div>
+      )}
 
       {/* Actions (Frame 2608574) */}
       <PostActions
@@ -137,8 +141,9 @@ export const FeedPost = (props: FeedPostProps) => {
         isCommented={isCommented}
         commentsCount={commentCount}
         handleToggleCommentSection={handleToggleCommentSection}
-        shares={props.shares || 0}
+        shares={shareCount}
         handleShare={() => setIsShareModalOpen(true)}
+        handleRepost={() => setIsRepostModalOpen(true)}
         isSaved={isSaved || false}
         setIsSaved={setIsSaved}
         handleSaveToggle={() => setIsSaveModalOpen(true)}
@@ -198,6 +203,18 @@ export const FeedPost = (props: FeedPostProps) => {
           onClose={() => setIsSaveModalOpen(false)}
           postId={id.toString()}
           onSaved={setIsSaved}
+        />
+      )}
+
+      {isRepostModalOpen && (
+        <CreatePostModal
+          isOpen={true}
+          onClose={() => setIsRepostModalOpen(false)}
+          sharedPostId={id.toString()}
+          onPostCreated={() => {
+            incrementShareCount();
+            setIsRepostModalOpen(false);
+          }}
         />
       )}
     </div>

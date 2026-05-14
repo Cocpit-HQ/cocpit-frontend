@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { uploadCoverPhoto, deleteCoverPhoto } from "@/services/api/profile";
 import { useToast } from "@/hooks/use-toast";
@@ -55,6 +56,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
   // Determine initial state when modal opens
   useEffect(() => {
     if (isModalOpen) {
+      resetTransforms();
       if (coverImage || previewUrl) {
         setModalState("edit");
       } else {
@@ -304,14 +306,9 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
       setIsModalOpen(open);
       if (!open) handleCancelPreview();
     }}>
-      <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[800px] [&>button]:hidden outline-none">
-        <div className="relative bg-card rounded-[24px] p-[16px] w-[800px] max-w-full shadow-sm flex flex-col outline-none">
-          <button
-            onClick={() => setIsModalOpen(false)}
-            className="absolute top-6 right-6 p-1 text-destructive hover:bg-destructive/10 rounded-full transition-colors z-10"
-          >
-            <X className="w-6 h-6" strokeWidth={1.5} />
-          </button>
+      <DialogContent className="p-0 shadow-none max-w-[800px] outline-none">
+        <div className="relative bg-card rounded-[24px] p-[16px] w-[800px] max-w-full flex flex-col outline-none">
+          {/* Close button will be handled by global DialogPrimitive.Close */}
 
           <div className="text-center mb-6 relative px-4">
             <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-foreground mb-1">
@@ -337,13 +334,19 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
               {/* Transform Toolbar */}
               <div className="flex justify-center items-center gap-4 mb-6">
                 <button
-                  onClick={() => setFlipV(!flipV)}
+                  onClick={() => {
+                    setFlipV(!flipV);
+                    setFlipH(false);
+                  }}
                   className={cn("p-1.5 rounded-md transition-colors", flipV ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
                 >
                   <Icon icon="hugeicons:flip-top" className="w-6 h-6" />
                 </button>
                 <button
-                  onClick={() => setFlipH(!flipH)}
+                  onClick={() => {
+                    setFlipH(!flipH);
+                    setFlipV(false);
+                  }}
                   className={cn("p-1.5 rounded-md transition-colors", flipH ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
                 >
                   <Icon icon="hugeicons:flip-left" className="w-6 h-6" />
@@ -359,7 +362,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
                   disabled={isDeleting || !coverImage}
                   className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-50"
                 >
-                  {isDeleting ? <Loader2 className="w-6 h-6 animate-spin" strokeWidth={1.5} /> : <Trash2 className="w-6 h-6" strokeWidth={1.5} />}
+                  {isDeleting ? <Loader2 className="w-6 h-6 animate-spin" strokeWidth={1.5} /> : <Icon icon="fluent:delete-32-regular" className="w-6 h-6" />}
                 </button>
               </div>
 
@@ -377,6 +380,11 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
                 onTouchStart={(e) => {
                   const touch = e.touches[0];
                   handlePointerDown(touch.clientX, touch.clientY);
+                }}
+                onWheel={(e) => {
+                  e.preventDefault();
+                  const delta = e.deltaY > 0 ? -5 : 5;
+                  setZoom(prev => Math.min(100, Math.max(0, prev + delta)));
                 }}
               >
                 <img
@@ -405,13 +413,12 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
               {/* Zoom Slider */}
               <div className="mt-8 max-w-[400px] mx-auto w-full">
                 <p className="text-[14px] font-medium text-foreground mb-3">Zoom</p>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={zoom}
-                  onChange={(e) => setZoom(Number(e.target.value))}
-                  className="w-full h-1.5 bg-secondary rounded-full accent-primary cursor-pointer"
+                <Slider
+                  value={[zoom]}
+                  onValueChange={(vals) => setZoom(vals[0])}
+                  max={100}
+                  step={1}
+                  className="w-full"
                 />
               </div>
             </div>
@@ -477,8 +484,8 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isUploading || isDeleting || !hasImage}
-              className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:bg-primary"
+              disabled={isUploading || isDeleting || !hasImage || (!previewUrl && zoom === 0 && rotation === 0 && !flipH && !flipV && positionX === 0 && positionY === 0)}
+              className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:bg-primary shadow-sm"
             >
               {isUploading ? "Saving..." : "Save"}
             </Button>
@@ -517,7 +524,9 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
             className="cursor-pointer transition-transform hover:scale-110 active:scale-95"
             aria-label="Edit cover photo"
           >
-            <img src="/assets/edit.png" alt="Edit" className="w-[32px] h-[32px]" />
+            <div className="w-[32px] h-[32px] rounded-full bg-[#6366F1] flex items-center justify-center transition-transform group-hover:scale-110">
+              <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-white" style={{ strokeWidth: '1.5px' }} />
+            </div>
           </button>
         </div>
       </div>

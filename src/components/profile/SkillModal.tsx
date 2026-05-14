@@ -39,7 +39,8 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
 
   useEffect(() => {
     if (isOpen) {
-      setSelectedSkills(initialSkills)
+      // Deduplicate initial skills just in case there are duplicates in the state
+      setSelectedSkills([...new Set(initialSkills)])
       setSearchQuery("")
       setCurrentPage(1)
     }
@@ -48,17 +49,17 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
   const filteredSkills = useMemo(() => {
     // Combine suggested skills with selected skills to ensure they are available to toggle
     const combined = Array.from(new Set([...suggestedSkills, ...selectedSkills]))
-    
+
     // Filter based on current search query (frontend filter for immediate feedback)
-    const filtered = combined.filter(skill => 
+    const filtered = combined.filter(skill =>
       typeof skill === 'string' && skill.toLowerCase().includes(searchQuery.toLowerCase())
     )
-    
+
     const query = searchQuery.trim()
     if (query && !filtered.some(s => typeof s === 'string' && s.toLowerCase() === query.toLowerCase())) {
-        return [query, ...filtered]
+      return [query, ...filtered]
     }
-    
+
     return filtered
   }, [suggestedSkills, selectedSkills, searchQuery])
 
@@ -70,11 +71,13 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
   const totalPages = Math.max(1, Math.ceil(filteredSkills.length / skillsPerPage))
 
   const toggleSkill = (skill: string) => {
-    setSelectedSkills(prev => 
-      prev.includes(skill) 
-        ? prev.filter(s => s !== skill)
-        : [...prev, skill]
-    )
+    setSelectedSkills(prev => {
+      const exists = prev.some(s => typeof s === 'string' && s.toLowerCase() === skill.toLowerCase());
+      if (exists) {
+        return prev.filter(s => typeof s === 'string' && s.toLowerCase() !== skill.toLowerCase());
+      }
+      return [...prev, skill];
+    });
   }
 
   if (!isOpen) return null
@@ -82,7 +85,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in-90">
       <div className="w-full h-[100dvh] sm:h-[454px] max-w-none sm:max-w-[460px] rounded-none sm:rounded-[24px] bg-card shadow-2xl relative flex flex-col p-4 animate-in slide-in-from-right sm:slide-in-from-bottom-0">
-        
+
         {/* Mobile Header */}
         <div className="sm:hidden flex items-center justify-between mb-4 mt-2">
           <button onClick={onClose} className="p-2 -ml-2 text-foreground hover:bg-secondary rounded-full transition-colors">
@@ -91,28 +94,25 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
           <span className="text-[16px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
             Add skills
           </span>
-          <button 
-            onClick={() => {
-              const finalSkills = [...selectedSkills]
-              const query = searchQuery.trim()
-              if (query && !finalSkills.some(s => s.toLowerCase() === query.toLowerCase())) {
-                finalSkills.push(query)
-              }
-              onSave(finalSkills)
-            }}
-            disabled={loading}
-            className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all"
+          <Button
+            onClick={() => onSave(selectedSkills)}
+            disabled={
+              loading ||
+              selectedSkills.length === 0 ||
+              (JSON.stringify([...selectedSkills].sort()) === JSON.stringify([...initialSkills].sort()))
+            }
+            className="px-4 py-1.5 rounded-full bg-primary text-primary-foreground font-medium text-[14px] disabled:bg-muted disabled:opacity-100 transition-all disabled:cursor-not-allowed"
           >
             {loading ? "..." : "Save"}
-          </button>
+          </Button>
         </div>
 
         {/* Desktop Close Button */}
-        <button 
-          onClick={onClose} 
-          className="hidden sm:block absolute right-4 top-4 text-destructive hover:scale-110 transition-transform z-10"
+        <button
+          onClick={onClose}
+          className="hidden sm:block absolute right-4 top-4 text-destructive transition-transform z-10"
         >
-          <X className="w-6 h-6" />
+          <X className="w-5 h-5" strokeWidth={1} />
         </button>
 
         <div className="flex-1 flex flex-col items-center pt-2 sm:pt-4 w-full">
@@ -153,7 +153,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
           <div className="w-full flex-1 flex flex-wrap justify-start content-start items-start gap-3 mb-4 overflow-y-auto">
             {isSearching ? (
               <div className="w-full h-full flex items-center justify-center">
-                <span className="text-sm text-slate-400">Searching...</span>
+                <span className="text-sm text-muted-foreground">Searching...</span>
               </div>
             ) : paginatedSkills.length > 0 ? (
               paginatedSkills.map((skill) => {
@@ -166,9 +166,9 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
                     }}
                     className={cn(
                       "h-fit px-6 py-2.5 rounded-[12px] text-sm font-medium transition-all duration-200 border",
-                      isSelected 
+                      isSelected
                         ? "bg-primary border-primary text-primary-foreground shadow-sm"
-                        : "bg-secondary border-border text-primary hover:opacity-80"
+                        : "skill-chip hover:opacity-80"
                     )}
                   >
                     {skill}
@@ -177,7 +177,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
               })
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <span className="text-sm text-slate-400">No skills found</span>
+                <span className="text-sm text-muted-foreground">No skills found</span>
               </div>
             )}
           </div>
@@ -185,7 +185,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
           {/* Pagination */}
           <div className="w-full flex justify-end items-center gap-4 mb-5 pr-2">
             <div className="flex items-center gap-4 text-muted-foreground">
-              <button 
+              <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
                 className={cn("transition-colors", currentPage > 1 ? "text-primary" : "text-muted-foreground")}
@@ -195,7 +195,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
               <span className="text-foreground font-medium text-sm">
                 {String(currentPage).padStart(2, '0')}
               </span>
-              <button 
+              <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage >= totalPages}
                 className={cn("transition-colors", currentPage < totalPages ? "text-primary" : "text-muted-foreground")}
@@ -213,20 +213,17 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
             >
               Cancel
             </button>
-            <button
-              onClick={() => {
-                const finalSkills = [...selectedSkills]
-                const query = searchQuery.trim()
-                if (query && !finalSkills.some(s => s.toLowerCase() === query.toLowerCase())) {
-                  finalSkills.push(query)
-                }
-                onSave(finalSkills)
-              }}
-              disabled={loading}
-              className="w-[142px] h-[40px] rounded-[24px] bg-primary border border-transparent text-primary-foreground font-semibold shadow-md transition-all flex items-center justify-center gap-[10px] px-[16px] py-[8px] disabled:opacity-50"
+            <Button
+              onClick={() => onSave(selectedSkills)}
+              disabled={
+                loading ||
+                selectedSkills.length === 0 ||
+                (JSON.stringify([...selectedSkills].sort()) === JSON.stringify([...initialSkills].sort()))
+              }
+              className="w-[142px] h-[40px] rounded-[24px] bg-primary text-primary-foreground font-semibold shadow-md transition-all flex items-center justify-center disabled:bg-muted disabled:opacity-100 disabled:cursor-not-allowed"
             >
               {loading ? "Saving..." : "Save"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

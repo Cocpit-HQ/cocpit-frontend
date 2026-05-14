@@ -130,13 +130,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
 
       {/* Scrollable area with hidden scrollbar */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-12 py-4 scrollbar-hide pb-20 sm:pb-4">
-        {/* Close Button */}
-        <button 
-          onClick={onCancel}
-          className="hidden sm:block absolute top-6 right-6 p-1 text-destructive hover:bg-destructive/10 rounded-full transition-colors z-10"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {/* Close Button handled by global DialogPrimitive.Close in ProfilePage */}
 
         {/* Header */}
         <div className="hidden sm:block text-center mb-8">
@@ -293,37 +287,34 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
         </div>
 
         {/* Action Buttons */}
-        <div className="hidden sm:flex justify-between items-center pt-8 border-t border-[#E5E7EB] mt-8">
+        <div className="hidden sm:flex justify-center items-center gap-4 pt-8 border-t border-[#E5E7EB] mt-8">
           {initialData ? (
             <Button 
               type="button" 
-              variant="ghost" 
+              variant="outline" 
               onClick={() => onDelete?.(initialData.education_id!)}
-              className="text-red-500 hover:text-red-600 hover:bg-red-50 font-medium px-4 h-10"
+              className="h-10 px-8 rounded-full border-red-200 text-red-500 hover:bg-transparent bg-transparent font-medium w-[142px]"
             >
-              Delete record
+              Delete
             </Button>
           ) : (
-            <div /> // Spacer
-          )}
-          
-          <div className="flex gap-4">
             <Button 
               type="button" 
               variant="outline" 
               onClick={onCancel}
-              className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-[#EEF2FF] bg-white font-medium w-[142px]"
+              className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-transparent bg-white font-medium w-[142px]"
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={!isFormValid}
-              className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-50"
-            >
-              Save
-            </Button>
-          </div>
+          )}
+          
+          <Button 
+            type="submit" 
+            disabled={!isFormValid}
+            className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Save
+          </Button>
         </div>
       </form>
     </div>

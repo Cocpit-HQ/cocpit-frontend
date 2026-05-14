@@ -174,7 +174,7 @@ export function EditableExperienceGroup({
   return (
     <div className="flex flex-col py-8">
       {displayedExperiences.map((exp, index) => (
-        <React.Fragment key={exp.experience_id}>
+        <React.Fragment key={`${exp.experience_id}-${index}`}>
           {index > 0 && (
             <div className="relative h-12 w-full">
               <div className="absolute left-[76px] top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center h-[24px] pointer-events-none">

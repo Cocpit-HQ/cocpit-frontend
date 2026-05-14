@@ -20,6 +20,7 @@ export const usePostInteractions = (props: FeedPostProps) => {
   const [isSaved, setIsSaved] = useState(is_saved);
   const [likeCount, setLikeCount] = useState(typeof likes === 'string' ? parseInt(likes) : likes);
   const [commentCount, setCommentCount] = useState(typeof props.comments === 'string' ? parseInt(props.comments || '0') : (props.comments || 0));
+  const [shareCount, setShareCount] = useState(typeof props.shares === 'string' ? parseInt(props.shares || '0') : (props.shares || 0));
   
   // Poll State
   const [pollData, setPollData] = useState(poll);
@@ -35,7 +36,8 @@ export const usePostInteractions = (props: FeedPostProps) => {
     setIsCommented(initialIsCommented);
     setIsSaved(is_saved);
     setPollData(poll);
-  }, [initialIsLiked, initialIsCommented, is_saved, poll]);
+    setShareCount(typeof props.shares === 'string' ? parseInt(props.shares || '0') : (props.shares || 0));
+  }, [initialIsLiked, initialIsCommented, is_saved, poll, props.shares]);
 
   // Sync commentCount only when not locally modified.
   // Prevents optimistic increments from being overwritten by stale prop values.
@@ -123,12 +125,17 @@ export const usePostInteractions = (props: FeedPostProps) => {
     setCommentCount(prev => Math.max(0, prev - 1));
   };
 
+  const incrementShareCount = () => {
+    setShareCount(prev => prev + 1);
+  };
+
   return {
     isLiked,
     isCommented,
     isSaved,
     likeCount,
     commentCount,
+    shareCount,
     pollData,
     isVoting,
     setPollData,
@@ -137,6 +144,7 @@ export const usePostInteractions = (props: FeedPostProps) => {
     handleLike,
     handleVote,
     incrementCommentCount,
-    decrementCommentCount
+    decrementCommentCount,
+    incrementShareCount
   };
 };

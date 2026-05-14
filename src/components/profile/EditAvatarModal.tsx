@@ -5,6 +5,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { Trash2, X, Loader2 } from "lucide-react";
 import { Icon } from '@iconify/react';
 import { cn } from "@/lib/utils";
@@ -41,11 +42,11 @@ export function EditAvatarModal({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [modalState, setModalState] = useState<ModalState>("edit");
   const [isDragOver, setIsDragOver] = useState(false);
-  const [lastClickTime, setLastClickTime] = useState(0);
 
   // Determine initial state when modal opens
   useEffect(() => {
     if (isOpen) {
+      resetTransforms();
       if (currentAvatarUrl || previewUrl) {
         setModalState("edit");
       } else {
@@ -169,10 +170,6 @@ export function EditAvatarModal({
   }, [handleFileProcess]);
 
   const handleSave = async () => {
-    const now = Date.now();
-    if (now - lastClickTime < 2000) return;
-    setLastClickTime(now);
-
     const sourceUrl = previewUrl || currentAvatarUrl;
     if (!sourceUrl) return;
 
@@ -267,8 +264,9 @@ export function EditAvatarModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-none sm:max-w-[600px] h-[100dvh] sm:h-auto w-full [&>button]:hidden outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
-        <div className="relative bg-card rounded-none sm:rounded-[24px] p-4 sm:p-[32px] w-full h-full sm:h-auto shadow-sm flex flex-col outline-none overflow-y-auto overflow-x-hidden">
+      <DialogContent className="p-0 max-w-none sm:max-w-[600px] h-[100dvh] sm:h-auto w-full outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
+        <div className="relative bg-card rounded-none sm:rounded-[24px] p-4 sm:p-[32px] w-full h-full sm:h-auto shadow-none flex flex-col outline-none overflow-y-auto overflow-x-hidden">
+          {/* Close button handled by global DialogPrimitive.Close */}
 
           {/* ─── Mobile Header ─── */}
           <div className="sm:hidden flex items-center justify-between mb-8 sticky top-0 bg-card z-20 pt-2 pb-4">
@@ -280,20 +278,12 @@ export function EditAvatarModal({
             </DialogTitle>
             <button
               onClick={handleSave}
-              disabled={isUploading || isDeleting || !hasImage}
-              className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all"
+              disabled={isUploading || isDeleting || !hasImage || (!previewUrl && zoom === 0 && rotation === 0 && !flipH && !flipV && positionX === 0 && positionY === 0)}
+              className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               {isUploading ? "..." : "Save"}
             </button>
           </div>
-
-          {/* ─── Desktop Header ─── */}
-          <button
-            onClick={onClose}
-            className="hidden sm:block absolute top-6 right-6 p-1 text-destructive hover:bg-destructive/10 rounded-full transition-colors z-10"
-          >
-            <X className="w-6 h-6" strokeWidth={1.5} />
-          </button>
 
           <div className="hidden sm:block text-center mb-6 relative px-4">
             <DialogTitle className="text-[18px] leading-[26px] font-semibold font-[family-name:var(--font-poppins)] text-foreground mb-1">
@@ -319,13 +309,19 @@ export function EditAvatarModal({
               {/* Transform Toolbar */}
               <div className="flex justify-center items-center gap-4 mb-6">
                 <button
-                  onClick={() => setFlipV(!flipV)}
+                  onClick={() => {
+                    setFlipV(!flipV);
+                    setFlipH(false);
+                  }}
                   className={cn("p-1.5 rounded-md transition-colors", flipV ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
                 >
                   <Icon icon="hugeicons:flip-top" className="w-6 h-6" />
                 </button>
                 <button
-                  onClick={() => setFlipH(!flipH)}
+                  onClick={() => {
+                    setFlipH(!flipH);
+                    setFlipV(false);
+                  }}
                   className={cn("p-1.5 rounded-md transition-colors", flipH ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary")}
                 >
                   <Icon icon="hugeicons:flip-left" className="w-6 h-6" />
@@ -341,7 +337,7 @@ export function EditAvatarModal({
                   disabled={isDeleting || !currentAvatarUrl}
                   className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-50"
                 >
-                  {isDeleting ? <Loader2 className="w-6 h-6 animate-spin" strokeWidth={1.5} /> : <Trash2 className="w-6 h-6" strokeWidth={1.5} />}
+                  {isDeleting ? <Loader2 className="w-6 h-6 animate-spin" strokeWidth={1.5} /> : <Icon icon="fluent:delete-32-regular" className="w-6 h-6" />}
                 </button>
               </div>
 
@@ -360,6 +356,11 @@ export function EditAvatarModal({
                   const touch = e.touches[0];
                   handlePointerDown(touch.clientX, touch.clientY);
                 }}
+                onWheel={(e) => {
+                  e.preventDefault();
+                  const delta = e.deltaY > 0 ? -5 : 5;
+                  setZoom(prev => Math.min(100, Math.max(0, prev + delta)));
+                }}
               >
                 {hasImage && (
                   <img
@@ -374,10 +375,10 @@ export function EditAvatarModal({
                 )}
 
                 {/* Perfect Circle Crop Overlay */}
-                <div 
+                <div
                   className="absolute inset-0 pointer-events-none z-[2] overflow-hidden"
                 >
-                   <div 
+                  <div
                     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full rounded-full"
                     style={{
                       boxShadow: '0 0 0 999px rgba(217, 217, 217, 0.5)'
@@ -403,13 +404,12 @@ export function EditAvatarModal({
               {/* Zoom Slider */}
               <div className="mt-auto sm:mt-8 max-w-[400px] mx-auto w-full px-4 sm:px-0">
                 <p className="text-[14px] font-medium text-foreground mb-3">Zoom</p>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={zoom}
-                  onChange={(e) => setZoom(Number(e.target.value))}
-                  className="w-full h-1.5 bg-secondary rounded-full accent-primary cursor-pointer"
+                <Slider
+                  value={[zoom]}
+                  onValueChange={(vals) => setZoom(vals[0])}
+                  max={100}
+                  step={1}
+                  className="w-full"
                 />
               </div>
             </div>
@@ -471,8 +471,8 @@ export function EditAvatarModal({
             </button>
             <button
               onClick={handleSave}
-              disabled={isUploading || isDeleting || !hasImage}
-              className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+              disabled={isUploading || isDeleting || !hasImage || (!previewUrl && zoom === 0 && rotation === 0 && !flipH && !flipV && positionX === 0 && positionY === 0)}
+              className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center shadow-sm"
             >
               {isUploading ? "Saving..." : "Save"}
             </button>

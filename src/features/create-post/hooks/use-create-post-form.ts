@@ -11,6 +11,10 @@ import { postApi } from '../api/post.api';
 import { sanitizeContent } from '@/lib/contentSanitizer';
 import { Post, PostVisibility } from '@/types/entities';
 
+const USER_CATEGORIES: CategoryType[] = ['Personal', 'Professional', 'Achievement'];
+const COMPANY_CATEGORIES: CategoryType[] = ['Update', 'Hiring', 'Milestone', 'Insight'];
+const INSTITUTION_CATEGORIES: CategoryType[] = ['Announcement', 'Academic', 'Admission', 'Campus Life', 'Research', 'Club Activity', 'General'];
+
 export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: boolean }) => {
   const {
     isOpen,
@@ -57,6 +61,19 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
   const [pendingContextId, setPendingContextId] = useState<string | null>(null);
 
   const isCompanyPost = !!postAsCompanyId;
+  const currentPoster = isCompanyPost
+    ? userCompanies.find(c => c.company_id === postAsCompanyId || c.org_id === postAsCompanyId)
+    : currentUser;
+
+  const getAllowedCategories = useCallback((): CategoryType[] => {
+    if (!isCompanyPost) return USER_CATEGORIES;
+    if ((currentPoster as any)?.entity_type === 'INSTITUTION') return INSTITUTION_CATEGORIES;
+    return COMPANY_CATEGORIES;
+  }, [isCompanyPost, currentPoster]);
+
+  const getDefaultCategory = useCallback((): CategoryType => {
+    return getAllowedCategories()[0] || 'Professional';
+  }, [getAllowedCategories]);
 
   // Sync with active profile
   useEffect(() => {
@@ -70,14 +87,22 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     if (!isOpen) return;
     const storageKey = isCompanyPost ? `lastCategory_Company_${postAsCompanyId}` : `lastCategory_User_${currentUser?.id}`;
     const savedCategory = localStorage.getItem(storageKey) as CategoryType | null;
-    if (savedCategory) setPostCategory(savedCategory);
-    else setPostCategory(isCompanyPost ? 'Update' : 'Professional');
-  }, [isCompanyPost, postAsCompanyId, currentUser?.id, isOpen]);
+    const allowedCategories = getAllowedCategories();
+
+    if (savedCategory && allowedCategories.includes(savedCategory)) {
+      setPostCategory(savedCategory);
+    } else {
+      const fallbackCategory = getDefaultCategory();
+      setPostCategory(fallbackCategory);
+      if (savedCategory) localStorage.setItem(storageKey, fallbackCategory);
+    }
+  }, [isCompanyPost, postAsCompanyId, currentUser?.id, isOpen, getAllowedCategories, getDefaultCategory]);
 
   const handleSetPostCategory = (category: CategoryType) => {
-    setPostCategory(category);
+    const safeCategory = getAllowedCategories().includes(category) ? category : getDefaultCategory();
+    setPostCategory(safeCategory);
     const storageKey = isCompanyPost ? `lastCategory_Company_${postAsCompanyId}` : `lastCategory_User_${currentUser?.id}`;
-    localStorage.setItem(storageKey, category);
+    localStorage.setItem(storageKey, safeCategory);
   };
 
   // Hydrate Edit Mode
@@ -151,10 +176,13 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     try {
       const finalContent = sanitizeContent(postType === 'article' ? articleContent : (postType === 'poll' ? poll.pollQuestion : description));
       
+      const allowedCategories = getAllowedCategories();
+      const safeCategory = allowedCategories.includes(postCategory) ? postCategory : getDefaultCategory();
+
       const payload: any = {
         title: postType === 'article' ? sanitizeContent(articleTitle) : '',
         content: finalContent,
-        category: postCategory,
+        category: safeCategory,
         visibility: visibility,
         post_type: postType === 'photo' ? 'image' : (postType === 'article' ? 'article' : postType),
         companyId: isCompanyPost ? postAsCompanyId || undefined : undefined,
@@ -232,10 +260,6 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       setPostAsCompanyId(newCompanyId);
     }
   };
-
-  const currentPoster = isCompanyPost
-    ? userCompanies.find(c => c.company_id === postAsCompanyId || c.org_id === postAsCompanyId)
-    : currentUser;
 
   return {
     state: {

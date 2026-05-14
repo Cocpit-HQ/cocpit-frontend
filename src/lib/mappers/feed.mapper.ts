@@ -195,10 +195,12 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         is_commented: (sp as any).is_commented,
         is_saved: (sp as any).is_saved,
         comments: (sp.comment_count || 0).toString(),
-        shares: "0",
+        shares: (sp.share_count || 0).toString(),
         poll: spPoll,
         authorSlug: sp.author.author_slug,
         isCompanyPost: sp.author.is_organization_post,
+        location: sp.location || undefined,
+        title: sp.category_name || sp.author.headline || "",
         isAvailable: true
       } as Post & { isAvailable?: boolean };
     }
@@ -223,7 +225,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     is_commented: backendPost.is_commented,
     is_saved: backendPost.is_saved,
     comments: (backendPost.comment_count || 0).toString(),
-    shares: "0",
+    shares: (backendPost.share_count || 0).toString(),
     commentData: [], // Backend doesn't provide comments in feed list
     category: (backendPost.category_name as any) || undefined,
     visibility: backendPost.visibility,

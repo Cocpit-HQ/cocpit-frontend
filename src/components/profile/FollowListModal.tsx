@@ -69,7 +69,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
     const { data: connections, isLoading: isLoadingConnections } = useQuery({
         queryKey: ["connections", userId, search],
-        queryFn: () => getMyConnections(search), 
+        queryFn: () => getMyConnections(search),
         enabled: isOpen && activeTab === "connections" && isOwnProfile,
     });
 
@@ -92,7 +92,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
             // Optimistically update followers list if we are in followers tab
             if (activeTab === "followers") {
-                queryClient.setQueryData(["followers", userId, search], (old: any[]) => 
+                queryClient.setQueryData(["followers", userId, search], (old: any[]) =>
                     old?.map(u => (u.user_id === newUserId || u.follower_id === newUserId) ? { ...u, is_following_back: true } : u)
                 );
             }
@@ -130,12 +130,12 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
             // Optimistically update lists
             if (activeTab === "following") {
-                queryClient.setQueryData(["following", userId, search], (old: any[]) => 
+                queryClient.setQueryData(["following", userId, search], (old: any[]) =>
                     old?.filter(u => (u.user_id || u.following_id) !== targetId)
                 );
             }
             if (activeTab === "followers") {
-                queryClient.setQueryData(["followers", userId, search], (old: any[]) => 
+                queryClient.setQueryData(["followers", userId, search], (old: any[]) =>
                     old?.map(u => (u.user_id === targetId || u.follower_id === targetId) ? { ...u, is_following_back: false } : u)
                 );
             }
@@ -169,7 +169,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
             }));
 
             if (activeTab === "following") {
-                queryClient.setQueryData(["following", userId, search], (old: any[]) => 
+                queryClient.setQueryData(["following", userId, search], (old: any[]) =>
                     old?.filter(u => u.user_id !== companyId)
                 );
             }
@@ -209,7 +209,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
             }));
 
             // Optimistically update connections list
-            queryClient.setQueryData(["connections", userId, search], (old: any[]) => 
+            queryClient.setQueryData(["connections", userId, search], (old: any[]) =>
                 old?.filter(u => (u.user_id || u.follower_id || u.following_id) !== data.id)
             );
 
@@ -242,7 +242,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
             }));
 
             // Optimistically remove from followers list
-            queryClient.setQueryData(["followers", userId, search], (old: any[]) => 
+            queryClient.setQueryData(["followers", userId, search], (old: any[]) =>
                 old?.filter(u => (u.user_id || u.follower_id) !== targetId)
             );
 
@@ -318,9 +318,9 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                     </div>
                     <p className="text-[14px] font-medium text-foreground font-[family-name:var(--font-poppins)]">No one here yet</p>
                     <p className="text-[12px] text-muted-foreground font-[family-name:var(--font-poppins)] mt-1">
-                        {type === 'followers' ? "You don't have any followers yet." : 
-                         type === 'following' ? "You aren't following anyone yet." : 
-                         "You don't have any professional connections yet."}
+                        {type === 'followers' ? "You don't have any followers yet." :
+                            type === 'following' ? "You aren't following anyone yet." :
+                                "You don't have any professional connections yet."}
                     </p>
                 </div>
             );
@@ -348,10 +348,10 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                                     )}
                                 </div>
                                 <div className="min-w-0 flex flex-col justify-center">
-                                    <p className="font-medium text-[16px] text-black font-[family-name:var(--font-poppins)] truncate leading-[24px]">
+                                    <p className="font-medium text-[16px] text-foreground font-[family-name:var(--font-poppins)] truncate leading-[24px]">
                                         {user.full_name}
                                     </p>
-                                    <p className="text-[12px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] line-clamp-1 leading-[16px]">
+                                    <p className="text-[12px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)] line-clamp-1 leading-[16px]">
                                         {user.headline || "Connection"}
                                     </p>
                                 </div>
@@ -360,21 +360,21 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                             {isOwnProfile && (
                                 <div className="flex-shrink-0 ml-4">
                                     {type === 'following' && (
-                                            <button
-                                                className="h-[36px] px-4 rounded-[24px] bg-white text-[14px] font-normal text-[#818CF8] font-[family-name:var(--font-poppins)] hover:bg-secondary/50 transition-colors"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    handleUnfollow(id, user.full_name, user.type);
-                                                }}
-                                            >
-                                                Unfollow
-                                            </button>
+                                        <button
+                                            className="h-[36px] px-4 rounded-[24px] bg-primary-tint text-[14px] font-normal text-primary-tint-foreground font-[family-name:var(--font-poppins)] hover:opacity-80 transition-colors"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handleUnfollow(id, user.full_name, user.type);
+                                            }}
+                                        >
+                                            Unfollow
+                                        </button>
                                     )}
                                     {type === 'followers' && (
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2">
                                             {!user.is_following_back && (
-                                                <button 
-                                                    className="h-[36px] px-6 bg-primary text-primary-foreground text-[14px] font-medium rounded-full hover:opacity-90 transition-all shadow-sm font-[family-name:var(--font-poppins)]"
+                                                <button
+                                                    className="h-[36px] px-5 bg-[#6366F1] text-white text-[13px] font-medium rounded-full hover:opacity-90 transition-all shadow-sm font-[family-name:var(--font-poppins)]"
                                                     onClick={(e) => {
                                                         e.preventDefault();
                                                         handleFollow(id);
@@ -383,13 +383,21 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                                                     Follow back
                                                 </button>
                                             )}
-                                            
-                                             {/* Removed Remove Follower button */}
-                                         </div>
+
+                                            <button
+                                                className="p-1.5 text-[#6B7280] hover:bg-secondary rounded-full transition-colors"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    handleRemoveFollower(id, user.full_name);
+                                                }}
+                                            >
+                                                <Icon icon="fluent:dismiss-24-regular" className="w-5 h-5" />
+                                            </button>
+                                        </div>
                                     )}
                                     {type === 'connections' && (
-                                        <button 
-                                            className="h-[36px] px-4 rounded-[24px] bg-white text-[14px] font-normal text-[#818CF8] font-[family-name:var(--font-poppins)] hover:bg-secondary/50 transition-colors"
+                                        <button
+                                            className="h-[36px] px-4 rounded-[24px] bg-primary-tint text-[14px] font-normal text-primary-tint-foreground font-[family-name:var(--font-poppins)] hover:opacity-80 transition-colors"
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 handleRemoveConnection(id, user.full_name, user.type);
@@ -409,14 +417,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-none sm:max-w-[600px] w-full h-[100dvh] sm:h-[498px] flex flex-col p-4 sm:p-4 gap-0 overflow-hidden bg-white border-none rounded-none sm:rounded-[24px] shadow-2xl [&>button]:hidden data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
-                {/* Desktop Close Button */}
-                <button
-                    onClick={onClose}
-                    className="hidden sm:block absolute top-4 right-4 p-1 text-[#FF6B6B] hover:bg-[#FF6B6B]/10 rounded-full transition-colors z-50"
-                >
-                    <X className="w-6 h-6" strokeWidth={2} />
-                </button>
+            <DialogContent className="max-w-none sm:max-w-[600px] w-full h-[100dvh] sm:h-[498px] flex flex-col p-4 sm:p-4 gap-0 overflow-hidden bg-card rounded-none sm:rounded-[24px] shadow-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
                 {/* Mobile Header */}
                 <div className="sm:hidden flex items-center justify-between sticky top-0 bg-card z-50 px-4 py-4 border-b border-border">
                     <button onClick={onClose} className="p-2 -ml-2 text-foreground hover:bg-secondary rounded-full transition-colors">
@@ -429,10 +430,10 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                 </div>
 
                 <DialogHeader className="hidden sm:flex p-0 pt-4 text-center relative flex-col items-center gap-2">
-                    <DialogTitle className="text-[18px] font-medium text-black font-[family-name:var(--font-poppins)] text-center w-full leading-[26px]">
+                    <DialogTitle className="text-[18px] font-medium text-foreground font-[family-name:var(--font-poppins)] text-center w-full leading-[26px]">
                         People
                     </DialogTitle>
-                    <p className="text-[12px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] leading-[16px]">
+                    <p className="text-[12px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)] leading-[16px]">
                         Manage your followers, following, and professional connections
                     </p>
                 </DialogHeader>
@@ -441,26 +442,26 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full h-full flex flex-col">
                         <div className="px-4 sm:px-0 mt-4">
                             <TabsList className="w-full h-[48px] bg-transparent p-0 rounded-none grid grid-cols-3 gap-4">
-                                <TabsTrigger 
+                                <TabsTrigger
                                     value="following"
-                                    className="h-[48px] rounded-[24px] px-4 data-[state=active]:bg-[#EEF2FF] data-[state=inactive]:bg-white data-[state=active]:text-black shadow-[0px_0px_4px_rgba(99,102,241,0.05)] transition-all flex items-center justify-between border-none"
+                                    className="h-[48px] rounded-[24px] px-4 data-[state=active]:bg-primary-tint data-[state=inactive]:bg-muted/50 data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground shadow-[0px_0px_4px_rgba(99,102,241,0.05)] transition-all flex items-center justify-between border-none"
                                 >
                                     <span className="text-[14px] font-normal font-[family-name:var(--font-poppins)]">Following</span>
-                                    <span className="text-[14px] font-normal text-[#6366F1] font-[family-name:var(--font-poppins)]">{stats?.following_count || 0}</span>
+                                    <span className="text-[14px] font-normal text-primary-tint-foreground font-[family-name:var(--font-poppins)]">{stats?.following_count || 0}</span>
                                 </TabsTrigger>
-                                <TabsTrigger 
+                                <TabsTrigger
                                     value="followers"
-                                    className="h-[48px] rounded-[24px] px-4 data-[state=active]:bg-[#EEF2FF] data-[state=inactive]:bg-white data-[state=active]:text-black shadow-[0px_0px_4px_rgba(99,102,241,0.05)] transition-all flex items-center justify-between border-none"
+                                    className="h-[48px] rounded-[24px] px-4 data-[state=active]:bg-primary-tint data-[state=inactive]:bg-muted/50 data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground shadow-[0px_0px_4px_rgba(99,102,241,0.05)] transition-all flex items-center justify-between border-none"
                                 >
                                     <span className="text-[14px] font-normal font-[family-name:var(--font-poppins)]">Followers</span>
-                                    <span className="text-[14px] font-normal text-[#6366F1] font-[family-name:var(--font-poppins)]">{stats?.followers_count || 0}</span>
+                                    <span className="text-[14px] font-normal text-primary-tint-foreground font-[family-name:var(--font-poppins)]">{stats?.followers_count || 0}</span>
                                 </TabsTrigger>
-                                <TabsTrigger 
+                                <TabsTrigger
                                     value="connections"
-                                    className="h-[48px] rounded-[24px] px-4 data-[state=active]:bg-[#EEF2FF] data-[state=inactive]:bg-white data-[state=active]:text-black shadow-[0px_0px_4px_rgba(99,102,241,0.05)] transition-all flex items-center justify-between border-none"
+                                    className="h-[48px] rounded-[24px] px-4 data-[state=active]:bg-primary-tint data-[state=inactive]:bg-muted/50 data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground shadow-[0px_0px_4px_rgba(99,102,241,0.05)] transition-all flex items-center justify-between border-none"
                                 >
                                     <span className="text-[14px] font-normal font-[family-name:var(--font-poppins)]">Connection</span>
-                                    <span className="text-[14px] font-normal text-[#6366F1] font-[family-name:var(--font-poppins)]">{stats?.connections_count || 0}</span>
+                                    <span className="text-[14px] font-normal text-primary-tint-foreground font-[family-name:var(--font-poppins)]">{stats?.connections_count || 0}</span>
                                 </TabsTrigger>
                             </TabsList>
                         </div>
@@ -469,11 +470,11 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                             <div className="relative">
                                 <Input
                                     placeholder="Search"
-                                    className="h-[40px] rounded-[24px] border-[#6B7280] pl-6 pr-12 text-[16px] font-medium font-[family-name:var(--font-poppins)] placeholder:text-[#6B7280] bg-white focus-visible:ring-0"
+                                    className="h-[40px] rounded-[24px] border-border pl-6 pr-12 text-[16px] font-medium font-[family-name:var(--font-poppins)] placeholder:text-muted-foreground bg-muted/30 focus-visible:ring-0"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
-                                <Search className="absolute right-5 top-1/2 -translate-y-1/2 h-5 w-5 text-[#6B7280]" />
+                                <Search className="absolute right-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                             </div>
                         </div>
 
@@ -501,26 +502,26 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                 {confirmAction && (
                     <div className="absolute inset-0 z-50 flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
                         <div className="bg-card w-full max-w-[400px] p-8 rounded-[24px] shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-                            <DialogTitle className="text-[20px] font-bold text-foreground font-[family-name:var(--font-poppins)] mb-2">
-                                {confirmAction.type === 'unfollow' ? "Unfollow this account?" : 
-                                 confirmAction.type === 'remove_follower' ? "Remove follower?" : 
-                                 "Remove connection?"}
+                            <DialogTitle className="text-[14px] font-normal text-foreground font-[family-name:var(--font-poppins)] mb-2 leading-[20px] text-center">
+                                {confirmAction.type === 'unfollow' ? "Unfollow this account?" :
+                                    confirmAction.type === 'remove_follower' ? "Remove follower?" :
+                                        "Remove connection?"}
                             </DialogTitle>
-                            <p className="text-[14px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)] leading-relaxed mb-8">
-                                {confirmAction.type === 'unfollow' ? "You will stop seeing their posts in your feed." : 
-                                 confirmAction.type === 'remove_follower' ? "This person will no longer follow you or see your updates in their feed." : 
-                                 "You will no longer be connected with this person. They won't be notified."}
+                            <p className="text-[12px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)] leading-[16px] mb-8 text-center px-4 max-w-[268px] mx-auto">
+                                {confirmAction.type === 'unfollow' ? "You will stop seeing their posts in your feed." :
+                                    confirmAction.type === 'remove_follower' ? "This person will no longer follow you or see your updates in their feed." :
+                                        "You will no longer be connected with this person. They won't be notified."}
                             </p>
                             <div className="flex gap-4 w-full">
-                                <Button 
-                                    variant="outline" 
-                                    className="flex-1 h-[48px] rounded-full border-primary text-primary hover:bg-secondary font-semibold text-[15px] font-[family-name:var(--font-poppins)]"
+                                <Button
+                                    variant="outline"
+                                    className="flex-1 h-[48px] rounded-full border-[#6366F1] text-[#6366F1] bg-transparent hover:bg-transparent hover:text-[#6366F1] font-semibold text-[15px] font-[family-name:var(--font-poppins)] shadow-none"
                                     onClick={() => setConfirmAction(null)}
                                 >
                                     Cancel
                                 </Button>
-                                <Button 
-                                    className="flex-1 h-[48px] rounded-full bg-destructive hover:opacity-90 text-destructive-foreground font-semibold text-[15px] font-[family-name:var(--font-poppins)] border-none"
+                                <Button
+                                    className="flex-1 h-[48px] rounded-full bg-[#FF6B6B] hover:opacity-90 text-white font-semibold text-[15px] font-[family-name:var(--font-poppins)] border-none shadow-sm"
                                     onClick={executeConfirmedAction}
                                 >
                                     Remove
