@@ -14,11 +14,11 @@ export interface CreateReportRequest {
 }
 
 export const getReportReasons = async (): Promise<ReportReason[]> => {
-  const response = await api.get<ReportReason[]>("/report-reasons");
+  const response = await api.get<ReportReason[]>("/report/report-reasons");
   return response.data;
 };
 
 export const createReport = async (data: CreateReportRequest): Promise<{ message: string }> => {
-  const response = await api.post<{ message: string }>("/reports", data);
+  const response = await api.post<{ message: string }>("/report/reports", data);
   return response.data;
 };

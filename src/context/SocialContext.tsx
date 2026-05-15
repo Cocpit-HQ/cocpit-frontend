@@ -158,10 +158,11 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     try {
       await api.post(`/users/${id}/block`);
       toast({ title: "User blocked", description: "You will no longer see their content." });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Block failed", error);
       setBlockedIds(prev => prev.filter(uid => uid !== id));
-      toast({ title: "Error", description: "Failed to block user", variant: "destructive" });
+      const errorMsg = error?.response?.data?.message || "Failed to block user";
+      toast({ title: "Error", description: errorMsg, variant: "destructive" });
     }
   };
 
@@ -171,10 +172,11 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
     try {
       await api.delete(`/users/${id}/unblock`);
       toast({ title: "User unblocked" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Unblock failed", error);
       setBlockedIds(prev => [...prev, id]); // Revert
-      toast({ title: "Error", description: "Failed to unblock user", variant: "destructive" });
+      const errorMsg = error?.response?.data?.message || "Failed to unblock user";
+      toast({ title: "Error", description: errorMsg, variant: "destructive" });
     }
   };
 

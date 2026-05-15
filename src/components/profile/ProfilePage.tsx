@@ -737,7 +737,7 @@ export default function ProfilePage() {
         {isLoading ? (
           <ProfileSkeleton />
         ) : (
-          <div className="overflow-hidden relative bg-card md:rounded-[24px] rounded-none border-none outline-none pb-8 md:pb-0">
+          <div className="overflow-hidden relative bg-card md:rounded-[24px] rounded-none border-none outline-none pb-8 md:pb-0 dark:bg-[#0B0F19]">
 
             <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage}>
               <div className="absolute top-3 right-3 md:hidden z-10">

@@ -4,8 +4,8 @@ import { useParams, useRouter } from 'next/navigation'
 import type { Page } from "@/types/common"
 import { AppShell } from '@/components/layout/AppShell'
 import { useIsMobile } from "@/hooks/use-mobile"
-import ChatWindow from '@/components/messaging/ui/ChatWindow';
-import ChatList from '@/components/messaging/ui/ChatList';
+import ChatWindow from '@/features/messaging/components/ui/ChatWindow';
+import ChatList from '@/features/messaging/components/ui/ChatList';
 import { useQuery } from '@tanstack/react-query';
 import { getConversations } from '@/services/api/messaging';
 import { mapBackendChatToChatThread } from '@/lib/mappers/messaging.mapper';

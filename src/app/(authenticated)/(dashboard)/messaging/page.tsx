@@ -1,4 +1,4 @@
-import MessagingPage from "@/components/messaging/MessagingPage";
+import MessagingPage from "@/features/messaging/MessagingPage";
 import { Suspense } from "react";
 
 export default function MessagingRoute() {

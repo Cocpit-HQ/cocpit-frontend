@@ -12,7 +12,7 @@ export const getGroupDetails = async (groupId: string): Promise<GroupDetails> =>
 };
 
 export const inviteMember = async (groupId: string, receiverId: string) => {
-    const response = await api.post("/groups/invite", { groupId, receiverId });
+    const response = await api.post(`/groups/${groupId}/invite`, { groupId, receiverId });
     return response.data;
 };
 
@@ -77,6 +77,19 @@ export const updateMemberRole = async (groupId: string, userId: string, newRole:
 
 export const updateGroupAvatar = async (groupId: string, avatarUrl: string | null) => {
     const response = await api.put(`/groups/${groupId}/avatar`, { avatarUrl });
+    return response.data;
+};
+
+export const updateGroupDetails = async (
+    groupId: string,
+    details: {
+        name?: string;
+        headline?: string;
+        description?: string;
+        avatar?: string | null;
+    }
+) => {
+    const response = await api.put(`/groups/${groupId}/details`, details);
     return response.data;
 };
 

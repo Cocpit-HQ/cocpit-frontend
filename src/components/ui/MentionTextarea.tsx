@@ -207,10 +207,12 @@ export const MentionTextarea = ({
             />
 
             {showSuggestions && (
-                <div className="absolute z-50 w-72 bg-popover text-popover-foreground border rounded-lg shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95"
+                <div className="absolute z-50 w-[240px] bg-white border border-[#C7D2FE] shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 p-[8px] mb-2"
                     style={{ 
-                        top: suggestionPosition.top, 
+                        top: suggestionPosition.top - 24, // Position at the line top
                         left: suggestionPosition.left,
+                        transform: 'translateY(-100%)',
+                        borderRadius: '24px 24px 0px 24px'
                     }}
                 >
                     <div className="p-1 max-h-[300px] overflow-y-auto custom-scrollbar">

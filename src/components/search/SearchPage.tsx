@@ -55,7 +55,11 @@ export default function SearchPage() {
                 ]);
 
                 if (userResults.status === 'fulfilled') {
-                    setUsers(userResults.value as SearchedUser[]);
+                    // Deduplicate by id before setting state
+                    const uniqueResults = Array.from(
+                        new Map((userResults.value as SearchedUser[]).map(user => [user.id, user])).values()
+                    );
+                    setUsers(uniqueResults);
                 } else {
                     console.error("User search failed:", userResults.reason);
                     setUsers([]);

@@ -7,16 +7,43 @@ export const formatTime = (isoString: string): string => {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
-// Helper to calculate relative time (simplified)
 export const formatTimeAgo = (isoString: string): string => {
+  if (!isoString) return '';
   const date = new Date(isoString);
   const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (diffInSeconds < 60) return 'Just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  // Check if it's today
+  const isToday = date.getDate() === now.getDate() &&
+                  date.getMonth() === now.getMonth() &&
+                  date.getFullYear() === now.getFullYear();
+
+  if (isToday) {
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Check if it's yesterday
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday = date.getDate() === yesterday.getDate() &&
+                      date.getMonth() === yesterday.getMonth() &&
+                      date.getFullYear() === yesterday.getFullYear();
+
+  if (isYesterday) {
+    return 'Yesterday';
+  }
+
+  // Calculate difference in days (ignoring time of day)
+  const dateAtMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const nowAtMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffDays = Math.floor((nowAtMidnight.getTime() - dateAtMidnight.getTime()) / (1000 * 60 * 60 * 24));
+
+  // Within the last 6 days (meaning it falls on a distinct day of the week)
+  if (diffDays > 1 && diffDays < 7) {
+    return date.toLocaleDateString('en-US', { weekday: 'long' }); // 'Monday', 'Tuesday', etc.
+  }
+
+  // Older than a week, format as dd/mm/yyyy (en-GB uses this format natively)
+  return date.toLocaleDateString('en-GB');
 };
 
 export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread => {
@@ -28,7 +55,9 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     name: backendChat.other_user_name || "Deleted User",
     role: backendChat.other_user_headline || "",
     lastMessage: backendChat.last_message_text,
-    time: backendChat.timeAgo || formatTimeAgo(backendChat.last_message_at || backendChat.updated_at),
+    time: (backendChat.last_message_at || backendChat.updated_at) 
+      ? formatTimeAgo(backendChat.last_message_at || backendChat.updated_at) 
+      : (backendChat.timeAgo || ""),
     unread: backendChat.unread_count,
     avatar: backendChat.other_user_avatar || "gradient-1", // Use the URL if present, or fallback to a gradient default
     online: false, // Default to false, updated via socket
@@ -41,6 +70,7 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     isBlockedByOther: backendChat.is_blocked_by_other || false,
     lastMessageAt: backendChat.last_message_at || backendChat.updated_at || new Date().toISOString(),
     isDeleted: backendChat.is_deleted_user || false,
+    is_requesting: backendChat.is_requesting || false,
   };
 };
 

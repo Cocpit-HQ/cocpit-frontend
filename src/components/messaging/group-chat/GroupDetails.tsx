@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut, Trash2, UserPlus, Camera, Crown, MoreVertical, ShieldOff } from "lucide-react";
 import { useSocket } from "@/context/SocketContext";
 import { GroupAvatarUploadModal } from "./GroupAvatarUploadModal";
-import { updateGroupAvatar } from "@/services/api/group-chat";
+import { updateGroupAvatar, updateGroupDetails } from "@/services/api/group-chat";
 import { uploadMedia } from "@/services/api/upload";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -47,6 +47,19 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
             if (urls && urls.length > 0) {
                 const avatarUrl = typeof urls[0] === 'string' ? urls[0] : urls[0].url;
                 await updateGroupAvatar(activeGroup.conversation_id, avatarUrl);
+            }
+        } catch (err) {
+            console.error("Failed to update group avatar:", err);
+            alert("Failed to update group avatar");
+        }
+    };
+
+    const handleUpdateGroupDetails = async (file: File) => {
+        try {
+            const urls = await uploadMedia([file]);
+            if (urls && urls.length > 0) {
+                const avatarUrl = typeof urls[0] === 'string' ? urls[0] : urls[0].url;
+                await updateGroupDetails(activeGroup.conversation_id, { avatar: avatarUrl });
             }
         } catch (err) {
             console.error("Failed to update group avatar:", err);
@@ -244,7 +257,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                 isOpen={isAvatarModalOpen}
                 onClose={() => setIsAvatarModalOpen(false)}
                 currentAvatarUrl={activeGroup.group_avatar || null}
-                onUpload={handleAvatarUpload}
+                onUpload={handleUpdateGroupDetails}
                 onDelete={handleAvatarDelete}
             />
         </Sheet>

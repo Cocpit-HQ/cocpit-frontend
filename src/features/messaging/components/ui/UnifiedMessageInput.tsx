@@ -1,0 +1,245 @@
+"use client"
+
+import React, { useState, useRef, useEffect } from "react"
+import { Paperclip, Send, Smile, Mic, X, FileText, Film, Image as ImageIcon } from "lucide-react"
+import { MentionTextarea } from "@/components/ui/MentionTextarea"
+import { UserMention } from "@/services/api/users"
+
+interface UnifiedMessageInputProps {
+    onSendMessage: (text: string, files: File[]) => void
+    onTyping?: () => void
+    disabled?: boolean
+    disabledMessage?: string
+    placeholder?: string
+    isLoading?: boolean
+    searchUsersFn?: (query: string) => Promise<UserMention[]>
+}
+
+const EMOJI_LIST = ["😀", "😂", "😍", "🥺", "🔥", "👍", "👎", "🎉", "❤️", "💼", "🚀", "💯", "👏", "🤔", "👀", "✨", "✅", "❌", "🙌", "😎"];
+
+export default function UnifiedMessageInput({
+    onSendMessage,
+    onTyping,
+    disabled,
+    disabledMessage,
+    placeholder,
+    isLoading,
+    searchUsersFn
+}: UnifiedMessageInputProps) {
+    const [text, setText] = useState("")
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+    const [files, setFiles] = useState<File[]>([])
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
+    const pickerRef = useRef<HTMLDivElement>(null)
+    const emojiButtonRef = useRef<HTMLButtonElement>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const isDisabled = disabled || isLoading;
+
+    const handleSend = () => {
+        if (isDisabled) return;
+        if (text.trim() || files.length > 0) {
+            onSendMessage(text, files)
+            setText("")
+            setFiles([])
+            if (textareaRef.current) {
+                textareaRef.current.style.height = '44px';
+            }
+        }
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (isDisabled) return;
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault()
+            handleSend()
+        }
+    }
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            const newFiles = Array.from(e.target.files);
+            setFiles(prev => [...prev, ...newFiles]);
+        }
+    };
+
+    const removeFile = (index: number) => {
+        setFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const insertEmoji = (emoji: string) => {
+        const textarea = textareaRef.current;
+        if (!textarea) {
+            setText(prev => prev + emoji);
+            return;
+        }
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const newText = text.substring(0, start) + emoji + text.substring(end);
+
+        setText(newText);
+
+        setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
+            textarea.focus();
+            textarea.style.height = 'auto';
+            textarea.style.height = `${Math.min(textarea.scrollHeight, 128)}px`;
+        }, 0);
+
+        setShowEmojiPicker(false);
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                pickerRef.current &&
+                !pickerRef.current.contains(event.target as Node) &&
+                emojiButtonRef.current &&
+                !emojiButtonRef.current.contains(event.target as Node)
+            ) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        if (showEmojiPicker) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showEmojiPicker]);
+
+    const getFileIcon = (file: File) => {
+        if (file.type.startsWith('image/')) return <ImageIcon className="w-4 h-4" />;
+        if (file.type.startsWith('video/')) return <Film className="w-4 h-4" />;
+        return <FileText className="w-4 h-4" />;
+    };
+
+    return (
+        <div className="px-4 py-3 md:px-6 md:py-4 w-full bg-background shrink-0">
+            <div className={`flex flex-col w-full border border-border/60 ${files.length > 0 ? 'rounded-[20px]' : 'rounded-[32px]'} bg-transparent p-1.5 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all relative`}>
+                
+                {/* File Previews inside the input box */}
+                {files.length > 0 && (
+                    <div className="flex gap-2 overflow-x-auto px-2 pt-2 pb-1">
+                        {files.map((file, index) => (
+                            <div key={index} className="relative group shrink-0 mt-1 mr-1">
+                                {file.type.startsWith('image/') ? (
+                                    <div className="w-[60px] h-[60px] relative overflow-hidden rounded-[12px] bg-muted border border-border/50">
+                                        <img src={URL.createObjectURL(file)} alt="preview" className="object-cover w-full h-full" />
+                                    </div>
+                                ) : (
+                                    <div className="w-[60px] h-[60px] flex flex-col items-center justify-center bg-muted rounded-[12px] text-muted-foreground border border-border/50 p-1">
+                                        {getFileIcon(file)}
+                                        <span className="text-[9px] truncate w-full text-center mt-1 text-foreground/80">{file.name}</span>
+                                    </div>
+                                )}
+                                <button
+                                    onClick={() => removeFile(index)}
+                                    className="absolute -top-2 -right-2 bg-[#FFFFFF] border border-[#E5E7EB] text-[#EF4444] rounded-full p-[2px] shadow-sm hover:bg-[#EF4444] hover:text-[#FFFFFF] transition-colors z-10"
+                                    aria-label="Remove file"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                <div className="flex items-end gap-1.5 w-full">
+                    {/* Attachment button */}
+                    <button
+                        className="w-9 h-9 mb-0.5 flex items-center justify-center rounded-full transition-colors text-muted-foreground hover:bg-muted shrink-0 disabled:opacity-40 ml-1"
+                        disabled={isDisabled}
+                        onClick={() => fileInputRef.current?.click()}
+                        aria-label="Attach file"
+                    >
+                        <Paperclip className="w-5 h-5" strokeWidth={1.5} />
+                    </button>
+
+                    {/* Input textarea */}
+                    <div className="flex-1 relative">
+                        <MentionTextarea
+                            innerRef={textareaRef}
+                            value={text}
+                            searchUsersFn={searchUsersFn}
+                            onChange={(e) => {
+                                setText(e.target.value);
+                                if (onTyping) onTyping();
+
+                                const target = e.target;
+                                if (target && 'style' in target) {
+                                    target.style.height = 'auto';
+                                    const newHeight = Math.min(target.scrollHeight, 128);
+                                    target.style.height = `${newHeight}px`;
+                                    target.style.overflowY = target.scrollHeight > 128 ? 'auto' : 'hidden';
+                                }
+                            }}
+                            onKeyDown={handleKeyDown}
+                            placeholder={disabledMessage || placeholder || (isDisabled ? "Loading..." : "Write a message...")}
+                            rows={1}
+                            className="w-full px-2 py-2.5 bg-transparent border-0 resize-none focus:outline-none max-h-32 text-[15px] text-foreground placeholder:text-muted-foreground/60 scrollbar-hide overflow-hidden"
+                            style={{ minHeight: "40px" }}
+                            disabled={isDisabled}
+                        />
+                    </div>
+
+                    <input
+                        type="file"
+                        multiple
+                        ref={fileInputRef}
+                        className="hidden"
+                        onChange={handleFileSelect}
+                        accept="image/*,video/*,application/pdf"
+                    />
+
+                    {/* Right side controls */}
+                    <div className="flex items-center gap-1.5 mb-0.5 shrink-0 mr-1">
+                        <button
+                            ref={emojiButtonRef}
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${showEmojiPicker ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:bg-muted'}`}
+                            disabled={isDisabled}
+                            aria-label="Open emoji picker"
+                        >
+                            <Smile className="w-5 h-5" strokeWidth={1.5} />
+                        </button>
+
+                        <button
+                            onClick={handleSend}
+                            disabled={isDisabled || (!text.trim() && files.length === 0)}
+                            className={`w-9 h-9 flex items-center justify-center rounded-full transition-all shadow-sm
+                                ${text.trim() || files.length > 0
+                                    ? 'bg-[#EEF2FF] text-[#4F46E5] hover:bg-[#E0E7FF]'
+                                    : 'bg-transparent text-muted-foreground/40 cursor-not-allowed'
+                                }`}
+                            aria-label="Send message"
+                        >
+                            <Send className="w-5 h-5" strokeWidth={1.5} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Emoji Picker Overlay */}
+                {showEmojiPicker && (
+                    <div ref={pickerRef} className="absolute bottom-[calc(100%+10px)] right-4 p-2 bg-card border border-border rounded-xl shadow-xl z-50 w-64">
+                        <div className="grid grid-cols-6 gap-1 max-h-48 overflow-y-auto">
+                            {EMOJI_LIST.map((emoji) => (
+                                <button
+                                    key={emoji}
+                                    onClick={() => insertEmoji(emoji)}
+                                    className="p-1.5 hover:bg-muted rounded-lg text-xl transition-colors flex items-center justify-center"
+                                    aria-label={`Insert ${emoji}`}
+                                >
+                                    {emoji}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
