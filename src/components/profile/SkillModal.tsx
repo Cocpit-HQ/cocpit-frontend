@@ -110,7 +110,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
         {/* Desktop Close Button */}
         <button
           onClick={onClose}
-          className="hidden sm:block absolute right-4 top-4 text-destructive transition-transform z-10"
+          className="hidden sm:block absolute right-4 top-4 text-[#FF6B6B] transition-transform z-10"
         >
           <X className="w-5 h-5" strokeWidth={1} />
         </button>

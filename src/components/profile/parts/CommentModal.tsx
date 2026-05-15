@@ -87,7 +87,7 @@ export function CommentModal({ isOpen, onClose, postId, onCommentAdded }: Commen
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[500px] h-[600px] flex flex-col p-0 overflow-hidden">
+            <DialogContent className="sm:max-w-[500px] h-[600px] flex flex-col p-0 overflow-hidden sm:rounded-[24px]">
                 <DialogHeader className="p-4 border-b">
                     <DialogTitle className="flex items-center gap-2">
                         <MessageSquare className="w-5 h-5 text-[#6366F1]" />

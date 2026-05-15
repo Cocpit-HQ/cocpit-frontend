@@ -158,8 +158,8 @@ function RoleSection({
   existingCurrentRoleId,
 }: RoleSectionProps) {
   const inputStyles =
-    "bg-card border-border placeholder-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left"
-  const labelStyles = "text-[14px] font-medium text-foreground mb-1.5"
+    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE]"
+  const labelStyles = "block font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-foreground mb-2"
   const getSelectTextColor = (value: string) =>
     value ? "text-foreground" : "text-muted-foreground"
 
@@ -177,7 +177,7 @@ function RoleSection({
               <button
                 type="button"
                 onClick={onRemove}
-                className="text-red-400 hover:text-red-600 transition-colors flex items-center gap-1.5 text-[12px]"
+                className="text-[#FF6B6B] hover:text-[#FF6B6B]/80 transition-colors flex items-center gap-1.5 text-[12px]"
                 aria-label="Remove this role"
               >
                 <Trash2 className="w-4 h-4" />
@@ -189,7 +189,7 @@ function RoleSection({
 
         {/* Title */}
         <div className="flex flex-col">
-          <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center justify-between mb-2">
             <Label className={labelStyles}>{isFirst ? "Role" : "New role"}</Label>
             <span className={cn(
               "text-[11px]",
@@ -234,7 +234,7 @@ function RoleSection({
                   experienceIdToEnd: isChecked ? existingCurrentRoleId : undefined,
                 })
               }}
-              className="mt-0.5 w-[18px] h-[18px] rounded-[4px] border-2 border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+              className="mt-0.5 w-[18px] h-[18px] rounded-[4px] border-2 border-border dark:border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=checked]:text-primary-foreground"
             />
             <label
               htmlFor={`endCurrentRole-${index}`}
@@ -257,7 +257,7 @@ function RoleSection({
             <Textarea
               value={role.description}
               onChange={(e) => set("description", e.target.value)}
-              className="w-full min-h-[48px] bg-card border-border text-foreground placeholder-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus-visible:border-primary/50 focus-visible:outline-none transition-all shadow-none"
+              className="w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none"
               placeholder="Describe your work, impact, or achievements"
             />
           </div>
@@ -308,7 +308,7 @@ function RoleSection({
         </div>
 
         {/* Start date */}
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <Label className={labelStyles}>Start date</Label>
           <div className="grid grid-cols-2 gap-6">
             <Select value={role.startMonth} onValueChange={(v) => set("startMonth", v)}>
@@ -341,7 +341,7 @@ function RoleSection({
         </div>
 
         {/* End date */}
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <Label className={labelStyles}>End date</Label>
           <div className="grid grid-cols-2 gap-6">
             <Select
@@ -405,7 +405,7 @@ function RoleSection({
                 ...update,
               })
             }}
-            className="w-[18px] h-[18px] rounded-[4px] border-2 border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+            className="w-[18px] h-[18px] rounded-[4px] border-2 border-border dark:border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=checked]:text-primary-foreground"
           />
           <label
             htmlFor={`currentlyWorking-${index}`}
@@ -422,7 +422,7 @@ function RoleSection({
             <Textarea
               value={role.description}
               onChange={(e) => set("description", e.target.value)}
-              className="w-full min-h-[48px] bg-card border-border text-foreground placeholder-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus-visible:border-primary/50 focus-visible:outline-none transition-all shadow-none"
+              className="w-full min-h-[48px] bg-card border border-border text-foreground placeholder:text-muted-foreground rounded-[16px] px-[16px] py-[12px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] resize-none focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all shadow-none"
               placeholder="Describe your work, impact, or achievements"
             />
           </div>
@@ -446,12 +446,10 @@ export default function AddExperienceForm({
   const isEditing = !!initialExperiences && initialExperiences.length > 0
   const firstExp = initialExperiences?.[0]
 
-  const [company, setCompany] = useState(
-    companyName ?? firstExp?.company_name ?? ""
-  )
-  const [orgId, setOrgId] = useState<string | null>(firstExp?.org_id ?? null)
-  const [logoUrl, setLogoUrl] = useState<string | null>(firstExp?.logo_url ?? null)
-  const [location, setLocation] = useState(firstExp?.location ?? "")
+  const [company, setCompany] = useState(() => companyName ?? firstExp?.company_name ?? "")
+  const [orgId, setOrgId] = useState<string | null>(() => firstExp?.org_id ?? null)
+  const [logoUrl, setLogoUrl] = useState<string | null>(() => firstExp?.logo_url ?? null)
+  const [location, setLocation] = useState(() => firstExp?.location ?? "")
   const [roles, setRoles] = useState<RoleFormState[]>(() =>
     initialExperiences && initialExperiences.length > 0
       ? initialExperiences.map(mapToRole)
@@ -467,16 +465,21 @@ export default function AddExperienceForm({
 
   // Sync state when initialExperiences changes
   useEffect(() => {
-    const exp = initialExperiences?.[0]
-    setCompany(companyName ?? exp?.company_name ?? "")
-    setOrgId(exp?.org_id ?? null)
-    setLogoUrl(exp?.logo_url ?? null)
-    setLocation(exp?.location ?? "")
-    setRoles(
-      initialExperiences && initialExperiences.length > 0
-        ? initialExperiences.map(mapToRole)
-        : [emptyRole()]
-    )
+    if (initialExperiences && initialExperiences.length > 0) {
+      const exp = initialExperiences[0]
+      setCompany(companyName ?? exp.company_name ?? "")
+      setOrgId(exp.org_id ?? null)
+      setLogoUrl(exp.logo_url ?? null)
+      setLocation(exp.location ?? "")
+      setRoles(initialExperiences.map(mapToRole))
+    } else {
+      setCompany(companyName ?? "")
+      setOrgId(null)
+      setLogoUrl(null)
+      setLocation("")
+      setRoles([emptyRole()])
+    }
+    setDeletedRoleIds([])
     setFieldErrors({})
     setFieldWarnings({})
     setActiveRoleIndex(0)
@@ -842,8 +845,8 @@ export default function AddExperienceForm({
   }
 
   const inputStyles =
-    "bg-white border-[#E5E7EB] placeholder-[#6B7280] rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left"
-  const labelStyles = "text-[14px] font-medium text-[#111827] mb-1.5"
+    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE]"
+  const labelStyles = "block font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-foreground mb-2"
 
   const modalTitle = isEditing ? "Edit experience" : "Add experience"
 

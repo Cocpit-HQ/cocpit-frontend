@@ -5,6 +5,7 @@ import { Loader2, X, ChevronDown, Building2, Plus } from "lucide-react";
 import { searchOrganizations, OrganizationSuggestion } from "@/services/api/organization";
 import { useDebounce } from "@/hooks/use-debounce";
 import styles from "./LocationAutocomplete.module.css";
+import { cn } from "@/lib/utils";
 
 interface SchoolAutocompleteProps {
   onSelect: (schoolId: string | null, schoolName: string) => void;
@@ -142,7 +143,7 @@ export default function SchoolAutocomplete({ onSelect, selectedId, selectedName 
   return (
     <div ref={wrapperRef} className={styles.wrapper}>
       <div
-        className={styles.inputWrapper}
+        className={cn(styles.inputWrapper, open && styles.isOpen)}
         onClick={handleWrapperClick}
         style={{ cursor: "pointer" }}
       >

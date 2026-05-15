@@ -96,7 +96,7 @@ export function ContactInfoModal({ isOpen, onClose, user, isOwnProfile = false }
                 <div className="relative bg-card rounded-[24px] p-[24px] pt-[32px] w-full shadow-sm flex flex-col outline-none">
                     <button 
                         onClick={onClose}
-                        className="absolute top-6 right-6 p-1 text-destructive hover:bg-destructive/10 rounded-full transition-colors z-10"
+                        className="absolute top-6 right-6 p-1 text-[#FF6B6B] hover:bg-[#FF6B6B]/10 rounded-full transition-colors z-10"
                     >
                         <X className="w-5 h-5" />
                     </button>

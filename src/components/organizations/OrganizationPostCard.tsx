@@ -146,18 +146,20 @@ export function OrganizationPostCard({ post, onLike, onDelete, onEdit, isOwner }
                 </div>
 
                 {/* Interactions Footer */}
-                <div className="pt-3 border-t border-border/50 flex items-center gap-4 text-muted-foreground">
-                    <div className="flex items-center gap-1.5 text-xs font-medium">
-                        <ThumbsUp className={`w-3.5 h-3.5 ${post.isLiked ? 'fill-primary text-primary' : ''}`} />
-                        <span>{post.likes}</span>
+                <div className="pt-3 border-t border-border/50 flex items-center justify-between w-full text-muted-foreground">
+                    <div className="flex items-center gap-[16px]">
+                        <div className="flex items-center gap-1.5 text-xs font-medium">
+                            <ThumbsUp className={`w-3.5 h-3.5 ${post.isLiked ? 'fill-primary text-primary' : ''}`} size={16} />
+                            <span>{post.likes}</span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-xs font-medium">
+                            <MessageCircle className="w-3.5 h-3.5" size={16} />
+                            <span>{post.comments}</span>
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-1.5 text-xs font-medium">
-                        <MessageCircle className="w-3.5 h-3.5" />
-                        <span>{post.comments}</span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 text-xs font-medium ml-auto">
                         <span className="text-[10px] uppercase tracking-wide opacity-70">
                             {post.visibility || 'Public'}
                         </span>

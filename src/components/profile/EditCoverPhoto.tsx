@@ -306,7 +306,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
       setIsModalOpen(open);
       if (!open) handleCancelPreview();
     }}>
-      <DialogContent className="p-0 shadow-none max-w-[800px] outline-none">
+      <DialogContent className="p-0 shadow-none max-w-[800px] sm:rounded-[24px] outline-none">
         <div className="relative bg-card rounded-[24px] p-[16px] w-[800px] max-w-full flex flex-col outline-none">
           {/* Close button will be handled by global DialogPrimitive.Close */}
 
@@ -360,7 +360,7 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
                 <button
                   onClick={handleDelete}
                   disabled={isDeleting || !coverImage}
-                  className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-50"
+                  className="p-1.5 text-[#FF6B6B] hover:bg-[#FF6B6B]/10 rounded-md transition-colors disabled:opacity-50"
                 >
                   {isDeleting ? <Loader2 className="w-6 h-6 animate-spin" strokeWidth={1.5} /> : <Icon icon="fluent:delete-32-regular" className="w-6 h-6" />}
                 </button>

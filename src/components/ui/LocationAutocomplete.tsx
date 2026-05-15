@@ -18,6 +18,14 @@ export default function LocationAutocomplete({ onSelect, value }: LocationAutoco
   const [open, setOpen] = useState(false);
   const debouncedQuery = useDebounce(query, 300);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Sync external value if it changes
+  useEffect(() => {
+    if (value !== query) {
+      setQuery(value ?? "");
+    }
+  }, [value]);
 
   // Fetch suggestions when debounced query changes
   useEffect(() => {
@@ -93,7 +101,7 @@ export default function LocationAutocomplete({ onSelect, value }: LocationAutoco
   return (
     <div ref={wrapperRef} className={styles.wrapper}>
       <div
-        className={styles.inputWrapper}
+        className={`${styles.inputWrapper} ${open ? styles.isOpen : ''}`}
         onClick={handleWrapperClick}
         style={{ cursor: "pointer" }}
       >

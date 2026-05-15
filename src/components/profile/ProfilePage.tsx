@@ -82,7 +82,7 @@ const routes: Record<string, string> = {
   jobs: "/jobs",
   analytics: "/analytics",
 }
-const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?: boolean, onDelete?: (id: string) => void }) => {
+const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility }: { post: Post, isOwnPost?: boolean, onDelete?: (id: string) => void, onToggleVisibility?: (id: string) => void }) => {
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likesCount, setLikesCount] = useState(Number(post.likes) || 0);
   const [isSaved, setIsSaved] = useState(post.is_saved || false);
@@ -149,6 +149,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
     try {
       const updated = await updatePost(localPost.id, { visibility: newVisibility });
       setLocalPost(mapProfilePostToPost(updated));
+      onToggleVisibility?.(localPost.id);
       toast.success(`Post is now ${newVisibility}`);
     } catch (err) {
       toast.error("Failed to update privacy");
@@ -258,10 +259,10 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
                 {isOwnPost && (
                   <DropdownMenuItem
                     onClick={() => onDelete?.(localPost.id)}
-                    className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-red-50 focus:text-red-600 text-red-500 rounded-xl outline-none transition-colors"
+                    className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-red-50 focus:text-[#FF6B6B] text-[#FF6B6B] rounded-xl outline-none transition-colors"
                   >
                     <span className="text-[14px] font-[family-name:var(--font-poppins)]">Delete post</span>
-                    <Icon icon="hugeicons:delete-02" className="w-6 h-6 text-red-500" style={{ strokeWidth: '1.5px' }} />
+                    <Icon icon="hugeicons:delete-02" className="w-6 h-6 text-[#FF6B6B]" style={{ strokeWidth: '1.5px' }} />
                   </DropdownMenuItem>
                 )}
               </div>
@@ -333,23 +334,24 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete }: { post: Post, isOwnPost?
       {/* Interaction Footer (Frame 2608574) */}
       <div className="w-full h-[40px] px-4 py-2 mt-auto border-t border-border">
         {/* Frame 2608620 */}
-        <div className="flex items-center justify-between gap-1 h-[24px]">
-          <button onClick={handleLike} className="flex items-center gap-1 min-w-0 flex-shrink-0">
-            <Icon icon={isLiked ? "solar:like-bold" : "solar:like-broken"} className={cn("w-5 h-5", isLiked ? "text-[#6366F1]" : "text-foreground")} />
-            <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{likesCount}</span>
-          </button>
-          <Link href={`/post/${localPost.id}?comments=true`} className="flex items-center gap-1 min-w-0 flex-shrink-0">
-            <Icon icon="hugeicons:comment-01" className="w-5 h-5 text-foreground" />
-            <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.comments || 0}</span>
-          </Link>
-          <button onClick={handleRepost} className="flex items-center gap-1 min-w-0 flex-shrink-0">
-            <Icon icon="hugeicons:repost" className="w-5 h-5 text-foreground" />
-            <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.shares || 0}</span>
-          </button>
-          <button onClick={handleShare} className="flex items-center gap-1 min-w-0 flex-shrink-0">
-            <Icon icon="fluent:share-16-regular" className="w-5 h-5 text-foreground" />
-            <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">3</span>
-          </button>
+        <div className="flex items-center justify-between w-full h-[24px]">
+          <div className="flex items-center gap-[16px]">
+            <button onClick={handleLike} className="flex items-center gap-1 min-w-0 flex-shrink-0">
+              <Icon icon={isLiked ? "solar:like-bold" : "solar:like-broken"} className={cn("w-5 h-5", isLiked ? "text-[#6366F1]" : "text-foreground")} />
+              <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{likesCount}</span>
+            </button>
+            <Link href={`/post/${localPost.id}?comments=true`} className="flex items-center gap-1 min-w-0 flex-shrink-0">
+              <Icon icon="hugeicons:comment-01" className="w-5 h-5 text-foreground" />
+              <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.comments || 0}</span>
+            </Link>
+            <button onClick={handleRepost} className="flex items-center gap-1 min-w-0 flex-shrink-0">
+              <Icon icon="hugeicons:repost" className="w-5 h-5 text-foreground" />
+              <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.shares || 0}</span>
+            </button>
+            <button onClick={handleShare} className="flex items-center min-w-0 flex-shrink-0">
+              <Icon icon="fluent:share-16-regular" className="w-5 h-5 text-foreground" />
+            </button>
+          </div>
           <button onClick={handleBookmark} className="flex-shrink-0">
             <Icon
               icon={isSaved ? "solar:bookmark-bold" : "solar:bookmark-linear"}
@@ -497,11 +499,7 @@ export default function ProfilePage() {
   }, [previewPosts]);
 
   const handleToggleVisibility = useCallback((id: string) => {
-    setPreviewPosts(prev => prev.map(post =>
-      post.id === id
-        ? { ...post, visibility: post.visibility === 'private' ? 'public' : 'private' }
-        : post
-    ));
+    setPreviewPosts(prev => prev.filter(post => post.id !== id));
     togglePostVisibility(id);
   }, [togglePostVisibility]);
 
@@ -526,7 +524,7 @@ export default function ProfilePage() {
     setIsSavingSkills(true);
     try {
       const normalizedNewSkills = newSkills.map(s => s.trim()).filter(s => s !== "");
-      
+
       // Deduplicate new skills case-insensitively to prevent any accidental duplicates
       const uniqueNewSkills: string[] = [];
       for (const skill of normalizedNewSkills) {
@@ -737,7 +735,7 @@ export default function ProfilePage() {
         {isLoading ? (
           <ProfileSkeleton />
         ) : (
-          <div className="overflow-hidden relative bg-card md:rounded-[24px] rounded-none border-none outline-none pb-8 md:pb-0 dark:bg-[#0B0F19]">
+          <div className="overflow-hidden relative bg-card md:rounded-[24px] rounded-none border-none outline-none pb-8 md:pb-0">
 
             <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage}>
               <div className="absolute top-3 right-3 md:hidden z-10">
@@ -801,7 +799,7 @@ export default function ProfilePage() {
                 </div>
 
 
-                <div className="hidden md:flex flex-col items-end mt-12 pr-[16px]">
+                <div className="hidden md:flex flex-col items-end mt-[59px] pr-[16px]">
                   <button
                     onClick={() => setIsContactInfoModalOpen(true)}
                     className="text-[14px] font-medium text-muted-foreground hover:text-primary transition-colors font-[family-name:var(--font-poppins)]"
@@ -890,9 +888,9 @@ export default function ProfilePage() {
 
                     return (
                       <div className="flex items-center gap-2 flex-nowrap">
-                        <div className="flex items-center gap-[10px] px-[16px] py-[8px] bg-primary-tint rounded-[24px] border border-primary/20 flex-shrink-0 w-fit h-[36px]">
-                          <Icon icon="solar:buildings-linear" className="w-5 h-5 text-primary-tint-foreground" />
-                          <span className="text-[12px] font-normal text-primary-tint-foreground leading-[16px] font-[family-name:var(--font-poppins)] whitespace-nowrap">
+                        <div className="flex items-center gap-[10px] px-[16px] py-[8px] bg-primary-tint rounded-[24px] border border-transparent flex-shrink-0 w-fit h-[36px]">
+                          <Icon icon="solar:buildings-linear" className="w-5 h-5" style={{ color: 'var(--pill-text-refined)' }} />
+                          <span className="text-[12px] font-normal leading-[16px] font-[family-name:var(--font-poppins)] whitespace-nowrap" style={{ color: 'var(--pill-text-refined)' }}>
                             {visibleRoles[0].role} at {visibleRoles[0].name}
                           </span>
                         </div>
@@ -1070,11 +1068,11 @@ export default function ProfilePage() {
 
             {/* Posts Section */}
             <div
-              className="w-full md:w-[960px] mx-auto bg-transparent mt-[16px] transition-all duration-500 ease-in-out overflow-hidden"
+              className="w-full md:max-w-[960px] mx-auto bg-transparent mt-[16px] transition-all duration-500 ease-in-out overflow-hidden"
               style={{ minHeight: '564px' }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between pt-4 pb-4 px-4 md:px-10">
+              <div className="flex items-center justify-between pt-4 pb-4 px-4 md:pl-10 md:pr-4">
                 <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Post</h2>
                 {previewPosts.length > 3 && (
                   <button
@@ -1097,6 +1095,7 @@ export default function ProfilePage() {
                       post={post}
                       isOwnPost={!isCompany}
                       onDelete={handleDeletePost}
+                      onToggleVisibility={handleToggleVisibility}
                     />
                   </div>
                 ))}
@@ -1105,11 +1104,11 @@ export default function ProfilePage() {
 
             {/* Skills Section */}
             <div
-              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-card-inner border border-card-border-inner transition-all duration-500 ease-in-out overflow-hidden"
+              className="w-full md:max-w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-card-inner border border-card-border-inner transition-all duration-500 ease-in-out overflow-hidden"
             >
               <div className="pt-[16px] pb-[40px] flex flex-col gap-[32px]">
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 md:px-10">
+                <div className="flex items-center justify-between px-4 md:pl-10 md:pr-4">
                   <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Skills</h2>
                   <button
                     onClick={() => setIsAddSkillModalOpen(true)}
@@ -1120,9 +1119,9 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Skills Nested Card Wrapper */}
-                <div className="px-4 md:px-10">
+                <div className="px-4 md:pl-10 md:pr-4">
                   <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[100px] flex items-center p-8">
-                    <div className="flex flex-wrap gap-[16px]">
+                    <div className="flex flex-wrap gap-[40px]">
                       {skills.map((skill: any, index) => {
                         const skillName = skill.name || (typeof skill === 'string' ? skill : '');
                         if (!skillName) return null;
@@ -1145,11 +1144,11 @@ export default function ProfilePage() {
             {/* Experience Section */}
             <div
               id="experience-section"
-              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-card-inner border border-card-border-inner transition-all duration-500 ease-in-out overflow-hidden"
+              className="w-full md:max-w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-card-inner border border-card-border-inner transition-all duration-500 ease-in-out overflow-hidden"
             >
               <div className="pt-[16px] pb-[40px] flex flex-col gap-[32px]">
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 md:px-10">
+                <div className="flex items-center justify-between px-4 md:pl-10 md:pr-4">
                   <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Experience</h2>
                   <button
                     onClick={() => { setEditingExperiences(null); setIsAddExperienceModalOpen(true); }}
@@ -1160,8 +1159,8 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Experience Nested Card Wrapper */}
-                <div className="px-4 md:px-10">
-                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[72px] pl-[40px] py-8 pr-6">
+                <div className="px-4 md:pl-10 md:pr-4">
+                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[72px] pl-[40px] py-8 pr-4">
                     <div className="flex flex-col gap-[16px]">
                       {(isExperienceExpanded ? experiences : experiences.slice(0, 2)).map((group, gIdx) => (
                         <EditableExperienceGroup
@@ -1193,11 +1192,11 @@ export default function ProfilePage() {
             {/* Education Section */}
             <div
               id="education-section"
-              className="w-full md:w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-card-inner border border-card-border-inner transition-all duration-500 ease-in-out overflow-hidden"
+              className="w-full md:max-w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-card-inner border border-card-border-inner transition-all duration-500 ease-in-out overflow-hidden"
             >
               <div className="pt-[16px] pb-[40px] flex flex-col gap-[32px]">
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 md:px-10">
+                <div className="flex items-center justify-between px-4 md:pl-10 md:pr-4">
                   <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Education</h2>
                   <button
                     onClick={() => { setEditingEducation(null); setIsAddEducationModalOpen(true); }}
@@ -1208,8 +1207,8 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Education Nested Card Wrapper */}
-                <div className="px-4 md:px-10">
-                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[72px] pl-[40px] py-8 pr-6">
+                <div className="px-4 md:pl-10 md:pr-4">
+                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[72px] pl-[40px] py-8 pr-4">
                     <div className="flex flex-col gap-[16px]">
                       {(isEducationExpanded ? educations : educations.slice(0, 2)).map((edu, index) => (
                         <EditableEducationItem
@@ -1255,7 +1254,7 @@ export default function ProfilePage() {
       />
 
       <Dialog open={isAddExperienceModalOpen} onOpenChange={setIsAddExperienceModalOpen}>
-        <DialogContent className="p-0 shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
+        <DialogContent className="p-0 shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full sm:rounded-[24px] outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
           <DialogTitle className="sr-only">Add Experience</DialogTitle>
           <DialogDescription className="sr-only">Fill in the details to add or edit experience records on your profile.</DialogDescription>
           <AddExperienceForm
@@ -1276,7 +1275,7 @@ export default function ProfilePage() {
       </Dialog>
 
       <Dialog open={isAddEducationModalOpen} onOpenChange={setIsAddEducationModalOpen}>
-        <DialogContent className="p-0 shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
+        <DialogContent className="p-0 shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full sm:rounded-[24px] outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
           <DialogTitle className="sr-only">Add Education</DialogTitle>
           <DialogDescription className="sr-only">Fill in the details to add a new education record to your profile.</DialogDescription>
           <AddEducationForm

@@ -264,7 +264,7 @@ export function EditAvatarModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="p-0 max-w-none sm:max-w-[600px] h-[100dvh] sm:h-auto w-full outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
+      <DialogContent className="p-0 max-w-none sm:max-w-[600px] h-[100dvh] sm:h-auto w-full sm:rounded-[24px] outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
         <div className="relative bg-card rounded-none sm:rounded-[24px] p-4 sm:p-[32px] w-full h-full sm:h-auto shadow-none flex flex-col outline-none overflow-y-auto overflow-x-hidden">
           {/* Close button handled by global DialogPrimitive.Close */}
 
@@ -335,7 +335,7 @@ export function EditAvatarModal({
                 <button
                   onClick={handleDelete}
                   disabled={isDeleting || !currentAvatarUrl}
-                  className="p-1.5 text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-50"
+                  className="p-1.5 text-[#FF6B6B] hover:bg-[#FF6B6B]/10 rounded-md transition-colors disabled:opacity-50"
                 >
                   {isDeleting ? <Loader2 className="w-6 h-6 animate-spin" strokeWidth={1.5} /> : <Icon icon="fluent:delete-32-regular" className="w-6 h-6" />}
                 </button>

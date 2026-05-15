@@ -89,7 +89,7 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
   };
 
   return (
-    <div className="flex flex-col items-start p-4 w-[560px] bg-[#FFFFFFFF] border border-[#EEF2FF] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] rounded-[24px] mb-6 relative">
+    <div className="flex flex-col items-start p-4 w-[560px] bg-card border border-border shadow-sm rounded-[24px] mb-6 relative">
       {/* Header */}
       <div className="flex flex-row justify-between items-center w-full h-10 px-0">
         <div className="flex items-center gap-2">
@@ -101,8 +101,8 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
             />
           </div>
           <div className="flex flex-col">
-            <span className="font-[family-name:var(--font-poppins)] font-semibold text-[16px] text-black leading-tight">{post.author}</span>
-            <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-[#6B7280]">{post.isCompanyPost ? 'Organization' : 'designer'}</span>
+            <span className="font-[family-name:var(--font-poppins)] font-semibold text-[16px] text-foreground leading-tight">{post.author}</span>
+            <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground">{post.isCompanyPost ? 'Organization' : 'designer'}</span>
           </div>
         </div>
 
@@ -209,20 +209,20 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
 
       <div className="w-full mt-4">
         <div className="px-0 mb-2">
-          <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-black">
+          <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-foreground break-words whitespace-pre-wrap">
             {post.content}
           </p>
         </div>
 
         <div className="flex items-center px-0 gap-2 mb-4">
-          <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-[#6B7280]">{post.location || 'Kolhapur'}</span>
-          <span className="text-[#6B7280]">•</span>
-          <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-[#6B7280]">{post.timeAgo || '6 days ago'}</span>
+          <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground">{post.location || 'Kolhapur'}</span>
+          <span className="text-muted-foreground">•</span>
+          <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground">{post.timeAgo || '6 days ago'}</span>
         </div>
 
         {/* Shared Post Content */}
         {post.shared_post && (
-          <div className="w-full border border-[#EEF2FF] rounded-[16px] p-3 mt-2 mb-4 bg-white">
+          <div className="w-full border border-border rounded-[16px] p-3 mt-2 mb-4 bg-card">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 rounded-full overflow-hidden bg-[#D9D9D9] relative flex-shrink-0">
                 <img
@@ -232,7 +232,7 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
                 />
               </div>
               <div className="flex flex-col">
-                <span className="font-[family-name:var(--font-poppins)] font-semibold text-[14px] text-black truncate max-w-[200px]">
+                <span className="font-[family-name:var(--font-poppins)] font-semibold text-[14px] text-foreground truncate max-w-[200px]">
                   {post.shared_post.author}
                 </span>
                 <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-[#6B7280]">
@@ -240,7 +240,7 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
                 </span>
               </div>
             </div>
-            <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-black line-clamp-3">
+            <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-foreground break-words line-clamp-3">
               {post.shared_post.content}
             </p>
             {(post.shared_post.images && post.shared_post.images.length > 0 || post.shared_post.imageSrc) && (
@@ -271,15 +271,15 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
           </div>
         )}
 
-        <div className="pt-3 px-0 mb-4 border-t border-[#EEF2FF]">
-          <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-black">
+        <div className="pt-3 px-0 mb-4 border-t border-border">
+          <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-foreground">
             Liked by <span className="font-semibold">Jhon</span> and <span className="font-semibold">others</span>
           </p>
         </div>
 
         {/* Interaction Bar */}
         <div className="flex justify-between items-center px-0 w-full h-10">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-[16px]">
             <div
               onClick={(e) => { e.stopPropagation(); onLike?.(); }}
               className="flex items-center gap-1.5 cursor-pointer group"
@@ -289,10 +289,10 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
                 strokeWidth={1.5}
                 className={cn(
                   "transition-all",
-                  post.isLiked ? "text-[#6366F1] fill-[#6366F1]" : "text-[#000000] group-hover:text-[#6366F1]"
+                  post.isLiked ? "text-primary fill-primary" : "text-foreground group-hover:text-primary"
                 )}
               />
-              <span className="font-[family-name:var(--font-poppins)] text-[12px] text-[#000000]">{post.likes || 0}</span>
+              <span className="font-[family-name:var(--font-poppins)] text-[12px] text-foreground">{post.likes || 0}</span>
             </div>
             <div
               onClick={handleToggleComments}
@@ -304,23 +304,22 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
                 height="20"
                 className={cn(
                   "transition-all",
-                  showComments ? "text-[#6366F1]" : "text-[#000000] group-hover:text-[#6366F1]"
+                  showComments ? "text-primary" : "text-foreground group-hover:text-primary"
                 )}
               />
-              <span className="font-[family-name:var(--font-poppins)] text-[12px] text-[#000000]">{commentsCount}</span>
+              <span className="font-[family-name:var(--font-poppins)] text-[12px] text-foreground">{commentsCount}</span>
             </div>
             <div className="flex items-center gap-1.5 cursor-pointer group">
-              <Icon icon="hugeicons:repost" width="20" height="20" className={cn("transition-all", post.shared_post ? "text-[#6366F1]" : "text-[#000000] group-hover:text-[#6366F1]")} />
-              <span className="font-[family-name:var(--font-poppins)] text-[12px] text-[#000000]">{post.shares || 0}</span>
+              <Icon icon="hugeicons:repost" width="20" height="20" className={cn("transition-all", post.shared_post ? "text-primary" : "text-foreground group-hover:text-primary")} />
+              <span className="font-[family-name:var(--font-poppins)] text-[12px] text-foreground">{post.shares || 0}</span>
             </div>
-            <div className="flex items-center gap-1.5 cursor-pointer group">
-              <Icon icon="fluent:share-16-regular" width="20" height="20" className="text-[#000000] group-hover:text-[#6366F1] transition-all" />
-              <span className="font-[family-name:var(--font-poppins)] text-[12px] text-[#000000]">0</span>
+            <div className="flex items-center cursor-pointer group">
+              <Icon icon="fluent:share-16-regular" width="20" height="20" className="text-foreground group-hover:text-primary transition-all" />
             </div>
           </div>
           <div
             onClick={(e) => { e.stopPropagation(); onSave?.(); }}
-            className="cursor-pointer group"
+            className="flex items-center cursor-pointer group"
           >
             <Icon
               icon={post.is_saved ? "solar:bookmark-bold" : "solar:bookmark-linear"}
@@ -479,21 +478,21 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
   }, [userId, activeTab, profileData, isProfileLoading])
 
   return (
-    <div className="min-h-screen bg-white flex justify-center py-10 px-4">
+    <div className="min-h-screen bg-background flex justify-center py-10 px-4">
       <div className="flex flex-col w-[592px]">
         {/* Fixed Header Section (Non-scrollable) */}
-        <div className="w-full bg-white z-20 p-4 pb-6 flex flex-col gap-6 border-b border-slate-50">
+        <div className="w-full bg-background z-20 p-4 pb-6 flex flex-col gap-6 border-b border-transparent">
           {/* Navigation Header */}
           <div className="w-full flex items-center gap-4">
             <button
               onClick={() => router.back()}
-              className="w-[48px] h-[48px] flex items-center justify-center rounded-full border border-[#DADADA] bg-white/80 backdrop-blur-[12px] hover:bg-slate-50 transition-colors shadow-[0px_4px_12px_rgba(0,0,0,0.03)] outline-none flex-shrink-0"
+              className="w-[48px] h-[48px] flex items-center justify-center rounded-full border border-border bg-background/80 backdrop-blur-[12px] hover:bg-accent transition-colors shadow-sm outline-none flex-shrink-0"
             >
-              <ChevronLeft size={24} className="text-[#6B7280]" strokeWidth={1.5} />
+              <ChevronLeft size={24} className="text-muted-foreground" strokeWidth={1.5} />
             </button>
             <div className="flex flex-col">
-              <h1 className="font-[family-name:var(--font-poppins)] font-medium text-[18px] text-black leading-[26px]">Post activity</h1>
-              <span className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-[#6B7280] leading-[16px]">Track your Interactions</span>
+              <h1 className="font-[family-name:var(--font-poppins)] font-medium text-[18px] text-foreground leading-[26px]">Post activity</h1>
+              <span className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-muted-foreground leading-[16px]">Track your Interactions</span>
             </div>
           </div>
 

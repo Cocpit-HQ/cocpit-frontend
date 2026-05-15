@@ -238,7 +238,7 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                                             onClick={() => setLocalImages(prev => prev.filter((_, i) => i !== idx))}
                                             className="absolute bottom-4 right-4 w-10 h-10 bg-card rounded-full flex items-center justify-center shadow-lg hover:bg-secondary transition-colors z-10"
                                         >
-                                            <Trash2 className="w-5 h-5 text-destructive" />
+                                            <Trash2 className="w-5 h-5 text-[#FF6B6B]" />
                                         </button>
                                     </div>
                                 </div>

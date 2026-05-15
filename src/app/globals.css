@@ -114,6 +114,7 @@
 
     --primary-tint: #EEF2FF;
     --primary-tint-foreground: #6366F1;
+    --pill-text-refined: #6366F1;
 
     --card-shadow-inner: 0px 0px 4px rgba(99, 102, 241, 0.05);
     --card-border-inner: transparent;
@@ -152,6 +153,8 @@
 
     --card-shadow-inner: 0px 0px 4px 0px rgba(99, 102, 241, 0.05);
     --card-border-inner: transparent;
+    --pill-text-refined: #F9FAFB;
+    --pill-border-refined: #F9FAFB;
   }
 
   [data-theme="light"] {
@@ -194,6 +197,7 @@
 
     --primary-tint: #EEF2FF;
     --primary-tint-foreground: #6366F1;
+    --pill-text-refined: #6366F1;
 
     --card-shadow-inner: 0px 0px 4px 0px #6366F10D;
     --card-border-inner: transparent;
@@ -213,7 +217,7 @@
     --accent-primary: #6366F1;
     --accent-secondary: #818CF8;
     --text-heading: #F9FAFB;
-    --text-body: #94A3B8;
+    --text-body: #9CA3AF;
     --text-muted: #4B607A;
     --border-subtle: #1C2840;
     --border-card: #232F45;
@@ -246,7 +250,7 @@
     --secondary-foreground: #F1F5F9;
 
     --muted: #1A2236;
-    --muted-foreground: #94A3B8;
+    --muted-foreground: #9CA3AF;
 
     --accent: #1A2236;
     --accent-foreground: #F1F5F9;
@@ -279,6 +283,7 @@
 
     --primary-tint: #1A2236;
     --primary-tint-foreground: #818CF8;
+    --pill-text-refined: #F9FAFB;
 
     --card-shadow-inner: 0px 0px 4px 0px rgba(99, 102, 241, 0.05);
     --card-border-inner: transparent;
@@ -1013,3 +1018,12 @@
     --background: #242b3d;
   }
 }
+
+/* ── Pill Border Variable Overrides ─────────────────────── */
+:root, [data-theme="light"] {
+  --pill-border-refined: transparent;
+}
+
+[data-theme="dark"], [data-theme="navy"] {
+  --pill-border-refined: #F9FAFB;
+}

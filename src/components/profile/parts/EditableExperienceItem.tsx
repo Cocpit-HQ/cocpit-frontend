@@ -43,20 +43,24 @@ export function EditableExperienceItem({
 
                 {/* Info block */}
                 <div className="flex-1 min-w-0">
-                    <div className="flex flex-col gap-1">
-                        <h3 className="text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
+                    <div className="flex flex-col">
+                        <h3 className="text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] text-foreground mb-[8px]">
                             {experience.title}
                         </h3>
-                        <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground line-clamp-2">
-                            {experience.description}
-                        </p>
-                        <div className="mt-1 flex flex-col gap-0.5">
-                            <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+                        {experience.description && (
+                            <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground line-clamp-2 mb-[10px]">
+                                {experience.description}
+                            </p>
+                        )}
+                        <div className="flex flex-col gap-[8px]">
+                            <p className="text-[12px] leading-[16px] tracking-normal text-center font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
                                 {experience.company_name}
                             </p>
-                            <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
-                                {experience.location}
-                            </p>
+                            {experience.location && (
+                                <p className="text-[12px] leading-[16px] tracking-normal text-center font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+                                    {experience.location}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>

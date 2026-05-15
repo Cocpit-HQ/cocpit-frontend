@@ -56,9 +56,9 @@ export function ProfileSwitcher({ showArrow = false, customTrigger, align = "end
                     </Button>
                 )}
             </DropdownMenuTrigger>
-            <DropdownMenuContent 
-                className="w-[320px] h-auto pt-2 pb-2 px-2 flex flex-col gap-2 rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-0 border-[#EEF2FF] shadow-[0px_4px_20px_rgba(99,102,241,0.1)] font-[family-name:var(--font-poppins)]" 
-                align={align} 
+            <DropdownMenuContent
+                className="w-[320px] h-auto pt-2 pb-2 px-2 flex flex-col gap-2 rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-0 border-[#EEF2FF] shadow-[0px_4px_20px_rgba(99,102,241,0.1)] font-[family-name:var(--font-poppins)]"
+                align={align}
                 forceMount
             >
                 <div className="flex items-center justify-between">

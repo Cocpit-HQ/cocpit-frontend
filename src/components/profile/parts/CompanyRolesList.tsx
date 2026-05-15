@@ -69,10 +69,11 @@ export const CompanyRolesList = React.memo(function CompanyRolesList({ roles, is
                             onClick={() => onRoleClick(filteredRoles[0])}
                             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors border 
                                 ${filteredRoles[0].is_role_visible || isOwnProfile
-                                    ? "bg-[#EEF2FF] text-[#6366F1] border-[#E0E7FF]"
+                                    ? "bg-[#EEF2FF] border-transparent"
                                     : "bg-muted text-muted-foreground border-border hover:bg-muted/80"}
                                 ${!filteredRoles[0].is_role_visible && isOwnProfile ? "opacity-60 dashed border-dashed" : ""}
                             `}
+                            style={filteredRoles[0].is_role_visible || isOwnProfile ? { color: 'var(--pill-text-refined)' } : {}}
                         >
                             <Building2 className="w-3.5 h-3.5" />
                             <span>{filteredRoles[0].role} at {filteredRoles[0].name}</span>
@@ -123,10 +124,11 @@ export const CompanyRolesList = React.memo(function CompanyRolesList({ roles, is
                                 onClick={() => onRoleClick(role)}
                                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors border max-w-full text-left
                                     ${role.is_role_visible || isOwnProfile
-                                        ? "bg-[#EEF2FF] text-[#6366F1] border-[#E0E7FF]"
+                                        ? "bg-[#EEF2FF] border-transparent"
                                         : "bg-muted text-muted-foreground border-border hover:bg-muted/80"}
                                     ${!role.is_role_visible && isOwnProfile ? "opacity-60 dashed border-dashed" : ""}
                                 `}
+                                style={role.is_role_visible || isOwnProfile ? { color: 'var(--pill-text-refined)' } : {}}
                             >
                                 <Building2 className="w-3.5 h-3.5 shrink-0" />
                                 <span className="truncate">{role.role} at {role.name}</span>

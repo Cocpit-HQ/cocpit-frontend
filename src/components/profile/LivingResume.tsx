@@ -100,7 +100,7 @@ export function LivingResume({ experiences, skills, resumeName, resumeUrl }: Liv
         <div className="flex items-center gap-3">
           {/* PDF File Chip */}
           {resumeName && (
-            <div className="flex flex-row items-center justify-center gap-[10px] w-[148px] h-[40px] px-[16px] py-[8px] rounded-[24px] border border-border bg-primary-tint transition-colors box-border flex-none order-0 flex-grow-0">
+            <div className="flex flex-row items-center justify-center gap-[10px] w-[148px] h-[40px] px-[16px] py-[8px] rounded-[24px] border border-border transition-colors box-border flex-none order-0 flex-grow-0">
               <Icon icon="material-icon-theme:pdf" width={24} height={24} className="flex-shrink-0 text-muted-foreground grayscale opacity-80" />
               <span className="font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-muted-foreground truncate flex-1 min-w-0">{resumeName}</span>
               <button
@@ -109,8 +109,8 @@ export function LivingResume({ experiences, skills, resumeName, resumeUrl }: Liv
                 className="w-6 h-6 flex items-center justify-center transition-colors flex-shrink-0 hover:opacity-80 cursor-pointer disabled:opacity-50"
                 title="Remove"
               >
-                <div className="w-5 h-5 rounded-full border-[1.5px] border-destructive flex items-center justify-center">
-                  <X className="w-3 h-3 text-destructive stroke-[4px]" />
+                <div className="w-5 h-5 rounded-full border-[1.5px] border-[#FF6B6B] flex items-center justify-center">
+                  <X className="w-3 h-3 text-[#FF6B6B] stroke-[4px]" />
                 </div>
               </button>
             </div>

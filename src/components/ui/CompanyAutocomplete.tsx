@@ -129,7 +129,7 @@ export default function CompanyAutocomplete({
   return (
     <div ref={wrapperRef} className={styles.wrapper}>
       <div 
-        className={`${styles.inputWrapper} min-h-[48px]`} 
+        className={`${styles.inputWrapper} ${open ? styles.isOpen : ''} min-h-[48px]`} 
         onClick={handleWrapperClick}
         style={{ cursor: "text" }}
       >

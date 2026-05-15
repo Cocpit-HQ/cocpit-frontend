@@ -3,6 +3,7 @@
 import React from "react";
 import { Experience, ExperienceGroup } from "@/types/entities";
 import { Icon } from "@iconify/react";
+import { RoleSelectionPopup } from "./RoleSelectionPopup";
 
 interface EditableExperienceGroupProps {
   group: ExperienceGroup;
@@ -86,23 +87,23 @@ function RoleRow({
         </div>
         {/* Middle Section: Roles and Details */}
         <div className="flex-1 min-w-0">
-          <div className="flex flex-col gap-1">
-            <h3 className="text-[16px] leading-[22px] font-semibold font-[family-name:var(--font-poppins)] text-[#111827]">
+          <div className="flex flex-col">
+            <h3 className="text-[16px] leading-[22px] font-semibold font-[family-name:var(--font-poppins)] text-foreground mb-[8px]">
               {experience.title}
             </h3>
 
             {experience.description && (
-              <p className="text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-[#374151] line-clamp-2">
+              <p className="text-[12px] leading-[16px] tracking-normal font-normal font-[family-name:var(--font-poppins)] text-foreground line-clamp-2 mb-[10px]">
                 {experience.description}
               </p>
             )}
 
-            <div className="flex flex-col gap-0.5">
-              <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280]">
+            <div className="flex flex-col gap-[8px]">
+              <p className="text-[12px] leading-[16px] tracking-normal  font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
                 {experience.company_name}
               </p>
               {experience.location && (
-                <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-[#6B7280]">
+                <p className="text-[12px] leading-[16px] tracking-normal  font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
                   {experience.location}
                 </p>
               )}
@@ -112,39 +113,37 @@ function RoleRow({
       </div>
 
       {/* Right Column: Metadata + Edit Button (Fixed 220px) */}
-      <div className="flex items-start flex-shrink-0 w-[220px] ml-auto">
-        <div className="flex flex-col items-end w-full">
-          <div className="flex flex-col items-start p-0 gap-[8px] mx-auto w-[130px]">
+      <div className="flex flex-row items-start justify-end flex-shrink-0 w-[220px] gap-[16px] ml-auto">
+        <div className="flex flex-col items-start p-0 gap-[8px] w-[130px]">
 
             {/* Row 1: Date range */}
             <div className="flex flex-row items-center gap-[8px]">
-              <span className="w-[60px] h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-[#6B7280] whitespace-nowrap flex-none">
+              <span className="w-[60px] h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap flex-none">
                 {formatDate(experience.start_date)}
               </span>
-              <span className="w-[9px] h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-center text-[#6B7280] flex-none">
+              <span className="w-[9px] h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-center text-muted-foreground flex-none">
                 -
               </span>
-              <span className="w-[75px] h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-[#6B7280] whitespace-nowrap flex-grow">
+              <span className="w-[75px] h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap flex-grow">
                 {experience.end_date ? formatDate(experience.end_date) : 'Present'}
               </span>
             </div>
 
             {/* Row 2: Work type and mode */}
             <div className="flex flex-row items-center gap-[8px]">
-              <span className="w-[60px] h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-[#6B7280] whitespace-nowrap flex-none">
+              <span className="w-[60px] h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap flex-none">
                 {experience.work_type || 'Full time'}
               </span>
-              <span className="w-[9px] h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-center text-[#6B7280] flex-none">
+              <span className="w-[9px] h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-center text-muted-foreground flex-none">
                 -
               </span>
-              <span className="w-[75px] h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-[#6B7280] whitespace-nowrap flex-grow">
+              <span className="w-[75px] h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap flex-grow">
                 {experience.work_mode || 'Remote'}
               </span>
             </div>
 
-          </div>
         </div>
-        <div className="w-8 flex justify-end flex-shrink-0">
+        <div className="w-[32px] flex justify-end flex-shrink-0">
           {isFirst && (
             <button
               onClick={onEdit}
@@ -153,7 +152,7 @@ function RoleRow({
             >
               <Icon
                 icon="eva:edit-outline"
-                className="w-[24px] h-[24px] text-[#6B7280] stroke-[1.5px] group-hover:text-[#111827] transition-colors"
+                className="w-[24px] h-[24px] text-muted-foreground stroke-[1.5px] group-hover:text-primary transition-colors"
               />
             </button>
           )}
@@ -168,22 +167,24 @@ export function EditableExperienceGroup({
   onEdit,
 }: EditableExperienceGroupProps) {
   const [isExpanded, setIsExpanded] = React.useState(false);
+  const [showRoleSelector, setShowRoleSelector] = React.useState(false);
+
   const hasMore = group.experiences.length > 2;
   const displayedExperiences = isExpanded ? group.experiences : group.experiences.slice(0, 2);
 
   return (
-    <div className="flex flex-col py-8">
+    <div className="flex flex-col py-4">
       {displayedExperiences.map((exp, index) => (
         <React.Fragment key={`${exp.experience_id}-${index}`}>
           {index > 0 && (
             <div className="relative h-12 w-full">
               <div className="absolute left-[76px] top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center h-[24px] pointer-events-none">
                 {/* The vertical line */}
-                <div className="w-[1px] h-full bg-[#6B7280] relative">
+                <div className="w-[1px] h-full bg-muted-foreground relative">
                   {/* Top dot centered on the start of the line */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[4px] h-[4px] rounded-full bg-[#6B7280]" />
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[4px] h-[4px] rounded-full bg-muted-foreground" />
                   {/* Bottom dot centered on the end of the line */}
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-[4px] h-[4px] rounded-full bg-[#6B7280]" />
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-[4px] h-[4px] rounded-full bg-muted-foreground" />
                 </div>
               </div>
             </div>
@@ -191,7 +192,13 @@ export function EditableExperienceGroup({
           <div className="w-full">
             <RoleRow
               experience={exp}
-              onEdit={() => onEdit(exp)}
+              onEdit={() => {
+                if (group.experiences.length === 1) {
+                  onEdit(exp);
+                } else {
+                  setShowRoleSelector(true);
+                }
+              }}
               isFirst={index === 0}
               logoUrl={group.logo_url}
             />
@@ -208,6 +215,18 @@ export function EditableExperienceGroup({
             {isExpanded ? "See less" : "See more"}
           </button>
         </div>
+      )}
+
+      {showRoleSelector && (
+        <RoleSelectionPopup
+          roles={group.experiences}
+          logoUrl={group.logo_url}
+          onSelect={(role) => {
+            setShowRoleSelector(false);
+            onEdit(role);
+          }}
+          onClose={() => setShowRoleSelector(false)}
+        />
       )}
     </div>
   );

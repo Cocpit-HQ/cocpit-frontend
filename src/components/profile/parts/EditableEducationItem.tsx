@@ -30,12 +30,12 @@ export function EditableEducationItem({
 
                 {/* Info block */}
                 <div className="flex-1 min-w-0">
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-[8px]">
                         <h3 className="text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
                             {education.school_name}
                         </h3>
 
-                        <div className="flex flex-col gap-0.5">
+                        <div className="flex flex-col gap-[8px]">
                             <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
                                 {education.degree}
                             </p>

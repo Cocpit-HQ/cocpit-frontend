@@ -333,7 +333,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                           visible_role_ids: checked ? [orgId!] : []
                         }));
                       }}
-                      className="w-[18px] h-[18px] bg-card rounded-[4px] border-[1.5px] border-[#000000] data-[state=checked]:bg-[#6366F1] data-[state=checked]:border-[#6366F1]"
+                      className="w-[18px] h-[18px] bg-card rounded-[4px] border-2 border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=checked]:text-primary-foreground"
                     />
                     <Label htmlFor={`role-${orgId}`} className="text-[14px] leading-[20px] font-normal text-foreground font-[family-name:var(--font-poppins)] cursor-pointer">
                       Show <span className="text-primary font-normal">"{role.role} at {role.name}"</span> on profile

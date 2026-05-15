@@ -122,3 +122,84 @@
 .sidebar__business-btn:active {
   @apply translate-y-0;
 }
+
+/* ============================================
+   Dark Mode Overrides
+   ============================================ */
+
+[data-theme="dark"] .sidebar,
+[data-theme="navy"] .sidebar {
+  background-color: #0B0F19;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .sidebar__section-title,
+[data-theme="navy"] .sidebar__section-title {
+  color: #9CA3AF;
+}
+
+[data-theme="dark"] .sidebar__item,
+[data-theme="navy"] .sidebar__item {
+  color: #9CA3AF;
+}
+
+[data-theme="dark"] .sidebar__item .sidebar__item-label,
+[data-theme="navy"] .sidebar__item .sidebar__item-label {
+  color: #9CA3AF;
+}
+
+[data-theme="dark"] .sidebar__item .sidebar__item-icon,
+[data-theme="navy"] .sidebar__item .sidebar__item-icon {
+  color: #9CA3AF;
+}
+
+[data-theme="dark"] .sidebar__item:hover,
+[data-theme="navy"] .sidebar__item:hover,
+[data-theme="dark"] .sidebar__item--active,
+[data-theme="navy"] .sidebar__item--active {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 8px 16px;
+  gap: 8px;
+  width: 200px;
+  height: 40px;
+  background: #818CF8;
+  border-right: 3px solid #F9FAFB;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: #F9FAFB;
+}
+
+[data-theme="dark"] .sidebar__item:hover .sidebar__item-label,
+[data-theme="navy"] .sidebar__item:hover .sidebar__item-label,
+[data-theme="dark"] .sidebar__item--active .sidebar__item-label,
+[data-theme="navy"] .sidebar__item--active .sidebar__item-label {
+  font-family: var(--font-poppins), 'Poppins', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  color: #F9FAFB;
+}
+
+[data-theme="dark"] .sidebar__item:hover .sidebar__item-icon,
+[data-theme="navy"] .sidebar__item:hover .sidebar__item-icon,
+[data-theme="dark"] .sidebar__item--active .sidebar__item-icon,
+[data-theme="navy"] .sidebar__item--active .sidebar__item-icon {
+  width: 24px;
+  height: 24px;
+  color: #F9FAFB;
+}
+
+[data-theme="dark"] .sidebar__business-btn,
+[data-theme="navy"] .sidebar__business-btn {
+  background-color: #1F2937;
+  color: #9CA3AF;
+  border-color: #374151;
+}
+
+[data-theme="dark"] .sidebar__business-btn:hover,
+[data-theme="navy"] .sidebar__business-btn:hover {
+  background-color: #374151;
+  color: #ffffff;
+}

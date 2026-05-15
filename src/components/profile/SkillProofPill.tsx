@@ -37,7 +37,7 @@ export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly =
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>
           <div className="skill-chip group relative cursor-pointer gap-2">
-            <span className="group-hover:text-destructive">
+            <span className="group-hover:text-[#FF6B6B]">
               {skill}
             </span>
 
@@ -61,7 +61,7 @@ export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly =
                 }}
                 className="hidden group-hover:flex items-center justify-center ml-1"
               >
-                <Icon icon="fluent:delete-32-regular" className="w-[24px] h-[24px] text-destructive" />
+                <Icon icon="fluent:delete-32-regular" className="w-[24px] h-[24px] text-[#FF6B6B]" />
               </div>
             )}
           </div>
