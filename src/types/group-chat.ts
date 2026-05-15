@@ -1,7 +1,9 @@
 export interface GroupDetails {
     conversation_id: string;
     conversation_name: string;
+    headline?: string;
     description?: string;
+    group_headline?: string;
     group_avatar?: string;
     admin_id: string;
     created_at: string;
@@ -40,6 +42,6 @@ export interface GroupInvitation {
 
 export interface CreateGroupPayload {
     name: string;
-    description: string;
+    description?: string;
     members: string[]; // user IDs
 }

@@ -7,7 +7,7 @@ interface AvatarProps {
     url?: string
     fallbackGradient?: string
     name: string
-    size?: 'sm' | 'md' | 'lg' | 'xl'
+    size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
     online?: boolean
     className?: string
 }
@@ -27,6 +27,7 @@ export default function Avatar({
     const [error, setError] = useState(false)
 
     const sizeClasses = {
+        xs: "w-6 h-6",
         sm: "w-8 h-8",
         md: "w-10 h-10",
         lg: "w-12 h-12",
@@ -34,6 +35,7 @@ export default function Avatar({
     }
 
     const indicatorSize = {
+        xs: "w-1.5 h-1.5",
         sm: "w-2 h-2",
         md: "w-2.5 h-2.5",
         lg: "w-3 h-3",

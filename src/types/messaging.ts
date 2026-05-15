@@ -17,6 +17,7 @@ export interface BackendChat {
   is_blocked_by_other?: boolean;
   last_message_at?: string; // Added
   is_deleted_user?: boolean; // Added for deleted user handling
+  is_requesting?: boolean;
 }
 
 export interface BackendMessage {
@@ -82,6 +83,7 @@ export interface ChatThread {
   // Session indicator fields (company mode)
   sessionStatus?: 'mine' | 'other' | 'unclaimed' | null
   sessionHandlerName?: string
+  is_requesting?: boolean;
 }
 
 export interface Message {

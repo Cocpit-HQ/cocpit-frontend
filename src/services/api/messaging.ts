@@ -109,3 +109,22 @@ export const takeoverSession = async (conversationId: string, companyId: string)
   const response = await api.post('/company-chat-sessions/takeover', { conversationId });
   return response.data;
 };
+
+export const searchUsersForMessaging = async (query?: string, cursor?: string, limit?: number) => {
+  const params: Record<string, string | number> = {};
+  if (query) params.q = query;
+  if (cursor) params.cursor = cursor;
+  if (limit !== undefined) params.limit = limit;
+  const response = await api.get("/messaging/search/users", { params });
+  return response.data as { success: boolean; data: any[]; nextCursor: string | null; hasMore: boolean };
+};
+
+export const acceptChatRequest = async (conversationId: string) => {
+  const response = await api.put(`/conversations/${conversationId}/accept`);
+  return response.data;
+};
+
+export const declineChatRequest = async (conversationId: string) => {
+  const response = await api.put(`/conversations/${conversationId}/decline`);
+  return response.data;
+};
