@@ -15,3 +15,13 @@ export const markAllNotificationsRead = async (_companyId?: string) => {
     const response = await api.patch("/notifications/read-all");
     return response.data;
 };
+
+export const deleteNotification = async (id: string, companyId?: string) => {
+    const response = await api.delete(`/notifications/${id}`, { params: { companyId } });
+    return response.data;
+};
+
+export const deleteNotifications = async (ids: string[], companyId?: string) => {
+    const response = await api.delete(`/notifications/bulk`, { data: { ids, companyId } });
+    return response.data;
+};

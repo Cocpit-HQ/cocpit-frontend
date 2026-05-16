@@ -4,7 +4,7 @@ export interface UserStatusPayload {
 }
 
 export interface NotificationPayload {
-  type: 'message' | 'system' | 'company_job' | 'company_event' | 'company_post' | 'company_announcement';
+  type: 'message' | 'system' | 'company_job' | 'company_event' | 'company_post' | 'company_announcement' | 'post_tag';
   from?: string; // Sender User ID
   senderName?: string;
   senderAvatar?: string;
@@ -16,6 +16,11 @@ export interface NotificationPayload {
   actor_slug?: string;
   text?: string;
   reference_id?: string;
+  referenceId?: string;
+  metadata?: {
+    post_id?: string;
+    [key: string]: unknown;
+  };
 }
 
 export interface ErrorPayload {
