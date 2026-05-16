@@ -641,7 +641,7 @@ export const HomeHeader = () => {
                     {/* Mobile Icons */}
                     {!isSearchFocused && (
                         <div className="flex items-center gap-1">
-                            <NotificationPopover 
+                            <NotificationPopover
                                 className={`relative flex items-center justify-center transition-colors hover:bg-muted hover:text-foreground ${isNotificationsActive || isPopoverOpen ? 'bg-primary/10 text-primary w-14 h-10 px-4 py-2 rounded-[24px]' : 'text-muted-foreground p-2 rounded-full'}`}
                                 icon={<Bell className="w-5 h-5" />}
                                 onOpenChange={setIsPopoverOpen}

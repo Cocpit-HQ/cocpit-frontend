@@ -176,7 +176,7 @@ export default function NotificationsPage() {
               </div>
             </div>
 
-            <TabsList className="flex flex-row justify-start bg-transparent p-0 gap-3 border-none h-auto overflow-x-auto pb-2 -mb-2">
+            <TabsList className="flex flex-row justify-start bg-transparent p-0 gap-3 border-none h-auto overflow-x-auto pb-2 -mb-2 scrollbar-hide">
             <TabsTrigger 
               value="all" 
               className="rounded-full px-5 py-2 border data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-500 data-[state=active]:border-indigo-50 data-[state=inactive]:bg-background data-[state=inactive]:text-indigo-400 data-[state=inactive]:border-indigo-400 data-[state=active]:shadow-none data-[state=inactive]:shadow-none"
