@@ -10,12 +10,22 @@ import { searchHashtags, HashtagSuggestion } from '@/services/api/hashtags';
 import { SearchedUser } from '@/types/user';
 import { ProfileSwitcher } from '@/components/layout/ProfileSwitcher';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Hash, Plus } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 
 export const HomeHeader = () => {
     const router = useRouter();
+    const pathname = usePathname();
+    const isNotificationsActive = pathname === '/notifications';
+    const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+    // Reset popover-open state when navigating away from /notifications
+    // so the active pill style doesn't get stuck after "See all" navigation
+    useEffect(() => {
+        if (pathname !== '/notifications') {
+            setIsPopoverOpen(false);
+        }
+    }, [pathname]);
     const { setActiveModal } = useUIStore();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<SearchedUser[]>([]);
@@ -419,8 +429,9 @@ export const HomeHeader = () => {
 
                         <div className="flex items-center gap-4 text-muted-foreground">
                             <NotificationPopover
-                                className="relative rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                className={`relative flex items-center justify-center transition-colors  ${isNotificationsActive || isPopoverOpen ? 'bg-primary/10 text-primary w-14 h-10 px-4 py-2 rounded-[24px]' : 'text-muted-foreground p-2 rounded-full'}`}
                                 icon={<Bell width={20} height={20} strokeWidth={1.5} />}
+                                onOpenChange={setIsPopoverOpen}
                             />
                             <Link
                                 href="/messaging"
@@ -630,7 +641,11 @@ export const HomeHeader = () => {
                     {/* Mobile Icons */}
                     {!isSearchFocused && (
                         <div className="flex items-center gap-1">
-                            <NotificationPopover />
+                            <NotificationPopover 
+                                className={`relative flex items-center justify-center transition-colors hover:bg-muted hover:text-foreground ${isNotificationsActive || isPopoverOpen ? 'bg-primary/10 text-primary w-14 h-10 px-4 py-2 rounded-[24px]' : 'text-muted-foreground p-2 rounded-full'}`}
+                                icon={<Bell className="w-5 h-5" />}
+                                onOpenChange={setIsPopoverOpen}
+                            />
                             <Link
                                 href="/messaging"
                                 className="p-2 rounded-full transition-colors text-muted-foreground"

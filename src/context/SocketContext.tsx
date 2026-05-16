@@ -238,6 +238,37 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           ),
           duration: 5000,
         });
+      } else if (payload.type === 'post_tag') {
+        const taggedBy = payload.senderName || payload.actor_name || 'Someone';
+        const senderAvatar = payload.senderAvatar || payload.actor_avatar;
+        const notifText = payload.text || `${taggedBy} tagged you in a post`;
+        const postId = payload.referenceId || payload.reference_id || payload.metadata?.post_id;
+
+        toast({
+          title: "Tagged in a post",
+          description: (
+            <div
+              className="flex items-center gap-3 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => {
+                if (postId) {
+                  router.push(`/post/${postId}`);
+                } else {
+                  router.push('/notifications');
+                }
+              }}
+            >
+              {senderAvatar && (
+                <Avatar
+                  name={taggedBy}
+                  url={senderAvatar}
+                  size="sm"
+                />
+              )}
+              <span className="text-sm">{notifText}</span>
+            </div>
+          ),
+          duration: 5000,
+        });
       } else {
         toast({
           title: "New Notification",
