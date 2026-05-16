@@ -166,18 +166,16 @@ export default function MessagingPage() {
     };
   }, [isCompanyMode, companyId, chats.length, user?.id]); // Only re-run when company mode changes or chat count changes
 
-  // Handle userId param to start a new chat or select existing
-  useEffect(() => {
-    const userId = searchParams.get("userId");
-    const groupId = searchParams.get("groupId");
-    const conversationId = searchParams.get("conversationId");
+    // Handle userId param to start a new chat or select existing
+    useEffect(() => {
+      const userId = searchParams.get("userId");
+      const groupId = searchParams.get("groupId");
+      const conversationId = searchParams.get("conversationId");
 
-    if (isLoading) return;
 
     // Handle conversationId param (from notification click) — works for all chat types
     if (conversationId) {
-      if (conversationId === processedUserIdRef.current) return;
-      const targetChat = chats.find((c) => c.id === conversationId);
+      const targetChat = chats.find((c) => String(c.id) === String(conversationId));
       if (targetChat) {
         setSelectedChat(targetChat);
         processedUserIdRef.current = conversationId;
@@ -232,36 +230,43 @@ export default function MessagingPage() {
 
       if (groupId) {
         if (groupId === processedUserIdRef.current) return;
-        const groupChat = chats.find((c) => c.id === groupId);
+        const groupChat = chats.find((c) => String(c.id) === String(groupId));
         if (groupChat) {
           setSelectedChat(groupChat);
           processedUserIdRef.current = groupId;
         }
+        return;
       }
-      // Do NOT auto-select first chat or handle plain userId for company
-      return;
+      
+      // If we have a userId but no companyId match, don't return early.
+      // Let the regular userId logic below handle it.
+      if (!userId) return;
     }
 
     // Helper to safely set selected chat if different
     const safelySetSelectedChat = (chat: ChatThread | null) => {
       setSelectedChat((prev) => {
-        if (prev?.id === chat?.id) return prev;
+        if (prev?.id === chat?.id) {
+          // For draft chats, we also need to check otherUserId
+          if (chat?.id === "new" && prev?.otherUserId !== chat?.otherUserId) {
+            return chat;
+          }
+          return prev;
+        }
         return chat;
       });
     };
 
     if (userId) {
-      if (userId === processedUserIdRef.current) return;
-
-      const existingChat = chats.find((c) => c.otherUserId === userId);
+      const existingChat = chats.find(
+        (c) => 
+          String(c.otherUserId) === String(userId) || 
+          String(c.otherUserSlug) === String(userId),
+      );
 
       if (existingChat) {
         safelySetSelectedChat(existingChat);
-        processedUserIdRef.current = userId;
       } else {
-        // Prevent repeated fetching for the same new user
-        if (processedUserIdRef.current === userId) return;
-
         // No existing chat, fetch user details to create a draft
         const fetchUserAndCreateDraft = async () => {
           if (!userId || userId === "null" || userId === "undefined") return;
@@ -281,7 +286,6 @@ export default function MessagingPage() {
               online: false,
             };
             safelySetSelectedChat(newChat);
-            processedUserIdRef.current = userId;
           } catch (err) {
             console.error("Failed to fetch user details for new chat", err);
           }
@@ -289,18 +293,13 @@ export default function MessagingPage() {
         fetchUserAndCreateDraft();
       }
     } else if (groupId) {
-      if (groupId === processedUserIdRef.current) return;
-
-      const groupChat = chats.find((c) => c.id === groupId);
+      const groupChat = chats.find((c) => String(c.id) === String(groupId));
       if (groupChat) {
         safelySetSelectedChat(groupChat);
         processedUserIdRef.current = groupId;
       }
-    } else if (!userId && !groupId) {
-      // Only set to null if we don't have a chat selected already (to avoid clearing it during background polling)
-      // Actually, if there's no query param, we should just let the user stay on the currently selected chat if they selected one manually.
-      // But if they just navigated to /messaging (e.g. from another tab), it will load with selectedChat = null initially.
-      // We do not want to auto-select chats[0].
+    } else if (!userId && !groupId && !conversationId) {
+      processedUserIdRef.current = null;
     }
   }, [searchParams, chats, isMobile, isLoading, activeProfile]); // Added activeProfile
 
@@ -694,29 +693,22 @@ export default function MessagingPage() {
                     <path d="M8 8h5" />
                   </svg>
                 </div>
-                {activeProfile?.type === "COMPANY" ? (
+                {isLoading || searchParams.get("userId") || searchParams.get("groupId") || searchParams.get("conversationId") ? (
                   <>
                     <p className="font-semibold text-foreground text-[17px] tracking-tight mb-2">
-                      Company Messages
+                      Opening your chat...
                     </p>
                     <p className="text-[13px] text-muted-foreground/80 max-w-[260px] leading-relaxed">
-                      Select a conversation to start messaging as{" "}
-                      <span className="font-medium text-foreground">
-                        {activeProfile.name}
-                      </span>
+                      Please wait while we prepare your conversation
                     </p>
                   </>
                 ) : (
                   <>
                     <p className="font-semibold text-foreground text-[17px] tracking-tight mb-2">
-                      {isLoading
-                        ? "Loading..."
-                        : "Select a conversation to start messaging"}
+                      Select a conversation to start messaging
                     </p>
                     <p className="text-[13px] text-muted-foreground/80 max-w-[260px] leading-relaxed">
-                      {isLoading
-                        ? ""
-                        : "Chats from your network and requests will appear here"}
+                      Chats from your network and requests will appear here
                     </p>
                   </>
                 )}

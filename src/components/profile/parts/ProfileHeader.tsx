@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { MessageCircle, UserPlus, UserCheck, CheckCircle, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ProfileIdentityChips } from "@/components/profile/ProfileIdentityChips";
@@ -11,11 +11,12 @@ import { User } from "@/types/user";
 import { ConnectionButton } from "@/components/profile/ConnectionButton";
 import { CompanyRolesList } from "./CompanyRolesList";
 import { SendOfferDialog } from "./SendOfferDialog";
-import { UniversalShareModal } from "@/components/share/UniversalShareModal";
+import CocpitShareProfile from "@/shared/commonComponents/cocpitshareprofile";
 import { Share2, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ReportModal } from "@/components/shared/ReportModal";
 import { Flag } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ProfileHeaderProps {
     user: User;
@@ -47,6 +48,7 @@ import { MoreVertical, Ban } from "lucide-react";
 import { useSocial } from "@/context/SocialContext";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { getMyConnections, getFollowers, getFollowing } from "@/services/api/social";
 
 // ... existing component props ...
 
@@ -65,6 +67,23 @@ export const ProfileHeader = React.memo(function ProfileHeader({
     const [showBlockDialog, setShowBlockDialog] = useState(false);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    // Fetch following list for share modal
+    const { data: followingData = [] } = useQuery({
+        queryKey: ['following', user.id],
+        queryFn: () => getFollowing(user.id),
+        staleTime: 1000 * 60 * 5,
+    });
+
+    const shareUsers = useMemo(() =>
+        followingData.map((f: any) => ({
+            id: f.following_id,
+            name: f.full_name,
+            avatar: f.avatar_url || undefined,
+        })),
+        [followingData]
+    );
 
     // Read connection status directly from the same cache as ConnectionButton
     const { data: relationship } = useQuery<any>({
@@ -93,7 +112,7 @@ export const ProfileHeader = React.memo(function ProfileHeader({
     };
 
     return (
-        <div className="max-w-[960px] w-full mx-auto rounded-[24px] overflow-hidden border mb-4 relative bg-card border-border">
+        <div className="max-w-[998px] w-full mx-auto rounded-[24px] overflow-hidden border mb-4 relative bg-card border-border">
 
             {/* Block Confirmation Dialog */}
             <AlertDialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
@@ -169,9 +188,12 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                         ) : null}
 
                         {/* Dropdown Menu for More Actions */}
-                        <DropdownMenu>
+                        <DropdownMenu onOpenChange={setIsMenuOpen}>
                             <DropdownMenuTrigger asChild>
-                                <button className="bg-background hover:bg-muted text-foreground border border-input p-2 rounded-lg transition-colors flex items-center justify-center">
+                                <button className={cn(
+                                    "hover:bg-muted border border-input p-2 rounded-lg transition-colors flex items-center justify-center transition-all",
+                                    isMenuOpen ? "bg-[#EEF2FF] text-[#6366F1] border-transparent" : "bg-background text-foreground"
+                                )}>
                                     <MoreVertical className="w-5 h-5" />
                                 </button>
                             </DropdownMenuTrigger>
@@ -201,7 +223,7 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                                     <LinkIcon className="w-4 h-4 mr-2" />
                                     Copy Profile Link
                                 </DropdownMenuItem>
-                                 {!isOwnProfile && (
+                                {!isOwnProfile && (
                                     <>
                                         <DropdownMenuItem onClick={() => setIsReportModalOpen(true)} className="cursor-pointer">
                                             <Flag className="w-4 h-4 mr-2" />
@@ -277,16 +299,14 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                 isOwnProfile={isOwnProfile}
             />
 
-            <UniversalShareModal
+            <CocpitShareProfile
                 isOpen={isShareModalOpen}
                 onClose={() => setIsShareModalOpen(false)}
-                entityId={user.id}
-                entityType="profile"
-                entityName={user.name}
-                entityUrl={`/profile/${user.account_name || user.id}`}
-                entityAvatar={user.avatar}
-                entityHeadline={user.headline}
-                entityLocation={user.location}
+                users={shareUsers}
+                onShare={(selectedIds) => {
+                    console.log("Shared profile with:", selectedIds);
+                    setIsShareModalOpen(false);
+                }}
             />
 
             <ReportModal

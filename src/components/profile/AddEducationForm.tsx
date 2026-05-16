@@ -1,12 +1,12 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { Education } from "@/types/entities"
 import { Checkbox } from "@/components/ui/checkbox"
-import { X } from "lucide-react"
+import { AlertTriangle, X } from "lucide-react"
 import { Icon } from '@iconify/react'
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
@@ -26,6 +26,7 @@ interface AddEducationFormProps {
   onDelete?: (id: string) => void
   isDark?: boolean
   initialData?: Education | null
+  existingEducations?: Education[]
 }
 
 const months = [
@@ -36,7 +37,7 @@ const months = [
 const currentYear = new Date().getFullYear()
 const years = Array.from({ length: 60 }, (_, i) => (currentYear - i).toString())
 
-export default function AddEducationForm({ onCancel, onSave, onDelete, initialData }: AddEducationFormProps) {
+export default function AddEducationForm({ onCancel, onSave, onDelete, initialData, existingEducations = [] }: AddEducationFormProps) {
   const [formData, setFormData] = useState(() => {
     if (initialData) {
       const start = dayjs(initialData.start_date)
@@ -67,6 +68,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     }
   })
   const [stillStudying, setStillStudying] = useState(!!initialData && !initialData.end_date)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (initialData) {
@@ -99,10 +101,62 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
       })
       setStillStudying(false)
     }
+    setFieldErrors({})
   }, [initialData])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const existingCurrentEducation = useMemo(() => {
+    return existingEducations.find(education =>
+      education.education_id !== initialData?.education_id &&
+      !education.end_date
+    ) || null
+  }, [existingEducations, initialData])
+
+  const validate = () => {
+    const errors: Record<string, string> = {}
+
+    if (!formData.school_name.trim()) {
+      errors.school_name = "Education is required"
+    }
+
+    if (!formData.degree.trim()) {
+      errors.degree = "Qualification is required"
+    }
+
+    if (!formData.startMonth || !formData.startYear) {
+      errors.startDate = "Start date is required"
+    }
+
+    const startMonthIdx = months.indexOf(formData.startMonth)
+    const startDate = formData.startYear && startMonthIdx !== -1
+      ? dayjs(`${formData.startYear}-${startMonthIdx + 1}-01`).format("YYYY-MM-DD")
+      : ""
+
+    if (!stillStudying) {
+      if (!formData.endMonth || !formData.endYear) {
+        errors.endDate = "End date is required when not currently studying here"
+      } else {
+        const endMonthIdx = months.indexOf(formData.endMonth)
+        const endDate = formData.endYear && endMonthIdx !== -1
+          ? dayjs(`${formData.endYear}-${endMonthIdx + 1}-01`).format("YYYY-MM-DD")
+          : ""
+
+        if (startDate && endDate && endDate <= startDate) {
+          errors.endDate = "End date must be after start date"
+        }
+      }
+    }
+
+    if (stillStudying && existingCurrentEducation) {
+      errors.currentEducation = `Overlaps with existing current education: "${existingCurrentEducation.school_name}"`
+    }
+
+    setFieldErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault()
+    if (!validate()) return
 
     // Combine month/year into YYYY-MM-DD
     const startMonthIdx = months.indexOf(formData.startMonth)
@@ -127,7 +181,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     })
   }
 
-  const inputStyles = "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-foreground focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE]"
+  const inputStyles = "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"
   const labelStyles = "block font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-foreground mb-2"
 
   const getSelectTextColor = (value: string) => value ? "text-foreground" : "text-muted-foreground";
@@ -189,7 +243,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                 <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.degree))}>
                   <SelectValue placeholder="e.g. MBA" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent>
                   <SelectItem value="High School">High School</SelectItem>
                   <SelectItem value="Associate's">Associate's</SelectItem>
                   <SelectItem value="Bachelor's">Bachelor's</SelectItem>
@@ -212,7 +266,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                 <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.field_of_study))}>
                   <SelectValue placeholder="e.g. Finance" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent>
                   <SelectItem value="Computer Science">Computer Science</SelectItem>
                   <SelectItem value="Business">Business</SelectItem>
                   <SelectItem value="Finance">Finance</SelectItem>
@@ -238,10 +292,10 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                 value={formData.startMonth}
                 onValueChange={(val) => setFormData(prev => ({ ...prev, startMonth: val }))}
               >
-                <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.startMonth))}>
+                <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.startMonth), fieldErrors.startDate && "border-red-400")}>
                   <SelectValue placeholder="Month" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent>
                   {months.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -249,29 +303,34 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                 value={formData.startYear}
                 onValueChange={(val) => setFormData(prev => ({ ...prev, startYear: val }))}
               >
-                <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.startYear))}>
+                <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.startYear), fieldErrors.startDate && "border-red-400")}>
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent>
                   {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
+            {fieldErrors.startDate && (
+              <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" />{fieldErrors.startDate}
+              </p>
+            )}
           </div>
 
           {/* End Date */}
-          <div className="space-y-2">
-            <Label className={labelStyles}>End date</Label>
+          <div className={cn("space-y-2", stillStudying && "opacity-50")}>
+            <Label className={cn(labelStyles, stillStudying && "text-muted-foreground")}>End date</Label>
             <div className="grid grid-cols-2 gap-6">
               <Select
                 value={formData.endMonth}
                 onValueChange={(val) => setFormData(prev => ({ ...prev, endMonth: val }))}
                 disabled={stillStudying}
               >
-                <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.endMonth))}>
+                <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.endMonth), fieldErrors.endDate && "border-red-400")}>
                   <SelectValue placeholder="Month" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent>
                   {months.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -280,14 +339,19 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                 onValueChange={(val) => setFormData(prev => ({ ...prev, endYear: val }))}
                 disabled={stillStudying}
               >
-                <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.endYear))}>
+                <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.endYear), fieldErrors.endDate && "border-red-400")}>
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent>
                   {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
+            {fieldErrors.endDate && (
+              <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" />{fieldErrors.endDate}
+              </p>
+            )}
           </div>
 
           {/* Still Studying Checkbox */}
@@ -295,7 +359,13 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
             <Checkbox
               id="stillStudying"
               checked={stillStudying}
-              onCheckedChange={(checked) => setStillStudying(checked as boolean)}
+              onCheckedChange={(checked) => {
+                const isChecked = checked as boolean
+                setStillStudying(isChecked)
+                if (isChecked) {
+                  setFormData(prev => ({ ...prev, endMonth: "", endYear: "" }))
+                }
+              }}
               className="w-[18px] h-[18px] rounded-[4px] border-2 border-border dark:border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=checked]:text-primary-foreground"
             />
             <label
@@ -305,6 +375,11 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
               I currently study here
             </label>
           </div>
+          {fieldErrors.currentEducation && (
+            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" />{fieldErrors.currentEducation}
+            </p>
+          )}
 
           {/* Details Textarea */}
           <div className="flex flex-col">

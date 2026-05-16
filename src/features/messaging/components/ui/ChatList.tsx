@@ -20,11 +20,10 @@ import Avatar from "@/components/shared/Avatar"
 const TagChip = ({ active, label, hasIndicator, onClick }: { active: boolean, label: string, hasIndicator?: boolean, onClick: () => void }) => (
   <button
     onClick={onClick}
-    className={`flex flex-row justify-center items-center px-[16px] py-[6px] gap-[8px] h-[32px] rounded-[24px] flex-none order-0 ${
-      active
+    className={`flex flex-row justify-center items-center px-[16px] py-[6px] gap-[8px] h-[32px] rounded-[24px] flex-none order-0 ${active
         ? "bg-[#EEF2FF] border border-[#EEF2FF]"
         : "bg-transparent border border-[#6366F1]"
-    }`}
+      }`}
   >
     <span className={`h-[20px] font-['Poppins'] font-medium text-[14px] leading-[20px] flex items-center text-center tracking-[0.1px] text-[#6366F1] flex-none order-0`}>
       {label}
@@ -140,14 +139,14 @@ export function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], i
           {/* Left Group — Avatar + Text */}
           <div className="flex flex-row items-center p-0 gap-[8px]">
             <div className="w-[32px] h-[32px] flex-none">
-              <Avatar 
-                url={(activeProfile as any)?.avatar || session?.user?.image} 
-                name={activeProfile?.name || session?.user?.name || "User"} 
-                size="sm" 
+              <Avatar
+                url={(activeProfile as any)?.avatar || session?.user?.image}
+                name={activeProfile?.name || session?.user?.name || "User"}
+                size="sm"
               />
             </div>
             <div className="flex flex-col items-start p-0">
-              
+
               <h2 className="font-['Poppins'] font-medium text-[18px] leading-[26px] flex items-center text-[#000000] flex-none order-0 whitespace-nowrap">
                 {activeProfile?.name || session?.user?.name || "Cocpit"}
               </h2>
@@ -179,17 +178,17 @@ export function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], i
 
         {/* Tags Row (Frame 2608634) */}
         <div className="flex flex-row items-start p-0 gap-[16px] w-[298px] h-[40px] overflow-x-auto scrollbar-hide shrink-0">
-          <TagChip 
-            active={activeTab === 'chat'} 
-            label="Chat" 
-            hasIndicator={hasUnreadChats} 
-            onClick={() => setActiveTab('chat')} 
+          <TagChip
+            active={activeTab === 'chat'}
+            label="Chat"
+            hasIndicator={hasUnreadChats}
+            onClick={() => setActiveTab('chat')}
           />
-          <TagChip 
-            active={activeTab === 'requests'} 
-            label="Requests" 
-            hasIndicator={hasUnreadRequests} 
-            onClick={() => setActiveTab('requests')} 
+          <TagChip
+            active={activeTab === 'requests'}
+            label="Requests"
+            hasIndicator={hasUnreadRequests}
+            onClick={() => setActiveTab('requests')}
           />
         </div>
 

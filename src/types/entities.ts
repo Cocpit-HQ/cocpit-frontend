@@ -99,6 +99,7 @@ export interface SavedFolder {
   name: string;
   post_count: number;
   created_at: string;
+  cover_image?: string;
 }
 
 export interface Post {

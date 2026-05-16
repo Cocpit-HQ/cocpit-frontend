@@ -3,11 +3,13 @@
 import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, FolderPlus } from 'lucide-react'
+import { X, FolderPlus, User, Plus, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createSavedFolder } from '@/services/api/savedPost'
 import { SavedFolder } from '@/types/entities'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
+import { Icon } from '@iconify/react'
+import { CocpitProfileUpload } from '@/shared/commonComponents/Cocpitprofileupload'
 
 interface CreateFolderModalProps {
     isOpen: boolean
@@ -18,6 +20,7 @@ interface CreateFolderModalProps {
 export function CreateFolderModal({ isOpen, onClose, onFolderCreated }: CreateFolderModalProps) {
     const { isCompany, activeProfile } = useActiveProfile()
     const [folderName, setFolderName] = useState('')
+    const [coverImage, setCoverImage] = useState('')
     const [isLoading, setIsLoading] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -27,11 +30,13 @@ export function CreateFolderModal({ isOpen, onClose, onFolderCreated }: CreateFo
         setIsLoading(true)
         try {
             const companyId = isCompany ? activeProfile?.id : undefined;
-            const response = await createSavedFolder(folderName, companyId)
+            console.log("Creating folder with image:", { folderName, coverImage: coverImage ? "present" : "missing" });
+            const response = await createSavedFolder(folderName, companyId, coverImage)
             if (response.success) {
                 toast.success("Folder created")
                 onFolderCreated(response.folder)
                 setFolderName('')
+                setCoverImage('')
                 onClose()
             }
         } catch (error: any) {
@@ -50,7 +55,7 @@ export function CreateFolderModal({ isOpen, onClose, onFolderCreated }: CreateFo
 
     const modalContent = (
         <AnimatePresence>
-            <div className="fixed inset-0 z-[1000] flex items-center justify-center px-4 isolate">
+            <div className="fixed inset-0 z-[80] flex items-center justify-center px-4 isolate">
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -64,63 +69,86 @@ export function CreateFolderModal({ isOpen, onClose, onFolderCreated }: CreateFo
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.9, opacity: 0, y: 20 }}
                     transition={{ type: "spring", damping: 25, stiffness: 400 }}
-                    className="relative w-full max-w-sm bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-10 ring-1 ring-border/50"
+                    className="relative w-full max-w-[420px] md:min-h-[374px] bg-card border border-border rounded-[24px] shadow-2xl z-10 flex flex-col p-6 font-poppins"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-muted/20">
-                        <div className="flex items-center gap-2.5">
-                            <div className="p-1.5 rounded-lg bg-primary/10">
-                                <FolderPlus className="w-4 h-4 text-primary" />
-                            </div>
-                            <h3 className="font-bold text-base text-foreground tracking-tight">
-                                New Collection
-                            </h3>
-                        </div>
+                    {/* Header with Close Button */}
+                    <div className="flex flex-col items-end w-full h-6 mb-[10px]">
                         <button
                             onClick={onClose}
-                            className="p-1.5 rounded-full hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all active:scale-95"
+                            className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-muted transition-all active:scale-95"
                         >
-                            <X className="w-5 h-5" />
+                            <X className="w-5 h-5 text-[#FF6B6B]" strokeWidth={2} />
                         </button>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="p-5">
-                        <div className="mb-5">
-                            <label className="block text-[11px] font-bold text-muted-foreground/60 mb-2 uppercase tracking-[0.1em]">
-                                Collection Name
-                            </label>
-                            <input
-                                type="text"
-                                autoFocus
-                                value={folderName}
-                                onChange={(e) => setFolderName(e.target.value)}
-                                placeholder="e.g. Design Inspo, Tech News..."
-                                className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-muted-foreground/40 font-medium"
-                            />
+                    <div className="flex flex-col items-center w-full flex-1 gap-4">
+                        {/* Title & Subtitle */}
+                        <div className="flex flex-col items-center gap-2">
+                            <h3 className="font-medium text-[18px] leading-[26px] text-foreground text-center">
+                                Collection
+                            </h3>
+                            <p className="font-normal text-[12px] leading-[16px] text-muted-foreground text-center">
+                                Share this with others
+                            </p>
                         </div>
 
-                        <div className="flex justify-end items-center gap-3 mt-2">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-5 py-2.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={!folderName.trim() || isLoading}
-                                className="px-6 py-2.5 text-sm font-bold bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:grayscale transition-all shadow-md shadow-primary/20 active:scale-95 flex items-center gap-2"
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <div className="w-3 h-3 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                                        Creating...
-                                    </>
-                                ) : "Create Collection"}
-                            </button>
-                        </div>
-                    </form>
+                        {/* Add cover image section */}
+                        <CocpitProfileUpload
+                            value={coverImage}
+                            onChange={setCoverImage}
+                            trigger={
+                                <div className="flex flex-col items-center gap-2 mt-2 cursor-pointer group">
+                                    <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center border border-border overflow-hidden relative transition-all group-hover:bg-muted/80">
+                                        {coverImage ? (
+                                            <img src={coverImage} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <Icon icon="solar:folder-linear" className="w-10 h-10 text-muted-foreground" />
+                                        )}
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-all">
+                                            <Plus className="w-6 h-6 text-white opacity-0 group-hover:opacity-100" />
+                                        </div>
+                                    </div>
+                                    <span className="font-normal text-[12px] leading-[16px] text-foreground">Add cover image</span>
+                                </div>
+                            }
+                        />
+
+                        <form onSubmit={handleSubmit} className="w-full flex flex-col flex-1 gap-6 mt-2">
+                            <div className="flex flex-col gap-2">
+                                <label className="font-normal text-[14px] leading-[20px] text-foreground">
+                                    Collection name
+                                </label>
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    value={folderName}
+                                    onChange={(e) => setFolderName(e.target.value)}
+                                    placeholder="Enter value"
+                                    className="w-full h-12 bg-transparent border border-[#818CF8]/50 rounded-[12px] px-4 text-[16px] leading-[24px] font-normal text-foreground dark:text-foreground focus:outline-none focus:border-[#818CF8] focus:ring-1 focus:ring-[#818CF8] transition-all placeholder:text-muted-foreground/50 font-poppins"
+                                />
+                            </div>
+
+                            <div className="flex items-center gap-3 mt-auto">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="flex-1 h-10 flex items-center justify-center border border-[#818CF8] rounded-[24px] font-normal text-[14px] text-[#818CF8] bg-white dark:bg-transparent hover:bg-[#818CF8]/5 transition-all active:scale-95"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={!folderName.trim() || isLoading}
+                                    className="flex-1 h-10 flex items-center justify-center bg-[#818CF8] rounded-[24px] font-normal text-[14px] text-white hover:bg-[#818CF8]/90 disabled:bg-[#818CF8]/40 disabled:text-white/60 transition-all active:scale-95 shadow-sm"
+                                >
+                                    {isLoading ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : "Add"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </motion.div>
             </div>
         </AnimatePresence>

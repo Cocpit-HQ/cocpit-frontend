@@ -114,12 +114,12 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
                 if (isCancelled) return;
 
                 const normalizedCompanies = actorContext.organizations.map((company) => normalizeCompany(company)) as (Company & { role: string })[];
-                
+
                 // Deduplicate by ID to prevent key collisions in UI
                 const uniqueCompanies = Array.from(
                     new Map(normalizedCompanies.map(c => [c.org_id || c.company_id, c])).values()
                 );
-                
+
                 setBootstrappedCompanies(uniqueCompanies);
 
                 let nextProfile = userProfile;

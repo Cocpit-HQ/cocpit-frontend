@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -44,9 +43,17 @@ export function EditableExperienceItem({
                 {/* Info block */}
                 <div className="flex-1 min-w-0">
                     <div className="flex flex-col">
-                        <h3 className="text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] text-foreground mb-[8px]">
-                            {experience.title}
-                        </h3>
+                        <div className="flex justify-between items-start w-full">
+                            <h3 className="text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] text-foreground mb-[8px]">
+                                {experience.title}
+                            </h3>
+                            <button
+                                onClick={onEdit}
+                                className="md:hidden flex-shrink-0"
+                            >
+                                <Icon icon="eva:edit-outline" className="w-[20px] h-[20px] text-muted-foreground hover:text-primary transition-colors" />
+                            </button>
+                        </div>
                         {experience.description && (
                             <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground line-clamp-2 mb-[10px]">
                                 {experience.description}
@@ -61,13 +68,18 @@ export function EditableExperienceItem({
                                     {experience.location}
                                 </p>
                             )}
+                            {experience.location && (
+                                <p className="text-[12px] leading-[16px] tracking-normal text-center font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
+                                    {experience.location}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Right Column: Metadata + Edit Button (Fixed 240px) */}
-            <div className="flex items-start flex-shrink-0 w-[240px] justify-between">
+            <div className="flex items-start flex-shrink-0 w-[240px] justify-between hidden md:flex">
                 <div className="w-full">
                     <div className="grid grid-cols-[75px_9px_auto] gap-x-[6px] items-center w-full text-[10px] sm:text-[12px] leading-[14px] sm:leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
                         <span className="whitespace-nowrap text-left">{formatDate(experience.start_date)}</span>

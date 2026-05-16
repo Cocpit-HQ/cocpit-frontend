@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect, useMemo, useCallback } from "react"
+import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import dayjs from "dayjs"
 import { Menu, LogOut, Edit2, CheckCircle, GraduationCap, Briefcase, Pencil, Plus, Building2, FileText, Copy, ChevronDown, User, ThumbsUp, MessageSquare, Repeat2, Share, Bookmark, Eye, EyeOff, Trash2 } from "lucide-react"
@@ -12,7 +13,7 @@ import SuggestionsPanel from "@/components/home/SuggestionsPanel"
 import type { Page } from "@/types/common"
 import { CompanyRoleModal } from "@/components/profile/parts/CompanyRoleModal"
 import { CompanyRolesList } from "@/components/profile/parts/CompanyRolesList"
-import { UniversalShareModal } from "@/components/share/UniversalShareModal"
+import CocpitShareProfile from "@/shared/commonComponents/cocpitshareprofile"
 import { MoreVertical, Share2, Link as LinkIcon } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -66,12 +67,13 @@ import { EditableExperienceGroup } from "@/components/profile/parts/EditableExpe
 import { EditableEducationItem } from "@/components/profile/parts/EditableEducationItem"
 import { ContactInfoModal } from "@/components/profile/ContactInfoModal"
 import { FollowListModal } from "@/components/profile/FollowListModal"
-import { getProfileStats } from "@/services/api/social"
+import { getProfileStats, getFollowing } from "@/services/api/social"
 import { useQuery } from "@tanstack/react-query"
 import { ProfileSwitcher } from "@/components/layout/ProfileSwitcher"
 
 import { EditProfileModal } from "@/components/profile/parts/EditProfileModal"
 import { useMyProfile, useExperienceMutations, useEducationMutations, useSkillMutations, useAvatarMutations, useProfileMutation } from "@/hooks/use-my-profile"
+const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -82,15 +84,38 @@ const routes: Record<string, string> = {
   jobs: "/jobs",
   analytics: "/analytics",
 }
-const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility }: { post: Post, isOwnPost?: boolean, onDelete?: (id: string) => void, onToggleVisibility?: (id: string) => void }) => {
+
+const mergeProfilePostState = (current: Post, incoming: Post): Post => ({
+  ...current,
+  ...incoming,
+  author: incoming.author || current.author,
+  authorId: incoming.authorId || current.authorId,
+  authorAvatar: incoming.authorAvatar || current.authorAvatar,
+  title: incoming.title || current.title,
+  timeAgo: incoming.timeAgo || current.timeAgo,
+  category: incoming.category || current.category,
+  location: incoming.location ?? current.location,
+  tags: incoming.tags ?? current.tags,
+  shared_post: incoming.shared_post ?? current.shared_post,
+});
+
+const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpdate }: { post: Post, isOwnPost?: boolean, onDelete?: (id: string) => void, onToggleVisibility?: (id: string) => void, onUpdate?: (post: Post) => void }) => {
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likesCount, setLikesCount] = useState(Number(post.likes) || 0);
   const [isSaved, setIsSaved] = useState(post.is_saved || false);
 
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [localPost, setLocalPost] = useState(post);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    setLocalPost(post);
+    setIsLiked(post.isLiked || false);
+    setLikesCount(Number(post.likes) || 0);
+    setIsSaved(post.is_saved || false);
+  }, [post]);
 
   const image = localPost.imageSrc || (localPost.images && localPost.images.length > 0 ? localPost.images[0] : null);
 
@@ -105,6 +130,11 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility }: { po
   };
 
   const handleBookmark = async () => {
+    if (!isSaved) {
+      setIsSaveModalOpen(true);
+      return;
+    }
+
     try {
       const res = await toggleSavePost(localPost.id);
       setIsSaved(res.saved);
@@ -148,7 +178,9 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility }: { po
     const newVisibility = localPost.visibility === 'private' ? 'public' : 'private';
     try {
       const updated = await updatePost(localPost.id, { visibility: newVisibility });
-      setLocalPost(mapProfilePostToPost(updated));
+      const mergedPost = mergeProfilePostState(localPost, mapProfilePostToPost(updated));
+      setLocalPost(mergedPost);
+      onUpdate?.(mergedPost);
       onToggleVisibility?.(localPost.id);
       toast.success(`Post is now ${newVisibility}`);
     } catch (err) {
@@ -192,7 +224,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility }: { po
                 </button>
               </PopoverTrigger>
               <PopoverContent
-                className="w-[180px] p-2 bg-card border border-border rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto z-[210]"
+                className="w-[180px] p-2 bg-card border border-[#EEF2FF] dark:border-card-border-inner rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto z-[210]"
                 align="end"
                 sideOffset={8}
               >
@@ -226,7 +258,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility }: { po
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="w-[180px] p-2 bg-card border border-border rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg"
+              className="w-[180px] p-2 bg-card border border-[#EEF2FF] dark:border-card-border-inner rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg"
               align="end"
             >
               <div className="flex flex-col gap-1">
@@ -332,7 +364,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility }: { po
       </div>
 
       {/* Interaction Footer (Frame 2608574) */}
-      <div className="w-full h-[40px] px-4 py-2 mt-auto border-t border-border">
+      <div className="w-full h-[40px] px-4 py-2 mt-auto border-t border-transparent">
         {/* Frame 2608620 */}
         <div className="flex items-center justify-between w-full h-[24px]">
           <div className="flex items-center gap-[16px]">
@@ -377,8 +409,24 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility }: { po
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         post={localPost}
-        onSuccess={(updated) => setLocalPost(updated)}
+        onSuccess={(updated) => {
+          const mergedPost = mergeProfilePostState(localPost, updated);
+          setLocalPost(mergedPost);
+          onUpdate?.(mergedPost);
+        }}
       />
+
+      {isSaveModalOpen && (
+        <SavePostModal
+          isOpen={isSaveModalOpen}
+          onClose={() => setIsSaveModalOpen(false)}
+          postId={localPost.id}
+          onSaved={(saved) => {
+            setIsSaved(saved);
+            setIsSaveModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -403,6 +451,24 @@ export default function ProfilePage() {
     enabled: !!profileData?.user?.id,
     staleTime: 1000 * 30,
   });
+
+  // Fetch following list for share modal
+  const { data: followingData = [] } = useQuery({
+    queryKey: ['following', profileData?.user?.id],
+    queryFn: () => getFollowing(profileData!.user.id),
+    enabled: !!profileData?.user?.id,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const shareUsers = useMemo(() =>
+    followingData.map((f: any) => ({
+      id: f.following_id || f.user_id || f.id,
+      name: f.full_name || f.name || "Unknown User",
+      avatar: f.avatar_url || f.avatar || undefined,
+      slug: f.slug || f.account_name,
+    })),
+    [followingData]
+  );
 
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const [isExperienceExpanded, setIsExperienceExpanded] = useState(false);
@@ -503,6 +569,14 @@ export default function ProfilePage() {
     togglePostVisibility(id);
   }, [togglePostVisibility]);
 
+  const handleUpdatePreviewPost = useCallback((updatedPost: Post) => {
+    setPreviewPosts(prev =>
+      prev.map(post =>
+        post.id === updatedPost.id ? mergeProfilePostState(post, updatedPost) : post
+      )
+    );
+  }, []);
+
   const handleAvatarUpload = useCallback(async (file: File) => {
     const formData = new FormData();
     formData.append("avatar", file);
@@ -519,6 +593,7 @@ export default function ProfilePage() {
   }, [logout, router]);
 
   const [isSavingSkills, setIsSavingSkills] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   const handleSaveSkills = useCallback(async (newSkills: string[]) => {
     setIsSavingSkills(true);
@@ -731,7 +806,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-card">
-      <div className="w-full md:max-w-[960px] mx-auto pt-0 md:pt-8 pb-[100px] md:pb-12 px-0 md:px-0">
+      <div className="w-full md:max-w-[998px] mx-auto pt-0 md:pt-8 pb-[100px] md:pb-12 px-0 md:px-4 xl:px-0">
         {isLoading ? (
           <ProfileSkeleton />
         ) : (
@@ -771,7 +846,10 @@ export default function ProfilePage() {
             <div className="px-0 pb-0">
               <div className="flex items-start justify-between -mt-[49px] md:-mt-[49px]">
                 <div className="relative group ml-[12px] md:ml-[34px]">
-                  <div className="w-[98px] h-[98px] relative cursor-pointer" onClick={() => setIsViewAvatarOpen(true)}>
+                  <div
+                    className="w-[98px] h-[98px] relative cursor-pointer"
+                    onClick={() => isMobile ? setIsEditAvatarOpen(true) : setIsViewAvatarOpen(true)}
+                  >
                     {/* Top Half Border Only */}
                     <div className="absolute inset-0 rounded-full border-4 border-white shadow-sm [mask-image:linear-gradient(to_bottom,black_50%,transparent_50%)]" />
 
@@ -789,7 +867,7 @@ export default function ProfilePage() {
                       e.stopPropagation();
                       setIsEditAvatarOpen(true);
                     }}
-                    className="absolute -bottom-1 -right-1 cursor-pointer transition-transform hover:scale-110 active:scale-95 z-10"
+                    className="absolute -bottom-1 -right-1 cursor-pointer transition-transform hover:scale-110 active:scale-95 z-10 hidden md:flex"
                     aria-label="Edit Profile Picture"
                   >
                     <div className="w-[28px] h-[28px] md:w-[36px] md:h-[36px] rounded-full bg-[#6366F1] flex items-center justify-center transition-transform group-hover:scale-110">
@@ -797,6 +875,14 @@ export default function ProfilePage() {
                     </div>
                   </button>
                 </div>
+
+                {/* Mobile Call Icon */}
+                <button
+                  onClick={() => setIsContactInfoModalOpen(true)}
+                  className="md:hidden mt-12 mr-4 text-muted-foreground hover:text-primary transition-colors flex-shrink-0 outline-none"
+                >
+                  <Icon icon="solar:phone-calling-linear" className="w-6 h-6" />
+                </button>
 
 
                 <div className="hidden md:flex flex-col items-end mt-[59px] pr-[16px]">
@@ -809,21 +895,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Mobile Action Buttons */}
-              <div className="md:hidden flex items-center gap-3 px-4 mt-4">
-                <button
-                  onClick={() => setIsEditProfileModalOpen(true)}
-                  className="flex-1 h-[40px] rounded-[24px] bg-secondary text-primary font-medium font-[family-name:var(--font-poppins)] text-[14px] flex items-center justify-center transition-colors"
-                >
-                  Edit profile
-                </button>
-                <button
-                  onClick={() => setIsShareModalOpen(true)}
-                  className="w-[40px] h-[40px] rounded-full bg-secondary text-primary flex items-center justify-center transition-colors flex-shrink-0"
-                >
-                  <Share2 className="w-5 h-5" />
-                </button>
-              </div>
+
 
               {/* Mobile Stats Section */}
               <div className="md:hidden w-full px-4 mt-6">
@@ -840,7 +912,7 @@ export default function ProfilePage() {
                   <div className="w-[1px] h-8 bg-border"></div>
                   <div onClick={() => openFollowList("connections")} className="flex flex-col items-center cursor-pointer">
                     <span className="text-[16px] font-semibold text-primary font-[family-name:var(--font-poppins)]">{profileStats?.connections_count || 0}</span>
-                    <span className="text-[12px] text-muted-foreground font-[family-name:var(--font-poppins)]">Connections</span>
+                    <span className="text-[12px] text-muted-foreground font-[family-name:var(--font-poppins)]">Connection</span>
                   </div>
                 </div>
               </div>
@@ -878,31 +950,78 @@ export default function ProfilePage() {
 
             <div className="flex justify-between items-start w-full min-h-[217px] pt-[16px] px-4 md:pr-[16px] pb-[16px] md:pl-[40px] md:gap-[100px]">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-1 flex-wrap md:flex-nowrap">
-                  <h1 className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[28px] md:leading-[32px] font-[family-name:var(--font-poppins)] tracking-tight whitespace-nowrap">{user?.name}</h1>
+                <div className="flex items-center justify-between gap-3 mb-1 w-full">
+                  <div className="flex items-center gap-3 flex-wrap md:flex-nowrap min-w-0">
+                    <h1 className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[28px] md:leading-[32px] font-[family-name:var(--font-poppins)] tracking-tight truncate md:overflow-visible md:text-clip md:whitespace-nowrap">{user?.name}</h1>
 
-                  {/* Company Roles Static Display */}
-                  {(() => {
-                    const visibleRoles = user?.company_roles?.filter(r => r.is_role_visible) || [];
-                    if (visibleRoles.length === 0) return null;
+                    {/* Company Roles Static Display */}
+                    {(() => {
+                      const visibleRoles = user?.company_roles?.filter(r => r.is_role_visible) || [];
+                      if (visibleRoles.length === 0) return null;
 
-                    return (
-                      <div className="flex items-center gap-2 flex-nowrap">
-                        <div className="flex items-center gap-[10px] px-[16px] py-[8px] bg-primary-tint rounded-[24px] border border-transparent flex-shrink-0 w-fit h-[36px]">
-                          <Icon icon="solar:buildings-linear" className="w-5 h-5" style={{ color: 'var(--pill-text-refined)' }} />
-                          <span className="text-[12px] font-normal leading-[16px] font-[family-name:var(--font-poppins)] whitespace-nowrap" style={{ color: 'var(--pill-text-refined)' }}>
-                            {visibleRoles[0].role} at {visibleRoles[0].name}
-                          </span>
+                      return (
+                        <div className="flex items-center gap-2 flex-wrap md:flex-nowrap min-w-0">
+                          <div className="flex items-center gap-[10px] px-[16px] py-[8px] bg-primary-tint rounded-[24px] border border-transparent flex-shrink-0 w-fit h-[36px]">
+                            <Icon icon="solar:buildings-linear" className="w-5 h-5" style={{ color: 'var(--pill-text-refined)' }} />
+                            <span className="text-[12px] font-normal leading-[16px] font-[family-name:var(--font-poppins)] whitespace-nowrap" style={{ color: 'var(--pill-text-refined)' }}>
+                              {visibleRoles[0].role} at {visibleRoles[0].name}
+                            </span>
+                          </div>
+
+                          {visibleRoles.length > 1 && (
+                            <span className="text-[12px] font-medium text-muted-foreground whitespace-nowrap bg-muted px-2 py-0.5 rounded-full border border-border">
+                              + {visibleRoles.length - 1} more
+                            </span>
+                          )}
                         </div>
+                      );
+                    })()}
+                  </div>
 
-                        {visibleRoles.length > 1 && (
-                          <span className="text-[12px] font-medium text-muted-foreground whitespace-nowrap bg-muted px-2 py-0.5 rounded-full border border-border">
-                            + {visibleRoles.length - 1} more
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })()}
+                  {/* Three Dots Menu for Mobile */}
+                  <div className="md:hidden shrink-0">
+                    <DropdownMenu onOpenChange={setIsProfileMenuOpen}>
+                      <DropdownMenuTrigger asChild>
+                        <button className={cn(
+                          "flex items-center justify-center w-8 h-8 outline-none border-none focus:outline-none rounded-full transition-colors",
+                          isProfileMenuOpen ? "bg-[#EEF2FF] text-[#6366F1]" : "text-foreground"
+                        )}>
+                          <Icon icon="ph:dots-three-outline-vertical-light" className="w-6 h-6" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        sideOffset={8}
+                        alignOffset={0}
+                        className="w-[180px] h-[136px] !rounded-tl-[24px] !rounded-tr-none !rounded-br-[24px] !rounded-bl-[24px] border border-[#C7D2FE] p-[8px] bg-card flex flex-col gap-1"
+                      >
+                        <DropdownMenuItem
+                          onClick={() => setIsEditProfileModalOpen(true)}
+                          className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-primary-tint focus:text-primary-tint-foreground rounded-xl outline-none group transition-colors"
+                        >
+                          <span className="text-sm font-medium text-foreground group-focus:text-primary-tint-foreground">Edit profile</span>
+                          <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-foreground group-focus:text-primary-tint-foreground transition-colors" style={{ strokeWidth: '1.5px' }} />
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setIsShareModalOpen(true)}
+                          className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors"
+                        >
+                          <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Share profile</span>
+                          <Icon icon="fluent:share-16-regular" className="w-6 h-6 text-black group-focus:text-[#6366F1] transition-colors" style={{ strokeWidth: '1.5px' }} />
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            navigator.clipboard.writeText(window.location.href);
+                            toast.success("Profile link copied");
+                          }}
+                          className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors"
+                        >
+                          <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Copy profile</span>
+                          <Icon icon="solar:copy-outline" className="w-6 h-6 text-black group-focus:text-[#6366F1] transition-colors" style={{ strokeWidth: '1.5px' }} />
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
 
                 <p className="text-[16px] font-normal text-foreground leading-[24px] font-[family-name:var(--font-poppins)] mb-4">
@@ -1096,6 +1215,7 @@ export default function ProfilePage() {
                       isOwnPost={!isCompany}
                       onDelete={handleDeletePost}
                       onToggleVisibility={handleToggleVisibility}
+                      onUpdate={handleUpdatePreviewPost}
                     />
                   </div>
                 ))}
@@ -1120,8 +1240,8 @@ export default function ProfilePage() {
 
                 {/* Skills Nested Card Wrapper */}
                 <div className="px-4 md:pl-10 md:pr-4">
-                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[100px] flex items-center p-8">
-                    <div className="flex flex-wrap gap-[40px]">
+                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[100px] flex items-center p-4 md:p-8">
+                    <div className="flex flex-wrap gap-3 sm:gap-4 md:gap-[40px]">
                       {skills.map((skill: any, index) => {
                         const skillName = skill.name || (typeof skill === 'string' ? skill : '');
                         if (!skillName) return null;
@@ -1160,7 +1280,7 @@ export default function ProfilePage() {
 
                 {/* Experience Nested Card Wrapper */}
                 <div className="px-4 md:pl-10 md:pr-4">
-                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[72px] pl-[40px] py-8 pr-4">
+                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[72px] px-4 py-4 md:pl-[40px] md:pr-4 md:py-8">
                     <div className="flex flex-col gap-[16px]">
                       {(isExperienceExpanded ? experiences : experiences.slice(0, 2)).map((group, gIdx) => (
                         <EditableExperienceGroup
@@ -1208,7 +1328,7 @@ export default function ProfilePage() {
 
                 {/* Education Nested Card Wrapper */}
                 <div className="px-4 md:pl-10 md:pr-4">
-                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[72px] pl-[40px] py-8 pr-4">
+                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[72px] px-4 py-4 md:pl-[40px] md:pr-4 md:py-8">
                     <div className="flex flex-col gap-[16px]">
                       {(isEducationExpanded ? educations : educations.slice(0, 2)).map((edu, index) => (
                         <EditableEducationItem
@@ -1282,6 +1402,7 @@ export default function ProfilePage() {
             onSave={handleSaveEducation}
             onCancel={() => setIsAddEducationModalOpen(false)}
             initialData={editingEducation}
+            existingEducations={educations}
             onDelete={() => editingEducation && handleDeleteEducation(editingEducation.education_id)}
           />
         </DialogContent>
@@ -1322,13 +1443,14 @@ export default function ProfilePage() {
         isOwnProfile={true}
       />
 
-      <UniversalShareModal
+      <CocpitShareProfile
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        entityId={user?.id || ""}
-        entityType="profile"
-        entityName={user?.name || ""}
-        entityUrl={`/profile/${user?.account_name || user?.id}`}
+        users={shareUsers}
+        onShare={(selectedIds) => {
+          console.log("Shared profile with:", selectedIds);
+          setIsShareModalOpen(false);
+        }}
       />
     </div>
   )

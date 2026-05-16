@@ -156,9 +156,9 @@ function RoleSection({
   fieldErrors = {},
   fieldWarnings = {},
   existingCurrentRoleId,
-}: RoleSectionProps) {
-  const inputStyles =
-    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE]"
+	}: RoleSectionProps) {
+	  const inputStyles =
+	    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"
   const labelStyles = "block font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-foreground mb-2"
   const getSelectTextColor = (value: string) =>
     value ? "text-foreground" : "text-muted-foreground"
@@ -311,22 +311,22 @@ function RoleSection({
         <div className="space-y-2">
           <Label className={labelStyles}>Start date</Label>
           <div className="grid grid-cols-2 gap-6">
-            <Select value={role.startMonth} onValueChange={(v) => set("startMonth", v)}>
-              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.startMonth), fieldErrors.startDate && "border-red-400")}>
-                <SelectValue placeholder="Month" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                {months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={role.startYear} onValueChange={(v) => set("startYear", v)}>
-              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.startYear), fieldErrors.startDate && "border-red-400")}>
-                <SelectValue placeholder="Year" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                {years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-              </SelectContent>
-            </Select>
+	            <Select value={role.startMonth} onValueChange={(v) => set("startMonth", v)}>
+	              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.startMonth), fieldErrors.startDate && "border-red-400")}>
+	                <SelectValue placeholder="Month" />
+	              </SelectTrigger>
+	              <SelectContent>
+	                {months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+	              </SelectContent>
+	            </Select>
+	            <Select value={role.startYear} onValueChange={(v) => set("startYear", v)}>
+	              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.startYear), fieldErrors.startDate && "border-red-400")}>
+	                <SelectValue placeholder="Year" />
+	              </SelectTrigger>
+	              <SelectContent>
+	                {years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+	              </SelectContent>
+	            </Select>
           </div>
           {fieldErrors.startDate && (
             <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
@@ -341,33 +341,33 @@ function RoleSection({
         </div>
 
         {/* End date */}
-        <div className="space-y-2">
-          <Label className={labelStyles}>End date</Label>
+        <div className={cn("space-y-2", role.is_current && "opacity-50")}>
+          <Label className={cn(labelStyles, role.is_current && "text-muted-foreground")}>End date</Label>
           <div className="grid grid-cols-2 gap-6">
             <Select
               value={role.endMonth}
               onValueChange={(v) => set("endMonth", v)}
               disabled={role.is_current}
             >
-              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.endMonth), fieldErrors.endDate && "border-red-400")}>
-                <SelectValue placeholder="Month" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                {months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select
+	              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.endMonth), fieldErrors.endDate && "border-red-400")}>
+	                <SelectValue placeholder="Month" />
+	              </SelectTrigger>
+	              <SelectContent>
+	                {months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+	              </SelectContent>
+	            </Select>
+	            <Select
               value={role.endYear}
               onValueChange={(v) => set("endYear", v)}
               disabled={role.is_current}
             >
-              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.endYear), fieldErrors.endDate && "border-red-400")}>
-                <SelectValue placeholder="Year" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                {years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-              </SelectContent>
-            </Select>
+	              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.endYear), fieldErrors.endDate && "border-red-400")}>
+	                <SelectValue placeholder="Year" />
+	              </SelectTrigger>
+	              <SelectContent>
+	                {years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+	              </SelectContent>
+	            </Select>
           </div>
           {fieldErrors.endDate && (
             <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
@@ -842,10 +842,10 @@ export default function AddExperienceForm({
         alert("Version conflict: someone else updated this profile. Please refresh the page.")
       }
     }
-  }
+	  }
 
-  const inputStyles =
-    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE]"
+	  const inputStyles =
+	    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"
   const labelStyles = "block font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-foreground mb-2"
 
   const modalTitle = isEditing ? "Edit experience" : "Add experience"

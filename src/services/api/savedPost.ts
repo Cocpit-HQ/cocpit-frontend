@@ -29,9 +29,9 @@ export const getSavedPosts = async (
 
 // --- Folder Operations ---
 
-export const createSavedFolder = async (name: string, companyId?: string): Promise<{ success: boolean; folder: SavedFolder }> => {
+export const createSavedFolder = async (name: string, companyId?: string, coverImage?: string): Promise<{ success: boolean; folder: SavedFolder }> => {
     void companyId;
-    const res = await api.post("/saved-folders", { name });
+    const res = await api.post("/saved-folders", { name, coverImage });
     return res.data;
 };
 

@@ -5,6 +5,7 @@ import { Comment as CommentType } from '@/types/entities';
 import CommentList from './CommentList';
 import CommentInput from './CommentInput';
 import { ReportModal } from '@/components/shared/ReportModal';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 interface CommentSectionViewProps {
   comments: CommentType[];
@@ -27,6 +28,7 @@ export default function CommentSectionView({
   postId,
   onEditComment
 }: CommentSectionViewProps) {
+  const { activeProfile } = useActiveProfile();
   // Local UI State only
   const [replyingTo, setReplyingTo] = useState<{ name: string; id: string | number; account_name?: string } | null>(null);
   const [reportTargetId, setReportTargetId] = useState<string | number | null>(null);
@@ -90,7 +92,7 @@ export default function CommentSectionView({
           onCancelReply={handleCancelAll}
           editingComment={editingComment}
           onCancelEdit={handleCancelAll}
-          currentUserAvatar="/assets/pngegg.png"
+          currentUserAvatar={activeProfile?.avatar_url || "/assets/pngegg.png"}
         />
       </div>
 

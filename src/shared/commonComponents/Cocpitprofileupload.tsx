@@ -14,12 +14,14 @@ interface CocpitProfileUploadProps {
     value: string;
     onChange: (value: string) => void;
     trigger?: React.ReactNode;
+    title?: string;
 }
 
 export function CocpitProfileUpload({
     value,
     onChange,
     trigger,
+    title = "Profile",
 }: CocpitProfileUploadProps) {
     const [isOpen, setIsOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -31,8 +33,14 @@ export function CocpitProfileUpload({
     const [flipV, setFlipV] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [modalState, setModalState] = useState<ModalState>("upload");
+    const [positionX, setPositionX] = useState(0);
+    const [positionY, setPositionY] = useState(0);
+    const [isDraggingImage, setIsDraggingImage] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
     const [lastClickTime, setLastClickTime] = useState(0);
+
+    const lastPointer = useRef({ x: 0, y: 0 });
+    const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -47,6 +55,65 @@ export function CocpitProfileUpload({
         }
     }, [isOpen]);
 
+    useEffect(() => {
+        if (isOpen && !value) {
+            // small timeout to ensure DOM is ready
+            const timer = setTimeout(() => {
+                fileInputRef.current?.click();
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen, value]);
+
+    // Document-level mouse/touch move & up for smooth dragging
+    const hasMoved = useRef(false);
+
+    useEffect(() => {
+        if (!isDraggingImage) return;
+
+        const handleMove = (clientX: number, clientY: number) => {
+            const dx = clientX - lastPointer.current.x;
+            const dy = clientY - lastPointer.current.y;
+            if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+                hasMoved.current = true;
+            }
+            lastPointer.current = { x: clientX, y: clientY };
+            setPositionX(prev => prev + dx);
+            setPositionY(prev => prev + dy);
+        };
+
+        const onMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
+        const onTouchMove = (e: TouchEvent) => {
+            const touch = e.touches[0];
+            handleMove(touch.clientX, touch.clientY);
+        };
+        const onEnd = () => {
+            setIsDraggingImage(false);
+            if (!hasMoved.current) {
+                // if it wasn't a drag, maybe we wanted to click to change? 
+                // but usually repositioning is the primary goal here
+            }
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onEnd);
+        document.addEventListener("touchmove", onTouchMove, { passive: true });
+        document.addEventListener("touchend", onEnd);
+
+        return () => {
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("mouseup", onEnd);
+            document.removeEventListener("touchmove", onTouchMove);
+            document.removeEventListener("touchend", onEnd);
+        };
+    }, [isDraggingImage]);
+
+    const handlePointerDown = (clientX: number, clientY: number) => {
+        lastPointer.current = { x: clientX, y: clientY };
+        hasMoved.current = false;
+        setIsDraggingImage(true);
+    };
+
     const displayUrl = previewUrl || value || null;
     const hasImage = !!displayUrl;
 
@@ -55,6 +122,8 @@ export function CocpitProfileUpload({
         setRotation(0);
         setFlipH(false);
         setFlipV(false);
+        setPositionX(0);
+        setPositionY(0);
     };
 
     const handleClose = () => {
@@ -156,16 +225,20 @@ export function CocpitProfileUpload({
             drawWidth *= zoomScale;
             drawHeight *= zoomScale;
 
-            ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+            // Apply position offset scaled to canvas resolution
+            const containerEl = containerRef.current;
+            const previewSize = containerEl ? containerEl.offsetWidth : 240;
+            const scaleRatio = size / previewSize;
+            const canvasPosX = positionX * scaleRatio;
+            const canvasPosY = positionY * scaleRatio;
+
+            ctx.drawImage(img, -drawWidth / 2 + canvasPosX, -drawHeight / 2 + canvasPosY, drawWidth, drawHeight);
             ctx.restore();
 
-            canvas.toBlob(async (blob) => {
-                if (blob) {
-                    const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
-                    onChange(dataUrl);
-                    handleClose();
-                }
-            }, "image/jpeg", 0.95);
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+            console.log("CocpitProfileUpload: Saving image, length:", dataUrl.length);
+            onChange(dataUrl);
+            handleClose();
         } catch (error) {
             console.error("Save failed", error);
         } finally {
@@ -231,7 +304,7 @@ export function CocpitProfileUpload({
 
             <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
                 <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-none sm:max-w-[600px] h-[100dvh] sm:h-auto w-full [&>button]:hidden outline-none">
-                    <div className="relative bg-white rounded-none sm:rounded-[24px] p-4 sm:p-[32px] w-full h-full sm:h-auto shadow-sm flex flex-col outline-none overflow-y-auto">
+                    <div className="relative bg-card rounded-none sm:rounded-[24px] p-4 sm:p-[32px] w-full h-full sm:h-auto shadow-sm flex flex-col outline-none overflow-y-auto">
 
                         {/* Desktop close */}
                         <button
@@ -242,7 +315,7 @@ export function CocpitProfileUpload({
                         </button>
 
                         {/* Mobile header */}
-                        <div className="sm:hidden flex items-center justify-between mb-8 sticky top-0 bg-white z-20 pt-2 pb-4">
+                        <div className="sm:hidden flex items-center justify-between mb-8 sticky top-0 bg-card z-20 pt-2 pb-4">
                             <button
                                 onClick={handleClose}
                                 className="p-2 -ml-2 text-foreground hover:bg-secondary rounded-full transition-colors"
@@ -250,7 +323,7 @@ export function CocpitProfileUpload({
                                 <Icon icon="hugeicons:arrow-left-01" className="w-6 h-6" />
                             </button>
                             <DialogTitle className="text-[16px] font-medium font-['Poppins'] text-foreground m-0 p-0">
-                                Profile image
+                                {title} image
                             </DialogTitle>
                             <button
                                 onClick={handleSave}
@@ -263,10 +336,10 @@ export function CocpitProfileUpload({
 
                         {/* Desktop title */}
                         <div className="hidden sm:block text-center mb-6 px-4">
-                            <DialogTitle className="text-[18px] leading-[26px] font-medium font-['Poppins'] text-[#000000] mb-1">
-                                Profile image
+                            <DialogTitle className="text-[18px] leading-[26px] font-medium font-['Poppins'] text-foreground mb-1">
+                                {title} image
                             </DialogTitle>
-                            <p className="text-[14px] leading-[20px] font-normal font-['Poppins'] text-[#6B7280]">
+                            <p className="text-[14px] leading-[20px] font-normal font-['Poppins'] text-muted-foreground">
                                 Square image works best for profile display
                             </p>
                         </div>
@@ -289,7 +362,7 @@ export function CocpitProfileUpload({
                                         onClick={() => setFlipV(!flipV)}
                                         className={cn(
                                             "p-1.5 rounded-md transition-colors",
-                                            flipV ? "bg-[#6366F1] text-white" : "text-foreground hover:bg-[#EEF2FF]"
+                                            flipV ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"
                                         )}
                                     >
                                         <Icon icon="hugeicons:flip-top" className="w-6 h-6" />
@@ -298,21 +371,21 @@ export function CocpitProfileUpload({
                                         onClick={() => setFlipH(!flipH)}
                                         className={cn(
                                             "p-1.5 rounded-md transition-colors",
-                                            flipH ? "bg-[#6366F1] text-white" : "text-foreground hover:bg-[#EEF2FF]"
+                                            flipH ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"
                                         )}
                                     >
                                         <Icon icon="hugeicons:flip-left" className="w-6 h-6" />
                                     </button>
                                     <button
                                         onClick={() => setRotation((prev) => (prev + 90) % 360)}
-                                        className="p-1.5 text-foreground hover:bg-[#EEF2FF] rounded-md transition-colors"
+                                        className="p-1.5 text-foreground hover:bg-secondary rounded-md transition-colors"
                                     >
                                         <Icon icon="wordpress:rotate-left" className="w-6 h-6" />
                                     </button>
                                     <button
                                         onClick={handleDelete}
                                         disabled={isDeleting}
-                                        className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+                                        className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-md transition-colors disabled:opacity-50"
                                     >
                                         {isDeleting ? (
                                             <Loader2 className="w-6 h-6 animate-spin" strokeWidth={1.5} />
@@ -324,30 +397,50 @@ export function CocpitProfileUpload({
 
                                 {/* Preview */}
                                 <div
-                                    className="w-[240px] h-[240px] mx-auto relative overflow-hidden bg-muted rounded-md cursor-pointer group"
-                                    onClick={() => setModalState("upload")}
+                                    ref={containerRef}
+                                    className={cn(
+                                        "w-[240px] h-[240px] mx-auto relative overflow-hidden bg-muted rounded-md select-none group",
+                                        isDraggingImage ? "cursor-grabbing" : "cursor-grab"
+                                    )}
+                                    onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        handlePointerDown(e.clientX, e.clientY);
+                                    }}
+                                    onTouchStart={(e) => {
+                                        const touch = e.touches[0];
+                                        handlePointerDown(touch.clientX, touch.clientY);
+                                    }}
                                 >
                                     {hasImage && (
                                         <img
                                             src={displayUrl!}
                                             alt="Preview"
-                                            className="absolute inset-0 w-full h-full object-cover transition-all duration-200"
+                                            className="absolute inset-0 w-full h-full object-cover transition-none pointer-events-none"
+                                            draggable={false}
                                             style={{
-                                                transform: `scale(${1 + zoom / 100}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`,
+                                                transform: `translate(${positionX}px, ${positionY}px) scale(${1 + zoom / 100}) rotate(${rotation}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`,
                                             }}
                                         />
                                     )}
-                                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
                                         <div className="w-full h-full rounded-full ring-[200px] ring-black/40"></div>
                                     </div>
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 z-10">
-                                        <div className="w-9 h-9 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm">
-                                            <Icon icon="solar:upload-linear" className="w-5 h-5 text-white" />
+                                    {!isDraggingImage && (
+                                        <div
+                                            className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-300 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 z-20 cursor-pointer"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setModalState("upload");
+                                            }}
+                                        >
+                                            <div className="w-9 h-9 rounded-full flex items-center justify-center bg-white/20 backdrop-blur-sm">
+                                                <Icon icon="solar:upload-linear" className="w-5 h-5 text-white" />
+                                            </div>
+                                            <span className="text-white text-[13px] font-medium font-['Poppins'] mt-1">
+                                                Change image
+                                            </span>
                                         </div>
-                                        <span className="text-white text-[13px] font-medium font-['Poppins'] mt-1">
-                                            Change image
-                                        </span>
-                                    </div>
+                                    )}
                                 </div>
 
                                 {/* Zoom */}
@@ -381,21 +474,21 @@ export function CocpitProfileUpload({
                                     className={cn(
                                         "w-[320px] sm:w-[380px] cursor-pointer rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center py-12 px-6 gap-4",
                                         isDragOver
-                                            ? "border-[#6366F1] bg-[#EEF2FF] scale-[1.02]"
-                                            : "border-[#DDE3EA] hover:border-[#818CF8] hover:bg-[#EEF2FF]"
+                                            ? "border-primary bg-primary/10 scale-[1.02]"
+                                            : "border-border hover:border-primary/50 hover:bg-secondary/50"
                                     )}
                                 >
-                                    <div className="w-16 h-16 rounded-2xl bg-[#EEF2FF] flex items-center justify-center mb-2">
-                                        <Icon icon="solar:upload-linear" className="w-8 h-8 text-[#6366F1]" />
+                                    <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center mb-2">
+                                        <Icon icon="solar:upload-linear" className="w-8 h-8 text-primary" />
                                     </div>
                                     <div className="text-center space-y-2">
                                         <p className="text-[15px] font-medium text-foreground font-['Poppins']">
                                             Click or drag to upload
                                         </p>
-                                        <p className="text-[13px] text-[#6B7280] font-['Poppins'] leading-relaxed">
+                                        <p className="text-[13px] text-muted-foreground font-['Poppins'] leading-relaxed">
                                             JPG, PNG, WEBP – Max 5MB
                                         </p>
-                                        <p className="text-[12px] text-[#9CA3AF] font-['Poppins']">
+                                        <p className="text-[12px] text-muted-foreground/70 font-['Poppins']">
                                             Recommended size: 400 × 400 px
                                         </p>
                                     </div>
@@ -409,14 +502,14 @@ export function CocpitProfileUpload({
                                 type="button"
                                 onClick={handleClose}
                                 disabled={isUploading || isDeleting}
-                                className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[160px] h-[40px] bg-white border border-[#818CF8] rounded-[24px] font-['Poppins'] font-normal text-[14px] text-[#818CF8] hover:bg-[#EEF2FF] transition-colors disabled:opacity-50"
+                                className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[160px] h-[40px] bg-transparent border border-primary rounded-[24px] font-['Poppins'] font-normal text-[14px] text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSave}
                                 disabled={isUploading || isDeleting || !hasImage}
-                                className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[160px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] font-['Poppins'] font-normal text-[14px] text-white hover:bg-[#4F46E5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[160px] h-[40px] bg-primary border border-white dark:border-none rounded-[24px] font-['Poppins'] font-normal text-[14px] text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isUploading ? (
                                     <span className="flex items-center gap-2">

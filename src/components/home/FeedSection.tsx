@@ -59,7 +59,7 @@ export const FeedSection = ({
     }, [posts, activeTab]);
 
     return (
-        <section className="lg:col-span-8 max-w-[560px] mx-auto w-full">
+        <section className="lg:col-span-8 max-w-[560px] w-full">
             {/* Desktop Showcase Rail */}
             <div className="hidden md:block">
                 <StoryRail

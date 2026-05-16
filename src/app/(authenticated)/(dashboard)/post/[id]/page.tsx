@@ -53,13 +53,13 @@ export default function SinglePostPage({ params }: PageProps) {
         : false
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC]">
+        <div className="min-h-screen bg-background">
             <div className="max-w-[592px] mx-auto px-4 py-10">
                 {/* Navigation Header */}
                 <div className="flex items-center gap-4 mb-8">
                     <button
                         onClick={() => router.back()}
-                        className="p-2 rounded-full hover:bg-white transition-colors text-foreground"
+                        className="p-2 rounded-full hover:bg-accent transition-colors text-foreground"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
@@ -70,12 +70,12 @@ export default function SinglePostPage({ params }: PageProps) {
                     {/* Main Content Area */}
                     <div className="space-y-[24px]">
                         {loading ? (
-                            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[24px] border border-border/40">
+                            <div className="flex flex-col items-center justify-center py-20 bg-card rounded-[24px] border border-border/40">
                                 <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
                                 <p className="text-muted-foreground font-[family-name:var(--font-poppins)]">Loading post details...</p>
                             </div>
                         ) : error ? (
-                            <div className="text-center py-20 bg-white rounded-[24px] border border-destructive/20">
+                            <div className="text-center py-20 bg-card rounded-[24px] border border-destructive/20">
                                 <p className="text-destructive font-medium font-[family-name:var(--font-poppins)]">{error}</p>
                                 <button 
                                     onClick={() => router.back()}
@@ -85,7 +85,7 @@ export default function SinglePostPage({ params }: PageProps) {
                                 </button>
                             </div>
                         ) : post ? (
-                            <div className="w-full bg-white border border-[#EEF2FF] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] rounded-[24px] overflow-hidden">
+                            <div className="w-full bg-card border border-[#EEF2FF] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] rounded-[24px] overflow-hidden">
                                 <FeedPost
                                     {...post}
                                     isOwnPost={isOwnPost}

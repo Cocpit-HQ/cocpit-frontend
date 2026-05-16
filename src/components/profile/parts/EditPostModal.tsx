@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { X, Search, ChevronLeft, UserPlus, MapPin, Trash2 } from "lucide-react";
 import { Icon } from "@iconify/react";
 import useEmblaCarousel from "embla-carousel-react";
@@ -23,6 +23,7 @@ import debounce from "lodash.debounce";
 import { Post } from "@/types/entities";
 import { cn } from "@/lib/utils";
 import { mapBackendPostToFrontend } from "@/lib/mappers/feed.mapper";
+import { CocpitSelectedUserChips } from "@/shared/commonComponents/CocpitSelectedUserChips";
 
 interface EditPostModalProps {
     isOpen: boolean;
@@ -163,35 +164,6 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
         }
     };
 
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const isDragging = useRef(false);
-    const startX = useRef(0);
-    const scrollLeft = useRef(0);
-
-    const handleMouseDown = (e: React.MouseEvent) => {
-        isDragging.current = true;
-        startX.current = e.pageX - (scrollContainerRef.current?.offsetLeft || 0);
-        scrollLeft.current = scrollContainerRef.current?.scrollLeft || 0;
-    };
-
-    const handleMouseLeave = () => {
-        isDragging.current = false;
-    };
-
-    const handleMouseUp = () => {
-        isDragging.current = false;
-    };
-
-    const handleMouseMove = (e: React.MouseEvent) => {
-        if (!isDragging.current) return;
-        e.preventDefault();
-        const x = e.pageX - (scrollContainerRef.current?.offsetLeft || 0);
-        const walk = (x - startX.current) * 2;
-        if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollLeft = scrollLeft.current - walk;
-        }
-    };
-
     const toggleUserTag = (user: UserMention) => {
         setTaggedUsers(prev => {
             const exists = prev.find(u => u.id === user.id);
@@ -201,6 +173,13 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
                 return [...prev, user];
             }
         });
+    };
+
+    const handleRemoveTaggedUser = (userId: string) => {
+        const user = taggedUsers.find(taggedUser => String(taggedUser.id) === userId);
+        if (user) {
+            toggleUserTag(user);
+        }
     };
 
     const renderEditView = () => (
@@ -344,32 +323,10 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
 
                 {taggedUsers.length > 0 && (
                     <div className="w-[368px] overflow-hidden">
-                        <div
-                            ref={scrollContainerRef}
-                            onMouseDown={handleMouseDown}
-                            onMouseLeave={handleMouseLeave}
-                            onMouseUp={handleMouseUp}
-                            onMouseMove={handleMouseMove}
-                            className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide flex-nowrap scroll-smooth cursor-grab active:cursor-grabbing"
-                        >
-                            {taggedUsers.map(user => (
-                                <div
-                                    key={user.id}
-                                    className="flex-shrink-0 bg-primary-tint px-4 h-[40px] rounded-[8px] flex items-center gap-2 text-sm border border-primary-tint select-none"
-                                >
-                                    <span className="text-primary-tint-foreground font-medium font-[family-name:var(--font-poppins)]">{user.full_name.split(' ')[0]}</span>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            toggleUserTag(user);
-                                        }}
-                                        className="w-6 h-6 flex items-center justify-center text-primary-tint-foreground hover:opacity-80 transition-colors ml-1"
-                                    >
-                                        <Icon icon="ph:x-circle" className="w-5 h-5" />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
+                        <CocpitSelectedUserChips
+                            users={taggedUsers}
+                            onRemove={handleRemoveTaggedUser}
+                        />
                     </div>
                 )}
             </div>

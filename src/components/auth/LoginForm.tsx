@@ -195,7 +195,7 @@ const LoginForm = () => {
               {showPassword ? <EyeClosed className={styles.toggleIcon} strokeWidth={2} /> : <Eye className={styles.toggleIcon} strokeWidth={2} />}
             </button>
           </div>
-          
+
           <div className={styles.passwordHelperRow}>
             {error ? (
               <span className={styles.errorText}>
@@ -213,11 +213,10 @@ const LoginForm = () => {
 
         <button
           type="submit"
-          className={`${styles.submitButton} ${
-            email && password 
-              ? styles.submitButtonActive 
+          className={`${styles.submitButton} ${email && password
+              ? styles.submitButtonActive
               : styles.submitButtonInactive
-          }`}
+            }`}
           disabled={isLoading || isGoogleLoading}
         >
           {isLoading ? (
