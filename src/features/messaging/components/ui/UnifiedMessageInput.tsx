@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react"
 import { Paperclip, Send, Smile, Mic, X, FileText, Film, Image as ImageIcon } from "lucide-react"
 import { MentionTextarea } from "@/components/ui/MentionTextarea"
 import { UserMention } from "@/services/api/users"
+import ReplyPreview from "../ReplyPreview"
 
 interface UnifiedMessageInputProps {
     onSendMessage: (text: string, files: File[]) => void
@@ -13,6 +14,8 @@ interface UnifiedMessageInputProps {
     placeholder?: string
     isLoading?: boolean
     searchUsersFn?: (query: string) => Promise<UserMention[]>
+    replyingTo?: { messageId: string; senderName: string; content: string } | null;
+    onCancelReply?: () => void;
 }
 
 const EMOJI_LIST = ["😀", "😂", "😍", "🥺", "🔥", "👍", "👎", "🎉", "❤️", "💼", "🚀", "💯", "👏", "🤔", "👀", "✨", "✅", "❌", "🙌", "😎"];
@@ -24,7 +27,9 @@ export default function UnifiedMessageInput({
     disabledMessage,
     placeholder,
     isLoading,
-    searchUsersFn
+    searchUsersFn,
+    replyingTo,
+    onCancelReply
 }: UnifiedMessageInputProps) {
     const [text, setText] = useState("")
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -118,7 +123,10 @@ export default function UnifiedMessageInput({
 
     return (
         <div className="px-4 py-3 md:px-6 md:py-4 w-full bg-background shrink-0">
-            <div className={`flex flex-col w-full border border-border/60 ${files.length > 0 ? 'rounded-[20px]' : 'rounded-[32px]'} bg-transparent p-1.5 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all relative`}>
+            <div className={`flex flex-col w-full border border-border/60 ${files.length > 0 || replyingTo ? 'rounded-[20px]' : 'rounded-[32px]'} bg-transparent p-1.5 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all relative`}>
+                {replyingTo && onCancelReply && (
+                    <ReplyPreview replyingTo={replyingTo} onCancel={onCancelReply} />
+                )}
                 
                 {/* File Previews inside the input box */}
                 {files.length > 0 && (

@@ -49,6 +49,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [previewMedia, setPreviewMedia] = useState<{ url: string, type: 'image' | 'video' | 'document', name?: string } | null>(null);
+    const [replyingTo, setReplyingTo] = useState<{ messageId: string, senderName: string, content: string } | null>(null);
 
     const handleMediaClick = (url: string, type: 'image' | 'video' | 'document', name?: string) => {
         setPreviewMedia({ url, type, name });
@@ -298,8 +299,8 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
     }, [socket, groupId, queryClient, currentUser.id, currentUser.user_id, setActiveConversationId]);
 
     const sendMessageMutation = useMutation({
-        mutationFn: async ({ text, files }: { text: string, files: File[] }) => {
-            return await sendGroupMessage(groupId, text, 'text', files);
+        mutationFn: async ({ text, files, replyMessageId }: { text: string, files: File[], replyMessageId?: string }) => {
+            return await sendGroupMessage(groupId, text, 'text', files, replyMessageId);
         },
         onMutate: async ({ text, files }) => {
             // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
@@ -420,8 +421,9 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         if (socket) {
             socket.emit('stopGroupTyping', { groupId: groupId });
         }
-        sendMessageMutation.mutate({ text, files });
-    }, [socket, groupId, sendMessageMutation]);
+        sendMessageMutation.mutate({ text, files, replyMessageId: replyingTo?.messageId });
+        setReplyingTo(null);
+    }, [socket, groupId, sendMessageMutation, replyingTo]);
 
     const handleTypingInput = React.useCallback(() => {
         if (!socket) return;
@@ -526,6 +528,11 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                             onAction={handleMessageAction}
                             onMediaClick={handleMediaClick}
                             unreadCount={unreadCount}
+                            onReply={(msg) => setReplyingTo({
+                                messageId: msg.id,
+                                senderName: msg.senderName || "Unknown",
+                                content: msg.text || msg.text_content || ""
+                            })}
                         />
                     </div>
 
@@ -535,6 +542,8 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                             onTyping={handleTypingInput}
                             isLoading={isLoading || isMessagesLoading}
                             placeholder="Type a message to group..."
+                            replyingTo={replyingTo}
+                            onCancelReply={() => setReplyingTo(null)}
                             searchUsersFn={async (query: string) => {
                                 const myId = currentUser.id || currentUser.user_id;
                                 const members = activeGroup?.members || [];

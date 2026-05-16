@@ -139,6 +139,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
   const [typingMap, setTypingMap] = useState<Map<string, string>>(new Map());
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMessageSelected, setIsMessageSelected] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<{ messageId: string, senderName: string, content: string } | null>(null);
 
   const isBlockedByMe = initialChat.otherUserId ? isBlocked(initialChat.otherUserId) : false;
   const isBlockedByOther = initialChat.isBlockedByOther;
@@ -444,13 +445,13 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
   }, [socket, chat.id, chat.isGroup, session?.user?.id, queryClient]); // Depend only on chat.id, not the full chat object
 
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ text, files }: { text: string, files: File[] }) => {
+    mutationFn: async ({ text, files, replyMessageId }: { text: string, files: File[], replyMessageId?: string }) => {
       if (chat.isGroup) {
-        return sendGroupMessage(chat.id, text, 'text', files);
+        return sendGroupMessage(chat.id, text, 'text', files, replyMessageId);
       }
 
       if (!chat.otherUserId) throw new Error("Target user ID missing");
-      return sendMessage(chat.otherUserId, text, undefined, files, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined);
+      return sendMessage(chat.otherUserId, text, undefined, files, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined, replyMessageId);
     },
     onMutate: async ({ text, files }) => {
       await queryClient.cancelQueries({ queryKey: ['messages', chat.id] });
@@ -537,8 +538,9 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
       }
     }
 
-    sendMessageMutation.mutate({ text, files });
-  }, [chat.otherUserId, chat.isGroup, chat.id, isBlockedByMe, isBlockedByOther, socket, sendMessageMutation]);
+    sendMessageMutation.mutate({ text, files, replyMessageId: replyingTo?.messageId });
+    setReplyingTo(null);
+  }, [chat.otherUserId, chat.isGroup, chat.id, isBlockedByMe, isBlockedByOther, socket, sendMessageMutation, replyingTo]);
 
   const handleTypingInput = React.useCallback(() => {
     if (!socket || !chat) return;
@@ -815,12 +817,12 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
                     <div className="w-[40px] h-[40px] flex-none mr-[8px]">
                       <Avatar url={chat.avatar} name={chat.name} size="md" online={chat.online} />
                     </div>
-                    <div className="flex flex-col items-start p-0">
-                      <h2 className="font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-[#000000] whitespace-nowrap">
-                        {chat.name}
+                    <div className="flex flex-col items-start p-0 min-w-0">
+                      <h2 className="font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-[#000000] w-full">
+                        <span className="truncate">{chat.name}</span>
                       </h2>
-                      <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] whitespace-nowrap">
-                        {chat.role || "Group Chat"}
+                      <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] w-full">
+                        <span className="truncate">{chat.role || "Group Chat"}</span>
                       </p>
                     </div>
                   </>
@@ -832,17 +834,17 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
                     >
                       <Avatar url={chat.avatar} name={chat.name} size="md" online={chat.online} />
                     </Link>
-                    <div className="flex flex-col items-start p-0">
+                    <div className="flex flex-col items-start p-0 min-w-0">
                       <Link
                         href={chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`}
-                        className="hover:opacity-80 transition-opacity"
+                        className="hover:opacity-80 transition-opacity w-full"
                       >
-                        <h2 className="font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-[#000000] whitespace-nowrap">
-                          {chat.name}
+                        <h2 className="font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-[#000000] w-full">
+                          <span className="truncate">{chat.name}</span>
                         </h2>
                       </Link>
-                      <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] whitespace-nowrap">
-                        {chat.role || "Member"}
+                      <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] w-full">
+                        <span className="truncate">{chat.role || "Member"}</span>
                       </p>
                       {/* Active Status */}
                       {chat.online && (
@@ -962,6 +964,11 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
           unreadCount={chat.unread}
           isOpponentOnline={chat.online}
           isGroup={chat.isGroup}
+          onReply={(msg) => setReplyingTo({
+            messageId: msg.id,
+            senderName: msg.senderName || "Unknown",
+            content: msg.text || msg.text_content || ""
+          })}
         />
       )}
 
@@ -1026,6 +1033,8 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
                     undefined
             }
             placeholder={sessionDisabled ? "Claim to start typing..." : "Type a message..."}
+            replyingTo={replyingTo}
+            onCancelReply={() => setReplyingTo(null)}
           />
         </div>
       )}

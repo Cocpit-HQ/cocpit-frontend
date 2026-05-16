@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useLayoutEffect, useState, forwardRef } from "react";
 import { Message } from "@/types/messaging";
 import SystemMessage from "./SystemMessage";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown } from "lucide-react";
 import MessageBubble from "../ui/MessageBubble";
 
 
@@ -19,9 +19,10 @@ interface GroupMessageListProps {
     onAction?: (action: string, message: Message) => void;
     onMediaClick?: (url: string, type: 'image' | 'video' | 'document', name?: string) => void;
     unreadCount?: number;
+    onReply?: (message: Message) => void;
 }
 
-const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ messages, currentUserId, onLoadMore, hasMore, isLoadingMore, onMessageClick, selectedMessageId, editingMessageId, onSaveEdit, onCancelEdit, onAction, onMediaClick, unreadCount = 0 }, ref) => {
+const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ messages, currentUserId, onLoadMore, hasMore, isLoadingMore, onMessageClick, selectedMessageId, editingMessageId, onSaveEdit, onCancelEdit, onAction, onMediaClick, unreadCount = 0, onReply }, ref) => {
     const localRef = useRef<HTMLDivElement>(null);
     const scrollRef = (ref as React.RefObject<HTMLDivElement>) || localRef;
     const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
@@ -29,6 +30,29 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
 
     const [initialUnread] = useState(unreadCount);
     const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
+
+    const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+    const [showScrollButton, setShowScrollButton] = useState(false);
+    const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const handleReplyClick = (messageId: string) => {
+        const element = document.getElementById(`message-${messageId}`);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setHighlightedMessageId(messageId);
+            setTimeout(() => setHighlightedMessageId(null), 1000);
+        }
+    };
+
+    const handleScrollButtonMouseEnter = () => {
+        if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    };
+
+    const handleScrollButtonMouseLeave = () => {
+        scrollTimerRef.current = setTimeout(() => {
+            setShowScrollButton(false);
+        }, 2000);
+    };
 
     // Auto-scroll logic
     useEffect(() => {
@@ -77,6 +101,15 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
             onLoadMore();
         } else {
             setShouldScrollToBottom(isAtBottom);
+            if (!isAtBottom) {
+                setShowScrollButton(true);
+                if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+                scrollTimerRef.current = setTimeout(() => {
+                    setShowScrollButton(false);
+                }, 2000);
+            } else {
+                setShowScrollButton(false);
+            }
         }
     };
 
@@ -104,11 +137,12 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
     };
 
     return (
-        <div
-            ref={scrollRef}
-            onScroll={handleScroll}
-            className="flex-1 overflow-y-auto px-4 py-3 space-y-0.5 scrollbar-hide scroll-smooth relative bg-background"
-        >
+        <div className="flex-1 relative flex flex-col min-h-0 overflow-hidden">
+            <div
+                ref={scrollRef}
+                onScroll={handleScroll}
+                className="flex-1 overflow-y-auto px-4 py-3 space-y-0.5 scrollbar-hide relative bg-background"
+            >
             {hasMore && (
                 <div className="flex justify-center py-2">
                     {isLoadingMore ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> : <div className="h-4" />}
@@ -197,11 +231,33 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
                                 isGroup={true}
                                 onMediaClick={onMediaClick}
                                 onMediaLoad={handleMediaLoad}
+                                onReply={onReply}
+                                onReplyClick={handleReplyClick}
+                                isHighlighted={highlightedMessageId === msg.id}
                             />
                         </React.Fragment>
                     );
                 })}
             </div>
+            </div>
+            
+            {showScrollButton && !shouldScrollToBottom && (
+                <button
+                    className="absolute bottom-4 right-4 md:right-8 bg-white border border-border shadow-lg text-primary p-2 rounded-full z-50 hover:bg-muted transition-all"
+                    onClick={() => {
+                        if (scrollRef.current) {
+                            scrollRef.current.scrollTo({
+                                top: scrollRef.current.scrollHeight,
+                                behavior: 'smooth'
+                            });
+                        }
+                    }}
+                    onMouseEnter={handleScrollButtonMouseEnter}
+                    onMouseLeave={handleScrollButtonMouseLeave}
+                >
+                    <ChevronDown className="w-5 h-5" />
+                </button>
+            )}
         </div>
     );
 });

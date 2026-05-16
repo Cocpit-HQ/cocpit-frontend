@@ -15,14 +15,14 @@ export default function InvitationCard({ groupName, groupAvatar, inviterName, on
     return (
         <div className="p-4 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors">
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <Avatar>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Avatar className="shrink-0">
                         <AvatarImage src={groupAvatar} />
                         <AvatarFallback>{(groupName || "Group").substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    <div>
-                        <p className="font-semibold text-sm">{groupName || "Unnamed Group"}</p>
-                        <p className="text-xs text-muted-foreground">Invited by {inviterName || "Someone"}</p>
+                    <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-sm truncate">{groupName || "Unnamed Group"}</p>
+                        <p className="text-xs text-muted-foreground truncate">Invited by {inviterName || "Someone"}</p>
                     </div>
                 </div>
                 <div className="flex gap-2">

@@ -164,7 +164,8 @@ export default function CreateGroupModal({
             await createGroup({
                 name: groupName,
                 description: "",
-                members: selectedUserIds
+                members: selectedUserIds,
+                avatar: groupAvatar
             });
             // Reset state and close
             handleClose();

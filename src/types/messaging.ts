@@ -36,6 +36,18 @@ export interface BackendMessage {
   is_blocked?: boolean; // Blocked status from backend
   is_deleted_for_everyone?: boolean; // Deleted status from backend
   is_deleted_for_me?: boolean;
+  replied_is_deleted?: boolean;
+  replied_msg_id?: string | null;
+  replied_sender_name?: string | null;
+  replied_content?: string | null;
+  replyMessageId?: string | null;
+  replyMessageContent?: string | null;
+  reply_message?: {
+    message_id: string;
+    text_content: string;
+    sender_name: string;
+    message_type: string;
+  } | null;
   shared_post?: {
     post_id: string;
     content: string;
@@ -130,6 +142,13 @@ export interface Message {
   is_deleted?: boolean;
   is_deleted_for_everyone?: boolean;
   is_deleted_for_me?: boolean;
+  replied_msg_id?: string | null;
+  repliedMessage?: {
+    messageId: string;
+    senderName: string;
+    content: string;
+    isDeleted: boolean;
+  } | null;
   status?: 'sending' | 'sent' | 'delivered' | 'read';
   media?: { url: string; type: 'image' | 'video' | 'document' }[];
 }

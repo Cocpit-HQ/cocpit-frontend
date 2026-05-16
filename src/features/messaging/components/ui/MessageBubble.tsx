@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Message } from "@/types/messaging"
-import { MoreVertical, Info, Copy, Pencil, Trash2, Check, CheckCheck } from "lucide-react"
+import { MoreVertical, Info, Copy, Pencil, Trash2, Check, CheckCheck, Smile, Reply } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +15,14 @@ import { ProfilePreviewCard } from "../../ProfilePreviewCard"
 import { EntityPreviewCard } from "../../EntityPreviewCard"
 import Avatar from "@/components/shared/Avatar"
 import { Icon } from "@iconify/react"
+import RepliedMessageBox from "../RepliedMessageBox"
+
+const CustomReplyIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className={className}>
+    <path d="M0 0h32v32H0z" fill="none" />
+    <path fill="currentColor" d="M28.88 30a1 1 0 0 1-.88-.5A15.19 15.19 0 0 0 15 22v6a1 1 0 0 1-.62.92a1 1 0 0 1-1.09-.21l-12-12a1 1 0 0 1 0-1.42l12-12a1 1 0 0 1 1.09-.21A1 1 0 0 1 15 4v6.11a17.19 17.19 0 0 1 15 17a16 16 0 0 1-.13 2a1 1 0 0 1-.79.86ZM14.5 20A17.62 17.62 0 0 1 28 26a15.31 15.31 0 0 0-14.09-14a1 1 0 0 1-.91-1V6.41L3.41 16L13 25.59V21a1 1 0 0 1 1-1h.54Z" />
+  </svg>
+)
 
 // --- Types ---
 interface MessageBubbleProps {
@@ -32,6 +40,9 @@ interface MessageBubbleProps {
   isOpponentOnline?: boolean
   onMediaClick?: (url: string, type: 'image' | 'video' | 'document', name?: string) => void
   onMediaLoad?: () => void
+  onReply?: (message: Message) => void
+  onReplyClick?: (messageId: string) => void
+  isHighlighted?: boolean
 }
 
 // --- Hooks ---
@@ -286,6 +297,7 @@ const MessageText = ({
   isMediaOnly: boolean,
   isMe: boolean
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const router = useRouter()
   if (isMediaOnly) return null
 
@@ -341,6 +353,11 @@ const MessageText = ({
     })
   }
 
+  const rawText = message.text || message.text_content || "";
+  const words = rawText.split(/\s+/);
+  const isLong = words.length > 50;
+  const textToShow = isLong && !isExpanded ? words.slice(0, 50).join(" ") + "..." : rawText;
+
   return (
     <div className={cn(message.media && message.media.length > 0 ? "px-3 py-2 md:px-4 md:py-2.5" : "")}>
       <span className="leading-snug block whitespace-pre-wrap break-words">
@@ -348,7 +365,29 @@ const MessageText = ({
           ? "This message deleted for everyone"
           : message.is_deleted_for_me
             ? "This message deleted for you"
-            : renderTextWithMentions(message.text || message.text_content || "")}
+            : renderTextWithMentions(textToShow)}
+        {isLong && !isExpanded && (
+          <span 
+            className={cn(
+              "font-['Poppins'] font-normal text-[12px] cursor-pointer ml-[4px] inline underline-offset-2 hover:underline", 
+              isMe ? "text-black" : "text-[#6366F1]"
+            )} 
+            onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}
+          >
+            Read more
+          </span>
+        )}
+        {isLong && isExpanded && (
+          <span 
+            className={cn(
+              "font-['Poppins'] font-normal text-[12px] cursor-pointer ml-[4px] inline underline-offset-2 hover:underline", 
+              isMe ? "text-black" : "text-[#6366F1]"
+            )} 
+            onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
+          >
+            Read less
+          </span>
+        )}
         {message.is_edited && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
           <span className="text-[10px] opacity-60 ml-1 italic">(edited)</span>
         )}
@@ -402,7 +441,10 @@ function MessageBubble(props: MessageBubbleProps) {
     showTime = true,
     isOpponentOnline = false,
     onMediaClick,
-    onMediaLoad
+    onMediaLoad,
+    onReply,
+    onReplyClick,
+    isHighlighted
   } = props
 
   const isMe = message.sender === "me"
@@ -470,12 +512,15 @@ function MessageBubble(props: MessageBubbleProps) {
         />
       )}
       <div
+        id={`message-${message.id}`}
         className={cn(
-          "flex w-full group transition-all relative",
-          showTime ? "mb-[16px]" : "mb-[4px]",
+          "flex w-full group transition-colors relative py-1",
+          showTime ? "mb-[12px]" : "mb-[2px]",
           isMe ? "justify-end" : "justify-start",
-          (message.is_deleted_for_everyone || message.is_deleted_for_me) ? "cursor-default" : ""
+          (message.is_deleted_for_everyone || message.is_deleted_for_me) ? "cursor-default" : "",
+          (isHighlighted || isSelected) ? "duration-300" : "duration-1000"
         )}
+        style={{ backgroundColor: (isHighlighted || isSelected) ? '#eef2ffb9' : 'transparent' }}
         onClick={() => !message.is_deleted_for_everyone && !message.is_deleted_for_me && onMessageClick?.(message)}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -485,10 +530,19 @@ function MessageBubble(props: MessageBubbleProps) {
         <div className={cn("flex flex-col relative w-full gap-[4px]", isMe ? "items-end" : "items-start")}>
           
           {/* ROW 1: Bubble — indented 32px to align after avatar space */}
-          <div className={cn("flex w-full", isMe ? "justify-end" : "justify-start pl-[32px]")}>
+          <div className={cn("flex w-full group/message items-center", isMe ? "justify-end" : "justify-start pl-[32px]")}>
+            
+            {/* Action Icons for isMe */}
+            {isMe && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
+              <div className={cn("flex-row items-center gap-[8px] bg-transparent opacity-0 transition-opacity px-2", (isSelected || showMobileActions) ? "opacity-100 flex md:group-hover/message:opacity-100" : "group-hover/message:opacity-100 hidden md:flex")}>
+                <button className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative"><Smile className="w-[20px] h-[20px]" /></button>
+                <button className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative" onClick={(e) => { e.stopPropagation(); onReply?.(message); }}><CustomReplyIcon className="w-[20px] h-[20px]" /></button>
+              </div>
+            )}
+
             <div
               className={cn(
-                "relative break-words text-[14px] leading-[20px] max-w-[85%] transition-colors",
+                "relative break-words text-[14px] leading-[20px] max-w-[85%] transition-all",
                 paddingClasses,
                 getBubbleClasses(),
                 (isSelected || showMobileActions) && "ring-2 ring-[#6366F1] ring-offset-1 ring-offset-background"
@@ -503,6 +557,15 @@ function MessageBubble(props: MessageBubbleProps) {
                 />
               ) : (
                 <>
+                  {message.repliedMessage && message.repliedMessage.senderName && (
+                    <RepliedMessageBox
+                      senderName={message.repliedMessage.senderName}
+                      content={message.repliedMessage.content}
+                      isDeleted={message.repliedMessage.isDeleted}
+                      isMe={isMe}
+                      onClick={() => onReplyClick?.(message.repliedMessage!.messageId)}
+                    />
+                  )}
                   <SharedPostCard message={message} onMediaLoad={onMediaLoad} />
                   {message.sharedProfileId && message.sharedProfileType && (
                     <div className="mt-1 mb-2">
@@ -536,6 +599,14 @@ function MessageBubble(props: MessageBubbleProps) {
                 </>
               )}
             </div>
+
+            {/* Action Icons for !isMe */}
+            {!isMe && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
+              <div className={cn("flex-row items-center gap-[8px] bg-transparent opacity-0 transition-opacity px-2", (isSelected || showMobileActions) ? "opacity-100 flex md:group-hover/message:opacity-100" : "group-hover/message:opacity-100 hidden md:flex")}>
+                <button className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative"><Smile className="w-[20px] h-[20px]" /></button>
+                <button className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative" onClick={(e) => { e.stopPropagation(); onReply?.(message); }}><CustomReplyIcon className="w-[20px] h-[20px]" /></button>
+              </div>
+            )}
           </div>
 
           {/* ROW 2: Avatar + Time — conditional on showTime prop */}
@@ -639,6 +710,8 @@ export default React.memo(MessageBubble, (prevProps, nextProps) => {
     prevProps.message.media === nextProps.message.media &&
     prevProps.message.sharedProfile === nextProps.message.sharedProfile &&
     prevProps.message.entityType === nextProps.message.entityType &&
-    prevProps.message.entityId === nextProps.message.entityId
+    prevProps.message.entityId === nextProps.message.entityId &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.isHighlighted === nextProps.isHighlighted
   )
 })

@@ -2,7 +2,17 @@ import api from "@/lib/axios";
 import { GroupDetails, CreateGroupPayload } from "../../types/group-chat";
 
 export const createGroup = async (data: CreateGroupPayload) => {
-    const response = await api.post("/groups", data);
+    const formData = new FormData();
+    formData.append("name", data.name);
+    if (data.description) formData.append("description", data.description);
+    if (data.members) formData.append("members", JSON.stringify(data.members));
+    if (data.avatar) formData.append("avatar", data.avatar);
+
+    const response = await api.post("/groups", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
     return response.data;
 };
 
@@ -36,11 +46,12 @@ export const deleteGroup = async (groupId: string) => {
     return response.data;
 };
 
-export const sendMessage = async (groupId: string, content: string, type: 'text' | 'image' | 'system' = 'text', files?: File[]) => {
+export const sendMessage = async (groupId: string, content: string, type: 'text' | 'image' | 'system' = 'text', files?: File[], replyMessageId?: string) => {
     if (files && files.length > 0) {
         const formData = new FormData();
         formData.append("content", content || "");
         formData.append("type", type);
+        if (replyMessageId) formData.append("replyMessageId", replyMessageId);
 
         files.forEach((file) => {
             formData.append("images", file);
@@ -51,7 +62,9 @@ export const sendMessage = async (groupId: string, content: string, type: 'text'
         });
         return response.data;
     } else {
-        const response = await api.post(`/groups/${groupId}/messages`, { content, type });
+        const payload: any = { content, type };
+        if (replyMessageId) payload.replyMessageId = replyMessageId;
+        const response = await api.post(`/groups/${groupId}/messages`, payload);
         return response.data;
     }
 };

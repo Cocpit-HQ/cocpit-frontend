@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useLayoutEffect, useState, forwardRef } from "react"
 import { Message } from "@/types/messaging"
 import MessageBubble from "./MessageBubble"
-import { Loader2 } from "lucide-react"
+import { Loader2, ChevronDown } from "lucide-react"
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface MessageListProps {
@@ -19,9 +19,10 @@ interface MessageListProps {
   unreadCount?: number
   isOpponentOnline?: boolean
   isGroup?: boolean
+  onReply?: (message: Message) => void
 }
 
-const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, onMessageClick, onMediaClick, unreadCount = 0, isOpponentOnline, isGroup }, ref) => {
+const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, onMessageClick, onMediaClick, unreadCount = 0, isOpponentOnline, isGroup, onReply }, ref) => {
   const localRef = useRef<HTMLDivElement>(null)
   const scrollRef = (ref as React.RefObject<HTMLDivElement>) || localRef
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true)
@@ -30,6 +31,29 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
   // Freeze the initial unread count so it doesn't disappear when marked as read
   const [initialUnread] = useState(unreadCount)
   const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false)
+
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null)
+  const [showScrollButton, setShowScrollButton] = useState(false)
+  const scrollTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const handleReplyClick = (messageId: string) => {
+    const index = messages.findIndex(m => m.id === messageId);
+    if (index !== -1) {
+      rowVirtualizer.scrollToIndex(index, { align: 'center' });
+      setHighlightedMessageId(messageId);
+      setTimeout(() => setHighlightedMessageId(null), 1000);
+    }
+  };
+
+  const handleScrollButtonMouseEnter = () => {
+    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+  };
+
+  const handleScrollButtonMouseLeave = () => {
+    scrollTimerRef.current = setTimeout(() => {
+      setShowScrollButton(false);
+    }, 2000);
+  };
 
   const rowVirtualizer = useVirtualizer({
     count: messages.length,
@@ -80,6 +104,15 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
       onLoadMore()
     } else {
       setShouldScrollToBottom(isAtBottom)
+      if (!isAtBottom) {
+        setShowScrollButton(true);
+        if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+        scrollTimerRef.current = setTimeout(() => {
+          setShowScrollButton(false);
+        }, 2000);
+      } else {
+        setShowScrollButton(false);
+      }
     }
   }
 
@@ -101,11 +134,12 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
   };
 
   return (
-    <div
-      ref={scrollRef}
-      onScroll={handleScroll}
-      className="flex-1 overflow-y-auto px-4 py-3 space-y-0.5 scrollbar-hide relative bg-background"
-    >
+    <div className="flex-1 relative flex flex-col min-h-0 overflow-hidden">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto px-4 py-3 space-y-0.5 scrollbar-hide relative bg-background"
+      >
       {hasMore && (
         <div className="flex justify-center py-2">
           {isLoadingMore ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> : <div className="h-4" />}
@@ -188,6 +222,9 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
                 onMediaClick={onMediaClick}
                 isOpponentOnline={isOpponentOnline}
                 isGroup={isGroup}
+                onReply={onReply}
+                onReplyClick={handleReplyClick}
+                isHighlighted={highlightedMessageId === msg.id}
                 onMediaLoad={() => {
                   if (shouldScrollToBottom && scrollRef.current) {
                     scrollRef.current.scrollTop = scrollRef.current.scrollHeight
@@ -198,6 +235,20 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
           );
         })}
       </div>
+      </div>
+      
+      {showScrollButton && !shouldScrollToBottom && (
+        <button
+          className="absolute bottom-4 right-4 md:right-8 bg-white border border-border shadow-lg text-primary p-2 rounded-full z-50 hover:bg-muted transition-all"
+          onClick={() => {
+            rowVirtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
+          }}
+          onMouseEnter={handleScrollButtonMouseEnter}
+          onMouseLeave={handleScrollButtonMouseLeave}
+        >
+          <ChevronDown className="w-5 h-5" />
+        </button>
+      )}
     </div>
   )
 })

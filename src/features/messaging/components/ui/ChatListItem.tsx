@@ -64,12 +64,12 @@ export function ChatListItem({ chat, isSelected, isMobile }: ChatListItemProps) 
           </div>
 
           {/* Text Block */}
-          <div className="flex flex-col items-start pl-[8px] flex-1 min-w-0 pr-[40px]">
-            <h3 className="h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-[#000000]">
-              {chat.name}
+          <div className="flex flex-col items-start pl-[8px] flex-1 min-w-0 pr-[85px]">
+            <h3 className="h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-[#000000] w-full">
+              <span className="truncate">{chat.name}</span>
             </h3>
-            <p className="h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280]">
-              {chat.role || "Member"}
+            <p className="h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] w-full">
+              <span className="truncate">{chat.role || "Member"}</span>
             </p>
           </div>
 

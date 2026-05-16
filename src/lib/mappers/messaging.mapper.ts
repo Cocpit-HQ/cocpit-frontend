@@ -108,6 +108,13 @@ export const mapBackendMessageToMessage = (backendMessage: BackendMessage, curre
     sharedProfileType: backendMessage.shared_profile_type || undefined,
     entityType: backendMessage.entity_type || undefined,
     entityId: backendMessage.entity_id || undefined,
+    replied_msg_id: backendMessage.reply_message?.message_id || backendMessage.replied_msg_id || backendMessage.replyMessageId || null,
+    repliedMessage: (backendMessage.reply_message || backendMessage.replied_msg_id || backendMessage.replyMessageId) ? {
+      messageId: backendMessage.reply_message?.message_id || backendMessage.replied_msg_id || backendMessage.replyMessageId!,
+      senderName: backendMessage.reply_message?.sender_name || backendMessage.replied_sender_name || "",
+      content: backendMessage.reply_message?.text_content || backendMessage.replyMessageContent || backendMessage.replied_content || "",
+      isDeleted: backendMessage.replied_is_deleted || false
+    } : null,
     created_at: backendMessage.created_at,
   };
 };

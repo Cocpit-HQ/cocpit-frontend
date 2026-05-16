@@ -147,23 +147,23 @@ export default function GroupHeader({
                                     </div>
                                 )}
                             </div>
-                            <div className="min-w-0 flex flex-col justify-center">
-                                <h2 className="font-medium text-[16px] leading-[24px] text-[#000000]" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                            <div className="min-w-0 flex flex-col justify-center flex-1">
+                                <h2 className="font-medium text-[16px] leading-[24px] text-[#000000] truncate" style={{ fontFamily: "'Poppins', sans-serif" }}>
                                     {activeGroup.conversation_name}
                                 </h2>
                                 {typingStatus ? (
-                                    <p className="text-[12px] leading-[16px] text-primary italic font-medium animate-pulse" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                                    <p className="text-[12px] leading-[16px] text-primary italic font-medium animate-pulse truncate" style={{ fontFamily: "'Poppins', sans-serif" }}>
                                         {typingStatus}
                                     </p>
                                 ) : (
-                                    <div className="flex items-center gap-0">
+                                    <div className="flex items-center gap-0 min-w-0">
                                         {activeGroup.group_headline && (
-                                            <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex items-center h-[16px] ">
+                                            <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] truncate">
                                                 {activeGroup.group_headline}
                                             </span>
                                         )}
-                                        <span className="w-[6px] h-[6px] rounded-full bg-[#6B7280] mr-[8px] ml-[16px]" />
-                                        <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex items-center h-[16px]">
+                                        <span className="w-[6px] h-[6px] rounded-full bg-[#6B7280] mx-2 shrink-0" />
+                                        <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] shrink-0">
                                             {memberCount} Members
                                         </span>
                                     </div>

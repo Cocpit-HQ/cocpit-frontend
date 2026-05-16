@@ -21,6 +21,8 @@ export interface GroupMember {
     joined_at: string;
     role: 'admin' | 'member'; // Added role
     left_at?: string | null;
+    isPending?: boolean;
+    status?: 'accepted' | 'pending';
 }
 
 export interface Invitation {
@@ -44,4 +46,5 @@ export interface CreateGroupPayload {
     name: string;
     description?: string;
     members: string[]; // user IDs
+    avatar?: File | null;
 }

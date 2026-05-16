@@ -207,17 +207,22 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
 
     const visibleMembers = activeGroup.members
         .filter(m => !isInactive || m.user_id !== currentUserId)
+        .filter(m => !m.isPending || isAdmin) // ONLY SHOW PENDING IF ADMIN
         .sort((a, b) => {
-            // 1. Current user always first
+            // 1. Accepted first, pending after (per rule 10)
+            if (a.isPending && !b.isPending) return 1;
+            if (!a.isPending && b.isPending) return -1;
+
+            // 2. Current user always first among accepted
             if (a.user_id === currentUserId) return -1;
             if (b.user_id === currentUserId) return 1;
 
-            // 2. Admins before members
+            // 3. Admins before members (among accepted)
             if (a.role === 'admin' && b.role !== 'admin') return -1;
             if (b.role === 'admin' && a.role !== 'admin') return 1;
 
-            // 3. Alphabetical by name within same role
-            return a.full_name.localeCompare(b.full_name);
+            // 4. Alphabetical by name
+            return (a.full_name || "").localeCompare(b.full_name || "");
         });
 
     // FIX 1 & SECTION: Group Info Panel View
@@ -302,7 +307,10 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     <style>{`div::-webkit-scrollbar { display: none; }`}</style>
                     {visibleMembers.map((member) => (
-                        <div key={member.user_id} className="flex flex-row justify-between items-center  py-[8px] gap-[8px] w-full h-[56px] bg-white rounded-[24px]">
+                        <div key={member.user_id} className={cn(
+                            "flex flex-row justify-between items-center py-[8px] gap-[8px] w-full h-[56px] bg-white rounded-[24px]",
+                            member.isPending && "opacity-50 blur-[1.5px]"
+                        )}>
                             {/* Left: Avatar */}
                             <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-muted shrink-0 self-stretch">
                                 {member.avatar_url ? (
