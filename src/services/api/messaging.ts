@@ -130,3 +130,14 @@ export const declineChatRequest = async (conversationId: string) => {
   const response = await api.put(`/conversations/${conversationId}/decline`);
   return response.data;
 };
+
+export const addOrUpdateReaction = async (messageId: string, emoji: string) => {
+  const response = await api.post(`/messages/${messageId}/reactions`, { emoji });
+  return response.data;
+};
+
+export const clearReaction = async (messageId: string) => {
+  const response = await api.post(`/messages/${messageId}/reactions`, { emoji: "" });
+  return response.data;
+};
+

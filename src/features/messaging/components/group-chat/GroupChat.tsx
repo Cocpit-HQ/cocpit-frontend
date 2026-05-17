@@ -10,7 +10,7 @@ import AddMemberModal from "./AddMemberModal";
 import { Loader2 } from "lucide-react";
 import { useQueryClient, useQuery, useMutation, useInfiniteQuery, InfiniteData } from "@tanstack/react-query";
 import { sendMessage as sendGroupMessage } from "@/services/api/group-chat";
-import { editMessage, deleteMessage } from "@/services/api/messaging";
+import { editMessage, deleteMessage, addOrUpdateReaction, clearReaction } from "@/services/api/messaging";
 import { Message } from "@/types/messaging";
 import { formatTimeAgo } from "@/lib/mappers/messaging.mapper";
 import { useSocket } from "@/context/SocketContext";
@@ -287,6 +287,26 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         socket.on('stoppedTyping', handleStopTyping);
         socket.on('message_deleted_for_me', handleMessageDeletedForMe);
         socket.on('message_deleted_for_everyone', handleMessageDeletedForEveryone);
+        socket.on('message_reaction_updated', (payload: { messageId: string; conversationId: string; reaction: { user_id: string; emoji: string; full_name: string; avatar: string | null; updated_at: string } | null; userId?: string }) => {
+            if (payload.conversationId !== groupId) return;
+            queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
+                if (!old) return old;
+                const newPages = old.pages.map(page => page.map(m => {
+                    if (m.id !== payload.messageId) return m;
+                    const reactions = m.reactions || [];
+                    if (payload.reaction === null) {
+                        return { ...m, reactions: reactions.filter(r => r.user_id !== payload.userId) };
+                    } else {
+                        const idx = reactions.findIndex(r => r.user_id === payload.reaction!.user_id);
+                        const newReactions = idx !== -1
+                            ? reactions.map((r, i) => i === idx ? payload.reaction! : r)
+                            : [...reactions, payload.reaction!];
+                        return { ...m, reactions: newReactions };
+                    }
+                }));
+                return { ...old, pages: newPages };
+            });
+        });
 
         return () => {
             socket.off('new_message', handleNewMessage);
@@ -294,6 +314,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             socket.off('stoppedTyping', handleStopTyping);
             socket.off('message_deleted_for_me', handleMessageDeletedForMe);
             socket.off('message_deleted_for_everyone', handleMessageDeletedForEveryone);
+            socket.off('message_reaction_updated');
             setActiveConversationId(null);
         };
     }, [socket, groupId, queryClient, currentUser.id, currentUser.user_id, setActiveConversationId]);
@@ -441,6 +462,58 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
         }, 3000);
     }, [socket, groupId]);
 
+    // ---- Reaction Logic ----
+    const currentUserId = currentUser.id || currentUser.user_id || '';
+
+    const optimisticallyUpdateGroupReaction = (messageId: string, emoji: string, userId: string) => {
+        queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
+            if (!old) return old;
+            const newPages = old.pages.map(page => page.map(m => {
+                if (m.id !== messageId) return m;
+                const reactions = m.reactions || [];
+                const existingIdx = reactions.findIndex(r => r.user_id === userId);
+                let newReactions;
+                if (existingIdx !== -1) {
+                    newReactions = reactions.map((r, i) => i === existingIdx ? { ...r, emoji, updated_at: new Date().toISOString() } : r);
+                } else {
+                    const memberName = activeGroup?.members.find(m => m.user_id === userId)?.full_name || '';
+                    newReactions = [...reactions, { user_id: userId, emoji, full_name: memberName, avatar: null, updated_at: new Date().toISOString() }];
+                }
+                return { ...m, reactions: newReactions };
+            }));
+            return { ...old, pages: newPages };
+        });
+    };
+
+    const handleGroupReactionSelect = async (message: Message, selectedEmoji: string) => {
+        const myReaction = message.reactions?.find(r => r.user_id === currentUserId);
+        if (myReaction && myReaction.emoji === selectedEmoji) return;
+        optimisticallyUpdateGroupReaction(message.id, selectedEmoji, currentUserId);
+        try {
+            if (selectedEmoji === '') {
+                await clearReaction(message.id);
+            } else {
+                await addOrUpdateReaction(message.id, selectedEmoji);
+            }
+        } catch (error) {
+            // Rollback: restore previous state
+            queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
+                if (!old) return old;
+                const newPages = old.pages.map(page => page.map(m => {
+                    if (m.id !== message.id) return m;
+                    const reactions = m.reactions || [];
+                    const newReactions = myReaction
+                        ? reactions.map(r => r.user_id === currentUserId ? myReaction : r)
+                        : reactions.filter(r => r.user_id !== currentUserId);
+                    return { ...m, reactions: newReactions };
+                }));
+                return { ...old, pages: newPages };
+            });
+            toast({ title: 'Error', description: 'Failed to update reaction', variant: 'destructive' });
+        }
+    };
+    // ---- End Reaction Logic ----
+
     // Derived typing string for display
     let typingStatus: string | null = null;
     const typingUsers = Array.from(typingMap.values());
@@ -533,6 +606,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                                 senderName: msg.senderName || "Unknown",
                                 content: msg.text || msg.text_content || ""
                             })}
+                            onReaction={handleGroupReactionSelect}
                         />
                     </div>
 

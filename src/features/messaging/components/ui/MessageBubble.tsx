@@ -16,6 +16,9 @@ import { EntityPreviewCard } from "../../EntityPreviewCard"
 import Avatar from "@/components/shared/Avatar"
 import { Icon } from "@iconify/react"
 import RepliedMessageBox from "../RepliedMessageBox"
+import EmojiPicker, { EmojiClickData } from "emoji-picker-react"
+import { ReactionListPopup } from "../ReactionListPopup"
+import { createPortal } from "react-dom"
 
 const CustomReplyIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className={className}>
@@ -43,6 +46,8 @@ interface MessageBubbleProps {
   onReply?: (message: Message) => void
   onReplyClick?: (messageId: string) => void
   isHighlighted?: boolean
+  onReaction?: (message: Message, emoji: string) => void
+  currentUserId?: string
 }
 
 // --- Hooks ---
@@ -444,7 +449,9 @@ function MessageBubble(props: MessageBubbleProps) {
     onMediaLoad,
     onReply,
     onReplyClick,
-    isHighlighted
+    isHighlighted,
+    onReaction,
+    currentUserId,
   } = props
 
   const isMe = message.sender === "me"
@@ -484,6 +491,88 @@ function MessageBubble(props: MessageBubbleProps) {
   const [showMobileActions, setShowMobileActions] = useState(false)
   const pressTimer = useRef<NodeJS.Timeout | null>(null)
 
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [pickerPos, setPickerPos] = useState<{ top: number; left: number } | null>(null)
+  const [reactionListOpen, setReactionListOpen] = useState(false)
+  const [reactionPopupPos, setReactionPopupPos] = useState<{ top: number; left: number } | null>(null)
+
+  const handleReactionBadgeClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (reactionListOpen) {
+      setReactionListOpen(false)
+      setReactionPopupPos(null)
+      return
+    }
+    const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect()
+    const popupW = 320
+    const numReactions = message.reactions?.filter(r => r.emoji && r.emoji !== '').length || 0
+    const estimatedH = Math.min(300, 60 + numReactions * 50)
+    
+    let top = rect.bottom + 8
+    
+    if (top + estimatedH > window.innerHeight - 10) {
+      top = rect.top - estimatedH - 8
+      if (top < 10) top = 10
+    }
+    
+    let left = isMe ? rect.left - popupW + rect.width : rect.left
+    if (left < 10) left = 10
+    if (left + popupW > window.innerWidth - 10) left = window.innerWidth - popupW - 10
+    
+    setReactionPopupPos({ top, left })
+    setReactionListOpen(true)
+  }
+
+  const handleEmojiButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (showEmojiPicker) {
+      setShowEmojiPicker(false)
+      setPickerPos(null)
+      return
+    }
+    const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect()
+    // New 25% smaller picker size
+    const pickerH = 340
+    const pickerW = 310
+    
+    // Default position: below the icon
+    let top = rect.bottom + 8
+    
+    // If it goes off the bottom of the screen, flip it above
+    if (top + pickerH > window.innerHeight - 10) {
+      top = rect.top - pickerH - 8
+      
+      // If it also goes off the top (e.g. very small screen), cap it to stay on screen
+      if (top < 10) {
+        top = 10
+      }
+    }
+    
+    // Horizontal positioning: align to the right edge if it's "my" message, else left
+    let left = isMe ? rect.right - pickerW : rect.left
+    if (left < 10) left = 10
+    if (left + pickerW > window.innerWidth - 10) left = window.innerWidth - pickerW - 10
+    
+    setPickerPos({ top, left })
+    setShowEmojiPicker(true)
+  }
+
+  const handleEmojiSelect = (emojiData: EmojiClickData) => {
+    setShowEmojiPicker(false)
+    setPickerPos(null)
+    onReaction?.(message, emojiData.emoji)
+  }
+
+  // Close picker on ESC
+  useEffect(() => {
+    if (!showEmojiPicker) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { setShowEmojiPicker(false); setPickerPos(null) } }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [showEmojiPicker])
+
   const handleTouchStart = () => {
     if (message.is_deleted_for_everyone || message.is_deleted_for_me) return
     pressTimer.current = setTimeout(() => {
@@ -502,6 +591,12 @@ function MessageBubble(props: MessageBubbleProps) {
     onAction?.(action, message)
     setShowMobileActions(false)
   }
+
+  // Compute reaction badge data
+  const validReactions = (message.reactions || []).filter(r => r.emoji && r.emoji !== '')
+  const myReaction = validReactions.find(r => r.user_id === currentUserId)
+  // Display user's reaction if exists, else the last reaction in the list
+  const displayReaction = myReaction || validReactions[validReactions.length - 1]
 
   return (
     <>
@@ -535,20 +630,35 @@ function MessageBubble(props: MessageBubbleProps) {
             {/* Action Icons for isMe */}
             {isMe && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
               <div className={cn("flex-row items-center gap-[8px] bg-transparent opacity-0 transition-opacity px-2", (isSelected || showMobileActions) ? "opacity-100 flex md:group-hover/message:opacity-100" : "group-hover/message:opacity-100 hidden md:flex")}>
-                <button className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative"><Smile className="w-[20px] h-[20px]" /></button>
-                <button className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative" onClick={(e) => { e.stopPropagation(); onReply?.(message); }}><CustomReplyIcon className="w-[20px] h-[20px]" /></button>
+                <button 
+                  className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative" 
+                  onClick={handleEmojiButtonClick}
+                  onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                  onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                >
+                  <Smile className="w-[20px] h-[20px]" />
+                </button>
+                <button 
+                  className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative" 
+                  onClick={(e) => { e.stopPropagation(); onReply?.(message); }}
+                  onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                  onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                >
+                  <CustomReplyIcon className="w-[20px] h-[20px]" />
+                </button>
               </div>
             )}
 
-            <div
-              className={cn(
-                "relative break-words text-[14px] leading-[20px] max-w-[85%] transition-all",
-                paddingClasses,
-                getBubbleClasses(),
-                (isSelected || showMobileActions) && "ring-2 ring-[#6366F1] ring-offset-1 ring-offset-background"
-              )}
-            >
-              {isEditing ? (
+            <div className="relative max-w-[85%] flex">
+              <div
+                className={cn(
+                  "relative break-words text-[14px] leading-[20px] w-full transition-all",
+                  paddingClasses,
+                  getBubbleClasses(),
+                  (isSelected || showMobileActions) && "ring-2 ring-[#6366F1] ring-offset-1 ring-offset-background"
+                )}
+              >
+                {isEditing ? (
                 <MessageEditor
                   message={message}
                   isEditing={isEditing}
@@ -598,13 +708,47 @@ function MessageBubble(props: MessageBubbleProps) {
                   />
                 </>
               )}
+              </div>
+              
+              {/* Overlapping Reaction Badge */}
+              {validReactions.length > 0 && displayReaction && (
+                <button
+                  onClick={handleReactionBadgeClick}
+                  className={cn(
+                    "absolute flex flex-row items-center justify-center gap-[4px] px-[6px] bg-white border border-[#EEF2FF] rounded-[24px] shadow-sm cursor-pointer hover:scale-105 transition-all z-10",
+                    isMe ? "-left-[12px] -bottom-[12px]" : "-right-[12px] -bottom-[12px]"
+                  )}
+                  style={{ minWidth: '32px', height: '24px', boxSizing: 'border-box' }}
+                >
+                  <span className="text-[14px] leading-[1]">{displayReaction.emoji}</span>
+                  {validReactions.length > 1 && (
+                    <span className="font-['Poppins'] font-medium text-[11px] text-[#374151]">
+                      {validReactions.length}
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
 
             {/* Action Icons for !isMe */}
             {!isMe && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
               <div className={cn("flex-row items-center gap-[8px] bg-transparent opacity-0 transition-opacity px-2", (isSelected || showMobileActions) ? "opacity-100 flex md:group-hover/message:opacity-100" : "group-hover/message:opacity-100 hidden md:flex")}>
-                <button className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative"><Smile className="w-[20px] h-[20px]" /></button>
-                <button className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative" onClick={(e) => { e.stopPropagation(); onReply?.(message); }}><CustomReplyIcon className="w-[20px] h-[20px]" /></button>
+                <button 
+                  className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative" 
+                  onClick={handleEmojiButtonClick}
+                  onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                  onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                >
+                  <Smile className="w-[20px] h-[20px]" />
+                </button>
+                <button 
+                  className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative" 
+                  onClick={(e) => { e.stopPropagation(); onReply?.(message); }}
+                  onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                  onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                >
+                  <CustomReplyIcon className="w-[20px] h-[20px]" />
+                </button>
               </div>
             )}
           </div>
@@ -646,6 +790,42 @@ function MessageBubble(props: MessageBubbleProps) {
 
         </div>
 
+      {/* Emoji Picker — fixed position portal */}
+      {showEmojiPicker && pickerPos && typeof document !== 'undefined' && createPortal(
+        <>
+          <div
+            className="fixed inset-0 z-[99]"
+            onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(false); setPickerPos(null) }}
+          />
+          <div
+            className="fixed z-[100] shadow-2xl rounded-2xl overflow-hidden"
+            style={{ top: pickerPos.top, left: pickerPos.left }}
+            onClick={e => e.stopPropagation()}
+          >
+            <EmojiPicker 
+              onEmojiClick={handleEmojiSelect} 
+              lazyLoadEmojis 
+              width={310} 
+              height={340} 
+              previewConfig={{ showPreview: false }} 
+            />
+          </div>
+        </>,
+        document.body
+      )}
+
+      {/* Reaction list popup */}
+      {reactionListOpen && validReactions.length > 0 && reactionPopupPos && typeof document !== 'undefined' && createPortal(
+        <ReactionListPopup
+          reactions={validReactions}
+          currentUserId={currentUserId || ''}
+          messageId={message.id}
+          onClose={() => { setReactionListOpen(false); setReactionPopupPos(null); }}
+          onRemoveReaction={() => { onReaction?.(message, ''); setReactionListOpen(false); setReactionPopupPos(null); }}
+          position={reactionPopupPos}
+        />,
+        document.body
+      )}
 
 
       {/* Mobile Action Bottom Sheet */}
@@ -712,6 +892,8 @@ export default React.memo(MessageBubble, (prevProps, nextProps) => {
     prevProps.message.entityType === nextProps.message.entityType &&
     prevProps.message.entityId === nextProps.message.entityId &&
     prevProps.isSelected === nextProps.isSelected &&
-    prevProps.isHighlighted === nextProps.isHighlighted
+    prevProps.isHighlighted === nextProps.isHighlighted &&
+    prevProps.message.reactions === nextProps.message.reactions &&
+    prevProps.currentUserId === nextProps.currentUserId
   )
 })

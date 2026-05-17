@@ -71,6 +71,13 @@ export interface BackendMessage {
   entity_type?: "post" | "profile" | "company" | "job" | "event";
   entity_id?: string;
   media?: { url: string; media_type: string }[];
+  reactions?: {
+    user_id: string;
+    emoji: string;
+    full_name: string;
+    avatar: string | null;
+    updated_at: string;
+  }[];
 }
 
 // Frontend entity types
@@ -151,4 +158,11 @@ export interface Message {
   } | null;
   status?: 'sending' | 'sent' | 'delivered' | 'read';
   media?: { url: string; type: 'image' | 'video' | 'document' }[];
+  reactions?: {
+    user_id: string;
+    emoji: string;
+    full_name: string;
+    avatar: string | null;
+    updated_at: string;
+  }[];
 }

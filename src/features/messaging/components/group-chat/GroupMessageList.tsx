@@ -20,9 +20,10 @@ interface GroupMessageListProps {
     onMediaClick?: (url: string, type: 'image' | 'video' | 'document', name?: string) => void;
     unreadCount?: number;
     onReply?: (message: Message) => void;
+    onReaction?: (message: Message, emoji: string) => void;
 }
 
-const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ messages, currentUserId, onLoadMore, hasMore, isLoadingMore, onMessageClick, selectedMessageId, editingMessageId, onSaveEdit, onCancelEdit, onAction, onMediaClick, unreadCount = 0, onReply }, ref) => {
+const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ messages, currentUserId, onLoadMore, hasMore, isLoadingMore, onMessageClick, selectedMessageId, editingMessageId, onSaveEdit, onCancelEdit, onAction, onMediaClick, unreadCount = 0, onReply, onReaction }, ref) => {
     const localRef = useRef<HTMLDivElement>(null);
     const scrollRef = (ref as React.RefObject<HTMLDivElement>) || localRef;
     const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
@@ -234,6 +235,8 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
                                 onReply={onReply}
                                 onReplyClick={handleReplyClick}
                                 isHighlighted={highlightedMessageId === msg.id}
+                                onReaction={onReaction}
+                                currentUserId={currentUserId}
                             />
                         </React.Fragment>
                     );

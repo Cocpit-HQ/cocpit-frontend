@@ -20,9 +20,11 @@ interface MessageListProps {
   isOpponentOnline?: boolean
   isGroup?: boolean
   onReply?: (message: Message) => void
+  onReaction?: (message: Message, emoji: string) => void
+  currentUserId?: string
 }
 
-const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, onMessageClick, onMediaClick, unreadCount = 0, isOpponentOnline, isGroup, onReply }, ref) => {
+const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, onMessageClick, onMediaClick, unreadCount = 0, isOpponentOnline, isGroup, onReply, onReaction, currentUserId }, ref) => {
   const localRef = useRef<HTMLDivElement>(null)
   const scrollRef = (ref as React.RefObject<HTMLDivElement>) || localRef
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true)
@@ -55,48 +57,54 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
     }, 2000);
   };
 
-  const rowVirtualizer = useVirtualizer({
-    count: messages.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => 60, // approximate height of MessageBubble
-    overscan: 10,
-  });
+    const rowVirtualizer = useVirtualizer({
+      count: messages.length,
+      getScrollElement: () => scrollRef.current,
+      estimateSize: () => 60, // approximate height of MessageBubble
+      overscan: 10,
+    });
 
-  // Auto-scroll logic
-  useEffect(() => {
-    if (!scrollRef.current) return;
+    // Auto-scroll logic
+    useEffect(() => {
+      if (!scrollRef.current) return;
 
-    if (initialUnread > 0 && !hasScrolledToUnread && messages.length > 0) {
-      // Scroll to the first unread message
-      const firstUnreadIndex = Math.max(0, messages.length - initialUnread);
-      rowVirtualizer.scrollToIndex(firstUnreadIndex, { align: 'start' });
-      setHasScrolledToUnread(true);
-      setShouldScrollToBottom(false);
-    } else if (shouldScrollToBottom && messages.length > 0) {
-      rowVirtualizer.scrollToIndex(messages.length - 1, { align: 'end' });
-    }
-  }, [messages.length, shouldScrollToBottom, initialUnread, hasScrolledToUnread, rowVirtualizer])
-
-  // Handle scroll retention when loading more
-  useLayoutEffect(() => {
-    if (isLoadingMore && scrollRef.current) {
-      setPrevScrollHeight(scrollRef.current.scrollHeight)
-      setShouldScrollToBottom(false)
-    } else if (!isLoadingMore && prevScrollHeight > 0 && scrollRef.current) {
-      const newScrollHeight = scrollRef.current.scrollHeight
-      const diff = newScrollHeight - prevScrollHeight
-      if (diff > 0) {
-        scrollRef.current.scrollTop = diff
+      if (initialUnread > 0 && !hasScrolledToUnread && messages.length > 0) {
+        // Scroll to the first unread message
+        const firstUnreadIndex = Math.max(0, messages.length - initialUnread);
+        rowVirtualizer.scrollToIndex(firstUnreadIndex, { align: "start" });
+        setHasScrolledToUnread(true);
+        setShouldScrollToBottom(false);
+      } else if (shouldScrollToBottom && messages.length > 0) {
+        rowVirtualizer.scrollToIndex(messages.length - 1, { align: "end" });
       }
-      setPrevScrollHeight(0)
-    }
-  }, [isLoadingMore, prevScrollHeight, scrollRef])
+    }, [
+      messages.length,
+      shouldScrollToBottom,
+      initialUnread,
+      hasScrolledToUnread,
+      rowVirtualizer,
+    ]);
 
-  // Check if we should auto-scroll for next update
-  const handleScroll = () => {
-    if (!scrollRef.current) return
-    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current
-    const isAtBottom = scrollHeight - scrollTop - clientHeight < 50
+    // Handle scroll retention when loading more
+    useLayoutEffect(() => {
+      if (isLoadingMore && scrollRef.current) {
+        setPrevScrollHeight(scrollRef.current.scrollHeight);
+        setShouldScrollToBottom(false);
+      } else if (!isLoadingMore && prevScrollHeight > 0 && scrollRef.current) {
+        const newScrollHeight = scrollRef.current.scrollHeight;
+        const diff = newScrollHeight - prevScrollHeight;
+        if (diff > 0) {
+          scrollRef.current.scrollTop = diff;
+        }
+        setPrevScrollHeight(0);
+      }
+    }, [isLoadingMore, prevScrollHeight, scrollRef]);
+
+    // Check if we should auto-scroll for next update
+    const handleScroll = () => {
+      if (!scrollRef.current) return;
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
 
     if (scrollTop === 0 && hasMore && !isLoadingMore && onLoadMore) {
       setShouldScrollToBottom(false)
@@ -116,22 +124,23 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
     }
   }
 
-  const formatDateDivider = (dateString?: string) => {
-    if (!dateString) return null;
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    const formatDateDivider = (dateString?: string) => {
+      if (!dateString) return null;
+      const date = new Date(dateString);
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
 
-    if (date.toDateString() === today.toDateString()) return "Today";
-    if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
-    
-    return date.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: date.getFullYear() === today.getFullYear() ? undefined : "numeric",
-    });
-  };
+      if (date.toDateString() === today.toDateString()) return "Today";
+      if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+
+      return date.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year:
+          date.getFullYear() === today.getFullYear() ? undefined : "numeric",
+      });
+    };
 
   return (
     <div className="flex-1 relative flex flex-col min-h-0 overflow-hidden">
@@ -146,37 +155,54 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
         </div>
       )}
 
-      <div
-        style={{
-          height: `${rowVirtualizer.getTotalSize()}px`,
-          width: '100%',
-          position: 'relative',
-        }}
-      >
-        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-          const msg = messages[virtualRow.index];
-          const prev = messages[virtualRow.index - 1];
-          const next = messages[virtualRow.index + 1];
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              width: "100%",
+              position: "relative",
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const msg = messages[virtualRow.index];
+              const prev = messages[virtualRow.index - 1];
+              const next = messages[virtualRow.index + 1];
 
-          const isMoreThanOneMinute = (date1?: string, date2?: string) => {
-            if (!date1 || !date2) return true;
-            return Math.abs(new Date(date1).getTime() - new Date(date2).getTime()) > 60000;
-          };
+              const isMoreThanOneMinute = (date1?: string, date2?: string) => {
+                if (!date1 || !date2) return true;
+                return (
+                  Math.abs(
+                    new Date(date1).getTime() - new Date(date2).getTime(),
+                  ) > 60000
+                );
+              };
 
-          const isTimeBreakWithPrev = prev ? isMoreThanOneMinute(msg.created_at, prev.created_at) : false;
-          const isTimeBreakWithNext = next ? isMoreThanOneMinute(msg.created_at, next.created_at) : false;
+              const isTimeBreakWithPrev = prev
+                ? isMoreThanOneMinute(msg.created_at, prev.created_at)
+                : false;
+              const isTimeBreakWithNext = next
+                ? isMoreThanOneMinute(msg.created_at, next.created_at)
+                : false;
 
-          // Simple grouping logic based on sender AND time difference
-          const isFirstInGroup = !prev || prev.sender !== msg.sender || isTimeBreakWithPrev;
-          const isLastInGroup = !next || next.sender !== msg.sender || isTimeBreakWithNext;
-          
-          const currentMsgDateStr = msg.created_at ? formatDateDivider(msg.created_at) : null;
-          const prevMsgDateStr = prev?.created_at ? formatDateDivider(prev.created_at) : null;
-          const showDateDivider = currentMsgDateStr && currentMsgDateStr !== prevMsgDateStr;
-          
-          const isFirstUnread = initialUnread > 0 && virtualRow.index === messages.length - initialUnread;
-          
-          const groupedMsg = { ...msg, isFirstInGroup, isLastInGroup };
+              // Simple grouping logic based on sender AND time difference
+              const isFirstInGroup =
+                !prev || prev.sender !== msg.sender || isTimeBreakWithPrev;
+              const isLastInGroup =
+                !next || next.sender !== msg.sender || isTimeBreakWithNext;
+
+              const currentMsgDateStr = msg.created_at
+                ? formatDateDivider(msg.created_at)
+                : null;
+              const prevMsgDateStr = prev?.created_at
+                ? formatDateDivider(prev.created_at)
+                : null;
+              const showDateDivider =
+                currentMsgDateStr && currentMsgDateStr !== prevMsgDateStr;
+
+              const isFirstUnread =
+                initialUnread > 0 &&
+                virtualRow.index === messages.length - initialUnread;
+
+              const groupedMsg = { ...msg, isFirstInGroup, isLastInGroup };
 
           return (
             <div
@@ -225,6 +251,8 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
                 onReply={onReply}
                 onReplyClick={handleReplyClick}
                 isHighlighted={highlightedMessageId === msg.id}
+                onReaction={onReaction}
+                currentUserId={currentUserId}
                 onMediaLoad={() => {
                   if (shouldScrollToBottom && scrollRef.current) {
                     scrollRef.current.scrollTop = scrollRef.current.scrollHeight
@@ -255,4 +283,4 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
 
 MessageList.displayName = "MessageList"
 
-export default MessageList
+export default MessageList;

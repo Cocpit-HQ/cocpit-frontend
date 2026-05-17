@@ -14,7 +14,7 @@ import { SocketMessage, TypingPayload } from "@/types/socket"
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery, InfiniteData } from "@tanstack/react-query"
 import { useToast } from "@/hooks/use-toast"
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox"
-import { getMessages, sendMessage, markAsRead, editMessage, deleteMessage, acceptChatRequest, declineChatRequest } from "@/services/api/messaging"
+import { getMessages, sendMessage, markAsRead, editMessage, deleteMessage, acceptChatRequest, declineChatRequest, addOrUpdateReaction, clearReaction } from "@/services/api/messaging"
 import { sendMessage as sendGroupMessage, getGroupDetails } from "@/services/api/group-chat"
 import { GroupMember } from "@/types/group-chat"
 import { mapBackendMessageToMessage } from "@/lib/mappers/messaging.mapper"
@@ -427,12 +427,36 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
       });
     };
 
+    const handleReactionUpdated = (payload: { messageId: string; conversationId: string; reaction: { user_id: string; emoji: string; full_name: string; avatar: string | null; updated_at: string } | null; userId?: string }) => {
+      if (payload.conversationId !== chat.id) return;
+      queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
+        if (!old) return old;
+        const newPages = old.pages.map(page => page.map(m => {
+          if (m.id !== payload.messageId) return m;
+          const reactions = m.reactions || [];
+          if (payload.reaction === null) {
+            // Remove reaction for that user
+            const uid = payload.userId;
+            return { ...m, reactions: reactions.filter(r => r.user_id !== uid) };
+          } else {
+            const idx = reactions.findIndex(r => r.user_id === payload.reaction!.user_id);
+            const newReactions = idx !== -1
+              ? reactions.map((r, i) => i === idx ? payload.reaction! : r)
+              : [...reactions, payload.reaction!];
+            return { ...m, reactions: newReactions };
+          }
+        }));
+        return { ...old, pages: newPages };
+      });
+    };
+
     socket.on('new_message', handleNewMessage);
     socket.on('isTyping', handleTyping);
     socket.on('stoppedTyping', handleStopTyping);
     socket.on('messages_seen', handleMessagesSeen);
     socket.on('message_deleted', handleMessageDeleted);
     socket.on('message_edited', handleMessageEdited);
+    socket.on('message_reaction_updated', handleReactionUpdated);
 
     return () => {
       socket.off('new_message', handleNewMessage);
@@ -441,6 +465,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
       socket.off('messages_seen', handleMessagesSeen);
       socket.off('message_deleted', handleMessageDeleted);
       socket.off('message_edited', handleMessageEdited);
+      socket.off('message_reaction_updated', handleReactionUpdated);
     };
   }, [socket, chat.id, chat.isGroup, session?.user?.id, queryClient]); // Depend only on chat.id, not the full chat object
 
@@ -736,6 +761,65 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
     editMessageMutation.mutate({ messageId, text });
   };
 
+  // ---- Reaction Logic ----
+  const currentUserId = activeProfile?.type === 'COMPANY' ? activeProfile.id : (session?.user?.id || '');
+
+  const optimisticallyUpdateReaction = (messageId: string, emoji: string, userId: string) => {
+    queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
+      if (!old) return old;
+      const newPages = old.pages.map(page => page.map(m => {
+        if (m.id !== messageId) return m;
+        const reactions = m.reactions || [];
+        const existingIdx = reactions.findIndex(r => r.user_id === userId);
+        let newReactions;
+        if (existingIdx !== -1) {
+          newReactions = reactions.map((r, i) => i === existingIdx ? { ...r, emoji, updated_at: new Date().toISOString() } : r);
+        } else {
+          newReactions = [...reactions, { user_id: userId, emoji, full_name: session?.user?.name || '', avatar: null, updated_at: new Date().toISOString() }];
+        }
+        return { ...m, reactions: newReactions };
+      }));
+      return { ...old, pages: newPages };
+    });
+  };
+
+  const rollbackReaction = (messageId: string, previousReaction: Message['reactions'] extends Array<infer R> | undefined ? R | undefined : never, userId: string) => {
+    queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
+      if (!old) return old;
+      const newPages = old.pages.map(page => page.map(m => {
+        if (m.id !== messageId) return m;
+        const reactions = m.reactions || [];
+        let newReactions;
+        if (previousReaction) {
+          newReactions = reactions.map(r => r.user_id === userId ? previousReaction : r);
+        } else {
+          newReactions = reactions.filter(r => r.user_id !== userId);
+        }
+        return { ...m, reactions: newReactions };
+      }));
+      return { ...old, pages: newPages };
+    });
+  };
+
+  const handleReactionSelect = async (message: Message, selectedEmoji: string) => {
+    const myReaction = message.reactions?.find(r => r.user_id === currentUserId);
+    // Same emoji — no-op
+    if (myReaction && myReaction.emoji === selectedEmoji) return;
+    // Optimistic update
+    optimisticallyUpdateReaction(message.id, selectedEmoji, currentUserId);
+    try {
+      if (selectedEmoji === '') {
+        await clearReaction(message.id);
+      } else {
+        await addOrUpdateReaction(message.id, selectedEmoji);
+      }
+    } catch (error) {
+      rollbackReaction(message.id, myReaction, currentUserId);
+      toast({ title: 'Error', description: 'Failed to update reaction', variant: 'destructive' });
+    }
+  };
+  // ---- End Reaction Logic ----
+
   const [previewMedia, setPreviewMedia] = useState<{ url: string, type: 'image' | 'video' | 'document', name?: string } | null>(null);
 
   const handleMediaClick = (url: string, type: 'image' | 'video' | 'document', name?: string) => {
@@ -969,6 +1053,8 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
             senderName: msg.senderName || "Unknown",
             content: msg.text || msg.text_content || ""
           })}
+          onReaction={handleReactionSelect}
+          currentUserId={currentUserId}
         />
       )}
 

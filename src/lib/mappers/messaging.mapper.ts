@@ -116,5 +116,6 @@ export const mapBackendMessageToMessage = (backendMessage: BackendMessage, curre
       isDeleted: backendMessage.replied_is_deleted || false
     } : null,
     created_at: backendMessage.created_at,
+    reactions: backendMessage.reactions || [],
   };
 };
