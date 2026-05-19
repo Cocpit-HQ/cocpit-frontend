@@ -38,33 +38,16 @@ export const HomeHeader = () => {
     const abortControllerRef = useRef<AbortController | null>(null);
     const { history, saveSearch, removeSearch, clearAll } = useSearchHistory();
 
-    // Scroll behavior for mobile header
     const [isHeaderVisible, setIsHeaderVisible] = useState(true);
     const lastScrollY = useRef(0);
-
-    // Helper for matching text highlighting
-    const highlightMatch = (text: string, query: string) => {
-        if (!query.trim()) return text;
-        const cleanQuery = query.startsWith('#') ? query.slice(1) : query;
-        if (!cleanQuery) return text;
-
-        try {
-            const parts = text.split(new RegExp(`(${cleanQuery})`, 'gi'));
-            return (
-                <span>
-                    {parts.map((part, i) =>
-                        part.toLowerCase() === cleanQuery.toLowerCase()
-                            ? <b key={i} className="text-primary font-bold">{part}</b>
-                            : part
-                    )}
-                </span>
-            );
-        } catch {
-            return text;
-        }
-    };
+    const isFeedPage = pathname === '/feed' || pathname === '/';
 
     useEffect(() => {
+        if (!isFeedPage) {
+            setIsHeaderVisible(true);
+            return;
+        }
+
         const handleScroll = (e: Event) => {
             const target = e.target as HTMLElement | Document;
             let currentScrollY = window.scrollY;
@@ -93,7 +76,30 @@ export const HomeHeader = () => {
 
         window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
         return () => window.removeEventListener('scroll', handleScroll, { capture: true });
-    }, []);
+    }, [isFeedPage]);
+
+    // Helper for matching text highlighting
+    const highlightMatch = (text: string, query: string) => {
+        if (!query.trim()) return text;
+        const cleanQuery = query.startsWith('#') ? query.slice(1) : query;
+        if (!cleanQuery) return text;
+
+        try {
+            const parts = text.split(new RegExp(`(${cleanQuery})`, 'gi'));
+            return (
+                <span>
+                    {parts.map((part, i) =>
+                        part.toLowerCase() === cleanQuery.toLowerCase()
+                            ? <b key={i} className="text-primary font-bold">{part}</b>
+                            : part
+                    )}
+                </span>
+            );
+        } catch {
+            return text;
+        }
+    };
+
 
     useEffect(() => {
         if (debouncedSearchQuery.trim() === '') {

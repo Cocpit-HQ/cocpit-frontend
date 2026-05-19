@@ -176,39 +176,39 @@ export default function NotificationsPage() {
               </div>
             </div>
 
-            <TabsList className="flex flex-row justify-start bg-transparent p-0 gap-3 border-none h-auto overflow-x-auto pb-2 -mb-2 scrollbar-hide">
+            <TabsList className="flex flex-row justify-start bg-transparent p-0 gap-3 border-none h-auto overflow-x-auto pb-2 -mb-2 scrollbar-hide no-scrollbar">
             <TabsTrigger 
               value="all" 
-              className="rounded-full px-5 py-2 border data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-500 data-[state=active]:border-indigo-50 data-[state=inactive]:bg-background data-[state=inactive]:text-indigo-400 data-[state=inactive]:border-indigo-400 data-[state=active]:shadow-none data-[state=inactive]:shadow-none"
+              className="rounded-full px-5 py-2 border transition-all data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=active]:border-primary data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:border-border data-[state=active]:shadow-none data-[state=inactive]:shadow-none hover:bg-muted/10 dark:hover:bg-white/5"
             >
               All
             </TabsTrigger>
             <TabsTrigger 
               value="requests" 
-              className="rounded-full px-5 py-2 border data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-500 data-[state=active]:border-indigo-50 data-[state=inactive]:bg-background data-[state=inactive]:text-indigo-400 data-[state=inactive]:border-indigo-400 data-[state=active]:shadow-none data-[state=inactive]:shadow-none relative"
+              className="rounded-full px-5 py-2 border transition-all data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=active]:border-primary data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:border-border data-[state=active]:shadow-none data-[state=inactive]:shadow-none hover:bg-muted/10 dark:hover:bg-white/5 relative"
             >
               Requests
               {pendingRequests.length > 0 && (
-                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px]">
+                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px] border-none">
                   {pendingRequests.length}
                 </Badge>
               )}
             </TabsTrigger>
             <TabsTrigger 
               value="mentions" 
-              className="rounded-full px-5 py-2 border data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-500 data-[state=active]:border-indigo-50 data-[state=inactive]:bg-background data-[state=inactive]:text-indigo-400 data-[state=inactive]:border-indigo-400 data-[state=active]:shadow-none data-[state=inactive]:shadow-none"
+              className="rounded-full px-5 py-2 border transition-all data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=active]:border-primary data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:border-border data-[state=active]:shadow-none data-[state=inactive]:shadow-none hover:bg-muted/10 dark:hover:bg-white/5"
             >
               Mentions
             </TabsTrigger>
             <TabsTrigger 
               value="jobs" 
-              className="rounded-full px-5 py-2 border data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-500 data-[state=active]:border-indigo-50 data-[state=inactive]:bg-background data-[state=inactive]:text-indigo-400 data-[state=inactive]:border-indigo-400 data-[state=active]:shadow-none data-[state=inactive]:shadow-none"
+              className="rounded-full px-5 py-2 border transition-all data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=active]:border-primary data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:border-border data-[state=active]:shadow-none data-[state=inactive]:shadow-none hover:bg-muted/10 dark:hover:bg-white/5"
             >
               Jobs
             </TabsTrigger>
             <TabsTrigger 
               value="events" 
-              className="rounded-full px-5 py-2 border data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-500 data-[state=active]:border-indigo-50 data-[state=inactive]:bg-background data-[state=inactive]:text-indigo-400 data-[state=inactive]:border-indigo-400 data-[state=active]:shadow-none data-[state=inactive]:shadow-none"
+              className="rounded-full px-5 py-2 border transition-all data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=active]:border-primary data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:border-border data-[state=active]:shadow-none data-[state=inactive]:shadow-none hover:bg-muted/10 dark:hover:bg-white/5"
             >
               Events
             </TabsTrigger>
@@ -389,10 +389,10 @@ export default function NotificationsPage() {
           {((activeTab === 'all' && notifications.length > 0) ||
             (activeTab === 'mentions' && mentions.length > 0) ||
             (activeTab === 'jobs' && jobs.length > 0)) && (
-            <div className="sticky bottom-0 bg-white dark:bg-background">
+            <div className="sticky bottom-0 bg-white dark:bg-background border-t border-border/40 backdrop-blur-sm bg-opacity-80">
               <button
                 onClick={() => setShowClearConfirm(true)}
-                className="w-full py-3.5 text-sm text-indigo-400 hover:text-indigo-500 transition-colors font-medium"
+                className="w-full py-3.5 text-sm text-primary hover:text-primary/80 transition-colors font-semibold"
               >
                 Clear all
               </button>
@@ -411,76 +411,25 @@ export default function NotificationsPage() {
           onClick={() => setShowClearConfirm(false)}
         >
           <div
-            style={{
-              width: 300,
-              background: '#FFFFFF',
-              borderRadius: 24,
-              padding: 16,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-            }}
+            className="w-[300px] bg-card rounded-[24px] p-4 flex flex-col gap-2 shadow-xl border border-border"
             onClick={e => e.stopPropagation()}
           >
             {/* Text block */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              padding: '8px 0',
-              gap: 10,
-              borderRadius: 24,
-              background: '#FFFFFF',
-            }}>
-              <p style={{
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: 400,
-                fontSize: 14,
-                lineHeight: '20px',
-                textAlign: 'center',
-                color: '#000000',
-                margin: 0,
-              }}>
+            <div className="flex flex-col items-center justify-center p-2 gap-2 rounded-[24px] bg-card">
+              <p className="font-poppins font-normal text-sm text-center text-foreground m-0">
                 Clear all notifications?
               </p>
-              <p style={{
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: 400,
-                fontSize: 12,
-                lineHeight: '16px',
-                textAlign: 'center',
-                color: '#6B7280',
-                margin: 0,
-                width: 268,
-              }}>
+              <p className="font-poppins font-normal text-[12px] leading-4 text-center text-muted-foreground m-0 max-w-[240px]">
                 This will remove all your notifications. You can&apos;t undo this action.
               </p>
             </div>
 
             {/* Buttons row */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'row',
-              gap: 16,
-              width: 268,
-              alignSelf: 'center',
-            }}>
+            <div className="flex flex-row gap-4 w-full px-2 mt-2">
               {/* Cancel */}
               <button
                 onClick={() => setShowClearConfirm(false)}
-                style={{
-                  flex: 1,
-                  height: 40,
-                  background: '#FFFFFF',
-                  border: '1px solid #818CF8',
-                  borderRadius: 24,
-                  fontFamily: 'Poppins, sans-serif',
-                  fontWeight: 400,
-                  fontSize: 14,
-                  color: '#818CF8',
-                  cursor: 'pointer',
-                }}
+                className="flex-1 h-10 bg-transparent border border-primary rounded-full font-poppins font-normal text-sm text-primary hover:bg-primary/5 transition-colors"
               >
                 Cancel
               </button>
@@ -490,18 +439,7 @@ export default function NotificationsPage() {
                   setShowClearConfirm(false)
                   await handleClearAll()
                 }}
-                style={{
-                  flex: 1,
-                  height: 40,
-                  background: '#FF6B6B',
-                  border: '1px solid #FFFFFF',
-                  borderRadius: 24,
-                  fontFamily: 'Poppins, sans-serif',
-                  fontWeight: 400,
-                  fontSize: 14,
-                  color: '#FFFFFF',
-                  cursor: 'pointer',
-                }}
+                className="flex-1 h-10 bg-destructive border border-transparent rounded-full font-poppins font-normal text-sm text-destructive-foreground hover:bg-destructive/90 transition-colors"
               >
                 Clear all
               </button>
