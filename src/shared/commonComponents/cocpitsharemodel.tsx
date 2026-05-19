@@ -2,36 +2,63 @@
 
 import React, { useMemo, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X, Mail, Facebook, Search, User, Briefcase } from "lucide-react";
-import { Icon } from "@iconify/react";
+import { X, Mail, Facebook, Search, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSocial } from "@/context/SocialContext";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
+import { getFollowing } from "@/services/api/social";
 
-export interface CocpitShareProfileProps {
+export interface CocpitShareModelProps {
   isOpen: boolean;
   onClose: () => void;
-  users: { id: string; name: string; avatar?: string; slug?: string }[];
+  users?: { id: string; name: string; avatar?: string; slug?: string }[];
   onShare?: (selectedIds: string[]) => void;
+  postId?: string;
+  profileId?: string;
 }
 
-export default function CocpitShareProfile({
+export default function CocpitShareModel({
   isOpen,
   onClose,
-  users,
+  users: propUsers,
   onShare,
-}: CocpitShareProfileProps) {
+  postId,
+  profileId,
+}: CocpitShareModelProps) {
   const router = useRouter();
   const { startChat } = useSocial();
+  const { activeProfile } = useActiveProfile();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+
+  // Fetch following list of the logged-in user if users prop is not provided
+  const { data: followingData = [] } = useQuery({
+    queryKey: ["following", user?.id],
+    queryFn: () => (user?.id ? getFollowing(user.id) : Promise.resolve([])),
+    enabled: !propUsers && !!user?.id && isOpen,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const users = useMemo(() => {
+    if (propUsers) return propUsers;
+    return followingData.map((f: any) => ({
+      id: f.following_id || f.user_id || f.id,
+      name: f.full_name,
+      avatar: f.avatar_url || undefined,
+    }));
+  }, [propUsers, followingData]);
 
   const isSearching = searchTerm.length > 0;
 
   const filteredUsers = useMemo(() => {
-    if (!searchTerm.trim()) return users;
-    const lowered = searchTerm.toLowerCase();
-    return users.filter((u) => u.name.toLowerCase().includes(lowered));
-  }, [searchTerm, users]);
+    if (!isSearching) return users;
+    return users.filter((u: { id: string; name: string; avatar?: string; slug?: string }) =>
+      u.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [users, isSearching, searchTerm]);
 
   const handleClose = () => {
     setSearchTerm("");
@@ -40,21 +67,62 @@ export default function CocpitShareProfile({
   };
 
   const toggleSelected = (id: string) => {
-    setSelectedUsers((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setSelectedUsers([id]);
+    onShare?.([id]);
+    
+    if (postId) {
+      const isCompany = activeProfile?.type === "COMPANY";
+      const effectiveCompanyId = isCompany ? activeProfile?.id : undefined;
+
+      if (effectiveCompanyId) {
+        router.push(`/messaging?userId=${id}&companyId=${effectiveCompanyId}&sharedPostId=${postId}`);
+      } else {
+        router.push(`/messaging?userId=${id}&sharedPostId=${postId}`);
+      }
+    } else if (profileId) {
+      const isCompany = activeProfile?.type === "COMPANY";
+      const effectiveCompanyId = isCompany ? activeProfile?.id : undefined;
+
+      if (effectiveCompanyId) {
+        router.push(`/messaging?userId=${id}&companyId=${effectiveCompanyId}&sharedProfileId=${profileId}`);
+      } else {
+        router.push(`/messaging?userId=${id}&sharedProfileId=${profileId}`);
+      }
+    } else {
+      startChat(id);
+    }
+    
+    handleClose();
   };
 
   const canShare = selectedUsers.length > 0;
 
   const shareOptions = useMemo(
     () => [
-      { key: "business", label: "Business", icon: <Icon icon="ic:outline-business-center" className="w-6 h-6 text-black dark:text-white group-hover:text-white" /> },
-      { key: "email", label: "Email", icon: <Icon icon="lucide:mail" className="w-6 h-6 text-black dark:text-white group-hover:text-white" style={{ strokeWidth: 1 }} /> },
-      { key: "whatsapp", label: "WhatsApp", icon: <Icon icon="teenyicons:whatsapp-outline" className="w-6 h-6 text-black dark:text-white group-hover:text-white" /> },
-      { key: "facebook", label: "Facebook", icon: <Icon icon="teenyicons:facebook-outline" className="w-6 h-6 text-black dark:text-white group-hover:text-white" /> },
+      {
+        icon: <Mail className="w-5 h-5 text-gray-500 dark:text-gray-400" />,
+        label: "Send via Email",
+        onClick: () => {
+          window.open(
+            `mailto:?subject=Check out this profile&body=${encodeURIComponent(
+              window.location.href
+            )}`
+          );
+        },
+      },
+      {
+        icon: <Facebook className="w-5 h-5 text-gray-500 dark:text-gray-400" />,
+        label: "Share on Facebook",
+        onClick: () => {
+          window.open(
+            `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+              window.location.href
+            )}`
+          );
+        },
+      },
     ],
-    [],
+    []
   );
 
   return (
@@ -86,7 +154,7 @@ export default function CocpitShareProfile({
             </button>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 flex-1 flex flex-col overflow-hidden">
             <div className="relative">
               <input
                 value={searchTerm}
@@ -100,11 +168,11 @@ export default function CocpitShareProfile({
             </div>
 
             {!isSearching ? (
-              <>
+              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
                 <div className="mt-5 grid grid-cols-3 gap-4 text-center max-h-[280px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2">
                   {users.map((u, index) => (
-                    <div 
-                      key={`${u.id}-${index}`} 
+                    <div
+                      key={`${u.id}-${index}`}
                       className="flex flex-col items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1E293B] rounded-lg p-2 transition-colors relative"
                       onClick={() => toggleSelected(u.id)}
                     >
@@ -121,7 +189,7 @@ export default function CocpitShareProfile({
                           )}
                         </div>
                         {selectedUsers.includes(u.id) && (
-                          <div className="absolute bottom-0 right-0 h-4.5 w-4.5 rounded-[4px] bg-[#6366F1] flex items-center justify-center shadow-sm border border-white translate-x-[10%] translate-y-[10%] z-10">
+                          <div className="absolute bottom-0 right-0 h-4.5 w-4.5 rounded-full bg-[#6366F1] flex items-center justify-center shadow-sm border border-white translate-x-[10%] translate-y-[10%] z-10">
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                               <polyline points="20 6 9 17 4 12" />
                             </svg>
@@ -140,8 +208,9 @@ export default function CocpitShareProfile({
                     <div className="flex items-center justify-around">
                       {shareOptions.map((opt) => (
                         <button
-                          key={opt.key}
+                          key={opt.label}
                           type="button"
+                          onClick={opt.onClick}
                           className="h-10 w-10 flex items-center justify-center hover:bg-[#C7D2FE] transition-colors rounded-full group"
                           aria-label={opt.label}
                           title={opt.label}
@@ -152,7 +221,7 @@ export default function CocpitShareProfile({
                     </div>
                   </div>
                 )}
-              </>
+              </div>
             ) : (
               <div className="mt-5 max-h-[280px] overflow-auto pr-1">
                 {filteredUsers.length === 0 ? (
@@ -167,7 +236,7 @@ export default function CocpitShareProfile({
                         key={`${u.id}-${index}`}
                         className="flex items-center justify-between py-2"
                       >
-                        <div 
+                        <div
                           className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1E293B] flex-1 p-1 rounded transition-colors"
                           onClick={() => toggleSelected(u.id)}
                         >
@@ -216,6 +285,30 @@ export default function CocpitShareProfile({
                   type="button"
                   onClick={() => {
                     onShare?.(selectedUsers);
+                    if (selectedUsers.length > 0) {
+                      const id = selectedUsers[0];
+                      if (postId) {
+                        const isCompany = activeProfile?.type === "COMPANY";
+                        const effectiveCompanyId = isCompany ? activeProfile?.id : undefined;
+
+                        if (effectiveCompanyId) {
+                          router.push(`/messaging?userId=${id}&companyId=${effectiveCompanyId}&sharedPostId=${postId}`);
+                        } else {
+                          router.push(`/messaging?userId=${id}&sharedPostId=${postId}`);
+                        }
+                      } else if (profileId) {
+                        const isCompany = activeProfile?.type === "COMPANY";
+                        const effectiveCompanyId = isCompany ? activeProfile?.id : undefined;
+
+                        if (effectiveCompanyId) {
+                          router.push(`/messaging?userId=${id}&companyId=${effectiveCompanyId}&sharedProfileId=${profileId}`);
+                        } else {
+                          router.push(`/messaging?userId=${id}&sharedProfileId=${profileId}`);
+                        }
+                      } else {
+                        startChat(id);
+                      }
+                    }
                     handleClose(); // Close after sending
                   }}
                   className="w-full h-[44px] rounded-full font-['Poppins'] text-[14px] font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#818CF8] hover:opacity-95 transition-opacity"

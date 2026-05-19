@@ -103,9 +103,9 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
   return (
     <div className="relative mb-6 flex w-full max-w-none flex-col items-start overflow-hidden rounded-[24px] border border-border bg-card py-4 shadow-sm md:w-[560px] md:max-w-[560px]">
       {/* Header */}
-      <div className="flex h-10 w-full flex-row items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full overflow-hidden bg-[#D9D9D9] relative flex-shrink-0">
+      <div className="flex w-full flex-row items-start justify-between px-4">
+        <div className="flex items-start gap-2">
+          <div className="w-8 h-8 rounded-full overflow-hidden bg-[#D9D9D9] relative flex-shrink-0 mt-0.5">
             <img
               src={post.authorAvatar || "/assets/pngegg.png"}
               alt={post.author}
@@ -115,6 +115,11 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
           <div className="flex flex-col">
             <span className="font-[family-name:var(--font-poppins)] font-semibold text-[16px] text-foreground leading-tight">{post.author}</span>
             <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground">{post.isCompanyPost ? 'Organization' : 'designer'}</span>
+            <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)] mt-0.5">
+              <span>{post.location || 'Kolhapur'}</span>
+              <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
+              <span>{post.timeAgo || '6 days ago'}</span>
+            </div>
           </div>
         </div>
 
@@ -229,11 +234,7 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
           </p>
         </div>
 
-        <div className="flex items-center px-0 gap-2 mb-4">
-          <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground">{post.location || 'Kolhapur'}</span>
-          <span className="text-muted-foreground">•</span>
-          <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground">{post.timeAgo || '6 days ago'}</span>
-        </div>
+
 
         {/* Shared Post Content */}
         {post.shared_post && (

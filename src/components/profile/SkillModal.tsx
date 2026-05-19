@@ -101,7 +101,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
               selectedSkills.length === 0 ||
               (JSON.stringify([...selectedSkills].sort()) === JSON.stringify([...initialSkills].sort()))
             }
-            className="px-4 py-1.5 rounded-full bg-primary text-primary-foreground font-medium text-[14px] disabled:bg-muted disabled:opacity-100 transition-all disabled:cursor-not-allowed"
+            className="px-4 py-1.5 rounded-full bg-primary hover:bg-primary text-primary-foreground font-medium text-[14px] disabled:opacity-50 transition-all disabled:cursor-not-allowed font-[family-name:var(--font-poppins)]"
           >
             {loading ? "..." : "Save"}
           </Button>
@@ -144,7 +144,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
                   setSearchQuery("")
                 }
               }}
-              className="flex-1 bg-transparent border-none p-0 focus:ring-0 outline-none text-foreground placeholder:text-muted-foreground text-[14px]"
+              className="flex-1 bg-transparent border-none p-0 focus:ring-0 outline-none text-foreground placeholder:text-muted-foreground text-[14px] font-[family-name:var(--font-poppins)]"
             />
             <Search className="w-5 h-5 text-muted-foreground ml-2 flex-shrink-0" />
           </div>
@@ -153,7 +153,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
           <div className="w-full flex-1 flex flex-wrap justify-start content-start items-start gap-3 mb-4 overflow-y-auto">
             {isSearching ? (
               <div className="w-full h-full flex items-center justify-center">
-                <span className="text-sm text-muted-foreground">Searching...</span>
+                <span className="text-sm text-muted-foreground font-[family-name:var(--font-poppins)]">Searching...</span>
               </div>
             ) : paginatedSkills.length > 0 ? (
               paginatedSkills.map((skill) => {
@@ -165,7 +165,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
                       toggleSkill(skill)
                     }}
                     className={cn(
-                      "h-fit px-6 py-2.5 rounded-[12px] text-sm font-medium transition-all duration-200 border",
+                      "h-fit px-6 py-2.5 rounded-[12px] text-sm font-medium transition-all duration-200 border font-[family-name:var(--font-poppins)]",
                       isSelected
                         ? "bg-primary border-primary text-primary-foreground shadow-sm"
                         : "skill-chip hover:opacity-80"
@@ -177,7 +177,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
               })
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <span className="text-sm text-muted-foreground">No skills found</span>
+                <span className="text-sm text-muted-foreground font-[family-name:var(--font-poppins)]">No skills found</span>
               </div>
             )}
           </div>
@@ -192,7 +192,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <span className="text-foreground font-medium text-sm">
+              <span className="text-foreground font-medium text-sm font-[family-name:var(--font-poppins)]">
                 {String(currentPage).padStart(2, '0')}
               </span>
               <button
@@ -209,7 +209,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
           <div className="hidden sm:flex w-full justify-center gap-4 mt-auto">
             <button
               onClick={onClose}
-              className="w-[142px] h-[40px] rounded-[24px] bg-card border border-primary text-primary font-semibold transition-all flex items-center justify-center gap-[10px] px-[16px] py-[8px]"
+              className="w-[142px] h-[40px] rounded-[24px] bg-card border border-primary text-primary font-semibold transition-all flex items-center justify-center gap-[10px] px-[16px] py-[8px] font-[family-name:var(--font-poppins)]"
             >
               Cancel
             </button>
@@ -220,7 +220,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
                 selectedSkills.length === 0 ||
                 (JSON.stringify([...selectedSkills].sort()) === JSON.stringify([...initialSkills].sort()))
               }
-              className="w-[142px] h-[40px] rounded-[24px] bg-primary text-primary-foreground font-semibold shadow-md transition-all flex items-center justify-center disabled:bg-muted disabled:opacity-100 disabled:cursor-not-allowed"
+              className="w-[142px] h-[40px] rounded-[24px] bg-primary hover:bg-primary text-primary-foreground font-semibold shadow-md transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed font-[family-name:var(--font-poppins)]"
             >
               {loading ? "Saving..." : "Save"}
             </Button>

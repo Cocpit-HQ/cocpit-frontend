@@ -13,9 +13,9 @@ interface CompanyAutocompleteProps {
   placeholder?: string;
 }
 
-export default function CompanyAutocomplete({ 
-  onSelect, 
-  selectedId, 
+export default function CompanyAutocomplete({
+  onSelect,
+  selectedId,
   selectedName,
   placeholder = "e.g. Google"
 }: CompanyAutocompleteProps) {
@@ -83,7 +83,7 @@ export default function CompanyAutocomplete({
         setOpen(false);
         // On blur, if we have custom text, update parent
         if (query.trim() && query !== selectedName) {
-           onSelect(null, query.trim());
+          onSelect(null, query.trim());
         }
       }
     };
@@ -108,7 +108,7 @@ export default function CompanyAutocomplete({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuery = e.target.value;
     setQuery(newQuery);
-    
+
     // Reset selected ID when user starts typing
     onSelect(null, newQuery);
   };
@@ -128,8 +128,8 @@ export default function CompanyAutocomplete({
 
   return (
     <div ref={wrapperRef} className={styles.wrapper}>
-      <div 
-        className={`${styles.inputWrapper} ${open ? styles.isOpen : ''} min-h-[48px]`} 
+      <div
+        className={`${styles.inputWrapper} ${open ? styles.isOpen : ''} min-h-[48px]`}
         onClick={handleWrapperClick}
         style={{ cursor: "text" }}
       >
@@ -147,9 +147,9 @@ export default function CompanyAutocomplete({
           {loading ? (
             <Loader2 className={styles.spinner} />
           ) : query ? (
-            <button 
-              type="button" 
-              onClick={(e) => { e.stopPropagation(); handleClear(); }} 
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); handleClear(); }}
               className={styles.clearBtn}
             >
               <X className={styles.clearIcon} />

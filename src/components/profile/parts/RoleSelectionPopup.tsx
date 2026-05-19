@@ -46,7 +46,7 @@ export function RoleSelectionPopup({ roles, onSelect, onClose, logoUrl }: RoleSe
             <div
               key={role.experience_id}
               onClick={() => onSelect(role)}
-              className="flex items-start gap-2 px-4 py-3 w-full min-h-[64px] h-auto rounded-[12px] cursor-pointer hover:bg-[#EEF2FF] transition-colors border border-transparent hover:border-[#E5E7EB]"
+              className="flex items-start gap-2 px-4 py-3 w-full min-h-[64px] h-auto rounded-[12px] cursor-pointer hover:bg-[#EEF2FF] transition-colors border border-transparent"
             >
               {/* Logo Section */}
               <div className="flex flex-row justify-center items-center w-[56px] h-[40px] rounded-[24px] overflow-hidden flex-none bg-card border border-border mt-1">

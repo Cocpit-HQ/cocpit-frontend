@@ -8,6 +8,7 @@ import { avatarGradients } from "@/constants/messaging"
 import MessageList from "./MessageList"
 import UnifiedMessageInput from "./UnifiedMessageInput"
 import MobileChatHeader from "./MobileChatHeader"
+import { useSearchParams, useRouter } from "next/navigation";
 import { useSocket } from "@/context/SocketContext"
 import { useSession } from "next-auth/react"
 import { SocketMessage, TypingPayload } from "@/types/socket"
@@ -57,7 +58,7 @@ function ChatHeaderMenu({ selectedMessage, onMessageAction, currentUserId }: { s
   return (
     <>
       <div className="flex items-center gap-3">
-        <button 
+        <button
           onClick={() => onMessageAction('close')}
           className="p-1 hover:bg-[#EEF2FF] rounded-full transition-colors"
         >
@@ -69,21 +70,21 @@ function ChatHeaderMenu({ selectedMessage, onMessageAction, currentUserId }: { s
         <DropdownMenu onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild>
             <button className="p-1 outline-none transition-colors">
-              <Icon 
-                icon="mdi-light:dots-vertical" 
-                width={24} 
-                height={24} 
+              <Icon
+                icon="mdi-light:dots-vertical"
+                width={24}
+                height={24}
                 style={{ color: isOpen ? '#6366F1' : '#000000' }}
               />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent 
-            align="end" 
+          <DropdownMenuContent
+            align="end"
             className="w-[204px] p-[8px] mr-4 bg-white border border-[#C7D2FE]"
             style={{ borderRadius: '24px 0px 24px 24px' }}
           >
             {isMyMessage && (
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => onMessageAction('edit')}
                 className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors border-none outline-none"
               >
@@ -92,7 +93,7 @@ function ChatHeaderMenu({ selectedMessage, onMessageAction, currentUserId }: { s
               </DropdownMenuItem>
             )}
             {isMyMessage && (
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => onMessageAction('delete')}
                 className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#FFF0F0] rounded-md transition-colors border-none outline-none"
               >
@@ -100,14 +101,14 @@ function ChatHeaderMenu({ selectedMessage, onMessageAction, currentUserId }: { s
                 <Icon icon="fluent:delete-16-regular" width={24} height={24} color="#FF6B6B" />
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={() => onMessageAction('info')}
               className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors border-none outline-none"
             >
               <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Info</span>
               <Icon icon="fluent:info-16-regular" width={24} height={24} color="#000000" />
             </DropdownMenuItem>
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={() => onMessageAction('copy')}
               className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors border-none outline-none"
             >
@@ -141,6 +142,16 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
   const [isMessageSelected, setIsMessageSelected] = useState(false);
   const [replyingTo, setReplyingTo] = useState<{ messageId: string, senderName: string, content: string } | null>(null);
 
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const sharedPostIdParam = searchParams?.get("sharedPostId");
+  const sharedProfileIdParam = searchParams?.get("sharedProfileId");
+
+  const [pendingSharedPostId, setPendingSharedPostId] = useState<string | null>(null);
+  const [pendingSharedPost, setPendingSharedPost] = useState<any | null>(null);
+  const [pendingSharedProfileId, setPendingSharedProfileId] = useState<string | null>(null);
+  const [pendingSharedProfile, setPendingSharedProfile] = useState<any | null>(null);
+
   const isBlockedByMe = initialChat.otherUserId ? isBlocked(initialChat.otherUserId) : false;
   const isBlockedByOther = initialChat.isBlockedByOther;
 
@@ -155,6 +166,57 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
     ...initialChat,
     online: (!isBlockedByMe && !isBlockedByOther && initialChat.otherUserId) ? isUserOnline(initialChat.otherUserId) : false
   };
+
+  // Sync state with URL parameter on mount or when chat/param changes
+  useEffect(() => {
+    if (sharedPostIdParam) {
+      setPendingSharedPostId(sharedPostIdParam);
+      // Fetch post details to display preview
+      Promise.all([
+        import("@/services/api/posts"),
+        import("@/lib/mappers/feed.mapper")
+      ]).then(([{ getPostById }, { mapBackendPostToFrontend }]) => {
+        getPostById(sharedPostIdParam)
+          .then((backendPost) => {
+            const mapped = mapBackendPostToFrontend(backendPost);
+            setPendingSharedPost(mapped);
+          })
+          .catch((err) => {
+            console.error("Failed to fetch shared post details:", err);
+          });
+      });
+      
+      // Clean up the URL query parameter without a full reload
+      const newParams = new URLSearchParams(window.location.search);
+      newParams.delete("sharedPostId");
+      const newSearch = newParams.toString();
+      const newPath = window.location.pathname + (newSearch ? `?${newSearch}` : "");
+      window.history.replaceState(null, "", newPath);
+    }
+  }, [sharedPostIdParam, chat.id]);
+
+  useEffect(() => {
+    if (sharedProfileIdParam) {
+      setPendingSharedProfileId(sharedProfileIdParam);
+      // Fetch profile details to display preview
+      import("@/services/api/user").then(({ getUserById }) => {
+        getUserById(sharedProfileIdParam)
+          .then((response) => {
+            setPendingSharedProfile(response.user);
+          })
+          .catch((err) => {
+            console.error("Failed to fetch shared profile details:", err);
+          });
+      });
+
+      // Clean up the URL query parameter without a full reload
+      const newParams = new URLSearchParams(window.location.search);
+      newParams.delete("sharedProfileId");
+      const newSearch = newParams.toString();
+      const newPath = window.location.pathname + (newSearch ? `?${newSearch}` : "");
+      window.history.replaceState(null, "", newPath);
+    }
+  }, [sharedProfileIdParam, chat.id]);
 
   const handleUnblock = async () => {
     if (!chat.otherUserId) return;
@@ -470,15 +532,15 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
   }, [socket, chat.id, chat.isGroup, session?.user?.id, queryClient]); // Depend only on chat.id, not the full chat object
 
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ text, files, replyMessageId }: { text: string, files: File[], replyMessageId?: string }) => {
+    mutationFn: async ({ text, files, replyMessageId, sharedPostId, sharedProfileId }: { text: string, files: File[], replyMessageId?: string, sharedPostId?: string, sharedProfileId?: string }) => {
       if (chat.isGroup) {
         return sendGroupMessage(chat.id, text, 'text', files, replyMessageId);
       }
 
       if (!chat.otherUserId) throw new Error("Target user ID missing");
-      return sendMessage(chat.otherUserId, text, undefined, files, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined, replyMessageId);
+      return sendMessage(chat.otherUserId, text, sharedPostId, files, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined, replyMessageId, sharedProfileId);
     },
-    onMutate: async ({ text, files }) => {
+    onMutate: async ({ text, files, sharedPostId }) => {
       await queryClient.cancelQueries({ queryKey: ['messages', chat.id] });
       const previousMessages = queryClient.getQueryData(['messages', chat.id]);
 
@@ -498,7 +560,14 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
         created_at: new Date().toISOString(),
         type: 'text',
         read_at: null,
-        media: tempMedia
+        media: tempMedia,
+        sharedPost: pendingSharedPost ? {
+          id: pendingSharedPost.id,
+          content: pendingSharedPost.content,
+          author: pendingSharedPost.author,
+          authorAvatar: pendingSharedPost.authorAvatar || null,
+          media: pendingSharedPost.images?.map((img: string) => ({ url: img, type: 'image' })) || []
+        } : null
       };
 
       queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
@@ -563,9 +632,19 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
       }
     }
 
-    sendMessageMutation.mutate({ text, files, replyMessageId: replyingTo?.messageId });
+    sendMessageMutation.mutate({
+      text,
+      files,
+      replyMessageId: replyingTo?.messageId,
+      sharedPostId: pendingSharedPostId || undefined,
+      sharedProfileId: pendingSharedProfileId || undefined
+    });
     setReplyingTo(null);
-  }, [chat.otherUserId, chat.isGroup, chat.id, isBlockedByMe, isBlockedByOther, socket, sendMessageMutation, replyingTo]);
+    setPendingSharedPostId(null);
+    setPendingSharedPost(null);
+    setPendingSharedProfileId(null);
+    setPendingSharedProfile(null);
+  }, [chat.otherUserId, chat.isGroup, chat.id, isBlockedByMe, isBlockedByOther, socket, sendMessageMutation, replyingTo, pendingSharedPostId, pendingSharedProfileId]);
 
   const handleTypingInput = React.useCallback(() => {
     if (!socket || !chat) return;
@@ -1121,6 +1200,16 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
             placeholder={sessionDisabled ? "Claim to start typing..." : "Type a message..."}
             replyingTo={replyingTo}
             onCancelReply={() => setReplyingTo(null)}
+            pendingSharedPost={pendingSharedPost}
+            onCancelPendingSharedPost={() => {
+              setPendingSharedPostId(null);
+              setPendingSharedPost(null);
+            }}
+            pendingSharedProfile={pendingSharedProfile}
+            onCancelPendingSharedProfile={() => {
+              setPendingSharedProfileId(null);
+              setPendingSharedProfile(null);
+            }}
           />
         </div>
       )}
@@ -1175,10 +1264,10 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
               setShowReportConfirm(false);
             } catch (err: any) {
               const errorMsg = err?.response?.data?.message || "Failed to report profile";
-              toast({ 
+              toast({
                 title: "Error",
-                description: errorMsg, 
-                variant: "destructive" 
+                description: errorMsg,
+                variant: "destructive"
               });
             }
           }

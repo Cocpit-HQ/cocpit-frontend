@@ -15,12 +15,13 @@ export const getMessages = async (conversationId: string, limit: number = 50, be
   return response.data;
 };
 
-export const sendMessage = async (targetUserId: string, text_content: string, shared_post_id?: string, files?: File[], authorCompanyId?: string, replyMessageId?: string) => {
+export const sendMessage = async (targetUserId: string, text_content: string, shared_post_id?: string, files?: File[], authorCompanyId?: string, replyMessageId?: string, shared_profile_id?: string) => {
   if (files && files.length > 0) {
     const formData = new FormData();
     formData.append("targetUserId", targetUserId);
     if (text_content) formData.append("text_content", text_content);
     if (shared_post_id) formData.append("shared_post_id", shared_post_id);
+    if (shared_profile_id) formData.append("shared_profile_id", shared_profile_id);
     if (replyMessageId) formData.append("replyMessageId", replyMessageId);
     void authorCompanyId;
 
@@ -37,6 +38,7 @@ export const sendMessage = async (targetUserId: string, text_content: string, sh
       targetUserId,
       text_content,
       shared_post_id,
+      shared_profile_id,
       replyMessageId,
     });
     return response.data;

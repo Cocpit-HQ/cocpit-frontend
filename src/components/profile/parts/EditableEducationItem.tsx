@@ -32,19 +32,25 @@ export function EditableEducationItem({
                 <div className="flex-1 min-w-0">
                     <div className="flex flex-col gap-[8px]">
                         <div className="flex justify-between items-start w-full">
-                            <h3 className="text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] text-foreground">
+                            <h3 className="text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] text-foreground mb-[8px]">
                                 {education.school_name}
                             </h3>
                             <button
                                 onClick={onEdit}
-                                className="md:hidden flex-shrink-0"
+                                className="md:hidden flex-shrink-0 p-1 hover:bg-[color:var(--edit-btn-hover)] text-muted-foreground hover:text-primary rounded-full transition-colors mt-[-4px]"
                             >
                                 <Icon
                                     icon="eva:edit-outline"
-                                    className="w-[20px] h-[20px] text-muted-foreground stroke-[1.5px] hover:text-primary transition-colors"
+                                    className="w-[20px] h-[20px] stroke-[1.5px] transition-colors"
                                 />
                             </button>
                         </div>
+
+                        {education.description && (
+                            <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground line-clamp-2 mb-[10px]">
+                                {education.description}
+                            </p>
+                        )}
 
                         <div className="flex flex-col gap-[8px]">
                             <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
@@ -54,12 +60,6 @@ export function EditableEducationItem({
                                 Kolhapur, Maharashtra, India
                             </p>
                         </div>
-
-                        {education.description && (
-                            <p className="mt-1 text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground line-clamp-2">
-                                {education.description}
-                            </p>
-                        )}
                     </div>
                 </div>
             </div>
@@ -77,11 +77,11 @@ export function EditableEducationItem({
                 </div>
                 <button
                     onClick={onEdit}
-                    className="flex-shrink-0 mt-0.5 md:ml-2"
+                    className="flex-shrink-0 mt-0.5 md:ml-2 p-1 hover:bg-[color:var(--edit-btn-hover)] text-muted-foreground hover:text-primary rounded-full transition-colors"
                 >
                     <Icon
                         icon="eva:edit-outline"
-                        className="w-[24px] h-[24px] text-muted-foreground stroke-[1.5px] hover:text-primary transition-colors"
+                        className="w-[24px] h-[24px] stroke-[1.5px] transition-colors"
                     />
                 </button>
             </div>

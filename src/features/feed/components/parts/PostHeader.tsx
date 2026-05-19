@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Icon } from "@iconify/react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { TaggedPeoplePopover } from "@/shared/commonComponents/TaggedPeoplePopover";
 
 interface PostHeaderProps {
   id: string | number;
@@ -110,35 +111,7 @@ export const PostHeader = ({
         <div className="flex items-center gap-1">
           {/* Tag icon */}
           {tags && tags.length > 0 && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="p-1 hover:bg-secondary rounded-full transition-colors outline-none text-muted-foreground hover:text-foreground data-[state=open]:text-primary">
-                  <Icon icon="la:user-tag" className="w-[24px] h-[24px]" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="w-[180px] h-[136px] p-2 bg-card border border-border rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] z-[210]"
-                align="end"
-                sideOffset={8}
-              >
-                <div className="flex flex-col gap-1">
-                  {tags.map((tag: any, idx: number) => (
-                    <div key={idx} className="flex items-center gap-3 px-3 py-2 hover:bg-muted rounded-[12px] transition-colors cursor-pointer group">
-                      <div className="w-6 h-6 rounded-full border border-border flex items-center justify-center overflow-hidden bg-muted">
-                        {tag.avatar_url || tag.avatar ? (
-                          <img src={tag.avatar_url || tag.avatar} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <Icon icon="solar:user-linear" className="w-3 h-3 text-muted-foreground" />
-                        )}
-                      </div>
-                      <span className="text-[14px] leading-[20px] font-normal text-foreground font-[family-name:var(--font-poppins)] transition-colors">
-                        {tag.full_name || tag.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
+            <TaggedPeoplePopover tags={tags} />
           )}
 
           <div className="relative">
