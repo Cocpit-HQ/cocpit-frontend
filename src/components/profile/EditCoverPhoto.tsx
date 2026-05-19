@@ -521,10 +521,10 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="cursor-pointer transition-transform hover:scale-110 active:scale-95"
+            className="cursor-pointer"
             aria-label="Edit cover photo"
           >
-            <div className="w-[32px] h-[32px] rounded-full bg-[#6366F1] flex items-center justify-center transition-transform group-hover:scale-110">
+            <div className="w-[32px] h-[32px] rounded-full bg-[#6366F1] flex items-center justify-center">
               <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-white" style={{ strokeWidth: '1.5px' }} />
             </div>
           </button>

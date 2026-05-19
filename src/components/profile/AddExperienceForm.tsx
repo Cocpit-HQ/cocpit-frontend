@@ -1,18 +1,20 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useMemo } from "react"
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { Experience } from "@/types/entities"
 import { Checkbox } from "@/components/ui/checkbox"
-import { X, Plus, ChevronDown, Trash2, AlertTriangle } from "lucide-react"
+import { X, Plus, ChevronDown, Trash2, AlertTriangle, Loader2, Building2, Briefcase } from "lucide-react"
 import { Icon } from '@iconify/react'
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
 import LocationAutocomplete from "@/components/ui/LocationAutocomplete"
-import CompanyAutocomplete from "@/components/ui/CompanyAutocomplete"
 import { Input } from "@/components/ui/input"
+import { useDebounce } from "@/hooks/use-debounce"
+import { getCompanyList } from "@/services/api/onboarding"
+import acStyles from "@/components/ui/LocationAutocomplete.module.css"
 import {
   Select,
   SelectContent,
@@ -156,15 +158,103 @@ function RoleSection({
   fieldErrors = {},
   fieldWarnings = {},
   existingCurrentRoleId,
-	}: RoleSectionProps) {
-	  const inputStyles =
-	    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"
+}: RoleSectionProps) {
+  const inputStyles =
+    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"
   const labelStyles = "block font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-foreground mb-2"
   const getSelectTextColor = (value: string) =>
     value ? "text-foreground" : "text-muted-foreground"
 
   const set = (field: keyof RoleFormState, value: any) =>
     onChange({ ...role, [field]: value })
+
+  // ── Role autocomplete state ─────────────────────────────────────────────
+  const [roleOptions, setRoleOptions] = useState<string[]>([])
+  const [roleSearch, setRoleSearch] = useState(role.title)
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false)
+  const [roleLoading, setRoleLoading] = useState(false)
+  const [roleHighlight, setRoleHighlight] = useState(-1)
+  const roleWrapperRef = useRef<HTMLDivElement>(null)
+  const roleInputRef = useRef<HTMLInputElement>(null)
+  const roleSelectedRef = useRef(false)
+  const roleListRef = useRef<HTMLUListElement>(null)
+  const debouncedRoleSearch = useDebounce(roleSearch, 300)
+
+  // Sync roleSearch when role.title changes (e.g. on initial edit)
+  useEffect(() => { setRoleSearch(role.title) }, [role.title])
+
+  // ── Fetch role suggestions ──────────────────────────────────────────────
+  useEffect(() => {
+    if (roleSelectedRef.current) { roleSelectedRef.current = false; return }
+    let cancelled = false
+    setRoleLoading(true)
+    getCompanyList("", debouncedRoleSearch).then(res => {
+      if (!cancelled) {
+        const titles = res.titles || []
+        setRoleOptions(titles)
+        if (titles.length > 0 && document.activeElement === roleInputRef.current) setShowRoleDropdown(true)
+        setRoleHighlight(-1)
+      }
+    }).catch(() => { if (!cancelled) setRoleOptions([]) }).finally(() => { if (!cancelled) setRoleLoading(false) })
+    return () => { cancelled = true }
+  }, [debouncedRoleSearch])
+
+  // ── Role focus handler ──────────────────────────────────────────────────
+  const handleRoleFocus = () => {
+    if (roleOptions.length > 0) setShowRoleDropdown(true)
+    setRoleLoading(true)
+    getCompanyList("", roleSearch).then(res => {
+      const titles = res.titles || []
+      setRoleOptions(titles)
+      if (titles.length > 0) setShowRoleDropdown(true)
+      setRoleHighlight(-1)
+    }).catch(() => { }).finally(() => setRoleLoading(false))
+  }
+
+  // ── Role outside click ──────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (roleWrapperRef.current && !roleWrapperRef.current.contains(e.target as Node)) setShowRoleDropdown(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  // ── Role selection ──────────────────────────────────────────────────────
+  const selectRole = (name: string) => {
+    roleSelectedRef.current = true
+    setRoleSearch(name)
+    set("title", name)
+    setShowRoleDropdown(false)
+    setRoleOptions([])
+  }
+
+  // ── Role "Other" option ──────────────────────────────────────────────────
+  const roleExactMatch = roleOptions.some(n => n.toLowerCase() === roleSearch.trim().toLowerCase())
+  const roleTotalItems = roleOptions.length + 1
+
+  // ── Role auto-scroll ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (roleHighlight >= 0 && roleListRef.current) {
+      const el = roleListRef.current.querySelector(`[data-idx="${roleHighlight}"]`) as HTMLElement
+      el?.scrollIntoView({ block: "nearest" })
+    }
+  }, [roleHighlight])
+
+  // ── Role keyboard navigation ────────────────────────────────────────────
+  const handleRoleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") { setShowRoleDropdown(false); return }
+    if (!showRoleDropdown || roleTotalItems === 0) return
+    if (e.key === "ArrowDown") { e.preventDefault(); setRoleHighlight(p => (p < roleTotalItems - 1 ? p + 1 : 0)) }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setRoleHighlight(p => (p > 0 ? p - 1 : roleTotalItems - 1)) }
+    else if (e.key === "Enter") {
+      e.preventDefault()
+      if (roleHighlight >= 0) {
+        if (roleHighlight < roleOptions.length) selectRole(roleOptions[roleHighlight])
+        else selectRole(roleSearch.trim())
+      }
+    }
+  }
 
   return (
     <div className="relative pl-0">
@@ -177,7 +267,7 @@ function RoleSection({
               <button
                 type="button"
                 onClick={onRemove}
-                className="text-[#FF6B6B] hover:text-[#FF6B6B]/80 transition-colors flex items-center gap-1.5 text-[12px]"
+                className="text-[#FF6B6B] hover:text-[#FF6B6B]/80 transition-colors flex items-center gap-1.5 text-[12px] font-[family-name:var(--font-poppins)]"
                 aria-label="Remove this role"
               >
                 <Trash2 className="w-4 h-4" />
@@ -188,33 +278,99 @@ function RoleSection({
         )}
 
         {/* Title */}
-        <div className="flex flex-col">
+        <div className="flex flex-col" ref={roleWrapperRef}>
           <div className="flex items-center justify-between mb-2">
             <Label className={labelStyles}>{isFirst ? "Role" : "New role"}</Label>
             <span className={cn(
-              "text-[11px]",
+              "text-[11px] font-[family-name:var(--font-poppins)]",
               role.title.length > 90 ? "text-amber-500" : "text-[#9CA3AF]"
             )}>
               {role.title.length}/100
             </span>
           </div>
-          <div className="relative">
-            <Input
-              value={role.title}
-              onChange={(e) => set("title", e.target.value)}
-              className={cn(
-                inputStyles, "pr-10 w-full",
-                fieldErrors.title && "border-red-400 focus-visible:border-red-400"
-              )}
-              placeholder="e.g. Designer"
-              maxLength={100}
-            />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-              <ChevronDown className="w-4 h-4 text-gray-400" />
+          <div className={acStyles.wrapper}>
+            <div className={cn(
+              acStyles.inputWrapper,
+              showRoleDropdown && acStyles.isOpen,
+              fieldErrors.title && "border-red-400"
+            )} onClick={() => roleInputRef.current?.focus()}>
+              <input
+                ref={roleInputRef}
+                type="text"
+                className={acStyles.input}
+                placeholder="e.g. Designer"
+                value={roleSearch}
+                onChange={(e) => {
+                  const val = e.target.value
+                  setRoleSearch(val)
+                  set("title", val)
+                }}
+                onFocus={handleRoleFocus}
+                onKeyDown={handleRoleKeyDown}
+                autoComplete="off"
+                maxLength={100}
+              />
+              <div className={acStyles.suffix}>
+                {roleLoading ? (
+                  <Loader2 className={acStyles.spinner} />
+                ) : roleSearch ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setRoleSearch("")
+                      set("title", "")
+                      setRoleOptions([])
+                      setShowRoleDropdown(false)
+                    }}
+                    className={acStyles.clearBtn}
+                  >
+                    <X className={acStyles.clearIcon} />
+                  </button>
+                ) : (
+                  <ChevronDown className={cn(acStyles.clearIcon, "text-muted-foreground transition-transform", showRoleDropdown && "rotate-180")} />
+                )}
+              </div>
             </div>
+            {showRoleDropdown && (
+              <ul ref={roleListRef} className={acStyles.dropdown}>
+                {roleOptions.map((name, idx) => (
+                  <li
+                    key={name}
+                    data-idx={idx}
+                    className={cn(acStyles.item, "date-select-item", idx === roleHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")}
+                    onMouseDown={() => selectRole(name)}
+                    onMouseEnter={() => setRoleHighlight(idx)}
+                  >
+                    <Briefcase className={acStyles.itemIcon} />
+                    <span>{name}</span>
+                  </li>
+                ))}
+                <li
+                  data-idx={roleOptions.length}
+                  className={cn(acStyles.item, "border-t border-border date-select-item", roleOptions.length === roleHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")}
+                  onMouseDown={() => {
+                    if (roleSearch.trim()) {
+                      selectRole(roleSearch.trim())
+                    } else {
+                      setShowRoleDropdown(false)
+                      roleInputRef.current?.focus()
+                    }
+                  }}
+                  onMouseEnter={() => setRoleHighlight(roleOptions.length)}
+                >
+                  <Plus className={acStyles.itemIcon} />
+                  <span>
+                    {roleSearch.trim() && !roleExactMatch
+                      ? `Other: "${roleSearch.trim()}"`
+                      : "Other (type your own)"}
+                  </span>
+                </li>
+              </ul>
+            )}
           </div>
           {fieldErrors.title && (
-            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
+            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
               <AlertTriangle className="w-3 h-3" />{fieldErrors.title}
             </p>
           )}
@@ -238,7 +394,7 @@ function RoleSection({
             />
             <label
               htmlFor={`endCurrentRole-${index}`}
-              className="text-[13px] font-medium text-foreground cursor-pointer leading-[20px]"
+              className="text-[13px] font-medium text-foreground cursor-pointer leading-[20px] font-[family-name:var(--font-poppins)]"
             >
               End current role
               {previousRoleTitle && (
@@ -273,7 +429,7 @@ function RoleSection({
                 type="button"
                 onClick={() => set("work_type", role.work_type === type ? "" : type)}
                 className={cn(
-                  "h-[32px] px-4 rounded-[8px] text-[12px] font-medium transition-all duration-200 border border-transparent",
+                  "h-[32px] px-4 rounded-[8px] text-[12px] font-medium transition-all duration-200 border border-transparent font-[family-name:var(--font-poppins)]",
                   role.work_type === type
                     ? "bg-primary text-primary-foreground border-primary"
                     : "skill-chip hover:opacity-80"
@@ -295,7 +451,7 @@ function RoleSection({
                 type="button"
                 onClick={() => set("work_mode", role.work_mode === mode ? "" : mode)}
                 className={cn(
-                  "h-[32px] px-4 rounded-[8px] text-[12px] font-medium transition-all duration-200 border border-transparent",
+                  "h-[32px] px-4 rounded-[8px] text-[12px] font-medium transition-all duration-200 border border-transparent font-[family-name:var(--font-poppins)]",
                   role.work_mode === mode
                     ? "bg-primary text-primary-foreground border-primary"
                     : "skill-chip hover:opacity-80"
@@ -311,30 +467,30 @@ function RoleSection({
         <div className="space-y-2">
           <Label className={labelStyles}>Start date</Label>
           <div className="grid grid-cols-2 gap-6">
-	            <Select value={role.startMonth} onValueChange={(v) => set("startMonth", v)}>
-	              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.startMonth), fieldErrors.startDate && "border-red-400")}>
-	                <SelectValue placeholder="Month" />
-	              </SelectTrigger>
-	              <SelectContent>
-	                {months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-	              </SelectContent>
-	            </Select>
-	            <Select value={role.startYear} onValueChange={(v) => set("startYear", v)}>
-	              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.startYear), fieldErrors.startDate && "border-red-400")}>
-	                <SelectValue placeholder="Year" />
-	              </SelectTrigger>
-	              <SelectContent>
-	                {years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-	              </SelectContent>
-	            </Select>
+            <Select value={role.startMonth} onValueChange={(v) => set("startMonth", v)}>
+              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.startMonth), fieldErrors.startDate && "border-red-400")}>
+                <SelectValue placeholder="Month" />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map((m) => <SelectItem key={m} value={m} className="date-select-item">{m}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={role.startYear} onValueChange={(v) => set("startYear", v)}>
+              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.startYear), fieldErrors.startDate && "border-red-400")}>
+                <SelectValue placeholder="Year" />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map((y) => <SelectItem key={y} value={y} className="date-select-item">{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           {fieldErrors.startDate && (
-            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
+            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
               <AlertTriangle className="w-3 h-3" />{fieldErrors.startDate}
             </p>
           )}
           {!fieldErrors.startDate && fieldWarnings.startDate && (
-            <p className="text-[11px] text-amber-600 mt-1 flex items-center gap-1">
+            <p className="text-[11px] text-amber-600 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
               <AlertTriangle className="w-3 h-3" />{fieldWarnings.startDate}
             </p>
           )}
@@ -349,28 +505,28 @@ function RoleSection({
               onValueChange={(v) => set("endMonth", v)}
               disabled={role.is_current}
             >
-	              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.endMonth), fieldErrors.endDate && "border-red-400")}>
-	                <SelectValue placeholder="Month" />
-	              </SelectTrigger>
-	              <SelectContent>
-	                {months.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-	              </SelectContent>
-	            </Select>
-	            <Select
+              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.endMonth), fieldErrors.endDate && "border-red-400")}>
+                <SelectValue placeholder="Month" />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map((m) => <SelectItem key={m} value={m} className="date-select-item">{m}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select
               value={role.endYear}
               onValueChange={(v) => set("endYear", v)}
               disabled={role.is_current}
             >
-	              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.endYear), fieldErrors.endDate && "border-red-400")}>
-	                <SelectValue placeholder="Year" />
-	              </SelectTrigger>
-	              <SelectContent>
-	                {years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-	              </SelectContent>
-	            </Select>
+              <SelectTrigger className={cn(inputStyles, getSelectTextColor(role.endYear), fieldErrors.endDate && "border-red-400")}>
+                <SelectValue placeholder="Year" />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map((y) => <SelectItem key={y} value={y} className="date-select-item">{y}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           {fieldErrors.endDate && (
-            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
+            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
               <AlertTriangle className="w-3 h-3" />{fieldErrors.endDate}
             </p>
           )}
@@ -409,7 +565,7 @@ function RoleSection({
           />
           <label
             htmlFor={`currentlyWorking-${index}`}
-            className="text-[14px] font-medium text-foreground"
+            className="text-[14px] font-medium text-foreground font-[family-name:var(--font-poppins)]"
           >
             I currently work here
           </label>
@@ -484,6 +640,92 @@ export default function AddExperienceForm({
     setFieldWarnings({})
     setActiveRoleIndex(0)
   }, [initialExperiences, companyName])
+
+  // ── Company autocomplete state ─────────────────────────────────────────────
+  const [companyOptions, setCompanyOptions] = useState<string[]>([])
+  const [companySearch, setCompanySearch] = useState(company)
+  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false)
+  const [companyLoading, setCompanyLoading] = useState(false)
+  const [companyHighlight, setCompanyHighlight] = useState(-1)
+  const companyWrapperRef = useRef<HTMLDivElement>(null)
+  const companyInputRef = useRef<HTMLInputElement>(null)
+  const companySelectedRef = useRef(false)
+  const companyListRef = useRef<HTMLUListElement>(null)
+  const debouncedCompanySearch = useDebounce(companySearch, 300)
+
+  // Sync companySearch with company state
+  useEffect(() => { setCompanySearch(company) }, [company])
+
+  // ── Fetch company suggestions ──────────────────────────────────────────────
+  useEffect(() => {
+    if (companySelectedRef.current) { companySelectedRef.current = false; return }
+    let cancelled = false
+    setCompanyLoading(true)
+    getCompanyList(debouncedCompanySearch, "").then(res => {
+      if (!cancelled) {
+        const names = res.company_names || []
+        setCompanyOptions(names)
+        if (names.length > 0 && document.activeElement === companyInputRef.current) setShowCompanyDropdown(true)
+        setCompanyHighlight(-1)
+      }
+    }).catch(() => { if (!cancelled) setCompanyOptions([]) }).finally(() => { if (!cancelled) setCompanyLoading(false) })
+    return () => { cancelled = true }
+  }, [debouncedCompanySearch])
+
+  // ── Company focus handler ──────────────────────────────────────────────────
+  const handleCompanyFocus = () => {
+    if (companyOptions.length > 0) setShowCompanyDropdown(true)
+    setCompanyLoading(true)
+    getCompanyList(companySearch, "").then(res => {
+      const names = res.company_names || []
+      setCompanyOptions(names)
+      if (names.length > 0) setShowCompanyDropdown(true)
+      setCompanyHighlight(-1)
+    }).catch(() => { }).finally(() => setCompanyLoading(false))
+  }
+
+  // ── Company outside click ──────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (companyWrapperRef.current && !companyWrapperRef.current.contains(e.target as Node)) setShowCompanyDropdown(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  // ── Company selection ──────────────────────────────────────────────────────
+  const selectCompany = (name: string) => {
+    companySelectedRef.current = true
+    setCompany(name); setCompanySearch(name); setOrgId(null); setLogoUrl(null)
+    setShowCompanyDropdown(false); setCompanyOptions([])
+  }
+
+  // ── Company "Other" option ──────────────────────────────────────────────────
+  const companyExactMatch = companyOptions.some(n => n.toLowerCase() === companySearch.trim().toLowerCase())
+  const companyTotalItems = companyOptions.length + 1
+
+  // ── Company auto-scroll ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (companyHighlight >= 0 && companyListRef.current) {
+      const el = companyListRef.current.querySelector(`[data-idx="${companyHighlight}"]`) as HTMLElement
+      el?.scrollIntoView({ block: "nearest" })
+    }
+  }, [companyHighlight])
+
+  // ── Company keyboard navigation ────────────────────────────────────────────
+  const handleCompanyKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") { setShowCompanyDropdown(false); return }
+    if (!showCompanyDropdown || companyTotalItems === 0) return
+    if (e.key === "ArrowDown") { e.preventDefault(); setCompanyHighlight(p => (p < companyTotalItems - 1 ? p + 1 : 0)) }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setCompanyHighlight(p => (p > 0 ? p - 1 : companyTotalItems - 1)) }
+    else if (e.key === "Enter") {
+      e.preventDefault()
+      if (companyHighlight >= 0) {
+        if (companyHighlight < companyOptions.length) selectCompany(companyOptions[companyHighlight])
+        else selectCompany(companySearch.trim())
+      }
+    }
+  }
 
   const updateRole = useCallback(
     (index: number, updated: RoleFormState) => {
@@ -842,10 +1084,10 @@ export default function AddExperienceForm({
         alert("Version conflict: someone else updated this profile. Please refresh the page.")
       }
     }
-	  }
+  }
 
-	  const inputStyles =
-	    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"
+  const inputStyles =
+    "bg-card border border-border placeholder:text-muted-foreground rounded-[16px] h-[48px] font-[family-name:var(--font-poppins)] text-[16px] leading-[24px] text-left text-foreground focus:border-[#C7D2FE] dark:focus:border-primary focus-visible:outline-none focus-visible:ring-0 transition-all data-[state=open]:border-[#C7D2FE] dark:data-[state=open]:border-primary"
   const labelStyles = "block font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-foreground mb-2"
 
   const modalTitle = isEditing ? "Edit experience" : "Add experience"
@@ -867,19 +1109,25 @@ export default function AddExperienceForm({
         <button
           onClick={() => handleSubmit()}
           disabled={!isFormValid || isSaving}
-          className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all"
+          className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all font-[family-name:var(--font-poppins)]"
         >
           {isSaving ? "Saving..." : "Save"}
         </button>
       </div>
 
       {/* ── Scrollable Body ── */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-12 py-4 scrollbar-hide pb-20 sm:pb-4">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-12 py-4 scrollbar-hide pb-20 sm:pb-4 relative">
+        <button
+          onClick={onCancel}
+          className="absolute right-4 top-4 hidden sm:block text-muted-foreground hover:text-foreground transition-colors outline-none border-none bg-transparent"
+        >
+          <X className="w-5 h-5 text-[#FF6B6B]" strokeWidth={1} />
+        </button>
 
         {/* Close button handled by global DialogPrimitive.Close in ProfilePage */}
 
         {/* Desktop header */}
-        <div className="hidden sm:block text-left mb-8 relative">
+        <div className="hidden sm:block text-center mb-8 relative">
           <h2 className="text-[18px] leading-[26px] font-medium font-[family-name:var(--font-poppins)] text-foreground mb-1">
             {modalTitle}
           </h2>
@@ -907,17 +1155,40 @@ export default function AddExperienceForm({
 
           {/* Company + Location — shared across roles */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            <div className="flex flex-col">
+            <div className="flex flex-col" ref={companyWrapperRef}>
               <Label className={labelStyles}>Company</Label>
-              <CompanyAutocomplete
-                selectedId={orgId}
-                selectedName={company}
-                onSelect={(id, name, logo) => {
-                  setOrgId(id)
-                  setCompany(name)
-                  if (logo !== undefined) setLogoUrl(logo)
-                }}
-              />
+              <div className={acStyles.wrapper}>
+                <div className={cn(acStyles.inputWrapper, showCompanyDropdown && acStyles.isOpen)} onClick={() => companyInputRef.current?.focus()}>
+                  <input ref={companyInputRef} type="text" className={acStyles.input} placeholder="e.g. Google" value={companySearch}
+                    onChange={(e) => { setCompanySearch(e.target.value); setCompany(e.target.value); setOrgId(null) }}
+                    onFocus={handleCompanyFocus}
+                    onKeyDown={handleCompanyKeyDown} autoComplete="off" />
+                  <div className={acStyles.suffix}>
+                    {companyLoading ? <Loader2 className={acStyles.spinner} /> : companySearch ? (
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setCompanySearch(""); setCompany(""); setOrgId(null); setCompanyOptions([]); setShowCompanyDropdown(false) }} className={acStyles.clearBtn}>
+                        <X className={acStyles.clearIcon} />
+                      </button>
+                    ) : (
+                      <ChevronDown className={cn(acStyles.clearIcon, "text-muted-foreground transition-transform", showCompanyDropdown && "rotate-180")} />
+                    )}
+                  </div>
+                </div>
+                {showCompanyDropdown && (
+                  <ul ref={companyListRef} className={acStyles.dropdown}>
+                    {companyOptions.map((name, idx) => (
+                      <li key={name} data-idx={idx} className={cn(acStyles.item, "date-select-item", idx === companyHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")} onMouseDown={() => selectCompany(name)} onMouseEnter={() => setCompanyHighlight(idx)}>
+                        <Building2 className={acStyles.itemIcon} /><span>{name}</span>
+                      </li>
+                    ))}
+                    <li data-idx={companyOptions.length} className={cn(acStyles.item, "border-t border-border date-select-item", companyOptions.length === companyHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")}
+                      onMouseDown={() => { if (companySearch.trim()) { selectCompany(companySearch.trim()) } else { setShowCompanyDropdown(false); companyInputRef.current?.focus() } }}
+                      onMouseEnter={() => setCompanyHighlight(companyOptions.length)}>
+                      <Plus className={acStyles.itemIcon} />
+                      <span>{companySearch.trim() && !companyExactMatch ? `Other: "${companySearch.trim()}"` : "Other (type your own)"}</span>
+                    </li>
+                  </ul>
+                )}
+              </div>
             </div>
 
             <div className="flex flex-col">
@@ -997,7 +1268,7 @@ export default function AddExperienceForm({
                   }
                 }}
                 disabled={isSaving}
-                className="h-10 px-8 rounded-full border-red-200 text-red-500 hover:bg-transparent bg-transparent font-medium w-[142px]"
+                className="h-10 px-8 rounded-full border-red-200 text-red-500 hover:bg-transparent bg-transparent font-medium w-[142px] font-[family-name:var(--font-poppins)]"
               >
                 Delete
               </Button>
@@ -1007,7 +1278,7 @@ export default function AddExperienceForm({
                 variant="outline"
                 onClick={onCancel}
                 disabled={isSaving}
-                className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-transparent bg-white font-medium w-[142px]"
+                className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-transparent bg-white font-medium w-[142px] font-[family-name:var(--font-poppins)]"
               >
                 Cancel
               </Button>
@@ -1015,7 +1286,7 @@ export default function AddExperienceForm({
             <Button
               type="submit"
               disabled={!isFormValid || isSaving}
-              className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed font-[family-name:var(--font-poppins)]"
             >
               {isSaving ? "Saving..." : "Save"}
             </Button>

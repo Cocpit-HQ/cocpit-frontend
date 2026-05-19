@@ -11,7 +11,7 @@ import { User } from "@/types/user";
 import { ConnectionButton } from "@/components/profile/ConnectionButton";
 import { CompanyRolesList } from "./CompanyRolesList";
 import { SendOfferDialog } from "./SendOfferDialog";
-import CocpitShareProfile from "@/shared/commonComponents/cocpitshareprofile";
+import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
 import { Share2, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ReportModal } from "@/components/shared/ReportModal";
@@ -299,10 +299,11 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                 isOwnProfile={isOwnProfile}
             />
 
-            <CocpitShareProfile
+            <CocpitShareModel
                 isOpen={isShareModalOpen}
                 onClose={() => setIsShareModalOpen(false)}
                 users={shareUsers}
+                profileId={user?.id}
                 onShare={(selectedIds) => {
                     console.log("Shared profile with:", selectedIds);
                     setIsShareModalOpen(false);

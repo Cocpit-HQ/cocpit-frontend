@@ -36,14 +36,14 @@ export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly =
     <TooltipProvider>
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>
-          <div className="skill-chip group relative cursor-pointer gap-2">
-            <span className="group-hover:text-[#FF6B6B]">
+          <div className="skill-chip group relative cursor-pointer flex items-center transition-all duration-1000 ease-in-out">
+            <span className="group-hover:text-[#FF6B6B] transition-colors duration-1000 ease-in-out">
               {skill}
             </span>
 
             {/* Default Proof Indicator */}
             {hasProof && (
-              <div className="absolute -top-3 -right-3 w-6 h-6 rounded-full border-2 border-card overflow-hidden shadow-sm group-hover:hidden">
+              <div className="absolute -top-3 -right-3 w-6 h-6 rounded-full border-2 border-card overflow-hidden shadow-sm transition-all duration-1000 ease-in-out opacity-100 group-hover:opacity-0 group-hover:scale-50">
                 <img
                   src={mentionedInPosts[0]?.authorAvatar || "/assets/avatar.png"}
                   alt="Proof"
@@ -59,7 +59,7 @@ export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly =
                   e.stopPropagation();
                   onDelete(skill);
                 }}
-                className="hidden group-hover:flex items-center justify-center ml-1"
+                className="flex items-center justify-center overflow-hidden transition-all duration-1000 ease-in-out max-w-0 opacity-0 group-hover:max-w-[24px] group-hover:opacity-100 group-hover:ml-2"
               >
                 <Icon icon="fluent:delete-32-regular" className="w-[24px] h-[24px] text-[#FF6B6B]" />
               </div>

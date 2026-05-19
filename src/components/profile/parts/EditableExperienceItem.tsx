@@ -49,9 +49,9 @@ export function EditableExperienceItem({
                             </h3>
                             <button
                                 onClick={onEdit}
-                                className="md:hidden flex-shrink-0"
+                                className="md:hidden flex-shrink-0 p-1 hover:bg-[color:var(--edit-btn-hover)] text-muted-foreground hover:text-primary rounded-full transition-colors mt-[-4px]"
                             >
-                                <Icon icon="eva:edit-outline" className="w-[20px] h-[20px] text-muted-foreground hover:text-primary transition-colors" />
+                                <Icon icon="eva:edit-outline" className="w-[20px] h-[20px] transition-colors" />
                             </button>
                         </div>
                         {experience.description && (
@@ -97,9 +97,9 @@ export function EditableExperienceItem({
                 </div>
                 <button
                     onClick={onEdit}
-                    className="flex-shrink-0 mt-0.5"
+                    className="flex-shrink-0 mt-0.5 p-1 hover:bg-[color:var(--edit-btn-hover)] text-muted-foreground hover:text-primary rounded-full transition-colors"
                 >
-                    <Icon icon="eva:edit-outline" className="w-[24px] h-[24px] text-muted-foreground hover:text-primary transition-colors" />
+                    <Icon icon="eva:edit-outline" className="w-[24px] h-[24px] transition-colors" />
                 </button>
             </div>
         </div>

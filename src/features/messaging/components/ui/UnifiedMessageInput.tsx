@@ -16,6 +16,10 @@ interface UnifiedMessageInputProps {
     searchUsersFn?: (query: string) => Promise<UserMention[]>
     replyingTo?: { messageId: string; senderName: string; content: string } | null;
     onCancelReply?: () => void;
+    pendingSharedPost?: any | null;
+    onCancelPendingSharedPost?: () => void;
+    pendingSharedProfile?: any | null;
+    onCancelPendingSharedProfile?: () => void;
 }
 
 const EMOJI_LIST = ["😀", "😂", "😍", "🥺", "🔥", "👍", "👎", "🎉", "❤️", "💼", "🚀", "💯", "👏", "🤔", "👀", "✨", "✅", "❌", "🙌", "😎"];
@@ -29,7 +33,11 @@ export default function UnifiedMessageInput({
     isLoading,
     searchUsersFn,
     replyingTo,
-    onCancelReply
+    onCancelReply,
+    pendingSharedPost,
+    onCancelPendingSharedPost,
+    pendingSharedProfile,
+    onCancelPendingSharedProfile
 }: UnifiedMessageInputProps) {
     const [text, setText] = useState("")
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -43,7 +51,7 @@ export default function UnifiedMessageInput({
 
     const handleSend = () => {
         if (isDisabled) return;
-        if (text.trim() || files.length > 0) {
+        if (text.trim() || files.length > 0 || pendingSharedPost || pendingSharedProfile) {
             onSendMessage(text, files)
             setText("")
             setFiles([])
@@ -123,11 +131,69 @@ export default function UnifiedMessageInput({
 
     return (
         <div className="px-4 py-3 md:px-6 md:py-4 w-full bg-background shrink-0">
-            <div className={`flex flex-col w-full border border-border/60 ${files.length > 0 || replyingTo ? 'rounded-[20px]' : 'rounded-[32px]'} bg-transparent p-1.5 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all relative`}>
+            <div className={`flex flex-col w-full border border-border/60 ${files.length > 0 || replyingTo || pendingSharedPost || pendingSharedProfile ? 'rounded-[20px]' : 'rounded-[32px]'} bg-transparent p-1.5 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all relative`}>
                 {replyingTo && onCancelReply && (
                     <ReplyPreview replyingTo={replyingTo} onCancel={onCancelReply} />
                 )}
-                
+
+                {pendingSharedPost && onCancelPendingSharedPost && (
+                    <div className="flex items-center justify-between gap-3 w-full relative px-[16px] py-[12px] bg-[#EEF2FF] border border-[#C7D2FE] rounded-[16px] mb-1.5">
+                        <div className="flex items-center gap-3 overflow-hidden flex-1">
+                            <div className="h-10 w-10 rounded-full overflow-hidden bg-white dark:bg-[#1E293B] flex items-center justify-center shrink-0 border border-[#C7D2FE]">
+                                {pendingSharedPost.author_avatar || pendingSharedPost.authorAvatar ? (
+                                    <img src={pendingSharedPost.author_avatar || pendingSharedPost.authorAvatar} alt={pendingSharedPost.author_name || pendingSharedPost.author} className="h-full w-full object-cover" />
+                                ) : (
+                                    <span className="font-semibold text-[#6366F1]">{(pendingSharedPost.author_name || pendingSharedPost.author)?.[0]?.toUpperCase() || "P"}</span>
+                                )}
+                            </div>
+                            <div className="flex flex-col text-left overflow-hidden">
+                                <span className="font-['Poppins'] font-semibold text-[13px] text-[#000000] dark:text-white truncate">
+                                    Shared Post by {pendingSharedPost.author_name || pendingSharedPost.author}
+                                </span>
+                                <span className="font-['Poppins'] font-normal text-[12px] text-[#4F46E5] dark:text-[#818CF8] truncate">
+                                    {pendingSharedPost.content || "View shared post"}
+                                </span>
+                            </div>
+                        </div>
+                        <button
+                            onClick={onCancelPendingSharedPost}
+                            className="text-[#6366F1] dark:text-[#818CF8] hover:bg-[#C7D2FE]/30 p-1.5 rounded-full transition-colors shrink-0"
+                            aria-label="Remove shared post"
+                        >
+                            <X className="w-[18px] h-[18px]" strokeWidth={2} />
+                        </button>
+                    </div>
+                )}
+
+                {pendingSharedProfile && onCancelPendingSharedProfile && (
+                    <div className="flex items-center justify-between gap-3 w-full relative px-[16px] py-[12px] bg-[#EEF2FF] border border-[#C7D2FE] rounded-[16px] mb-1.5">
+                        <div className="flex items-center gap-3 overflow-hidden flex-1">
+                            <div className="h-10 w-10 rounded-full overflow-hidden bg-white dark:bg-[#1E293B] flex items-center justify-center shrink-0 border border-[#C7D2FE]">
+                                {pendingSharedProfile.avatar || pendingSharedProfile.avatar_url ? (
+                                    <img src={pendingSharedProfile.avatar || pendingSharedProfile.avatar_url} alt={pendingSharedProfile.name} className="h-full w-full object-cover" />
+                                ) : (
+                                    <span className="font-semibold text-[#6366F1]">{pendingSharedProfile.name?.[0]?.toUpperCase() || "P"}</span>
+                                )}
+                            </div>
+                            <div className="flex flex-col text-left overflow-hidden">
+                                <span className="font-['Poppins'] font-semibold text-[13px] text-[#000000] dark:text-white truncate">
+                                    Shared Profile of {pendingSharedProfile.name}
+                                </span>
+                                <span className="font-['Poppins'] font-normal text-[12px] text-[#4F46E5] dark:text-[#818CF8] truncate">
+                                    {pendingSharedProfile.headline || "View shared profile"}
+                                </span>
+                            </div>
+                        </div>
+                        <button
+                            onClick={onCancelPendingSharedProfile}
+                            className="text-[#6366F1] dark:text-[#818CF8] hover:bg-[#C7D2FE]/30 p-1.5 rounded-full transition-colors shrink-0"
+                            aria-label="Remove shared profile"
+                        >
+                            <X className="w-[18px] h-[18px]" strokeWidth={2} />
+                        </button>
+                    </div>
+                )}
+
                 {/* File Previews inside the input box */}
                 {files.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto px-2 pt-2 pb-1">
@@ -216,9 +282,9 @@ export default function UnifiedMessageInput({
 
                         <button
                             onClick={handleSend}
-                            disabled={isDisabled || (!text.trim() && files.length === 0)}
+                            disabled={isDisabled || (!text.trim() && files.length === 0 && !pendingSharedPost && !pendingSharedProfile)}
                             className={`w-9 h-9 flex items-center justify-center rounded-full transition-all shadow-sm
-                                ${text.trim() || files.length > 0
+                                ${text.trim() || files.length > 0 || pendingSharedPost || pendingSharedProfile
                                     ? 'bg-[#EEF2FF] text-[#4F46E5] hover:bg-[#E0E7FF]'
                                     : 'bg-transparent text-muted-foreground/40 cursor-not-allowed'
                                 }`}

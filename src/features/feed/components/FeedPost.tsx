@@ -20,7 +20,7 @@ const CommentSection = dynamic(() => import('./comments/CommentSection'), { ssr:
 const MobileCommentDrawer = dynamic(() => import('./comments/MobileCommentDrawer'), { ssr: false });
 const ReportModal = dynamic(() => import('@/components/shared/ReportModal').then(m => m.ReportModal), { ssr: false });
 const PollAnalyticsModal = dynamic(() => import('@/components/home/PollAnalyticsModal').then(m => m.PollAnalyticsModal), { ssr: false });
-const UniversalShareModal = dynamic(() => import('@/components/share/UniversalShareModal').then(m => m.UniversalShareModal), { ssr: false });
+const CocpitShareModel = dynamic(() => import('@/shared/commonComponents/cocpitsharemodel'), { ssr: false });
 const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 const CreatePostModal = dynamic(() => import('@/features/create-post/components/CreatePostModal').then(m => m.CreatePostModal), { ssr: false });
 
@@ -186,14 +186,13 @@ export const FeedPost = (props: FeedPostProps) => {
       )}
 
       {isShareModalOpen && (
-        <UniversalShareModal
+        <CocpitShareModel
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
-          entityId={id.toString()}
-          entityType="post"
-          entityName={author}
-          entityAvatar={authorAvatar}
-          postCategory={props.category}
+          postId={id.toString()}
+          onShare={() => {
+            incrementShareCount();
+          }}
         />
       )}
 

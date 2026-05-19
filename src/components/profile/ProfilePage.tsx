@@ -10,10 +10,11 @@ import { Icon } from "@iconify/react"
 import { cn } from "@/lib/utils"
 
 import SuggestionsPanel from "@/components/home/SuggestionsPanel"
+import { TaggedPeoplePopover } from "@/shared/commonComponents/TaggedPeoplePopover"
 import type { Page } from "@/types/common"
 import { CompanyRoleModal } from "@/components/profile/parts/CompanyRoleModal"
 import { CompanyRolesList } from "@/components/profile/parts/CompanyRolesList"
-import CocpitShareProfile from "@/shared/commonComponents/cocpitshareprofile"
+import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel"
 import { MoreVertical, Share2, Link as LinkIcon } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -109,6 +110,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [localPost, setLocalPost] = useState(post);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   useEffect(() => {
     setLocalPost(post);
@@ -157,21 +159,8 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
     }
   };
 
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/post/${localPost.id}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "Check out this post",
-          url: shareUrl
-        });
-      } catch (err) {
-        // user cancelled
-      }
-    } else {
-      navigator.clipboard.writeText(shareUrl);
-      toast.success("Post link copied to clipboard!");
-    }
+  const handleShare = () => {
+    setIsShareModalOpen(true);
   };
 
   const handleTogglePrivacy = async () => {
@@ -212,40 +201,17 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
             <span className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)]">
               {(localPost as any).authorRole || "Designer"}
             </span>
+            <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] mt-0.5">
+              <span>{localPost.location || "Kolhapur"}</span>
+              <span className="w-1 h-1 rounded-full bg-[#DADADA] flex-none" />
+              <span>{localPost.timeAgo || "6 days ago"}</span>
+            </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0 z-20">
           {localPost.tags && localPost.tags.length > 0 && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="p-1 hover:bg-[#EEF2FF] rounded-full transition-colors outline-none text-[#6B7280] hover:text-[#6366F1] data-[state=open]:text-[#6366F1]">
-                  <Icon icon="la:user-tag" className="w-[24px] h-[24px]" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="w-[180px] p-2 bg-card border border-[#EEF2FF] dark:border-card-border-inner rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg overflow-y-auto z-[210]"
-                align="end"
-                sideOffset={8}
-              >
-                <div className="flex flex-col gap-1">
-                  {localPost.tags.map((tag: any, idx: number) => (
-                    <div key={idx} className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-[12px] transition-colors cursor-pointer">
-                      <div className="w-6 h-6 rounded-full border border-slate-200 flex items-center justify-center overflow-hidden bg-slate-50">
-                        {tag.avatar_url || tag.avatar ? (
-                          <img src={tag.avatar_url || tag.avatar} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <Icon icon="solar:user-linear" className="w-3 h-3 text-slate-400" />
-                        )}
-                      </div>
-                      <span className="text-[14px] leading-[20px] font-normal text-black font-[family-name:var(--font-poppins)]">
-                        {tag.full_name || tag.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
+            <TaggedPeoplePopover tags={localPost.tags} />
           )}
 
           <DropdownMenu onOpenChange={setIsMenuOpen}>
@@ -312,16 +278,6 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
         >
           {localPost.content}
         </Link>
-        {/* Metadata (Frame 2608604) */}
-        <div className="flex items-center gap-1 h-[16px]">
-          <span className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] flex-none">
-            {localPost.location || "Kolhapur"}
-          </span>
-          <div className="w-[6px] h-[6px] rounded-full bg-[#DADADA] flex-none" />
-          <span className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)]">
-            {localPost.timeAgo || "6 days ago"}
-          </span>
-        </div>
       </div>
 
       {/* Main Image/Shared Content (Rectangle 14) */}
@@ -424,6 +380,20 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
           onSaved={(saved) => {
             setIsSaved(saved);
             setIsSaveModalOpen(false);
+          }}
+        />
+      )}
+
+      {isShareModalOpen && (
+        <CocpitShareModel
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          postId={localPost.id}
+          onShare={() => {
+            setLocalPost(prev => ({
+              ...prev,
+              shares: (Number(prev.shares) || 0) + 1 + ""
+            }));
           }}
         />
       )}
@@ -867,10 +837,10 @@ export default function ProfilePage() {
                       e.stopPropagation();
                       setIsEditAvatarOpen(true);
                     }}
-                    className="absolute -bottom-1 -right-1 cursor-pointer transition-transform hover:scale-110 active:scale-95 z-10 hidden md:flex"
+                    className="absolute -bottom-1 -right-1 cursor-pointer z-10 hidden md:flex"
                     aria-label="Edit Profile Picture"
                   >
-                    <div className="w-[28px] h-[28px] md:w-[36px] md:h-[36px] rounded-full bg-[#6366F1] flex items-center justify-center transition-transform group-hover:scale-110">
+                    <div className="w-[28px] h-[28px] md:w-[36px] md:h-[36px] rounded-full bg-[#6366F1] flex items-center justify-center">
                       <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-white" style={{ strokeWidth: '1.5px' }} />
                     </div>
                   </button>
@@ -1159,7 +1129,7 @@ export default function ProfilePage() {
                 {!isAboutExpanded && (user?.about?.length || 0) > 150 && (
                   <button
                     onClick={() => setIsAboutExpanded(true)}
-                    className="absolute bottom-0 right-0 bg-card pl-2 text-muted-foreground hover:text-primary font-normal text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] transition-colors"
+                    className="absolute bottom-0 right-0 bg-card pl-2 text-[#6366F1] font-normal text-[14px] leading-[20px] font-[family-name:var(--font-poppins)] transition-colors"
                   >
                     ....More
                   </button>
@@ -1167,7 +1137,7 @@ export default function ProfilePage() {
                 {isAboutExpanded && (
                   <button
                     onClick={() => setIsAboutExpanded(false)}
-                    className="text-[#6366F1] hover:underline font-normal text-[14px] mt-2 block"
+                    className="text-[#6366F1] font-normal text-[14px] mt-2 block"
                   >
                     Show less
                   </button>
@@ -1187,7 +1157,7 @@ export default function ProfilePage() {
 
             {/* Posts Section */}
             <div
-              className="w-full md:max-w-[960px] mx-auto bg-transparent mt-[16px] transition-all duration-500 ease-in-out overflow-hidden"
+              className="w-full bg-transparent mt-[16px] transition-all duration-500 ease-in-out overflow-hidden"
               style={{ minHeight: '564px' }}
             >
               {/* Header */}
@@ -1224,9 +1194,9 @@ export default function ProfilePage() {
 
             {/* Skills Section */}
             <div
-              className="w-full md:max-w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-card-inner border border-card-border-inner transition-all duration-500 ease-in-out overflow-hidden"
+              className="w-full bg-card mt-[16px] md:rounded-[24px] transition-all duration-500 ease-in-out overflow-hidden"
             >
-              <div className="pt-[16px] pb-[40px] flex flex-col gap-[32px]">
+              <div className="pt-[16px] pb-[40px] flex flex-col gap-0">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 md:pl-10 md:pr-4">
                   <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Skills</h2>
@@ -1240,7 +1210,7 @@ export default function ProfilePage() {
 
                 {/* Skills Nested Card Wrapper */}
                 <div className="px-4 md:pl-10 md:pr-4">
-                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[100px] flex items-center p-4 md:p-8">
+                  <div className="bg-card rounded-[24px] min-h-[100px] flex items-center p-4 md:p-8">
                     <div className="flex flex-wrap gap-3 sm:gap-4 md:gap-[40px]">
                       {skills.map((skill: any, index) => {
                         const skillName = skill.name || (typeof skill === 'string' ? skill : '');
@@ -1264,9 +1234,9 @@ export default function ProfilePage() {
             {/* Experience Section */}
             <div
               id="experience-section"
-              className="w-full md:max-w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-card-inner border border-card-border-inner transition-all duration-500 ease-in-out overflow-hidden"
+              className="w-full bg-card mt-[16px] md:rounded-[24px] transition-all duration-500 ease-in-out overflow-hidden"
             >
-              <div className="pt-[16px] pb-[40px] flex flex-col gap-[32px]">
+              <div className="pt-[16px] pb-[40px] flex flex-col gap-0">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 md:pl-10 md:pr-4">
                   <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Experience</h2>
@@ -1280,7 +1250,7 @@ export default function ProfilePage() {
 
                 {/* Experience Nested Card Wrapper */}
                 <div className="px-4 md:pl-10 md:pr-4">
-                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[72px] px-4 py-4 md:pl-[40px] md:pr-4 md:py-8">
+                  <div className="bg-card rounded-[24px] min-h-[72px] px-4 py-4 md:pl-[40px] md:pr-4 md:py-8">
                     <div className="flex flex-col gap-[16px]">
                       {(isExperienceExpanded ? experiences : experiences.slice(0, 2)).map((group, gIdx) => (
                         <EditableExperienceGroup
@@ -1312,9 +1282,9 @@ export default function ProfilePage() {
             {/* Education Section */}
             <div
               id="education-section"
-              className="w-full md:max-w-[960px] mx-auto bg-card mt-[16px] md:rounded-[24px] shadow-card-inner border border-card-border-inner transition-all duration-500 ease-in-out overflow-hidden"
+              className="w-full bg-card mt-[16px] md:rounded-[24px] transition-all duration-500 ease-in-out overflow-hidden"
             >
-              <div className="pt-[16px] pb-[40px] flex flex-col gap-[32px]">
+              <div className="pt-[16px] pb-[40px] flex flex-col gap-0">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 md:pl-10 md:pr-4">
                   <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Education</h2>
@@ -1328,7 +1298,7 @@ export default function ProfilePage() {
 
                 {/* Education Nested Card Wrapper */}
                 <div className="px-4 md:pl-10 md:pr-4">
-                  <div className="bg-card rounded-[24px] shadow-card-inner border border-card-border-inner min-h-[72px] px-4 py-4 md:pl-[40px] md:pr-4 md:py-8">
+                  <div className="bg-card rounded-[24px] min-h-[72px] px-4 py-4 md:pl-[40px] md:pr-4 md:py-8">
                     <div className="flex flex-col gap-[16px]">
                       {(isEducationExpanded ? educations : educations.slice(0, 2)).map((edu, index) => (
                         <EditableEducationItem
@@ -1374,7 +1344,7 @@ export default function ProfilePage() {
       />
 
       <Dialog open={isAddExperienceModalOpen} onOpenChange={setIsAddExperienceModalOpen}>
-        <DialogContent className="p-0 shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full sm:rounded-[24px] outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
+        <DialogContent className="p-0 shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full sm:rounded-[24px] outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0 [&>button]:hidden">
           <DialogTitle className="sr-only">Add Experience</DialogTitle>
           <DialogDescription className="sr-only">Fill in the details to add or edit experience records on your profile.</DialogDescription>
           <AddExperienceForm
@@ -1395,7 +1365,7 @@ export default function ProfilePage() {
       </Dialog>
 
       <Dialog open={isAddEducationModalOpen} onOpenChange={setIsAddEducationModalOpen}>
-        <DialogContent className="p-0 shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full sm:rounded-[24px] outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
+        <DialogContent className="p-0 shadow-none max-w-none sm:max-w-[800px] h-[100dvh] sm:h-auto w-full sm:rounded-[24px] outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0 [&>button]:hidden">
           <DialogTitle className="sr-only">Add Education</DialogTitle>
           <DialogDescription className="sr-only">Fill in the details to add a new education record to your profile.</DialogDescription>
           <AddEducationForm
@@ -1443,10 +1413,11 @@ export default function ProfilePage() {
         isOwnProfile={true}
       />
 
-      <CocpitShareProfile
+      <CocpitShareModel
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         users={shareUsers}
+        profileId={user?.id}
         onShare={(selectedIds) => {
           console.log("Shared profile with:", selectedIds);
           setIsShareModalOpen(false);

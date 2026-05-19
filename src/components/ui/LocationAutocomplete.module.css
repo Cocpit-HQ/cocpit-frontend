@@ -61,7 +61,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .clearBtn {
@@ -92,13 +94,23 @@
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-  z-index: 9999; /* High z-index to ensure it's on top */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  z-index: 9999;
+  /* High z-index to ensure it's on top */
   max-height: 220px;
   overflow-y: auto;
   list-style: none;
   margin: 0;
   padding: 0.25rem 0;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE / Edge */
+}
+
+.dropdown::-webkit-scrollbar {
+  display: none;
+  /* Chrome / Safari */
 }
 
 .item {
@@ -106,8 +118,10 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.6rem 0.9rem;
+  font-family: var(--font-poppins), sans-serif;
   font-size: 0.875rem;
-  color: var(--foreground); /* Explicit dark color */
+  color: var(--foreground);
+  /* Explicit dark color */
   cursor: pointer;
   transition: background 0.15s ease;
 }

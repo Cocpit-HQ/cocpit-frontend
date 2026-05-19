@@ -1,16 +1,18 @@
 "use client"
 
-import React, { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { Education } from "@/types/entities"
 import { Checkbox } from "@/components/ui/checkbox"
-import { AlertTriangle, X } from "lucide-react"
+import { AlertTriangle, X, Loader2, GraduationCap, ChevronDown, Plus } from "lucide-react"
 import { Icon } from '@iconify/react'
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
-import SchoolAutocomplete from "@/components/ui/SchoolAutocomplete"
+import { useDebounce } from "@/hooks/use-debounce"
+import { getEducationList } from "@/services/api/onboarding"
+import acStyles from "@/components/ui/LocationAutocomplete.module.css"
 import LocationAutocomplete from "@/components/ui/LocationAutocomplete"
 import {
   Select,
@@ -70,6 +72,30 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
   const [stillStudying, setStillStudying] = useState(!!initialData && !initialData.end_date)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
+  // ── School autocomplete state ─────────────────────────────────────────────
+  const [schoolOptions, setSchoolOptions] = useState<string[]>([])
+  const [schoolSearch, setSchoolSearch] = useState(formData.school_name)
+  const [showSchoolDropdown, setShowSchoolDropdown] = useState(false)
+  const [schoolLoading, setSchoolLoading] = useState(false)
+  const [schoolHighlight, setSchoolHighlight] = useState(-1)
+  const schoolWrapperRef = useRef<HTMLDivElement>(null)
+  const schoolInputRef = useRef<HTMLInputElement>(null)
+  const schoolSelectedRef = useRef(false)
+  const schoolListRef = useRef<HTMLUListElement>(null)
+  const debouncedSchoolSearch = useDebounce(schoolSearch, 300)
+
+  // ── Degree autocomplete state ─────────────────────────────────────────────
+  const [degreeOptions, setDegreeOptions] = useState<string[]>([])
+  const [degreeSearch, setDegreeSearch] = useState(formData.degree)
+  const [showDegreeDropdown, setShowDegreeDropdown] = useState(false)
+  const [degreeLoading, setDegreeLoading] = useState(false)
+  const [degreeHighlight, setDegreeHighlight] = useState(-1)
+  const degreeWrapperRef = useRef<HTMLDivElement>(null)
+  const degreeInputRef = useRef<HTMLInputElement>(null)
+  const degreeSelectedRef = useRef(false)
+  const degreeListRef = useRef<HTMLUListElement>(null)
+  const debouncedDegreeSearch = useDebounce(degreeSearch, 300)
+
   useEffect(() => {
     if (initialData) {
       const start = dayjs(initialData.start_date)
@@ -87,6 +113,8 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
         description: initialData.description ?? "",
       })
       setStillStudying(!initialData.end_date)
+      setSchoolSearch(initialData.school_name ?? "")
+      setDegreeSearch(initialData.degree ?? "")
     } else {
       setFormData({
         school_name: "",
@@ -100,6 +128,8 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
         description: "",
       })
       setStillStudying(false)
+      setSchoolSearch("")
+      setDegreeSearch("")
     }
     setFieldErrors({})
   }, [initialData])
@@ -110,6 +140,130 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
       !education.end_date
     ) || null
   }, [existingEducations, initialData])
+
+  // ── Fetch school suggestions ──────────────────────────────────────────────
+  useEffect(() => {
+    if (schoolSelectedRef.current) { schoolSelectedRef.current = false; return }
+    let cancelled = false
+    setSchoolLoading(true)
+    getEducationList(debouncedSchoolSearch, "").then(res => {
+      if (!cancelled) {
+        const names = res.school_names || []
+        setSchoolOptions(names)
+        if (names.length > 0 && document.activeElement === schoolInputRef.current) setShowSchoolDropdown(true)
+        setSchoolHighlight(-1)
+      }
+    }).catch(() => { if (!cancelled) setSchoolOptions([]) }).finally(() => { if (!cancelled) setSchoolLoading(false) })
+    return () => { cancelled = true }
+  }, [debouncedSchoolSearch])
+
+  // ── Fetch degree suggestions ──────────────────────────────────────────────
+  useEffect(() => {
+    if (degreeSelectedRef.current) { degreeSelectedRef.current = false; return }
+    let cancelled = false
+    setDegreeLoading(true)
+    getEducationList("", debouncedDegreeSearch).then(res => {
+      if (!cancelled) {
+        const degs = res.degrees || []
+        setDegreeOptions(degs)
+        if (degs.length > 0 && document.activeElement === degreeInputRef.current) setShowDegreeDropdown(true)
+        setDegreeHighlight(-1)
+      }
+    }).catch(() => { if (!cancelled) setDegreeOptions([]) }).finally(() => { if (!cancelled) setDegreeLoading(false) })
+    return () => { cancelled = true }
+  }, [debouncedDegreeSearch])
+
+  // ── Focus handlers (open dropdown + always fetch fresh) ─────────────────────
+  const handleSchoolFocus = () => {
+    if (schoolOptions.length > 0) setShowSchoolDropdown(true)
+    setSchoolLoading(true)
+    getEducationList(schoolSearch, "").then(res => {
+      const names = res.school_names || []
+      setSchoolOptions(names)
+      if (names.length > 0) setShowSchoolDropdown(true)
+      setSchoolHighlight(-1)
+    }).catch(() => { }).finally(() => setSchoolLoading(false))
+  }
+  const handleDegreeFocus = () => {
+    if (degreeOptions.length > 0) setShowDegreeDropdown(true)
+    setDegreeLoading(true)
+    getEducationList("", degreeSearch).then(res => {
+      const degs = res.degrees || []
+      setDegreeOptions(degs)
+      if (degs.length > 0) setShowDegreeDropdown(true)
+      setDegreeHighlight(-1)
+    }).catch(() => { }).finally(() => setDegreeLoading(false))
+  }
+
+  // ── Outside click ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (schoolWrapperRef.current && !schoolWrapperRef.current.contains(e.target as Node)) setShowSchoolDropdown(false)
+      if (degreeWrapperRef.current && !degreeWrapperRef.current.contains(e.target as Node)) setShowDegreeDropdown(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  // ── Selection helpers ─────────────────────────────────────────────────────
+  const selectSchool = (name: string) => {
+    schoolSelectedRef.current = true
+    setFormData(prev => ({ ...prev, school_name: name })); setSchoolSearch(name)
+    setShowSchoolDropdown(false); setSchoolOptions([])
+  }
+  const selectDegree = (deg: string) => {
+    degreeSelectedRef.current = true
+    setFormData(prev => ({ ...prev, degree: deg })); setDegreeSearch(deg)
+    setShowDegreeDropdown(false); setDegreeOptions([])
+  }
+
+  // ── "Other" option ── always visible at bottom of dropdown ─────────────────────────
+  const schoolExactMatch = schoolOptions.some(n => n.toLowerCase() === schoolSearch.trim().toLowerCase())
+  const degreeExactMatch = degreeOptions.some(d => d.toLowerCase() === degreeSearch.trim().toLowerCase())
+  const schoolTotalItems = schoolOptions.length + 1   // +1 for "Other" (always present)
+  const degreeTotalItems = degreeOptions.length + 1
+
+  // ── Auto-scroll on keyboard highlight ─────────────────────────────────────
+  useEffect(() => {
+    if (schoolHighlight >= 0 && schoolListRef.current) {
+      const el = schoolListRef.current.querySelector(`[data-idx="${schoolHighlight}"]`) as HTMLElement
+      el?.scrollIntoView({ block: "nearest" })
+    }
+  }, [schoolHighlight])
+  useEffect(() => {
+    if (degreeHighlight >= 0 && degreeListRef.current) {
+      const el = degreeListRef.current.querySelector(`[data-idx="${degreeHighlight}"]`) as HTMLElement
+      el?.scrollIntoView({ block: "nearest" })
+    }
+  }, [degreeHighlight])
+
+  // ── Keyboard navigation ───────────────────────────────────────────────────
+  const handleSchoolKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") { setShowSchoolDropdown(false); return }
+    if (!showSchoolDropdown || schoolTotalItems === 0) return
+    if (e.key === "ArrowDown") { e.preventDefault(); setSchoolHighlight(p => (p < schoolTotalItems - 1 ? p + 1 : 0)) }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setSchoolHighlight(p => (p > 0 ? p - 1 : schoolTotalItems - 1)) }
+    else if (e.key === "Enter") {
+      e.preventDefault()
+      if (schoolHighlight >= 0) {
+        if (schoolHighlight < schoolOptions.length) selectSchool(schoolOptions[schoolHighlight])
+        else selectSchool(schoolSearch.trim()) // "Other" selected
+      }
+    }
+  }
+  const handleDegreeKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") { setShowDegreeDropdown(false); return }
+    if (!showDegreeDropdown || degreeTotalItems === 0) return
+    if (e.key === "ArrowDown") { e.preventDefault(); setDegreeHighlight(p => (p < degreeTotalItems - 1 ? p + 1 : 0)) }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setDegreeHighlight(p => (p > 0 ? p - 1 : degreeTotalItems - 1)) }
+    else if (e.key === "Enter") {
+      e.preventDefault()
+      if (degreeHighlight >= 0) {
+        if (degreeHighlight < degreeOptions.length) selectDegree(degreeOptions[degreeHighlight])
+        else selectDegree(degreeSearch.trim()) // "Other" selected
+      }
+    }
+  }
 
   const validate = () => {
     const errors: Record<string, string> = {}
@@ -207,14 +361,20 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
           type="button"
           onClick={handleSubmit}
           disabled={!isFormValid}
-          className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all"
+          className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-50 transition-all font-[family-name:var(--font-poppins)]"
         >
           Save
         </button>
       </div>
 
       {/* Scrollable area with hidden scrollbar */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-12 py-4 scrollbar-hide pb-20 sm:pb-4">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-12 py-4 scrollbar-hide pb-20 sm:pb-4 relative">
+        <button
+          onClick={onCancel}
+          className="absolute right-4 top-4 hidden sm:block text-muted-foreground hover:text-foreground transition-colors outline-none border-none bg-transparent"
+        >
+          <X className="w-5 h-5 text-[#FF6B6B]" strokeWidth={1} />
+        </button>
         {/* Close Button handled by global DialogPrimitive.Close in ProfilePage */}
 
         {/* Header */}
@@ -226,32 +386,75 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Row 1: Education & Qualification */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="flex flex-col">
+            <div className="flex flex-col" ref={schoolWrapperRef}>
               <Label className={labelStyles}>Education</Label>
-              <SchoolAutocomplete
-                selectedName={formData.school_name}
-                selectedId={null}
-                onSelect={(_, name) => setFormData(prev => ({ ...prev, school_name: name }))}
-              />
+              <div className={acStyles.wrapper}>
+                <div className={cn(acStyles.inputWrapper, showSchoolDropdown && acStyles.isOpen)} onClick={() => schoolInputRef.current?.focus()}>
+                  <input ref={schoolInputRef} type="text" className={acStyles.input} placeholder="Enter your school or university" value={schoolSearch}
+                    onChange={(e) => { setSchoolSearch(e.target.value); setFormData(prev => ({ ...prev, school_name: e.target.value })) }}
+                    onFocus={handleSchoolFocus}
+                    onKeyDown={handleSchoolKeyDown} autoComplete="off" />
+                  <div className={acStyles.suffix}>
+                    {schoolLoading ? <Loader2 className={acStyles.spinner} /> : schoolSearch ? (
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setSchoolSearch(""); setFormData(prev => ({ ...prev, school_name: "" })); setSchoolOptions([]); setShowSchoolDropdown(false) }} className={acStyles.clearBtn}>
+                        <X className={acStyles.clearIcon} />
+                      </button>
+                    ) : (
+                      <ChevronDown className={cn(acStyles.clearIcon, "text-muted-foreground transition-transform", showSchoolDropdown && "rotate-180")} />
+                    )}
+                  </div>
+                </div>
+                {showSchoolDropdown && (
+                  <ul ref={schoolListRef} className={acStyles.dropdown}>
+                    {schoolOptions.map((name, idx) => (
+                      <li key={name} data-idx={idx} className={cn(acStyles.item, "date-select-item", idx === schoolHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")} onMouseDown={() => selectSchool(name)} onMouseEnter={() => setSchoolHighlight(idx)}>
+                        <GraduationCap className={acStyles.itemIcon} /><span>{name}</span>
+                      </li>
+                    ))}
+                    <li data-idx={schoolOptions.length} className={cn(acStyles.item, "border-t border-border date-select-item", schoolOptions.length === schoolHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")}
+                      onMouseDown={() => { if (schoolSearch.trim()) { selectSchool(schoolSearch.trim()) } else { setShowSchoolDropdown(false); schoolInputRef.current?.focus() } }}
+                      onMouseEnter={() => setSchoolHighlight(schoolOptions.length)}>
+                      <Plus className={acStyles.itemIcon} />
+                      <span>{schoolSearch.trim() && !schoolExactMatch ? `Other: "${schoolSearch.trim()}"` : "Other (type your own)"}</span>
+                    </li>
+                  </ul>
+                )}
+              </div>
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col" ref={degreeWrapperRef}>
               <Label className={labelStyles}>Qualification</Label>
-              <Select
-                value={formData.degree}
-                onValueChange={(val) => setFormData(prev => ({ ...prev, degree: val }))}
-              >
-                <SelectTrigger className={cn(inputStyles, getSelectTextColor(formData.degree))}>
-                  <SelectValue placeholder="e.g. MBA" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="High School">High School</SelectItem>
-                  <SelectItem value="Associate's">Associate's</SelectItem>
-                  <SelectItem value="Bachelor's">Bachelor's</SelectItem>
-                  <SelectItem value="Master's">Master's</SelectItem>
-                  <SelectItem value="MBA">MBA</SelectItem>
-                  <SelectItem value="PhD">PhD</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className={acStyles.wrapper}>
+                <div className={cn(acStyles.inputWrapper, showDegreeDropdown && acStyles.isOpen)} onClick={() => degreeInputRef.current?.focus()}>
+                  <input ref={degreeInputRef} type="text" className={acStyles.input} placeholder="e.g. MBA" value={degreeSearch}
+                    onChange={(e) => { setDegreeSearch(e.target.value); setFormData(prev => ({ ...prev, degree: e.target.value })) }}
+                    onFocus={handleDegreeFocus}
+                    onKeyDown={handleDegreeKeyDown} autoComplete="off" />
+                  <div className={acStyles.suffix}>
+                    {degreeLoading ? <Loader2 className={acStyles.spinner} /> : degreeSearch ? (
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setDegreeSearch(""); setFormData(prev => ({ ...prev, degree: "" })); setDegreeOptions([]); setShowDegreeDropdown(false) }} className={acStyles.clearBtn}>
+                        <X className={acStyles.clearIcon} />
+                      </button>
+                    ) : (
+                      <ChevronDown className={cn(acStyles.clearIcon, "text-muted-foreground transition-transform", showDegreeDropdown && "rotate-180")} />
+                    )}
+                  </div>
+                </div>
+                {showDegreeDropdown && (
+                  <ul ref={degreeListRef} className={acStyles.dropdown}>
+                    {degreeOptions.map((deg, idx) => (
+                      <li key={deg} data-idx={idx} className={cn(acStyles.item, "date-select-item", idx === degreeHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")} onMouseDown={() => selectDegree(deg)} onMouseEnter={() => setDegreeHighlight(idx)}>
+                        <GraduationCap className={acStyles.itemIcon} /><span>{deg}</span>
+                      </li>
+                    ))}
+                    <li data-idx={degreeOptions.length} className={cn(acStyles.item, "border-t border-border date-select-item", degreeOptions.length === degreeHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")}
+                      onMouseDown={() => { if (degreeSearch.trim()) { selectDegree(degreeSearch.trim()) } else { setShowDegreeDropdown(false); degreeInputRef.current?.focus() } }}
+                      onMouseEnter={() => setDegreeHighlight(degreeOptions.length)}>
+                      <Plus className={acStyles.itemIcon} />
+                      <span>{degreeSearch.trim() && !degreeExactMatch ? `Other: "${degreeSearch.trim()}"` : "Other (type your own)"}</span>
+                    </li>
+                  </ul>
+                )}
+              </div>
             </div>
           </div>
 
@@ -267,11 +470,11 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                   <SelectValue placeholder="e.g. Finance" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Computer Science">Computer Science</SelectItem>
-                  <SelectItem value="Business">Business</SelectItem>
-                  <SelectItem value="Finance">Finance</SelectItem>
-                  <SelectItem value="Engineering">Engineering</SelectItem>
-                  <SelectItem value="Arts">Arts</SelectItem>
+                  <SelectItem value="Computer Science" className="date-select-item">Computer Science</SelectItem>
+                  <SelectItem value="Business" className="date-select-item">Business</SelectItem>
+                  <SelectItem value="Finance" className="date-select-item">Finance</SelectItem>
+                  <SelectItem value="Engineering" className="date-select-item">Engineering</SelectItem>
+                  <SelectItem value="Arts" className="date-select-item">Arts</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -296,7 +499,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                   <SelectValue placeholder="Month" />
                 </SelectTrigger>
                 <SelectContent>
-                  {months.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                  {months.map(m => <SelectItem key={m} value={m} className="date-select-item">{m}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select
@@ -307,12 +510,12 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
                 <SelectContent>
-                  {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                  {years.map(y => <SelectItem key={y} value={y} className="date-select-item">{y}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             {fieldErrors.startDate && (
-              <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
+              <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
                 <AlertTriangle className="w-3 h-3" />{fieldErrors.startDate}
               </p>
             )}
@@ -331,7 +534,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                   <SelectValue placeholder="Month" />
                 </SelectTrigger>
                 <SelectContent>
-                  {months.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                  {months.map(m => <SelectItem key={m} value={m} className="date-select-item">{m}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select
@@ -343,12 +546,12 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
                 <SelectContent>
-                  {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                  {years.map(y => <SelectItem key={y} value={y} className="date-select-item">{y}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             {fieldErrors.endDate && (
-              <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
+              <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
                 <AlertTriangle className="w-3 h-3" />{fieldErrors.endDate}
               </p>
             )}
@@ -370,13 +573,13 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
             />
             <label
               htmlFor="stillStudying"
-              className="text-[14px] font-medium text-[#111827] dark:text-foreground"
+              className="text-[14px] font-medium text-[#111827] dark:text-foreground font-[family-name:var(--font-poppins)]"
             >
               I currently study here
             </label>
           </div>
           {fieldErrors.currentEducation && (
-            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1">
+            <p className="text-[11px] text-red-500 mt-1 flex items-center gap-1 font-[family-name:var(--font-poppins)]">
               <AlertTriangle className="w-3 h-3" />{fieldErrors.currentEducation}
             </p>
           )}
@@ -399,7 +602,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                 type="button"
                 variant="outline"
                 onClick={() => onDelete?.(initialData.education_id!)}
-                className="h-10 px-8 rounded-full border-[#FF6B6B]/20 text-[#FF6B6B] hover:bg-transparent bg-transparent font-medium w-[142px]"
+                className="h-10 px-8 rounded-full border-[#FF6B6B]/20 text-[#FF6B6B] hover:bg-transparent bg-transparent font-medium w-[142px] font-[family-name:var(--font-poppins)]"
               >
                 Delete
               </Button>
@@ -408,7 +611,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                 type="button"
                 variant="outline"
                 onClick={onCancel}
-                className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-transparent bg-white font-medium w-[142px]"
+                className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-transparent bg-white font-medium w-[142px] font-[family-name:var(--font-poppins)]"
               >
                 Cancel
               </Button>
@@ -417,7 +620,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
             <Button
               type="submit"
               disabled={!isFormValid}
-              className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed font-[family-name:var(--font-poppins)]"
             >
               Save
             </Button>

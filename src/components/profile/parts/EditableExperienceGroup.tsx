@@ -62,12 +62,12 @@ function RoleRow({
                 {isFirst && (
                   <button
                     onClick={onEdit}
-                    className="p-1 hover:bg-secondary rounded-full transition-colors group mt-[-4px]"
+                    className="p-1 hover:bg-[color:var(--edit-btn-hover)] text-muted-foreground hover:text-primary rounded-full transition-colors mt-[-4px]"
                     aria-label={`Edit ${experience.title}`}
                   >
                     <Icon
                       icon="eva:edit-outline"
-                      className="w-[20px] h-[20px] text-muted-foreground stroke-[1.5px] group-hover:text-primary transition-colors"
+                      className="w-[20px] h-[20px] stroke-[1.5px] transition-colors"
                     />
                   </button>
                 )}
@@ -129,12 +129,12 @@ function RoleRow({
           {isFirst && (
             <button
               onClick={onEdit}
-              className="p-1 hover:bg-secondary rounded-full transition-colors group mt-[-4px]"
+              className="p-1 hover:bg-[color:var(--edit-btn-hover)] text-muted-foreground hover:text-primary rounded-full transition-colors mt-[-4px]"
               aria-label={`Edit ${experience.title}`}
             >
               <Icon
                 icon="eva:edit-outline"
-                className="w-[24px] h-[24px] text-muted-foreground stroke-[1.5px] group-hover:text-primary transition-colors"
+                className="w-[24px] h-[24px] stroke-[1.5px] transition-colors"
               />
             </button>
           )}
