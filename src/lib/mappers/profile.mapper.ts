@@ -136,7 +136,7 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     })(),
     location: backendPost.location || undefined,
     tags: backendPost.tags || [],
-    sampleLikerUsername: (backendPost as any).sample_liker_username || undefined,
-    authorHeadline: (backendPost as any).author_headline || undefined,
+    sampleLikerUsername: backendPost.sample_liker_username || undefined,
+    authorHeadline: backendPost.author_headline || undefined,
   };
 };
