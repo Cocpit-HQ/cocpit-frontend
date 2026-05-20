@@ -66,10 +66,17 @@ export function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], i
     if (!socket) return;
     const handleInvite = () => {
       queryClient.invalidateQueries({ queryKey: ['invitations'] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    };
+    const handleInvitationUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ['invitations'] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     };
     socket.on('group_invite', handleInvite);
+    socket.on('invitation_update', handleInvitationUpdate);
     return () => {
       socket.off('group_invite', handleInvite);
+      socket.off('invitation_update', handleInvitationUpdate);
     };
   }, [socket, queryClient]);
 

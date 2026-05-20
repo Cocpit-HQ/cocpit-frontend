@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getGroupDetails, createGroup, inviteMember, leaveGroup, deleteGroup, getGroupInvitations, removeMember, promoteToAdmin, updateMemberRole } from "@/services/api/group-chat";
+import { getGroupDetails, createGroup, inviteMember, leaveGroup, deleteGroup, getGroupInvitations, removeMember, promoteToAdmin, updateMemberRole, cancelInvitation } from "@/services/api/group-chat";
 import { GroupDetails, GroupInvitation, CreateGroupPayload } from "@/types/group-chat";
 import { toast } from "sonner";
 import { useSocket } from "@/context/SocketContext";
@@ -22,6 +22,7 @@ interface GroupChatContextType {
     updateGroupAvatar: (file: File) => Promise<void>;
     refreshGroup: () => void;
     isInactive: boolean;
+    cancelInvitation: (invitationId: string) => Promise<void>;
 }
 
 interface ApiError {
@@ -44,6 +45,16 @@ export const GroupChatProvider: React.FC<{ groupId?: string; children: React.Rea
         enabled: !!groupId,
         retry: false // Avoid background retries on 403s
     });
+
+    useEffect(() => {
+        if (queryError) {
+            const err = queryError as any;
+            if (err.status === 403 || err.response?.status === 403) {
+                window.location.href = '/messaging';
+            }
+        }
+    }, [queryError]);
+
 
     const { user } = useAuth();
 
@@ -231,6 +242,27 @@ export const GroupChatProvider: React.FC<{ groupId?: string; children: React.Rea
         }
     });
 
+    const cancelInvitationMutation = useMutation({
+        mutationFn: (invitationId: string) => {
+            if (!groupId) throw new Error("Missing group ID");
+            return cancelInvitation(groupId, invitationId);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['group-details', groupId] });
+            queryClient.invalidateQueries({ queryKey: ['group-invitations', groupId] });
+            toast.success("Invitation cancelled successfully!");
+        },
+        onError: (err: unknown) => {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Failed to cancel invitation");
+        }
+    });
+
+    const cancelInvitationHandler = async (invitationId: string) => {
+        await cancelInvitationMutation.mutateAsync(invitationId);
+    };
+
+
     const isInactive = !!activeGroup?.is_inactive;
 
     return (
@@ -266,7 +298,9 @@ export const GroupChatProvider: React.FC<{ groupId?: string; children: React.Rea
             updateGroupAvatar: async (file) => {
                 // Placeholder - implemented in component
             },
-            refreshGroup: refetch
+            refreshGroup: refetch,
+            cancelInvitation: cancelInvitationHandler
+
         }}>
             {children}
         </GroupChatContext.Provider>

@@ -31,7 +31,7 @@ interface GroupDetailsProps {
 }
 
 export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMember, activeView, setActiveView }: GroupDetailsProps) {
-    const { activeGroup, leaveGroup, deleteGroup, removeMember, promoteToAdmin, updateMemberRole, isInactive, refreshGroup } = useGroupChat();
+    const { activeGroup, leaveGroup, deleteGroup, removeMember, promoteToAdmin, updateMemberRole, isInactive, refreshGroup, cancelInvitation } = useGroupChat();
     const { isUserOnline } = useSocket();
     const { blockUser } = useSocial();
     const { toast } = useToast();
@@ -49,6 +49,8 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
     });
     const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [invitationToCancel, setInvitationToCancel] = useState<string | null>(null);
     const [userToRemove, setUserToRemove] = useState<string | null>(null);
     const [userToMakeAdmin, setUserToMakeAdmin] = useState<string | null>(null);
     const [userToDemote, setUserToDemote] = useState<string | null>(null);
@@ -307,12 +309,12 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     <style>{`div::-webkit-scrollbar { display: none; }`}</style>
                     {visibleMembers.map((member) => (
-                        <div key={member.user_id} className={cn(
-                            "flex flex-row justify-between items-center py-[8px] gap-[8px] w-full h-[56px] bg-white rounded-[24px]",
-                            member.isPending && "opacity-50 blur-[1.5px]"
-                        )}>
+                        <div key={member.user_id} className="flex flex-row justify-between items-center py-[8px] gap-[8px] w-full h-[56px] bg-white rounded-[24px]">
                             {/* Left: Avatar */}
-                            <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-muted shrink-0 self-stretch">
+                            <div className={cn(
+                                "w-[32px] h-[32px] rounded-full overflow-hidden bg-muted shrink-0 self-stretch",
+                                member.isPending && "opacity-25 blur-[1.5px]"
+                            )}>
                                 {member.avatar_url ? (
                                     <Image src={member.avatar_url} alt={member.full_name} width={32} height={32} className="object-cover w-full h-full" />
                                 ) : (
@@ -323,7 +325,10 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                             </div>
 
                             {/* Middle: Name + Headline + Admin badge */}
-                            <div className="flex flex-col flex-1 ml-[8px]">
+                            <div className={cn(
+                                "flex flex-col flex-1 ml-[8px]",
+                                member.isPending && "opacity-25 blur-[1.5px]"
+                            )}>
                                 <span className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-[#000000] flex items-center">
                                     {member.user_id === currentUserId ? "You" : member.full_name}
                                 </span>
@@ -357,10 +362,24 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent
                                         align="end"
-                                        className="w-[180px] p-[8px] mr-4  bg-white border border-[#C7D2FE]"
+                                        className="w-[220px] p-[8px] mr-4  bg-white border border-[#C7D2FE]"
                                         style={{ borderRadius: '24px 0px 24px 24px' }}
                                     >
-                                        {member.user_id === currentUserId ? (
+                                        {member.isPending ? (
+                                            <DropdownMenuItem
+                                                onClick={() => {
+                                                    if (member.invitation_id) {
+                                                        setInvitationToCancel(member.invitation_id);
+                                                    } else {
+                                                        toast({ title: "Error", description: "Invitation ID not found", variant: "destructive" });
+                                                    }
+                                                }}
+                                                className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#FFF0F0] rounded-md transition-colors"
+                                            >
+                                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#FF6B6B]">Cancel invitation</span>
+                                                <Trash2 className="w-[19px] h-[20px] text-[#FF6B6B]" strokeWidth={1} />
+                                            </DropdownMenuItem>
+                                        ) : member.user_id === currentUserId ? (
                                             <DropdownMenuItem
                                                 onClick={() => setShowLeaveConfirm(true)}
                                                 className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#FFF0F0] rounded-md transition-colors"
@@ -410,17 +429,33 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                 </div>
 
                 {/* 7. LEAVE GROUP & DELETE GROUP BUTTONS */}
-                <div className="mt-[24px]  ">
-                    <button
-                        onClick={() => setShowLeaveConfirm(true)}
-                        className="w-full flex items-center justify-between py-[10px] bg-transparent border-none outline-none"
-                    >
-                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#FF6B6B]  h-[20px]">
-                            Leave group
-                        </span>
-                        <Trash2 className="w-[19px] h-[20px] text-[#FF6B6B]" strokeWidth={1} />
-                    </button>
-
+                <div className="mt-[24px]">
+                    <div className="w-full flex items-center justify-between py-[10px]">
+                        <button
+                            onClick={() => setShowLeaveConfirm(true)}
+                            className="bg-transparent border-none outline-none cursor-pointer"
+                        >
+                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-left text-[#FF6B6B] h-[20px]">
+                                Leave group
+                            </span>
+                        </button>
+                        {isAdmin ? (
+                            <button
+                                onClick={() => setShowDeleteConfirm(true)}
+                                className="bg-transparent border-none outline-none cursor-pointer p-1 hover:bg-[#FFF0F0] rounded transition-colors"
+                                title="Delete group"
+                            >
+                                <Trash2 className="w-[19px] h-[20px] text-[#FF6B6B]" strokeWidth={1} />
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => setShowLeaveConfirm(true)}
+                                className="bg-transparent border-none outline-none cursor-pointer"
+                            >
+                                <Trash2 className="w-[19px] h-[20px] text-[#FF6B6B]" strokeWidth={1} />
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
@@ -571,14 +606,15 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                                 customReason: "Reported from group chat info panel"
                             });
                             toast({ description: reportRes.message || "Profile reported successfully" });
-                            setUserToReport(null);
                         } catch (err: any) {
-                            const errorMsg = err?.response?.data?.message || "Failed to report profile";
+                            const errorMsg = err?.response?.data?.message || err?.message || "Failed to report profile";
                             toast({ 
                                 title: "Error",
                                 description: errorMsg, 
                                 variant: "destructive" 
                             });
+                        } finally {
+                            setUserToReport(null);
                         }
                     }
                 }}
@@ -595,9 +631,9 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                     if (userToBlock) {
                         try {
                             await blockUser(userToBlock);
-                            setUserToBlock(null);
                         } catch (err: any) {
                             // SocialContext already shows the specific API error toast
+                        } finally {
                             setUserToBlock(null);
                         }
                     }
@@ -625,11 +661,71 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                 confirmText="Leave"
                 cancelText="Cancel"
                 onConfirm={async () => {
-                    await leaveGroup(activeGroup.conversation_id);
-                    setShowLeaveConfirm(false);
-                    onClose('chat');
+                    try {
+                        await leaveGroup(activeGroup.conversation_id);
+                        onClose('chat');
+                    } catch (err: any) {
+                        const errorMsg = err?.response?.data?.message || err?.message || "Failed to leave group";
+                        toast({ 
+                            title: "Error",
+                            description: errorMsg, 
+                            variant: "destructive" 
+                        });
+                    } finally {
+                        setShowLeaveConfirm(false);
+                    }
                 }}
                 onCancel={() => setShowLeaveConfirm(false)}
+            />
+
+            <CocpitConfirmBox
+                isOpen={showDeleteConfirm}
+                title="Delete this group?"
+                message="This will permanently delete the group for all members."
+                confirmText="Delete"
+                cancelText="Cancel"
+                onConfirm={async () => {
+                    try {
+                        await deleteGroup(activeGroup.conversation_id);
+                        toast({ description: "Group deleted successfully" });
+                        onClose('chat');
+                    } catch (err: any) {
+                        const errorMsg = err?.response?.data?.message || err?.message || "Failed to delete group";
+                        toast({
+                            title: "Error",
+                            description: errorMsg,
+                            variant: "destructive"
+                        });
+                    } finally {
+                        setShowDeleteConfirm(false);
+                    }
+                }}
+                onCancel={() => setShowDeleteConfirm(false)}
+            />
+
+            <CocpitConfirmBox
+                isOpen={invitationToCancel !== null}
+                title="Cancel this invitation?"
+                message="This user will no longer be invited to the group."
+                confirmText="Cancel Invitation"
+                cancelText="Keep Invited"
+                onConfirm={async () => {
+                    if (invitationToCancel) {
+                        try {
+                            await cancelInvitation(invitationToCancel);
+                        } catch (err: any) {
+                            const errorMsg = err?.response?.data?.message || err?.message || "Failed to cancel invitation";
+                            toast({ 
+                                title: "Error",
+                                description: errorMsg, 
+                                variant: "destructive" 
+                            });
+                        } finally {
+                            setInvitationToCancel(null);
+                        }
+                    }
+                }}
+                onCancel={() => setInvitationToCancel(null)}
             />
 
             <CocpitConfirmBox
@@ -640,8 +736,18 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                 cancelText="Cancel"
                 onConfirm={async () => {
                     if (userToRemove) {
-                        await handleRemoveMember(userToRemove);
-                        setUserToRemove(null);
+                        try {
+                            await handleRemoveMember(userToRemove);
+                        } catch (err: any) {
+                            const errorMsg = err?.response?.data?.message || err?.message || "Failed to remove member";
+                            toast({
+                                title: "Error",
+                                description: errorMsg,
+                                variant: "destructive"
+                            });
+                        } finally {
+                            setUserToRemove(null);
+                        }
                     }
                 }}
                 onCancel={() => setUserToRemove(null)}
@@ -655,8 +761,18 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                 cancelText="Cancel"
                 onConfirm={async () => {
                     if (userToMakeAdmin) {
-                        await promoteToAdmin(userToMakeAdmin);
-                        setUserToMakeAdmin(null);
+                        try {
+                            await promoteToAdmin(userToMakeAdmin);
+                        } catch (err: any) {
+                            const errorMsg = err?.response?.data?.message || err?.message || "Failed to make member admin";
+                            toast({
+                                title: "Error",
+                                description: errorMsg,
+                                variant: "destructive"
+                            });
+                        } finally {
+                            setUserToMakeAdmin(null);
+                        }
                     }
                 }}
                 onCancel={() => setUserToMakeAdmin(null)}
@@ -670,8 +786,18 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                 cancelText="Cancel"
                 onConfirm={async () => {
                     if (userToDemote) {
-                        await updateMemberRole(userToDemote, 'member');
-                        setUserToDemote(null);
+                        try {
+                            await updateMemberRole(userToDemote, 'member');
+                        } catch (err: any) {
+                            const errorMsg = err?.response?.data?.message || err?.message || "Failed to demote member";
+                            toast({
+                                title: "Error",
+                                description: errorMsg,
+                                variant: "destructive"
+                            });
+                        } finally {
+                            setUserToDemote(null);
+                        }
                     }
                 }}
                 onCancel={() => setUserToDemote(null)}

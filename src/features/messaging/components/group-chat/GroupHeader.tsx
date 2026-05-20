@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useGroupChat } from "./groupChat.context";
 import { useAuth } from "@/hooks/use-auth";
+import { useQueryClient } from "@tanstack/react-query";
+import { muteGroup } from "@/services/api/messaging";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MoreVertical, BellOff, LogOut, Trash2 } from "lucide-react";
 import { UserCog, Share2, Info, Ban } from "lucide-react";
@@ -44,6 +46,7 @@ export default function GroupHeader({
     const isMobile = useIsMobile();
     const { user } = useAuth();
     const { toast } = useToast();
+    const queryClient = useQueryClient();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [showMuteConfirm, setShowMuteConfirm] = useState(false);
 
@@ -210,9 +213,21 @@ export default function GroupHeader({
                 message="You won’t receive notifications from this group."
                 confirmText="Mute"
                 cancelText="Cancel"
-                onConfirm={() => {
-                    toast({ description: "Group muted successfully" });
-                    setShowMuteConfirm(false);
+                onConfirm={async () => {
+                    try {
+                        await muteGroup(activeGroup.conversation_id, true);
+                        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                        toast({ description: "Group muted successfully" });
+                    } catch (err: any) {
+                        const errorMsg = err?.response?.data?.message || err?.message || "Failed to mute group";
+                        toast({
+                            title: "Error",
+                            description: errorMsg,
+                            variant: "destructive"
+                        });
+                    } finally {
+                        setShowMuteConfirm(false);
+                    }
                 }}
                 onCancel={() => setShowMuteConfirm(false)}
             />

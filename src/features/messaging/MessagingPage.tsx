@@ -420,12 +420,89 @@ export default function MessagingPage() {
     };
 
     const handleConversationUpdated = (payload: any) => {
-      // Trigger refetch to get the accurate last message (handling delete-for-me/everyone)
-      // queryClient.invalidateQueries({ queryKey: ['conversations'] }); // Avoid full refetch, rely on socket events updating specific message state?
-      // Actually, for delete-for-me/everyone, we might receive separate events in GroupChat.
-      // If we need to update the last message plain text in the sidebar:
-      // We should ideally update cache manually if payload contains data.
-      // For now, disabling to meet requirement of NO REFETCH on message send/update.
+      if (!payload) return;
+
+      const conversationId = payload.conversation_id || payload.conversationId;
+      if (!conversationId) return;
+
+      const queryKey = [
+        "conversations",
+        activeProfile?.type ?? "USER",
+        activeProfile?.id ?? "me",
+      ];
+
+      queryClient.setQueryData(
+        queryKey,
+        (oldData: ChatThread[] | undefined) => {
+          if (!oldData) return oldData;
+
+          // Find if the conversation already exists
+          const matchedIndex = oldData.findIndex(
+            (c) => String(c.id) === String(conversationId)
+          );
+
+          // Get or construct ChatThread details
+          let targetThread: ChatThread;
+
+          if (matchedIndex !== -1) {
+            // Update existing thread properties
+            const existing = oldData[matchedIndex];
+            const lastMsgText = payload.last_message_text || payload.lastMessage || payload.last_message;
+            const lastMsgAt = payload.last_message_at || payload.updatedAt || payload.updated_at || existing.lastMessageAt;
+            const unreadCount = typeof payload.unread_count === 'number'
+              ? payload.unread_count
+              : (typeof payload.unread === 'number'
+                ? payload.unread
+                : existing.unread);
+
+            targetThread = {
+              ...existing,
+              lastMessage: lastMsgText !== undefined ? lastMsgText : existing.lastMessage,
+              time: lastMsgAt ? formatTimeAgo(lastMsgAt) : existing.time,
+              lastMessageAt: lastMsgAt || existing.lastMessageAt,
+              unread: String(conversationId) === String(selectedChat?.id) ? 0 : unreadCount,
+            };
+            
+            // Also update details if full other_user_name etc are provided
+            if (payload.other_user_name || payload.otherUserName) {
+              targetThread.name = payload.other_user_name || payload.otherUserName;
+              targetThread.avatar = payload.other_user_avatar || payload.otherUserAvatar || targetThread.avatar;
+              targetThread.role = payload.other_user_headline || payload.otherUserHeadline || targetThread.role;
+            }
+          } else {
+            // Build brand new thread using mapBackendChatToChatThread mapper
+            // Prepare normalized snake_case object for mapper if camelCase is received
+            const normalizedPayload = {
+              conversation_id: conversationId,
+              other_user_id: payload.other_user_id || payload.otherUserId,
+              other_user_name: payload.other_user_name || payload.otherUserName || "New Contact",
+              other_user_avatar: payload.other_user_avatar || payload.otherUserAvatar || "gradient-1",
+              other_user_headline: payload.other_user_headline || payload.otherUserHeadline || "",
+              other_user_slug: payload.other_user_slug || payload.otherUserSlug || "",
+              other_user_type: payload.other_user_type || payload.otherUserType || "USER",
+              last_message_text: payload.last_message_text || payload.lastMessage || "",
+              last_message_at: payload.last_message_at || payload.updatedAt || payload.updated_at || new Date().toISOString(),
+              unread_count: typeof payload.unread_count === 'number' ? payload.unread_count : (typeof payload.unread === 'number' ? payload.unread : 1),
+              is_group: payload.is_group || payload.isGroup || false,
+              is_blocked_by_me: payload.is_blocked_by_me || false,
+              is_blocked_by_other: payload.is_blocked_by_other || false,
+              is_deleted_user: payload.is_deleted_user || false,
+              is_requesting: payload.is_requesting || false,
+              updated_at: payload.updated_at || payload.updatedAt || new Date().toISOString(),
+            };
+            targetThread = mapBackendChatToChatThread(normalizedPayload);
+          }
+
+          // Generate the new list
+          const remainingList = oldData.filter((_, idx) => idx !== matchedIndex);
+          const updatedList = [targetThread, ...remainingList];
+
+          // Sort by lastMessageAt descending
+          return updatedList.sort(
+            (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
+          );
+        }
+      );
     };
 
     const handleMessageDeleted = (payload: {
@@ -527,6 +604,7 @@ export default function MessagingPage() {
     socket.on("notification", handleNotification);
     socket.on("group_updated", handleGroupUpdate);
     socket.on("conversation-updated", handleConversationUpdated);
+    socket.on("conversation_updated", handleConversationUpdated);
     socket.on("message_deleted", handleMessageDeleted);
     socket.on("message_deleted_for_everyone", handleMessageDeleted);
     socket.on("message_deleted_for_me", handleMessageDeleted);
@@ -584,6 +662,7 @@ export default function MessagingPage() {
       socket.off("notification", handleNotification);
       socket.off("group_updated", handleGroupUpdate);
       socket.off("conversation-updated", handleConversationUpdated);
+      socket.off("conversation_updated", handleConversationUpdated);
       socket.off("message_deleted", handleMessageDeleted);
       socket.off("message_deleted_for_everyone", handleMessageDeleted);
       socket.off("message_deleted_for_me", handleMessageDeleted);

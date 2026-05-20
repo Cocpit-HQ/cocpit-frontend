@@ -5,43 +5,34 @@ interface RepliedMessageBoxProps {
   senderName: string;
   content: string;
   isDeleted: boolean;
-  isMe?: boolean;
+  isSent: boolean;
   onClick?: () => void;
 }
 
-export default function RepliedMessageBox({ senderName, content, isDeleted, isMe = false, onClick }: RepliedMessageBoxProps) {
+export default function RepliedMessageBox({ senderName, content, isDeleted, isSent, onClick }: RepliedMessageBoxProps) {
   return (
     <div 
       className={cn(
-        "flex flex-col w-full rounded-[8px] px-[12px] py-[8px] mb-[8px] relative overflow-hidden",
-        isMe ? "bg-white/20 hover:bg-white/30" : "bg-black/5 hover:bg-black/10",
-        "cursor-pointer transition-colors"
+        "box-border flex flex-col items-start p-[16px] gap-[8px] w-[365px] h-[72px] rounded-[6px] border-l-[2px] cursor-pointer transition-colors flex-none order-0 flex-grow-0",
+        isSent ? "bg-[#818CF8] border-l-[#EEF2FF]" : "bg-[#E0E7FF] border-l-[#C7D2FE]"
       )}
       onClick={(e) => {
         e.stopPropagation();
         onClick?.();
       }}
     >
-      {/* Left thick white/grey line */}
-      <div className={cn(
-        "absolute left-0 top-0 bottom-0 w-[3px] rounded-full",
-        isMe ? "bg-white" : "bg-[#6366F1]/50"
-      )} style={{ margin: '4px 0 4px 6px', height: 'calc(100% - 8px)' }} />
-
-      <div className="flex flex-col ml-[4px]">
-        <span className={cn(
-          "font-['Poppins'] font-semibold text-[13px] leading-[18px] truncate",
-          isMe ? "text-[#FFFFFF]" : "text-[#000000]"
-        )}>
-          {senderName}
-        </span>
-        <span className={cn(
-          "font-['Poppins'] font-normal text-[13px] leading-[18px] break-words line-clamp-2 mt-[2px]",
-          isMe ? "text-[#FFFFFF]" : "text-[#6B7280]"
-        )}>
-          {isDeleted ? <i className="opacity-80">Original message was deleted</i> : content}
-        </span>
-      </div>
+      <span className={cn(
+        "font-['Poppins'] font-medium text-[12px] leading-[16px] flex-none order-0 truncate w-full",
+        isSent ? "text-[#FFFFFF]" : "text-[#6366F1]"
+      )}>
+        {senderName}
+      </span>
+      <span className={cn(
+        "w-[333px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center flex-none order-1 flex-grow-0 truncate",
+        isSent ? "text-[#FFFFFF]" : "text-[#6B7280]"
+      )}>
+        {isDeleted ? <i className="opacity-80">Original message was deleted</i> : content}
+      </span>
     </div>
   );
 }

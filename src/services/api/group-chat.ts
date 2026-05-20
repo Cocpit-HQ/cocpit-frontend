@@ -115,3 +115,9 @@ export const getMessageReadReceipts = async (groupId: string, messageId: string)
     const response = await api.get(`/groups/${groupId}/messages/${messageId}/read`);
     return response.data;
 };
+
+export const cancelInvitation = async (groupId: string, invitationId: string) => {
+    const response = await api.delete(`/groups/${groupId}/invitations/${invitationId}`);
+    return response.data;
+};
+

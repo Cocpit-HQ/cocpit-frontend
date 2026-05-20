@@ -473,6 +473,12 @@ function MessageBubble(props: MessageBubbleProps) {
       return "bg-muted/30 text-muted-foreground italic border border-dashed border-border rounded-[12px] rounded-bl-none"
     }
 
+    if (message.repliedMessage && message.repliedMessage.senderName) {
+      return isMe
+        ? "box-border flex flex-col justify-center items-start w-[381px] h-[122px] bg-[#6366F1] text-[#FFFFFF] rounded-[12px_12px_0px_12px] shadow-sm gap-[10px]"
+        : "box-border flex flex-col justify-center items-start w-[381px] h-[122px] bg-[#EEF2FF] text-[#000000] rounded-[12px_12px_12px_0px] gap-[10px]"
+    }
+
     // Standard message styling
     const baseClasses = isMe
       ? "bg-[#6366F1] text-[#FFFFFF] rounded-[12px_12px_0px_12px] shadow-sm"
@@ -485,7 +491,9 @@ function MessageBubble(props: MessageBubbleProps) {
 
   const paddingClasses = (message.media && message.media.length > 0)
     ? "p-0 overflow-hidden"
-    : "px-[16px] py-[16px]"
+    : (message.repliedMessage && message.repliedMessage.senderName)
+      ? "px-[8px] pt-[8px] pb-[16px]"
+      : "px-[16px] py-[16px]"
 
   // Long press mobile detection
   const [showMobileActions, setShowMobileActions] = useState(false)
@@ -652,7 +660,10 @@ function MessageBubble(props: MessageBubbleProps) {
             <div className="relative max-w-[85%] flex">
               <div
                 className={cn(
-                  "relative break-words text-[14px] leading-[20px] w-full transition-all",
+                  "relative break-words w-full transition-all",
+                  message.repliedMessage && message.repliedMessage.senderName
+                    ? "font-['Poppins'] font-normal text-[12px] leading-[16px]"
+                    : "text-[14px] leading-[20px]",
                   paddingClasses,
                   getBubbleClasses(),
                   (isSelected || showMobileActions) && "ring-2 ring-[#6366F1] ring-offset-1 ring-offset-background"
@@ -672,7 +683,7 @@ function MessageBubble(props: MessageBubbleProps) {
                       senderName={message.repliedMessage.senderName}
                       content={message.repliedMessage.content}
                       isDeleted={message.repliedMessage.isDeleted}
-                      isMe={isMe}
+                      isSent={isMe}
                       onClick={() => onReplyClick?.(message.repliedMessage!.messageId)}
                     />
                   )}

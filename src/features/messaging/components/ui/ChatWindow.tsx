@@ -15,8 +15,8 @@ import { SocketMessage, TypingPayload } from "@/types/socket"
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery, InfiniteData } from "@tanstack/react-query"
 import { useToast } from "@/hooks/use-toast"
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox"
-import { getMessages, sendMessage, markAsRead, editMessage, deleteMessage, acceptChatRequest, declineChatRequest, addOrUpdateReaction, clearReaction } from "@/services/api/messaging"
-import { sendMessage as sendGroupMessage, getGroupDetails } from "@/services/api/group-chat"
+import { getMessages, sendMessage, markAsRead, editMessage, deleteMessage, acceptChatRequest, declineChatRequest, addOrUpdateReaction, clearReaction, deletePersonalChat, muteGroup } from "@/services/api/messaging"
+import { sendMessage as sendGroupMessage, getGroupDetails, leaveGroup } from "@/services/api/group-chat"
 import { GroupMember } from "@/types/group-chat"
 import { mapBackendMessageToMessage } from "@/lib/mappers/messaging.mapper"
 import Avatar from "@/components/shared/Avatar"
@@ -1303,18 +1303,19 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
         cancelText="Cancel"
         onConfirm={async () => {
           try {
-            await declineChatRequest(chat.id);
+            await deletePersonalChat(chat.id);
             queryClient.setQueryData(['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'], (oldChats: ChatThread[] | undefined) => {
               if (!oldChats) return [];
               return oldChats.filter(c => c.id !== chat.id);
             });
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
-            toast({ description: "Chat deleted" });
-            setShowDeleteConfirm(false);
+            toast({ description: "Chat deleted successfully" });
             if (onBack) onBack();
           } catch (err: any) {
             const errorMsg = err?.response?.data?.message || err?.message || "Failed to delete chat";
             toast({ title: "Error", description: errorMsg, variant: "destructive" });
+          } finally {
+            setShowDeleteConfirm(false);
           }
         }}
         onCancel={() => setShowDeleteConfirm(false)}
@@ -1328,12 +1329,14 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
         cancelText="Cancel"
         onConfirm={async () => {
           try {
-            // TODO: Wire to actual mute API when available
+            await muteGroup(chat.id, true);
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
             toast({ description: "Group muted successfully" });
-            setShowMuteConfirm(false);
           } catch (err: any) {
-            const errorMsg = err?.response?.data?.message || "Failed to mute group";
+            const errorMsg = err?.response?.data?.message || err?.message || "Failed to mute group";
             toast({ title: "Error", description: errorMsg, variant: "destructive" });
+          } finally {
+            setShowMuteConfirm(false);
           }
         }}
         onCancel={() => setShowMuteConfirm(false)}
@@ -1345,9 +1348,18 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
         message="You won't receive messages from this group anymore."
         confirmText="Leave"
         cancelText="Cancel"
-        onConfirm={() => {
-          toast({ description: "Left group successfully" });
-          setShowLeaveConfirm(false);
+        onConfirm={async () => {
+          try {
+            await leaveGroup(chat.id);
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            toast({ description: "You left the group" });
+            if (onBack) onBack();
+          } catch (err: any) {
+            const errorMsg = err?.response?.data?.message || err?.message || "Failed to leave group";
+            toast({ title: "Error", description: errorMsg, variant: "destructive" });
+          } finally {
+            setShowLeaveConfirm(false);
+          }
         }}
         onCancel={() => setShowLeaveConfirm(false)}
       />

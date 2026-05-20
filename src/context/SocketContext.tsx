@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { NotificationPayload, UserStatusPayload } from '@/types/socket';
 import Avatar from '@/components/shared/Avatar';
+import { useQueryClient } from '@tanstack/react-query';
 
 type TargetedMessageNotification = NotificationPayload & {
   targetProfileType?: 'USER' | 'COMPANY';
@@ -47,6 +48,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const { activeProfile } = useActiveProfile();
   const { toast } = useToast();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
@@ -90,6 +92,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         queueMicrotask(() => {
           setSocket(null);
           setIsConnected(false);
+          setOnlineUsers(new Set());
         });
       }
       return;
@@ -132,11 +135,26 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('connect', () => {
       console.log("Socket connected:", newSocket.id);
       setIsConnected(true);
+
+      // Re-join active conversation room on reconnect
+      const activeConvId = activeConversationRef.current;
+      if (activeConvId) {
+        console.log("Re-joining conversation room on reconnect:", activeConvId);
+        newSocket.emit('joinConversation', { conversationId: activeConvId.toString() });
+      }
+
+      // Re-fetch conversation list and invitations, and refresh current messages
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['invitations'] });
+      if (activeConvId) {
+        queryClient.invalidateQueries({ queryKey: ['messages', activeConvId] });
+      }
     });
 
     newSocket.on('disconnect', (reason) => {
       console.log("Socket disconnected. Reason:", reason);
       setIsConnected(false);
+      setOnlineUsers(new Set());
     });
 
     newSocket.on("connect_error", (err) => {

@@ -143,3 +143,14 @@ export const clearReaction = async (messageId: string) => {
   return response.data;
 };
 
+export const muteGroup = async (conversationId: string, muted: boolean = true, mutedUntil?: string | null) => {
+  const response = await api.patch(`/conversations/${conversationId}/mute`, { muted, mutedUntil });
+  return response.data;
+};
+
+export const deletePersonalChat = async (conversationId: string) => {
+  const response = await api.delete(`/conversations/${conversationId}`);
+  return response.data;
+};
+
+

@@ -23,6 +23,7 @@ export interface GroupMember {
     left_at?: string | null;
     isPending?: boolean;
     status?: 'accepted' | 'pending';
+    invitation_id?: string;
 }
 
 export interface Invitation {
