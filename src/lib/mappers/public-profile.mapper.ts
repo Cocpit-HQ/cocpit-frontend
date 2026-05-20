@@ -145,7 +145,7 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
     })(),
     location: publicPost.location || undefined,
     tags: publicPost.tags || [],
-    sampleLikerUsername: (publicPost as any).sample_liker_username || undefined,
-    authorHeadline: (publicPost as any).author_headline || undefined,
+    sampleLikerUsername: publicPost.sample_liker_username || undefined,
+    authorHeadline: publicPost.author_headline || undefined,
   };
 };

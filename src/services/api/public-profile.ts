@@ -38,6 +38,10 @@ export interface PublicPost {
   is_saved: boolean;
   comment_count: number;
   poll: PublicPostPoll | null;
+  location?: string | null;
+  tags?: any[];
+  sample_liker_username?: string | null;
+  author_headline?: string;
   shared_post?: {
     is_accessible: boolean;
     reason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
