@@ -25,7 +25,7 @@ const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal'
 const CreatePostModal = dynamic(() => import('@/features/create-post/components/CreatePostModal').then(m => m.CreatePostModal), { ssr: false });
 
 export const FeedPost = (props: FeedPostProps) => {
-  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags } = props;
+  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, sampleLikerUsername } = props;
   const { activeProfile, isCompany } = useActiveProfile();
 
   // Custom Hooks
@@ -85,6 +85,7 @@ export const FeedPost = (props: FeedPostProps) => {
           onReport={() => setIsReportModalOpen(true)}
           location={location}
           tags={tags}
+          authorRole={props.authorHeadline || undefined}
         />
 
         <PostContent
@@ -125,7 +126,23 @@ export const FeedPost = (props: FeedPostProps) => {
       {likeCount > 0 && (
         <div className="px-[16px] h-[20px] flex items-center">
           <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
-            Liked by {isLiked ? 'you' : (author === 'Anushri' ? 'John' : 'Anushri')} and others
+            Liked by {isLiked ? (
+              likeCount === 1 ? (
+                'you'
+              ) : (
+                <>
+                  you and {likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}
+                </>
+              )
+            ) : (
+              likeCount === 1 ? (
+                `@${sampleLikerUsername || 'someone'}`
+              ) : (
+                <>
+                  @{sampleLikerUsername || 'someone'} and {likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}
+                </>
+              )
+            )}
           </p>
         </div>
       )}

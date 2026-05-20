@@ -3,6 +3,8 @@ import { toast } from 'sonner';
 import { feedApi } from '../api/feed.api';
 import { FeedPostProps } from '../types';
 import { Poll } from '@/types/entities';
+import { useSession } from 'next-auth/react';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 export const usePostInteractions = (props: FeedPostProps) => {
   const { 
@@ -21,6 +23,9 @@ export const usePostInteractions = (props: FeedPostProps) => {
   const [likeCount, setLikeCount] = useState(typeof likes === 'string' ? parseInt(likes) : likes);
   const [commentCount, setCommentCount] = useState(typeof props.comments === 'string' ? parseInt(props.comments || '0') : (props.comments || 0));
   const [shareCount, setShareCount] = useState(typeof props.shares === 'string' ? parseInt(props.shares || '0') : (props.shares || 0));
+  
+  const { data: session } = useSession();
+  const { isCompany, activeProfile } = useActiveProfile();
   
   // Poll State
   const [pollData, setPollData] = useState(poll);

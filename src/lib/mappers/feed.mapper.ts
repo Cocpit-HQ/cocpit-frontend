@@ -235,6 +235,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     shared_post: sharedPost,
     location: backendPost.location || undefined,
     tags: backendPost.tags || [],
+    sampleLikerUsername: backendPost.sample_liker_username || undefined,
+    authorHeadline: backendPost.author_headline || undefined,
   };
 };
 

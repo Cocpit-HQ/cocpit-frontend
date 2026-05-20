@@ -128,6 +128,8 @@ export interface Post {
   poll?: Poll | null;
   shared_post?: Post | null;
   isAvailable?: boolean;
+  sampleLikerUsername?: string | null;
+  authorHeadline?: string | null;
   unavailableReason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
 
   // Job sharing fields

@@ -182,7 +182,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
   return (
     <div className="flex flex-col items-start py-4 w-[285.33px] h-[504px] bg-card border border-[#EEF2FF] dark:border-card-border-inner shadow-card-inner rounded-[24px] relative flex-shrink-0">
       {/* Header section (Frame 2608569) */}
-      <div className="w-full h-[40px] flex items-center justify-between px-4 z-10 mb-2">
+      <div className="w-full h-[40px] flex items-center justify-between px-4 z-10 mb-4">
         {/* Author Info (Frame 2608571) */}
         <div className="flex items-center gap-2 overflow-hidden flex-1">
           {/* Avatar (Ellipse 10) */}
@@ -198,9 +198,9 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
             <span className="text-[16px] leading-[24px] font-normal text-foreground truncate font-[family-name:var(--font-poppins)]">
               {localPost.author || "Anonymous"}
             </span>
-            <span className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)]">
-              {(localPost as any).authorRole || "Designer"}
-            </span>
+            <Link href={`/post/${localPost.id}`} className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] truncate block w-full cursor-pointer" title={localPost.authorHeadline || localPost.title || ""}>
+              {localPost.authorHeadline || localPost.title || ""}
+            </Link>
             <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] mt-0.5">
               <span>{localPost.location || "Kolhapur"}</span>
               <span className="w-1 h-1 rounded-full bg-[#DADADA] flex-none" />
@@ -313,11 +313,29 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
       </div>
 
       {/* Liked by Section (Frame 2608622) */}
-      <div className="w-full h-[20px] px-4 mb-2 flex items-center">
-        <p className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)] truncate">
-          Liked by <span className="font-medium">Jhon</span> and others
-        </p>
-      </div>
+      {likesCount > 0 && (
+        <div className="w-full h-[20px] px-4 mb-4 flex items-center">
+          <p className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)] truncate">
+            Liked by {isLiked ? (
+              likesCount === 1 ? (
+                'you'
+              ) : (
+                <>
+                  you and {likesCount - 1} {likesCount - 1 === 1 ? 'other' : 'others'}
+                </>
+              )
+            ) : (
+              likesCount === 1 ? (
+                <span>@{localPost.sampleLikerUsername || 'someone'}</span>
+              ) : (
+                <>
+                  <span>@{localPost.sampleLikerUsername || 'someone'}</span> and {likesCount - 1} {likesCount - 1 === 1 ? 'other' : 'others'}
+                </>
+              )
+            )}
+          </p>
+        </div>
+      )}
 
       {/* Interaction Footer (Frame 2608574) */}
       <div className="w-full h-[40px] px-4 py-2 mt-auto border-t border-transparent">
