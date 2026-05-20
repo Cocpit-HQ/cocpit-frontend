@@ -73,6 +73,8 @@ export interface BackendPost {
     company_slug?: string;
   } | null;
   is_broadcast?: boolean;
+  sample_liker_username?: string | null;
+  author_headline?: string;
 }
 
 export interface BackendMedia {

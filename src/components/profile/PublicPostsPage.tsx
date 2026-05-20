@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import {
   ChevronLeft,
   ArrowLeft,
@@ -112,9 +113,11 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="flex flex-col">
-            <span className="font-[family-name:var(--font-poppins)] font-semibold text-[16px] text-foreground leading-tight">{post.author}</span>
-            <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground">{post.isCompanyPost ? 'Organization' : 'designer'}</span>
+          <div className="flex flex-col min-w-0 overflow-hidden flex-1">
+            <span className="font-[family-name:var(--font-poppins)] font-semibold text-[16px] text-foreground leading-tight truncate">{post.author}</span>
+            <Link href={`/post/${post.id}`} className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground truncate w-full block cursor-pointer" title={post.authorHeadline || post.title || (post.isCompanyPost ? 'Organization' : '')}>
+              {post.authorHeadline || post.title || (post.isCompanyPost ? 'Organization' : '')}
+            </Link>
             <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)] mt-0.5">
               <span>{post.location || 'Kolhapur'}</span>
               <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
@@ -287,11 +290,29 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
           </div>
         )}
 
-        <div className="pt-3 px-0 mb-4 border-t border-transparent">
-          <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-foreground">
-            Liked by <span className="font-semibold">Jhon</span> and <span className="font-semibold">others</span>
-          </p>
-        </div>
+        {Number(post.likes || 0) > 0 && (
+          <div className="pt-3 px-0 mb-4 border-t border-transparent">
+            <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-foreground">
+              Liked by {post.isLiked ? (
+                Number(post.likes || 0) === 1 ? (
+                  'you'
+                ) : (
+                  <>
+                    you and {Number(post.likes || 0) - 1} {Number(post.likes || 0) - 1 === 1 ? 'other' : 'others'}
+                  </>
+                )
+              ) : (
+                Number(post.likes || 0) === 1 ? (
+                  <span className="font-semibold">@{post.sampleLikerUsername || 'someone'}</span>
+                ) : (
+                  <>
+                    <span className="font-semibold">@{post.sampleLikerUsername || 'someone'}</span> and {Number(post.likes || 0) - 1} {Number(post.likes || 0) - 1 === 1 ? 'other' : 'others'}
+                  </>
+                )
+              )}
+            </p>
+          </div>
+        )}
 
         {/* Interaction Bar */}
         <div className="flex justify-between items-center px-0 w-full h-10">

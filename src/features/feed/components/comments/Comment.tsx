@@ -151,8 +151,13 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
         {/* Top Info Row */}
         <div className="flex justify-between items-start mb-1">
           <div className="flex flex-col">
-            <Link href={authorLink} className="hover:underline leading-tight">
+            <Link href={authorLink} className="hover:underline leading-tight flex items-baseline gap-1.5 flex-wrap">
               <span className="text-sm font-bold text-black">{author?.name || 'Anonymous'}</span>
+              {author?.authorSlug && (
+                <span className="text-[11px] text-muted-foreground font-normal">
+                  @{author.authorSlug}
+                </span>
+              )}
             </Link>
             {author?.headline && (
               <span className="text-[12px] text-muted-foreground font-normal leading-tight mt-0.5">

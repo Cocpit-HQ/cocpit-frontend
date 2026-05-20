@@ -33,9 +33,23 @@ export const updatePost = async (postId: string, data: UpdatePostRequest): Promi
 };
 
 
-export const toggleLike = async (postId: string, companyId?: string): Promise<{ postId: string; liked: boolean; likeCount: number }> => {
-  void companyId;
-  const response = await api.post<{ postId: string; liked: boolean; likeCount: number }>(`/post/${postId}/like`);
+export interface LikerInfo {
+  userId: string | null;
+  username: string | null;
+  fullName: string | null;
+  avatar: string | null;
+}
+
+export interface ToggleLikeResponse {
+  postId: string;
+  liked: boolean;
+  likeCount: number;
+  username: string | null;
+  liker: LikerInfo;
+}
+
+export const toggleLike = async (postId: string, companyId?: string): Promise<ToggleLikeResponse> => {
+  const response = await api.post<ToggleLikeResponse>(`/post/${postId}/like`, { companyId });
   return response.data;
 };
 

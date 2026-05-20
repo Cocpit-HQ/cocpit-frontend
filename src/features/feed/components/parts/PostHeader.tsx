@@ -64,24 +64,36 @@ export const PostHeader = ({
   return (
     <div className="flex flex-row justify-between items-start p-0 gap-[8px] w-full">
       {/* Author Info (Frame 2608571) */}
-      <div className="flex flex-row items-center p-0 gap-[8px]">
+      <div className="flex flex-row items-center p-0 gap-[8px] flex-1 min-w-0 overflow-hidden">
         {/* Avatar (Ellipse 10) */}
         <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0 bg-muted">
           <img src={avatarSrc} alt={author} className="w-full h-full object-cover" />
         </div>
 
         {/* Name & Role (Frame 2608568) */}
-        <div className="flex flex-col items-start p-0">
+        <div className="flex flex-col items-start p-0 min-w-0 overflow-hidden">
           <div className="flex items-center gap-1 h-[24px]">
             {isMe || (!isCompanyPost && !authorId) ? (
-              <h3 className="text-foreground text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] cursor-default">
-                {author}
-              </h3>
+              <div className="flex items-baseline gap-1.5">
+                <h3 className="text-foreground text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] cursor-default">
+                  {author}
+                </h3>
+                {authorSlug && (
+                  <span className="text-[12px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
+                    @{authorSlug}
+                  </span>
+                )}
+              </div>
             ) : (
-              <Link href={authorLink} className="hover:underline block">
+              <Link href={authorLink} className="hover:underline flex items-baseline gap-1.5">
                 <h3 className="text-foreground text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)]">
                   {author}
                 </h3>
+                {authorSlug && (
+                  <span className="text-[12px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
+                    @{authorSlug}
+                  </span>
+                )}
               </Link>
             )}
             {isCompanyPost && (
@@ -93,9 +105,9 @@ export const PostHeader = ({
               </span>
             )}
           </div>
-          <p className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
-            {authorRole || title || 'Designer'}
-          </p>
+          <Link href={`/post/${id}`} className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground truncate w-full block cursor-pointer" title={authorRole || title || ''}>
+            {authorRole || title || ''}
+          </Link>
           {(location || timeAgo) && (
             <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
               {location && <span>{location}</span>}
@@ -107,7 +119,7 @@ export const PostHeader = ({
       </div>
 
       {/* Metadata & Menu (Right side) */}
-      <div className="flex flex-row items-center gap-[12px] h-[40px]">
+      <div className="flex flex-row items-center gap-[12px] h-[40px] flex-shrink-0">
         <div className="flex items-center gap-1">
           {/* Tag icon */}
           {tags && tags.length > 0 && (
