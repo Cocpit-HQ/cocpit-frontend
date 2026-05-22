@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Paperclip, Send, Smile, Mic, X, FileText, Film, Image as ImageIcon } from "lucide-react";
 import { useGroupChat } from "./groupChat.context";
+import { MentionTextarea } from "@/components/ui/MentionTextarea";
+import { searchUsers } from "@/services/api/users";
 
 interface GroupMessageInputProps {
     onSendMessage: (text: string, files: File[]) => void;
@@ -157,18 +159,21 @@ export default function GroupMessageInput({ onSendMessage, onTyping, isLoading }
                 </button>
 
                 <div className="flex-1 relative rounded-2xl bg-muted">
-                    <textarea
-                        ref={textareaRef}
+                    <MentionTextarea
+                        innerRef={textareaRef}
                         value={text}
+                        searchUsersFn={searchUsers}
                         onChange={(e) => {
                             setText(e.target.value);
                             if (onTyping) onTyping();
 
                             const target = e.target;
-                            target.style.height = 'auto';
-                            const newHeight = Math.min(target.scrollHeight, 128);
-                            target.style.height = `${newHeight}px`;
-                            target.style.overflowY = target.scrollHeight > 128 ? 'auto' : 'hidden';
+                            if (target && 'style' in target) {
+                                target.style.height = 'auto';
+                                const newHeight = Math.min(target.scrollHeight, 128);
+                                target.style.height = `${newHeight}px`;
+                                target.style.overflowY = target.scrollHeight > 128 ? 'auto' : 'hidden';
+                            }
                         }}
                         onKeyDown={handleKeyDown}
                         placeholder="Type a message..."

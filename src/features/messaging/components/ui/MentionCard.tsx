@@ -86,7 +86,7 @@ export function Mention({ username, isMe, children }: MentionProps) {
         side="top" 
         align="start" 
         sideOffset={6}
-        className="w-72 p-4 bg-popover/95 backdrop-blur-xl border-white/10 shadow-2xl rounded-2xl will-change-[opacity,transform] z-[100]"
+        className="w-72  bg-popover/95 backdrop-blur-xl border-white/10 shadow-2xl rounded-2xl will-change-[opacity,transform] z-[100]"
         onClick={(e) => e.stopPropagation()}
       >
         {isLoading ? (
@@ -95,15 +95,15 @@ export function Mention({ username, isMe, children }: MentionProps) {
              <p className="text-xs font-medium text-muted-foreground">Loading profile...</p>
            </div>
         ) : userData ? (
-          <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-start gap-4">
-              <Avatar className="w-14 h-14 border border-white/10 shadow-sm ring-2 ring-background">
+          <div className="flex flex-col gap-2 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-2">
+              <Avatar className="w-10 h-10 border border-white/10 shadow-sm ring-2 ring-background">
                 <AvatarImage src={userData.avatar_url || ""} alt={userData.full_name} className="object-cover" />
                 <AvatarFallback className="bg-primary/10 text-primary font-medium text-lg">
                   {userData.full_name.substring(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0 pt-0.5">
+              <div className="flex-1 min-w-0 ">
                 <h4 className="text-[15px] font-semibold text-foreground truncate leading-tight">
                   {userData.full_name}
                 </h4>
@@ -118,7 +118,7 @@ export function Mention({ username, isMe, children }: MentionProps) {
               </div>
             </div>
             
-            <div className="flex items-center gap-2 mt-1">
+            {/* <div className="flex items-center gap-2 mt-1">
               <Button 
                 variant="default" 
                 size="sm" 
@@ -137,7 +137,7 @@ export function Mention({ username, isMe, children }: MentionProps) {
                 <User className="w-3.5 h-3.5 mr-1.5" />
                 Profile
               </Button>
-            </div>
+            </div> */}
           </div>
         ) : (
           <div className="py-6 text-center animate-in fade-in">

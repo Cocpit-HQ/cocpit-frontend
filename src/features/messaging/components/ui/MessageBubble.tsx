@@ -326,11 +326,11 @@ const MessageText = ({
           <Mention key={i} username={username} isMe={isMe}>
             <span 
               className={cn(
-                "hover:underline cursor-pointer font-bold",
-                isMe ? "text-white" : "text-[#818cf8]"
+                "hover:underline cursor-pointer font-bold font-['Poppins'] font-medium text-[12px]",
+                isMe ? "text-white" : "text-[#6366F1]"
               )}
             >
-              {displayName}
+              @{username}
             </span>
           </Mention>
         );
@@ -344,8 +344,8 @@ const MessageText = ({
           <Mention key={i} username={username} isMe={isMe}>
             <span 
               className={cn(
-                "hover:underline cursor-pointer font-bold",
-                isMe ? "text-white" : "text-[#818cf8]"
+                "hover:underline cursor-pointer font-['Poppins'] font-medium text-[12px]",
+                isMe ? "text-white" : "text-[#6366F1]"
               )}
             >
               {part}

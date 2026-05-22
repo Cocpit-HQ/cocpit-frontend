@@ -2,10 +2,10 @@
 
 import React, { useRef, useEffect } from 'react';
 import { UserMention } from '@/services/api/users';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { HashtagSuggestion } from '@/services/api/hashtags';
 import { useMentions } from '@/hooks/use-mentions';
+import { CocpitMentionListCard } from '@/shared/commonComponents/CocpitMentionListCard';
 
 interface MentionTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
     value: string;
@@ -129,7 +129,7 @@ export const MentionTextarea = ({
         if (match) {
             const baseLeft = textBefore.substring(0, match.index);
             const content = format === 'full' ? user.full_name : user.account_name;
-            const injected = `@[${content}](${user.account_name}) `;
+            const injected = `@${user.account_name} `;
             const newValue = baseLeft + injected + textAfter;
 
             const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
@@ -195,94 +195,139 @@ export const MentionTextarea = ({
         }
     };
 
-    return (
-        <div className="relative w-full">
-            <textarea
-                ref={textareaRef}
-                value={value}
-                onChange={handleInput}
-                onKeyDown={(e) => mentionKeyDown(e, onSelect)}
-                className={cn("w-full resize-none bg-transparent outline-none", className)}
-                {...props}
-            />
+    const backdropRef = useRef<HTMLDivElement>(null);
 
-            {showSuggestions && (
-                <div className="absolute z-50 w-[240px] bg-white border border-[#C7D2FE] shadow-xl overflow-hidden animate-in fade-in-0 zoom-in-95 p-[8px] mb-2"
-                    style={{ 
-                        top: suggestionPosition.top - 24, // Position at the line top
-                        left: suggestionPosition.left,
-                        transform: 'translateY(-100%)',
-                        borderRadius: '24px 24px 0px 24px'
+    const renderHighlightedText = (text: string) => {
+        if (!text) return null;
+        const parts = text.split(/(@[a-zA-Z0-9_.]+)/g);
+        return (
+            <>
+                {parts.map((part, i) => {
+                    if (part.startsWith('@')) {
+                        return (
+                            <span key={i} style={{ color: '#6366F1' }} className="font-semibold">
+                                {part}
+                            </span>
+                        );
+                    }
+                    return part;
+                })}
+            </>
+        );
+    };
+
+    const handleScroll = () => {
+        if (textareaRef.current && backdropRef.current) {
+            backdropRef.current.scrollTop = textareaRef.current.scrollTop;
+            backdropRef.current.scrollLeft = textareaRef.current.scrollLeft;
+        }
+    };
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (textareaRef.current && backdropRef.current) {
+                backdropRef.current.scrollTop = textareaRef.current.scrollTop;
+                backdropRef.current.scrollLeft = textareaRef.current.scrollLeft;
+            }
+        }, 0);
+        return () => clearTimeout(timer);
+    }, [value]);
+
+    return (
+        <div className="flex flex-col w-full">
+            {showSuggestions && mode === 'mention' && (
+                <CocpitMentionListCard
+                    users={users}
+                    activeIndex={activeIndex}
+                    query={query}
+                    isLoading={isLoading}
+                    onSelect={(user) => selectUser(user as UserMention, 'account')}
+                    onHoverIndex={setActiveIndex}
+                    onDismiss={() => setShowSuggestions(false)}
+                    showNoResults={!isLoading && showSuggestions && users.length === 0 && !!query}
+                />
+            )}
+
+            {showSuggestions && mode === 'hashtag' && (
+                <div
+                    className="animate-in fade-in-0 zoom-in-95"
+                    style={{
+                        boxSizing: 'border-box',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        padding: '16px',
+                        gap: '8px',
+                        width: '100%',
+                        background: '#FFFFFF',
+                        border: '1px solid #EEF2FF',
+                        borderRadius: '12px',
+                        maxHeight: '232px',
+                        overflowY: 'auto',
+                        scrollbarWidth: 'thin',
+                        marginBottom: '8px',
                     }}
                 >
-                    <div className="p-1 max-h-[300px] overflow-y-auto custom-scrollbar">
-                        {mode === 'mention' && users.map((user, index) => (
-                            <div
-                                key={user.id}
-                                onMouseEnter={() => setActiveIndex(index)}
-                                className={cn(
-                                    "group flex items-center justify-between p-1 rounded-md transition-all duration-200",
-                                    index === activeIndex ? "bg-accent/50" : "hover:bg-muted/30"
-                                )}
-                            >
-                                <div className="flex items-center gap-3 px-2 py-1 flex-1 overflow-hidden">
-                                    <Avatar className="h-9 w-9 border border-border/50 shrink-0">
-                                        <AvatarImage src={user.avatar_url} />
-                                        <AvatarFallback>{user.full_name?.[0] || 'U'}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex flex-col items-start overflow-hidden">
-                                        <span className="font-semibold text-sm truncate w-full">{highlightMatch(user.full_name, query)}</span>
-                                        <span className="text-xs text-muted-foreground truncate w-full">@{highlightMatch(user.account_name, query)}</span>
-                                    </div>
-                                </div>
-                                <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity pr-1">
-                                    <button
-                                        onClick={() => selectUser(user, 'full')}
-                                        className="text-[10px] uppercase tracking-wider font-bold px-2 py-1.5 rounded bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
-                                    >
-                                        Name
-                                    </button>
-                                    <button
-                                        onClick={() => selectUser(user, 'account')}
-                                        className="text-[10px] uppercase tracking-wider font-bold px-2 py-1.5 rounded bg-muted text-muted-foreground hover:bg-foreground hover:text-background transition-colors"
-                                    >
-                                        @
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-
-
-
-                        {mode === 'hashtag' && hashtags.map((h, index) => (
-                            <button
-                                key={h.tag}
-                                onClick={() => selectHashtag(h)}
-                                onMouseEnter={() => setActiveIndex(index)}
-                                className={cn(
-                                    "w-full flex items-center justify-between px-3 py-2 text-sm rounded-sm transition-colors text-left",
-                                    index === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted/80"
-                                )}
-                            >
-                                <span className="font-medium text-primary">#{highlightMatch(h.tag, query)}</span>
-                                <span className="text-xs text-muted-foreground">{h.usage_count} posts</span>
-                            </button>
-                        ))}
-
-                        {isLoading && (
-                            <div className="px-3 py-3 text-xs text-muted-foreground animate-pulse text-center">
-                                Searching...
-                            </div>
-                        )}
-                        
-                        {!isLoading && showSuggestions && ((mode === 'mention' && users.length === 0) || (mode === 'hashtag' && hashtags.length === 0)) && query && (
-                            <div className="px-3 py-3 text-xs text-muted-foreground italic text-center">
-                                No results found
-                            </div>
-                        )}
-                    </div>
+                    {hashtags.map((h, index) => (
+                        <button
+                            key={h.tag}
+                            onClick={() => selectHashtag(h)}
+                            onMouseEnter={() => setActiveIndex(index)}
+                            className={cn(
+                                "w-full flex items-center justify-between px-3 py-2 text-sm rounded-sm transition-colors text-left",
+                                index === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted/80"
+                            )}
+                        >
+                            <span className="font-medium text-primary">#{h.tag}</span>
+                            <span className="text-xs text-muted-foreground">{h.usage_count} posts</span>
+                        </button>
+                    ))}
+                    {isLoading && (
+                        <div className="px-3 py-3 text-xs text-muted-foreground animate-pulse text-center w-full">
+                            Searching...
+                        </div>
+                    )}
+                    {!isLoading && hashtags.length === 0 && query && (
+                        <div className="px-3 py-3 text-xs text-muted-foreground italic text-center w-full">
+                            No results found
+                        </div>
+                    )}
                 </div>
             )}
+
+            <div className="relative w-full">
+                {/* Backdrop containing the highlighted text */}
+                <div
+                    ref={backdropRef}
+                    className={cn(
+                        "absolute inset-0 pointer-events-none whitespace-pre-wrap break-words overflow-y-auto scrollbar-hide text-foreground",
+                        value.length === 0 ? "opacity-0" : "opacity-100",
+                        className
+                    )}
+                    style={{
+                        borderColor: 'transparent',
+                        backgroundColor: 'transparent',
+                        color: value.length > 0 ? 'inherit' : 'transparent',
+                    }}
+                >
+                    {renderHighlightedText(value)}
+                </div>
+
+                <textarea
+                    ref={textareaRef}
+                    value={value}
+                    onChange={handleInput}
+                    onScroll={handleScroll}
+                    onKeyDown={(e) => mentionKeyDown(e, onSelect)}
+                    className={cn("w-full resize-none bg-transparent outline-none relative z-10", className)}
+                    {...props}
+                    style={{
+                        ...props.style,
+                        color: value.length > 0 ? 'transparent' : 'inherit',
+                        caretColor: 'var(--foreground, currentColor)',
+                    }}
+                />
+            </div>
         </div>
     );
 };
