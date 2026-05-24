@@ -104,6 +104,14 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
             onRemoveCover={() => media.clearMedia()}
             isEdit={isEdit}
             coverInputRef={articleCoverInputRef}
+            caption={state.description}
+            onCaptionChange={state.setDescription}
+            onPost={actions.handlePost}
+            isSubmitting={state.isSubmitting}
+            onClose={onClose}
+            currentUser={state.currentUser}
+            currentPoster={state.currentPoster}
+            isCompanyPost={state.isCompanyPost}
           />
         );
       default:
@@ -118,7 +126,10 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
           "p-0 border-none shadow-2xl overflow-hidden z-[101] bg-background",
           isMobile 
             ? "w-full h-full max-w-none rounded-none flex flex-col pt-0 pb-0" 
-            : "fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full max-w-3xl rounded-2xl max-h-[90vh] flex flex-col"
+            : cn(
+                "fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full rounded-2xl max-h-[90vh] flex flex-col transition-all duration-300",
+                state.postType === 'article' ? "max-w-4xl h-[85vh]" : "max-w-3xl"
+              )
         )}
       >
         <div className="sr-only">
@@ -128,28 +139,31 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
           </DialogDescription>
         </div>
 
-        <CreatePostHeader 
-          onClose={onClose}
-          isCompanyPost={state.isCompanyPost}
-          currentPosterName={(state.currentPoster as any)?.name || state.currentUser?.name || 'User'}
-          currentPosterLogo={state.isCompanyPost 
-            ? ((state.currentPoster as any)?.logo_url || (state.currentPoster as any)?.avatar_url || '/assets/pngegg.png') 
-            : (state.currentUser?.image || '/assets/pngegg.png')}
-          visibility={state.visibility}
-          onVisibilityToggle={() => state.setVisibility(v => v === 'public' ? 'private' : 'public')}
-          userCompanies={state.userCompanies}
-          onContextSwitch={actions.requestContextSwitch}
-          currentUser={state.currentUser}
-          isMobile={isMobile}
-          isEdit={isEdit}
-          activeCompanyId={state.postAsCompanyId}
-        />
+        {state.postType !== 'article' && (
+          <CreatePostHeader 
+            onClose={onClose}
+            isCompanyPost={state.isCompanyPost}
+            currentPosterName={(state.currentPoster as any)?.name || state.currentUser?.name || 'User'}
+            currentPosterLogo={state.isCompanyPost 
+              ? ((state.currentPoster as any)?.logo_url || (state.currentPoster as any)?.avatar_url || '/assets/pngegg.png') 
+              : (state.currentUser?.image || '/assets/pngegg.png')}
+            visibility={state.visibility}
+            onVisibilityToggle={() => state.setVisibility(v => v === 'public' ? 'private' : 'public')}
+            userCompanies={state.userCompanies}
+            onContextSwitch={actions.requestContextSwitch}
+            currentUser={state.currentUser}
+            isMobile={isMobile}
+            isEdit={isEdit}
+            activeCompanyId={state.postAsCompanyId}
+          />
+        )}
 
         <div className={cn(
           "flex-1 overflow-y-auto custom-scrollbar bg-background/50",
-          isMobile ? "px-4 py-4" : "p-0"
+          isMobile ? "px-4 py-4" : "p-0",
+          state.postType === 'article' && "flex flex-col"
         )}>
-          {!isMobile && (
+          {!isMobile && state.postType !== 'article' && (
             <>
               <PostIdentity 
                  isCompanyPost={state.isCompanyPost}
@@ -168,7 +182,7 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
             </>
           )}
 
-          {isMobile && !isEdit && (
+          {isMobile && !isEdit && state.postType !== 'article' && (
              <PostTypeSelector 
                 activeType={state.postType}
                 onTypeChange={state.setPostType}
@@ -178,7 +192,7 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
              />
           )}
 
-          {!isMobile && (
+          {!isMobile && state.postType !== 'article' && (
              <CategorySelector 
                 isCompanyPost={state.isCompanyPost}
                 currentPoster={state.currentPoster}
@@ -187,24 +201,26 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
              />
           )}
 
-          <div className={cn(isMobile ? "" : "p-6")}>
+          <div className={cn(isMobile ? "" : (state.postType === 'article' ? "p-0 flex-1 flex flex-col" : "p-6"))}>
             {renderPostFlow()}
             <SharedPreview sharedPost={state.sharedPost} isMobile={isMobile} />
           </div>
         </div>
 
-        <CreatePostFooter 
-          onPost={actions.handlePost}
-          isSubmitting={state.isSubmitting}
-          isMobile={isMobile}
-          isEdit={isEdit}
-          isCompanyPost={state.isCompanyPost}
-          notifyEmployees={state.notifyEmployees}
-          onNotifyEmployeesToggle={state.setNotifyEmployees}
-          isBroadcast={state.isBroadcast}
-          onBroadcastToggle={state.setIsBroadcast}
-          postType={state.postType}
-        />
+        {state.postType !== 'article' && (
+          <CreatePostFooter 
+            onPost={actions.handlePost}
+            isSubmitting={state.isSubmitting}
+            isMobile={isMobile}
+            isEdit={isEdit}
+            isCompanyPost={state.isCompanyPost}
+            notifyEmployees={state.notifyEmployees}
+            onNotifyEmployeesToggle={state.setNotifyEmployees}
+            isBroadcast={state.isBroadcast}
+            onBroadcastToggle={state.setIsBroadcast}
+            postType={state.postType}
+          />
+        )}
         
         {state.showContextWarning && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in">

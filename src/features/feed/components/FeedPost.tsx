@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { FeedPostProps } from '../types';
 import { usePostInteractions } from '../hooks/use-post-interactions';
@@ -25,8 +26,11 @@ const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal'
 const CreatePostModal = dynamic(() => import('@/features/create-post/components/CreatePostModal').then(m => m.CreatePostModal), { ssr: false });
 
 export const FeedPost = (props: FeedPostProps) => {
-  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, sampleLikerUsername } = props;
+  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, sampleLikerUsername, category, title, articleBody } = props;
   const { activeProfile, isCompany } = useActiveProfile();
+  const router = useRouter();
+  const isArticlePost = category === 'Article' || Boolean(articleBody);
+  const isArticleFeedCard = isArticlePost && !props.isFullContent;
 
   // Custom Hooks
   const {
@@ -64,7 +68,14 @@ export const FeedPost = (props: FeedPostProps) => {
   };
 
   return (
-    <div className="feed-card-shell flex w-full flex-col gap-[16px] overflow-hidden py-[16px] transition-all duration-300 hover:shadow-md">
+    <div
+      onClick={() => {
+        if (isArticleFeedCard) {
+          router.push(`/post/${id}`);
+        }
+      }}
+      className={`feed-card-shell flex w-full flex-col gap-[16px] overflow-hidden py-[16px] transition-all duration-300 hover:shadow-md ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
+    >
       {/* Header & Content (Frame 2608598) */}
       <div className="flex flex-col gap-[16px] px-[16px]">
         <PostHeader
@@ -100,20 +111,28 @@ export const FeedPost = (props: FeedPostProps) => {
           location={location}
           timeAgo={timeAgo}
           onToggleExpand={() => setIsExpanded(!isExpanded)}
+          category={category}
+          title={title}
+          articleBody={articleBody}
+          imageSrc={imageSrc}
+          authorAvatar={authorAvatar}
+          authorSlug={props.authorSlug}
         />
       </div>
 
       {/* Media (Rectangle 14) */}
-      <PostMedia
-        imageSrc={imageSrc}
-        images={props.images}
-        videoSrc={videoSrc}
-        videoRef={videoRef}
-        aspectRatio={finalAspectRatio}
-        onLoad={handleMediaLoad}
-        priority={props.priority}
-        isVerticalVideo={isVerticalVideo}
-      />
+      {!isArticlePost && (
+        <PostMedia
+          imageSrc={imageSrc}
+          images={props.images}
+          videoSrc={videoSrc}
+          videoRef={videoRef}
+          aspectRatio={finalAspectRatio}
+          onLoad={handleMediaLoad}
+          priority={props.priority}
+          isVerticalVideo={isVerticalVideo}
+        />
+      )}
 
       {/* Poll */}
       <PostPoll
@@ -170,6 +189,7 @@ export const FeedPost = (props: FeedPostProps) => {
       {isCommentSectionOpen && (
         <CommentSection
           postId={id.toString()}
+          isPostOwner={props.isOwnPost}
           incrementCommentCount={incrementCommentCount}
           decrementCommentCount={decrementCommentCount}
         />
@@ -179,6 +199,7 @@ export const FeedPost = (props: FeedPostProps) => {
         <MobileCommentDrawer
           postId={id.toString()}
           isOpen={isMobileDrawerOpen}
+          isPostOwner={props.isOwnPost}
           onClose={() => setIsMobileDrawerOpen(false)}
           incrementCommentCount={incrementCommentCount}
           decrementCommentCount={decrementCommentCount}

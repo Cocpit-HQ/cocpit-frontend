@@ -1,7 +1,7 @@
 import { Area } from 'react-easy-crop';
 import { Post, PostVisibility } from '@/types/entities';
 
-export type PostType = 'text' | 'photo' | 'poll' | 'video' | 'article';
+export type PostType = 'text' | 'photo' | 'poll' | 'video' | 'article' | 'milestone' | 'expert';
 
 export interface CreatePostModalProps {
   isOpen: boolean;
@@ -30,6 +30,11 @@ export interface MediaItem {
   isExisting?: boolean;
   fitMode: 'cover' | 'contain';
   previewUrl?: string;
+  flipH?: boolean;
+  flipV?: boolean;
+  rotation?: number;
+  naturalWidth?: number;
+  naturalHeight?: number;
 }
 
 export interface PollOption {

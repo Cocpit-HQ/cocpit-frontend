@@ -5,6 +5,7 @@ import { Image, Video, FileText, BarChart3 } from 'lucide-react'
 import { PostType } from '@/features/create-post/types'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { useFeed } from '@/hooks/use-feed'
+import { useUIStore } from '@/store/ui.store'
 
 interface CreatePostProps {
   onOpenModal: (type?: PostType) => void
@@ -65,7 +66,11 @@ export function CreatePost({ onOpenModal }: CreatePostProps) {
         <PostButton
           icon={<FileText className="w-4 h-4 text-orange-600" />}
           label="Article"
-          onClick={() => onOpenModal('article')}
+          onClick={() => {
+            const { setArticleMode, setActiveModal } = useUIStore.getState();
+            setActiveModal(null);
+            setArticleMode(true);
+          }}
         />
         <PostButton
           icon={<BarChart3 className="w-4 h-4 text-purple-600" />}

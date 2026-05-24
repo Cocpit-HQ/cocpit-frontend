@@ -95,6 +95,21 @@ export const deleteComment = async (commentId: string, companyId?: string) => {
   return response.data;
 };
 
+export const hideComment = async (commentId: string | number, companyId?: string) => {
+  const response = await api.post(`/comments/${commentId}/hide`, { companyId });
+  return response.data;
+};
+
+export const unhideComment = async (commentId: string | number, companyId?: string) => {
+  const response = await api.delete(`/comments/${commentId}/hide`, { data: { companyId } });
+  return response.data;
+};
+
+export const getHiddenComments = async (companyId?: string) => {
+  const response = await api.get(`/users/me/comments/hidden`, { params: { companyId } });
+  return response.data;
+};
+
 export const toggleCommentLike = async (commentId: string | number, companyId?: string) => {
   void companyId;
   const response = await api.post(`/comments/${commentId}/like`);

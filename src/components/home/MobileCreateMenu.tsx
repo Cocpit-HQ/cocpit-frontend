@@ -8,13 +8,14 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
+import type { PostType } from '@/features/create-post/types';
 
-type PostType = 'text' | 'photo' | 'video' | 'poll';
+type MobileCreateOptionType = Extract<PostType, 'text' | 'photo' | 'video' | 'poll' | 'article'>;
 
 interface MobileCreateMenuProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onOptionClick: (type: PostType) => void;
+  onOptionClick: (type: MobileCreateOptionType) => void;
 }
 
 export default function MobileCreateMenu({

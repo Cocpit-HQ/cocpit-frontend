@@ -35,14 +35,14 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
   const { startUpload } = usePostUpload();
   const { addPost } = useFeed();
 
-  // --- Sub-hooks ---
-  const media = usePostMedia();
-  const poll = usePostPoll();
-
   // --- Form State ---
   const [postType, setPostType] = useState<PostType>(initialPostType);
   const [postCategory, setPostCategory] = useState<CategoryType>('Professional');
   const [visibility, setVisibility] = useState<PostVisibility>('public');
+
+  // --- Sub-hooks ---
+  const media = usePostMedia([], [], (type) => setPostType(prev => prev === 'article' ? 'article' : type));
+  const poll = usePostPoll();
   const [description, setDescription] = useState('');
   const [articleTitle, setArticleTitle] = useState('');
   const [articleContent, setArticleContent] = useState('');
@@ -174,13 +174,56 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     setIsSubmitting(true);
 
     try {
-      const finalContent = sanitizeContent(postType === 'article' ? articleContent : (postType === 'poll' ? poll.pollQuestion : description));
+      // --- Frontend Media Validations ---
+      // 1. Mutually Exclusive Images and Videos
+      if (media.uploadedImages.length > 0 && media.uploadedVideos.length > 0) {
+        toast.error("Cannot upload video and images together");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 2. Video Count Enforcement
+      if (media.uploadedVideos.length > 1) {
+        toast.error("Only one video file is allowed");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 3. Image Count Enforcement
+      if (media.uploadedImages.length > 10) {
+        toast.error("Maximum 10 images allowed");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 4. File Size Limit (100MB per file)
+      const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+      const oversizedImage = media.uploadedImages.find(img => img.file && img.file.size > MAX_FILE_SIZE);
+      if (oversizedImage) {
+        toast.error(`Image "${oversizedImage.file?.name || 'file'}" exceeds the 100MB size limit.`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const oversizedVideo = media.uploadedVideos.find(v => v.file && v.file.size > MAX_FILE_SIZE);
+      if (oversizedVideo) {
+        toast.error(`Video "${oversizedVideo.file?.name || 'file'}" exceeds the 100MB size limit.`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      let finalContent = "";
+      if (postType === 'article') {
+        finalContent = `${description.trim()}<!-- article_divider -->${articleContent}`;
+      } else {
+        finalContent = sanitizeContent(postType === 'poll' ? poll.pollQuestion : description);
+      }
       
       const allowedCategories = getAllowedCategories();
       const safeCategory = allowedCategories.includes(postCategory) ? postCategory : getDefaultCategory();
 
       const payload: any = {
-        title: postType === 'article' ? sanitizeContent(articleTitle) : '',
+        title: postType === 'article' ? articleTitle.trim() : '',
         content: finalContent,
         category: safeCategory,
         visibility: visibility,

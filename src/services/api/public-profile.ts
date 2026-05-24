@@ -24,6 +24,7 @@ export interface PublicPostPoll {
 
 export interface PublicPost {
   post_id: string;
+  title?: string | null;
   content: string;
   created_at: string;
   visibility: 'public' | 'private' | 'connections';
@@ -46,6 +47,7 @@ export interface PublicPost {
     is_accessible: boolean;
     reason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
     post_id?: string;
+    title?: string | null;
     content?: string;
     created_at?: string;
     author?: {

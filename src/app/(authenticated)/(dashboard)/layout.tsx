@@ -35,7 +35,11 @@ export default function DashboardLayout({
                             onOpenChange={setOptionsOpen}
                             onOptionClick={(type) => {
                                 setOptionsOpen(false);
-                                setActiveModal('create-post', type as any);
+                                if (type === 'article') {
+                                    useUIStore.getState().setArticleMode(true);
+                                } else {
+                                    setActiveModal('create-post', type);
+                                }
                             }}
                         />
                         <FeedCreatePostModal

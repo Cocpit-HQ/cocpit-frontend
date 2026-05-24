@@ -112,7 +112,7 @@ const PhotoFlow = ({
             />
           </div>
         )}
-        <input ref={galleryInputRef} type="file" accept="image/*" multiple onChange={onPhotoUpload} className="hidden" />
+        <input ref={galleryInputRef} type="file" accept="image/*,video/*" multiple onChange={onPhotoUpload} className="hidden" />
       </div>
     );
   }
@@ -204,7 +204,7 @@ const PhotoFlow = ({
           />
         </div>
       )}
-      <input ref={galleryInputRef} type="file" accept="image/*" multiple onChange={onPhotoUpload} className="hidden" />
+      <input ref={galleryInputRef} type="file" accept="image/*,video/*" multiple onChange={onPhotoUpload} className="hidden" />
     </div>
   );
 };

@@ -5,6 +5,19 @@ import { PublicPost } from "@/services/api/public-profile";
 
 dayjs.extend(relativeTime);
 
+const splitArticleContent = (content?: string | null) => {
+  const rawContent = content || "";
+  if (!rawContent.includes("<!-- article_divider -->")) {
+    return { content: rawContent, articleBody: "" };
+  }
+
+  const parts = rawContent.split("<!-- article_divider -->");
+  return {
+    content: parts[0] || "",
+    articleBody: parts[1] || "",
+  };
+};
+
 export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
   // Date formatting
   const now = dayjs();
@@ -52,6 +65,8 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
     }))
   } : undefined;
 
+  const { content, articleBody } = splitArticleContent(publicPost.content);
+
   // Category mapping
   // Post entity expects specific string literals. We map what we can.
   let category: 'Personal' | 'Professional' | 'Achievement' | undefined = undefined;
@@ -65,9 +80,9 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
     author: publicPost.author_name,
     authorAvatar: publicPost.author_avatar || undefined,
     // Backend doesn't return title/headline anymore in the new query structure provided
-    title: "",
+    title: publicPost.title || publicPost.category_name || "",
     timeAgo: timeAgo,
-    content: publicPost.content,
+    content: content,
     imageSrc: images.length > 0 ? images[0] : undefined,
     images: images.length > 0 ? images : undefined,
     videoSrc: videoSrc,
@@ -81,6 +96,7 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
     visibility: publicPost.visibility as 'public' | 'private', // Assuming backend visibility matches
     poll: poll,
     category: category,
+    articleBody: articleBody || undefined,
     shared_post: (() => {
       const sp = publicPost.shared_post;
       if (!sp) return undefined;
@@ -109,13 +125,16 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
       }
 
       if (sp.author && sp.post_id) {
+        const { content: sharedContent, articleBody: sharedArticleBody } = splitArticleContent(sp.content);
         return {
           id: sp.post_id,
           authorId: sp.author.user_id,
           author: sp.author.full_name,
           authorAvatar: sp.author.avatar_url,
           timeAgo: sp.created_at ? dayjs(sp.created_at).fromNow() : "",
-          content: sp.content || "",
+          title: sp.title || "",
+          content: sharedContent,
+          articleBody: sharedArticleBody || undefined,
           imageSrc: sp.media?.find(m => m.media_type === 'image')?.url,
           likes: sp.like_count || 0,
           isLiked: sp.is_liked,

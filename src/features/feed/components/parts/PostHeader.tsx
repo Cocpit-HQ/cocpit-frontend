@@ -85,7 +85,7 @@ export const PostHeader = ({
                 )}
               </div>
             ) : (
-              <Link href={authorLink} className="hover:underline flex items-baseline gap-1.5">
+              <Link href={authorLink} className="hover:underline flex items-baseline gap-1.5" onClick={(e) => e.stopPropagation()}>
                 <h3 className="text-foreground text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)]">
                   {author}
                 </h3>
@@ -105,7 +105,7 @@ export const PostHeader = ({
               </span>
             )}
           </div>
-          <Link href={`/post/${id}`} className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground truncate w-full block cursor-pointer" title={authorRole || title || ''}>
+          <Link href={`/post/${id}`} className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground truncate w-full block cursor-pointer" title={authorRole || title || ''} onClick={(e) => e.stopPropagation()}>
             {authorRole || title || ''}
           </Link>
           {(location || timeAgo) && (

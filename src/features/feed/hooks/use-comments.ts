@@ -1,7 +1,7 @@
 // TODO: Migrate to React Query (useQuery) when comment caching/deduplication is needed.
 // Current architecture: manual fetch lifecycle with optimistic updates.
 import { useState, useEffect, useCallback } from 'react';
-import { getComments, addComment, deleteComment, updateComment } from '@/services/api/posts';
+import { getComments, addComment, deleteComment, updateComment, hideComment } from '@/services/api/posts';
 import { Comment as CommentType } from '@/types/entities';
 import { mapBackendCommentToFrontend } from '@/lib/mappers/feed.mapper';
 import { useSession } from 'next-auth/react';
@@ -137,6 +137,25 @@ export const useComments = (postId: string) => {
     }
   }, [comments, isCompany, activeProfile?.id]);
 
+  const handleHideComment = useCallback(async (commentId: string | number) => {
+    const prevComments = [...comments];
+    
+    // Optimistic: Remove the hidden comment from the view
+    setComments(prev => prev.filter(c => c.id !== commentId && c.parent_id !== commentId));
+
+    try {
+      const companyId = isCompany ? activeProfile?.id : undefined;
+      await hideComment(commentId.toString(), companyId);
+      toast.success('Comment hidden');
+      return true;
+    } catch (error) {
+      console.error('Failed to hide comment:', error);
+      toast.error('Failed to hide comment');
+      setComments(prevComments); // Revert on failure
+      return false;
+    }
+  }, [comments, isCompany, activeProfile?.id]);
+
   return {
     comments,
     isLoading,
@@ -144,6 +163,7 @@ export const useComments = (postId: string) => {
     handleAddComment,
     handleDeleteComment,
     handleUpdateComment,
+    handleHideComment,
     currentUserId: isCompany ? activeProfile?.id : session?.user?.id
   };
 };

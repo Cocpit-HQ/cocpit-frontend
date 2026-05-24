@@ -179,13 +179,22 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         }))
       } : null;
 
+      let spContent = sp.content || "";
+      let spArticleBody = "";
+      if (spContent.includes("<!-- article_divider -->")) {
+        const parts = spContent.split("<!-- article_divider -->");
+        spContent = parts[0];
+        spArticleBody = parts[1];
+      }
+
       sharedPost = {
         id: sp.post_id,
         authorId: sp.author.user_id,
         author: sp.author.full_name,
         authorAvatar: sp.author.avatar_url || undefined,
         timeAgo: spShortTimeAgo,
-        content: sp.content || "",
+        content: spContent,
+        articleBody: spArticleBody,
         imageSrc: spImages.length > 0 ? spImages[0] : undefined,
         images: spImages.length > 0 ? spImages : undefined,
         videoSrc: spVideoSrc,
@@ -200,10 +209,18 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         authorSlug: sp.author.author_slug,
         isCompanyPost: sp.author.is_organization_post,
         location: sp.location || undefined,
-        title: sp.category_name || sp.author.headline || "",
+        title: sp.title || sp.category_name || sp.author.headline || "",
         isAvailable: true
       } as Post & { isAvailable?: boolean };
     }
+  }
+
+  let content = backendPost.content || "";
+  let articleBody = "";
+  if (content.includes("<!-- article_divider -->")) {
+    const parts = content.split("<!-- article_divider -->");
+    content = parts[0];
+    articleBody = parts[1];
   }
 
   return {
@@ -211,10 +228,11 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     authorId: backendPost.author_id,
     author: backendPost.author_name,
     authorAvatar: backendPost.author_avatar || undefined,
-    // Use category or empty string for title (headline) since backend doesn't provide it
-    title: backendPost.category_name || "",
+    // Fix article title bug: preserve title if it exists, otherwise fall back to category or empty string
+    title: backendPost.title || backendPost.category_name || "",
     timeAgo: shortTimeAgo,
-    content: backendPost.content,
+    content: content,
+    articleBody: articleBody,
     imageSrc: images.length > 0 ? images[0] : undefined,
     images: images.length > 0 ? images : undefined,
     videoSrc: videoSrc,

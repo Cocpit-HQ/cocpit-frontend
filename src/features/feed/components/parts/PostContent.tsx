@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { FileText } from 'lucide-react';
 import { RichTextRenderer } from '@/components/ui/RichTextRenderer';
 import { PostSharedContent } from './PostSharedContent';
 import type { Poll, Post } from '@/types/entities';
@@ -19,22 +20,77 @@ interface PostContentProps {
   location?: string;
   timeAgo?: string;
   onToggleExpand?: () => void;
+  // Article support props:
+  category?: string;
+  title?: string | null;
+  articleBody?: string;
+  imageSrc?: string;
+  authorAvatar?: string;
 }
 
 export const PostContent = ({
   content, author, authorSlug, isExpanded, isFullContent,
   shared_post, sharedPollData, isSharedVoting, handleSharedVote, isProfileView,
-  postId, location, timeAgo, onToggleExpand
+  postId, location, timeAgo, onToggleExpand,
+  category, title, articleBody, imageSrc
 }: PostContentProps) => {
+  const isArticle = category === 'Article' || Boolean(articleBody);
+  const articleHref = postId ? `/post/${postId}` : undefined;
+  const plainArticleBody = (articleBody || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  const articleDescription = (content || '').trim() || plainArticleBody;
+  const isLongArticleDescription = articleDescription.length > 180 || articleDescription.split('\n').length > 3;
+  const hasArticleBody = Boolean(articleBody?.trim());
+  const showFullArticle = isArticle && (isFullContent || isExpanded);
+
   const hasMetadata = Boolean(location || timeAgo);
 
-  if (!content && !shared_post && !hasMetadata) {
+  if (!content && !shared_post && !hasMetadata && !isArticle) {
     return null;
   }
 
   return (
     <div className="flex-1 flex flex-col justify-center w-full gap-2">
-      {content && (
+      {/* Custom rich article renderer styles */}
+      <style>{`
+        .article-body-view h1 {
+          font-size: 1.6rem;
+          font-weight: 800;
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
+          color: var(--foreground);
+          font-family: var(--font-poppins), sans-serif;
+          line-height: 1.3;
+        }
+        .article-body-view h2 {
+          font-size: 1.3rem;
+          font-weight: 700;
+          margin-top: 1.25rem;
+          margin-bottom: 0.5rem;
+          color: var(--foreground);
+          font-family: var(--font-poppins), sans-serif;
+          line-height: 1.3;
+        }
+        .article-body-view p {
+          margin-bottom: 1rem;
+          font-size: 0.95rem;
+          line-height: 1.6;
+          color: var(--foreground);
+          opacity: 0.9;
+        }
+        .article-body-view ul {
+          list-style-type: disc;
+          padding-left: 1.5rem;
+          margin-bottom: 1rem;
+          font-size: 0.95rem;
+          line-height: 1.6;
+        }
+        .article-body-view li {
+          margin-bottom: 0.4rem;
+        }
+      `}</style>
+
+      {/* Main post description/caption */}
+      {content && !isArticle && (
         <div className="w-full">
           <div 
             className={`font-normal font-[family-name:var(--font-poppins)] text-[12px] leading-[16px] text-foreground whitespace-pre-wrap ${!isFullContent && !isExpanded ? 'line-clamp-2' : ''}`}
@@ -55,8 +111,85 @@ export const PostContent = ({
         </div>
       )}
 
+      {/* Inline Article Card */}
+      {isArticle && (
+        <div className="w-full mt-2 border border-border bg-card/60 rounded-2xl overflow-hidden shadow-sm transition-all duration-300 flex flex-col">
+          {articleHref ? (
+            <Link href={articleHref} className="block" onClick={(e) => e.stopPropagation()}>
+              <div className="w-full aspect-[21/9] overflow-hidden relative border-b border-border/40">
+                {imageSrc ? (
+                  <img 
+                    src={imageSrc} 
+                    alt={title || "Article cover"} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-indigo-50/50 dark:bg-indigo-950/20 flex items-center justify-center">
+                    <FileText className="w-8 h-8 text-indigo-400" />
+                  </div>
+                )}
+              </div>
+            </Link>
+          ) : (
+            <div className="w-full aspect-[21/9] overflow-hidden relative border-b border-border/40">
+              {imageSrc ? (
+                <img 
+                  src={imageSrc} 
+                  alt={title || "Article cover"} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-indigo-50/50 dark:bg-indigo-950/20 flex items-center justify-center">
+                  <FileText className="w-8 h-8 text-indigo-400" />
+                </div>
+              )}
+            </div>
+          )}
 
+          <div className="p-5 flex flex-col gap-3">
+            {articleHref && !isFullContent ? (
+              <Link href={articleHref} className="block">
+                <h4 className="line-clamp-2 font-bold text-[16px] text-foreground font-[family-name:var(--font-poppins)] leading-snug">
+                  {title || "Untitled Article"}
+                </h4>
+              </Link>
+            ) : (
+              <h4 className="line-clamp-2 font-bold text-[16px] text-foreground font-[family-name:var(--font-poppins)] leading-snug">
+                {title || "Untitled Article"}
+              </h4>
+            )}
 
+            {articleDescription && (
+              <div className="relative">
+                <div
+                  className={`font-normal font-[family-name:var(--font-poppins)] text-[13px] leading-[20px] text-foreground/85 whitespace-pre-wrap ${!showFullArticle ? 'line-clamp-3' : ''}`}
+                >
+                  <RichTextRenderer content={articleDescription} authorName={author} authorSlug={authorSlug} />
+                </div>
+                {!showFullArticle && isLongArticleDescription && (
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-card via-card/95 to-transparent" />
+                )}
+              </div>
+            )}
+
+            {hasArticleBody && showFullArticle && (
+              <div
+                className={`grid overflow-hidden transition-all duration-300 ease-out ${showFullArticle ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+              >
+                <div className="overflow-hidden">
+                  <div
+                    dangerouslySetInnerHTML={{ __html: articleBody || '' }}
+                    className="article-body-view border-t border-border/40 pt-4"
+                  />
+                </div>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
+      {/* Shared Post content if present */}
       {shared_post && (
         <PostSharedContent
           shared_post={shared_post}

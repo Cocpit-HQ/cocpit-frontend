@@ -58,8 +58,7 @@ import { UserData, Skill, AddSkillsPayload } from "@/types/user"
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
 import type { Post } from "@/types/entities"
 import { ViewAvatarModal } from "@/components/profile/ViewAvatarModal"
-import { EditAvatarModal } from "@/components/profile/EditAvatarModal"
-import EditCoverPhoto from "@/components/profile/EditCoverPhoto"
+import { EditAvatarModal, EditCoverPhoto } from "@/shared/commonComponents/Cocpitprofileupload"
 import { PostCarousel } from "@/components/shared/PostCarousel"
 import { ProfileSkeleton } from "@/components/profile/ProfileSkeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -120,6 +119,12 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
   }, [post]);
 
   const image = localPost.imageSrc || (localPost.images && localPost.images.length > 0 ? localPost.images[0] : null);
+  const videoSrc = localPost.videoSrc || null;
+  const isArticlePost = localPost.category === 'Article' || Boolean(localPost.articleBody);
+  const isPollPost = Boolean(localPost.poll);
+  const articleExcerpt = localPost.content?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
+  const pollQuestion = articleExcerpt || localPost.title || "Untitled poll";
+  const pollOptions = localPost.poll?.options?.slice(0, 4) || [];
 
   const handleLike = async () => {
     try {
@@ -272,16 +277,27 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
       {/* Content Section (Frame 2608605) */}
       <div className="w-full flex flex-col gap-[8px] mb-2 px-4">
         {/* Text Content (Frame 2608573) */}
-        <Link
-          href={`/post/${localPost.id}`}
-          className="text-[12px] leading-[20px] text-foreground font-[family-name:var(--font-poppins)] truncate h-[20px] cursor-pointer"
-        >
-          {localPost.content}
-        </Link>
+        {isArticlePost ? (
+          null
+        ) : isPollPost ? (
+          <Link
+            href={`/post/${localPost.id}`}
+            className="text-[12px] leading-[20px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-2 min-h-[40px] cursor-pointer"
+          >
+            {pollQuestion}
+          </Link>
+        ) : (
+          <Link
+            href={`/post/${localPost.id}`}
+            className="text-[12px] leading-[20px] text-foreground font-[family-name:var(--font-poppins)] truncate h-[20px] cursor-pointer"
+          >
+            {localPost.content}
+          </Link>
+        )}
       </div>
 
       {/* Main Image/Shared Content (Rectangle 14) */}
-      <div className="w-full h-[300px] mb-2 bg-muted relative overflow-hidden">
+      <div className="w-full h-[300px] mb-4 bg-muted relative overflow-hidden">
         {localPost.shared_post ? (
           <div className="w-full h-full p-3 bg-card overflow-hidden flex flex-col">
             <div className="flex items-center gap-2 mb-2">
@@ -297,6 +313,69 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
               </div>
             )}
           </div>
+        ) : isPollPost ? (
+          <Link href={`/post/${localPost.id}`} className="block w-full h-full p-4 bg-[#F8FAFF]">
+            <div className="w-full h-full rounded-[20px] border border-[#E3E9FF] bg-white p-4 flex flex-col">
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <span className="inline-flex items-center rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1]">
+                  Poll
+                </span>
+                <span className="text-[10px] text-muted-foreground font-[family-name:var(--font-poppins)]">
+                  {localPost.poll?.total_votes || 0} votes
+                </span>
+              </div>
+
+              <div className="space-y-2.5">
+                {pollOptions.map((option, index) => (
+                  <div
+                    key={option.option_id || `${option.option_text}-${index}`}
+                    className="rounded-[14px] border border-[#E8ECFF] bg-[#F8FAFF] px-3 py-2.5"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[12px] leading-[18px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-1">
+                        {option.option_text}
+                      </span>
+                      <span className="text-[11px] leading-[16px] text-[#6366F1] font-medium font-[family-name:var(--font-poppins)] flex-shrink-0">
+                        {option.vote_count}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {localPost.poll && localPost.poll.options.length > pollOptions.length && (
+                <div className="mt-auto pt-3 text-[11px] leading-[16px] text-muted-foreground font-[family-name:var(--font-poppins)]">
+                  +{localPost.poll.options.length - pollOptions.length} more option{localPost.poll.options.length - pollOptions.length === 1 ? "" : "s"}
+                </div>
+              )}
+            </div>
+          </Link>
+        ) : isArticlePost ? (
+          <Link href={`/post/${localPost.id}`} className="block w-full h-full relative">
+            {image ? (
+              <img
+                src={image}
+                alt={localPost.title || "Article cover"}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-[#EEF2FF] to-[#DDE5FF] flex items-center justify-center px-6 text-center">
+                <span className="text-[16px] leading-[24px] text-[#6366F1] font-semibold font-[family-name:var(--font-poppins)] line-clamp-3">
+                  {localPost.title || "Untitled Article"}
+                </span>
+              </div>
+            )}
+          </Link>
+        ) : videoSrc ? (
+          <Link href={`/post/${localPost.id}`} className="block w-full h-full bg-black">
+            <video
+              src={videoSrc}
+              className="w-full h-full object-cover"
+              muted
+              playsInline
+              preload="metadata"
+            />
+          </Link>
         ) : (
           <div className="w-full h-full">
             {localPost.images && localPost.images.length > 1 ? (
@@ -311,6 +390,16 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
           </div>
         )}
       </div>
+
+      {isArticlePost && (
+        <div className="w-full px-4 mb-3">
+          <Link href={`/post/${localPost.id}`} className="block">
+            <h3 className="text-[14px] leading-[20px] text-foreground font-semibold font-[family-name:var(--font-poppins)] line-clamp-2">
+              {localPost.title || "Untitled Article"}
+            </h3>
+          </Link>
+        </div>
+      )}
 
       {/* Liked by Section (Frame 2608622) */}
       {likesCount > 0 && (
@@ -772,7 +861,7 @@ export default function ProfilePage() {
 
   const profileIdentity: ProfileIdentity = {
     openTo: (user?.open_to as any) || "Full-time",
-    availability: (user?.availability as any) || "Immediate",
+    availability: (user?.availability as any) || "Immediately",
     workPreference: (user?.work_preference as any) || "Hybrid",
   };
 
@@ -798,9 +887,9 @@ export default function ProfilePage() {
         {isLoading ? (
           <ProfileSkeleton />
         ) : (
-          <div className="overflow-hidden relative bg-card md:rounded-[24px] rounded-none border-none outline-none pb-8 md:pb-0">
+          <div id="profile-card" className="overflow-hidden relative bg-card md:rounded-[24px] rounded-none border-none outline-none pb-8 md:pb-0">
 
-            <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage}>
+            <EditCoverPhoto coverImage={coverImage} setCoverImage={setCoverImage} portalContainerId="profile-card">
               <div className="absolute top-3 right-3 md:hidden z-10">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -1408,6 +1497,7 @@ export default function ProfilePage() {
         currentAvatarUrl={user?.avatar || null}
         onUpload={handleAvatarUpload}
         onDelete={handleAvatarDelete}
+        portalContainerId="profile-card"
       />
 
       <FollowListModal

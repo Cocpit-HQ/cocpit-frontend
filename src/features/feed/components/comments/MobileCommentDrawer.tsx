@@ -12,11 +12,12 @@ interface MobileCommentDrawerProps {
   onClose: () => void;
   incrementCommentCount?: () => void;
   decrementCommentCount?: () => void;
+  isPostOwner?: boolean;
 }
 
-export default function MobileCommentDrawer({ postId, isOpen, onClose, incrementCommentCount, decrementCommentCount }: MobileCommentDrawerProps) {
+export default function MobileCommentDrawer({ postId, isOpen, onClose, incrementCommentCount, decrementCommentCount, isPostOwner }: MobileCommentDrawerProps) {
   const { 
-    comments, isLoading, handleAddComment, handleDeleteComment, currentUserId 
+    comments, isLoading, handleAddComment, handleDeleteComment, handleHideComment, currentUserId 
   } = useComments(postId);
 
   // Named handlers for consistency with CommentSection.tsx
@@ -56,7 +57,9 @@ export default function MobileCommentDrawer({ postId, isOpen, onClose, increment
               isLoading={isLoading}
               onAddComment={handleAdd}
               onDeleteComment={handleDelete}
+              onHideComment={handleHideComment}
               currentUserId={currentUserId}
+              isPostOwner={isPostOwner}
             />
           </div>
         </Drawer.Content>

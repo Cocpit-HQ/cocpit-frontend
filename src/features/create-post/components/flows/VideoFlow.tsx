@@ -69,7 +69,7 @@ const VideoFlow = ({
             />
           </div>
         )}
-        <input ref={videoInputRef} type="file" accept="video/*" multiple onChange={onVideoUpload} className="hidden" />
+        <input ref={videoInputRef} type="file" accept="image/*,video/*" multiple onChange={onVideoUpload} className="hidden" />
       </div>
     );
   }
@@ -106,7 +106,7 @@ const VideoFlow = ({
                 )}
               </div>
             ))}
-            {!isEdit && (
+            {!isEdit && uploadedVideos.length === 0 && (
               <button
                 onClick={() => videoInputRef.current?.click()}
                 className="flex-shrink-0 w-32 h-32 flex items-center justify-center bg-muted/50 rounded-md border border-dashed border-border hover:bg-muted transition-colors"
@@ -124,7 +124,7 @@ const VideoFlow = ({
           />
         </div>
       )}
-      <input ref={videoInputRef} type="file" accept="video/*" multiple onChange={onVideoUpload} className="hidden" />
+      <input ref={videoInputRef} type="file" accept="image/*,video/*" multiple onChange={onVideoUpload} className="hidden" />
     </div>
   );
 };

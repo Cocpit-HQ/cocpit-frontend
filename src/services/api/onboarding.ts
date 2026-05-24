@@ -3,13 +3,27 @@ import api from "@/lib/axios";
 export interface EducationListResponse {
   school_names: string[];
   degrees: string[];
+  specializations: string[];
 }
 
-export const getEducationList = async (schoolSearch = "", degreeSearch = ""): Promise<EducationListResponse> => {
-  const params = new URLSearchParams();
-  if (schoolSearch) params.append("school_search", schoolSearch);
-  if (degreeSearch) params.append("degree_search", degreeSearch);
-  const response = await api.get<EducationListResponse>(`/profile/educations?${params.toString()}`);
+export const getEducationList = async (
+  schoolSearch = "",
+  degreeSearch = "",
+  specializationSearch = ""
+): Promise<EducationListResponse> => {
+  const response = await api.get<EducationListResponse>(
+    "/profile/educations",
+    {
+      params: {
+        ...(schoolSearch && { school_search: schoolSearch }),
+        ...(degreeSearch && { degree_search: degreeSearch }),
+        ...(specializationSearch && {
+          specialization_search: specializationSearch,
+        }),
+      },
+    }
+  );
+
   return response.data;
 };
 

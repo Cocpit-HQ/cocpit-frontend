@@ -37,6 +37,12 @@ const LOOKING_FOR_OPTIONS = ["Full-time", "Part-time", "Internship", "Freelance"
 const AVAILABILITY_OPTIONS = ["Immediately", "Weekdays", "Weekends", "15 to 30 days", "Flexible", "On-demand"]
 const WORK_SETUP_OPTIONS = ["Remote", "Hybrid", "On-site"]
 
+const normalizeAvailability = (value?: string | null) => {
+  if (value === "Immediate") return "Immediately";
+  if (value === "30 Days") return "15 to 30 days";
+  return value || "";
+}
+
 const ROLES = [
   { id: "student", label: "Student" },
   { id: "fresher", label: "Fresher" },
@@ -84,7 +90,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
         location: user.location || "",
         website: user.website || "",
         open_to: user.open_to || "",
-        availability: user.availability || "",
+        availability: normalizeAvailability(user.availability),
         work_preference: user.work_preference || "",
         about: user.about || "",
         show_owner_badge: true,
@@ -162,7 +168,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
           <button
             onClick={handleSave}
             disabled={isSaving || !hasChanges()}
-            className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isSaving ? "..." : "Save"}
           </button>
@@ -354,7 +360,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               <Button
                 onClick={handleSave}
                 disabled={isSaving || !hasChanges()}
-                className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] hover:opacity-90 text-white font-medium transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] hover:bg-[#6366F1] text-white font-medium shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {isSaving ? "Saving..." : "Save"}
               </Button>

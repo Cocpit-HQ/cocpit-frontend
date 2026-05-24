@@ -3,8 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
-import EditCoverPhoto from "@/components/profile/EditCoverPhoto";
-import { EditAvatarModal } from "@/components/profile/EditAvatarModal";
+import { EditAvatarModal, EditCoverPhoto } from "@/shared/commonComponents/Cocpitprofileupload";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Company, companyService } from "@/services/organization.service";
 import { BadgeCheck, MapPin, Globe, Users, PenBox, UserPlus, UserMinus, Loader2, LayoutDashboard, Eye, Network } from "lucide-react";
@@ -246,7 +245,7 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
     };
 
     return (
-        <div className="bg-card border-b md:border border-border shadow-sm rounded-none md:rounded-xl mt-0 md:mt-6 mb-6 w-full relative group">
+        <div id="profile-card" className="bg-card border-b md:border border-border shadow-sm rounded-none md:rounded-xl mt-0 md:mt-6 mb-6 w-full relative group">
             {/* Cover Image */}
             <div className="h-[160px] w-full relative bg-muted group/cover rounded-none md:rounded-t-xl overflow-hidden">
                 {canManageCompany ? (
@@ -255,6 +254,7 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
                         setCoverImage={() => { }} // State handled by query invalidation
                         onUpload={handleCoverUpload}
                         onDelete={handleCoverDelete}
+                        portalContainerId="profile-card"
                     >
                         <div className="h-[160px] w-full bg-muted relative">
                         </div>
@@ -388,6 +388,7 @@ export function OrganizationHeader({ company, isLoading }: OrganizationHeaderPro
                     currentAvatarUrl={company.logo_url || null}
                     onUpload={handleLogoUpload}
                     onDelete={handleLogoDelete}
+                    portalContainerId="profile-card"
                 />
             )}
 

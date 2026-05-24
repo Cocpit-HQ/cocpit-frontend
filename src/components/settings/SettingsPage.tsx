@@ -22,10 +22,12 @@ import {
   HandIcon,
   Bookmark,
   History,
+  EyeOff,
 } from "lucide-react"
 
 
 import { BlockedUsersSection } from "@/components/settings/BlockedUsersSection"
+import { HiddenCommentsSection } from "@/components/settings/HiddenCommentsSection"
 import ActiveSessions from "@/components/settings/ActiveSessions"
 import { YourActivity } from "@/components/settings/YourActivity"
 
@@ -50,7 +52,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import type { Page, Theme } from "@/types/common"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 
-type SettingsSection = "appearance" | "notifications" | "privacy" | "account" | "blocked" | "sessions" | "companies" | "saved" | "activity"
+type SettingsSection = "appearance" | "notifications" | "privacy" | "account" | "blocked" | "sessions" | "companies" | "saved" | "activity" | "hidden-comments"
 
 
 const routes: Record<string, string> = {
@@ -457,6 +459,13 @@ export default function SettingsPage() {
                   onClick={() => handleSectionClick("blocked")}
                 />
                 <SettingsNavCard
+                  icon={<EyeOff className="w-5 h-5" />}
+                  title="Hidden Comments"
+                  description="View comments you've hidden"
+                  isActive={activeSection === "hidden-comments"}
+                  onClick={() => handleSectionClick("hidden-comments")}
+                />
+                <SettingsNavCard
                   icon={<Monitor className="w-5 h-5" />}
                   title="Active Sessions"
                   description="Manage your logged-in devices"
@@ -629,6 +638,15 @@ export default function SettingsPage() {
                   <div className="rounded-xl bg-card border border-border overflow-hidden">
                     <BlockedUsersSection />
                   </div>
+                </div>
+              )}
+              {activeSection === "hidden-comments" && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="mb-2 text-foreground">Hidden Comments</h2>
+                    <p className="text-sm text-muted-foreground">View and manage comments you have hidden</p>
+                  </div>
+                  <HiddenCommentsSection />
                 </div>
               )}
               {activeSection === "sessions" && (

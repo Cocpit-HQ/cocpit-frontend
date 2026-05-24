@@ -147,7 +147,9 @@ export function getGradientImage(style: string, width = 1080, height = 1920): Pr
 export async function getPaddedImg(
   imageSrc: string,
   aspect: number,
-  fillColor = '#000000'
+  fillColor = '#000000',
+  rotation = 0,
+  flip = { horizontal: false, vertical: false }
 ): Promise<Blob> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
@@ -157,8 +159,14 @@ export async function getPaddedImg(
     throw new Error('Canvas context not found');
   }
 
-  const { width, height } = image;
-  const imageAspect = width / height;
+  // calculate bounding box of the rotated image
+  const { width: rotatedWidth, height: rotatedHeight } = rotateSize(
+    image.width,
+    image.height,
+    rotation
+  );
+
+  const imageAspect = rotatedWidth / rotatedHeight;
 
   let targetWidth, targetHeight;
 
@@ -166,14 +174,12 @@ export async function getPaddedImg(
   // We want the resulting image to maintain the source resolution quality
   if (aspect > imageAspect) {
     // Target is wider than image (pillarbox - bars on sides)
-    // Height is the constraint (match source height), width increases
-    targetHeight = height;
-    targetWidth = height * aspect;
+    targetHeight = rotatedHeight;
+    targetWidth = rotatedHeight * aspect;
   } else {
     // Target is taller than image (letterbox - bars on top/bottom)
-    // Width is the constraint (match source width), height increases
-    targetWidth = width;
-    targetHeight = width / aspect;
+    targetWidth = rotatedWidth;
+    targetHeight = rotatedWidth / aspect;
   }
 
   canvas.width = targetWidth;
@@ -183,11 +189,14 @@ export async function getPaddedImg(
   ctx.fillStyle = fillColor;
   ctx.fillRect(0, 0, targetWidth, targetHeight);
 
-  // Draw image centered
-  const x = (targetWidth - width) / 2;
-  const y = (targetHeight - height) / 2;
+  // Translate canvas context to a central location to allow rotating and flipping around the center
+  ctx.translate(targetWidth / 2, targetHeight / 2);
+  ctx.rotate(getRadianAngle(rotation));
+  ctx.scale(flip.horizontal ? -1 : 1, flip.vertical ? -1 : 1);
+  ctx.translate(-image.width / 2, -image.height / 2);
 
-  ctx.drawImage(image, x, y);
+  // Draw image
+  ctx.drawImage(image, 0, 0);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((file) => {

@@ -25,8 +25,12 @@ export default function PostCard({ post, href, onDelete, isOwnPost, companyId }:
     // Refined image detection
     const image = post.image_url ||
         post.imageSrc ||
-        (post.media && post.media.length > 0 ? post.media[0].url : null) ||
+        (post.media && post.media.find((item: { media_type?: string; url?: string }) => item.media_type === 'image')?.url) ||
         (post.images && post.images.length > 0 ? (typeof post.images[0] === 'string' ? post.images[0] : post.images[0].url) : null);
+    const video = post.video_url ||
+        post.videoSrc ||
+        (post.media && post.media.find((item: { media_type?: string; url?: string }) => item.media_type === 'video')?.url) ||
+        null;
 
     // Also check shared_post
     const sharedImage = post.shared_post?.imageSrc ||
@@ -37,6 +41,7 @@ export default function PostCard({ post, href, onDelete, isOwnPost, companyId }:
     const isSharedJob = post.shared_post?.shared_entity_type === 'job' || post.shared_post?.job_id || post.shared_post?.isJob;
 
     const displayImage = image || (!isSharedJob ? sharedImage : null);
+    const displayVideo = !displayImage ? video : null;
 
     const sanitizedContent = typeof window !== 'undefined' ? DOMPurify.sanitize(content) : content;
 
@@ -49,6 +54,14 @@ export default function PostCard({ post, href, onDelete, isOwnPost, companyId }:
                             src={displayImage}
                             alt=""
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                    ) : displayVideo ? (
+                        <video
+                            src={displayVideo}
+                            className="w-full h-full object-cover"
+                            muted
+                            playsInline
+                            preload="metadata"
                         />
                     ) : isSharedJob ? (
                         <div className="w-full h-full bg-primary/10 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-card to-primary/5">
@@ -70,12 +83,12 @@ export default function PostCard({ post, href, onDelete, isOwnPost, companyId }:
                     )}
 
                     {/* Overlay for text readability - only show if there's an image or bottom text */}
-                    {(displayImage || (!isSharedJob && sanitizedContent)) && (
+                    {(displayImage || displayVideo || (!isSharedJob && sanitizedContent)) && (
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-300" />
                     )}
 
                     <div className="absolute bottom-0 left-0 p-4 w-full flex flex-col justify-end min-h-[40%]">
-                        {!isSharedJob && sanitizedContent && displayImage && (
+                        {!isSharedJob && sanitizedContent && (displayImage || displayVideo) && (
                             <div
                                 className="text-white text-xs md:text-sm font-medium line-clamp-3 leading-snug mb-2 group-hover:line-clamp-none transition-all duration-300"
                                 dangerouslySetInnerHTML={{ __html: sanitizedContent }}
@@ -99,7 +112,7 @@ export default function PostCard({ post, href, onDelete, isOwnPost, companyId }:
                     isOwnPost={isOwnPost}
                     onDelete={onDelete}
                     className="bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60"
-                    postType={post.poll ? 'poll' : (displayImage ? 'image' : (isSharedJob ? 'article' : 'text'))}
+                    postType={post.poll ? 'poll' : (displayVideo ? 'video' : (displayImage ? 'image' : (isSharedJob ? 'article' : 'text')))}
                     visibility={post.visibility || 'public'}
                     companyId={companyId}
                 />

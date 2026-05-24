@@ -95,6 +95,13 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(parseInt(post.comments) || 0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const image = post.imageSrc || (post.images && post.images.length > 0 ? post.images[0] : null);
+  const videoSrc = post.videoSrc || null;
+  const isArticlePost = post.category === 'Article' || Boolean(post.articleBody);
+  const isPollPost = Boolean(post.poll);
+  const articleExcerpt = post.content?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
+  const pollQuestion = articleExcerpt || post.title || "Untitled poll";
+  const pollOptions = post.poll?.options?.slice(0, 4) || [];
 
   const handleToggleComments = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -232,9 +239,15 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
 
       <div className="mt-4 w-full px-4">
         <div className="px-0 mb-2">
-          <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-foreground break-words whitespace-pre-wrap">
-            {post.content}
-          </p>
+          {isArticlePost ? null : isPollPost ? (
+            <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-foreground break-words whitespace-pre-wrap line-clamp-2">
+              {pollQuestion}
+            </p>
+          ) : (
+            <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-foreground break-words whitespace-pre-wrap">
+              {post.content}
+            </p>
+          )}
         </div>
 
 
@@ -280,14 +293,82 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
           </div>
         )}
 
-        {!post.shared_post && (post.images && post.images.length > 0 || post.imageSrc) && (
-          <div className="relative -mx-4 mb-4 h-[360px] w-[calc(100%+2rem)] overflow-hidden bg-slate-50 sm:h-[420px] md:h-[501px]">
-            {post.images && post.images.length > 1 ? (
-              <PostCarousel images={post.images} />
-            ) : (
-              <Image src={post.imageSrc || post.images?.[0] || ''} alt="Post content" fill className="object-cover" />
-            )}
-          </div>
+        {!post.shared_post && (
+          isPollPost ? (
+            <div className="mb-4 rounded-[20px] border border-[#E3E9FF] bg-[#F8FAFF] p-4">
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <span className="inline-flex items-center rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1]">
+                  Poll
+                </span>
+                <span className="text-[10px] text-muted-foreground font-[family-name:var(--font-poppins)]">
+                  {post.poll?.total_votes || 0} votes
+                </span>
+              </div>
+
+              <div className="space-y-2.5">
+                {pollOptions.map((option, index) => (
+                  <div
+                    key={option.option_id || `${option.option_text}-${index}`}
+                    className="rounded-[14px] border border-[#E8ECFF] bg-white px-3 py-2.5"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[12px] leading-[18px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-1">
+                        {option.option_text}
+                      </span>
+                      <span className="text-[11px] leading-[16px] text-[#6366F1] font-medium font-[family-name:var(--font-poppins)] flex-shrink-0">
+                        {option.vote_count}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {post.poll && post.poll.options.length > pollOptions.length && (
+                <div className="pt-3 text-[11px] leading-[16px] text-muted-foreground font-[family-name:var(--font-poppins)]">
+                  +{post.poll.options.length - pollOptions.length} more option{post.poll.options.length - pollOptions.length === 1 ? "" : "s"}
+                </div>
+              )}
+            </div>
+          ) : isArticlePost ? (
+            <>
+              <div className="relative -mx-4 mb-3 h-[360px] w-[calc(100%+2rem)] overflow-hidden bg-slate-50 sm:h-[420px] md:h-[501px]">
+                {image ? (
+                  <Image src={image} alt={post.title || "Article cover"} fill className="object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-[#EEF2FF] to-[#DDE5FF] flex items-center justify-center px-8 text-center">
+                    <span className="text-[20px] leading-[28px] text-[#6366F1] font-semibold font-[family-name:var(--font-poppins)] line-clamp-3">
+                      {post.title || "Untitled Article"}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="mb-4">
+                <Link href={`/post/${post.id}`} className="block">
+                  <h3 className="font-[family-name:var(--font-poppins)] font-semibold text-[16px] leading-[24px] text-foreground line-clamp-2">
+                    {post.title || "Untitled Article"}
+                  </h3>
+                </Link>
+              </div>
+            </>
+          ) : videoSrc ? (
+            <div className="relative -mx-4 mb-4 h-[360px] w-[calc(100%+2rem)] overflow-hidden bg-black sm:h-[420px] md:h-[501px]">
+              <video
+                src={videoSrc}
+                className="w-full h-full object-cover"
+                muted
+                playsInline
+                preload="metadata"
+              />
+            </div>
+          ) : ((post.images && post.images.length > 0) || post.imageSrc) ? (
+            <div className="relative -mx-4 mb-4 h-[360px] w-[calc(100%+2rem)] overflow-hidden bg-slate-50 sm:h-[420px] md:h-[501px]">
+              {post.images && post.images.length > 1 ? (
+                <PostCarousel images={post.images} />
+              ) : (
+                <Image src={post.imageSrc || post.images?.[0] || ''} alt="Post content" fill className="object-cover" />
+              )}
+            </div>
+          ) : null
         )}
 
         {Number(post.likes || 0) > 0 && (
@@ -443,6 +524,7 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
           <div className="w-full mt-4 border-t border-[#EEF2FF] pt-4">
             <CommentSection
               postId={post.id}
+              isPostOwner={isOwner}
               incrementCommentCount={() => setCommentsCount(prev => prev + 1)}
               decrementCommentCount={() => setCommentsCount(prev => prev - 1)}
             />

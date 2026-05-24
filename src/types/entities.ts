@@ -131,6 +131,7 @@ export interface Post {
   sampleLikerUsername?: string | null;
   authorHeadline?: string | null;
   unavailableReason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
+  articleBody?: string;
 
   // Job sharing fields
   isJob?: boolean;

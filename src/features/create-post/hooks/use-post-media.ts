@@ -2,8 +2,13 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { Area } from 'react-easy-crop';
 import { MediaItem } from '../types';
 import getCroppedImg, { getPaddedImg } from '@/lib/canvasUtils';
+import { toast } from 'sonner';
 
-export const usePostMedia = (initialImages: MediaItem[] = [], initialVideos: MediaItem[] = []) => {
+export const usePostMedia = (
+  initialImages: MediaItem[] = [],
+  initialVideos: MediaItem[] = [],
+  onTypeChange?: (type: 'photo' | 'video') => void
+) => {
   const [uploadedImages, setUploadedImages] = useState<MediaItem[]>(initialImages);
   const [uploadedVideos, setUploadedVideos] = useState<MediaItem[]>(initialVideos);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -47,25 +52,118 @@ export const usePostMedia = (initialImages: MediaItem[] = [], initialVideos: Med
     let file: File | undefined = e instanceof File ? e : e.target.files?.[0];
     
     if (file) {
-      const newImage = createMediaItem(file);
-      setUploadedImages([newImage]);
-      setActiveImageIndex(0);
+      const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error("File size cannot exceed 100MB");
+        if (!(e instanceof File) && e.target) e.target.value = '';
+        return;
+      }
+
+      if (file.type.startsWith('video/')) {
+        if (uploadedImagesRef.current.length > 0) {
+          toast.error("Cannot upload video and images together");
+          if (!(e instanceof File) && e.target) e.target.value = '';
+          return;
+        }
+        if (uploadedVideosRef.current.length >= 1) {
+          toast.error("Only one video file is allowed");
+          if (!(e instanceof File) && e.target) e.target.value = '';
+          return;
+        }
+        const newVideo = createMediaItem(file);
+        setUploadedVideos([newVideo]);
+        setUploadedImages([]);
+        setActiveImageIndex(0);
+        onTypeChange?.('video');
+      } else {
+        if (uploadedVideosRef.current.length > 0) {
+          toast.error("Cannot upload video and images together");
+          if (!(e instanceof File) && e.target) e.target.value = '';
+          return;
+        }
+        if (uploadedImagesRef.current.length >= 10) {
+          toast.error("Maximum 10 images allowed");
+          if (!(e instanceof File) && e.target) e.target.value = '';
+          return;
+        }
+        const newImage = createMediaItem(file);
+        setUploadedImages([newImage]);
+        setUploadedVideos([]);
+        setActiveImageIndex(0);
+        onTypeChange?.('photo');
+      }
     }
     if (!(e instanceof File) && e.target) e.target.value = '';
-  }, [createMediaItem]);
+  }, [createMediaItem, onTypeChange]);
 
   const handleDesktopPhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
     if (isEdit) return;
     if (e.target.files && e.target.files.length > 0) {
-      const newImages = Array.from(e.target.files).map(file => createMediaItem(file));
-      setUploadedImages(prev => {
-        const updated = [...prev, ...newImages];
-        if (prev.length === 0) setActiveImageIndex(0);
-        return updated;
-      });
+      const files = Array.from(e.target.files);
+      const videoFiles = files.filter(f => f.type.startsWith('video/'));
+      const imageFiles = files.filter(f => f.type.startsWith('image/'));
+
+      // 1. Size Check
+      const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+      const hasOversized = files.some(file => file.size > MAX_FILE_SIZE);
+      if (hasOversized) {
+        toast.error("File size cannot exceed 100MB");
+        e.target.value = '';
+        return;
+      }
+
+      // 2. Mixed Check in selection
+      if (videoFiles.length > 0 && imageFiles.length > 0) {
+        toast.error("Cannot upload video and images together");
+        e.target.value = '';
+        return;
+      }
+
+      // 3. Mixed Check against existing state
+      if (videoFiles.length > 0 && uploadedImagesRef.current.length > 0) {
+        toast.error("Cannot upload video and images together");
+        e.target.value = '';
+        return;
+      }
+      if (imageFiles.length > 0 && uploadedVideosRef.current.length > 0) {
+        toast.error("Cannot upload video and images together");
+        e.target.value = '';
+        return;
+      }
+
+      // 4. Video count limit
+      if (uploadedVideosRef.current.length + videoFiles.length > 1) {
+        toast.error("Only one video file is allowed");
+        e.target.value = '';
+        return;
+      }
+
+      // 5. Image count limit
+      if (uploadedImagesRef.current.length + imageFiles.length > 10) {
+        toast.error("Maximum 10 images allowed");
+        e.target.value = '';
+        return;
+      }
+
+      if (videoFiles.length > 0) {
+        const newVideos = videoFiles.map(file => createMediaItem(file));
+        setUploadedVideos(newVideos);
+        setUploadedImages([]);
+        setActiveImageIndex(0);
+        onTypeChange?.('video');
+      } else if (imageFiles.length > 0) {
+        const newImages = imageFiles.map(file => createMediaItem(file));
+        setUploadedImages(prev => {
+          const updated = [...prev, ...newImages];
+          if (prev.length === 0) setActiveImageIndex(0);
+          return updated;
+        });
+        setUploadedVideos([]);
+        onTypeChange?.('photo');
+      }
     }
     e.target.value = '';
-  }, [createMediaItem]);
+  }, [createMediaItem, onTypeChange]);
 
   const removeMediaItem = useCallback((mediaId: string, setMedia: React.Dispatch<React.SetStateAction<MediaItem[]>>, isEdit: boolean) => {
     if (isEdit) return;
@@ -85,50 +183,153 @@ export const usePostMedia = (initialImages: MediaItem[] = [], initialVideos: Med
   const handleVideoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
     if (isEdit) return;
     if (e.target.files && e.target.files.length > 0) {
-      const newVideos = Array.from(e.target.files).map(file => createMediaItem(file));
-      setUploadedVideos(prev => [...prev, ...newVideos]);
+      const files = Array.from(e.target.files);
+      const videoFiles = files.filter(f => f.type.startsWith('video/'));
+      const imageFiles = files.filter(f => f.type.startsWith('image/'));
+
+      // 1. Size Check
+      const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+      const hasOversized = files.some(file => file.size > MAX_FILE_SIZE);
+      if (hasOversized) {
+        toast.error("File size cannot exceed 100MB");
+        e.target.value = '';
+        return;
+      }
+
+      // 2. Mixed Check in selection
+      if (videoFiles.length > 0 && imageFiles.length > 0) {
+        toast.error("Cannot upload video and images together");
+        e.target.value = '';
+        return;
+      }
+
+      // 3. Mixed Check against existing state
+      if (videoFiles.length > 0 && uploadedImagesRef.current.length > 0) {
+        toast.error("Cannot upload video and images together");
+        e.target.value = '';
+        return;
+      }
+      if (imageFiles.length > 0 && uploadedVideosRef.current.length > 0) {
+        toast.error("Cannot upload video and images together");
+        e.target.value = '';
+        return;
+      }
+
+      // 4. Video count limit
+      if (uploadedVideosRef.current.length + videoFiles.length > 1) {
+        toast.error("Only one video file is allowed");
+        e.target.value = '';
+        return;
+      }
+
+      // 5. Image count limit
+      if (uploadedImagesRef.current.length + imageFiles.length > 10) {
+        toast.error("Maximum 10 images allowed");
+        e.target.value = '';
+        return;
+      }
+
+      if (videoFiles.length > 0) {
+        const newVideos = videoFiles.map(file => createMediaItem(file));
+        setUploadedVideos(prev => [...prev, ...newVideos]);
+        setUploadedImages([]);
+        setActiveImageIndex(0);
+        onTypeChange?.('video');
+      } else if (imageFiles.length > 0) {
+        const newImages = imageFiles.map(file => createMediaItem(file));
+        setUploadedImages(prev => {
+          const updated = [...prev, ...newImages];
+          if (prev.length === 0) setActiveImageIndex(0);
+          return updated;
+        });
+        setUploadedVideos([]);
+        onTypeChange?.('photo');
+      }
     }
     e.target.value = '';
-  }, [createMediaItem]);
+  }, [createMediaItem, onTypeChange]);
 
   const handleCropChange = useCallback((crop: { x: number; y: number }) => {
-    setUploadedImages(prev => {
-      const updated = [...prev];
-      if (updated[activeImageIndex]) {
-        updated[activeImageIndex].crop = crop;
+    setUploadedImages(prev => prev.map((img, idx) => {
+      if (idx === activeImageIndex) {
+        return { ...img, crop };
       }
-      return updated;
-    });
+      return img;
+    }));
   }, [activeImageIndex]);
 
   const handleZoomChange = useCallback((zoom: number) => {
-    setUploadedImages(prev => {
-      const updated = [...prev];
-      if (updated[activeImageIndex]) {
-        updated[activeImageIndex].zoom = zoom;
+    setUploadedImages(prev => prev.map((img, idx) => {
+      if (idx === activeImageIndex) {
+        return { ...img, zoom };
       }
-      return updated;
-    });
+      return img;
+    }));
   }, [activeImageIndex]);
 
   const handleFitModeChange = useCallback((mode: 'cover' | 'contain') => {
-    setUploadedImages(prev => {
-      const updated = [...prev];
-      if (updated[activeImageIndex]) {
-        updated[activeImageIndex].fitMode = mode;
+    setUploadedImages(prev => prev.map((img, idx) => {
+      if (idx === activeImageIndex) {
+        return { ...img, fitMode: mode };
       }
-      return updated;
-    });
+      return img;
+    }));
   }, [activeImageIndex]);
 
   const handleCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
-    setUploadedImages(prev => {
-      const updated = [...prev];
-      if (updated[activeImageIndex]) {
-        updated[activeImageIndex].pixelCrop = croppedAreaPixels;
+    setUploadedImages(prev => prev.map((img, idx) => {
+      if (idx === activeImageIndex) {
+        return { ...img, pixelCrop: croppedAreaPixels };
       }
-      return updated;
-    });
+      return img;
+    }));
+  }, [activeImageIndex]);
+
+  const handleFlipHChange = useCallback(() => {
+    setUploadedImages(prev => prev.map((img, idx) => {
+      if (idx === activeImageIndex) {
+        return { ...img, flipH: !img.flipH, flipV: false };
+      }
+      return img;
+    }));
+    setUploadedVideos(prev => prev.map((vid, idx) => {
+      if (idx === 0) {
+        return { ...vid, flipH: !vid.flipH, flipV: false };
+      }
+      return vid;
+    }));
+  }, [activeImageIndex]);
+
+  const handleFlipVChange = useCallback(() => {
+    setUploadedImages(prev => prev.map((img, idx) => {
+      if (idx === activeImageIndex) {
+        return { ...img, flipV: !img.flipV, flipH: false };
+      }
+      return img;
+    }));
+    setUploadedVideos(prev => prev.map((vid, idx) => {
+      if (idx === 0) {
+        return { ...vid, flipV: !vid.flipV, flipH: false };
+      }
+      return vid;
+    }));
+  }, [activeImageIndex]);
+
+  const handleRotateChange = useCallback(() => {
+    setUploadedImages(prev => prev.map((img, idx) => {
+      if (idx === activeImageIndex) {
+        const currentRotation = img.rotation || 0;
+        return { ...img, rotation: (currentRotation + 90) % 360 };
+      }
+      return img;
+    }));
+    setUploadedVideos(prev => prev.map((vid, idx) => {
+      if (idx === 0) {
+        const currentRotation = vid.rotation || 0;
+        return { ...vid, rotation: (currentRotation + 90) % 360 };
+      }
+      return vid;
+    }));
   }, [activeImageIndex]);
 
   const handleAspectChange = useCallback((newAspect: number) => {
@@ -141,20 +342,44 @@ export const usePostMedia = (initialImages: MediaItem[] = [], initialVideos: Med
 
     if (postType === 'photo') {
       for (const img of uploadedImages) {
-        if (img.pixelCrop && !img.isExisting) {
-          try {
-            const blob = await getCroppedImg(img.url, img.pixelCrop);
+        if (img.isExisting) {
+          newUrls.push(img.url);
+          continue;
+        }
+
+        try {
+          if (img.fitMode === 'contain') {
+            const blob = await getPaddedImg(
+              img.url,
+              aspectRatio,
+              '#000000',
+              img.rotation || 0,
+              { horizontal: !!img.flipH, vertical: !!img.flipV }
+            );
             if (blob) {
               const blobUrl = URL.createObjectURL(blob);
               newUrls.push(blobUrl);
             } else {
               newUrls.push(img.url);
             }
-          } catch (e) {
-            console.error("Failed to crop image", e);
+          } else if (img.pixelCrop) {
+            const blob = await getCroppedImg(
+              img.url,
+              img.pixelCrop,
+              img.rotation || 0,
+              { horizontal: !!img.flipH, vertical: !!img.flipV }
+            );
+            if (blob) {
+              const blobUrl = URL.createObjectURL(blob);
+              newUrls.push(blobUrl);
+            } else {
+              newUrls.push(img.url);
+            }
+          } else {
             newUrls.push(img.url);
           }
-        } else {
+        } catch (e) {
+          console.error("Failed to process image preview", e);
           newUrls.push(img.url);
         }
       }
@@ -176,20 +401,31 @@ export const usePostMedia = (initialImages: MediaItem[] = [], initialVideos: Med
   const prepareFilesToUpload = async (postType: string, currentAspectRatio: number) => {
     let filesToUpload: File[] = [];
 
-    if (postType === 'photo') {
+    if (postType === 'photo' || postType === 'article') {
       const processedFiles = await Promise.all(uploadedImages.map(async (item) => {
         if (item.isExisting) return undefined;
         if (item.file) {
           if (item.fitMode === 'contain') {
             try {
-              const blob = await getPaddedImg(item.url, currentAspectRatio);
+              const blob = await getPaddedImg(
+                item.url,
+                currentAspectRatio,
+                '#000000',
+                item.rotation || 0,
+                { horizontal: !!item.flipH, vertical: !!item.flipV }
+              );
               if (blob) return new File([blob], item.file.name, { type: 'image/jpeg' });
             } catch (e) { console.error("Pad failed", e); }
             return item.file;
           }
           if (item.pixelCrop) {
             try {
-              const blob = await getCroppedImg(item.url, item.pixelCrop);
+              const blob = await getCroppedImg(
+                item.url,
+                item.pixelCrop,
+                item.rotation || 0,
+                { horizontal: !!item.flipH, vertical: !!item.flipV }
+              );
               if (blob) return new File([blob], item.file.name, { type: 'image/jpeg' });
             } catch (e) { console.error("Crop failed", e); }
           }
@@ -219,6 +455,9 @@ export const usePostMedia = (initialImages: MediaItem[] = [], initialVideos: Med
     handleFitModeChange,
     handleCropComplete,
     handleAspectChange,
+    handleFlipHChange,
+    handleFlipVChange,
+    handleRotateChange,
     generatePreviewBlobs,
     revokeAllMediaUrls,
     clearMedia,

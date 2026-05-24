@@ -33,6 +33,7 @@ export interface ProfilePostPoll {
 
 export interface ProfilePost {
   post_id: string;
+  title?: string | null;
   content: string;
   created_at: string;
   visibility: 'public' | 'private';
@@ -55,6 +56,7 @@ export interface ProfilePost {
     is_accessible: boolean;
     reason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
     post_id?: string;
+    title?: string | null;
     content?: string;
     created_at?: string;
     author?: {

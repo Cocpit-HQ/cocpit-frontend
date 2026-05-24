@@ -16,6 +16,7 @@ interface CommentSectionViewProps {
   isPostOwner?: boolean;
   postId: string | number;
   onEditComment?: (commentId: string | number, newText: string) => void;
+  onHideComment?: (commentId: string | number) => void;
 }
 
 export default function CommentSectionView({
@@ -26,7 +27,8 @@ export default function CommentSectionView({
   isLoading,
   isPostOwner,
   postId,
-  onEditComment
+  onEditComment,
+  onHideComment
 }: CommentSectionViewProps) {
   const { activeProfile } = useActiveProfile();
   // Local UI State only
@@ -72,6 +74,7 @@ export default function CommentSectionView({
             currentUserId={currentUserId}
             onReply={handleReply}
             onReport={setReportTargetId}
+            onHide={onHideComment}
             isPostOwner={isPostOwner}
             postId={postId}
           />

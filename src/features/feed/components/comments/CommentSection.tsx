@@ -28,6 +28,7 @@ export default function CommentSection({
     handleAddComment, 
     handleDeleteComment, 
     handleUpdateComment,
+    handleHideComment,
     currentUserId 
   } = useComments(postId.toString());
 
@@ -52,6 +53,7 @@ export default function CommentSection({
       onAddComment={handleAdd}
       onDeleteComment={handleDelete}
       onEditComment={handleUpdateComment}
+      onHideComment={handleHideComment}
       currentUserId={currentUserId}
       isPostOwner={isPostOwner}
     />

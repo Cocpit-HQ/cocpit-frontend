@@ -13,6 +13,22 @@ export function EditableEducationItem({
     education,
     onEdit,
 }: EditableEducationItemProps) {
+    const [isDescExpanded, setIsDescExpanded] = React.useState(false);
+
+    const isLongDescription = education.description && education.description.length > 160;
+
+    const displayDescription = React.useMemo(() => {
+        if (!education.description) return "";
+        if (isDescExpanded || !isLongDescription) return education.description;
+        
+        const truncated = education.description.slice(0, 160);
+        const lastSpace = truncated.lastIndexOf(" ");
+        if (lastSpace > 50) {
+            return truncated.slice(0, lastSpace);
+        }
+        return truncated;
+    }, [education.description, isDescExpanded, isLongDescription]);
+
     const formatDate = (dateStr: string) => {
         if (!dateStr) return "";
         const date = new Date(dateStr);
@@ -47,8 +63,30 @@ export function EditableEducationItem({
                         </div>
 
                         {education.description && (
-                            <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground line-clamp-2 mb-[10px]">
-                                {education.description}
+                            <p className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground mb-[10px] break-words">
+                                {displayDescription}
+                                {!isDescExpanded && isLongDescription && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsDescExpanded(true);
+                                        }}
+                                        className="text-muted-foreground hover:text-primary font-semibold transition-colors cursor-pointer ml-1 inline-flex items-center"
+                                    >
+                                        ... More
+                                    </button>
+                                )}
+                                {isDescExpanded && isLongDescription && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsDescExpanded(false);
+                                        }}
+                                        className="text-primary hover:underline ml-1 font-medium cursor-pointer inline-flex items-center"
+                                    >
+                                        See less
+                                    </button>
+                                )}
                             </p>
                         )}
 

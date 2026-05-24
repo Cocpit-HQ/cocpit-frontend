@@ -25,6 +25,9 @@ const CreateStoryForm = dynamic(
 import { useScrollRestoration } from '@/hooks/use-scroll-restoration';
 import { useFeed } from '@/hooks/use-feed';
 import { useFeedUIStore } from '@/store/feed.store'
+import { useUIStore } from '@/store/ui.store';
+
+import InlineArticleEditor from './InlineArticleEditor';
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false)
@@ -34,6 +37,7 @@ export default function HomePage() {
   useScrollRestoration(mounted && !isFeedLoading);
 
   const { activeTab, setActiveTab } = useFeedUIStore();
+  const { isArticleMode } = useUIStore();
 
   // UI State
   const [showCreateStory, setShowCreateStory] = useState(false)
@@ -64,24 +68,30 @@ export default function HomePage() {
       <div className="pt-4 md:pt-6 pb-4 md:pb-8">
         <div className="mx-auto w-full max-w-[1128px] px-0 md:px-4 xl:px-0">
           <div className="flex w-full flex-col gap-6 md:gap-8 lg:flex-row lg:items-start lg:justify-center">
-            {/* Feed Section */}
-            <FeedSection
-              groups={groups}
-              storyLoading={storyLoading}
-              setShowCreateStory={setShowCreateStory}
-              setMobileSelectedGroupId={setMobileSelectedGroupId}
-              setSelectedStory={setSelectedStory}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-            />
+            {isArticleMode ? (
+              <InlineArticleEditor />
+            ) : (
+              <>
+                {/* Feed Section */}
+                <FeedSection
+                  groups={groups}
+                  storyLoading={storyLoading}
+                  setShowCreateStory={setShowCreateStory}
+                  setMobileSelectedGroupId={setMobileSelectedGroupId}
+                  setSelectedStory={setSelectedStory}
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                />
 
-            {/* Sideboards */}
-            <aside className="w-full min-w-0 space-y-6 px-0 md:px-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:w-[406px] lg:shrink-0 lg:self-start lg:overflow-y-auto">
-              <div className="space-y-6">
-                <UpdatesPanel />
-                <TrendingHashtags />
-              </div>
-            </aside>
+                {/* Sideboards */}
+                <aside className="w-full min-w-0 space-y-6 px-0 md:px-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:w-[406px] lg:shrink-0 lg:self-start lg:overflow-y-auto">
+                  <div className="space-y-6">
+                    <UpdatesPanel />
+                    <TrendingHashtags />
+                  </div>
+                </aside>
+              </>
+            )}
           </div>
         </div>
       </div>

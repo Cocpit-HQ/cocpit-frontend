@@ -480,6 +480,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                     <CocpitProfileUpload
                         value={editData.avatar}
                         onChange={(val) => setEditData({ ...editData, avatar: val })}
+                        showCircle={true}
                         trigger={
                             <div className="relative group cursor-pointer">
                                 <div className="w-[100px] h-[100px] rounded-full overflow-hidden bg-muted border-4 border-white">

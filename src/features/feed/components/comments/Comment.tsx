@@ -29,6 +29,7 @@ interface CommentProps {
   postId?: string | number;
   onReport?: (commentId: string | number) => void;
   onEdit?: (commentId: string | number, currentText: string) => void;
+  onHide?: (commentId: string | number) => void;
 }
 
 const formatCommentText = (text: string, postId?: string | number, currentCommentId?: string | number) => {
@@ -59,7 +60,7 @@ const formatCommentText = (text: string, postId?: string | number, currentCommen
   });
 };
 
-export default function Comment({ comment, onReply, onDelete, onEdit, currentUserId, variant = 'root', isGrouped = false, isPostOwner, postId, onReport }: CommentProps) {
+export default function Comment({ comment, onReply, onDelete, onEdit, currentUserId, variant = 'root', isGrouped = false, isPostOwner, postId, onReport, onHide }: CommentProps) {
   const { author, text, timeAgo, like_count, is_liked, is_pinned, authorId, id, isPending } = comment;
   const { data: session } = useSession();
   const { isCompany, activeProfile } = useActiveProfile();
@@ -214,7 +215,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
 
                       <DropdownMenuItem
                         onClick={() => {
-                          toast.success("Comment hidden");
+                          if (onHide) onHide(id);
                         }}
                         className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-slate-50"
                       >
