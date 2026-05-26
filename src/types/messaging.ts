@@ -21,6 +21,8 @@ export interface BackendChat {
   invitation_id?: string;
   request_source?: string;
   is_read?: boolean;
+  is_muted?: boolean;
+  muted_until?: string | null;
 }
 
 export interface BackendMessage {
@@ -112,6 +114,8 @@ export interface ChatThread {
   invitation_id?: string;
   request_source?: string;
   is_read?: boolean;
+  is_muted?: boolean;
+  muted_until?: string | null;
 }
 
 export interface Message {

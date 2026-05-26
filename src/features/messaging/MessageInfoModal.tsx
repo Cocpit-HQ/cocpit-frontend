@@ -65,8 +65,8 @@ export default function MessageInfoModal({ isOpen, onClose, messageId, messageCo
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-background rounded-l-lg rounded-r-lg w-full max-w-md max-h-[80vh] flex flex-col shadow-xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm p-0 md:p-4 animate-in fade-in duration-200">
+            <div className="bg-background rounded-t-[24px] rounded-b-none md:rounded-[24px] w-full max-w-full md:max-w-md max-h-[80vh] flex flex-col shadow-xl animate-in slide-in-from-bottom duration-300 md:zoom-in-95 md:duration-200">
                 <div className="p-4 border-b border-border flex items-center justify-between">
                     <h2 className="text-lg font-semibold">Message Info</h2>
                     <button onClick={onClose} className="p-1 hover:bg-muted rounded-full">

@@ -30,7 +30,7 @@ export function DeleteMessageModal({
 }: DeleteMessageModalProps) {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
-            <AlertDialogContent className="max-w-xs sm:max-w-sm rounded-xl bg-[#0f1117] border-white/10 text-white">
+            <AlertDialogContent className="fixed bottom-0 top-auto left-0 right-0 translate-x-0 translate-y-0 w-full max-w-full rounded-t-[24px] rounded-b-none bg-[#0f1117] border-white/10 text-white p-6 md:left-[50%] md:top-[50%] md:right-auto md:bottom-auto md:translate-x-[-50%] md:translate-y-[-50%] md:max-w-sm md:rounded-xl animate-in slide-in-from-bottom duration-300 md:zoom-in-95 md:duration-200">
                 <AlertDialogHeader>
                     <AlertDialogTitle className="text-white">Delete Message?</AlertDialogTitle>
                     <AlertDialogDescription className="text-gray-400">

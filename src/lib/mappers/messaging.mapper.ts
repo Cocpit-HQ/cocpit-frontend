@@ -74,6 +74,8 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     invitation_id: backendChat.invitation_id,
     request_source: backendChat.request_source,
     is_read: backendChat.is_read || false,
+    is_muted: backendChat.is_muted || false,
+    muted_until: backendChat.muted_until || null,
   };
 };
 
