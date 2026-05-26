@@ -14,6 +14,7 @@ interface EntityPreviewCardProps {
 
 // ─── Icon Map ───────────────────────────────────────────────
 
+
 const ENTITY_ICONS: Record<EntityType, React.ReactNode> = {
     post: <FileText className="w-3 h-3" />,
     profile: <User className="w-3 h-3" />,
