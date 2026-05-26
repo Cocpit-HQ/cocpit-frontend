@@ -144,29 +144,21 @@ export default function AddMemberModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         className="
-    shadow-none border-none outline-none
-    p-0 !gap-0 [&>button]:hidden
-    
-    {/* Mobile - full screen, slides from right */}
-    w-full max-w-none h-[100dvh] rounded-none
-    data-[state=open]:animate-in data-[state=open]:slide-in-from-right
-    data-[state=open]:duration-300
-
-    {/* Desktop - modal with radius */}
-    sm:w-[400px] sm:h-[620px] sm:rounded-[24px]
-    sm:max-w-[400px]
-    data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90
-    data-[state=open]:sm:zoom-in-95
-    data-[state=open]:sm:slide-in-from-bottom-0
-  "
+          shadow-none border-none outline-none
+          p-0 !gap-0 [&>button]:hidden
+          fixed bottom-0 top-auto left-0 right-0 translate-x-0 translate-y-0 w-full max-w-full h-[85dvh] rounded-t-[24px] rounded-b-none
+          data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=open]:duration-300
+          sm:left-[50%] sm:top-[50%] sm:right-auto sm:bottom-auto sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[400px] sm:h-[620px] sm:rounded-[24px] sm:max-w-[400px]
+          data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:sm:slide-in-from-bottom-0
+        "
       >
         <div
           className="
-      w-full h-full flex flex-col items-center
-      pt-[10px] px-[16px] pb-[16px]
-      rounded-none sm:rounded-[24px]
-      overflow-hidden bg-white
-    "
+            w-full h-full flex flex-col items-center
+            pt-[10px] px-[16px] pb-[16px]
+            rounded-t-[24px] rounded-b-none sm:rounded-[24px]
+            overflow-hidden bg-white
+          "
         >
           {/* CLOSE ICON ROW */}
           <div className=" flex flex-col items-end flex-none order-0 self-stretch grow-0">
@@ -194,7 +186,7 @@ export default function AddMemberModal({
             </DialogDescription>
 
             {/* SEARCH BOX */}
-            <div className="w-[368px] h-[40px] px-[16px] py-[8px] flex flex-row justify-between items-center gap-[10px] border border-[#6B7280] rounded-[24px] flex-none  self-stretch grow-0 mt-[16px] box-border">
+            <div className="w-full max-w-[368px] h-[40px] px-[16px] py-[8px] flex flex-row justify-between items-center gap-[10px] border border-[#6B7280] rounded-[24px] flex-none grow-0 mt-[16px] box-border">
               <input
                 placeholder="Search"
                 value={searchTerm}
@@ -215,7 +207,7 @@ export default function AddMemberModal({
             <div
               ref={listRef}
               onScroll={handleScroll}
-              className="w-[368px] h-[350px] flex flex-col items-start p-0 gap-[8px] flex-none self-stretch mt-[16px] overflow-y-auto scrollbar-hide"
+              className="w-full max-w-[368px] h-[350px] flex flex-col items-start p-0 gap-[8px] flex-none mt-[16px] overflow-y-auto scrollbar-hide"
             >
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center w-full h-full gap-2">
@@ -246,7 +238,7 @@ export default function AddMemberModal({
                       onClick={() =>
                         toggleUserSelection(user.user_id || user.id)
                       }
-                      className="w-[368px] h-[48px] flex flex-row justify-between items-center p-0 gap-[16px] flex-none order-0 self-stretch grow-0 mb-[8px] cursor-pointer hover:bg-[#F9FAFB] rounded-lg transition-colors group"
+                      className="w-full h-[48px] flex flex-row justify-between items-center p-0 gap-[16px] flex-none order-0 self-stretch grow-0 mb-[8px] cursor-pointer hover:bg-[#F9FAFB] rounded-lg transition-colors group"
                     >
                       <div className="flex flex-row items-center gap-[8px]">
                         <div className="w-[32px] h-[32px] rounded-full overflow-hidden flex-none order-0 grow-0">
@@ -295,7 +287,7 @@ export default function AddMemberModal({
             </div>
 
             {/* ACTION BUTTONS ROW */}
-            <div className="w-[300px] h-[40px] flex flex-row items-start p-0 gap-[16px] flex-none order-3 grow-0 mt-[16px] mb-[8px] mx-[34px]">
+            <div className="w-full max-w-[300px] h-[40px] flex flex-row items-start p-0 gap-[16px] flex-none order-3 grow-0 mt-[16px] mb-[8px] mx-auto">
               {/* CANCEL BUTTON */}
               <button
                 onClick={handleCancel}

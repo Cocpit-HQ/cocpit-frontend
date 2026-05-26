@@ -13,7 +13,7 @@ export default function RepliedMessageBox({ senderName, content, isDeleted, isSe
   return (
     <div 
       className={cn(
-        "box-border flex flex-col items-start p-[16px] gap-[8px] w-[365px] h-[72px] rounded-[6px] border-l-[2px] cursor-pointer transition-colors flex-none order-0 flex-grow-0",
+        "box-border flex flex-col items-start p-[12px] gap-[4px] w-full rounded-[6px] border-l-[2px] cursor-pointer transition-colors flex-none order-0 flex-grow-0",
         isSent ? "bg-[#818CF8] border-l-[#EEF2FF]" : "bg-[#E0E7FF] border-l-[#C7D2FE]"
       )}
       onClick={(e) => {
@@ -28,7 +28,7 @@ export default function RepliedMessageBox({ senderName, content, isDeleted, isSe
         {senderName}
       </span>
       <span className={cn(
-        "w-[333px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center flex-none order-1 flex-grow-0 truncate",
+        "w-full h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center flex-none order-1 flex-grow-0 truncate",
         isSent ? "text-[#FFFFFF]" : "text-[#6B7280]"
       )}>
         {isDeleted ? <i className="opacity-80">Original message was deleted</i> : content}

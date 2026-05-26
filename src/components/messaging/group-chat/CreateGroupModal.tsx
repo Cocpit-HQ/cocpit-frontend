@@ -63,8 +63,19 @@ export default function CreateGroupModal({ isOpen, onClose }: CreateGroupModalPr
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
-                <DialogHeader>
+            <DialogContent
+                className="
+                    shadow-none border-none outline-none
+                    p-0 !gap-0 [&>button]:hidden
+                    fixed bottom-0 top-auto left-0 right-0 translate-x-0 translate-y-0 w-full max-w-full h-[85dvh] rounded-t-[24px] rounded-b-none
+                    data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=open]:duration-300
+                    sm:left-[50%] sm:top-[50%] sm:right-auto sm:bottom-auto sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-[400px] sm:h-[620px] sm:rounded-[24px] sm:max-w-[400px]
+                    data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:sm:slide-in-from-bottom-0
+                    overflow-hidden bg-white
+                "
+            >
+                <div className="w-full h-full flex flex-col pt-[10px] px-[16px] pb-[16px] rounded-t-[24px] rounded-b-none sm:rounded-[24px] overflow-hidden bg-white">
+                    <DialogHeader>
                     <DialogTitle>Create New Group</DialogTitle>
                 </DialogHeader>
 
@@ -151,6 +162,7 @@ export default function CreateGroupModal({ isOpen, onClose }: CreateGroupModalPr
                         {isLoading ? "Creating..." : `Create Group (${selectedMembers.size})`}
                     </Button>
                 </DialogFooter>
+                </div>
             </DialogContent>
         </Dialog>
     );
