@@ -704,33 +704,6 @@ export default function MessagingPage() {
       }
     };
 
-    const handlePreferenceUpdated = (payload: {
-      conversationId: string;
-      preference: { is_muted: boolean; muted_until: string | null };
-    }) => {
-      const queryKey = [
-        "conversations",
-        activeProfile?.type ?? "USER",
-        activeProfile?.id ?? "me",
-      ];
-      queryClient.setQueryData(
-        queryKey,
-        (oldData: ChatThread[] | undefined) => {
-          if (!oldData) return oldData;
-          return oldData.map((c) => {
-            if (String(c.id) === String(payload.conversationId)) {
-              return {
-                ...c,
-                is_muted: payload.preference.is_muted,
-                muted_until: payload.preference.muted_until,
-              };
-            }
-            return c;
-          });
-        }
-      );
-    };
-
     socket.on("new_message", handleNewMessage);
     socket.on("notification", handleNotification);
     socket.on("group_updated", handleGroupUpdate);
@@ -744,7 +717,6 @@ export default function MessagingPage() {
     socket.on("block_confirmed", handleBlock);
     socket.on("user_unblocked", handleUnblock);
     socket.on("unblock_confirmed", handleUnblock);
-    socket.on("conversation_preference_updated", handlePreferenceUpdated);
 
     // Session events: re-fetch session status for the affected conversation
     const handleSessionEvent = (payload: { conversationId: string }) => {
@@ -810,7 +782,6 @@ export default function MessagingPage() {
       socket.off("block_confirmed", handleBlock);
       socket.off("user_unblocked", handleUnblock);
       socket.off("unblock_confirmed", handleUnblock);
-      socket.off("conversation_preference_updated", handlePreferenceUpdated);
     };
   }, [
     socket,
@@ -878,7 +849,6 @@ export default function MessagingPage() {
                     groupId={activeChat.id}
                     currentUser={user || UNKNOWN_USER}
                     unreadCount={activeChat.unread}
-                    isMuted={activeChat.is_muted}
                     onBack={() => {
                       setSelectedChat(null);
                       processedUserIdRef.current = null;

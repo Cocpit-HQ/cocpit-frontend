@@ -32,10 +32,9 @@ interface GroupChatProps {
     messages?: Message[]; // Pass messages optionally if managed by parent
     onBack?: () => void;
     unreadCount?: number;
-    isMuted?: boolean;
 }
 
-export default function GroupChat({ groupId, currentUser, messages = [], onBack, unreadCount = 0, isMuted = false }: GroupChatProps) {
+export default function GroupChat({ groupId, currentUser, messages = [], onBack, unreadCount = 0 }: GroupChatProps) {
     const { activeGroup, isLoading, error, inviteMember, isInactive, leaveGroup } = useGroupChat();
     const { activeProfile } = useActiveProfile();
     const { toast } = useToast();
@@ -547,7 +546,6 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                     selectedMessage={selectedMessage}
                     onMessageAction={(action) => handleMessageAction(action)}
                     currentUserId={currentUser.id || currentUser.user_id || ""}
-                    isMuted={isMuted}
                 />
                 <ChatSkeleton />
             </div>
@@ -579,7 +577,6 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                     selectedMessage={selectedMessage}
                     onMessageAction={(action) => handleMessageAction(action)}
                     currentUserId={currentUser.id || currentUser.user_id || ""}
-                    isMuted={isMuted}
                 />
             )}
 
@@ -653,10 +650,8 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
 
                 {/* Info/Edit Panel - Slides in from the right */}
                 <div className={cn(
-                    "fixed inset-0 z-50 bg-white md:absolute md:inset-0 md:z-10 transition-all duration-300",
-                    activeView === 'chat' 
-                        ? "translate-x-full opacity-0 invisible" 
-                        : "translate-x-0 opacity-100 visible"
+                    "absolute inset-0 z-10 bg-white transition-all duration-300",
+                    activeView === 'chat' ? "translate-x-full opacity-0 invisible" : "translate-x-0 opacity-100 visible"
                 )}>
                     <GroupDetails
                         isOpen={activeView !== 'chat'}

@@ -4,7 +4,6 @@ import React from "react"
 import Link from "next/link"
 import { ChatThread } from "@/types/messaging"
 import { avatarGradients } from "@/constants/messaging"
-import { BellOff } from "lucide-react"
 
 import Avatar from "@/components/shared/Avatar"
 import { useSocket } from "@/context/SocketContext"
@@ -87,11 +86,6 @@ export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead
           <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] absolute top-[2px] right-0">
             {chat.time}
           </span>
-          {chat.is_muted && (
-            <span className="absolute top-[22px] right-0 flex items-center justify-center">
-              <BellOff className="w-[12px] h-[12px] text-[#6B7280]" />
-            </span>
-          )}
         </div>
 
         {/* GROUP 2: Last Message */}
@@ -130,8 +124,7 @@ function arePropsEqual(prevProps: ChatListItemProps, nextProps: ChatListItemProp
     prevProps.chat.sessionStatus === nextProps.chat.sessionStatus &&
     prevProps.chat.sessionHandlerName === nextProps.chat.sessionHandlerName &&
     prevProps.chat.is_requesting === nextProps.chat.is_requesting &&
-    prevProps.chat.request_source === nextProps.chat.request_source &&
-    prevProps.chat.is_muted === nextProps.chat.is_muted
+    prevProps.chat.request_source === nextProps.chat.request_source
   );
 }
 

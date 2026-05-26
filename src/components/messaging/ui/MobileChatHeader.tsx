@@ -5,7 +5,6 @@ import { ArrowLeft, MoreVertical, Phone, Video, X, Copy, Pencil, Info as InfoIco
 import { ChatThread, Message } from "@/types/messaging"
 import Avatar from "@/components/shared/Avatar"
 import { Button } from "@/components/ui/button"
-import { Icon } from "@iconify/react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,23 +18,9 @@ interface MobileChatHeaderProps {
   selectedMessage?: Message | null;
   onMessageAction?: (action: string) => void;
   currentUserId?: string;
-  onMuteClick?: () => void;
-  onUnmuteClick?: () => void;
-  onDeleteClick?: () => void;
-  onLeaveClick?: () => void;
 }
 
-export default function MobileChatHeader({
-  chat,
-  onBack,
-  selectedMessage,
-  onMessageAction,
-  currentUserId,
-  onMuteClick,
-  onUnmuteClick,
-  onDeleteClick,
-  onLeaveClick
-}: MobileChatHeaderProps) {
+export default function MobileChatHeader({ chat, onBack, selectedMessage, onMessageAction, currentUserId }: MobileChatHeaderProps) {
   const router = useRouter()
   const isMyMessage = selectedMessage && (selectedMessage.sender === 'me' || selectedMessage.senderId === currentUserId || selectedMessage.senderId === 'me');
 
@@ -139,57 +124,12 @@ export default function MobileChatHeader({
           </>
         ) : (
           <>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="p-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground outline-none transition-colors">
-                  <MoreVertical className="w-5 h-5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-[204px] p-[8px] mr-4 bg-white border border-[#C7D2FE]"
-                style={{ borderRadius: '24px 0px 24px 24px' }}
-              >
-                {chat.isGroup ? (
-                  <>
-                    {chat.is_muted ? (
-                      <DropdownMenuItem
-                        onClick={onUnmuteClick}
-                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors border-none outline-none"
-                      >
-                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Unmute group</span>
-                        <Icon icon="fluent:speaker-2-16-regular" width={24} height={24} color="#000000" />
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem
-                        onClick={onMuteClick}
-                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors border-none outline-none"
-                      >
-                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Mute group</span>
-                        <Icon icon="fluent:speaker-mute-16-regular" width={24} height={24} color="#000000" />
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem
-                      onClick={onLeaveClick}
-                      className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#FFF0F0] rounded-md transition-colors border-none outline-none"
-                    >
-                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#FF6B6B]">Leave group</span>
-                      <Icon icon="fluent:door-arrow-left-16-regular" width={24} height={24} color="#FF6B6B" />
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuItem
-                      onClick={onDeleteClick}
-                      className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#FFF0F0] rounded-md transition-colors border-none outline-none"
-                    >
-                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#FF6B6B]">Delete chat</span>
-                      <Icon icon="fluent:delete-16-regular" width={24} height={24} color="#FF6B6B" />
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <button className="p-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground">
+              <Phone className="w-5 h-5" />
+            </button>
+            <button className="p-2 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground">
+              <MoreVertical className="w-5 h-5" />
+            </button>
           </>
         )}
       </div>

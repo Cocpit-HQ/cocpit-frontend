@@ -474,7 +474,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                 </button>
             </div>
 
-            <div className="p-4 md:p-0">
+            <div className="">
                 {/* Avatar Section */}
                 <div className="flex flex-col items-center">
                     <CocpitProfileUpload

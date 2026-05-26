@@ -15,7 +15,7 @@ import { SocketMessage, TypingPayload } from "@/types/socket"
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery, InfiniteData } from "@tanstack/react-query"
 import { useToast } from "@/hooks/use-toast"
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox"
-import { getMessages, sendMessage, markAsRead, editMessage, deleteMessage, acceptChatRequest, declineChatRequest, addOrUpdateReaction, clearReaction, deletePersonalChat, muteGroup, unmuteGroup } from "@/services/api/messaging"
+import { getMessages, sendMessage, markAsRead, editMessage, deleteMessage, acceptChatRequest, declineChatRequest, addOrUpdateReaction, clearReaction, deletePersonalChat, muteGroup } from "@/services/api/messaging"
 import { sendMessage as sendGroupMessage, getGroupDetails, leaveGroup, respondInvitation } from "@/services/api/group-chat"
 import { GroupMember } from "@/types/group-chat"
 import { mapBackendMessageToMessage } from "@/lib/mappers/messaging.mapper"
@@ -136,7 +136,6 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMuteConfirm, setShowMuteConfirm] = useState(false);
-  const [showUnmuteConfirm, setShowUnmuteConfirm] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   const [typingMap, setTypingMap] = useState<Map<string, string>>(new Map());
@@ -190,7 +189,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
             console.error("Failed to fetch shared post details:", err);
           });
       });
-
+      
       // Clean up the URL query parameter without a full reload
       const newParams = new URLSearchParams(window.location.search);
       newParams.delete("sharedPostId");
@@ -548,24 +547,6 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
       });
     };
 
-    const handlePreferenceUpdated = (payload: {
-      conversationId: string;
-      preference: { is_muted: boolean; muted_until: string | null };
-    }) => {
-      if (String(payload.conversationId) === String(chat.id)) {
-        const queryKey = ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'];
-        queryClient.setQueryData(queryKey, (oldChats: ChatThread[] | undefined) => {
-          if (!oldChats) return [];
-          return oldChats.map(c => 
-            String(c.id) === String(payload.conversationId)
-              ? { ...c, is_muted: payload.preference.is_muted, muted_until: payload.preference.muted_until }
-              : c
-          );
-        });
-        queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      }
-    };
-
     socket.on('new_message', handleNewMessage);
     socket.on('isTyping', handleTyping);
     socket.on('stoppedTyping', handleStopTyping);
@@ -573,7 +554,6 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
     socket.on('message_deleted', handleMessageDeleted);
     socket.on('message_edited', handleMessageEdited);
     socket.on('message_reaction_updated', handleReactionUpdated);
-    socket.on('conversation_preference_updated', handlePreferenceUpdated);
 
     return () => {
       socket.off('new_message', handleNewMessage);
@@ -583,9 +563,8 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
       socket.off('message_deleted', handleMessageDeleted);
       socket.off('message_edited', handleMessageEdited);
       socket.off('message_reaction_updated', handleReactionUpdated);
-      socket.off('conversation_preference_updated', handlePreferenceUpdated);
     };
-  }, [socket, chat.id, chat.isGroup, session?.user?.id, queryClient, activeProfile]); // Depend only on chat.id, not the full chat object
+  }, [socket, chat.id, chat.isGroup, session?.user?.id, queryClient]); // Depend only on chat.id, not the full chat object
 
   const sendMessageMutation = useMutation({
     mutationFn: async ({ text, files, replyMessageId, sharedPostId, sharedProfileId }: { text: string, files: File[], replyMessageId?: string, sharedPostId?: string, sharedProfileId?: string }) => {
@@ -1024,10 +1003,6 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
           selectedMessage={selectedMessage}
           onMessageAction={(action) => handleMessageActionWithMsg(action)}
           currentUserId={activeProfile?.type === 'COMPANY' ? activeProfile.id : (session?.user?.id || "")}
-          onMuteClick={() => setShowMuteConfirm(true)}
-          onUnmuteClick={() => setShowUnmuteConfirm(true)}
-          onDeleteClick={() => setShowDeleteConfirm(true)}
-          onLeaveClick={() => setShowLeaveConfirm(true)}
         />
       ) : (
         <div className="px-[16px] py-[12px] border-b border-[#EEF2FF] flex items-center justify-between bg-[#FFFFFF] shrink-0">
@@ -1072,7 +1047,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                             <span className="truncate">{chat.role}</span>
                             {(typingDisplayString || chat.online) && (
                               <>
-                                <span className="w-[6px] h-[6px] rounded-full bg-[#22C55E] flex-none mr-[8px]" />
+                                <span className="mx-1.5">•</span>
                                 <span
                                   style={{ color: typingDisplayString ? '#000000' : '#22C55E' }}
                                 >
@@ -1083,14 +1058,11 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                           </>
                         ) : (
                           (typingDisplayString || chat.online) ? (
-                            <>
-                              <span className="w-[6px] h-[6px] rounded-full bg-[#22C55E] flex-none mr-[8px]" />
-                              <span
-                                style={{ color: typingDisplayString ? '#000000' : '#22C55E' }}
-                              >
-                                {typingDisplayString ? "Typing..." : "Active now"}
-                              </span>
-                            </>
+                            <span
+                              style={{ color: typingDisplayString ? '#000000' : '#22C55E' }}
+                            >
+                              {typingDisplayString ? "Typing..." : "Active now"}
+                            </span>
                           ) : (
                             <span className="truncate">Member</span>
                           )
@@ -1122,17 +1094,10 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                           <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Share profile</span>
                           <Icon icon="fluent:share-16-regular" width={24} height={24} color="#000000" />
                         </DropdownMenuItem>
-                        {chat.is_muted ? (
-                          <DropdownMenuItem onClick={() => setShowUnmuteConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors">
-                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Unmute group</span>
-                            <Icon icon="fluent:speaker-2-16-regular" width={24} height={24} color="#000000" />
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem onClick={() => setShowMuteConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors">
-                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Mute group</span>
-                            <Icon icon="fluent:speaker-mute-16-regular" width={24} height={24} color="#000000" />
-                          </DropdownMenuItem>
-                        )}
+                        <DropdownMenuItem onClick={() => setShowMuteConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors">
+                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Mute group</span>
+                          <Icon icon="fluent:speaker-mute-16-regular" width={24} height={24} color="#000000" />
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setShowLeaveConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#FFF0F0] rounded-md transition-colors">
                           <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#FF6B6B]">Leave group</span>
                           <Icon icon="fluent:door-arrow-left-16-regular" width={24} height={24} color="#FF6B6B" />
@@ -1418,60 +1383,17 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
         cancelText="Cancel"
         onConfirm={async () => {
           try {
-            // Optimistic Cache Update
-            const queryKey = ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'];
-            queryClient.setQueryData(queryKey, (oldChats: ChatThread[] | undefined) => {
-              if (!oldChats) return [];
-              return oldChats.map(c => 
-                String(c.id) === String(chat.id)
-                  ? { ...c, is_muted: true, muted_until: null }
-                  : c
-              );
-            });
             await muteGroup(chat.id, true);
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
             toast({ description: "Group muted successfully" });
           } catch (err: any) {
             const errorMsg = err?.response?.data?.message || err?.message || "Failed to mute group";
             toast({ title: "Error", description: errorMsg, variant: "destructive" });
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
           } finally {
             setShowMuteConfirm(false);
           }
         }}
         onCancel={() => setShowMuteConfirm(false)}
-      />
-
-      <CocpitConfirmBox
-        isOpen={showUnmuteConfirm}
-        title="Unmute this group?"
-        message="You will receive notifications from this group again."
-        confirmText="Unmute"
-        cancelText="Cancel"
-        onConfirm={async () => {
-          try {
-            // Optimistic Cache Update
-            const queryKey = ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'];
-            queryClient.setQueryData(queryKey, (oldChats: ChatThread[] | undefined) => {
-              if (!oldChats) return [];
-              return oldChats.map(c => 
-                String(c.id) === String(chat.id)
-                  ? { ...c, is_muted: false, muted_until: null }
-                  : c
-              );
-            });
-            await unmuteGroup(chat.id);
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
-            toast({ description: "Group unmuted successfully" });
-          } catch (err: any) {
-            const errorMsg = err?.response?.data?.message || err?.message || "Failed to unmute group";
-            toast({ title: "Error", description: errorMsg, variant: "destructive" });
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
-          } finally {
-            setShowUnmuteConfirm(false);
-          }
-        }}
-        onCancel={() => setShowUnmuteConfirm(false)}
       />
 
       <CocpitConfirmBox

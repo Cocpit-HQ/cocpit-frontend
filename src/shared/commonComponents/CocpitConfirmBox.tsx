@@ -54,12 +54,12 @@ export const CocpitConfirmBox: React.FC<CocpitConfirmBoxProps> = ({
         `}
       </style>
       <div 
-        className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
         style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
         onClick={handleBackdropClick}
       >
         <div 
-          className={`bg-card w-full max-w-full md:max-w-[400px] p-8 rounded-t-[24px] rounded-b-none md:rounded-[24px] shadow-2xl flex flex-col items-center text-center animate-in slide-in-from-bottom duration-300 md:zoom-in-95 md:duration-200 relative ${isBlinking ? 'blink-attention' : ''}`}
+          className={`bg-card w-full max-w-[400px] p-8 rounded-[24px] shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200 relative ${isBlinking ? 'blink-attention' : ''}`}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();

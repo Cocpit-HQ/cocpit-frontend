@@ -475,8 +475,8 @@ function MessageBubble(props: MessageBubbleProps) {
 
     if (message.repliedMessage && message.repliedMessage.senderName) {
       return isMe
-        ? "box-border flex flex-col justify-center items-start bg-[#6366F1] text-[#FFFFFF] rounded-[12px_12px_0px_12px] shadow-sm gap-[10px] w-full"
-        : "box-border flex flex-col justify-center items-start bg-[#EEF2FF] text-[#000000] rounded-[12px_12px_12px_0px] gap-[10px] w-full"
+        ? "box-border flex flex-col justify-center items-start w-[381px] h-[122px] bg-[#6366F1] text-[#FFFFFF] rounded-[12px_12px_0px_12px] shadow-sm gap-[10px]"
+        : "box-border flex flex-col justify-center items-start w-[381px] h-[122px] bg-[#EEF2FF] text-[#000000] rounded-[12px_12px_12px_0px] gap-[10px]"
     }
 
     // Standard message styling
@@ -637,7 +637,7 @@ function MessageBubble(props: MessageBubbleProps) {
             
             {/* Action Icons for isMe */}
             {isMe && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
-              <div className={cn("flex flex-row items-center gap-[8px] bg-transparent opacity-0 transition-opacity px-2 shrink-0 z-20 relative", (isSelected || showMobileActions) ? "opacity-100 flex md:group-hover/message:opacity-100" : "group-hover/message:opacity-100 hidden md:flex")}>
+              <div className={cn("flex-row items-center gap-[8px] bg-transparent opacity-0 transition-opacity px-2", (isSelected || showMobileActions) ? "opacity-100 flex md:group-hover/message:opacity-100" : "group-hover/message:opacity-100 hidden md:flex")}>
                 <button 
                   className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative" 
                   onClick={handleEmojiButtonClick}
@@ -657,7 +657,7 @@ function MessageBubble(props: MessageBubbleProps) {
               </div>
             )}
 
-            <div className="relative max-w-[70%] md:max-w-[85%] flex">
+            <div className="relative max-w-[85%] flex">
               <div
                 className={cn(
                   "relative break-words w-full transition-all",
@@ -743,7 +743,7 @@ function MessageBubble(props: MessageBubbleProps) {
 
             {/* Action Icons for !isMe */}
             {!isMe && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
-              <div className={cn("flex flex-row items-center gap-[8px] bg-transparent opacity-0 transition-opacity px-2 shrink-0 z-20 relative", (isSelected || showMobileActions) ? "opacity-100 flex md:group-hover/message:opacity-100" : "group-hover/message:opacity-100 hidden md:flex")}>
+              <div className={cn("flex-row items-center gap-[8px] bg-transparent opacity-0 transition-opacity px-2", (isSelected || showMobileActions) ? "opacity-100 flex md:group-hover/message:opacity-100" : "group-hover/message:opacity-100 hidden md:flex")}>
                 <button 
                   className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative" 
                   onClick={handleEmojiButtonClick}

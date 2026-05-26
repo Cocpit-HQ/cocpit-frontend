@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { useGroupChat } from "./groupChat.context";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
-import { muteGroup, unmuteGroup } from "@/services/api/messaging";
+import { muteGroup } from "@/services/api/messaging";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MoreVertical, BellOff, Bell, LogOut, Trash2 } from "lucide-react";
+import { ArrowLeft, MoreVertical, BellOff, LogOut, Trash2 } from "lucide-react";
 import { UserCog, Share2, Info, Ban } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox";
@@ -12,7 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Message } from "@/types/messaging";
-import { useActiveProfile } from "@/context/ActiveProfileContext";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -30,7 +29,6 @@ interface GroupHeaderProps {
     selectedMessage?: Message | null;
     onMessageAction?: (action: string) => void;
     currentUserId?: string;
-    isMuted?: boolean;
 }
 
 export default function GroupHeader({
@@ -42,18 +40,15 @@ export default function GroupHeader({
     isMessageSelected,
     selectedMessage,
     onMessageAction,
-    currentUserId,
-    isMuted = false
+    currentUserId
 }: GroupHeaderProps) {
     const { activeGroup, isInactive } = useGroupChat();
-    const { activeProfile } = useActiveProfile();
     const isMobile = useIsMobile();
     const { user } = useAuth();
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [showMuteConfirm, setShowMuteConfirm] = useState(false);
-    const [showUnmuteConfirm, setShowUnmuteConfirm] = useState(false);
 
     if (!activeGroup) return null;
 
@@ -182,36 +177,24 @@ export default function GroupHeader({
 
                     <DropdownMenu onOpenChange={setIsDropdownOpen}>
                         <DropdownMenuTrigger asChild>
-                            <button className="p-1 outline-none transition-colors">
-                                <Icon
-                                    icon="mdi-light:dots-vertical"
-                                    width={24}
-                                    height={24}
-                                    style={{ color: isDropdownOpen ? '#6366F1' : '#000000' }}
-                                />
-                            </button>
+                            <Icon
+                                icon="mdi-light:dots-vertical"
+                                width={24}
+                                height={24}
+                                style={{ color: isDropdownOpen ? '#6366F1' : '#000000' }}
+                            />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
                             align="end"
                             className=" p-[8px] mr-4  bg-white border border-[#C7D2FE]"
                             style={{ borderRadius: '24px 0px 24px 24px' }}>
-                            {isMuted ? (
-                                <DropdownMenuItem
-                                    onClick={() => setShowUnmuteConfirm(true)}
-                                    className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors"
-                                >
-                                    <span className="text-sm font-normal">Unmute Group</span>
-                                    <Bell className="w-4 h-4" />
-                                </DropdownMenuItem>
-                            ) : (
-                                <DropdownMenuItem
-                                    onClick={() => setShowMuteConfirm(true)}
-                                    className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors"
-                                >
-                                    <span className="text-sm font-normal">Mute Group</span>
-                                    <BellOff className="w-4 h-4" />
-                                </DropdownMenuItem>
-                            )}
+                            <DropdownMenuItem
+                                onClick={() => setShowMuteConfirm(true)}
+                                className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors"
+                            >
+                                <span className="text-sm font-normal">Mute Group</span>
+                                <BellOff className="w-4 h-4" />
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={onLeaveGroup}
                                 className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] text-red-500 focus:text-red-500 rounded-md transition-colors"
@@ -232,16 +215,6 @@ export default function GroupHeader({
                 cancelText="Cancel"
                 onConfirm={async () => {
                     try {
-                        // Optimistic Cache Update
-                        const queryKey = ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'];
-                        queryClient.setQueryData(queryKey, (oldChats: any[] | undefined) => {
-                            if (!oldChats) return [];
-                            return oldChats.map(c => 
-                                String(c.id) === String(activeGroup.conversation_id)
-                                    ? { ...c, is_muted: true, muted_until: null }
-                                    : c
-                            );
-                        });
                         await muteGroup(activeGroup.conversation_id, true);
                         queryClient.invalidateQueries({ queryKey: ['conversations'] });
                         toast({ description: "Group muted successfully" });
@@ -252,48 +225,11 @@ export default function GroupHeader({
                             description: errorMsg,
                             variant: "destructive"
                         });
-                        queryClient.invalidateQueries({ queryKey: ['conversations'] });
                     } finally {
                         setShowMuteConfirm(false);
                     }
                 }}
                 onCancel={() => setShowMuteConfirm(false)}
-            />
-
-            <CocpitConfirmBox
-                isOpen={showUnmuteConfirm}
-                title="Unmute group notifications?"
-                message="You will receive notifications from this group again."
-                confirmText="Unmute"
-                cancelText="Cancel"
-                onConfirm={async () => {
-                    try {
-                        // Optimistic Cache Update
-                        const queryKey = ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'];
-                        queryClient.setQueryData(queryKey, (oldChats: any[] | undefined) => {
-                            if (!oldChats) return [];
-                            return oldChats.map(c => 
-                                String(c.id) === String(activeGroup.conversation_id)
-                                    ? { ...c, is_muted: false, muted_until: null }
-                                    : c
-                            );
-                        });
-                        await unmuteGroup(activeGroup.conversation_id);
-                        queryClient.invalidateQueries({ queryKey: ['conversations'] });
-                        toast({ description: "Group unmuted successfully" });
-                    } catch (err: any) {
-                        const errorMsg = err?.response?.data?.message || err?.message || "Failed to unmute group";
-                        toast({
-                            title: "Error",
-                            description: errorMsg,
-                            variant: "destructive"
-                        });
-                        queryClient.invalidateQueries({ queryKey: ['conversations'] });
-                    } finally {
-                        setShowUnmuteConfirm(false);
-                    }
-                }}
-                onCancel={() => setShowUnmuteConfirm(false)}
             />
         </div>
     );

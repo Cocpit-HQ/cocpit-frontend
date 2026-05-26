@@ -148,11 +148,6 @@ export const muteGroup = async (conversationId: string, muted: boolean = true, m
   return response.data;
 };
 
-export const unmuteGroup = async (conversationId: string) => {
-  const response = await api.patch(`/conversations/${conversationId}/unmute`);
-  return response.data;
-};
-
 export const deletePersonalChat = async (conversationId: string) => {
   const response = await api.delete(`/conversations/${conversationId}`);
   return response.data;
