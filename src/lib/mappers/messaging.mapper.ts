@@ -71,6 +71,9 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     lastMessageAt: backendChat.last_message_at || backendChat.updated_at || new Date().toISOString(),
     isDeleted: backendChat.is_deleted_user || false,
     is_requesting: backendChat.is_requesting || false,
+    invitation_id: backendChat.invitation_id,
+    request_source: backendChat.request_source,
+    is_read: backendChat.is_read || false,
   };
 };
 
@@ -117,5 +120,8 @@ export const mapBackendMessageToMessage = (backendMessage: BackendMessage, curre
     } : null,
     created_at: backendMessage.created_at,
     reactions: backendMessage.reactions || [],
+    active_member_count: backendMessage.active_member_count,
+    delivered_count: backendMessage.delivered_count,
+    seen_count: backendMessage.seen_count,
   };
 };

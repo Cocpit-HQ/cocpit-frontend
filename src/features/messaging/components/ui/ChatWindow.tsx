@@ -16,7 +16,7 @@ import { useQuery, useMutation, useQueryClient, useInfiniteQuery, InfiniteData }
 import { useToast } from "@/hooks/use-toast"
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox"
 import { getMessages, sendMessage, markAsRead, editMessage, deleteMessage, acceptChatRequest, declineChatRequest, addOrUpdateReaction, clearReaction, deletePersonalChat, muteGroup } from "@/services/api/messaging"
-import { sendMessage as sendGroupMessage, getGroupDetails, leaveGroup } from "@/services/api/group-chat"
+import { sendMessage as sendGroupMessage, getGroupDetails, leaveGroup, respondInvitation } from "@/services/api/group-chat"
 import { GroupMember } from "@/types/group-chat"
 import { mapBackendMessageToMessage } from "@/lib/mappers/messaging.mapper"
 import Avatar from "@/components/shared/Avatar"
@@ -45,6 +45,7 @@ interface ChatWindowProps {
   chat: ChatThread
   isMobile: boolean
   onBack?: () => void
+  onAcceptSuccess?: () => void
 }
 
 const getAvatarGradient = (avatar: string) => {
@@ -122,7 +123,7 @@ function ChatHeaderMenu({ selectedMessage, onMessageAction, currentUserId }: { s
   );
 }
 
-export default function ChatWindow({ chat: initialChat, isMobile, onBack }: ChatWindowProps) {
+export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcceptSuccess }: ChatWindowProps) {
   const { socket, isUserOnline, setActiveConversationId } = useSocket();
   const { unblockUser, isBlocked, blockUser } = useSocial();
   const { data: session } = useSession();
@@ -166,6 +167,9 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
     ...initialChat,
     online: (!isBlockedByMe && !isBlockedByOther && initialChat.otherUserId) ? isUserOnline(initialChat.otherUserId) : false
   };
+
+  const isGroupInvitation = !!chat.is_requesting && (chat.isGroup === true || (chat as any).is_group === true || chat.request_source === 'group_invitation');
+  const isSingleRequest = !!chat.is_requesting && !isGroupInvitation;
 
   // Sync state with URL parameter on mount or when chat/param changes
   useEffect(() => {
@@ -227,13 +231,29 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
 
   const handleAcceptRequest = async () => {
     try {
-      await acceptChatRequest(chat.id);
-      queryClient.setQueryData(['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'], (oldChats: ChatThread[] | undefined) => {
-        if (!oldChats) return [];
-        return oldChats.map(c => c.id === chat.id ? { ...c, is_requesting: false } : c);
-      });
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      toast({ description: "Request accepted" });
+      if (isGroupInvitation) {
+        if (!chat.invitation_id) {
+          throw new Error("Invitation ID missing");
+        }
+        await respondInvitation(chat.invitation_id, 'accept');
+        queryClient.setQueryData(['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'], (oldChats: ChatThread[] | undefined) => {
+          if (!oldChats) return [];
+          return oldChats.map(c => c.id === chat.id ? { ...c, is_requesting: false } : c);
+        });
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        queryClient.invalidateQueries({ queryKey: ['invitations'] });
+        toast({ description: "Request accepted" });
+        if (onAcceptSuccess) onAcceptSuccess();
+      } else {
+        await acceptChatRequest(chat.id);
+        queryClient.setQueryData(['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'], (oldChats: ChatThread[] | undefined) => {
+          if (!oldChats) return [];
+          return oldChats.map(c => c.id === chat.id ? { ...c, is_requesting: false } : c);
+        });
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        toast({ description: "Request accepted" });
+        if (onAcceptSuccess) onAcceptSuccess();
+      }
     } catch (err: any) {
       const errorMsg = err?.response?.data?.message || err?.message || "Failed to accept request";
       toast({ title: "Error", description: errorMsg, variant: "destructive" });
@@ -242,10 +262,25 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
 
   const handleDeclineRequest = async () => {
     try {
-      await declineChatRequest(chat.id);
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      toast({ description: "Request declined" });
-      if (onBack) onBack();
+      if (isGroupInvitation) {
+        if (!chat.invitation_id) {
+          throw new Error("Invitation ID missing");
+        }
+        await respondInvitation(chat.invitation_id, 'reject');
+        queryClient.setQueryData(['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'], (oldChats: ChatThread[] | undefined) => {
+          if (!oldChats) return [];
+          return oldChats.filter(c => c.id !== chat.id);
+        });
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        queryClient.invalidateQueries({ queryKey: ['invitations'] });
+        toast({ description: "Request declined" });
+        if (onBack) onBack();
+      } else {
+        await declineChatRequest(chat.id);
+        queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        toast({ description: "Request declined" });
+        if (onBack) onBack();
+      }
     } catch (err: any) {
       const errorMsg = err?.response?.data?.message || err?.message || "Failed to decline request";
       toast({ title: "Error", description: errorMsg, variant: "destructive" });
@@ -273,7 +308,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
       return lastPage[0]?.created_at; // Oldest message in the current batch
     },
     initialPageParam: null as string | null,
-    enabled: !!chat.id && chat.id !== 'new' && !!session?.user?.id,
+    enabled: !!chat.id && chat.id !== 'new' && !!session?.user?.id && !isGroupInvitation,
   });
 
   // Flatten and reverse pages to show oldest to newest
@@ -293,19 +328,19 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
     chatSession.clearSessionLost();
     setTypingMap(new Map());
 
-    if (chat.id && chat.unread > 0) {
+    if (chat.id && (chat.unread > 0 || (isGroupInvitation && !chat.is_read))) {
       const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
       markAsRead(chat.id, companyId).then(() => {
-        // Optimistically update conversation unread count
+        // Optimistically update conversation unread count and read status
         queryClient.setQueryData(['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'], (oldChats: ChatThread[] | undefined) => {
           if (!oldChats) return [];
-          return oldChats.map(c => c.id === chat.id ? { ...c, unread: 0 } : c);
+          return oldChats.map(c => c.id === chat.id ? { ...c, unread: 0, is_read: true } : c);
         });
       }).catch(console.error);
     }
 
     return () => setActiveConversationId(null);
-  }, [chat.id, chat.unread, queryClient, setActiveConversationId]);
+  }, [chat.id, chat.unread, chat.is_read, isGroupInvitation, activeProfile, queryClient, setActiveConversationId]);
 
 
   useEffect(() => {
@@ -978,7 +1013,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
                 {chat.isGroup ? (
                   <>
                     <div className="w-[40px] h-[40px] flex-none mr-[8px]">
-                      <Avatar url={chat.avatar} name={chat.name} size="md" online={chat.online} />
+                      <Avatar url={chat.avatar} name={chat.name} size="md" />
                     </div>
                     <div className="flex flex-col items-start p-0 min-w-0">
                       <h2 className="font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-[#000000] w-full">
@@ -995,7 +1030,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
                       href={chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`}
                       className="w-[40px] h-[40px] flex-none mr-[8px] hover:opacity-80 transition-opacity"
                     >
-                      <Avatar url={chat.avatar} name={chat.name} size="md" online={chat.online} />
+                      <Avatar url={chat.avatar} name={chat.name} size="md" />
                     </Link>
                     <div className="flex flex-col items-start p-0 min-w-0">
                       <Link
@@ -1007,17 +1042,32 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
                         </h2>
                       </Link>
                       <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] w-full">
-                        <span className="truncate">{chat.role || "Member"}</span>
+                        {chat.role ? (
+                          <>
+                            <span className="truncate">{chat.role}</span>
+                            {(typingDisplayString || chat.online) && (
+                              <>
+                                <span className="mx-1.5">•</span>
+                                <span
+                                  style={{ color: typingDisplayString ? '#000000' : '#22C55E' }}
+                                >
+                                  {typingDisplayString ? "Typing..." : "Active now"}
+                                </span>
+                              </>
+                            )}
+                          </>
+                        ) : (
+                          (typingDisplayString || chat.online) ? (
+                            <span
+                              style={{ color: typingDisplayString ? '#000000' : '#22C55E' }}
+                            >
+                              {typingDisplayString ? "Typing..." : "Active now"}
+                            </span>
+                          ) : (
+                            <span className="truncate">Member</span>
+                          )
+                        )}
                       </p>
-                      {/* Active Status */}
-                      {chat.online && (
-                        <div className="flex flex-row items-center p-0 gap-[8px] h-[16px] mt-[4px]">
-                          <span className="w-[6px] h-[6px] rounded-full bg-[#22C55E] flex-none" />
-                          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#22C55E]">
-                            Active now
-                          </span>
-                        </div>
-                      )}
                     </div>
                   </>
                 )}
@@ -1088,7 +1138,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
       )}
 
       {/* Session Banner (company mode only) */}
-      {isCompanyMode && (
+      {isCompanyMode && !isGroupInvitation && (
         <SessionBanner
           session={chatSession.session}
           featureEnabled={chatSession.featureEnabled}
@@ -1103,41 +1153,43 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
         />
       )}
 
-      {chat.pinnedContext && (
+      {chat.pinnedContext && !isGroupInvitation && (
         <div className="px-4 py-2 text-xs text-center font-medium bg-primary/20 text-primary">
           Context: {chat.pinnedContext}
         </div>
       )}
 
-      {isLoading ? (
-        <ChatSkeleton />
-      ) : (
-        <MessageList
-          messages={messages}
-          onLoadMore={fetchNextPage}
-          hasMore={hasNextPage}
-          isLoadingMore={isFetchingNextPage}
-          onAction={handleMessageActionWithMsg}
-          editingMessageId={editingMessageId}
-          onSaveEdit={handleSaveEdit}
-          onCancelEdit={() => setEditingMessageId(null)}
-          selectedMessageId={selectedMessage?.id}
-          onMessageClick={handleMessageClick}
-          onMediaClick={handleMediaClick}
-          unreadCount={chat.unread}
-          isOpponentOnline={chat.online}
-          isGroup={chat.isGroup}
-          onReply={(msg) => setReplyingTo({
-            messageId: msg.id,
-            senderName: msg.senderName || "Unknown",
-            content: msg.text || msg.text_content || ""
-          })}
-          onReaction={handleReactionSelect}
-          currentUserId={currentUserId}
-        />
+      {!isGroupInvitation && (
+        isLoading ? (
+          <ChatSkeleton />
+        ) : (
+          <MessageList
+            messages={messages}
+            onLoadMore={fetchNextPage}
+            hasMore={hasNextPage}
+            isLoadingMore={isFetchingNextPage}
+            onAction={handleMessageActionWithMsg}
+            editingMessageId={editingMessageId}
+            onSaveEdit={handleSaveEdit}
+            onCancelEdit={() => setEditingMessageId(null)}
+            selectedMessageId={selectedMessage?.id}
+            onMessageClick={handleMessageClick}
+            onMediaClick={handleMediaClick}
+            unreadCount={chat.unread}
+            isOpponentOnline={chat.online}
+            isGroup={chat.isGroup}
+            onReply={(msg) => setReplyingTo({
+              messageId: msg.id,
+              senderName: msg.senderName || "Unknown",
+              content: msg.text || msg.text_content || ""
+            })}
+            onReaction={handleReactionSelect}
+            currentUserId={currentUserId}
+          />
+        )
       )}
 
-      {typingDisplayString && !isBlockedByMe && !isBlockedByOther && (
+      {typingDisplayString && !isBlockedByMe && !isBlockedByOther && !isGroupInvitation && (
         <div className="px-5 py-1.5 text-xs text-muted-foreground/80 italic flex items-center gap-1.5 border-t border-border/30">
           <span className="flex gap-0.5">
             <span className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -1148,7 +1200,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
         </div>
       )}
 
-      {activeProfile?.type === 'COMPANY' && !isBlockedByMe && !isBlockedByOther && (
+      {activeProfile?.type === 'COMPANY' && !isBlockedByMe && !isBlockedByOther && !isGroupInvitation && (
         <div className="px-4 py-1 text-xs text-center bg-muted/40 text-muted-foreground/70 border-t border-border/40">
           Replying as <span className="font-semibold text-foreground">{activeProfile.name}</span>
         </div>
@@ -1186,31 +1238,33 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack }: Chat
               </button>
             </div>
           )}
-          <UnifiedMessageInput
-            onSendMessage={handleSendMessage}
-            onTyping={handleTypingInput}
-            searchUsersFn={chat.isGroup ? searchGroupMembers : undefined}
-            disabled={chat.is_requesting || (!chat.otherUserId && !chat.isGroup) || !!isBlockedByOther || sessionDisabled}
-            disabledMessage={
-              isBlockedByOther ? "User not found" :
-                sessionDisabled && chatSession.session ? `Handled by ${chatSession.session.handler_name_snapshot}` :
-                  sessionDisabled ? "Claim this conversation to reply" :
-                    undefined
-            }
-            placeholder={sessionDisabled ? "Claim to start typing..." : "Type a message..."}
-            replyingTo={replyingTo}
-            onCancelReply={() => setReplyingTo(null)}
-            pendingSharedPost={pendingSharedPost}
-            onCancelPendingSharedPost={() => {
-              setPendingSharedPostId(null);
-              setPendingSharedPost(null);
-            }}
-            pendingSharedProfile={pendingSharedProfile}
-            onCancelPendingSharedProfile={() => {
-              setPendingSharedProfileId(null);
-              setPendingSharedProfile(null);
-            }}
-          />
+          {!isGroupInvitation && (
+            <UnifiedMessageInput
+              onSendMessage={handleSendMessage}
+              onTyping={handleTypingInput}
+              searchUsersFn={chat.isGroup ? searchGroupMembers : undefined}
+              disabled={chat.is_requesting || (!chat.otherUserId && !chat.isGroup) || !!isBlockedByOther || sessionDisabled}
+              disabledMessage={
+                isBlockedByOther ? "User not found" :
+                  sessionDisabled && chatSession.session ? `Handled by ${chatSession.session.handler_name_snapshot}` :
+                    sessionDisabled ? "Claim this conversation to reply" :
+                      undefined
+              }
+              placeholder={sessionDisabled ? "Claim to start typing..." : "Type a message..."}
+              replyingTo={replyingTo}
+              onCancelReply={() => setReplyingTo(null)}
+              pendingSharedPost={pendingSharedPost}
+              onCancelPendingSharedPost={() => {
+                setPendingSharedPostId(null);
+                setPendingSharedPost(null);
+              }}
+              pendingSharedProfile={pendingSharedProfile}
+              onCancelPendingSharedProfile={() => {
+                setPendingSharedProfileId(null);
+                setPendingSharedProfile(null);
+              }}
+            />
+          )}
         </div>
       )}
 

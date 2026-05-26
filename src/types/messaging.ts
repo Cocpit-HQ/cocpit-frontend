@@ -18,6 +18,9 @@ export interface BackendChat {
   last_message_at?: string; // Added
   is_deleted_user?: boolean; // Added for deleted user handling
   is_requesting?: boolean;
+  invitation_id?: string;
+  request_source?: string;
+  is_read?: boolean;
 }
 
 export interface BackendMessage {
@@ -78,6 +81,9 @@ export interface BackendMessage {
     avatar: string | null;
     updated_at: string;
   }[];
+  active_member_count?: number;
+  delivered_count?: number;
+  seen_count?: number;
 }
 
 // Frontend entity types
@@ -103,6 +109,9 @@ export interface ChatThread {
   sessionStatus?: 'mine' | 'other' | 'unclaimed' | null
   sessionHandlerName?: string
   is_requesting?: boolean;
+  invitation_id?: string;
+  request_source?: string;
+  is_read?: boolean;
 }
 
 export interface Message {
@@ -165,4 +174,7 @@ export interface Message {
     avatar: string | null;
     updated_at: string;
   }[];
+  active_member_count?: number;
+  delivered_count?: number;
+  seen_count?: number;
 }

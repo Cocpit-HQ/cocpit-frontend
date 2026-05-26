@@ -47,7 +47,6 @@ export default function MobileChatHeader({ chat, onBack, selectedMessage, onMess
                   url={chat.avatar}
                   name={chat.name}
                   size="sm"
-                  online={chat.online}
                 />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-sm text-foreground truncate leading-tight">
@@ -67,7 +66,6 @@ export default function MobileChatHeader({ chat, onBack, selectedMessage, onMess
                   url={chat.avatar}
                   name={chat.name}
                   size="sm"
-                  online={chat.online}
                 />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-sm text-foreground truncate leading-tight group-hover:text-primary transition-colors">

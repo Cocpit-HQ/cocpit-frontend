@@ -43,20 +43,29 @@ interface ChatListProps {
   error: Error | null;
   onCreateGroup?: () => void;
   isCompany?: boolean;
+  activeTab?: 'chat' | 'requests';
+  setActiveTab?: (tab: 'chat' | 'requests') => void;
 }
 
-export function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], isLoading, error, onCreateGroup, isCompany = false }: ChatListProps) {
+export function ChatList({
+  selectedChatId,
+  onSelectChat,
+  isMobile,
+  chats = [],
+  isLoading,
+  error,
+  onCreateGroup,
+  isCompany = false,
+  activeTab: propActiveTab,
+  setActiveTab: propSetActiveTab,
+}: ChatListProps) {
   const [searchTerm, setSearchTerm] = useState("")
-  const { socket, isUserOnline } = useSocket();
+  const { socket, isUserOnline, typingConversations } = useSocket();
   const { activeProfile } = useActiveProfile();
   const queryClient = useQueryClient();
   const parentRef = React.useRef<HTMLDivElement>(null);
 
   const { data: session } = useSession();
-  const { data: invitations = [] } = useQuery({
-    queryKey: ['invitations'],
-    queryFn: getPendingInvitations
-  });
 
   useEffect(() => {
     console.log("ChatList Rendered:", {
@@ -66,15 +75,13 @@ export function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], i
       chatsCount: chats?.length,
       isLoading,
       hasError: !!error,
-      invitationsCount: invitations?.length
     });
-  }, [session, activeProfile, chats, isLoading, error, invitations]);
+  }, [session, activeProfile, chats, isLoading, error]);
 
 
   const handleRespond = async (invitationId: string, action: 'accept' | 'reject') => {
     try {
       await respondInvitation(invitationId, action);
-      queryClient.invalidateQueries({ queryKey: ['invitations'] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     } catch (err) {
       console.error("Failed to respond", err);
@@ -84,11 +91,9 @@ export function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], i
   useEffect(() => {
     if (!socket) return;
     const handleInvite = () => {
-      queryClient.invalidateQueries({ queryKey: ['invitations'] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     };
     const handleInvitationUpdate = () => {
-      queryClient.invalidateQueries({ queryKey: ['invitations'] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     };
     socket.on('group_invite', handleInvite);
@@ -99,11 +104,20 @@ export function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], i
     };
   }, [socket, queryClient]);
 
-  const [activeTab, setActiveTab] = useState<'chat' | 'requests'>('chat');
+  const [localActiveTab, setLocalActiveTab] = useState<'chat' | 'requests'>('chat');
+  const activeTab = propActiveTab !== undefined ? propActiveTab : localActiveTab;
+  const setActiveTab = propSetActiveTab !== undefined ? propSetActiveTab : setLocalActiveTab;
 
   // Badge logic
   const hasUnreadChats = chats.some(chat => !chat.is_requesting && chat.unread > 0);
-  const hasUnreadRequests = chats.some(chat => chat.is_requesting && chat.unread > 0);
+  const hasUnreadRequests = chats.some(chat => {
+    if (chat.is_requesting === true) {
+      const isGroupInv = chat.isGroup === true || (chat as any).is_group === true || chat.request_source === 'group_invitation';
+      const isGroupInvUnread = isGroupInv && !chat.is_read;
+      return isGroupInvUnread || chat.unread > 0;
+    }
+    return false;
+  });
 
   // Merge online status into chats
   const chatsWithStatus = React.useMemo(() => chats.map(chat => ({
@@ -206,22 +220,6 @@ export function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], i
       </div>
 
       <div ref={parentRef} className="flex flex-col flex-1 w-full overflow-y-auto pb-24 md:pb-0 scrollbar-hide relative gap-[8px]">
-        {/* Invitations Section */}
-        {!isCompany && invitations.length > 0 && (
-          <div className="p-4 bg-muted/30 space-y-2 border-b border-border">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">Invitations</h3>
-            {invitations.map((inv: any) => (
-              <InvitationCard
-                key={inv.invitation_id}
-                groupName={inv.group_name}
-                groupAvatar={inv.group_avatar}
-                inviterName={inv.inviter_name}
-                onAccept={() => handleRespond(inv.invitation_id, 'accept')}
-                onReject={() => handleRespond(inv.invitation_id, 'reject')}
-              />
-            ))}
-          </div>
-        )}
 
         {/* ... */}
         {isLoading && <div className="p-8 text-center text-muted-foreground">Loading conversations...</div>}
@@ -254,6 +252,8 @@ export function ChatList({ selectedChatId, onSelectChat, isMobile, chats = [], i
                     chat={chat}
                     isSelected={selectedChatId === chat.id}
                     isMobile={isMobile}
+                    isGroupInvitationRead={chat.is_read}
+                    isTyping={!!typingConversations?.[chat.id]}
                   />
                 </div>
               );

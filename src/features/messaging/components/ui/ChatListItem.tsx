@@ -6,6 +6,7 @@ import { ChatThread } from "@/types/messaging"
 import { avatarGradients } from "@/constants/messaging"
 
 import Avatar from "@/components/shared/Avatar"
+import { useSocket } from "@/context/SocketContext"
 
 const getAvatarGradient = (avatar: string) => {
   return avatarGradients[avatar] || "from-gray-400 to-gray-500";
@@ -15,9 +16,17 @@ interface ChatListItemProps {
   chat: ChatThread
   isSelected: boolean
   isMobile: boolean
+  isGroupInvitationRead?: boolean
+  isTyping?: boolean
 }
 
-export function ChatListItem({ chat, isSelected, isMobile }: ChatListItemProps) {
+export function ChatListItem({ chat, isSelected, isMobile, isGroupInvitationRead, isTyping }: ChatListItemProps) {
+  const { activeConversationId } = useSocket();
+  const isGroupInvitation = !!chat.is_requesting && (chat.isGroup === true || (chat as any).is_group === true || chat.request_source === 'group_invitation');
+  const displayUnread = isGroupInvitation 
+    ? ((isGroupInvitationRead || isSelected || chat.id === activeConversationId) ? 0 : 1) 
+    : (chat.id !== activeConversationId ? chat.unread : 0);
+
   const content = (
     <div
       onClick={(e) => {
@@ -81,12 +90,12 @@ export function ChatListItem({ chat, isSelected, isMobile }: ChatListItemProps) 
 
         {/* GROUP 2: Last Message */}
         <div className="mt-[8px] pl-[48px] flex items-center justify-between w-full">
-          <p className={`font-['Poppins'] text-[14px] leading-[20px] truncate flex-1 pr-[8px] ${chat.unread > 0 ? 'font-medium text-[#111827]' : 'font-normal text-[#6B7280]'}`}>
-            {chat.lastMessage}
+          <p className={`font-['Poppins'] text-[14px] leading-[20px] truncate flex-1 pr-[8px] ${displayUnread > 0 ? 'font-medium text-[#111827]' : 'font-normal text-[#6B7280]'}`}>
+            {isTyping ? "Typing..." : chat.lastMessage}
           </p>
-          {chat.unread > 0 && (
+          {displayUnread > 0 && (
             <span className="bg-[#4F46E5] text-[#FFFFFF] font-['Poppins'] font-medium text-[12px] leading-[16px] rounded-[100px] min-w-[20px] h-[20px] flex items-center justify-center px-[6px] shrink-0">
-              {chat.unread > 99 ? '99+' : chat.unread}
+              {displayUnread > 99 ? '99+' : displayUnread}
             </span>
           )}
         </div>
@@ -100,8 +109,10 @@ export function ChatListItem({ chat, isSelected, isMobile }: ChatListItemProps) 
 
 function arePropsEqual(prevProps: ChatListItemProps, nextProps: ChatListItemProps) {
   return (
+    prevProps.isTyping === nextProps.isTyping &&
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.isMobile === nextProps.isMobile &&
+    prevProps.isGroupInvitationRead === nextProps.isGroupInvitationRead &&
     prevProps.chat.id === nextProps.chat.id &&
     prevProps.chat.lastMessage === nextProps.chat.lastMessage &&
     prevProps.chat.time === nextProps.chat.time &&
@@ -111,7 +122,9 @@ function arePropsEqual(prevProps: ChatListItemProps, nextProps: ChatListItemProp
     prevProps.chat.avatar === nextProps.chat.avatar &&
     prevProps.chat.role === nextProps.chat.role &&
     prevProps.chat.sessionStatus === nextProps.chat.sessionStatus &&
-    prevProps.chat.sessionHandlerName === nextProps.chat.sessionHandlerName
+    prevProps.chat.sessionHandlerName === nextProps.chat.sessionHandlerName &&
+    prevProps.chat.is_requesting === nextProps.chat.is_requesting &&
+    prevProps.chat.request_source === nextProps.chat.request_source
   );
 }
 

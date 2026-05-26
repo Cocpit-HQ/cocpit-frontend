@@ -20,6 +20,7 @@ import GroupChat from "./components/group-chat/GroupChat";
 import { GroupChatProvider } from "./components/group-chat/groupChat.context";
 import CreateGroupModal from "./components/group-chat/CreateGroupModal";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { useToast } from "@/hooks/use-toast";
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -39,6 +40,7 @@ export default function MessagingPage() {
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
   const [selectedChat, setSelectedChat] = useState<ChatThread | null>(null);
+  const [activeTab, setActiveTab] = useState<'chat' | 'requests'>('chat');
   const processedUserIdRef = React.useRef<string | null>(null);
   const processedMessagesRef = React.useRef<Set<string>>(new Set());
 
@@ -85,6 +87,11 @@ export default function MessagingPage() {
   const isLoading = rawChatsQuery.isLoading;
   const error = rawChatsQuery.error;
 
+  const activeChat = React.useMemo(() => {
+    if (!selectedChat) return null;
+    return chats.find((c) => String(c.id) === String(selectedChat.id)) || selectedChat;
+  }, [chats, selectedChat]);
+
   // Fetch session status for each company conversation and enrich chats
   const isCompanyMode = activeProfile?.type === "COMPANY";
   const companyId = isCompanyMode ? activeProfile.id : undefined;
@@ -94,6 +101,7 @@ export default function MessagingPage() {
 
   const { socket } = useSocket();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   React.useEffect(() => {
     if (!isCompanyMode || !companyId || !chats.length) return;
@@ -600,6 +608,102 @@ export default function MessagingPage() {
       );
     };
 
+    const handleBlock = (payload: any) => {
+      if (!payload) return;
+      const conversationId = payload.conversation_id;
+      if (!conversationId) return;
+
+      const isMeBlocker = payload.blocked_by_user_id === user?.id;
+
+      const queryKey = [
+        "conversations",
+        activeProfile?.type ?? "USER",
+        activeProfile?.id ?? "me",
+      ];
+      queryClient.setQueryData(
+        queryKey,
+        (oldData: ChatThread[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map((c) => {
+            if (String(c.id) === String(conversationId)) {
+              return {
+                ...c,
+                isBlockedByMe: isMeBlocker ? true : c.isBlockedByMe,
+                isBlockedByOther: !isMeBlocker ? true : c.isBlockedByOther,
+              };
+            }
+            return c;
+          });
+        }
+      );
+
+      if (selectedChat?.id && String(selectedChat.id) === String(conversationId)) {
+        setSelectedChat((prev) =>
+          prev
+            ? {
+                ...prev,
+                isBlockedByMe: isMeBlocker ? true : prev.isBlockedByMe,
+                isBlockedByOther: !isMeBlocker ? true : prev.isBlockedByOther,
+              }
+            : null
+        );
+      }
+
+      if (!isMeBlocker) {
+        toast({
+          description: `${payload.blocked_by_name || "Someone"} has blocked you`,
+        });
+      }
+    };
+
+    const handleUnblock = (payload: any) => {
+      if (!payload) return;
+      const conversationId = payload.conversation_id;
+      if (!conversationId) return;
+
+      const isMeUnblocker = payload.unblocked_by_user_id === user?.id;
+
+      const queryKey = [
+        "conversations",
+        activeProfile?.type ?? "USER",
+        activeProfile?.id ?? "me",
+      ];
+      queryClient.setQueryData(
+        queryKey,
+        (oldData: ChatThread[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map((c) => {
+            if (String(c.id) === String(conversationId)) {
+              return {
+                ...c,
+                isBlockedByMe: isMeUnblocker ? false : c.isBlockedByMe,
+                isBlockedByOther: !isMeUnblocker ? false : c.isBlockedByOther,
+              };
+            }
+            return c;
+          });
+        }
+      );
+
+      if (selectedChat?.id && String(selectedChat.id) === String(conversationId)) {
+        setSelectedChat((prev) =>
+          prev
+            ? {
+                ...prev,
+                isBlockedByMe: isMeUnblocker ? false : prev.isBlockedByMe,
+                isBlockedByOther: !isMeUnblocker ? false : prev.isBlockedByOther,
+              }
+            : null
+        );
+      }
+
+      if (!isMeUnblocker) {
+        toast({
+          description: `${payload.unblocked_by_name || "Someone"} has unblocked you`,
+        });
+      }
+    };
+
     socket.on("new_message", handleNewMessage);
     socket.on("notification", handleNotification);
     socket.on("group_updated", handleGroupUpdate);
@@ -609,6 +713,10 @@ export default function MessagingPage() {
     socket.on("message_deleted_for_everyone", handleMessageDeleted);
     socket.on("message_deleted_for_me", handleMessageDeleted);
     socket.on("message_edited", handleMessageEdited);
+    socket.on("user_blocked", handleBlock);
+    socket.on("block_confirmed", handleBlock);
+    socket.on("user_unblocked", handleUnblock);
+    socket.on("unblock_confirmed", handleUnblock);
 
     // Session events: re-fetch session status for the affected conversation
     const handleSessionEvent = (payload: { conversationId: string }) => {
@@ -670,6 +778,10 @@ export default function MessagingPage() {
       socket.off("session_claimed", handleSessionEvent);
       socket.off("session_released", handleSessionEvent);
       socket.off("session_takeover_forced", handleSessionEvent);
+      socket.off("user_blocked", handleBlock);
+      socket.off("block_confirmed", handleBlock);
+      socket.off("user_unblocked", handleUnblock);
+      socket.off("unblock_confirmed", handleUnblock);
     };
   }, [
     socket,
@@ -717,6 +829,8 @@ export default function MessagingPage() {
               error={error}
               onCreateGroup={() => setIsCreateGroupOpen(true)}
               isCompany={activeProfile?.type === "COMPANY"}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
             />
           </div>
 
@@ -728,13 +842,13 @@ export default function MessagingPage() {
                 : "hidden md:flex flex-col flex-1 h-full overflow-hidden bg-[#FFFFFF] rounded-[24px]"
             }`}
           >
-            {selectedChat ? (
-              selectedChat.isGroup ? (
-                <GroupChatProvider groupId={selectedChat.id}>
+            {activeChat ? (
+              (activeChat.isGroup && !activeChat.is_requesting) ? (
+                <GroupChatProvider groupId={activeChat.id}>
                   <GroupChat
-                    groupId={selectedChat.id}
+                    groupId={activeChat.id}
                     currentUser={user || UNKNOWN_USER}
-                    unreadCount={selectedChat.unread}
+                    unreadCount={activeChat.unread}
                     onBack={() => {
                       setSelectedChat(null);
                       processedUserIdRef.current = null;
@@ -744,12 +858,15 @@ export default function MessagingPage() {
                 </GroupChatProvider>
               ) : (
                 <ChatWindow
-                  chat={selectedChat}
+                  chat={activeChat}
                   isMobile={!!isMobile}
                   onBack={() => {
                     setSelectedChat(null);
                     processedUserIdRef.current = null;
                     router.push("/messaging");
+                  }}
+                  onAcceptSuccess={() => {
+                    setActiveTab('chat');
                   }}
                 />
               )

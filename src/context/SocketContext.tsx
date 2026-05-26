@@ -6,7 +6,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { NotificationPayload, UserStatusPayload } from '@/types/socket';
+import { NotificationPayload, UserStatusPayload, TypingPayload } from '@/types/socket';
 import Avatar from '@/components/shared/Avatar';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -29,6 +29,7 @@ interface SocketContextType {
   isUserOnline: (userId: string) => boolean;
   activeConversationId: string | null;
   setActiveConversationId: (id: string | null) => void;
+  typingConversations: Record<string, string | null>;
 }
 
 const SocketContext = createContext<SocketContextType>({
@@ -37,7 +38,8 @@ const SocketContext = createContext<SocketContextType>({
   onlineUsers: new Set(),
   isUserOnline: () => false,
   activeConversationId: null,
-  setActiveConversationId: () => { }
+  setActiveConversationId: () => { },
+  typingConversations: {}
 });
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
@@ -54,6 +56,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
 
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [typingConversations, setTypingConversations] = useState<Record<string, string | null>>({});
 
   // Ref to track the current token to prevent checking equality against a changing dependency causing loops
   const tokenRef = useRef<string | null>(null);
@@ -307,8 +310,29 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       });
     };
 
+    const handleTyping = (payload: TypingPayload) => {
+      if (payload.conversationId && payload.senderId !== session?.user?.id) {
+        setTypingConversations(prev => ({
+          ...prev,
+          [payload.conversationId]: payload.username || "Someone"
+        }));
+      }
+    };
+
+    const handleStopTyping = (payload: TypingPayload) => {
+      if (payload.conversationId) {
+        setTypingConversations(prev => {
+          const next = { ...prev };
+          delete next[payload.conversationId];
+          return next;
+        });
+      }
+    };
+
     newSocket.on('notification', handleNotification);
     newSocket.on('userStatusChanged', handleUserStatus);
+    newSocket.on('isTyping', handleTyping);
+    newSocket.on('stoppedTyping', handleStopTyping);
 
     socketRef.current = newSocket;
     queueMicrotask(() => {
@@ -327,7 +351,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       console.log("Socket cleanup triggered for token:", token.substring(0, 10) + "...");
       newSocket.off('notification', handleNotification);
       newSocket.off('userStatusChanged', handleUserStatus);
+      newSocket.off('isTyping', handleTyping);
+      newSocket.off('stoppedTyping', handleStopTyping);
       newSocket.disconnect();
+      setTypingConversations({});
     };
   }, [session?.user?.accessToken, session?.user?.error, toast, router]);
 
@@ -339,8 +366,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     onlineUsers,
     isUserOnline: isUserOnlineMemo,
     activeConversationId,
-    setActiveConversationId
-  }), [socket, isConnected, onlineUsers, isUserOnlineMemo, activeConversationId]);
+    setActiveConversationId,
+    typingConversations
+  }), [socket, isConnected, onlineUsers, isUserOnlineMemo, activeConversationId, typingConversations]);
 
   return (
     <SocketContext.Provider value={contextValue}>

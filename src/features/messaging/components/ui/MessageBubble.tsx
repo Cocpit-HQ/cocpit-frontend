@@ -785,9 +785,17 @@ function MessageBubble(props: MessageBubbleProps) {
             showTime ? (
               /* Sent message: tick icon LEFT of time, both right-aligned below bubble */
               <div className="flex flex-row items-center justify-end gap-[8px] mt-[4px]">
-                {message.read_at ? (
+                {isGroup ? (
+                  (message.active_member_count !== undefined && message.seen_count !== undefined && message.active_member_count > 0 && message.seen_count >= message.active_member_count) ? (
+                    <Icon icon="mdi:check-all" className="w-[14px] h-[14px] text-[#6366F1]" />
+                  ) : (message.active_member_count !== undefined && message.delivered_count !== undefined && message.active_member_count > 0 && message.delivered_count >= message.active_member_count) ? (
+                    <Icon icon="mdi:check-all" className="w-[14px] h-[14px] text-[#6B7280]" />
+                  ) : (
+                    <Icon icon="mdi:check" className="w-[14px] h-[14px] text-[#6B7280]" />
+                  )
+                ) : message.read_at ? (
                   <Icon icon="mdi:check-all" className="w-[14px] h-[14px] text-[#6366F1]" />
-                ) : (isOpponentOnline || isGroup) ? (
+                ) : isOpponentOnline ? (
                   <Icon icon="mdi:check-all" className="w-[14px] h-[14px] text-[#6B7280]" />
                 ) : (
                   <Icon icon="mdi:check" className="w-[14px] h-[14px] text-[#6B7280]" />
