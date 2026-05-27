@@ -95,6 +95,7 @@ const CreatePostFooter = ({
           {getButtonText()}
         </button>
       </div>
+
       
       {isBroadcast && !isEdit && (
         <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider text-center sm:text-right animate-pulse">
