@@ -16,7 +16,8 @@ import { EntityPreviewCard } from "../../EntityPreviewCard"
 import Avatar from "@/components/shared/Avatar"
 import { Icon } from "@iconify/react"
 import RepliedMessageBox from "../RepliedMessageBox"
-import EmojiPicker, { EmojiClickData } from "emoji-picker-react"
+import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react"
+import { useTheme } from "next-themes"
 import { ReactionListPopup } from "../ReactionListPopup"
 import { createPortal } from "react-dom"
 
@@ -109,7 +110,7 @@ const MessageMenu = ({ message, onAction }: { message: Message, onAction?: (acti
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="p-1 hover:bg-[#EEF2FF] rounded-full transition-colors text-muted-foreground">
+        <button className="p-1 hover:bg-[var(--primary-tint)] rounded-full transition-colors text-muted-foreground">
           <MoreVertical className="w-4 h-4" />
         </button>
       </DropdownMenuTrigger>
@@ -269,7 +270,7 @@ const MessageMedia = ({ message, isMediaOnly, onMediaClick, onMediaLoad }: { mes
             ) : (
               // Image message — Figma spec: 300x242, bg #EEF2FF, border-radius 12px 12px 12px 0
               <div
-                className="flex flex-col items-start p-0 gap-[10px] w-[300px] bg-[#EEF2FF] rounded-[12px_12px_12px_0px] overflow-hidden flex-none order-0 cursor-pointer"
+                className="flex flex-col items-start p-0 gap-[10px] w-[300px] bg-[var(--primary-tint)] rounded-[12px_12px_12px_0px] overflow-hidden flex-none order-0 cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation()
                   onMediaClick?.(item.url, 'image', `Image-${index + 1}`)
@@ -327,7 +328,7 @@ const MessageText = ({
             <span 
               className={cn(
                 "hover:underline cursor-pointer font-bold font-['Poppins'] font-medium text-[12px]",
-                isMe ? "text-white" : "text-[#6366F1]"
+                isMe ? "text-[var(--primary-foreground)]" : "text-[var(--primary)]"
               )}
             >
               @{username}
@@ -345,7 +346,7 @@ const MessageText = ({
             <span 
               className={cn(
                 "hover:underline cursor-pointer font-['Poppins'] font-medium text-[12px]",
-                isMe ? "text-white" : "text-[#6366F1]"
+                isMe ? "text-[var(--primary-foreground)]" : "text-[var(--primary)]"
               )}
             >
               {part}
@@ -375,7 +376,7 @@ const MessageText = ({
           <span 
             className={cn(
               "font-['Poppins'] font-normal text-[12px] cursor-pointer ml-[4px] inline underline-offset-2 hover:underline", 
-              isMe ? "text-black" : "text-[#6366F1]"
+              isMe ? "text-[var(--primary-foreground)]" : "text-[var(--primary)]"
             )} 
             onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}
           >
@@ -386,7 +387,7 @@ const MessageText = ({
           <span 
             className={cn(
               "font-['Poppins'] font-normal text-[12px] cursor-pointer ml-[4px] inline underline-offset-2 hover:underline", 
-              isMe ? "text-black" : "text-[#6366F1]"
+              isMe ? "text-[var(--primary-foreground)]" : "text-[var(--primary)]"
             )} 
             onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
           >
@@ -432,6 +433,9 @@ const MessageEditor = ({
 // --- Main Component ---
 
 function MessageBubble(props: MessageBubbleProps) {
+  const { theme, resolvedTheme } = useTheme()
+  const isDarkTheme = resolvedTheme === "dark" || theme === "dark" || theme === "navy"
+
   const {
     message,
     onAction,
@@ -475,14 +479,14 @@ function MessageBubble(props: MessageBubbleProps) {
 
     if (message.repliedMessage && message.repliedMessage.senderName) {
       return isMe
-        ? "box-border flex flex-col justify-center items-start bg-[#6366F1] text-[#FFFFFF] rounded-[12px_12px_0px_12px] shadow-sm gap-[10px] w-full"
-        : "box-border flex flex-col justify-center items-start bg-[#EEF2FF] text-[#000000] rounded-[12px_12px_12px_0px] gap-[10px] w-full"
+        ? "box-border flex flex-col justify-center items-start bg-[var(--primary)] text-[var(--primary-foreground)] rounded-[12px_12px_0px_12px] shadow-sm gap-[10px] w-full"
+        : "box-border flex flex-col justify-center items-start bg-[var(--primary-tint)] text-[var(--foreground)] rounded-[12px_12px_12px_0px] gap-[10px] w-full"
     }
 
     // Standard message styling
     const baseClasses = isMe
-      ? "bg-[#6366F1] text-[#FFFFFF] rounded-[12px_12px_0px_12px] shadow-sm"
-      : "bg-[#EEF2FF] text-[#000000] rounded-[12px_12px_12px_0px]"
+      ? "bg-[var(--primary)] text-[var(--primary-foreground)] rounded-[12px_12px_0px_12px] shadow-sm"
+      : "bg-[var(--primary-tint)] text-[var(--foreground)] rounded-[12px_12px_12px_0px]"
 
     const mediaOnlyClasses = "bg-transparent rounded-[12px] overflow-hidden"
 
@@ -623,7 +627,7 @@ function MessageBubble(props: MessageBubbleProps) {
           (message.is_deleted_for_everyone || message.is_deleted_for_me) ? "cursor-default" : "",
           (isHighlighted || isSelected) ? "duration-300" : "duration-1000"
         )}
-        style={{ backgroundColor: (isHighlighted || isSelected) ? '#eef2ffb9' : 'transparent' }}
+        style={{ backgroundColor: (isHighlighted || isSelected) ? 'var(--primary-tint)' : 'transparent' }}
         onClick={() => !message.is_deleted_for_everyone && !message.is_deleted_for_me && onMessageClick?.(message)}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -639,7 +643,7 @@ function MessageBubble(props: MessageBubbleProps) {
             {isMe && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
               <div className={cn("flex flex-row items-center gap-[8px] bg-transparent opacity-0 transition-opacity px-2 shrink-0 z-20 relative", (isSelected || showMobileActions) ? "opacity-100 flex md:group-hover/message:opacity-100" : "group-hover/message:opacity-100 hidden md:flex")}>
                 <button 
-                  className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative" 
+                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative" 
                   onClick={handleEmojiButtonClick}
                   onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                   onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
@@ -647,7 +651,7 @@ function MessageBubble(props: MessageBubbleProps) {
                   <Smile className="w-[20px] h-[20px]" />
                 </button>
                 <button 
-                  className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative" 
+                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative" 
                   onClick={(e) => { e.stopPropagation(); onReply?.(message); }}
                   onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                   onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
@@ -666,7 +670,7 @@ function MessageBubble(props: MessageBubbleProps) {
                     : "text-[14px] leading-[20px]",
                   paddingClasses,
                   getBubbleClasses(),
-                  (isSelected || showMobileActions) && "ring-2 ring-[#6366F1] ring-offset-1 ring-offset-background"
+                  (isSelected || showMobileActions) && "ring-2 ring-[var(--primary)] ring-offset-1 ring-offset-background"
                 )}
               >
                 {isEditing ? (
@@ -726,14 +730,14 @@ function MessageBubble(props: MessageBubbleProps) {
                 <button
                   onClick={handleReactionBadgeClick}
                   className={cn(
-                    "absolute flex flex-row items-center justify-center gap-[4px] px-[6px] bg-white border border-[#EEF2FF] rounded-[24px] shadow-sm cursor-pointer hover:scale-105 transition-all z-10",
+                    "absolute flex flex-row items-center justify-center gap-[4px] px-[6px] bg-[var(--background)] border border-[var(--border)] rounded-[24px] shadow-sm cursor-pointer hover:scale-105 transition-all z-10",
                     isMe ? "-left-[12px] -bottom-[12px]" : "-right-[12px] -bottom-[12px]"
                   )}
                   style={{ minWidth: '32px', height: '24px', boxSizing: 'border-box' }}
                 >
                   <span className="text-[14px] leading-[1]">{displayReaction.emoji}</span>
                   {validReactions.length > 1 && (
-                    <span className="font-['Poppins'] font-medium text-[11px] text-[#374151]">
+                    <span className="font-['Poppins'] font-medium text-[11px] text-[var(--muted-foreground)]">
                       {validReactions.length}
                     </span>
                   )}
@@ -745,7 +749,7 @@ function MessageBubble(props: MessageBubbleProps) {
             {!isMe && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
               <div className={cn("flex flex-row items-center gap-[8px] bg-transparent opacity-0 transition-opacity px-2 shrink-0 z-20 relative", (isSelected || showMobileActions) ? "opacity-100 flex md:group-hover/message:opacity-100" : "group-hover/message:opacity-100 hidden md:flex")}>
                 <button 
-                  className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative" 
+                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative" 
                   onClick={handleEmojiButtonClick}
                   onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                   onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
@@ -753,7 +757,7 @@ function MessageBubble(props: MessageBubbleProps) {
                   <Smile className="w-[20px] h-[20px]" />
                 </button>
                 <button 
-                  className="text-[#6B7280] hover:text-[#000000] p-1 z-50 relative" 
+                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative" 
                   onClick={(e) => { e.stopPropagation(); onReply?.(message); }}
                   onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                   onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
@@ -776,7 +780,7 @@ function MessageBubble(props: MessageBubbleProps) {
                     <div className="w-[24px] h-[24px]" />
                   )}
                 </div>
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280]">
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[var(--muted-foreground)]">
                   {message.time}
                 </span>
               </div>
@@ -787,20 +791,20 @@ function MessageBubble(props: MessageBubbleProps) {
               <div className="flex flex-row items-center justify-end gap-[8px] mt-[4px]">
                 {isGroup ? (
                   (message.active_member_count !== undefined && message.seen_count !== undefined && message.active_member_count > 0 && message.seen_count >= message.active_member_count) ? (
-                    <Icon icon="mdi:check-all" className="w-[14px] h-[14px] text-[#6366F1]" />
+                    <Icon icon="mdi:check-all" className="w-[14px] h-[14px] text-[var(--primary)]" />
                   ) : (message.active_member_count !== undefined && message.delivered_count !== undefined && message.active_member_count > 0 && message.delivered_count >= message.active_member_count) ? (
-                    <Icon icon="mdi:check-all" className="w-[14px] h-[14px] text-[#6B7280]" />
+                    <Icon icon="mdi:check-all" className="w-[14px] h-[14px] text-[var(--muted-foreground)]" />
                   ) : (
-                    <Icon icon="mdi:check" className="w-[14px] h-[14px] text-[#6B7280]" />
+                    <Icon icon="mdi:check" className="w-[14px] h-[14px] text-[var(--muted-foreground)]" />
                   )
                 ) : message.read_at ? (
-                  <Icon icon="mdi:check-all" className="w-[14px] h-[14px] text-[#6366F1]" />
+                  <Icon icon="mdi:check-all" className="w-[14px] h-[14px] text-[var(--primary)]" />
                 ) : isOpponentOnline ? (
-                  <Icon icon="mdi:check-all" className="w-[14px] h-[14px] text-[#6B7280]" />
+                  <Icon icon="mdi:check-all" className="w-[14px] h-[14px] text-[var(--muted-foreground)]" />
                 ) : (
-                  <Icon icon="mdi:check" className="w-[14px] h-[14px] text-[#6B7280]" />
+                  <Icon icon="mdi:check" className="w-[14px] h-[14px] text-[var(--muted-foreground)]" />
                 )}
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280]">
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[var(--muted-foreground)]">
                   {message.time}
                 </span>
               </div>
@@ -827,6 +831,7 @@ function MessageBubble(props: MessageBubbleProps) {
               width={310} 
               height={340} 
               previewConfig={{ showPreview: false }} 
+              theme={isDarkTheme ? Theme.DARK : Theme.LIGHT}
             />
           </div>
         </>,

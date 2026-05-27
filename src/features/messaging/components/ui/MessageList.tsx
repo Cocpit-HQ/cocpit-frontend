@@ -228,11 +228,11 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
               )}
               {isFirstUnread && (
                 <div className="flex items-center justify-center my-6 px-4 md:px-8 w-full">
-                  <div className="h-[1px] bg-[#4F46E5]/40 flex-1" />
-                  <span className="text-[11px] font-bold text-[#4F46E5] mx-4 shrink-0 bg-[#4F46E5]/10 px-3 py-1 rounded-full">
+                  <div className="h-[1px] bg-[var(--primary)]/40 flex-1" />
+                  <span className="text-[11px] font-bold text-[var(--primary)] mx-4 shrink-0 bg-[var(--primary)]/10 px-3 py-1 rounded-full">
                     {initialUnread} Unread message{initialUnread !== 1 ? 's' : ''}
                   </span>
-                  <div className="h-[1px] bg-[#4F46E5]/40 flex-1" />
+                  <div className="h-[1px] bg-[var(--primary)]/40 flex-1" />
                 </div>
               )}
               <MessageBubble

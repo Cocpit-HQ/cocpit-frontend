@@ -229,14 +229,14 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
 
     // FIX 1 & SECTION: Group Info Panel View
     const renderInfoPanel = () => (
-        <div className="flex flex-col h-full bg-white animate-in slide-in-from-right duration-300">
+        <div className="flex flex-col h-full bg-[var(--card)] animate-in slide-in-from-right duration-300">
             {/* FIX 1 — BACK BUTTON */}
             <div className="p-[24px] pb-0 flex items-center">
                 <button
                     onClick={() => onClose('chat')}
-                    className="flex flex-row justify-center items-center p-2 gap-[10px] w-12 h-12 border border-[#DADADA] backdrop-blur-sm rounded-[100px] shrink-0 transition-colors hover:bg-[#EEF2FF]"
+                    className="flex flex-row justify-center items-center p-2 gap-[10px] w-12 h-12 border border-[var(--border)] backdrop-blur-sm rounded-[100px] shrink-0 transition-colors hover:bg-[var(--primary-tint)]"
                 >
-                    <ChevronLeft className="w-6 h-6 text-[#6B7280]" style={{ strokeWidth: 1.5 }} />
+                    <ChevronLeft className="w-6 h-6 text-[var(--muted-foreground)]" style={{ strokeWidth: 1.5 }} />
                 </button>
             </div>
 
@@ -256,17 +256,17 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                 </div>
 
                 {/* 2. GROUP NAME */}
-                <span className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-[#000000] flex items-center justify-center  h-[26px] mt-[8px]">
+                <span className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-[var(--foreground)] flex items-center justify-center  h-[26px] mt-[8px]">
                     {activeGroup.conversation_name}
                 </span>
 
                 {/* 3. HEADLINE ROW */}
                 <div className="flex flex-row items-center justify-center mt-[8px]">
-                    <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex items-center  h-[16px]">
+                    <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[var(--muted-foreground)] flex items-center  h-[16px]">
                         {activeGroup.group_headline || ""}
                     </span>
-                    <span className="w-[6px] h-[6px] rounded-full bg-[#6B7280] mx-[8px]" />
-                    <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex items-center w-[68px] h-[16px]">
+                    <span className="w-[6px] h-[6px] rounded-full bg-[var(--muted-foreground)] mx-[8px]" />
+                    <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[var(--muted-foreground)] flex items-center w-[68px] h-[16px]">
                         {activeGroup.members.length} Members
                     </span>
                 </div>
@@ -276,7 +276,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                     <div className="flex justify-center mt-[12px] mb-[28px]">
                         <button
                             onClick={() => setActiveView('edit')}
-                            className="w-[16.75px] h-[16.75px] flex items-center justify-center text-[#818CF8]"
+                            className="w-[16.75px] h-[16.75px] flex items-center justify-center text-[var(--primary-tint-foreground)]"
                         >
                             <Icon icon="lucide:pencil" className="w-full h-full" />
                         </button>
@@ -285,17 +285,17 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
 
                 {/* 5. MEMBER LIST + ADD MEMBER BUTTON ROW */}
                 <div className="flex flex-row items-center justify-between mt-[28px] mb-[12px]">
-                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000] w-[89px] h-[20px] text-center">
+                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)] w-[89px] h-[20px] text-center">
                         Members list
                     </span>
                     {isAdmin && (
                         <button
                             onClick={onAddMember}
-                            className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[167px] h-[40px] bg-white border border-[#818CF8] rounded-[24px] hover:bg-[#EEF2FF] transition-colors"
+                            className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[167px] h-[40px] bg-[var(--card)] border border-[var(--primary-tint-foreground)] rounded-[24px] hover:bg-[var(--primary-tint)] transition-colors"
                         >
-                            <Plus className="w-4 h-4 text-[#818CF8]" style={{ strokeWidth: 1.5 }} />
+                            <Plus className="w-4 h-4 text-[var(--primary-tint-foreground)]" style={{ strokeWidth: 1.5 }} />
                             <span
-                                className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#818CF8]"
+                                className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[var(--primary-tint-foreground)]"
                                 style={{ width: '101px' }}
                             >
                                 Add members
@@ -309,7 +309,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     <style>{`div::-webkit-scrollbar { display: none; }`}</style>
                     {visibleMembers.map((member) => (
-                        <div key={member.user_id} className="flex flex-row justify-between items-center py-[8px] gap-[8px] w-full h-[56px] bg-white rounded-[24px]">
+                        <div key={member.user_id} className="flex flex-row justify-between items-center py-[8px] gap-[8px] w-full h-[56px] bg-[var(--card)] rounded-[24px]">
                             {/* Left: Avatar */}
                             <div className={cn(
                                 "w-[32px] h-[32px] rounded-full overflow-hidden bg-muted shrink-0 self-stretch",
@@ -329,19 +329,19 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                                 "flex flex-col flex-1 ml-[8px]",
                                 member.isPending && "opacity-25 blur-[1.5px]"
                             )}>
-                                <span className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-[#000000] flex items-center">
+                                <span className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-[var(--foreground)] flex items-center">
                                     {member.user_id === currentUserId ? "You" : member.full_name}
                                 </span>
                                 <div className="flex flex-row items-center">
                                     {member.headline != '' && (
-                                        <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex items-center mr-[8px]">
+                                        <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[var(--muted-foreground)] flex items-center mr-[8px]">
                                             {member.headline || "Member"}
                                         </span>
                                     )}
                                     {member.role === 'admin' && (
                                         <>
-                                            <span className="w-[6px] h-[6px] rounded-full bg-[#6366F1] mr-[8px]" />
-                                            <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] flex items-center  h-[16px]">
+                                            <span className="w-[6px] h-[6px] rounded-full bg-[var(--primary)] mr-[8px]" />
+                                            <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[var(--primary)] flex items-center  h-[16px]">
                                                 Admin
                                             </span>
                                         </>
@@ -357,12 +357,12 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                                             icon="mdi-light:dots-vertical"
                                             width={24}
                                             height={24}
-                                            style={{ color: isDropdownOpen ? '#6366F1' : '#000000' }}
+                                            style={{ color: isDropdownOpen ? 'var(--primary)' : 'var(--foreground)' }}
                                         />
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent
                                         align="end"
-                                        className="w-[220px] p-[8px] mr-4  bg-white border border-[#C7D2FE]"
+                                        className="w-[220px] p-[8px] mr-4  bg-[var(--card)] border border-[var(--border)]"
                                         style={{ borderRadius: '24px 0px 24px 24px' }}
                                     >
                                         {member.isPending ? (
@@ -374,50 +374,50 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                                                         toast({ title: "Error", description: "Invitation ID not found", variant: "destructive" });
                                                     }
                                                 }}
-                                                className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#FFF0F0] rounded-md transition-colors"
+                                                className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
                                             >
-                                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#FF6B6B]">Cancel invitation</span>
-                                                <Trash2 className="w-[19px] h-[20px] text-[#FF6B6B]" strokeWidth={1} />
+                                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Cancel invitation</span>
+                                                <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
                                             </DropdownMenuItem>
                                         ) : member.user_id === currentUserId ? (
                                             <DropdownMenuItem
                                                 onClick={() => setShowLeaveConfirm(true)}
-                                                className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#FFF0F0] rounded-md transition-colors"
+                                                className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
                                             >
-                                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#FF6B6B]">Leave group</span>
-                                                <Trash2 className="w-[19px] h-[20px] text-[#FF6B6B]" strokeWidth={1} />
+                                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Leave group</span>
+                                                <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
                                             </DropdownMenuItem>
                                         ) : (
                                             <>
                                                 {member.role !== 'admin' ? (
-                                                    <DropdownMenuItem onClick={() => setUserToMakeAdmin(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors">
-                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Make admin</span>
-                                                        <Icon icon="material-symbols:admin-panel-settings-outline" width={24} height={24} color="#000000" />
+                                                    <DropdownMenuItem onClick={() => setUserToMakeAdmin(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Make admin</span>
+                                                        <Icon icon="material-symbols:admin-panel-settings-outline" width={24} height={24} color="var(--foreground)" />
                                                     </DropdownMenuItem>
                                                 ) : (
-                                                    <DropdownMenuItem onClick={() => setUserToDemote(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors">
-                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Dismiss as admin</span>
-                                                        <Icon icon="solar:shield-minus-linear" width={24} height={24} color="#000000" />
+                                                    <DropdownMenuItem onClick={() => setUserToDemote(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Dismiss as admin</span>
+                                                        <Icon icon="solar:shield-minus-linear" width={24} height={24} color="var(--foreground)" />
                                                     </DropdownMenuItem>
                                                 )}
-                                                <DropdownMenuItem className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors">
-                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Share profile</span>
-                                                    <Icon icon="fluent:share-16-regular" width={24} height={24} color="#000000" />
+                                                <DropdownMenuItem className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Share profile</span>
+                                                    <Icon icon="fluent:share-16-regular" width={24} height={24} color="var(--foreground)" />
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => setUserToReport(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors">
-                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Report profile</span>
-                                                    <Info className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
+                                                <DropdownMenuItem onClick={() => setUserToReport(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Report profile</span>
+                                                    <Info className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => setUserToBlock(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors">
-                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Block profile</span>
-                                                    <Ban className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1} />
+                                                <DropdownMenuItem onClick={() => setUserToBlock(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Block profile</span>
+                                                    <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1} />
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     onClick={() => setUserToRemove(member.user_id)}
-                                                    className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#FFF0F0] rounded-md transition-colors"
+                                                    className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
                                                 >
-                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#FF6B6B]">Remove</span>
-                                                    <Trash2 className="w-[19px] h-[20px] text-[#FF6B6B]" strokeWidth={1} />
+                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Remove</span>
+                                                    <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
                                                 </DropdownMenuItem>
                                             </>
                                         )}
@@ -435,24 +435,24 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                             onClick={() => setShowLeaveConfirm(true)}
                             className="bg-transparent border-none outline-none cursor-pointer"
                         >
-                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-left text-[#FF6B6B] h-[20px]">
+                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-left text-[var(--destructive)] h-[20px]">
                                 Leave group
                             </span>
                         </button>
                         {isAdmin ? (
                             <button
                                 onClick={() => setShowDeleteConfirm(true)}
-                                className="bg-transparent border-none outline-none cursor-pointer p-1 hover:bg-[#FFF0F0] rounded transition-colors"
+                                className="bg-transparent border-none outline-none cursor-pointer p-1 hover:bg-[var(--destructive)]/10 rounded transition-colors"
                                 title="Delete group"
                             >
-                                <Trash2 className="w-[19px] h-[20px] text-[#FF6B6B]" strokeWidth={1} />
+                                <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
                             </button>
                         ) : (
                             <button
                                 onClick={() => setShowLeaveConfirm(true)}
                                 className="bg-transparent border-none outline-none cursor-pointer"
                             >
-                                <Trash2 className="w-[19px] h-[20px] text-[#FF6B6B]" strokeWidth={1} />
+                                <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
                             </button>
                         )}
                     </div>
@@ -463,14 +463,14 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
 
     // Section 2: Edit Group Profile Form
     const renderEditForm = () => (
-        <div className="flex flex-col h-full bg-white animate-in slide-in-from-right duration-300 overflow-y-auto scrollbar-hide">
+        <div className="flex flex-col h-full bg-[var(--card)] animate-in slide-in-from-right duration-300 overflow-y-auto scrollbar-hide">
             {/* FIX 1 — BACK BUTTON */}
             <div className="p-[24px] pb-0 flex items-center">
                 <button
                     onClick={() => onClose('info')}
-                    className="flex flex-row justify-center items-center p-2 gap-[10px] w-12 h-12 border border-[#DADADA] backdrop-blur-sm rounded-[100px] shrink-0 transition-colors hover:bg-[#EEF2FF]"
+                    className="flex flex-row justify-center items-center p-2 gap-[10px] w-12 h-12 border border-[var(--border)] backdrop-blur-sm rounded-[100px] shrink-0 transition-colors hover:bg-[var(--primary-tint)]"
                 >
-                    <ChevronLeft className="w-6 h-6 text-[#6B7280]" style={{ strokeWidth: 1.5 }} />
+                    <ChevronLeft className="w-6 h-6 text-[var(--muted-foreground)]" style={{ strokeWidth: 1.5 }} />
                 </button>
             </div>
 
@@ -483,7 +483,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                         showCircle={true}
                         trigger={
                             <div className="relative group cursor-pointer">
-                                <div className="w-[100px] h-[100px] rounded-full overflow-hidden bg-muted border-4 border-white">
+                                <div className="w-[100px] h-[100px] rounded-full overflow-hidden bg-muted border-4 border-[var(--card)]">
                                     {editData.avatar ? (
                                         <Image src={editData.avatar} alt="Preview" width={100} height={100} className="object-cover w-full h-full" />
                                     ) : (
@@ -498,7 +498,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                             </div>
                         }
                     />
-                    <p className="font-['Poppins'] font-normal text-[14px] leading-[16px] text-center text-[#000000] mt-3">
+                    <p className="font-['Poppins'] font-normal text-[14px] leading-[16px] text-center text-[var(--foreground)] mt-3">
                         Profile image
                     </p>
                 </div>
@@ -506,18 +506,18 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                 <div className="flex flex-col gap-[8px] pb-[8px]">
                     {/* Group Name */}
                     <div className="flex flex-col items-start gap-[8px] w-full h-auto min-h-[76px]">
-                        <Label htmlFor="group-name" className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000] w-[89px] h-[20px]">
+                        <Label htmlFor="group-name" className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)] w-[89px] h-[20px]">
                             Group name
                         </Label>
                         <Input
                             id="group-name"
                             value={editData.name}
                             onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                            className="flex flex-row items-center px-[16px] py-[8px] gap-[10px] w-full h-[48px] bg-white/8 border border-[#DDE3EA] backdrop-blur-sm rounded-[16px] focus:ring-[#6366F1] focus:border-[#6366F1] transition-all self-stretch"
+                            className="flex flex-row items-center px-[16px] py-[8px] gap-[10px] w-full h-[48px] bg-[var(--input)] border border-[var(--border)] text-[var(--foreground)] backdrop-blur-sm rounded-[16px] focus:ring-[var(--primary)] focus:border-[var(--primary)] transition-all self-stretch"
                             placeholder="Enter group name"
                         />
                         {formErrors.name && (
-                            <p className="text-red-500 text-[12px] font-['Poppins'] font-normal mt-[4px]">
+                            <p className="text-[var(--destructive)] text-[12px] font-['Poppins'] font-normal mt-[4px]">
                                 {formErrors.name}
                             </p>
                         )}
@@ -525,20 +525,20 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
 
                     {/* Group Headline */}
                     <div className="flex flex-col items-start gap-[8px] w-full h-auto min-h-[76px]">
-                        <Label htmlFor="group-headline" className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000] w-[109px] h-[20px]">
+                        <Label htmlFor="group-headline" className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)] w-[109px] h-[20px]">
                             Group headline
                         </Label>
                         <Input
                             id="group-headline"
                             value={editData.headline}
                             onChange={(e) => setEditData({ ...editData, headline: e.target.value })}
-                            className="flex flex-row items-center px-[16px] py-[8px] gap-[10px] w-full h-[48px] bg-white/8 border border-[#DDE3EA] backdrop-blur-sm rounded-[16px] focus:ring-[#6366F1] focus:border-[#6366F1] transition-all self-stretch"
+                            className="flex flex-row items-center px-[16px] py-[8px] gap-[10px] w-full h-[48px] bg-[var(--input)] border border-[var(--border)] text-[var(--foreground)] backdrop-blur-sm rounded-[16px] focus:ring-[var(--primary)] focus:border-[var(--primary)] transition-all self-stretch"
                             placeholder="Enter group headline"
                         />
                         <div className="w-full flex flex-row justify-between items-start">
                             <div className="flex-1">
                                 {formErrors.headline && (
-                                    <p className="text-red-500 text-[10px] ml-1 font-['Poppins'] font-normal ">
+                                    <p className="text-[var(--destructive)] text-[10px] ml-1 font-['Poppins'] font-normal ">
                                         {formErrors.headline}
                                     </p>
                                 )}
@@ -548,14 +548,14 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
 
                     {/* Group Description */}
                     <div className="flex flex-col items-start gap-[8px] w-full h-[76px]">
-                        <Label htmlFor="group-description" className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000] w-[126px] h-[20px]">
+                        <Label htmlFor="group-description" className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)] w-[126px] h-[20px]">
                             Group description
                         </Label>
                         <Input
                             id="group-description"
                             value={editData.description}
                             onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                            className="flex flex-row items-center px-[16px] py-[8px] gap-[10px] w-full h-[48px] bg-white/8 border border-[#DDE3EA] backdrop-blur-sm rounded-[16px] focus:ring-[#6366F1] focus:border-[#6366F1] transition-all self-stretch"
+                            className="flex flex-row items-center px-[16px] py-[8px] gap-[10px] w-full h-[48px] bg-[var(--input)] border border-[var(--border)] text-[var(--foreground)] backdrop-blur-sm rounded-[16px] focus:ring-[var(--primary)] focus:border-[var(--primary)] transition-all self-stretch"
                             placeholder="Enter group description..."
                         />
                     </div>
@@ -563,9 +563,9 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                 <div className="flex flex-row items-center justify-center gap-[10px] mt-[8px]">
                     <button
                         onClick={() => setShowDiscardConfirm(true)}
-                        className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[146px] h-[40px] bg-white border border-[#818CF8] rounded-[24px] hover:bg-[#EEF2FF] transition-colors"
+                        className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[146px] h-[40px] bg-[var(--card)] border border-[var(--primary-tint-foreground)] rounded-[24px] hover:bg-[var(--primary-tint)] transition-colors"
                     >
-                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#818CF8] w-[54px] h-[20px]">
+                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[var(--primary-tint-foreground)] w-[54px] h-[20px]">
                             Discard
                         </span>
                     </button>
@@ -575,8 +575,8 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                         disabled={!hasChanges || !editData.name?.trim()}
                         className={
                             hasChanges && editData.name?.trim()
-                                ? "box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[146px] h-[40px] bg-[#6366F1] border border-[#FFFFFF] rounded-[24px] cursor-pointer font-['Poppins'] font-medium text-[14px] text-[#FFFFFF]"
-                                : "box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[146px] h-[40px] bg-[#C7D2FE] border border-[#FFFFFF] rounded-[24px] cursor-not-allowed font-['Poppins'] font-medium text-[14px] text-[#FFFFFF]"
+                                ? "box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[146px] h-[40px] bg-[var(--primary)] border border-[var(--primary-foreground)] rounded-[24px] cursor-pointer font-['Poppins'] font-medium text-[14px] text-[var(--primary-foreground)]"
+                                : "box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[146px] h-[40px] bg-[var(--border)] border border-[var(--primary-foreground)]/30 rounded-[24px] cursor-not-allowed font-['Poppins'] font-medium text-[14px] text-[var(--muted-foreground)]"
                         }
                     >
                         <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white w-[35px] h-[20px]">

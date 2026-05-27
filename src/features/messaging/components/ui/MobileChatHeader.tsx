@@ -146,7 +146,7 @@ export default function MobileChatHeader({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-[204px] p-[8px] mr-4 bg-white border border-[#C7D2FE]"
+                className="w-[204px] p-[8px] mr-4 bg-[var(--popover)] border border-[var(--border)]"
                 style={{ borderRadius: '24px 0px 24px 24px' }}
               >
                 {chat.isGroup ? (
@@ -154,36 +154,36 @@ export default function MobileChatHeader({
                     {chat.is_muted ? (
                       <DropdownMenuItem
                         onClick={onUnmuteClick}
-                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors border-none outline-none"
+                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
                       >
-                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Unmute group</span>
-                        <Icon icon="fluent:speaker-2-16-regular" width={24} height={24} color="#000000" />
+                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Unmute group</span>
+                        <Icon icon="fluent:speaker-2-16-regular" width={24} height={24} color="var(--foreground)" />
                       </DropdownMenuItem>
                     ) : (
                       <DropdownMenuItem
                         onClick={onMuteClick}
-                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors border-none outline-none"
+                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
                       >
-                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Mute group</span>
-                        <Icon icon="fluent:speaker-mute-16-regular" width={24} height={24} color="#000000" />
+                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Mute group</span>
+                        <Icon icon="fluent:speaker-mute-16-regular" width={24} height={24} color="var(--foreground)" />
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuItem
                       onClick={onLeaveClick}
-                      className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#FFF0F0] rounded-md transition-colors border-none outline-none"
+                      className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors border-none outline-none"
                     >
-                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#FF6B6B]">Leave group</span>
-                      <Icon icon="fluent:door-arrow-left-16-regular" width={24} height={24} color="#FF6B6B" />
+                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Leave group</span>
+                      <Icon icon="fluent:door-arrow-left-16-regular" width={24} height={24} color="var(--destructive)" />
                     </DropdownMenuItem>
                   </>
                 ) : (
                   <>
                     <DropdownMenuItem
                       onClick={onDeleteClick}
-                      className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#FFF0F0] rounded-md transition-colors border-none outline-none"
+                      className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors border-none outline-none"
                     >
-                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#FF6B6B]">Delete chat</span>
-                      <Icon icon="fluent:delete-16-regular" width={24} height={24} color="#FF6B6B" />
+                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Delete chat</span>
+                      <Icon icon="fluent:delete-16-regular" width={24} height={24} color="var(--destructive)" />
                     </DropdownMenuItem>
                   </>
                 )}

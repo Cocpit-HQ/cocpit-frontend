@@ -107,7 +107,7 @@ export function Mention({ username, isMe, children }: MentionProps) {
                 <h4 className="text-[15px] font-semibold text-foreground truncate leading-tight">
                   {userData.full_name}
                 </h4>
-                <p className="text-xs text-[#818cf8] font-medium truncate mt-0.5">
+                <p className="text-xs text-[var(--primary-tint-foreground)] font-medium truncate mt-0.5">
                   @{userData.account_name}
                 </p>
                 {userData.headline && (

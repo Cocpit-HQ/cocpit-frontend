@@ -16,19 +16,19 @@ export default function ReplyPreview({ replyingTo, onCancel }: ReplyPreviewProps
     : replyingTo.content;
 
   return (
-    <div className="flex flex-col gap-[4px] w-full relative px-[16px] py-[12px] bg-[#F4F5FA] rounded-[16px] mb-1.5">
+    <div className="flex flex-col gap-[4px] w-full relative px-[16px] py-[12px] bg-[var(--primary-tint)] border border-[var(--border)] rounded-[16px] mb-1.5">
       <div className="flex justify-between items-center w-full">
-        <span className="font-['Poppins'] font-semibold text-[13px] text-[#000000]">
+        <span className="font-['Poppins'] font-semibold text-[13px] text-[var(--foreground)]">
           Reply to {replyingTo.senderName}
         </span>
         <button
           onClick={onCancel}
-          className="text-[#000000] hover:bg-black/5 p-1 rounded-full transition-colors"
+          className="text-[var(--foreground)] hover:bg-[var(--border)]/30 p-1 rounded-full transition-colors"
         >
           <X className="w-[18px] h-[18px]" strokeWidth={2} />
         </button>
       </div>
-      <div className="font-['Poppins'] font-normal text-[13px] text-[#000000] break-words">
+      <div className="font-['Poppins'] font-normal text-[13px] text-[var(--muted-foreground)] break-words">
         {truncatedContent}
       </div>
     </div>

@@ -135,7 +135,8 @@ export const GroupChatProvider: React.FC<{ groupId?: string; children: React.Rea
         socket.on('removed_from_group', (payload: any) => {
             if (payload.groupId === groupId) {
                 queryClient.invalidateQueries({ queryKey: ['conversations'] });
-                // No redirect, stay to show history
+                queryClient.invalidateQueries({ queryKey: ['group-details', groupId] });
+                refetch();
             }
         });
 

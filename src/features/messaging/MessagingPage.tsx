@@ -832,7 +832,7 @@ export default function MessagingPage() {
       className="h-full w-full bg-background flex flex-col"
       style={{ height: isMobile ? "100dvh" : "calc(100vh - 64px)" }}
     >
-      <div className="flex-1 w-full h-full bg-[#FAFAFA] dark:bg-background overflow-hidden p-4">
+      <div className="flex-1 w-full h-full bg-[var(--background)] dark:bg-background overflow-hidden p-4">
         <div className="flex w-full h-full gap-4">
           {/* Chat List - on mobile, hidden if we have a selected chat */}
           <div
@@ -867,8 +867,8 @@ export default function MessagingPage() {
           <div
             className={`${
               isMobile && selectedChat
-                ? "fixed inset-0 z-50 bg-[#FFFFFF] w-full h-[100dvh] flex flex-col"
-                : "hidden md:flex flex-col flex-1 h-full overflow-hidden bg-[#FFFFFF] rounded-[24px]"
+                ? "fixed inset-0 z-50 bg-[var(--card)] w-full h-[100dvh] flex flex-col"
+                : "hidden md:flex flex-col flex-1 h-full overflow-hidden bg-[var(--card)] rounded-[24px]"
             }`}
           >
             {activeChat ? (

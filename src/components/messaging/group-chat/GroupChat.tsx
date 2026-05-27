@@ -44,6 +44,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
     const [messageToDelete, setMessageToDelete] = useState<Message | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [previewMedia, setPreviewMedia] = useState<{ url: string, type: 'image' | 'video' | 'document', name?: string } | null>(null);
+    const [leaveAction, setLeaveAction] = useState<'left' | 'removed' | null>(null);
 
     const handleMediaClick = (url: string, type: 'image' | 'video' | 'document', name?: string) => {
         setPreviewMedia({ url, type, name });
@@ -266,11 +267,26 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
             queryClient.invalidateQueries({ queryKey: ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'] });
         };
 
+        const handleMemberLeft = (payload: any) => {
+            const myId = currentUser.id || currentUser.user_id;
+            if (payload.groupId === groupId && String(payload.userId) === String(myId)) {
+                setLeaveAction(payload.action_type || 'left');
+            }
+        };
+
+        const handleRemovedFromGroup = (payload: any) => {
+            if (payload.groupId === groupId) {
+                setLeaveAction(payload.action_type || 'removed');
+            }
+        };
+
         socket.on('new_message', handleNewMessage);
         socket.on('isTyping', handleTyping);
         socket.on('stoppedTyping', handleStopTyping);
         socket.on('message_deleted_for_me', handleMessageDeletedForMe);
         socket.on('message_deleted_for_everyone', handleMessageDeletedForEveryone);
+        socket.on('memberLeft', handleMemberLeft);
+        socket.on('removed_from_group', handleRemovedFromGroup);
 
         return () => {
             socket.off('new_message', handleNewMessage);
@@ -278,6 +294,8 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
             socket.off('stoppedTyping', handleStopTyping);
             socket.off('message_deleted_for_me', handleMessageDeletedForMe);
             socket.off('message_deleted_for_everyone', handleMessageDeletedForEveryone);
+            socket.off('memberLeft', handleMemberLeft);
+            socket.off('removed_from_group', handleRemovedFromGroup);
             setActiveConversationId(null);
         };
     }, [socket, groupId, queryClient, currentUser.id, currentUser.user_id, setActiveConversationId]);
@@ -399,6 +417,34 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
         markRead();
 
     }, [groupId, displayMessages.length, queryClient, isInactive]);
+
+    useEffect(() => {
+        if (!isInactive) {
+            setLeaveAction(null);
+        }
+    }, [isInactive]);
+
+    useEffect(() => {
+        if (!activeGroup) return;
+
+        if (isInactive && !leaveAction && displayMessages.length > 0) {
+            const myId = currentUser.id || currentUser.user_id;
+            const systemMsg = [...displayMessages].reverse().find(m => 
+                m.type === 'system' && 
+                (m.action_type === 'leave' || m.action_type === 'remove') &&
+                (String(m.target_id) === String(myId) || String(m.senderId) === String(myId))
+            );
+            if (systemMsg) {
+                if (systemMsg.action_type === 'leave') {
+                    setLeaveAction('left');
+                } else if (systemMsg.action_type === 'remove') {
+                    setLeaveAction('removed');
+                }
+            } else {
+                setLeaveAction('left');
+            }
+        }
+    }, [activeGroup, isInactive, displayMessages, currentUser, leaveAction]);
 
     const handleSendMessage = React.useCallback((text: string, files: File[]) => {
         // Stop typing immediately when sending
@@ -531,8 +577,17 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack 
                 />
             ) : (
                 <div className="p-4 border-t border-border bg-card/50 backdrop-blur-sm text-center text-muted-foreground text-sm flex flex-col items-center gap-1">
-                    <p className="font-medium text-foreground">You left this group</p>
-                    <p className="text-xs opacity-70">You can delete this chat from your list in group info.</p>
+                    {leaveAction === 'removed' ? (
+                        <>
+                            <p className="font-medium text-foreground">You were removed from this group</p>
+                            <p className="text-xs opacity-70">You can delete this chat from your list in group info.</p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="font-medium text-foreground">You left this group</p>
+                            <p className="text-xs opacity-70">You can delete this chat from your list in group info.</p>
+                        </>
+                    )}
                 </div>
             )}
 

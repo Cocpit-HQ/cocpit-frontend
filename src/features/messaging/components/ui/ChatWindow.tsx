@@ -61,11 +61,11 @@ function ChatHeaderMenu({ selectedMessage, onMessageAction, currentUserId }: { s
       <div className="flex items-center gap-3">
         <button
           onClick={() => onMessageAction('close')}
-          className="p-1 hover:bg-[#EEF2FF] rounded-full transition-colors"
+          className="p-1 hover:bg-[var(--primary-tint)] rounded-full transition-colors"
         >
-          <X className="h-6 w-6 text-[#000000]" />
+          <X className="h-6 w-6 text-[var(--foreground)]" />
         </button>
-        <div className="font-['Poppins'] font-medium text-[16px] text-[#000000]">1 Selected</div>
+        <div className="font-['Poppins'] font-medium text-[16px] text-[var(--foreground)]">1 Selected</div>
       </div>
       <div className="flex items-center gap-1">
         <DropdownMenu onOpenChange={setIsOpen}>
@@ -75,46 +75,46 @@ function ChatHeaderMenu({ selectedMessage, onMessageAction, currentUserId }: { s
                 icon="mdi-light:dots-vertical"
                 width={24}
                 height={24}
-                style={{ color: isOpen ? '#6366F1' : '#000000' }}
+                style={{ color: isOpen ? 'var(--primary)' : 'var(--foreground)' }}
               />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-[204px] p-[8px] mr-4 bg-white border border-[#C7D2FE]"
+            className="w-[204px] p-[8px] mr-4 bg-[var(--popover)] border border-[var(--border)]"
             style={{ borderRadius: '24px 0px 24px 24px' }}
           >
             {isMyMessage && (
               <DropdownMenuItem
                 onClick={() => onMessageAction('edit')}
-                className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors border-none outline-none"
+                className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
               >
-                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Edit</span>
-                <Icon icon="fluent:edit-16-regular" width={24} height={24} color="#000000" />
+                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Edit</span>
+                <Icon icon="fluent:edit-16-regular" width={24} height={24} color="var(--foreground)" />
               </DropdownMenuItem>
             )}
             {isMyMessage && (
               <DropdownMenuItem
                 onClick={() => onMessageAction('delete')}
-                className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#FFF0F0] rounded-md transition-colors border-none outline-none"
+                className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors border-none outline-none"
               >
-                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#FF6B6B]">Delete</span>
-                <Icon icon="fluent:delete-16-regular" width={24} height={24} color="#FF6B6B" />
+                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Delete</span>
+                <Icon icon="fluent:delete-16-regular" width={24} height={24} color="var(--destructive)" />
               </DropdownMenuItem>
             )}
             <DropdownMenuItem
               onClick={() => onMessageAction('info')}
-              className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors border-none outline-none"
+              className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
             >
-              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Info</span>
-              <Icon icon="fluent:info-16-regular" width={24} height={24} color="#000000" />
+              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Info</span>
+              <Icon icon="fluent:info-16-regular" width={24} height={24} color="var(--foreground)" />
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onMessageAction('copy')}
-              className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors border-none outline-none"
+              className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
             >
-              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Copy</span>
-              <Icon icon="fluent:copy-16-regular" width={24} height={24} color="#000000" />
+              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Copy</span>
+              <Icon icon="fluent:copy-16-regular" width={24} height={24} color="var(--foreground)" />
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -813,44 +813,6 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
     }
   });
 
-  const handleMessageAction = (action: string) => {
-    if (!selectedMessage) return;
-
-    if (action === 'info') {
-      setIsMessageInfoOpen(true);
-    } else if (action === 'copy') {
-      navigator.clipboard.writeText(selectedMessage.text || selectedMessage.text_content || "");
-      setSelectedMessage(null);
-      setIsMessageSelected(false);
-    } else if (action === 'edit') {
-      setEditingMessageId(selectedMessage.id);
-      setSelectedMessage(null);
-      setIsMessageSelected(false);
-    } else if (action === 'delete') {
-      // If action comes from bubble menu, 'selectedMessage' might not be set or might be different.
-      // But here handleMessageAction is for header menu usually.
-      // Wait, MessageList calls onAction too. We need to handle passed message if possible or rely on selected.
-      // The shared handleMessageAction uses selectedMessage for context.
-      // If called from bubble, we might need a separate handler or update this one.
-
-      // Since MessageBubble passes the message in onAction('delete', message), we need to update signature of handleMessageAction?
-      // No, looking at MessageBubble: onAction('delete', message).
-      // Looking at MessageList, it passes (action, message) => onAction(action, message).
-      // So handleMessageAction needs to accept message?
-      // In ChatWindow line 432: const handleMessageAction = (action: string) => { ... }
-      // It DOES NOT accept message. It uses 'selectedMessage' state.
-
-      // ISSUE: MessageBubble actions pass the message, but ChatWindow handler ignores it.
-      // We must update ChatWindow handler to accept optional message.
-      setMessageToDelete(selectedMessage);
-      setIsDeleteModalOpen(true);
-      setSelectedMessage(null);
-    } else if (action === 'close') {
-      setSelectedMessage(null);
-      setIsMessageSelected(false);
-    }
-  };
-
   // Improved handler to support direct action from bubble
   const handleMessageActionWithMsg = (action: string, message?: Message) => {
     const targetMsg = message || selectedMessage;
@@ -877,12 +839,6 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
       }
     } else if (action === 'info') {
       if (targetMsg) {
-        // setSelectedMessage(targetMsg); // Maybe needed?
-        // setIsMessageInfoOpen(true);
-        // For info modal, we rely on selectedMessage being set? 
-        // If clicked from bubble, we might need to set it first.
-
-        // Current impl relies on selectedMessage for 'info'.
         if (selectedMessage?.id !== targetMsg.id) setSelectedMessage(targetMsg);
         setIsMessageInfoOpen(true);
       }
@@ -895,6 +851,11 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   const handleSaveEdit = (messageId: string, text: string) => {
     editMessageMutation.mutate({ messageId, text });
   };
+
+  const handleClearSelection = () => {
+    setSelectedMessage(null);
+    setIsMessageSelected(false);
+  }
 
   // ---- Reaction Logic ----
   const currentUserId = activeProfile?.type === 'COMPANY' ? activeProfile.id : (session?.user?.id || '');
@@ -1016,7 +977,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   }, [groupMembers, chat.id, chat.isGroup]);
 
   return (
-    <div className={`flex flex-col h-full ${isMobile ? "h-dvh bg-background" : ""}`}>
+    <div className={`flex flex-col h-full ${isMobile ? "h-dvh bg-[var(--background)]" : ""}`}>
       {isMobile ? (
         <MobileChatHeader
           chat={chat}
@@ -1030,7 +991,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
           onLeaveClick={() => setShowLeaveConfirm(true)}
         />
       ) : (
-        <div className="px-[16px] py-[12px] border-b border-[#EEF2FF] flex items-center justify-between bg-[#FFFFFF] shrink-0">
+        <div className="px-[16px] py-[12px] border-b border-[var(--border)] flex items-center justify-between bg-[var(--card)] shrink-0">
           {!isMessageSelected || !selectedMessage ? (
             <>
               {/* LEFT: Avatar + Text Group */}
@@ -1041,10 +1002,10 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                       <Avatar url={chat.avatar} name={chat.name} size="md" />
                     </div>
                     <div className="flex flex-col items-start p-0 min-w-0">
-                      <h2 className="font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-[#000000] w-full">
+                      <h2 className="font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-[var(--foreground)] w-full">
                         <span className="truncate">{chat.name}</span>
                       </h2>
-                      <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] w-full">
+                      <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[var(--muted-foreground)] w-full">
                         <span className="truncate">{chat.role || "Group Chat"}</span>
                       </p>
                     </div>
@@ -1062,19 +1023,19 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                         href={chat.otherUserType === 'COMPANY' ? `/organization/${chat.otherUserSlug || chat.otherUserId}` : `/profile/${chat.otherUserSlug || chat.otherUserId}`}
                         className="hover:opacity-80 transition-opacity w-full"
                       >
-                        <h2 className="font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-[#000000] w-full">
+                        <h2 className="font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-[var(--foreground)] w-full">
                           <span className="truncate">{chat.name}</span>
                         </h2>
                       </Link>
-                      <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] w-full">
+                      <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[var(--muted-foreground)] w-full">
                         {chat.role ? (
                           <>
                             <span className="truncate">{chat.role}</span>
                             {(typingDisplayString || chat.online) && (
                               <>
-                                <span className="w-[6px] h-[6px] rounded-full bg-[#22C55E] flex-none mr-[8px]" />
+                                <span className="w-[6px] h-[6px] rounded-full bg-[#22C55E] flex-none mx-[8px]" />
                                 <span
-                                  style={{ color: typingDisplayString ? '#000000' : '#22C55E' }}
+                                  style={{ color: typingDisplayString ? 'var(--foreground)' : '#22C55E' }}
                                 >
                                   {typingDisplayString ? "Typing..." : "Active now"}
                                 </span>
@@ -1084,9 +1045,9 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                         ) : (
                           (typingDisplayString || chat.online) ? (
                             <>
-                              <span className="w-[6px] h-[6px] rounded-full bg-[#22C55E] flex-none mr-[8px]" />
+                              <span className="w-[6px] h-[6px] rounded-full bg-[#22C55E] flex-none mx-[8px]" />
                               <span
-                                style={{ color: typingDisplayString ? '#000000' : '#22C55E' }}
+                                style={{ color: typingDisplayString ? 'var(--foreground)' : '#22C55E' }}
                               >
                                 {typingDisplayString ? "Typing..." : "Active now"}
                               </span>
@@ -1109,52 +1070,52 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                       icon="mdi-light:dots-vertical"
                       width={24}
                       height={24}
-                      style={{ color: isDropdownOpen ? '#6366F1' : '#000000' }}
+                      style={{ color: isDropdownOpen ? 'var(--primary)' : 'var(--foreground)' }}
                     />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="w-[204px] p-[8px] mr-4 bg-white border border-[#C7D2FE]"
+                    className="w-[204px] p-[8px] mr-4 bg-[var(--popover)] border border-[var(--border)]"
                     style={{ borderRadius: '24px 0px 24px 24px' }}>
                     {chat.isGroup ? (
                       <>
-                        <DropdownMenuItem className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors">
-                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Share profile</span>
-                          <Icon icon="fluent:share-16-regular" width={24} height={24} color="#000000" />
+                        <DropdownMenuItem className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Share profile</span>
+                          <Icon icon="fluent:share-16-regular" width={24} height={24} color="var(--foreground)" />
                         </DropdownMenuItem>
                         {chat.is_muted ? (
-                          <DropdownMenuItem onClick={() => setShowUnmuteConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors">
-                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Unmute group</span>
-                            <Icon icon="fluent:speaker-2-16-regular" width={24} height={24} color="#000000" />
+                          <DropdownMenuItem onClick={() => setShowUnmuteConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Unmute group</span>
+                            <Icon icon="fluent:speaker-2-16-regular" width={24} height={24} color="var(--foreground)" />
                           </DropdownMenuItem>
                         ) : (
-                          <DropdownMenuItem onClick={() => setShowMuteConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors">
-                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Mute group</span>
-                            <Icon icon="fluent:speaker-mute-16-regular" width={24} height={24} color="#000000" />
+                          <DropdownMenuItem onClick={() => setShowMuteConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Mute group</span>
+                            <Icon icon="fluent:speaker-mute-16-regular" width={24} height={24} color="var(--foreground)" />
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => setShowLeaveConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#FFF0F0] rounded-md transition-colors">
-                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#FF6B6B]">Leave group</span>
-                          <Icon icon="fluent:door-arrow-left-16-regular" width={24} height={24} color="#FF6B6B" />
+                        <DropdownMenuItem onClick={() => setShowLeaveConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors">
+                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Leave group</span>
+                          <Icon icon="fluent:door-arrow-left-16-regular" width={24} height={24} color="var(--destructive)" />
                         </DropdownMenuItem>
                       </>
                     ) : (
                       <>
-                        <DropdownMenuItem className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors">
-                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Share profile</span>
-                          <Icon icon="fluent:share-16-regular" width={24} height={24} color="#000000" />
+                        <DropdownMenuItem className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Share profile</span>
+                          <Icon icon="fluent:share-16-regular" width={24} height={24} color="var(--foreground)" />
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setShowReportConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors">
-                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Report profile</span>
-                          <InfoIcon className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
+                        <DropdownMenuItem onClick={() => setShowReportConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Report profile</span>
+                          <InfoIcon className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setShowBlockConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors">
-                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Block profile</span>
-                          <Ban className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
+                        <DropdownMenuItem onClick={() => setShowBlockConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Block profile</span>
+                          <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#FFF0F0] rounded-md transition-colors">
-                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#FF6B6B]">Delete Chat</span>
-                          <Trash2 className="w-[24px] h-[24px] text-[#FF6B6B]" strokeWidth={1} />
+                        <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors">
+                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Delete Chat</span>
+                          <Trash2 className="w-[24px] h-[24px] text-[var(--destructive)]" strokeWidth={1} />
                         </DropdownMenuItem>
                       </>
                     )}
@@ -1257,17 +1218,17 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
             <div className="flex flex-row justify-end items-center gap-[16px] mt-[10px] px-4 md:px-6 mb-2">
               <button
                 onClick={handleDeclineRequest}
-                className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[142px] h-[40px] bg-[#FFFFFF] border border-[#818CF8] rounded-[24px] flex-none order-0 cursor-pointer"
+                className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[142px] h-[40px] bg-[var(--card)] border border-[var(--primary)] rounded-[24px] flex-none order-0 cursor-pointer"
               >
-                <span className="w-[102px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#818CF8] whitespace-nowrap">
+                <span className="w-[102px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[var(--primary-tint-foreground)] whitespace-nowrap">
                   Decline request
                 </span>
               </button>
               <button
                 onClick={handleAcceptRequest}
-                className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[142px] h-[40px] bg-[#6366F1] border border-[#FFFFFF] rounded-[24px] flex-none order-1 cursor-pointer"
+                className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[142px] h-[40px] bg-[var(--primary)] border border-[var(--primary-foreground)] rounded-[24px] flex-none order-1 cursor-pointer"
               >
-                <span className="w-[107px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#FFFFFF] whitespace-nowrap">
+                <span className="w-[107px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[var(--primary-foreground)] whitespace-nowrap">
                   Accept request
                 </span>
               </button>

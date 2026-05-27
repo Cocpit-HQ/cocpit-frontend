@@ -66,11 +66,11 @@ export const CocpitConfirmBox: React.FC<CocpitConfirmBoxProps> = ({
           }}
         >
           <div className="flex flex-col items-center justify-center mb-8">
-            <span className="text-[14px] font-normal text-black font-[family-name:var(--font-poppins)] mb-2 leading-[20px] text-center">
+            <span className="text-[14px] font-normal text-[var(--foreground)] font-[family-name:var(--font-poppins)] mb-2 leading-[20px] text-center">
               {title}
             </span>
             {message && (
-              <span className="text-[12px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] leading-[16px] text-center px-4 max-w-[268px] mx-auto">
+              <span className="text-[12px] text-[var(--muted-foreground)] font-normal font-[family-name:var(--font-poppins)] leading-[16px] text-center px-4 max-w-[268px] mx-auto">
                 {message}
               </span>
             )}
@@ -83,7 +83,7 @@ export const CocpitConfirmBox: React.FC<CocpitConfirmBoxProps> = ({
                 e.stopPropagation();
                 onCancel();
               }}
-              className="flex-1 h-[48px] rounded-full border border-[#6366F1] text-[#6366F1] bg-transparent hover:bg-transparent hover:text-[#6366F1] font-semibold text-[15px] font-[family-name:var(--font-poppins)] shadow-none transition-colors"
+              className="flex-1 h-[48px] rounded-full border border-[var(--primary)] text-[var(--primary)] bg-transparent hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] font-semibold text-[15px] font-[family-name:var(--font-poppins)] shadow-none transition-colors"
             >
               {cancelText}
             </button>
@@ -93,7 +93,7 @@ export const CocpitConfirmBox: React.FC<CocpitConfirmBoxProps> = ({
                 e.stopPropagation();
                 onConfirm();
               }}
-              className="flex-1 h-[48px] rounded-full bg-[#FF6B6B] hover:opacity-90 text-white font-semibold text-[15px] font-[family-name:var(--font-poppins)] border-none shadow-sm transition-all"
+              className="flex-1 h-[48px] rounded-full bg-[var(--destructive)] hover:opacity-90 text-[var(--destructive-foreground)] font-semibold text-[15px] font-[family-name:var(--font-poppins)] border-none shadow-sm transition-all"
             >
               {confirmText}
             </button>

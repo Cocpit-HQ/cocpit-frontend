@@ -60,17 +60,17 @@ export default function GroupHeader({
     const memberCount = activeGroup.members.length;
 
     return (
-        <div className={`flex items-center justify-between border-b border-border bg-white shrink-0 h-[72px] ${isMobile ? "px-3" : "px-6"}`}>
+        <div className={`flex items-center justify-between border-b border-border bg-[var(--card)] shrink-0 h-[72px] ${isMobile ? "px-3" : "px-6"}`}>
             {isMessageSelected && selectedMessage ? (
                 <>
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => onMessageAction?.('close')}
-                            className="p-1 hover:bg-[#EEF2FF] rounded-full transition-colors"
+                            className="p-1 hover:bg-[var(--primary-tint)] rounded-full transition-colors"
                         >
-                            <Icon icon="mdi:close" className="h-6 w-6 text-[#000000]" />
+                            <Icon icon="mdi:close" className="h-6 w-6 text-[var(--foreground)]" />
                         </button>
-                        <div className="font-['Poppins'] font-medium text-[16px] text-[#000000]">1 Selected</div>
+                        <div className="font-['Poppins'] font-medium text-[16px] text-[var(--foreground)]">1 Selected</div>
                     </div>
                     <div className="flex items-center gap-1">
                         <DropdownMenu onOpenChange={setIsDropdownOpen}>
@@ -80,46 +80,46 @@ export default function GroupHeader({
                                         icon="mdi-light:dots-vertical"
                                         width={24}
                                         height={24}
-                                        style={{ color: isDropdownOpen ? '#6366F1' : '#000000' }}
+                                        style={{ color: isDropdownOpen ? 'var(--primary)' : 'var(--foreground)' }}
                                     />
                                 </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
                                 align="end"
-                                className="w-[204px] p-[8px] mr-4 bg-white border border-[#C7D2FE]"
+                                className="w-[204px] p-[8px] mr-4 bg-[var(--card)] border border-[var(--border)]"
                                 style={{ borderRadius: '24px 0px 24px 24px' }}
                             >
                                 {((selectedMessage.sender === 'me' || selectedMessage.senderId === currentUserId || selectedMessage.senderId === 'me')) && (
                                     <DropdownMenuItem
                                         onClick={() => onMessageAction?.('edit')}
-                                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors border-none outline-none"
+                                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
                                     >
-                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Edit</span>
-                                        <Icon icon="fluent:edit-16-regular" width={24} height={24} color="#000000" />
+                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Edit</span>
+                                        <Icon icon="fluent:edit-16-regular" width={24} height={24} color="var(--foreground)" />
                                     </DropdownMenuItem>
                                 )}
                                 {((selectedMessage.sender === 'me' || selectedMessage.senderId === currentUserId || selectedMessage.senderId === 'me')) && (
                                     <DropdownMenuItem
                                         onClick={() => onMessageAction?.('delete')}
-                                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#FFF0F0] rounded-md transition-colors border-none outline-none"
+                                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors border-none outline-none"
                                     >
-                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#FF6B6B]">Delete</span>
-                                        <Icon icon="fluent:delete-16-regular" width={24} height={24} color="#FF6B6B" />
+                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Delete</span>
+                                        <Icon icon="fluent:delete-16-regular" width={24} height={24} color="var(--destructive)" />
                                     </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem
                                     onClick={() => onMessageAction?.('info')}
-                                    className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors border-none outline-none"
+                                    className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
                                 >
-                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Info</span>
-                                    <Icon icon="fluent:info-16-regular" width={24} height={24} color="#000000" />
+                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Info</span>
+                                    <Icon icon="fluent:info-16-regular" width={24} height={24} color="var(--foreground)" />
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     onClick={() => onMessageAction?.('copy')}
-                                    className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors border-none outline-none"
+                                    className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors border-none outline-none"
                                 >
-                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#000000]">Copy</span>
-                                    <Icon icon="fluent:copy-16-regular" width={24} height={24} color="#000000" />
+                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Copy</span>
+                                    <Icon icon="fluent:copy-16-regular" width={24} height={24} color="var(--foreground)" />
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -134,7 +134,7 @@ export default function GroupHeader({
                                     e.stopPropagation();
                                     onBack();
                                 }}
-                                className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-[#EEF2FF] text-muted-foreground hover:text-foreground shrink-0"
+                                className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-[var(--primary-tint)] text-muted-foreground hover:text-foreground shrink-0"
                             >
                                 <ArrowLeft className="w-5 h-5" />
                             </button>
@@ -156,7 +156,7 @@ export default function GroupHeader({
                                 )}
                             </div>
                             <div className="min-w-0 flex flex-col justify-center flex-1">
-                                <h2 className="font-medium text-[16px] leading-[24px] text-[#000000] truncate" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                                <h2 className="font-medium text-[16px] leading-[24px] text-[var(--foreground)] truncate" style={{ fontFamily: "'Poppins', sans-serif" }}>
                                     {activeGroup.conversation_name}
                                 </h2>
                                 {typingStatus ? (
@@ -166,12 +166,12 @@ export default function GroupHeader({
                                 ) : (
                                     <div className="flex items-center gap-0 min-w-0">
                                         {activeGroup.group_headline && (
-                                            <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] truncate">
+                                            <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[var(--muted-foreground)] truncate">
                                                 {activeGroup.group_headline}
                                             </span>
                                         )}
-                                        <span className="w-[6px] h-[6px] rounded-full bg-[#6B7280] mx-2 shrink-0" />
-                                        <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] shrink-0">
+                                        <span className="w-[6px] h-[6px] rounded-full bg-[var(--muted-foreground)] mx-2 shrink-0" />
+                                        <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[var(--muted-foreground)] shrink-0">
                                             {memberCount} Members
                                         </span>
                                     </div>
@@ -187,18 +187,18 @@ export default function GroupHeader({
                                     icon="mdi-light:dots-vertical"
                                     width={24}
                                     height={24}
-                                    style={{ color: isDropdownOpen ? '#6366F1' : '#000000' }}
+                                    style={{ color: isDropdownOpen ? 'var(--primary)' : 'var(--foreground)' }}
                                 />
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
                             align="end"
-                            className=" p-[8px] mr-4  bg-white border border-[#C7D2FE]"
+                            className=" p-[8px] mr-4  bg-[var(--card)] border border-[var(--border)]"
                             style={{ borderRadius: '24px 0px 24px 24px' }}>
                             {isMuted ? (
                                 <DropdownMenuItem
                                     onClick={() => setShowUnmuteConfirm(true)}
-                                    className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors"
+                                    className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors"
                                 >
                                     <span className="text-sm font-normal">Unmute Group</span>
                                     <Bell className="w-4 h-4" />
@@ -206,7 +206,7 @@ export default function GroupHeader({
                             ) : (
                                 <DropdownMenuItem
                                     onClick={() => setShowMuteConfirm(true)}
-                                    className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] rounded-md transition-colors"
+                                    className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors"
                                 >
                                     <span className="text-sm font-normal">Mute Group</span>
                                     <BellOff className="w-4 h-4" />
@@ -214,7 +214,7 @@ export default function GroupHeader({
                             )}
                             <DropdownMenuItem
                                 onClick={onLeaveGroup}
-                                className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] text-red-500 focus:text-red-500 rounded-md transition-colors"
+                                className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[var(--primary-tint)] text-[var(--destructive)] focus:text-[var(--destructive)] rounded-md transition-colors"
                             >
                                 <span className="text-sm font-normal">Leave Group</span>
                                 <LogOut className="w-4 h-4" />
