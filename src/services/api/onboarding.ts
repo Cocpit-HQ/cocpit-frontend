@@ -111,8 +111,13 @@ export const updateOnboardingProfile = async (formData: FormData): Promise<any> 
 };
 
 export interface UpdateOnboardingLocationPayload {
-  location_id: string;
-  location: string;
+  country: string;
+  state: string | null;
+  city: string;
+  formattedAddress: string;
+  latitude: number | null;
+  longitude: number | null;
+  placeId: string;
 }
 
 export const updateOnboardingLocation = async (payload: UpdateOnboardingLocationPayload): Promise<any> => {

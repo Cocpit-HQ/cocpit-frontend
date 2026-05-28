@@ -1194,10 +1194,19 @@ export default function AddExperienceForm({
             <div className="flex flex-col">
               <Label className={labelStyles}>Location</Label>
               <LocationAutocomplete
+                mode="places"
                 value={location}
-                onSelect={(val) =>
-                  setLocation(val?.name || val || "")
-                }
+                onSelect={(val) => {
+                  if (!val) {
+                    setLocation("");
+                  } else if (typeof val === 'string') {
+                    setLocation(val);
+                  } else if ('formattedAddress' in val) {
+                    setLocation(val.formattedAddress);
+                  } else {
+                    setLocation(val.name || "");
+                  }
+                }}
               />
             </div>
           </div>

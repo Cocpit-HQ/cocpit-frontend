@@ -91,6 +91,19 @@ export interface UserData {
   connection_request_sender?: 'me' | 'them' | null;
   company_roles?: CompanyRole[];
   version: number;
+  onboarding_step?: string | null;
+  // Structured location fields (populated during onboarding, used for state rehydration)
+  location_formatted?: string | null;
+  location_country?: string | null;
+  location_state?: string | null;
+  location_city?: string | null;
+  location_lat?: number | null;
+  location_lng?: number | null;
+  location_place_id?: string | null;
+  // Role and skills (used for onboarding state rehydration on refresh)
+  user_role?: string | null;
+  skill_names?: string[];
+  interest_names?: string[];
 }
 
 export interface UpdateProfilePayload {

@@ -946,9 +946,27 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                 )}
               </div>
             </div>
-            {/* ...Location input remains unchanged... */}
+            <div className="flex flex-col">
+              <Label className={labelStyles}>Location</Label>
+              <LocationAutocomplete
+                mode="places"
+                value={formData.location}
+                onSelect={(val) => {
+                  let locStr = "";
+                  if (!val) {
+                    locStr = "";
+                  } else if (typeof val === 'string') {
+                    locStr = val;
+                  } else if ('formattedAddress' in val) {
+                    locStr = val.formattedAddress;
+                  } else {
+                    locStr = val.name || "";
+                  }
+                  setFormData(prev => ({ ...prev, location: locStr }));
+                }}
+              />
+            </div>
           </div>
-
           {/* Start Date */}
           <div className="space-y-2">
             <Label className={labelStyles}>Start date</Label>

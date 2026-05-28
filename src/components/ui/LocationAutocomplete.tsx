@@ -2,23 +2,30 @@
 
 import { useState, useRef, useEffect } from "react";
 import { MapPin, Loader2, X, ChevronDown } from "lucide-react";
-import { searchLocations, LocationSuggestion } from "@/services/api/location";
+import { searchLocations, LocationSuggestion, searchPlaces, PlacesSuggestion, getPlaceDetails, StructuredLocation } from "@/services/api/location";
 import { useDebounce } from "@/hooks/use-debounce";
+import { v4 as uuidv4 } from "uuid";
 import styles from "./LocationAutocomplete.module.css";
 
 interface LocationAutocompleteProps {
-  onSelect: (location: any) => void;
+  onSelect: (location: LocationSuggestion | StructuredLocation | null) => void;
   value: string | null;
+  mode?: "legacy" | "places";
 }
 
-export default function LocationAutocomplete({ onSelect, value }: LocationAutocompleteProps) {
+export default function LocationAutocomplete({ onSelect, value, mode = "places" }: LocationAutocompleteProps) {
   const [query, setQuery] = useState(value ?? "");
-  const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<(LocationSuggestion | PlacesSuggestion)[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const debouncedQuery = useDebounce(query, 300);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const sessionToken = useRef<string>(uuidv4());
+
+  const resetSession = () => {
+    sessionToken.current = uuidv4();
+  };
 
   // Sync external value if it changes
   useEffect(() => {
@@ -39,7 +46,12 @@ export default function LocationAutocomplete({ onSelect, value }: LocationAutoco
     const fetch = async () => {
       setLoading(true);
       try {
-        const results = await searchLocations(debouncedQuery);
+        let results;
+        if (mode === "legacy") {
+          results = await searchLocations(debouncedQuery);
+        } else {
+          results = await searchPlaces(debouncedQuery, sessionToken.current);
+        }
         setSuggestions(results);
         setOpen(results.length > 0);
       } catch {
@@ -66,11 +78,26 @@ export default function LocationAutocomplete({ onSelect, value }: LocationAutoco
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [value]);
 
-  const handleSelect = (loc: LocationSuggestion) => {
-    onSelect(loc);
-    setQuery(loc.name);
-    setSuggestions([]);
-    setOpen(false);
+  const handleSelect = async (loc: LocationSuggestion | PlacesSuggestion) => {
+    if (mode === "legacy") {
+      onSelect(loc as LocationSuggestion);
+      setQuery((loc as LocationSuggestion).name);
+      setSuggestions([]);
+      setOpen(false);
+    } else {
+      setLoading(true);
+      const details = await getPlaceDetails((loc as PlacesSuggestion).placeId, sessionToken.current);
+      resetSession();
+      if (details) {
+        onSelect(details);
+        setQuery(details.formattedAddress);
+      } else {
+        onSelect(null);
+      }
+      setSuggestions([]);
+      setOpen(false);
+      setLoading(false);
+    }
   };
 
   const handleClear = () => {
@@ -82,7 +109,7 @@ export default function LocationAutocomplete({ onSelect, value }: LocationAutoco
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
-    if (value) onSelect(""); // Clear selection when user starts re-typing
+    if (value) onSelect(null); // Clear selection when user starts re-typing
   };
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -135,10 +162,10 @@ export default function LocationAutocomplete({ onSelect, value }: LocationAutoco
 
       {open && suggestions.length > 0 && (
         <ul className={styles.dropdown}>
-          {suggestions.map((loc) => (
-            <li key={loc.id} className={styles.item} onMouseDown={() => handleSelect(loc)}>
+          {suggestions.map((loc: any) => (
+            <li key={loc.id || loc.placeId} className={styles.item} onMouseDown={() => handleSelect(loc)}>
               <MapPin className={styles.itemIcon} />
-              <span>{loc.name}</span>
+              <span>{loc.name || loc.description}</span>
             </li>
           ))}
         </ul>

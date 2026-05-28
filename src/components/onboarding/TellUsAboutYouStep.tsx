@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Loader2, ChevronLeft } from "lucide-react";
 import LocationAutocomplete from "@/components/ui/LocationAutocomplete";
-import { LocationSuggestion } from "@/services/api/location";
+import { LocationSuggestion, StructuredLocation } from "@/services/api/location";
 import { updateOnboardingLocation } from "@/services/api/onboarding";
 import { useToast } from "@/hooks/use-toast";
 import { useOnboardingStore } from "@/store/onboarding.store";
@@ -18,26 +18,28 @@ interface TellUsAboutYouStepProps {
 }
 
 export default function TellUsAboutYouStep({ onNext, onBack, currentStep, totalSteps }: TellUsAboutYouStepProps) {
-  const { locationId, locationName, latitude, longitude, setLocation } = useOnboardingStore();
+  const { 
+    locationPlaceId, locationFormatted, locationCountry, locationState, 
+    locationCity, locationLat, locationLng, setLocation 
+  } = useOnboardingStore();
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const selectedLocation = useMemo((): LocationSuggestion | null => {
-    if (!locationId || !locationName) return null;
+  const selectedLocation = useMemo((): StructuredLocation | null => {
+    if (!locationPlaceId || !locationFormatted) return null;
     return { 
-      id: parseInt(locationId), 
-      name: locationName,
-      latitude: latitude || "0",
-      longitude: longitude || "0"
+      placeId: locationPlaceId, 
+      formattedAddress: locationFormatted,
+      country: locationCountry || "",
+      state: locationState,
+      city: locationCity || "",
+      latitude: locationLat,
+      longitude: locationLng
     };
-  }, [locationId, locationName, latitude, longitude]);
+  }, [locationPlaceId, locationFormatted, locationCountry, locationState, locationCity, locationLat, locationLng]);
 
-  const setSelectedLocation = (loc: LocationSuggestion | null) => {
-    if (loc) {
-      setLocation(loc.id.toString(), loc.name, loc.latitude, loc.longitude);
-    } else {
-      setLocation(null, null, null, null);
-    }
+  const setSelectedLocation = (loc: LocationSuggestion | StructuredLocation | null) => {
+    setLocation(loc);
   };
 
   const handleContinue = async () => {
@@ -46,8 +48,13 @@ export default function TellUsAboutYouStep({ onNext, onBack, currentStep, totalS
     setSubmitting(true);
     try {
       await updateOnboardingLocation({
-        location_id: selectedLocation.id.toString(),
-        location: selectedLocation.name
+        country: selectedLocation.country,
+        state: selectedLocation.state,
+        city: selectedLocation.city,
+        formattedAddress: selectedLocation.formattedAddress,
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+        placeId: selectedLocation.placeId,
       });
 
       onNext();
@@ -116,7 +123,7 @@ export default function TellUsAboutYouStep({ onNext, onBack, currentStep, totalS
         <div className={styles.formGroup}>
           <label className={styles.label}>Location</label>
           <LocationAutocomplete
-            value={selectedLocation?.name || null}
+            value={selectedLocation?.formattedAddress || null}
             onSelect={setSelectedLocation}
           />
           <button

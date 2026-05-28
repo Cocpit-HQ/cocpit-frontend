@@ -43,6 +43,16 @@ const ONBOARDING_FLOW: Record<string | number, { next: any; prev: any }> = {
   5: { next: null, prev: 4 }
 };
 
+// Maps backend onboarding_step string → frontend step number
+const STEP_MAP: Record<string, number> = {
+  PROFILE:   1,
+  LOCATION:  2,
+  ROLE:      3,
+  DETAILS:   3, // substep handled separately
+  INTERESTS: 4,
+  SKILLS:    5,
+};
+
 export default function OnboardingPage() {
   const {
     step, setStep,
@@ -51,7 +61,8 @@ export default function OnboardingPage() {
     selectedInterests, setSelectedInterests,
     selectedSkills, setSelectedSkills,
     isInitialized, setInitialized,
-    setFullName, setAccountName, setInitialAccountName, setProfileImage
+    setFullName, setAccountName, setInitialAccountName, setProfileImage,
+    setLocation, setEducation, setWorkExperience,
   } = useOnboardingStore();
 
   const [isCompleted, setIsCompleted] = useState(false);
@@ -121,12 +132,62 @@ export default function OnboardingPage() {
       try {
         const profile = await getProfile();
         if (profile && profile.user) {
-          if (profile.user.name) setFullName(profile.user.name);
-          if (profile.user.account_name) {
-            setAccountName(profile.user.account_name);
-            setInitialAccountName(profile.user.account_name);
+          const u = profile.user;
+
+          // ── Step 1: Profile data ────────────────────────────────────────
+          if (u.name) setFullName(u.name);
+          if (u.account_name) {
+            setAccountName(u.account_name);
+            setInitialAccountName(u.account_name);
           }
-          if (profile.user.avatar) setProfileImage(profile.user.avatar);
+          if (u.avatar) setProfileImage(u.avatar);
+
+          // ── Step 2: Location (structured) ──────────────────────────────
+          if (u.location_place_id) {
+            setLocation({
+              placeId: u.location_place_id,
+              formattedAddress: u.location_formatted || u.location || "",
+              country: u.location_country || "",
+              state: u.location_state || null,
+              city: u.location_city || "",
+              latitude: u.location_lat || null,
+              longitude: u.location_lng || null,
+            });
+          }
+
+          // ── Step 3: Role ────────────────────────────────────────────────
+          if (u.user_role) setUserRole(u.user_role);
+
+          // ── Step 3 Details: Education & Work ────────────────────────────
+          if (profile.educations && profile.educations.length > 0) {
+            const latestEd = profile.educations[0];
+            setEducation(latestEd.school_name || "", latestEd.degree || "");
+          }
+          if (profile.experiences && profile.experiences.length > 0) {
+            // experiences are returned grouped by company_name
+            const latestExpGroup = profile.experiences[0];
+            if (latestExpGroup.experiences && latestExpGroup.experiences.length > 0) {
+              const latestExp = latestExpGroup.experiences[0];
+              setWorkExperience(latestExp.company_name || "", latestExp.title || "");
+            }
+          }
+
+          // ── Step 4: Interests (already submitted) ───────────────────────
+          if (u.interest_names && u.interest_names.length > 0) {
+            setSelectedInterests(u.interest_names);
+          }
+
+          // ── Step 5: Skills (already submitted) ─────────────────────────
+          if (u.skill_names && u.skill_names.length > 0) {
+            setSelectedSkills(u.skill_names);
+          }
+
+          // ── Restore step from backend ───────────────────────────────────
+          const backendStep = u.onboarding_step;
+          if (backendStep && STEP_MAP[backendStep] !== undefined) {
+            setStep(STEP_MAP[backendStep]);
+            if (backendStep === "DETAILS") setShowSubStep(false);
+          }
 
           setInitialized(true);
         }
@@ -137,7 +198,12 @@ export default function OnboardingPage() {
     };
 
     initStore();
-  }, [isInitialized, setFullName, setAccountName, setProfileImage, setInitialized]);
+  }, [
+    isInitialized, setFullName, setAccountName, setProfileImage, 
+    setInitialized, setStep, setShowSubStep, setLocation, 
+    setUserRole, setSelectedSkills, setSelectedInterests,
+    setEducation, setWorkExperience
+  ]);
 
   const navigate = (direction: "next" | "prev") => {
     const currentState = showSubStep ? "substep" : step;
