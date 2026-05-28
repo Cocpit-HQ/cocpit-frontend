@@ -118,17 +118,17 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
           if (post.videoSrc) type = 'video';
           if (post.poll) type = 'poll';
           if (post.title && !post.images?.length && !post.videoSrc && !post.poll) type = 'article';
-          
+
           setPostType(type);
           setPostCategory(post.category as any || (isCompanyPost ? 'Update' : 'Professional'));
           setVisibility(post.visibility || 'public');
-          
+
           if (type === 'text' || type === 'photo' || type === 'video') setDescription(post.content);
           if (type === 'article') {
             setArticleTitle(post.title || '');
             setArticleContent(post.content);
           }
-          
+
           if (post.images) {
             media.setUploadedImages(post.images.map((url, i) => ({
               id: `existing-${i}`,
@@ -161,11 +161,11 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         })
         .finally(() => setIsLoadingPost(false));
     } else if (isOpen && sharedPostId) {
-        postApi.getById(sharedPostId).then(post => {
-            setSharedPost(post);
-            setPostCategory(post.category as any || (isCompanyPost ? 'Update' : 'Professional'));
-            setVisibility(post.visibility || 'public');
-        });
+      postApi.getById(sharedPostId).then(post => {
+        setSharedPost(post);
+        setPostCategory(post.category as any || (isCompanyPost ? 'Update' : 'Professional'));
+        setVisibility(post.visibility || 'public');
+      });
     }
   }, [isOpen, editPostId, sharedPostId]);
 
@@ -218,7 +218,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       } else {
         finalContent = sanitizeContent(postType === 'poll' ? poll.pollQuestion : description);
       }
-      
+
       const allowedCategories = getAllowedCategories();
       const safeCategory = allowedCategories.includes(postCategory) ? postCategory : getDefaultCategory();
 
@@ -253,8 +253,8 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
           if (onUpdate) onUpdate({ ...originalPost, ...updatePayload } as any);
           toast.success("Post updated");
           onClose();
-        } catch (e) { 
-          toast.error("Failed to update post"); 
+        } catch (e) {
+          toast.error("Failed to update post");
           setIsSubmitting(false);
         }
         return;
@@ -306,20 +306,20 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
   return {
     state: {
-       postType, setPostType,
-       postCategory, setPostCategory, handleSetPostCategory,
-       visibility, setVisibility,
-       description, setDescription,
-       articleTitle, setArticleTitle,
-       articleContent, setArticleContent,
-       notifyEmployees, setNotifyEmployees,
-       isBroadcast, setIsBroadcast,
-       postAsCompanyId, setPostAsCompanyId,
-       isLoadingPost, isSubmitting,
-       originalPost, sharedPost,
-       showContextWarning, setShowContextWarning,
-       isCompanyPost, currentPoster, currentUser,
-       userCompanies
+      postType, setPostType,
+      postCategory, setPostCategory, handleSetPostCategory,
+      visibility, setVisibility,
+      description, setDescription,
+      articleTitle, setArticleTitle,
+      articleContent, setArticleContent,
+      notifyEmployees, setNotifyEmployees,
+      isBroadcast, setIsBroadcast,
+      postAsCompanyId, setPostAsCompanyId,
+      isLoadingPost, isSubmitting,
+      originalPost, sharedPost,
+      showContextWarning, setShowContextWarning,
+      isCompanyPost, currentPoster, currentUser,
+      userCompanies
     },
     media,
     poll,

@@ -175,7 +175,7 @@ export const FeedCreatePostModal = (props: CreatePostModalProps) => {
   };
 
   const renderMediaIcons = () => (
-    <div className="flex flex-row items-center gap-3 w-full">
+    <div className="flex flex-row items-center gap-2 w-full">
       {mediaActions.map((action, i) => {
         const isMilestoneAction = action.type === 'milestone';
         const isActive = isMilestoneAction
@@ -183,37 +183,31 @@ export const FeedCreatePostModal = (props: CreatePostModalProps) => {
           : state.postType === action.type;
 
         return (
-        <button
-          key={i}
-          onClick={() => {
-            if (action.type === 'article') {
-              const { setArticleMode } = useUIStore.getState();
-              onClose();
-              setArticleMode(true);
-            } else if (action.type === 'milestone') {
-              setShowAccountSelector(false);
-              setShowAchievementOptionPicker(true);
-            } else {
-              state.setPostType(action.type as any);
-              if (action.type === 'photo' && !hasImages) {
-                setTimeout(() => galleryInputRef.current?.click(), 0);
+          <button
+            key={i}
+            onClick={() => {
+              if (action.type === 'article') {
+                const { setArticleMode } = useUIStore.getState();
+                onClose();
+                setArticleMode(true);
+              } else if (action.type === 'milestone') {
+                setShowAccountSelector(false);
+                setShowAchievementOptionPicker(true);
+              } else {
+                state.setPostType(action.type as any);
+                if (action.type === 'photo' && !hasImages) {
+                  setTimeout(() => galleryInputRef.current?.click(), 0);
+                }
               }
-            }
-          }}
-          className={`w-12 h-10 rounded-2xl flex justify-center items-center transition-all duration-200 border ${isActive
-            ? 'border-indigo-200 bg-indigo-50 dark:border-indigo-500/30 dark:bg-indigo-500/10 shadow-sm'
-            : 'border-transparent hover:bg-gray-50 dark:hover:bg-[#2a2a4a] hover:border-gray-200 dark:hover:border-[#3a3a5a]'
-            }`}
-          title={action.label}
-        >
-          <Icon
-            icon={action.icon}
-            className={`w-6 h-6 transition-colors ${isActive
-              ? 'text-indigo-600 dark:text-indigo-400'
-              : 'text-black dark:text-white'
-              }`}
-          />
-        </button>
+            }}
+            className="w-[56px] h-[32px] rounded-full flex justify-center items-center bg-transparent transition-all duration-200"
+            title={action.label}
+          >
+            <Icon
+              icon={action.icon}
+              className="w-6 h-6 text-black dark:text-white"
+            />
+          </button>
         );
       })}
     </div>
@@ -222,13 +216,12 @@ export const FeedCreatePostModal = (props: CreatePostModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleRequestClose(); }}>
       <DialogContent
-        className={`w-full p-0 border-none rounded-[24px] bg-white dark:bg-[#1a1a2e] shadow-2xl overflow-hidden font-poppins flex flex-col z-[101] ${
-          state.postType === 'article'
-            ? 'max-w-[1050px] h-[90vh]'
-            : (isImageEditorMode || isVideoEditorMode)
-              ? 'max-w-[700px]'
-              : 'max-w-[600px] min-h-[480px] max-h-[90vh]'
-        } ${(state.postType === 'poll' || showAchievementOptionPicker) ? '[&>button:last-child]:hidden' : ''}`}
+        className={`w-full p-0 border-none rounded-[24px] bg-white dark:bg-[#1a1a2e] shadow-2xl overflow-hidden font-poppins flex flex-col z-[101] ${state.postType === 'article'
+          ? 'max-w-[1050px] h-[90vh]'
+          : (isImageEditorMode || isVideoEditorMode)
+            ? 'max-w-[700px]'
+            : 'max-w-[600px] min-h-[480px] max-h-[90vh]'
+          } ${(state.postType === 'poll' || showAchievementOptionPicker) ? '[&>button:last-child]:hidden' : ''}`}
       >
         <DialogTitle className="sr-only">{(isImageEditorMode || isVideoEditorMode) ? 'Edit Media' : 'Create Post'}</DialogTitle>
 
@@ -276,8 +269,8 @@ export const FeedCreatePostModal = (props: CreatePostModalProps) => {
 
                 {/* Counter */}
                 <span className="text-[16px] leading-[24px] font-normal text-black dark:text-white font-poppins text-center min-w-[38px]">
-                  {isVideoEditorMode 
-                    ? "01/01" 
+                  {isVideoEditorMode
+                    ? "01/01"
                     : `${String(media.activeImageIndex + 1).padStart(2, '0')}/${String(media.uploadedImages.length).padStart(2, '0')}`
                   }
                 </span>
@@ -436,22 +429,20 @@ export const FeedCreatePostModal = (props: CreatePostModalProps) => {
                     <button
                       type="button"
                       onClick={() => media.handleFitModeChange('cover')}
-                      className={`px-3 py-1 rounded-[8px] text-[12px] font-medium font-poppins transition-all duration-200 ${
-                        (activeImage?.fitMode || 'cover') === 'cover'
-                          ? 'bg-white dark:bg-[#1a1a2e] text-[#6366F1] shadow-sm'
-                          : 'text-[#6B7280] hover:text-black dark:hover:text-white'
-                      }`}
+                      className={`px-3 py-1 rounded-[8px] text-[12px] font-medium font-poppins transition-all duration-200 ${(activeImage?.fitMode || 'cover') === 'cover'
+                        ? 'bg-white dark:bg-[#1a1a2e] text-[#6366F1] shadow-sm'
+                        : 'text-[#6B7280] hover:text-black dark:hover:text-white'
+                        }`}
                     >
                       Fill
                     </button>
                     <button
                       type="button"
                       onClick={() => media.handleFitModeChange('contain')}
-                      className={`px-3 py-1 rounded-[8px] text-[12px] font-medium font-poppins transition-all duration-200 ${
-                        activeImage?.fitMode === 'contain'
-                          ? 'bg-white dark:bg-[#1a1a2e] text-[#6366F1] shadow-sm'
-                          : 'text-[#6B7280] hover:text-black dark:hover:text-white'
-                      }`}
+                      className={`px-3 py-1 rounded-[8px] text-[12px] font-medium font-poppins transition-all duration-200 ${activeImage?.fitMode === 'contain'
+                        ? 'bg-white dark:bg-[#1a1a2e] text-[#6366F1] shadow-sm'
+                        : 'text-[#6B7280] hover:text-black dark:hover:text-white'
+                        }`}
                     >
                       Fit
                     </button>
@@ -477,11 +468,10 @@ export const FeedCreatePostModal = (props: CreatePostModalProps) => {
                           key={ratio.label}
                           type="button"
                           onClick={() => media.setAspectRatio(ratio.value)}
-                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-[12px] font-medium font-poppins transition-all duration-200 ${
-                            isActive
-                              ? 'bg-white dark:bg-[#1a1a2e] text-[#6366F1] shadow-sm'
-                              : 'text-[#6B7280] hover:text-black dark:hover:text-white'
-                          }`}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-[12px] font-medium font-poppins transition-all duration-200 ${isActive
+                            ? 'bg-white dark:bg-[#1a1a2e] text-[#6366F1] shadow-sm'
+                            : 'text-[#6B7280] hover:text-black dark:hover:text-white'
+                            }`}
                           title={ratio.label}
                         >
                           <ratio.Icon className="w-3.5 h-3.5" />
@@ -774,12 +764,17 @@ export const FeedCreatePostModal = (props: CreatePostModalProps) => {
                         value={state.description}
                         onChange={(e) => state.setDescription(e.target.value)}
                       />
-                      <button
-                        className="absolute right-0 top-0 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-[#2a2a4a] transition-colors"
-                        title="Add emoji"
-                      >
-                        <Smile className="w-5 h-5 text-[#B0B7C3] hover:text-[#6B7280] transition-colors" strokeWidth={1.5} />
-                      </button>
+                      <div className="absolute right-0 top-0 flex items-center gap-2">
+                        <button className="transition-colors" title="Tag people">
+                          <Icon icon="la:user-tag" className="w-6 h-6 text-black dark:text-white" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
+                        </button>
+                        <button className="transition-colors" title="Location">
+                          <Icon icon="hugeicons:location-05" className="w-6 h-6 text-black dark:text-white" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
+                        </button>
+                        <button className="transition-colors" title="Add emoji">
+                          <Icon icon="lucide:smile" className="w-6 h-6 text-black dark:text-white" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -923,7 +918,7 @@ export const FeedCreatePostModal = (props: CreatePostModalProps) => {
                     <button
                       onClick={actions.handlePost}
                       disabled={isPostButtonDisabled}
-                      className="flex flex-row items-center justify-center gap-2 px-7 py-2.5 bg-[#C7D2FE] border border-white/60 rounded-full hover:bg-[#818CF8] transition-all duration-200 disabled:opacity-50 disabled:hover:bg-[#C7D2FE] group shadow-sm"
+                      className="flex flex-row items-center justify-center gap-2 px-7 py-2.5 bg-[#C7D2FE] border border-white/60 rounded-full enabled:hover:bg-[#818CF8] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none group shadow-sm"
                     >
                       {state.isSubmitting ? (
                         <Loader2 className="w-4 h-4 text-white animate-spin" />

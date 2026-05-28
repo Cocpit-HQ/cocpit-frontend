@@ -217,15 +217,15 @@
 }
 
 .option:hover {
-  background-color: #f4f4f5;
+  background-color: #EEF2FF;
   color: #18181b;
 }
 
-.optionSelected {
+/* .optionSelected {
   background-color: #E0E7FF;
   color: #6366F1;
   font-weight: 500;
-}
+} */
 
 .actionRow {
   display: flex;

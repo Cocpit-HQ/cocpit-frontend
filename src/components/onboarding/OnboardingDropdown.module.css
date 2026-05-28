@@ -138,7 +138,7 @@
 }
 
 .option:hover {
-  background-color: #f4f4f5;
+  background-color: #EEF2FF;
   color: #18181b;
 }
 
@@ -153,4 +153,31 @@
   text-align: center;
   color: #9ca3af;
   font-size: 14px;
+}
+
+.searchInput {
+  width: 100%;
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #18181b;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+.chevronWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.otherOption {
+  border-top: 1px solid #e4e4e7;
+  font-weight: 500;
 }

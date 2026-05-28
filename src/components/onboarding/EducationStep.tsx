@@ -15,62 +15,44 @@ interface EducationStepProps {
   totalSteps: number;
 }
 
-// Static fallback options if API returns empty
-const FALLBACK_SCHOOLS = [
-  "High School",
-  "Community College",
-  "State University",
-  "Private University",
-  "Technical Institute",
-  "Other",
-];
-
-const FALLBACK_PROGRAMS = [
-  "B.Tech",
-  "M.Tech",
-  "BCA",
-  "MCA",
-  "MBA",
-  "B.Sc",
-  "M.Sc",
-  "B.Com",
-  "B.A",
-  "Diploma",
-  "PhD",
-  "Other",
-];
-
 export default function EducationStep({ onNext, onBack, currentStep, totalSteps }: EducationStepProps) {
   const { userRole, schoolName: storeSchool, degree: storeDegree, setEducation } = useOnboardingStore();
   const { toast } = useToast();
   const [education, setEducationLocal] = useState(storeSchool || "");
   const [specialization, setSpecializationLocal] = useState(storeDegree || "");
   const [isSaving, setIsSaving] = useState(false);
-  const [schoolOptions, setSchoolOptions] = useState<string[]>(FALLBACK_SCHOOLS);
-  const [programOptions, setProgramOptions] = useState<string[]>(FALLBACK_PROGRAMS);
+  const [schoolOptions, setSchoolOptions] = useState<string[]>([]);
+  const [programOptions, setProgramOptions] = useState<string[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
 
   // Fetch school_names and degrees from the backend on mount
   useEffect(() => {
+    let isMounted = true;
     const fetchOptions = async () => {
       try {
+        setLoadingOptions(true);
         const data = await getEducationList();
-        if (data.school_names && data.school_names.length > 0) {
-          setSchoolOptions(data.school_names);
-        }
-        if (data.degrees && data.degrees.length > 0) {
-          setProgramOptions(data.degrees);
-        }
+        if (!isMounted) return;
+        setSchoolOptions(data.school_names || []);
+        setProgramOptions(data.degrees || []);
       } catch (error) {
-        // Keep fallback options on error — no crash
+        if (!isMounted) return;
         console.error("Failed to fetch education list:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load education options.",
+          variant: "destructive",
+        });
       } finally {
-        setLoadingOptions(false);
+        if (isMounted) setLoadingOptions(false);
       }
     };
 
     fetchOptions();
-  }, []);
+    return () => {
+      isMounted = false;
+    };
+  }, [toast]);
 
   const isValid = education !== "" && specialization !== "";
 
@@ -127,7 +109,7 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
         <div className={styles.form}>
           <OnboardingDropdown
             label="School / University"
-            placeholder="Select your school"
+            placeholder={loadingOptions ? "Loading schools..." : "Select your school"}
             options={schoolOptions}
             value={education}
             onChange={setEducationLocal}
@@ -136,7 +118,7 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
 
           <OnboardingDropdown
             label="Program"
-            placeholder="Select your program"
+            placeholder={loadingOptions ? "Loading programs..." : "Select your program"}
             options={programOptions}
             value={specialization}
             onChange={setSpecializationLocal}
