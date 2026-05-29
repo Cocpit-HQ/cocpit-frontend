@@ -58,7 +58,6 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
             onRemoveImage={(id) => media.removeMediaItem(id, media.setUploadedImages, isEdit)}
             onCropChange={media.handleCropChange}
             onZoomChange={media.handleZoomChange}
-            onFitModeChange={media.handleFitModeChange}
             onCropComplete={media.handleCropComplete}
             onAspectChange={media.setAspectRatio}
             galleryInputRef={galleryInputRef}

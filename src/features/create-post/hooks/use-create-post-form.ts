@@ -10,6 +10,7 @@ import { usePostPoll } from './use-post-poll';
 import { postApi } from '../api/post.api';
 import { sanitizeContent } from '@/lib/contentSanitizer';
 import { Post, PostVisibility } from '@/types/entities';
+import { LocationSuggestion, StructuredLocation } from '@/services/api/location';
 
 const USER_CATEGORIES: CategoryType[] = ['Personal', 'Professional', 'Achievement'];
 const COMPANY_CATEGORIES: CategoryType[] = ['Update', 'Hiring', 'Milestone', 'Insight'];
@@ -39,6 +40,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
   const [postType, setPostType] = useState<PostType>(initialPostType);
   const [postCategory, setPostCategory] = useState<CategoryType>('Professional');
   const [visibility, setVisibility] = useState<PostVisibility>('public');
+  const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | StructuredLocation | null>(null);
 
   // --- Sub-hooks ---
   const media = usePostMedia([], [], (type) => setPostType(prev => prev === 'article' ? 'article' : type));
@@ -129,6 +131,8 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             setArticleContent(post.content);
           }
 
+          setSelectedLocation(post.location ? { id: 0, name: post.location, latitude: '', longitude: '' } : null);
+
           if (post.images) {
             media.setUploadedImages(post.images.map((url, i) => ({
               id: `existing-${i}`,
@@ -136,8 +140,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
               type: 'image',
               crop: { x: 0, y: 0 },
               zoom: 1,
-              isExisting: true,
-              fitMode: 'cover'
+              isExisting: true
             })));
           }
           if (post.videoSrc) {
@@ -147,8 +150,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
               type: 'video',
               crop: { x: 0, y: 0 },
               zoom: 1,
-              isExisting: true,
-              fitMode: 'cover'
+              isExisting: true
             }]);
           }
           if (post.poll && post.poll.options) {
@@ -231,7 +233,8 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         companyId: isCompanyPost ? postAsCompanyId || undefined : undefined,
         ...(isCompanyPost && isBroadcast ? { is_broadcast: true } : {}),
         shared_post_id: sharedPostId,
-        shared_job_id: sharedJobId
+        shared_job_id: sharedJobId,
+        location: selectedLocation ? ("formattedAddress" in selectedLocation ? selectedLocation.formattedAddress : selectedLocation.name) : null
       };
 
       if (postType === 'poll') {
@@ -288,6 +291,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     setDescription('');
     setArticleTitle('');
     setArticleContent('');
+    setSelectedLocation(null);
     media.clearMedia();
     poll.clearPoll();
     setNotifyEmployees(false);
@@ -312,6 +316,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       description, setDescription,
       articleTitle, setArticleTitle,
       articleContent, setArticleContent,
+      selectedLocation, setSelectedLocation,
       notifyEmployees, setNotifyEmployees,
       isBroadcast, setIsBroadcast,
       postAsCompanyId, setPostAsCompanyId,

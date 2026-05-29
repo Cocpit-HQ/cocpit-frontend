@@ -14,8 +14,6 @@ interface MediaCropperProps {
   onAspectChange: (aspect: number) => void;
   isMobile: boolean;
   readOnly?: boolean;
-  fitMode: 'cover' | 'contain';
-  onFitModeChange: (mode: 'cover' | 'contain') => void;
 }
 
 const ASPECT_RATIOS = [
@@ -35,8 +33,6 @@ export function MediaCropper({
   onAspectChange,
   isMobile,
   readOnly,
-  fitMode,
-  onFitModeChange,
 }: MediaCropperProps) {
   return (
     <div className="flex flex-col h-full w-full gap-4">
@@ -44,25 +40,6 @@ export function MediaCropper({
       <div className="relative w-full h-[300px] md:h-[400px] bg-black rounded-lg overflow-hidden flex items-center justify-center">
         {readOnly ? (
           <img src={imageSrc} className="w-full h-full object-contain" alt="Post media" />
-        ) : fitMode === 'contain' ? (
-          // Contain Mode: Show image respecting aspect ratio with padding
-          // We create a container with the target aspect ratio, centered in the viewing area
-          <div
-            className="relative flex items-center justify-center bg-black"
-            style={{
-              width: aspect >= 1 ? '100%' : 'auto',
-              height: aspect < 1 ? '100%' : 'auto',
-              aspectRatio: `${aspect}`,
-              maxWidth: '100%',
-              maxHeight: '100%'
-            }}
-          >
-            <img
-              src={imageSrc}
-              className="max-w-full max-h-full object-contain"
-              alt="Post media"
-            />
-          </div>
         ) : (
           // Cover Mode: Standard Cropper
           <Cropper
@@ -86,42 +63,19 @@ export function MediaCropper({
       {/* Controls - Hide if readOnly */}
       {!readOnly && (
         <div className="flex flex-col gap-4 px-2">
-          {/* Zoom Control - Only for Cover mode */}
-          {fitMode === 'cover' && (
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-medium text-muted-foreground w-12">Zoom</span>
-              <input
-                type="range"
-                value={zoom}
-                min={1}
-                max={3}
-                step={0.1}
-                aria-labelledby="Zoom"
-                onChange={(e) => onZoomChange(Number(e.target.value))}
-                className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
-              />
-            </div>
-          )}
-
-          {/* Fit/Fill Toggle */}
+          {/* Zoom Control */}
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-muted-foreground w-12">Mode</span>
-            <div className="flex bg-muted/50 p-1 rounded-lg">
-              <button
-                type="button"
-                onClick={() => onFitModeChange('cover')}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${fitMode === 'cover' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                Fill
-              </button>
-              <button
-                type="button"
-                onClick={() => onFitModeChange('contain')}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${fitMode === 'contain' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                Fit
-              </button>
-            </div>
+            <span className="text-sm font-medium text-muted-foreground w-12">Zoom</span>
+            <input
+              type="range"
+              value={zoom}
+              min={1}
+              max={3}
+              step={0.1}
+              aria-labelledby="Zoom"
+              onChange={(e) => onZoomChange(Number(e.target.value))}
+              className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
+            />
           </div>
 
           {/* Aspect Ratio Selector */}

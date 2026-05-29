@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Area } from 'react-easy-crop';
 import { MediaItem } from '../types';
-import getCroppedImg, { getPaddedImg } from '@/lib/canvasUtils';
+import getCroppedImg from '@/lib/canvasUtils';
 import { toast } from 'sonner';
 
 export const usePostMedia = (
@@ -30,8 +30,7 @@ export const usePostMedia = (
     file,
     type: file.type.startsWith('image/') ? 'image' : 'video',
     crop: { x: 0, y: 0 },
-    zoom: 1,
-    fitMode: 'cover'
+    zoom: 1
   }), []);
 
   const revokeAllMediaUrls = useCallback(() => {
@@ -267,14 +266,6 @@ export const usePostMedia = (
     }));
   }, [activeImageIndex]);
 
-  const handleFitModeChange = useCallback((mode: 'cover' | 'contain') => {
-    setUploadedImages(prev => prev.map((img, idx) => {
-      if (idx === activeImageIndex) {
-        return { ...img, fitMode: mode };
-      }
-      return img;
-    }));
-  }, [activeImageIndex]);
 
   const handleCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
     setUploadedImages(prev => prev.map((img, idx) => {
@@ -348,21 +339,7 @@ export const usePostMedia = (
         }
 
         try {
-          if (img.fitMode === 'contain') {
-            const blob = await getPaddedImg(
-              img.url,
-              aspectRatio,
-              '#000000',
-              img.rotation || 0,
-              { horizontal: !!img.flipH, vertical: !!img.flipV }
-            );
-            if (blob) {
-              const blobUrl = URL.createObjectURL(blob);
-              newUrls.push(blobUrl);
-            } else {
-              newUrls.push(img.url);
-            }
-          } else if (img.pixelCrop) {
+          if (img.pixelCrop) {
             const blob = await getCroppedImg(
               img.url,
               img.pixelCrop,
@@ -405,19 +382,6 @@ export const usePostMedia = (
       const processedFiles = await Promise.all(uploadedImages.map(async (item) => {
         if (item.isExisting) return undefined;
         if (item.file) {
-          if (item.fitMode === 'contain') {
-            try {
-              const blob = await getPaddedImg(
-                item.url,
-                currentAspectRatio,
-                '#000000',
-                item.rotation || 0,
-                { horizontal: !!item.flipH, vertical: !!item.flipV }
-              );
-              if (blob) return new File([blob], item.file.name, { type: 'image/jpeg' });
-            } catch (e) { console.error("Pad failed", e); }
-            return item.file;
-          }
           if (item.pixelCrop) {
             try {
               const blob = await getCroppedImg(
@@ -452,7 +416,6 @@ export const usePostMedia = (
     removeMediaItem,
     handleCropChange,
     handleZoomChange,
-    handleFitModeChange,
     handleCropComplete,
     handleAspectChange,
     handleFlipHChange,

@@ -91,7 +91,7 @@ export const PostSharedContent = ({
             {/* Content (Frame 2608605) */}
             <div className="flex flex-col items-start p-0 gap-[8px] w-full">
               {shared_post.content && (
-                <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground w-full line-clamp-3">
+                <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground w-full line-clamp-3 whitespace-pre-wrap">
                   {shared_post.content}
                 </p>
               )}

@@ -18,28 +18,28 @@ const updates: FeedUpdate[] = [
     date: "08 May 2026",
     title: "UI/UX hiring +18% this month",
     href: "/jobs",
-    image: "/assets/openingPage.jpg",
+    image: "/images/updates/uiux hiring.svg",
   },
   {
     id: "freshers",
     date: "08 May 2026",
     title: "200+ fresher roles added",
     href: "/jobs",
-    image: "/assets/coverphoto.jpg",
+    image: "/images/updates/200+fresher role.svg",
   },
   {
     id: "remote-design",
     date: "08 May 2026",
     title: "Remote design demand rising",
     href: "/showcase",
-    image: "/assets/company-placeholder.png",
+    image: "/images/updates/remotedesign demand.svg",
   },
   {
     id: "roles",
     date: "08 May 2026",
     title: "200+ fresher roles added",
     href: "/jobs",
-    image: "/assets/coverphoto.jpg",
+    image: "/images/updates/200+roles added.svg",
   },
 ];
 
@@ -54,9 +54,9 @@ export default function UpdatesPanel() {
             <Link
               key={update.id}
               href={update.href}
-              className="feed-card-shell group flex min-h-[128px] gap-3 p-4 transition-shadow hover:shadow-md"
+              className="feed-card-shell outline outline-1 outline-offset-[-1px] outline-indigo-50 group flex w-[336px] h-[128px] gap-4 p-4 transition-shadow hover:shadow-md bg-white rounded-[24px]"
             >
-              <div className="relative h-[95px] w-[46%] shrink-0 overflow-hidden rounded-3xl bg-muted">
+              <div className="relative w-[144px] h-[95px] shrink-0 overflow-hidden rounded-[24px] bg-muted">
                 <Image
                   src={update.image}
                   alt=""
@@ -65,33 +65,38 @@ export default function UpdatesPanel() {
                   sizes="190px"
                 />
               </div>
-              <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-                <span className="text-xs text-muted-foreground">{update.date}</span>
-                <p className="line-clamp-2 text-base font-medium leading-6 text-foreground">{update.title}</p>
-                <span className="text-xs text-muted-foreground">Read</span>
+              <div className="flex flex-col w-[144px] h-[96px] gap-2 text-left">
+                <span className="text-[12px] font-normal leading-[16px] text-[#6B7280] font-['Poppins']">{update.date}</span>
+                <p className="line-clamp-2 text-[16px] font-medium leading-[24px] text-[#000000] font-['Poppins']">{update.title}</p>
+                <span className="text-[12px] font-normal leading-[16px] text-[#6B7280] font-['Poppins']">Read</span>
               </div>
             </Link>
           );
         })}
       </div>
 
-      <div className="feed-card-shell flex flex-col gap-4 p-4">
-        <div className="flex items-center gap-4">
-          <div className="flex h-[68px] w-[68px] shrink-0 items-center justify-center rounded-3xl bg-primary/10 text-primary">
-            <Gem className="h-9 w-9" aria-hidden="true" />
+      <div className="feed-card-shell outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col items-center w-[336px] h-[172px] p-4 gap-4 bg-white rounded-[24px]">
+        <div className="flex flex-row items-center w-[304px] h-[68px] gap-4 p-0">
+          <div className="relative w-[68px] h-[68px] shrink-0 overflow-hidden">
+            <Image
+              src="/images/updates/update to pro.svg"
+              alt="Update to PRO"
+              fill
+              className="object-contain"
+            />
           </div>
-          <div className="min-w-0">
-            <h3 className="text-sm font-medium text-foreground">Update to PRO</h3>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">
-              Get noticed faster by recruiters and unlock smarter AI tools.
+          <div className="flex flex-col justify-center items-start w-[220px] h-[68px] gap-2 p-0">
+            <h3 className="w-[220px] h-5 text-black text-[14px] font-normal leading-[20px] font-['Poppins']">Update to PRO</h3>
+            <p className="w-[220px] h-10 text-[#6B7280] text-[14px] font-normal leading-[20px] font-['Poppins']">
+              Get noticed faster by recruiters and unlock smarter AI tools
             </p>
+          </div>
         </div>
-      </div>
         <Link
           href="/settings"
-          className="inline-flex h-12 w-full items-center justify-center rounded-full border border-primary px-4 text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+          className="flex flex-row justify-center items-center w-[304px] h-[56px] p-4 gap-2.5 bg-white border border-[#6366F1] rounded-[24px]"
         >
-          Update now
+          <span className="text-center text-[#6366F1] text-[16px] font-medium font-['Poppins'] leading-[24px]">Update now</span>
         </Link>
       </div>
     </section>

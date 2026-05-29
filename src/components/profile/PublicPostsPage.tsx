@@ -272,7 +272,7 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
                 </span>
               </div>
             </div>
-            <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-foreground break-words line-clamp-3">
+            <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-foreground break-words line-clamp-3 whitespace-pre-wrap">
               {post.shared_post.content}
             </p>
             {(post.shared_post.images && post.shared_post.images.length > 0 || post.shared_post.imageSrc) && (

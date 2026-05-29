@@ -18,7 +18,6 @@ interface PhotoFlowProps {
   onRemoveImage: (id: string) => void;
   onCropChange: (crop: { x: number; y: number }) => void;
   onZoomChange: (zoom: number) => void;
-  onFitModeChange: (mode: 'cover' | 'contain') => void;
   onCropComplete: (croppedArea: Area, croppedAreaPixels: Area) => void;
   onAspectChange: (aspect: number) => void;
   galleryInputRef: React.RefObject<HTMLInputElement | null>;
@@ -37,7 +36,6 @@ const PhotoFlow = ({
   onRemoveImage,
   onCropChange,
   onZoomChange,
-  onFitModeChange,
   onCropComplete,
   onAspectChange,
   galleryInputRef
@@ -74,8 +72,6 @@ const PhotoFlow = ({
                 onAspectChange={onAspectChange}
                 isMobile={true}
                 readOnly={isEdit}
-                fitMode={uploadedImages[activeImageIndex]?.fitMode || 'cover'}
-                onFitModeChange={onFitModeChange}
               />
             </div>
 
@@ -147,8 +143,6 @@ const PhotoFlow = ({
               onAspectChange={onAspectChange}
               isMobile={false}
               readOnly={isEdit}
-              fitMode={uploadedImages[activeImageIndex]?.fitMode || 'cover'}
-              onFitModeChange={onFitModeChange}
             />
           </div>
 

@@ -28,7 +28,6 @@ export interface MediaItem {
   croppedBlobUrl?: string;
   pixelCrop?: { x: number; y: number; width: number; height: number };
   isExisting?: boolean;
-  fitMode: 'cover' | 'contain';
   previewUrl?: string;
   flipH?: boolean;
   flipV?: boolean;

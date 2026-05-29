@@ -51,10 +51,10 @@ export default function TrendingHashtags() {
   if (!hashtags || hashtags.length === 0) return null;
 
   return (
-    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-      <div className="p-4 border-b border-border flex items-center justify-between">
-        <h2 className="font-bold flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-primary" />
+    <div className="bg-white border border-[#EEF2FF] rounded-[24px] w-[336px] h-[172px] p-4 flex flex-col gap-4 overflow-hidden shadow-sm">
+      <div className="flex items-center justify-between w-full pb-3 border-b border-[#EEF2FF]">
+        <h2 className="font-bold flex items-center gap-2 text-black text-[16px] font-['Poppins']">
+          <TrendingUp className="w-4 h-4 text-[#6366F1]" />
           Trending Now
         </h2>
         <button
@@ -65,34 +65,23 @@ export default function TrendingHashtags() {
           <X className="w-4 h-4" />
         </button>
       </div>
-      <div className="p-2">
+      <div className="flex-1 overflow-y-auto scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex flex-col gap-3">
         {hashtags.slice(0, 5).map((h) => (
           <Link
             key={h.tag}
             href={`/hashtag/${h.tag.toLowerCase()}`}
-            className="flex flex-col px-3 py-2 hover:bg-muted transition-colors rounded-lg group"
+            className="flex flex-col text-left transition-colors rounded-lg group"
           >
-            <span className="font-semibold text-sm group-hover:text-primary transition-colors flex items-center gap-1">
-              <Hash className="w-3 h-3 text-muted-foreground" />
+            <span className="font-semibold text-sm group-hover:text-primary transition-colors flex items-center gap-1 font-['Poppins']">
+              <Hash className="w-3.5 h-3.5 text-muted-foreground" />
               {h.tag}
             </span>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+            <span className="text-[10px] text-[#6B7280] uppercase tracking-wider font-medium font-['Poppins']">
               {h.usage_count.toLocaleString()} Posts
             </span>
           </Link>
         ))}
       </div>
-      {hashtags.length > 5 && (
-        <div className="p-3 border-t border-border/50 bg-muted/5">
-            <Link 
-              href="/search?q=%23"
-              className="text-[11px] text-primary font-bold hover:text-primary/80 w-full text-left transition-colors flex items-center justify-between group"
-            >
-                See all trending topics
-                <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-            </Link>
-        </div>
-      )}
     </div>
   );
 }

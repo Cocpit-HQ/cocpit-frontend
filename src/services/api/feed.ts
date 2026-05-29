@@ -106,6 +106,7 @@ export interface CreatePostRequest {
   category: string;
   visibility: "public" | "private";
   post_type: "text" | "image" | "video" | "poll" | "article";
+  location?: string | null;
   media_urls?: string[];
   poll_options?: string[];
   poll_duration?: string;
