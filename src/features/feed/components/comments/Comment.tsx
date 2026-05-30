@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ThumbsUp, Trash2, Heart, MoreHorizontal, Flag, Ban, Link as LinkIcon, Pin } from 'lucide-react';
+import { ThumbsUp, Trash2, Heart, Flag, Ban, Link as LinkIcon, Pin } from 'lucide-react';
 import { toggleCommentLike, toggleCommentPin } from '@/services/api/posts';
 import { Comment as CommentType } from '@/types/entities';
 import Link from 'next/link';
@@ -173,7 +173,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="text-black hover:bg-muted p-0.5 rounded-full transition-colors flex items-center justify-center">
-                    <Icon icon="lucide:more-vertical" className="w-[18px] h-[18px]" />
+                    <Icon icon="ph:dots-three-outline-vertical-light" className="w-6 h-6" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent

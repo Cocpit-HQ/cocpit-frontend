@@ -71,7 +71,13 @@ export function StoryEditor({ file, initialMetadata, onSave, onCancel, disableBa
 
     const handleCropSave = async () => {
         try {
-            const croppedBlob = await getCroppedImg(mediaSrc, croppedAreaPixels, rotation);
+            const croppedBlob = await getCroppedImg(
+                mediaSrc, 
+                croppedAreaPixels, 
+                rotation,
+                undefined,
+                typeof file !== 'string' ? file.type : undefined
+            );
             setCurrentMediaBlob(croppedBlob);
             const croppedImage = URL.createObjectURL(croppedBlob);
 

@@ -3,7 +3,7 @@
 
 // Refactored to use standalone useFeed hook
 import React, { useState } from 'react';
-import { MoreHorizontal, Trash2, Eye, EyeOff, Flag } from 'lucide-react';
+import { Trash2, Eye, EyeOff, Flag } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import {
   DropdownMenu,
@@ -84,7 +84,7 @@ export function PostOptionsMenu({
             <button
               className="text-white/80 hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/20"
             >
-              <MoreHorizontal className="w-5 h-5" />
+              <Icon icon="ph:dots-three-outline-vertical-light" className="w-6 h-6" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 bg-card border-border">

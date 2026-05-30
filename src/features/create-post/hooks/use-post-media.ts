@@ -344,7 +344,8 @@ export const usePostMedia = (
               img.url,
               img.pixelCrop,
               img.rotation || 0,
-              { horizontal: !!img.flipH, vertical: !!img.flipV }
+              { horizontal: !!img.flipH, vertical: !!img.flipV },
+              img.file?.type
             );
             if (blob) {
               const blobUrl = URL.createObjectURL(blob);
@@ -388,9 +389,10 @@ export const usePostMedia = (
                 item.url,
                 item.pixelCrop,
                 item.rotation || 0,
-                { horizontal: !!item.flipH, vertical: !!item.flipV }
+                { horizontal: !!item.flipH, vertical: !!item.flipV },
+                item.file?.type
               );
-              if (blob) return new File([blob], item.file.name, { type: 'image/jpeg' });
+              if (blob) return new File([blob], item.file.name, { type: item.file.type || 'image/jpeg' });
             } catch (e) { console.error("Crop failed", e); }
           }
           return item.file;

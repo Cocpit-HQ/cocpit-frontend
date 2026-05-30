@@ -13,10 +13,9 @@ import ArticleFlow from '@/features/create-post/components/flows/ArticleFlow';
 import SharedPreview from '@/features/create-post/components/SharedPreview';
 import { ImageEditorToolbar } from '@/shared/commonComponents/image-editor/ImageEditorToolbar';
 import { DiscardConfirmOverlay } from '@/features/create-post/components/shared/DiscardConfirmOverlay';
-import AchievementOptionPicker, {
-  type AchievementOptionId,
-  getAchievementOptionById,
-} from '@/features/create-post/components/shared/AchievementOptionPicker';
+import { AchievementPickerDialog, type AchievementOptionId, getAchievementOptionById } from '@/features/create-post/components/shared/AchievementPickerDialog';
+import type { AchievementOption } from '@/features/create-post/components/shared/AchievementPickerDialog';
+import { AchievementPhotoPickerDialog } from '@/features/create-post/components/shared/AchievementPhotoPickerDialog';
 import { CustomVideoPlayer } from '@/components/ui/CustomVideoPlayer';
 import { useUIStore } from '@/store/ui.store';
 import { UserMention } from '@/services/api/users';
@@ -53,13 +52,33 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
   const [isGeneratingPreviews, setIsGeneratingPreviews] = useState(false);
   const [previewActiveIndex, setPreviewActiveIndex] = useState(0);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
-  const [showAchievementOptionPicker, setShowAchievementOptionPicker] = useState(false);
   const [selectedAchievementOptionId, setSelectedAchievementOptionId] = useState<AchievementOptionId | null>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const addMoreInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const articleCoverInputRef = useRef<HTMLInputElement>(null);
   const composerTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showAchievementDialog, setShowAchievementDialog] = useState(false);
+  const [showAchievementPhotoPicker, setShowAchievementPhotoPicker] = useState(false);
+
+  const handleAchievementPhotoSelect = async (imagePath: string) => {
+    try {
+      const response = await fetch(imagePath);
+      const blob = await response.blob();
+      const filename = imagePath.split('/').pop() || 'achievement.svg';
+      const file = new File([blob], filename, { type: blob.type || 'image/svg+xml' });
+
+      // Simulate a file upload event to populate the usePostMedia hook
+      media.handlePhotoUpload(file, isEdit);
+
+      setShowAchievementPhotoPicker(false);
+      setIsCreatePostOpen(true);
+    } catch (e) {
+      console.error("Failed to select achievement photo", e);
+      setShowAchievementPhotoPicker(false);
+      setIsCreatePostOpen(true);
+    }
+  };
 
   // Tag People State
   const [showTagSelector, setShowTagSelector] = useState(false);
@@ -105,13 +124,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
       : 'Milestone';
   const selectedAchievementOption = getAchievementOptionById(selectedAchievementOptionId);
   const isMilestoneComposerActive = state.postType === 'text' && state.postCategory === milestoneCategory;
-  const composerPlaceholder = isMilestoneComposerActive
-    ? selectedAchievementOption?.placeholder || (
-      milestoneCategory === 'Academic'
-        ? 'Share your academic milestone...'
-        : `Share your ${milestoneCategory.toLowerCase()}...`
-    )
-    : 'What would you like to share today?';
+  const composerPlaceholder = 'What would you like to share today?';
 
   const isPostButtonDisabled = (() => {
     if (state.isSubmitting) return true;
@@ -166,7 +179,6 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
       setVideoStep('edit');
       setPollStep('edit');
       setShowDiscardConfirm(false);
-      setShowAchievementOptionPicker(false);
       setSelectedAchievementOptionId(null);
       setShowTagSelector(false);
       setShowLocationSelector(false);
@@ -197,7 +209,6 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
   useEffect(() => {
     if (state.postType === 'text' && state.postCategory === milestoneCategory) return;
 
-    setShowAchievementOptionPicker(false);
     setSelectedAchievementOptionId(null);
   }, [state.postCategory, state.postType, milestoneCategory]);
 
@@ -211,7 +222,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
     return () => cancelAnimationFrame(focusFrame);
   }, [isOpen, isMilestoneComposerActive]);
 
-  const isImageEditorMode = state.postType === 'photo' && hasImages && photoStep === 'edit';
+  const isImageEditorMode = state.postType === 'photo' && hasImages && photoStep === 'edit' && !selectedAchievementOption;
   const isVideoEditorMode = state.postType === 'video' && hasVideos && videoStep === 'edit';
 
   const handleEmojiButtonClick = (e: React.MouseEvent<HTMLButtonElement>, textareaRef: React.RefObject<HTMLTextAreaElement | null>) => {
@@ -293,13 +304,26 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
 
   const handleAchievementOptionSelect = (optionId: AchievementOptionId) => {
     setSelectedAchievementOptionId(optionId);
-    setShowAchievementOptionPicker(false);
     state.setPostType('text');
     state.handleSetPostCategory(milestoneCategory);
 
     requestAnimationFrame(() => {
       composerTextareaRef.current?.focus();
     });
+  };
+
+  const handleAchievementDialogSelect = (option: AchievementOption) => {
+    // Map to AchievementOptionId used by existing handleAchievementOptionSelect
+    // Read AchievementOptionPicker.tsx to find the exact id strings it uses
+    // then call handleAchievementOptionSelect with the matching id
+    // so all existing category/postType logic is reused without duplication
+    const idMap: Record<AchievementOption, string> = {
+      new_project: 'new-project',
+      new_role: 'new-role',
+      academic_milestone: 'academic-milestone',
+      certificate: 'certificate',
+    };
+    handleAchievementOptionSelect(idMap[option] as any);
   };
 
   const handlePostClick = async () => {
@@ -358,7 +382,8 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 setArticleMode(true);
               } else if (action.type === 'milestone') {
                 setShowAccountSelector(false);
-                setShowAchievementOptionPicker(true);
+                setIsCreatePostOpen(false);
+                setShowAchievementDialog(true);
               } else {
                 state.setPostType(action.type as any);
                 if (action.type === 'photo' && !hasImages) {
@@ -371,7 +396,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
           >
             <Icon
               icon={action.icon}
-              className="w-6 h-6 text-black dark:text-white"
+              className="w-6 h-6 text-foreground"
             />
           </button>
         );
@@ -383,12 +408,12 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
     <>
       <Dialog open={isOpen && isCreatePostOpen} onOpenChange={(open) => { if (!open) handleRequestClose(); }}>
         <DialogContent
-          className={`w-full p-0 border-none rounded-[24px] sm:rounded-[24px] bg-white dark:bg-[#1a1a2e] shadow-2xl overflow-hidden font-poppins flex flex-col z-[101] ${state.postType === 'article'
+          className={`w-full p-0 border-none rounded-[24px] sm:rounded-[24px] bg-card shadow-2xl overflow-hidden font-poppins flex flex-col z-[101] ${state.postType === 'article'
             ? 'max-w-[1050px] h-[90vh]'
             : (isImageEditorMode || isVideoEditorMode)
               ? 'max-w-[700px]'
               : 'max-w-[600px] h-[552px] max-h-[90vh]'
-            } ${(state.postType === 'poll' || showAchievementOptionPicker) ? '[&>button:last-child]:hidden' : ''}`}
+            } ${(state.postType === 'poll' || showAchievementDialog) ? '[&>button:last-child]:hidden' : ''}`}
           onPointerDownOutside={(e) => {
             const target = e.target as HTMLElement;
             if (
@@ -410,12 +435,12 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
               {/* Content */}
               <div className="flex flex-col items-center gap-4 w-full max-w-[570px]">
                 {/* Toolbar Row: + | flip/rotate/delete | counter */}
-                <div className="flex flex-row justify-between items-center w-full">
+                <div className="self-stretch inline-flex justify-between items-center">
                   {/* Add More */}
                   {!isVideoEditorMode ? (
                     <button
                       onClick={() => addMoreInputRef.current?.click()}
-                      className="w-6 h-6 flex items-center justify-center text-black dark:text-white hover:opacity-70 transition-opacity"
+                      className="w-6 h-6 flex items-center justify-center text-foreground hover:opacity-70 transition-opacity"
                       title="Add more images"
                     >
                       <Plus className="w-6 h-6" strokeWidth={1.5} />
@@ -440,10 +465,17 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                     }}
                     deleteIconRed={true}
                     className="mb-0 gap-2"
+                    onToggleAspectRatio={!isVideoEditorMode ? () => {
+                      const ratios = [4 / 5, 1, 16 / 9];
+                      const current = media.aspectRatio;
+                      const closestIdx = ratios.findIndex(r => Math.abs(r - current) < 0.01);
+                      const nextIdx = (closestIdx + 1) % ratios.length;
+                      media.handleAspectChange(ratios[nextIdx]);
+                    } : undefined}
                   />
 
                   {/* Counter */}
-                  <span className="text-[16px] leading-[24px] font-normal text-black dark:text-white font-poppins text-center min-w-[38px]">
+                  <span className="text-[16px] leading-[24px] font-normal text-foreground font-poppins text-center min-w-[38px]">
                     {isVideoEditorMode
                       ? "01/01"
                       : `${String(media.activeImageIndex + 1).padStart(2, '0')}/${String(media.uploadedImages.length).padStart(2, '0')}`
@@ -452,7 +484,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 </div>
 
                 {/* Image / Video Preview */}
-                <div className="w-full h-[400px] bg-white dark:bg-[#1a1a2e] border border-[#EEF2FF] dark:border-[#2a2a4a] shadow-[0px_2px_4px_rgba(99,102,241,0.05)] rounded-[24px] overflow-hidden flex items-center justify-center">
+                <div className="w-[570px] h-96 bg-white rounded-3xl shadow-[0px_2px_4px_0px_rgba(99,102,241,0.05)] outline outline-1 outline-offset-[-1px] outline-indigo-50 overflow-hidden flex items-center justify-center">
                   {isVideoEditorMode && media.uploadedVideos[0] ? (
                     <div className="relative w-full h-full flex items-center justify-center bg-black">
                       <CustomVideoPlayer
@@ -471,24 +503,26 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       }}
                     >
                       {isEdit ? (
-                        <img src={activeImage.url} className="w-full h-full object-contain" alt="Post media" />
+                        <img src={activeImage.url} className="w-full h-full object-cover" alt="Post media" />
                       ) : (
-                        <Cropper
-                          image={activeImage.url}
-                          crop={activeImage.crop || { x: 0, y: 0 }}
-                          zoom={activeImage.zoom || 1}
-                          rotation={activeImage.rotation || 0}
-                          aspect={media.aspectRatio}
-                          onCropChange={media.handleCropChange}
-                          onZoomChange={media.handleZoomChange}
-                          onCropComplete={media.handleCropComplete}
-                          showGrid={true}
-                          objectFit="contain"
-                          style={{
-                            containerStyle: { background: '#fff', borderRadius: '24px' },
-                            cropAreaStyle: { border: '2px solid rgba(99,102,241,0.3)', borderRadius: '8px' },
-                          }}
-                        />
+                        <div className="relative w-full h-full">
+                          <Cropper
+                            image={activeImage.url}
+                            crop={activeImage.crop || { x: 0, y: 0 }}
+                            zoom={activeImage.zoom || 1}
+                            rotation={activeImage.rotation || 0}
+                            aspect={media.aspectRatio}
+                            onCropChange={media.handleCropChange}
+                            onZoomChange={media.handleZoomChange}
+                            onCropComplete={media.handleCropComplete}
+                            showGrid={true}
+                            objectFit="cover"
+                            style={{
+                              containerStyle: { background: '#ffffff', borderRadius: '24px', width: '100%', height: '100%' },
+                              cropAreaStyle: { border: '2px solid rgba(99,102,241,0.3)', borderRadius: '8px' },
+                            }}
+                          />
+                        </div>
                       )}
                     </div>
                   ) : null}
@@ -512,8 +546,8 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                             <img src={img.url} className="w-full h-full object-cover" alt={`Thumbnail ${idx + 1}`} />
                           </button>
                           <span className={`text-[10px] leading-[14px] font-poppins transition-colors duration-200 ${isActive
-                            ? 'text-black dark:text-white font-semibold'
-                            : 'text-[#9CA3AF] dark:text-[#6B7280] font-normal'
+                            ? 'text-foreground font-semibold'
+                            : 'text-muted-foreground font-normal'
                             }`}>
                             {String(idx + 1).padStart(2, '0')}
                           </span>
@@ -525,11 +559,11 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
 
                 {/* Zoom Slider */}
                 {!isEdit && !isVideoEditorMode && (
-                  <div className="flex flex-col items-start w-[300px]">
-                    <span className="text-[12px] leading-[16px] font-normal text-black dark:text-white font-poppins">
+                  <div className="w-72 flex flex-col justify-start items-start">
+                    <span className="text-center text-black text-xs font-normal font-['Poppins'] leading-4">
                       Zoom
                     </span>
-                    <div className="relative flex flex-row items-center w-[300px] h-8 gap-0">
+                    <div className="relative flex flex-row items-center w-full h-8 gap-0">
                       <div
                         className="h-2 rounded-l-[16px] rounded-r-[2px] bg-[#6366F1]"
                         style={{ width: `${((activeImage?.zoom || 1) - 1) / 2 * 100}%`, minWidth: '4px' }}
@@ -551,51 +585,15 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                   </div>
                 )}
 
-                {/* Aspect Ratio Selector */}
-                {!isEdit && !isVideoEditorMode && (
-                  <div className="flex flex-row items-center gap-3 w-[300px]">
-                    <span className="text-[12px] leading-[16px] font-normal text-black dark:text-white font-poppins">
-                      Ratio
-                    </span>
-                    <div className="flex gap-1 bg-[#EEF2FF] dark:bg-[#2a2a4a] p-1 rounded-[12px]">
-                      {[
-                        { value: 1 / 1, label: '1:1', Icon: Square },
-                        { value: 4 / 5, label: '4:5', Icon: RectangleVertical },
-                        { value: 16 / 9, label: '16:9', Icon: RectangleHorizontal },
-                      ].map((ratio) => {
-                        const isActive = media.aspectRatio === ratio.value;
-                        return (
-                          <button
-                            key={ratio.label}
-                            type="button"
-                            onClick={() => media.setAspectRatio(ratio.value)}
-                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] text-[12px] font-medium font-poppins transition-all duration-200 ${isActive
-                              ? 'bg-white dark:bg-[#1a1a2e] text-[#6366F1] shadow-sm'
-                              : 'text-[#6B7280] hover:text-black dark:hover:text-white'
-                              }`}
-                            title={ratio.label}
-                          >
-                            <ratio.Icon className="w-3.5 h-3.5" />
-                            <span>{ratio.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Back / Next */}
-                <div className="flex flex-row items-start gap-4 w-[300px]">
+                <div className="w-72 inline-flex justify-start items-start gap-4">
                   <button
                     onClick={() => {
                       media.clearMedia();
                       state.setPostType('text');
                     }}
-                    className="flex-1 flex items-center justify-center px-4 py-2 h-10 bg-white dark:bg-transparent border border-[#818CF8] rounded-[24px] hover:bg-[#818CF8]/10 transition-all duration-200"
+                    className="flex-1 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-400 flex justify-center items-center gap-2.5"
                   >
-                    <span className="text-[14px] leading-[20px] font-normal text-[#818CF8] font-poppins text-center">
-                      Back
-                    </span>
+                    <span className="text-center text-indigo-400 text-sm font-normal font-['Poppins'] leading-5">Back</span>
                   </button>
                   <button
                     onClick={async () => {
@@ -616,14 +614,12 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       }
                     }}
                     disabled={isGeneratingPreviews}
-                    className="flex-grow flex-1 flex items-center justify-center px-4 py-2 h-10 bg-[#6366F1] border border-white/60 rounded-[24px] hover:bg-[#6366F1]/90 transition-all duration-200 disabled:opacity-50"
+                    className="flex-1 h-10 px-4 py-2 bg-indigo-500 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 disabled:opacity-50"
                   >
                     {isGeneratingPreviews ? (
                       <Loader2 className="w-4 h-4 text-white animate-spin" />
                     ) : (
-                      <span className="text-[14px] leading-[20px] font-normal text-white font-poppins text-center">
-                        Next
-                      </span>
+                      <span className="text-center text-white text-sm font-normal font-['Poppins'] leading-5">Next</span>
                     )}
                   </button>
                 </div>
@@ -649,8 +645,8 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 {state.postType !== 'article' && (
                   state.postType === 'poll' && pollStep === 'edit' ? (
                     <div className="relative w-full flex flex-col items-center">
-                      <h2 className="font-bold text-[19.5px] leading-[28px] text-black dark:text-white tracking-tight text-center font-poppins">Create a poll</h2>
-                      <p className="font-normal text-[12.5px] leading-[17px] text-[#6B7280] dark:text-[#9CA3AF] text-center mt-1 font-poppins">
+                      <h2 className="font-bold text-[19.5px] leading-[28px] text-foreground tracking-tight text-center font-poppins">Create a poll</h2>
+                      <p className="font-normal text-[12.5px] leading-[17px] text-muted-foreground text-center mt-1 font-poppins">
                         Let people vote on your question
                       </p>
                       <button
@@ -663,8 +659,8 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                     </div>
                   ) : (
                     <div className="relative flex flex-col items-center gap-1.5 w-full">
-                      <h2 className="font-semibold text-[19px] leading-[28px] text-black dark:text-white tracking-tight text-center">Create</h2>
-                      <p className="font-normal text-[12.5px] leading-[17px] text-[#6B7280] dark:text-[#9CA3AF] text-center">
+                      <h2 className="font-semibold text-[19px] leading-[28px] text-foreground tracking-tight text-center">Create</h2>
+                      <p className="font-normal text-[12.5px] leading-[17px] text-muted-foreground text-center">
                         Post jobs, insights, or milestones to grow your presence.
                       </p>
                       {state.postType === 'poll' && (
@@ -687,10 +683,10 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       <img
                         src={currentPosterLogo}
                         alt="avatar"
-                        className="w-11 h-11 rounded-full object-cover ring-2 ring-white dark:ring-[#2a2a4a] shadow-sm"
+                        className="w-11 h-11 rounded-full object-cover ring-2 ring-border shadow-sm"
                       />
                       <div className="flex flex-col">
-                        <span className="font-semibold text-[17px] leading-[24px] text-black dark:text-white">{currentPosterName}</span>
+                        <span className="font-semibold text-[17px] leading-[24px] text-foreground">{currentPosterName}</span>
                         <span className="font-normal text-[12px] leading-[16px] text-[#9CA3AF]">@{currentPosterHandle}</span>
                       </div>
                     </div>
@@ -705,27 +701,76 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 )}
 
                 {/* Scrollable content area — overflow-y: auto */}
-                <div className={`flex flex-col w-full flex-1 min-h-0 ${state.postType === 'article' ? '' : 'mt-3 overflow-y-auto custom-scrollbar'}`}>
+                <div className={`flex flex-col w-full flex-1 min-h-0 ${
+                  state.postType === 'article' ? '' : 'mt-3 overflow-y-auto custom-scrollbar'
+                } ${state.postType === 'poll' ? 'pb-24 overflow-visible' : ''}`}>
                   {state.postType !== 'article' ? (
                     <div className="relative flex flex-col gap-4 w-full">
-                      {isMilestoneComposerActive && (
-                        <div className="flex">
-                          <span className="inline-flex items-center rounded-full bg-[#EEF2FF] px-3 py-1 text-[12px] font-medium text-[#6366F1]">
-                            {selectedAchievementOption?.label || milestoneCategory}
-                          </span>
-                        </div>
-                      )}
+
 
                       {/* Media preview and controls wrapper */}
-                      {((state.postType === 'photo' && hasImages) || (state.postType === 'video' && hasVideos)) && (
+                      {selectedAchievementOption && state.postType === 'photo' && hasImages ? (
+                        <div className="flex flex-col gap-2 w-full items-center">
+                          {/* Photo preview attachment */}
+                          <div 
+                            className="relative w-full bg-muted border border-border rounded-[24px] overflow-hidden flex flex-col items-center justify-center shadow-sm"
+                            style={{ aspectRatio: media.aspectRatio, maxHeight: '320px' }}
+                          >
+                            <div className="w-full h-full flex items-center justify-center p-3">
+                              <img
+                                src={media.previewMediaUrls[0] || media.uploadedImages[0]?.url}
+                                className="w-full h-full object-contain rounded-lg"
+                                alt="Cropped post media"
+                              />
+                            </div>
+                          </div>
+                          {/* Centered translated category label */}
+                          <div className="text-center text-gray-500 text-[12px] font-normal font-poppins mt-1">
+                            {{
+                              'new-project': 'Launched a project',
+                              'new-role': 'New role',
+                              'academic-milestone': 'Academic milestone',
+                              'certificate': 'Certificate',
+                            }[selectedAchievementOption.id] || 'Achievement'}
+                          </div>
+                          {/* Right aligned edit and delete controls */}
+                          <div className="flex justify-end gap-3.5 w-full pr-2 mt-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsCreatePostOpen(false);
+                                setShowAchievementPhotoPicker(true);
+                              }}
+                              className="p-1 text-gray-500 hover:text-[#6366F1] transition-colors"
+                              title="Edit achievement photo"
+                            >
+                              <Icon icon="proicons:pencil" className="w-[24px] h-[24px] text-foreground" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                media.clearMedia();
+                                setSelectedAchievementOptionId(null);
+                              }}
+                              className="p-1 text-[#FF6B6B] hover:text-red-600 transition-colors"
+                              title="Remove achievement"
+                            >
+                              <Icon icon="fluent:delete-16-regular" className="w-[24px] h-[24px]" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : ((state.postType === 'photo' && hasImages) || (state.postType === 'video' && hasVideos)) && (
                         <div className="flex flex-col gap-2 w-full items-center">
                           {/* Photo preview attachment */}
                           {state.postType === 'photo' && hasImages && (
-                            <div className="relative w-full bg-slate-50 dark:bg-[#1a1a2e] border border-gray-100 dark:border-[#2a2a4a] rounded-[24px] overflow-hidden flex flex-col items-center justify-center shadow-sm">
-                              <div className="w-full flex items-center justify-center p-3">
+                            <div 
+                              className="relative w-full bg-muted border border-border rounded-[24px] overflow-hidden flex flex-col items-center justify-center shadow-sm"
+                              style={{ aspectRatio: media.aspectRatio, maxHeight: '320px' }}
+                            >
+                              <div className="w-full h-full flex items-center justify-center p-3">
                                 <img
                                   src={media.previewMediaUrls[previewActiveIndex] || media.uploadedImages[previewActiveIndex]?.url}
-                                  className="w-full max-h-[260px] object-contain rounded-lg"
+                                  className="w-full h-full object-contain rounded-lg"
                                   alt="Cropped post media"
                                 />
                               </div>
@@ -734,7 +779,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
 
                           {/* Video preview attachment */}
                           {state.postType === 'video' && hasVideos && (
-                            <div className="relative w-full h-[232px] bg-slate-50 dark:bg-[#1a1a2e] border border-gray-100 dark:border-[#2a2a4a] rounded-[24px] overflow-hidden flex flex-col items-center justify-center shadow-sm">
+                            <div className="relative w-full h-[232px] bg-muted border border-border rounded-[24px] overflow-hidden flex flex-col items-center justify-center shadow-sm">
                               <div className="w-full flex-1 flex items-center justify-center p-3">
                                 <div className="w-full h-full rounded-lg overflow-hidden bg-black">
                                   <CustomVideoPlayer
@@ -752,23 +797,23 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                           {/* Controls row */}
                           <div className="flex items-center justify-between w-full px-1">
                             {/* Left: counter pill */}
-                            {state.postType === 'photo' && hasImages ? (
-                              <div className="flex items-center gap-3.5 bg-white dark:bg-[#1a1a2e] px-4 py-1.5 rounded-full shadow-[0px_4px_12px_rgba(99,102,241,0.08)] border border-indigo-50/50 dark:border-[#2a2a4a]/50">
+                            {state.postType === 'photo' && hasImages && media.uploadedImages.length > 1 ? (
+                              <div className="flex items-center gap-3.5 bg-card px-4 py-1.5 rounded-full shadow-[0px_4px_12px_rgba(99,102,241,0.08)] border border-border/50">
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setPreviewActiveIndex(prev => (prev === 0 ? media.uploadedImages.length - 1 : prev - 1)); }}
-                                  className={`p-0.5 text-[#6366F1] dark:text-indigo-400 hover:opacity-70 transition-opacity ${media.uploadedImages.length <= 1 ? 'opacity-30 pointer-events-none' : ''}`}
+                                  className="p-0.5 text-primary hover:opacity-70 transition-opacity"
                                   title="Previous image"
                                 >
                                   <ArrowLeft className="w-4 h-4" strokeWidth={2.5} />
                                 </button>
-                                <span className="text-[13px] font-semibold text-black dark:text-white min-w-[18px] text-center font-poppins">
+                                <span className="text-[13px] font-semibold text-foreground min-w-[18px] text-center font-poppins">
                                   {String(previewActiveIndex + 1).padStart(2, '0')}
                                 </span>
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setPreviewActiveIndex(prev => (prev === media.uploadedImages.length - 1 ? 0 : prev + 1)); }}
-                                  className={`p-0.5 text-[#6366F1] dark:text-indigo-400 hover:opacity-70 transition-opacity ${media.uploadedImages.length <= 1 ? 'opacity-30 pointer-events-none' : ''}`}
+                                  className="p-0.5 text-primary hover:opacity-70 transition-opacity"
                                   title="Next image"
                                 >
                                   <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
@@ -782,10 +827,10 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                               <button
                                 type="button"
                                 onClick={() => state.postType === 'video' ? setVideoStep('edit') : setPhotoStep('edit')}
-                                className="p-1.5 text-gray-500 hover:text-[#6366F1] hover:bg-[#EEF2FF] dark:hover:bg-[#2a2a4a] rounded-full transition-colors"
+                                className="p-1.5 text-gray-500 hover:text-[#6366F1] hover:bg-secondary rounded-full transition-colors"
                                 title="Edit media"
                               >
-                                <Icon icon="proicons:pencil" className="w-[24px] h-[24px] text-black dark:text-white" style={{ strokeWidth: '1.5px', stroke: 'currentColor' }} />
+                                <Icon icon="proicons:pencil" className="w-[24px] h-[24px] text-foreground" style={{ strokeWidth: '1.5px', stroke: 'currentColor' }} />
                               </button>
                               <button
                                 type="button"
@@ -793,7 +838,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                 className="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors"
                                 title="Remove media"
                               >
-                                <Icon icon="hugeicons:delete-02" className="w-[24px] h-[24px]" style={{ strokeWidth: '1.5px' }} />
+                                <Icon icon="fluent:delete-16-regular" className="w-[24px] h-[24px]" />
                               </button>
                             </div>
                           </div>
@@ -801,16 +846,18 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       )}
 
                       {/* Unified Content Textarea (Part of scroll unit) */}
-                      <div className="flex flex-col w-full">
-                        <textarea
-                          ref={composerTextareaRef}
-                          className="w-full resize-none outline-none font-normal text-[15px] leading-[23px] text-black dark:text-white placeholder:text-[#6B7280] bg-transparent font-poppins whitespace-pre-wrap"
-                          placeholder={composerPlaceholder}
-                          value={state.description}
-                          onChange={(e) => state.setDescription(e.target.value)}
-                          style={{ overflow: 'hidden', resize: 'none', height: 'auto', minHeight: '80px' }}
-                        />
-                      </div>
+                      {state.postType !== 'poll' && (
+                        <div className="flex flex-col w-full">
+                          <textarea
+                            ref={composerTextareaRef}
+                            className="w-full resize-none outline-none font-normal text-[15px] leading-[23px] text-foreground placeholder:text-[#6B7280] bg-transparent font-poppins whitespace-pre-wrap"
+                            placeholder={composerPlaceholder}
+                            value={state.description}
+                            onChange={(e) => state.setDescription(e.target.value)}
+                            style={{ overflow: 'hidden', resize: 'none', height: 'auto', minHeight: '80px' }}
+                          />
+                        </div>
+                      )}
 
                       {/* Poll Flow Options (Step === edit) */}
                       {state.postType === 'poll' && pollStep === 'edit' && (
@@ -832,7 +879,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       {state.postType === 'poll' && pollStep === 'preview' && (
                         <div className="flex flex-col w-full gap-4">
                           {/* Poll Preview Card */}
-                          <div className="w-full border border-gray-100 dark:border-[#2a2a4a] bg-[#F8FAFC]/50 dark:bg-[#1e1e38]/50 rounded-[24px] p-5 space-y-3.5 shadow-sm">
+                          <div className="w-full border border-border bg-muted/50 rounded-[24px] p-5 space-y-3.5 shadow-sm">
                             <h3 className="font-bold text-[15.5px] leading-[22px] text-[#1F2937] dark:text-white text-left font-poppins">
                               {poll.pollQuestion}
                             </h3>
@@ -848,7 +895,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                   </div>
                                 ))}
                             </div>
-                            <div className="flex items-center justify-end text-[11.5px] font-semibold text-[#6366F1] dark:text-indigo-400 font-poppins w-full pt-1">
+                            <div className="flex items-center justify-end text-[11.5px] font-semibold text-primary font-poppins w-full pt-1">
                               <span>0 votes • {poll.pollDuration} left • View result</span>
                             </div>
                           </div>
@@ -858,7 +905,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                             <button
                               type="button"
                               onClick={() => setPollStep('edit')}
-                              className="p-1.5 text-gray-500 hover:text-[#6366F1] hover:bg-[#EEF2FF] dark:hover:bg-[#2a2a4a] rounded-full transition-colors"
+                              className="p-1.5 text-gray-500 hover:text-[#6366F1] hover:bg-secondary rounded-full transition-colors"
                               title="Edit poll"
                             >
                               <Pencil className="w-5 h-5 stroke-[1.8]" />
@@ -872,7 +919,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                               className="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors"
                               title="Delete poll"
                             >
-                              <Trash2 className="w-5 h-5 stroke-[1.8]" />
+                              <Icon icon="fluent:delete-16-regular" className="w-5 h-5" />
                             </button>
                           </div>
                         </div>
@@ -913,7 +960,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                           poll.clearPoll();
                           state.setPostType('text');
                         }}
-                        className="flex flex-row items-center justify-center px-6 py-2 border border-[#818CF8] rounded-full bg-white dark:bg-transparent text-[#818CF8] hover:bg-[#818CF8]/10 transition-all duration-200 font-poppins text-[13.5px] font-medium"
+                        className="flex flex-row items-center justify-center px-6 py-2 border border-[#818CF8] rounded-full bg-transparent text-[#818CF8] hover:bg-[#818CF8]/10 transition-all duration-200 font-poppins text-[13.5px] font-medium"
                       >
                         Back
                       </button>
@@ -921,7 +968,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         type="button"
                         onClick={() => setPollStep('preview')}
                         disabled={!poll.isPollValid()}
-                        className="flex flex-row items-center justify-center gap-2 px-6 py-2 disabled:bg-[#C7D2FE] bg-[#818CF8] hover:bg-[#6366F1] border border-white/60 rounded-full text-white disabled:opacity-50 transition-all duration-200 shadow-sm font-poppins text-[13.5px] font-medium"
+                        className="flex flex-row items-center justify-center gap-2 px-6 py-2 disabled:bg-[#C7D2FE] bg-[#6366F1] hover:bg-[#6366F1] border border-white/60 rounded-full text-white disabled:opacity-50 transition-all duration-200 shadow-sm font-poppins text-[13.5px] font-medium"
                       >
                         <span>Next</span>
                       </button>
@@ -931,10 +978,10 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       {/* Tag, Location, Smile icons row */}
                       <div className="flex items-center gap-3 px-1">
                         <button className="relative transition-colors" title="Tag people" onClick={() => { setIsCreatePostOpen(false); setShowTagSelector(true); }}>
-                          <Icon icon="la:user-tag" className="w-6 h-6 text-black dark:text-white" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
+                          <Icon icon="la:user-tag" className="w-6 h-6 text-foreground" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
                         </button>
                         <button className="relative transition-colors" title="Location" onClick={() => { setIsCreatePostOpen(false); setShowLocationSelector(true); }}>
-                          <Icon icon="hugeicons:location-05" className="w-6 h-6 text-black dark:text-white" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
+                          <Icon icon="hugeicons:location-05" className="w-6 h-6 text-foreground" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
                           {state.selectedLocation && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full" />}
                         </button>
                         <button
@@ -944,12 +991,12 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                           title="Add emoji"
                           onClick={(e) => handleEmojiButtonClick(e, composerTextareaRef)}
                         >
-                          <Icon icon="lucide:smile" className="w-6 h-6 text-black dark:text-white" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
+                          <Icon icon="lucide:smile" className="w-6 h-6 text-foreground" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
                         </button>
                       </div>
 
                       <div className="flex flex-row justify-between items-center w-full">
-                        <button className="flex flex-row items-center justify-center gap-2 px-5 py-2.5 border border-[#818CF8] rounded-full bg-white dark:bg-transparent hover:bg-[#818CF8]/10 dark:hover:bg-[#818CF8]/10 transition-all duration-200 group">
+                        <button className="flex flex-row items-center justify-center gap-2 px-5 py-2.5 border border-[#818CF8] rounded-full bg-transparent hover:bg-[#818CF8]/10 dark:hover:bg-[#818CF8]/10 transition-all duration-200 group">
                           <Sparkles className="w-4 h-4 text-[#818CF8] group-hover:scale-110 transition-transform" />
                           <span className="font-medium text-[13.5px] leading-[20px] text-[#818CF8]">Enhance with AI</span>
                         </button>
@@ -957,7 +1004,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         <button
                           onClick={handlePostClick}
                           disabled={isPostButtonDisabled}
-                          className="flex flex-row items-center justify-center gap-2 px-7 py-2.5 bg-[#C7D2FE] border border-white/60 rounded-full enabled:hover:bg-[#818CF8] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none group shadow-sm"
+                          className="flex flex-row items-center justify-center gap-2 px-7 py-2.5 bg-[#C7D2FE] enabled:bg-[#6366F1] border border-white/60 rounded-full  transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none group shadow-sm"
                         >
                           {state.isSubmitting ? (
                             <Loader2 className="w-4 h-4 text-white animate-spin" />
@@ -974,24 +1021,17 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
             </>
           )}
 
-          {/* Achievement Option Picker */}
-          <AchievementOptionPicker
-            isOpen={showAchievementOptionPicker}
-            selectedOptionId={selectedAchievementOptionId}
-            onClose={() => setShowAchievementOptionPicker(false)}
-            onSelect={(option) => handleAchievementOptionSelect(option.id)}
-          />
 
           {/* Context Switch Warning */}
           {state.showContextWarning && (
             <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-              <div className="bg-white dark:bg-[#1a1a2e] border border-gray-100 dark:border-[#2a2a4a] rounded-2xl shadow-2xl p-6 max-w-sm w-full space-y-4 font-poppins">
-                <h3 className="text-[18px] leading-[26px] font-semibold text-black dark:text-white">Discard changes?</h3>
+              <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 max-w-sm w-full space-y-4 font-poppins">
+                <h3 className="text-[18px] leading-[26px] font-semibold text-foreground">Discard changes?</h3>
                 <p className="text-[14px] leading-[20px] text-[#6B7280]">Switching accounts will discard your current draft. Do you want to proceed?</p>
                 <div className="flex gap-3 justify-end pt-2">
                   <button
                     onClick={() => state.setShowContextWarning(false)}
-                    className="px-5 py-2 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-[#2a2a4a] text-black dark:text-white border border-gray-200 dark:border-[#3a3a5a] transition-colors"
+                    className="px-5 py-2 rounded-full text-sm font-medium hover:bg-secondary text-foreground border border-border transition-colors"
                   >
                     Cancel
                   </button>
@@ -1082,6 +1122,66 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
             onConfirm={() => {
               setShowLocationSelector(false);
               setIsCreatePostOpen(true);
+            }}
+          />
+        </BareDialogContent>
+      </Dialog>
+
+      {/* Achievement Picker Dialog — separate Dialog, matching Tag People flow */}
+      <Dialog
+        open={showAchievementDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowAchievementDialog(false);
+            setIsCreatePostOpen(true);
+          }
+        }}
+      >
+        <BareDialogContent className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden">
+          <DialogTitle className="sr-only">Select Milestone Option</DialogTitle>
+          <AchievementPickerDialog
+            isOpen={showAchievementDialog}
+            onClose={() => {
+              setShowAchievementDialog(false);
+              setIsCreatePostOpen(true);
+            }}
+            onSelect={(option) => {
+              handleAchievementDialogSelect(option);
+              setShowAchievementDialog(false);
+              setShowAchievementPhotoPicker(true);
+            }}
+          />
+        </BareDialogContent>
+      </Dialog>
+
+      {/* Achievement Photo Picker Dialog */}
+      <Dialog
+        open={showAchievementPhotoPicker}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowAchievementPhotoPicker(false);
+            setIsCreatePostOpen(true);
+          }
+        }}
+      >
+        <BareDialogContent className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden">
+          <DialogTitle className="sr-only">Select Achievement Photo</DialogTitle>
+          <AchievementPhotoPickerDialog
+            isOpen={showAchievementPhotoPicker}
+            selectedOption={selectedAchievementOption ? (selectedAchievementOption.id.replace('-', '_') as any) : null}
+            onClose={() => {
+              setShowAchievementPhotoPicker(false);
+              setIsCreatePostOpen(true);
+            }}
+            onBack={() => {
+              setShowAchievementPhotoPicker(false);
+              setShowAchievementDialog(true);
+            }}
+            onPhotoSelect={handleAchievementPhotoSelect}
+            onUploadPhoto={() => {
+              setShowAchievementPhotoPicker(false);
+              setIsCreatePostOpen(true);
+              setTimeout(() => galleryInputRef.current?.click(), 0);
             }}
           />
         </BareDialogContent>

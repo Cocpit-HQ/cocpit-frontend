@@ -25,6 +25,18 @@ export function rotateSize(width: number, height: number, rotation: number) {
   }
 }
 
+const getExportFormat = (type?: string) => {
+  if (!type) return 'image/jpeg';
+  if (
+    type === 'image/png' ||
+    type === 'image/svg+xml' ||
+    type === 'image/webp'
+  ) {
+    return 'image/png';
+  }
+  return 'image/jpeg';
+};
+
 /**
  * This function was adapted from the one in the ReadMe of https://github.com/DominicTobias/react-image-crop
  */
@@ -32,8 +44,13 @@ export default async function getCroppedImg(
   imageSrc: string,
   pixelCrop: { x: number; y: number; width: number; height: number },
   rotation = 0,
-  flip = { horizontal: false, vertical: false }
+  flip = { horizontal: false, vertical: false },
+  originalType?: string
 ): Promise<Blob> {
+  if (originalType === 'image/svg+xml') {
+    return fetch(imageSrc).then(res => res.blob());
+  }
+
   const image = await createImage(imageSrc)
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
@@ -61,6 +78,9 @@ export default async function getCroppedImg(
   ctx.scale(flip.horizontal ? -1 : 1, flip.vertical ? -1 : 1)
   ctx.translate(-image.width / 2, -image.height / 2)
 
+  // ENSURE TRANSPARENCY IN CANVAS
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   // draw rotated image
   ctx.drawImage(image, 0, 0)
 
@@ -77,13 +97,14 @@ export default async function getCroppedImg(
   canvas.width = pixelCrop.width
   canvas.height = pixelCrop.height
 
+  // ENSURE TRANSPARENCY IN CANVAS
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   // paste generated rotate image at the top left corner
   ctx.putImageData(data, 0, 0)
 
-  // As Base64 string
-  // return canvas.toDataURL('image/jpeg');
+  const format = getExportFormat(originalType);
 
-  // As Blob (better for large files)
   return new Promise((resolve, reject) => {
     canvas.toBlob((file) => {
       if (file) {
@@ -91,7 +112,7 @@ export default async function getCroppedImg(
       } else {
         reject(new Error('Canvas is empty'))
       }
-    }, 'image/jpeg')
+    }, format, format === 'image/jpeg' ? 0.92 : undefined)
   })
 }
 
@@ -128,7 +149,7 @@ export function getGradientImage(style: string, width = 1080, height = 1920): Pr
       gradient.addColorStop(1, '#4b5563'); // gray-600
     } else {
       // Default black or extract from style if it's a color
-      gradient = '#000000';
+      gradient = '#ffffff';
     }
 
     ctx.fillStyle = gradient;
@@ -147,10 +168,15 @@ export function getGradientImage(style: string, width = 1080, height = 1920): Pr
 export async function getPaddedImg(
   imageSrc: string,
   aspect: number,
-  fillColor = '#000000',
+  fillColor = 'transparent',
   rotation = 0,
-  flip = { horizontal: false, vertical: false }
+  flip = { horizontal: false, vertical: false },
+  originalType?: string
 ): Promise<Blob> {
+  if (originalType === 'image/svg+xml') {
+    return fetch(imageSrc).then(res => res.blob());
+  }
+
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -171,13 +197,10 @@ export async function getPaddedImg(
   let targetWidth, targetHeight;
 
   // Determine target dimensions based on aspect ratio
-  // We want the resulting image to maintain the source resolution quality
   if (aspect > imageAspect) {
-    // Target is wider than image (pillarbox - bars on sides)
     targetHeight = rotatedHeight;
     targetWidth = rotatedHeight * aspect;
   } else {
-    // Target is taller than image (letterbox - bars on top/bottom)
     targetWidth = rotatedWidth;
     targetHeight = rotatedWidth / aspect;
   }
@@ -185,9 +208,14 @@ export async function getPaddedImg(
   canvas.width = targetWidth;
   canvas.height = targetHeight;
 
-  // Fill background
-  ctx.fillStyle = fillColor;
-  ctx.fillRect(0, 0, targetWidth, targetHeight);
+  // ENSURE TRANSPARENCY IN CANVAS
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Fill background if not transparent
+  if (fillColor !== 'transparent') {
+    ctx.fillStyle = fillColor;
+    ctx.fillRect(0, 0, targetWidth, targetHeight);
+  }
 
   // Translate canvas context to a central location to allow rotating and flipping around the center
   ctx.translate(targetWidth / 2, targetHeight / 2);
@@ -198,6 +226,8 @@ export async function getPaddedImg(
   // Draw image
   ctx.drawImage(image, 0, 0);
 
+  const format = getExportFormat(originalType);
+
   return new Promise((resolve, reject) => {
     canvas.toBlob((file) => {
       if (file) {
@@ -205,6 +235,6 @@ export async function getPaddedImg(
       } else {
         reject(new Error('Canvas is empty'));
       }
-    }, 'image/jpeg');
+    }, format, format === 'image/jpeg' ? 0.92 : undefined);
   });
 }

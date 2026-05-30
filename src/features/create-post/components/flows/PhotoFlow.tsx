@@ -60,6 +60,14 @@ const PhotoFlow = ({
           </div>
         ) : (
           <div className="space-y-4">
+            <RichTextEditor
+              content={caption}
+              onChange={onCaptionChange}
+              placeholder="Write a caption..."
+              className="bg-transparent border shadow-none"
+              editorClassName="min-h-[100px]"
+            />
+
             <div className="w-full">
               <MediaCropper
                 imageSrc={uploadedImages[activeImageIndex]?.url}
@@ -98,14 +106,6 @@ const PhotoFlow = ({
                 )}
               </div>
             )}
-
-            <RichTextEditor
-              content={caption}
-              onChange={onCaptionChange}
-              placeholder="Write a caption..."
-              className="bg-transparent border shadow-none"
-              editorClassName="min-h-[100px]"
-            />
           </div>
         )}
         <input ref={galleryInputRef} type="file" accept="image/*,video/*" multiple onChange={onPhotoUpload} className="hidden" />
@@ -131,6 +131,14 @@ const PhotoFlow = ({
         </div>
       ) : (
         <div className="border rounded-lg p-4 space-y-4 bg-background border-border">
+          <RichTextEditor
+            content={caption}
+            onChange={onCaptionChange}
+            className="bg-transparent border-none min-h-[100px]"
+            editorClassName="min-h-[100px]"
+            placeholder="Add a caption..."
+          />
+
           <div className="w-full">
             <MediaCropper
               imageSrc={uploadedImages[activeImageIndex]?.url}
@@ -188,14 +196,6 @@ const PhotoFlow = ({
               </button>
             )}
           </div>
-
-          <RichTextEditor
-            content={caption}
-            onChange={onCaptionChange}
-            className="bg-transparent border-none min-h-[100px]"
-            editorClassName="min-h-[100px]"
-            placeholder="Add a caption..."
-          />
         </div>
       )}
       <input ref={galleryInputRef} type="file" accept="image/*,video/*" multiple onChange={onPhotoUpload} className="hidden" />

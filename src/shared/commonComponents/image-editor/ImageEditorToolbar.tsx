@@ -14,6 +14,7 @@ interface ImageEditorToolbarProps {
   disableDelete?: boolean;
   deleteIconRed?: boolean; // avatar uses text-[#FF6B6B], profile uses text-red-500
   className?: string;
+  onToggleAspectRatio?: () => void;
 }
 
 export const ImageEditorToolbar: React.FC<ImageEditorToolbarProps> = ({
@@ -27,9 +28,20 @@ export const ImageEditorToolbar: React.FC<ImageEditorToolbarProps> = ({
   disableDelete = false,
   deleteIconRed = false,
   className,
+  onToggleAspectRatio,
 }) => {
   return (
     <div className={cn("flex justify-center items-center gap-4 mb-6", className)}>
+      {onToggleAspectRatio && (
+        <button
+          type="button"
+          onClick={onToggleAspectRatio}
+          className="p-1.5 text-foreground hover:bg-secondary rounded-md transition-colors cursor-pointer"
+          title="Aspect Ratio"
+        >
+          <Icon icon="ion:resize-outline" className="w-6 h-6" />
+        </button>
+      )}
       <button
         type="button"
         onClick={onToggleFlipV}
@@ -70,10 +82,8 @@ export const ImageEditorToolbar: React.FC<ImageEditorToolbarProps> = ({
       >
         {isDeleting ? (
           <Loader2 className="w-6 h-6 animate-spin" strokeWidth={1.5} />
-        ) : deleteIconRed ? (
-          <Icon icon="fluent:delete-32-regular" className="w-6 h-6" />
         ) : (
-          <Trash2 className="w-6 h-6" strokeWidth={1.5} />
+          <Icon icon="fluent:delete-16-regular" className="w-6 h-6" />
         )}
       </button>
     </div>

@@ -205,7 +205,7 @@ export const HomeHeader = () => {
 
     return (
         <header
-            className={`sticky top-0 z-50 border-b border-border bg-background/85 px-3 py-2 backdrop-blur-md transition-transform duration-300 ease-in-out supports-[backdrop-filter]:bg-background/70 md:px-4 md:py-0 ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
+            className={`sticky top-0 z-50 bg-background/85 px-3 py-2 backdrop-blur-md transition-transform duration-300 ease-in-out supports-[backdrop-filter]:bg-background/70 md:px-4 md:py-0 ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
                 } md:translate-y-0`}
         >
             <div className="mx-auto flex min-h-12 w-full max-w-[1128px] items-center px-1 md:min-h-14 md:px-4 xl:px-0">

@@ -48,7 +48,7 @@ export const PostSharedContent = ({
         </div>
       ) : shared_post.isJob ? (
         <Link href={`/jobs/${shared_post.jobId}`} className="block" onClick={(e) => e.stopPropagation()}>
-          <div className="rounded-xl border border-primary/20 bg-primary/5 backdrop-blur-md overflow-hidden transition-all duration-300 hover:bg-primary/10 hover:border-primary/40 hover:shadow-md p-4 flex gap-4 items-center">
+          <div className="rounded-xl border border-primary/20 bg-primary/5 backdrop-blur-md overflow-hidden p-4 flex gap-4 items-center">
             <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-lg bg-card overflow-hidden flex items-center justify-center border border-border/50 shadow-sm">
               {shared_post.jobLogo ? (
                 <img src={shared_post.jobLogo} alt={shared_post.jobCompany || "Company logo"} className="w-full h-full object-contain p-1" />
@@ -65,7 +65,7 @@ export const PostSharedContent = ({
         </Link>
       ) : (
         <Link href={`/post/${shared_post.id}`} className="block">
-          <div className="feed-card-shell box-border flex flex-col items-start p-[8px_16px] gap-[16px] w-full transition-all duration-300 hover:shadow-md">
+          <div className="feed-card-shell box-border flex flex-col items-start p-[8px_16px] gap-[16px] w-full">
             {/* Header (Frame 2608569) */}
             <div className="flex flex-row items-center p-0 gap-[8px] w-full">
               <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-muted">

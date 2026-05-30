@@ -349,6 +349,26 @@
     background-color: var(--muted);
   }
 
+  /* ── Achievement Option Buttons ───────────────────────── */
+  .achievement-btn {
+    background-color: transparent;
+  }
+  .achievement-btn:hover {
+    background-color: #EEF2FF;
+  }
+  .achievement-btn-selected {
+    background-color: #EEF2FF;
+  }
+  .achievement-btn-selected:hover {
+    background-color: #E0E7FF;
+  }
+
+  [data-theme="dark"] .achievement-btn:hover,
+  [data-theme="dark"] .achievement-btn-selected,
+  [data-theme="dark"] .achievement-btn-selected:hover {
+    background-color: transparent !important;
+  }
+
   /* Gradient helpers from old globals */
   .bg-onboard {
     background: linear-gradient(180deg, #5A2DD8 0%, #8B63F5 100%);

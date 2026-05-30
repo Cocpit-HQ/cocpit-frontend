@@ -2,13 +2,12 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { MoreHorizontal, Globe, EyeOff, Star, Link2, Flag, Edit2, BarChart2, Trash2, Eye } from 'lucide-react';
+import { EyeOff, Edit2, BarChart2, Trash2, Eye } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Icon } from "@iconify/react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TaggedPeoplePopover } from "@/shared/commonComponents/TaggedPeoplePopover";
+import { useSocial } from '@/context/SocialContext';
 
 interface PostHeaderProps {
   id: string | number;
@@ -47,6 +46,21 @@ export const PostHeader = ({
   location, tags, authorRole, title
 }: PostHeaderProps) => {
   const avatarSrc = authorAvatar || '/assets/pngegg.png';
+  const { followUser, unfollowUser, isFollowing, isFollowLoading } = useSocial();
+  const authorUserId = authorId?.toString();
+  const isAuthorFollowing = authorUserId ? isFollowing(authorUserId) : false;
+  const isAuthorFollowLoading = authorUserId ? isFollowLoading(authorUserId) : false;
+
+  const handleToggleFollowAuthor = () => {
+    if (!authorUserId || isAuthorFollowLoading || isCompanyPost) return;
+
+    if (isAuthorFollowing) {
+      unfollowUser(authorUserId);
+    } else {
+      followUser(authorUserId);
+    }
+    setShowOptions(false);
+  };
 
   const handleOptionsClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -132,44 +146,41 @@ export const PostHeader = ({
               onClick={handleOptionsClick}
               className="text-muted-foreground hover:text-foreground transition-colors p-1"
             >
-              <Icon icon="solar:menu-dots-bold" className="w-[24px] h-[24px] rotate-90" />
+              <Icon icon="ph:dots-three-outline-vertical-light" className="w-6 h-6" />
             </button>
 
             {showOptions && optionsPos && typeof document !== 'undefined' && createPortal(
               <>
                 <div className="fixed inset-0 z-[199]" onClick={() => setShowOptions(false)} />
                 <div
-                  className="fixed w-48 bg-card border border-border rounded-lg shadow-lg z-[200] overflow-hidden"
+                  className="fixed w-44 p-2 bg-card border border-indigo-200 dark:border-[#818CF8] rounded-tl-3xl rounded-bl-3xl rounded-br-3xl rounded-tr-none shadow-lg z-[200]"
                   style={{ top: optionsPos.top, right: optionsPos.right }}
                 >
                   {!isOwnPost && (
                     <>
                       <button
-                        onClick={() => setShowOptions(false)}
-                        className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
+                        onClick={handleToggleFollowAuthor}
+                        disabled={!authorUserId || isAuthorFollowLoading || isCompanyPost}
+                        className="flex items-center justify-between w-full px-4 py-2 cursor-pointer focus:bg-primary-tint focus:text-primary-tint-foreground rounded-3xl outline-none transition-colors"
                       >
-                        <Star className="w-4 h-4" />
-                        <span>Add to favorites</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (typeof window !== 'undefined') {
-                            navigator.clipboard.writeText(`${window.location.origin}/post/${id}`);
-                            toast.success("Link copied!");
-                          }
-                          setShowOptions(false);
-                        }}
-                        className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
-                      >
-                        <Link2 className="w-4 h-4" />
-                        <span>Copy link</span>
+                        <span className="text-sm font-normal font-poppins text-foreground truncate pr-2">
+                          {isAuthorFollowing ? `Remove ${author}` : `Follow ${author}`}
+                        </span>
+                        <img src={avatarSrc} alt={author} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
                       </button>
                       <button
                         onClick={() => { onReport(); setShowOptions(false); }}
-                        className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                        className="flex items-center justify-between w-full px-4 py-2 cursor-pointer focus:bg-primary-tint focus:text-primary-tint-foreground rounded-3xl outline-none transition-colors"
                       >
-                        <Flag className="w-4 h-4" />
-                        <span>Report</span>
+                        <span className="text-sm font-normal font-poppins text-foreground">Report post</span>
+                        <Icon icon="mdi:information-outline" className="w-6 h-6 text-foreground" />
+                      </button>
+                      <button
+                        onClick={() => setShowOptions(false)}
+                        className="flex items-center justify-between w-full px-4 py-2 cursor-pointer focus:bg-primary-tint focus:text-primary-tint-foreground rounded-3xl outline-none transition-colors"
+                      >
+                        <span className="text-sm font-normal font-poppins text-foreground">Not interested</span>
+                        <Icon icon="hugeicons:cancel-01" className="w-6 h-6 text-foreground" style={{ strokeWidth: '1.5px' }} />
                       </button>
                     </>
                   )}

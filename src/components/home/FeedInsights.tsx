@@ -56,7 +56,7 @@ export function JobMatchesCard() {
           <Link
             key={job.id}
             href="/jobs"
-            className="feed-card-shell flex items-center justify-between gap-4 px-4 py-3 transition-shadow hover:shadow-md"
+            className="feed-card-shell flex items-center justify-between gap-4 px-4 py-3"
           >
             <div className="min-w-0">
               <h3 className="truncate text-sm font-medium text-foreground">{job.title}</h3>

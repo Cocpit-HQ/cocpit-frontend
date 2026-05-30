@@ -74,7 +74,7 @@ export const FeedPost = (props: FeedPostProps) => {
           router.push(`/post/${id}`);
         }
       }}
-      className={`feed-card-shell flex w-full flex-col gap-[16px] overflow-hidden py-[16px] transition-all duration-300 hover:shadow-md ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
+      className={`feed-card-shell flex w-full flex-col gap-[16px] overflow-hidden py-[16px] ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
     >
       {/* Header & Content (Frame 2608598) */}
       <div className="flex flex-col gap-[16px] px-[16px]">
