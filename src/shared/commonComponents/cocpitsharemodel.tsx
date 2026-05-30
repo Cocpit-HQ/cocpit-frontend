@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X, Mail, Facebook, Search, User } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { X, Mail, Facebook, Search, User, Briefcase } from "lucide-react";
+import { Icon } from "@iconify/react";
 import { useSocial } from "@/context/SocialContext";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
-import { getFollowing } from "@/services/api/social";
+import { toast } from "sonner";
+import { getShareUsers, sendMessage } from "@/services/api/messaging";
 
 export interface CocpitShareModelProps {
   isOpen: boolean;
@@ -27,29 +27,94 @@ export default function CocpitShareModel({
   postId,
   profileId,
 }: CocpitShareModelProps) {
-  const router = useRouter();
   const { startChat } = useSocial();
   const { activeProfile } = useActiveProfile();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [isSending, setIsSending] = useState(false);
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
 
-  // Fetch following list of the logged-in user if users prop is not provided
-  const { data: followingData = [] } = useQuery({
-    queryKey: ["following", user?.id],
-    queryFn: () => (user?.id ? getFollowing(user.id) : Promise.resolve([])),
-    enabled: !propUsers && !!user?.id && isOpen,
-    staleTime: 1000 * 60 * 5,
-  });
+  // Pagination states
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearchingApi, setIsSearchingApi] = useState(false);
+  const [searchCursor, setSearchCursor] = useState<string | null>(null);
+  const [hasMoreUsers, setHasMoreUsers] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const runSearch = useCallback(
+    async (query: string, cursor?: string, append = false) => {
+      setIsSearchingApi(true);
+      setSearchError(null);
+      try {
+        const result = await getShareUsers(
+          query || undefined,
+          cursor,
+          20
+        );
+        setSearchResults((prev) => {
+          const combined = append ? [...prev, ...result.data] : result.data;
+          const unique = Array.from(
+            new Map(combined.map((u) => [u.user_id || u.id, u])).values()
+          );
+          return unique;
+        });
+        setSearchCursor(result.nextCursor);
+        setHasMoreUsers(result.hasMore);
+      } catch (err: any) {
+        const msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to load users";
+        setSearchError(msg);
+        toast.error(msg);
+      } finally {
+        setIsSearchingApi(false);
+      }
+    },
+    [toast]
+  );
+
+  useEffect(() => {
+    if (propUsers) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!isOpen) return;
+    debounceRef.current = setTimeout(() => {
+      setSearchResults([]);
+      setSearchCursor(null);
+      setHasMoreUsers(false);
+      runSearch(searchTerm);
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchTerm, isOpen, propUsers, runSearch]);
+
+  const handleLoadMore = useCallback(() => {
+    if (!hasMoreUsers || isSearchingApi) return;
+    runSearch(searchTerm, searchCursor ?? undefined, true);
+  }, [hasMoreUsers, isSearchingApi, searchTerm, searchCursor, runSearch]);
+
+  const handleScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      const el = e.currentTarget;
+      const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+      if (nearBottom) handleLoadMore();
+    },
+    [handleLoadMore]
+  );
 
   const users = useMemo(() => {
     if (propUsers) return propUsers;
-    return followingData.map((f: any) => ({
-      id: f.following_id || f.user_id || f.id,
+    return searchResults.map((f: any) => ({
+      id: f.user_id || f.id,
       name: f.full_name,
       avatar: f.avatar_url || undefined,
+      conversation_id: f.conversation_id,
     }));
-  }, [propUsers, followingData]);
+  }, [propUsers, searchResults]);
 
   const isSearching = searchTerm.length > 0;
 
@@ -67,180 +132,155 @@ export default function CocpitShareModel({
   };
 
   const toggleSelected = (id: string) => {
-    setSelectedUsers([id]);
-    onShare?.([id]);
-    
-    if (postId) {
-      const isCompany = activeProfile?.type === "COMPANY";
-      const effectiveCompanyId = isCompany ? activeProfile?.id : undefined;
-
-      if (effectiveCompanyId) {
-        router.push(`/messaging?userId=${id}&companyId=${effectiveCompanyId}&sharedPostId=${postId}`);
+    setSelectedUsers((prev) => {
+      if (prev.includes(id)) {
+        return [];
       } else {
-        router.push(`/messaging?userId=${id}&sharedPostId=${postId}`);
+        return [id];
       }
-    } else if (profileId) {
-      const isCompany = activeProfile?.type === "COMPANY";
-      const effectiveCompanyId = isCompany ? activeProfile?.id : undefined;
-
-      if (effectiveCompanyId) {
-        router.push(`/messaging?userId=${id}&companyId=${effectiveCompanyId}&sharedProfileId=${profileId}`);
-      } else {
-        router.push(`/messaging?userId=${id}&sharedProfileId=${profileId}`);
-      }
-    } else {
-      startChat(id);
-    }
-    
-    handleClose();
+    });
   };
 
-  const canShare = selectedUsers.length > 0;
+  const handleSendClick = async () => {
+    if (selectedUsers.length === 0 || isSending) return;
+    const targetUserId = selectedUsers[0];
+    setIsSending(true);
+    try {
+      const isCompany = activeProfile?.type === "COMPANY";
+      const effectiveCompanyId = isCompany ? activeProfile?.id : undefined;
+
+      await sendMessage(
+        targetUserId,
+        shareUrl,
+        postId,
+        undefined,
+        effectiveCompanyId,
+        undefined,
+        profileId
+      );
+
+      toast.success("Message sent");
+
+      onShare?.([targetUserId]);
+      handleClose();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || "Failed to send message");
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const shareOptions = useMemo(
     () => [
       {
-        icon: <Mail className="w-5 h-5 text-gray-500 dark:text-gray-400" />,
+        icon: <Briefcase className="w-5 h-5 text-[var(--muted-foreground)]" />,
+        label: "Work in progress",
+        onClick: () => {
+          toast("This feature is coming soon!");
+        },
+      },
+      {
+        icon: <Mail className="w-5 h-5 text-[var(--muted-foreground)]" />,
         label: "Send via Email",
         onClick: () => {
           window.open(
-            `mailto:?subject=Check out this profile&body=${encodeURIComponent(
-              window.location.href
-            )}`
+            `mailto:?subject=Check this out&body=${encodeURIComponent(shareUrl)}`,
+            "_blank"
           );
         },
       },
       {
-        icon: <Facebook className="w-5 h-5 text-gray-500 dark:text-gray-400" />,
+        icon: <Icon icon="hugeicons:whatsapp" className="w-5 h-5 text-[var(--muted-foreground)]" />,
+        label: "Share on WhatsApp",
+        onClick: () => {
+          window.open(
+            `https://wa.me/?text=${encodeURIComponent(shareUrl)}`,
+            "_blank"
+          );
+        },
+      },
+      {
+        icon: <Facebook className="w-5 h-5 text-[var(--muted-foreground)]" />,
         label: "Share on Facebook",
         onClick: () => {
           window.open(
-            `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-              window.location.href
-            )}`
+            `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+            "_blank"
           );
         },
       },
     ],
-    []
+    [shareUrl, toast]
   );
 
   return (
-    <DialogPrimitive.Root
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) handleClose();
-      }}
-    >
-      <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <DialogPrimitive.Content className="fixed left-1/2 top-1/2 z-[9999] w-[420px] h-[506px] -translate-x-1/2 -translate-y-1/2 rounded-[24px] bg-white dark:bg-[#0B1120] border border-border dark:border-[#334155] p-[16px] shadow-2xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 flex flex-col">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex flex-col items-center flex-1">
-              <DialogPrimitive.Title className="text-[18px] font-semibold text-[#111827] dark:text-[#F9FAFB] font-['Poppins']">
-                Share
-              </DialogPrimitive.Title>
-              <DialogPrimitive.Description className="mt-1 text-[12px] text-[#6B7280] dark:text-[#9CA3AF] font-normal font-['Poppins']">
-                Share this with others
-              </DialogPrimitive.Description>
-            </div>
-            <button
-              type="button"
-              onClick={handleClose}
-              className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-black/5 transition-colors"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5 text-[#FF6B6B]" strokeWidth={1} />
-            </button>
-          </div>
-
-          <div className="mt-4 flex-1 flex flex-col overflow-hidden">
-            <div className="relative">
-              <input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search"
-                className="w-full h-[42px] rounded-full border border-[#E5E7EB] dark:border-[#334155] bg-white dark:bg-[#1E293B] px-4 pr-11 text-[14px] text-[#374151] dark:text-[#F9FAFB] font-['Poppins'] outline-none focus:ring-2 focus:ring-[#6366F1]/30 focus:border-[#6366F1]"
-              />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] dark:text-[#9CA3AF]">
-                <Search className="w-5 h-5" strokeWidth={1.5} />
+    <>
+      <DialogPrimitive.Root
+        open={isOpen}
+        onOpenChange={(open) => {
+          if (!open) handleClose();
+        }}
+      >
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Overlay className="fixed inset-0 z-[9998] bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <DialogPrimitive.Content
+            onPointerDownOutside={(e) => {
+              if (isSending) {
+                e.preventDefault();
+              }
+            }}
+            onInteractOutside={(e) => {
+              if (isSending) {
+                e.preventDefault();
+              }
+            }}
+            className="fixed left-1/2 top-1/2 z-[9999] w-[420px] h-[506px] -translate-x-1/2 -translate-y-1/2 rounded-[24px] bg-[var(--card)] border border-[var(--border)] p-[16px] shadow-2xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 flex flex-col"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col items-center flex-1">
+                <DialogPrimitive.Title className="text-[18px] font-semibold text-[var(--foreground)] font-['Poppins']">
+                  Share
+                </DialogPrimitive.Title>
+                <DialogPrimitive.Description className="mt-1 text-[12px] text-[var(--muted-foreground)] font-normal font-['Poppins']">
+                  Share this with others
+                </DialogPrimitive.Description>
               </div>
+              <button
+                type="button"
+                onClick={handleClose}
+                disabled={isSending}
+                className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-[var(--primary-tint)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5 text-[var(--destructive)]" strokeWidth={1} />
+              </button>
             </div>
 
-            {!isSearching ? (
-              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-                <div className="mt-5 grid grid-cols-3 gap-4 text-center max-h-[280px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2">
-                  {users.map((u, index) => (
-                    <div
-                      key={`${u.id}-${index}`}
-                      className="flex flex-col items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1E293B] rounded-lg p-2 transition-colors relative"
-                      onClick={() => toggleSelected(u.id)}
-                    >
-                      <div className="relative h-12 w-12">
-                        <div className="h-full w-full rounded-full overflow-hidden bg-[#EEF2FF] dark:bg-[#1E293B] flex items-center justify-center">
-                          {u.avatar ? (
-                            <img
-                              src={u.avatar}
-                              alt={u.name}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <User className="w-6 h-6 text-[#6366F1]" strokeWidth={1.5} />
-                          )}
-                        </div>
-                        {selectedUsers.includes(u.id) && (
-                          <div className="absolute bottom-0 right-0 h-4.5 w-4.5 rounded-full bg-[#6366F1] flex items-center justify-center shadow-sm border border-white translate-x-[10%] translate-y-[10%] z-10">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                      <div className="mt-2 text-[12px] text-[#374151] dark:text-[#F9FAFB] font-medium font-['Poppins'] text-center line-clamp-1">
-                        {u.name}
-                      </div>
-                    </div>
-                  ))}
+            <div className="mt-4 flex-1 flex flex-col overflow-hidden">
+              <div className="relative">
+                <input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search"
+                  className="w-full h-[42px] rounded-full border border-[var(--border)] bg-[var(--background)] px-4 pr-11 text-[14px] text-[var(--foreground)] font-['Poppins'] outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)]"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]">
+                  <Search className="w-5 h-5" strokeWidth={1.5} />
                 </div>
-
-                {!canShare && (
-                  <div className="mt-5 border-t border-[#E5E7EB] dark:border-[#334155] pt-4">
-                    <div className="flex items-center justify-around">
-                      {shareOptions.map((opt) => (
-                        <button
-                          key={opt.label}
-                          type="button"
-                          onClick={opt.onClick}
-                          className="h-10 w-10 flex items-center justify-center hover:bg-[#C7D2FE] transition-colors rounded-full group"
-                          aria-label={opt.label}
-                          title={opt.label}
-                        >
-                          <span className="text-[#111827] dark:text-[#F9FAFB] group-hover:text-white">{opt.icon}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
-            ) : (
-              <div className="mt-5 max-h-[280px] overflow-auto pr-1">
-                {filteredUsers.length === 0 ? (
-                  <div className="py-8 text-center text-[13px] text-[#6B7280] dark:text-[#9CA3AF] font-['Poppins']">
-                    No users found
-                  </div>
-                ) : (
-                  filteredUsers.map((u, index) => {
-                    const checked = selectedUsers.includes(u.id);
-                    return (
+
+              {!isSearching ? (
+                <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+                  <div onScroll={handleScroll} className="mt-5 grid grid-cols-3 gap-4 text-center max-h-[280px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2">
+                    {users.map((u, index) => (
                       <div
                         key={`${u.id}-${index}`}
-                        className="flex items-center justify-between py-2"
+                        className="flex flex-col items-center cursor-pointer hover:bg-[var(--primary-tint)] rounded-lg p-2 transition-colors relative"
+                        onClick={() => toggleSelected(u.id)}
                       >
-                        <div
-                          className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1E293B] flex-1 p-1 rounded transition-colors"
-                          onClick={() => toggleSelected(u.id)}
-                        >
-                          <div className="relative h-8 w-8 rounded-full overflow-hidden bg-[#EEF2FF] dark:bg-[#1E293B] flex items-center justify-center shrink-0">
+                        <div className="relative h-12 w-12">
+                          <div className="h-full w-full rounded-full overflow-hidden bg-[var(--primary-tint)] flex items-center justify-center">
                             {u.avatar ? (
                               <img
                                 src={u.avatar}
@@ -248,78 +288,128 @@ export default function CocpitShareModel({
                                 className="h-full w-full object-cover"
                               />
                             ) : (
-                              <User className="w-6 h-6 text-[#6366F1]" strokeWidth={1.5} />
-                            )}
-                            {selectedUsers.includes(u.id) && (
-                              <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                                <div className="h-3 w-3 rounded bg-[#6366F1] flex items-center justify-center shadow-sm border border-white">
-                                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="20 6 9 17 4 12" />
-                                  </svg>
-                                </div>
-                              </div>
+                              <User className="w-6 h-6 text-[var(--primary)]" strokeWidth={1.5} />
                             )}
                           </div>
-                          <div className="text-[14px] text-[#374151] dark:text-[#F9FAFB] font-normal font-['Poppins']">
-                            {u.name}
-                          </div>
+                          {selectedUsers.includes(u.id) && (
+                            <div className="absolute bottom-0 right-0 h-4.5 w-4.5 rounded-full bg-[var(--primary)] flex items-center justify-center shadow-sm border border-white translate-x-[10%] translate-y-[10%] z-10">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            </div>
+                          )}
                         </div>
-                        <label className="flex items-center cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 accent-[#6366F1]"
-                            checked={checked}
-                            onChange={() => toggleSelected(u.id)}
-                          />
-                        </label>
+                        <div className="mt-2 text-[12px] text-[var(--foreground)] font-medium font-['Poppins'] text-center line-clamp-1">
+                          {u.name}
+                        </div>
                       </div>
-                    );
-                  })
-                )}
-              </div>
-            )}
+                    ))}
+                  </div>
 
-            {canShare && (
-              <div className="mt-auto pt-4 border-t border-[#E5E7EB] dark:border-[#334155]">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onShare?.(selectedUsers);
-                    if (selectedUsers.length > 0) {
-                      const id = selectedUsers[0];
-                      if (postId) {
-                        const isCompany = activeProfile?.type === "COMPANY";
-                        const effectiveCompanyId = isCompany ? activeProfile?.id : undefined;
+                  {isSearchingApi && searchResults.length > 0 && (
+                    <div className="flex justify-center py-2 w-full">
+                      <Icon icon="line-md:loading-twotone-loop" className="w-4 h-4 text-[var(--primary)]" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div onScroll={handleScroll} className="mt-5 max-h-[280px] overflow-auto pr-1 flex-1">
+                  {filteredUsers.length === 0 ? (
+                    <div className="py-8 text-center text-[13px] text-[var(--muted-foreground)] font-['Poppins']">
+                      No users found
+                    </div>
+                  ) : (
+                    filteredUsers.map((u, index) => {
+                      const checked = selectedUsers.includes(u.id);
+                      return (
+                        <div
+                          key={`${u.id}-${index}`}
+                          className="flex items-center justify-between py-2"
+                        >
+                          <div
+                            className="flex items-center gap-3 cursor-pointer hover:bg-[var(--primary-tint)] flex-1 p-1 rounded transition-colors"
+                            onClick={() => toggleSelected(u.id)}
+                          >
+                            <div className="relative h-8 w-8 rounded-full overflow-hidden bg-[var(--primary-tint)] flex items-center justify-center shrink-0">
+                              {u.avatar ? (
+                                <img
+                                  src={u.avatar}
+                                  alt={u.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <User className="w-6 h-6 text-[var(--primary)]" strokeWidth={1.5} />
+                              )}
+                              {selectedUsers.includes(u.id) && (
+                                <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
+                                  <div className="h-3 w-3 rounded bg-[var(--primary)] flex items-center justify-center shadow-sm border border-white">
+                                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-[14px] text-[var(--foreground)] font-normal font-['Poppins']">
+                              {u.name}
+                            </div>
+                          </div>
+                          <label className="flex items-center cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 accent-[var(--primary)]"
+                              checked={checked}
+                              onChange={() => toggleSelected(u.id)}
+                            />
+                          </label>
+                        </div>
+                      );
+                    })
+                  )}
 
-                        if (effectiveCompanyId) {
-                          router.push(`/messaging?userId=${id}&companyId=${effectiveCompanyId}&sharedPostId=${postId}`);
-                        } else {
-                          router.push(`/messaging?userId=${id}&sharedPostId=${postId}`);
-                        }
-                      } else if (profileId) {
-                        const isCompany = activeProfile?.type === "COMPANY";
-                        const effectiveCompanyId = isCompany ? activeProfile?.id : undefined;
+                  {isSearchingApi && searchResults.length > 0 && (
+                    <div className="flex justify-center py-2 w-full">
+                      <Icon icon="line-md:loading-twotone-loop" className="w-4 h-4 text-[var(--primary)]" />
+                    </div>
+                  )}
+                </div>
+              )}
 
-                        if (effectiveCompanyId) {
-                          router.push(`/messaging?userId=${id}&companyId=${effectiveCompanyId}&sharedProfileId=${profileId}`);
-                        } else {
-                          router.push(`/messaging?userId=${id}&sharedProfileId=${profileId}`);
-                        }
-                      } else {
-                        startChat(id);
-                      }
-                    }
-                    handleClose(); // Close after sending
-                  }}
-                  className="w-full h-[44px] rounded-full font-['Poppins'] text-[14px] font-medium text-white bg-gradient-to-r from-[#6366F1] to-[#818CF8] hover:opacity-95 transition-opacity"
-                >
-                  Send
-                </button>
-              </div>
-            )}
-          </div>
-        </DialogPrimitive.Content>
-      </DialogPrimitive.Portal>
-    </DialogPrimitive.Root>
+              {selectedUsers.length > 0 ? (
+                <div className="mt-auto pt-4 border-t border-[var(--border)]">
+                  <button
+                    type="button"
+                    onClick={handleSendClick}
+                    disabled={isSending}
+                    className="w-full h-[48px] rounded-[24px] font-['Poppins'] font-normal text-[14px] text-white bg-[#6366F1] hover:opacity-95 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSending ? "Sending..." : "Send"}
+                  </button>
+                </div>
+              ) : (
+                !isSearching && (
+                  <div className="mt-auto pt-4 border-t border-[var(--border)]">
+                    <div className="flex items-center justify-around">
+                      {shareOptions.map((opt) => (
+                        <button
+                          key={opt.label}
+                          type="button"
+                          onClick={opt.onClick}
+                          className="h-10 w-10 flex items-center justify-center hover:bg-[var(--primary-tint)] transition-colors rounded-full group cursor-pointer"
+                          aria-label={opt.label}
+                          title={opt.label}
+                        >
+                          <span className="text-[var(--foreground)] group-hover:text-white">{opt.icon}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
+    </>
   );
 }

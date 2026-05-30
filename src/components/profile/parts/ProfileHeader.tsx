@@ -69,21 +69,6 @@ export const ProfileHeader = React.memo(function ProfileHeader({
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    // Fetch following list for share modal
-    const { data: followingData = [] } = useQuery({
-        queryKey: ['following', user.id],
-        queryFn: () => getFollowing(user.id),
-        staleTime: 1000 * 60 * 5,
-    });
-
-    const shareUsers = useMemo(() =>
-        followingData.map((f: any) => ({
-            id: f.following_id,
-            name: f.full_name,
-            avatar: f.avatar_url || undefined,
-        })),
-        [followingData]
-    );
 
     // Read connection status directly from the same cache as ConnectionButton
     const { data: relationship } = useQuery<any>({
@@ -302,7 +287,6 @@ export const ProfileHeader = React.memo(function ProfileHeader({
             <CocpitShareModel
                 isOpen={isShareModalOpen}
                 onClose={() => setIsShareModalOpen(false)}
-                users={shareUsers}
                 profileId={user?.id}
                 onShare={(selectedIds) => {
                     console.log("Shared profile with:", selectedIds);

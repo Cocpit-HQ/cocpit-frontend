@@ -46,6 +46,8 @@ export interface ApiExperience {
   end_date: string | null;
   is_current: boolean;
   description: string | null;
+  logo_url?: string | null;     // Logo from linked organization
+  company_logo?: string | null; // Fallback logo field
 }
 
 export interface ApiEducation {
@@ -56,6 +58,7 @@ export interface ApiEducation {
   start_date: string;
   end_date: string | null;
   description: string | null;
+  school_logo?: string | null; // School/university logo
 }
 
 export interface PublicUserProfileResponse {

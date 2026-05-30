@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import PublicPostsPage from '@/components/profile/PublicPostsPage';
+import { PublicPostsPage } from '@/features/profile';
 
 export default function UserPublicPostsPage() {
   const params = useParams();
