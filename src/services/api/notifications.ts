@@ -6,8 +6,8 @@ export const getNotifications = async (_companyId?: string): Promise<Notificatio
     return response.data;
 };
 
-export const markNotificationAsRead = async (id: string) => {
-    const response = await api.patch(`/notifications/${id}/read`);
+export const markNotificationAsRead = async (id: string, companyId?: string) => {
+    const response = await api.patch(`/notifications/${id}/read`, { companyId });
     return response.data;
 };
 

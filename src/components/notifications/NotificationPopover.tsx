@@ -80,11 +80,15 @@ export function NotificationPopover({
     const handleNewNotification = (newNotification: Notification) => {
       const normalizedNotification: Notification = {
         ...newNotification,
+        notification_id: newNotification.notification_id || `temp-${Date.now()}-${Math.random()}`,
         reference_id:
           newNotification.reference_id ||
           (newNotification as any).referenceId ||
           ((newNotification as any).metadata?.post_id ?? null),
+        actor_name: newNotification.actor_name || (newNotification as any).senderName,
+        actor_avatar: newNotification.actor_avatar || (newNotification as any).senderAvatar,
         is_read: newNotification.is_read ?? false,
+        created_at: newNotification.created_at || new Date().toISOString(),
       };
 
       // Filter: only show notifications relevant to the current active profile
@@ -109,7 +113,8 @@ export function NotificationPopover({
 
   const handleMarkAsRead = async (id: string) => {
     try {
-      await markNotificationAsRead(id)
+      const companyId = (isCompany && activeProfile) ? activeProfile.id : undefined;
+      await markNotificationAsRead(id, companyId)
       setNotifications(prev => prev.map(n =>
         n.notification_id === id ? { ...n, is_read: true } : n
       ))

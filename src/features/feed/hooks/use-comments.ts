@@ -7,6 +7,7 @@ import { mapBackendCommentToFrontend } from '@/lib/mappers/feed.mapper';
 import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { toast } from 'sonner';
+import { usePostSync } from './use-post-sync';
 
 export const useComments = (postId: string) => {
   const [comments, setComments] = useState<CommentType[]>([]);
@@ -155,6 +156,37 @@ export const useComments = (postId: string) => {
       return false;
     }
   }, [comments, isCompany, activeProfile?.id]);
+
+  // Real-time synchronization
+  const onCommentAdded = useCallback((data: { postId: string; comment: any }) => {
+    // Check if we are the author to avoid duplicating optimistic updates
+    const isOurComment = data.comment && data.comment.author_id === (isCompany ? activeProfile?.id : session?.user?.id);
+    if (!isOurComment) {
+      setComments(prev => {
+        // Prevent duplicates
+        if (prev.some(c => c.id === data.comment.comment_id)) return prev;
+        const mapped = mapBackendCommentToFrontend(data.comment);
+        return [mapped, ...prev];
+      });
+    }
+  }, [isCompany, activeProfile?.id, session?.user?.id]);
+
+  const onCommentLikeUpdated = useCallback((data: { postId: string; commentId: string; liked: boolean; likeCount: number }) => {
+    setComments(prev => prev.map(c => 
+      c.id === data.commentId || c.id === Number(data.commentId) 
+        ? { ...c, like_count: data.likeCount, is_liked: data.liked } 
+        : c
+    ));
+  }, []);
+
+  usePostSync(
+    postId,
+    {
+      onCommentAdded,
+      onCommentLikeUpdated
+    },
+    false // don't manage room here, let FeedPost handle it
+  );
 
   return {
     comments,

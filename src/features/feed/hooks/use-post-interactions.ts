@@ -5,6 +5,8 @@ import { FeedPostProps } from '../types';
 import { Poll } from '@/types/entities';
 import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { usePostSync } from './use-post-sync';
+import { useCallback } from 'react';
 
 export const usePostInteractions = (props: FeedPostProps) => {
   const { 
@@ -133,6 +135,31 @@ export const usePostInteractions = (props: FeedPostProps) => {
   const incrementShareCount = () => {
     setShareCount(prev => prev + 1);
   };
+
+  // Memoize callbacks to prevent infinite re-renders in usePostSync
+  const onLikeUpdated = useCallback((data: { postId: string; liked: boolean; likeCount: number; liker: any }) => {
+    // Only update if it's from another user (not us) to avoid double counting local optimistic updates
+    if (data.liker && data.liker.userId !== (isCompany ? activeProfile?.id : session?.user?.id)) {
+      setLikeCount(data.likeCount);
+    }
+  }, [isCompany, activeProfile?.id, session?.user?.id]);
+
+  const onCommentAdded = useCallback((data: { postId: string; comment: any }) => {
+    // Only update if it's from another user
+    if (data.comment && data.comment.author_id !== (isCompany ? activeProfile?.id : session?.user?.id)) {
+      hasLocalCountChange.current = true;
+      setCommentCount(prev => prev + 1);
+    }
+  }, [isCompany, activeProfile?.id, session?.user?.id]);
+
+  usePostSync(
+    id,
+    {
+      onLikeUpdated,
+      onCommentAdded,
+    },
+    true // manageRoom = true at the post level
+  );
 
   return {
     isLiked,
