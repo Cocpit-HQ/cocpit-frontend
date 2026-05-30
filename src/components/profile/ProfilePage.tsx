@@ -529,23 +529,6 @@ export default function ProfilePage() {
     staleTime: 1000 * 30,
   });
 
-  // Fetch following list for share modal
-  const { data: followingData = [] } = useQuery({
-    queryKey: ['following', profileData?.user?.id],
-    queryFn: () => getFollowing(profileData!.user.id),
-    enabled: !!profileData?.user?.id,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const shareUsers = useMemo(() =>
-    followingData.map((f: any) => ({
-      id: f.following_id || f.user_id || f.id,
-      name: f.full_name || f.name || "Unknown User",
-      avatar: f.avatar_url || f.avatar || undefined,
-      slug: f.slug || f.account_name,
-    })),
-    [followingData]
-  );
 
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const [isExperienceExpanded, setIsExperienceExpanded] = useState(false);
@@ -1524,7 +1507,6 @@ export default function ProfilePage() {
       <CocpitShareModel
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        users={shareUsers}
         profileId={user?.id}
         onShare={(selectedIds) => {
           console.log("Shared profile with:", selectedIds);

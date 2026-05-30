@@ -40,6 +40,7 @@ export const sendMessage = async (targetUserId: string, text_content: string, sh
       shared_post_id,
       shared_profile_id,
       replyMessageId,
+      authorCompanyId,
     });
     return response.data;
   }
@@ -156,6 +157,15 @@ export const unmuteGroup = async (conversationId: string) => {
 export const deletePersonalChat = async (conversationId: string) => {
   const response = await api.delete(`/conversations/${conversationId}`);
   return response.data;
+};
+
+export const getShareUsers = async (query?: string, cursor?: string, limit?: number) => {
+  const params: Record<string, string | number> = {};
+  if (query) params.q = query;
+  if (cursor) params.cursor = cursor;
+  if (limit !== undefined) params.limit = limit;
+  const response = await api.get("/share/users", { params });
+  return response.data as { success: boolean; data: any[]; nextCursor: string | null; hasMore: boolean };
 };
 
 

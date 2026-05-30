@@ -27,6 +27,10 @@ export interface User {
   connection_request_sender?: 'me' | 'them' | null;
   company_roles?: CompanyRole[];
   version?: number;
+  resume?: {
+    url: string;
+    originalName: string;
+  } | null;
 }
 
 export interface CompanyRole {
