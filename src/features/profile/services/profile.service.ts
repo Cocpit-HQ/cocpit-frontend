@@ -13,6 +13,7 @@ export {
   deleteEducation,
   addSkills,
   searchSkills,
+  getProfileSkills,
   deleteSkill,
   uploadAvatar,
   deleteAvatar,

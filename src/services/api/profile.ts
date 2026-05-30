@@ -182,10 +182,54 @@ export const addSkills = async (payload: AddSkillsPayload): Promise<AddSkillsRes
   return response.data;
 };
 
-export const searchSkills = async (query: string): Promise<string[]> => {
-  const response = await api.get<{ id: string; name: string }[]>("/profile/skills", { params: { search: query } });
-  return response.data.map(s => s.name);
+// ─── GET /profile/skills (cursor-based, mirrors onboarding) ───────────────────
+
+export const SKILLS_PAGE_SIZE = 20;
+
+export interface ProfileSkill {
+  skill_id: string;
+  name: string;
+}
+
+export interface GetProfileSkillsParams {
+  /** Search term — filters name server-side via ILIKE */
+  q?: string;
+  /** Opaque base64 cursor returned by the previous page */
+  cursor?: string;
+  /** Items per page (default: SKILLS_PAGE_SIZE, backend caps at 50) */
+  limit?: number;
+}
+
+export interface GetProfileSkillsResponse {
+  success: boolean;
+  data: {
+    items: ProfileSkill[];
+    /** Pass this as `cursor` on the next call. null = no more pages */
+    next_cursor: string | null;
+    has_more: boolean;
+  };
+}
+
+export const getProfileSkills = async (
+  params: GetProfileSkillsParams = {}
+): Promise<GetProfileSkillsResponse> => {
+  const { q, cursor, limit = SKILLS_PAGE_SIZE } = params;
+  const response = await api.get<GetProfileSkillsResponse>("/profile/skills", {
+    params: {
+      ...(q ? { q } : {}),
+      ...(cursor ? { cursor } : {}),
+      limit,
+    },
+  });
+  return response.data;
 };
+
+/** @deprecated Use getProfileSkills instead — this calls the old offset-based signature which is no longer supported */
+export const searchSkills = async (query: string): Promise<string[]> => {
+  const response = await getProfileSkills({ q: query });
+  return response.data.items.map((s) => s.name);
+};
+
 
 export const deleteSkill = async (id: string): Promise<void> => {
   await api.delete(`/profile/skills/${id}`);

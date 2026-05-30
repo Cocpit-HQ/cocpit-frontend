@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { X, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Icon } from '@iconify/react';
-import { useQuery } from "@tanstack/react-query";
-import { searchSkills } from "../services/profile.service";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { getProfileSkills } from "@/services/api/profile";
 
 interface SkillModalProps {
   isOpen: boolean;
@@ -23,22 +23,40 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
   const [currentPage, setCurrentPage] = useState(1);
   const skillsPerPage = 8;
 
+  // Debounce search — reset page and cursor on new search
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const { data: suggestedSkills = [], isLoading: isSearching } = useQuery({
-    queryKey: ["skill-suggestions", debouncedSearch],
-    queryFn: () => searchSkills(debouncedSearch),
+  // ── Cursor-based infinite query (mirrors onboarding skills) ─────────────────
+  const {
+    data: skillData,
+    fetchNextPage,
+    hasNextPage,
+    isLoading: isSearching,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["profile-skill-suggestions", debouncedSearch],
+    queryFn: ({ pageParam }) =>
+      getProfileSkills({ q: debouncedSearch, cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.data.next_cursor || undefined,
     enabled: isOpen,
+    refetchOnWindowFocus: false,
   });
+
+  // Flatten all fetched skill names across pages
+  const fetchedSkills = useMemo(
+    () => skillData?.pages.flatMap((page) => page.data.items.map((i) => i.name)) ?? [],
+    [skillData]
+  );
 
   useEffect(() => {
     if (isOpen) {
-      // Deduplicate initial skills just in case there are duplicates in the state
       setSelectedSkills([...new Set(initialSkills)]);
       setSearchQuery("");
       setCurrentPage(1);
@@ -46,10 +64,10 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
   }, [isOpen, initialSkills]);
 
   const filteredSkills = useMemo(() => {
-    // Combine suggested skills with selected skills to ensure they are available to toggle
-    const combined = Array.from(new Set([...suggestedSkills, ...selectedSkills]));
+    // Combine fetched skills with selected skills so selected ones remain visible
+    const combined = Array.from(new Set([...fetchedSkills, ...selectedSkills]));
 
-    // Filter based on current search query (frontend filter for immediate feedback)
+    // Frontend filter for immediate feedback while debounce hasn't fired yet
     const filtered = combined.filter(skill =>
       typeof skill === 'string' && skill.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -60,7 +78,7 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
     }
 
     return filtered;
-  }, [suggestedSkills, selectedSkills, searchQuery]);
+  }, [fetchedSkills, selectedSkills, searchQuery]);
 
   const paginatedSkills = useMemo(() => {
     const start = (currentPage - 1) * skillsPerPage;
@@ -68,6 +86,15 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
   }, [filteredSkills, currentPage]);
 
   const totalPages = Math.max(1, Math.ceil(filteredSkills.length / skillsPerPage));
+
+  // Load next cursor page when user reaches the last client-side page and more exist
+  const handleNextPage = useCallback(() => {
+    const isLastClientPage = currentPage >= totalPages;
+    if (isLastClientPage && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+    setCurrentPage(p => Math.min(totalPages + (hasNextPage ? 1 : 0), p + 1));
+  }, [currentPage, totalPages, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const toggleSkill = (skill: string) => {
     setSelectedSkills(prev => {
@@ -198,9 +225,9 @@ export function SkillModal({ isOpen, onClose, initialSkills = [], onSave, loadin
                 {String(currentPage).padStart(2, '0')}
               </span>
               <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage >= totalPages}
-                className={cn("transition-colors", currentPage < totalPages ? "text-primary" : "text-muted-foreground")}
+                onClick={handleNextPage}
+                disabled={currentPage >= totalPages && !hasNextPage}
+                className={cn("transition-colors", (currentPage < totalPages || hasNextPage) ? "text-primary" : "text-muted-foreground")}
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
