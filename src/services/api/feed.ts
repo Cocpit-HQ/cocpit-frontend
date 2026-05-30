@@ -2,14 +2,68 @@ import api from "@/lib/axios";
 
 export interface FeedResponse {
   posts: BackendPost[];
-  nextCursor: {
-    cursorCreatedAt: string;
-    cursorPostId: string;
-  } | null;
+  nextCursor: string | null;
+  session_id?: string;
   hashtag?: {
     tag: string;
     usage_count: number;
   };
+}
+
+export interface EngineFeedItem {
+  id: string;
+  type: string;
+  content: any;
+  author: {
+    id: string;
+    name: string;
+    avatar_url: string | null;
+    verified: boolean;
+  };
+  score: number;
+  slot_type: 'organic' | 'exploration' | 'opportunity';
+  ranked_at: string;
+  position: number;
+  post_data?: BackendPost;
+}
+
+export interface EngineFeedResponse {
+  ok: boolean;
+  data: {
+    items: EngineFeedItem[];
+    cursor: string | null;
+    has_more: boolean;
+    session_id: string;
+    served_at: string;
+  };
+  meta: {
+    total_candidates: number;
+    cache_hit: boolean;
+    exploration_slots: number;
+    ranking_version: string;
+  };
+}
+
+export interface EngineFeedSession {
+  ok: boolean;
+  data: {
+    session_id: string;
+    cursor: string | null;
+    seen_count: number;
+    started_at: string;
+    expires_at: string;
+  };
+}
+
+export interface TrackEventRequest {
+  event_type: 'impression' | 'click' | 'dwell' | 'share' | 'dismiss' | 'like' | 'comment';
+  item_id: string;
+  item_type: string;
+  session_id: string;
+  position: number;
+  dwell_ms?: number;
+  context?: 'home' | 'explore' | 'startup';
+  metadata?: any;
 }
 
 export interface BackendPost {
@@ -75,6 +129,11 @@ export interface BackendPost {
   is_broadcast?: boolean;
   sample_liker_username?: string | null;
   author_headline?: string;
+  _rankingMeta?: {
+    score: number;
+    slot_type: string;
+    position: number;
+  };
 }
 
 export interface BackendMedia {
@@ -135,13 +194,63 @@ export interface CreatePostResponse {
   } | Record<string, never> | null;
 }
 
-export const getFeed = async (cursorCreatedAt?: string, cursorPostId?: string, companyId?: string): Promise<FeedResponse> => {
+export const getFeed = async (cursor?: string, companyId?: string): Promise<FeedResponse> => {
   const params = new URLSearchParams();
-  if (cursorCreatedAt) params.append("cursorCreatedAt", cursorCreatedAt);
-  if (cursorPostId) params.append("cursorPostId", cursorPostId);
-  void companyId;
+  if (cursor && typeof cursor === 'string') {
+    params.append("cursor", cursor);
+  }
+  void companyId; // Feed context might not use this in the same way, but keeping it for now
 
-  const response = await api.get<FeedResponse>(`/All/feeds?${params.toString()}`);
+  const response = await api.get<EngineFeedResponse>(`/feed?${params.toString()}`);
+  
+  if (!response.data.ok || !response.data.data) {
+    return { posts: [], nextCursor: null };
+  }
+
+  const { items, cursor: nextCursorString, session_id } = response.data.data;
+
+  if (!items || items.length === 0) {
+    return {
+      posts: [],
+      nextCursor: null,
+      session_id
+    };
+  }
+
+  // Use backend-hydrated posts directly
+  const hydratedPosts = items.map((item) => {
+    if (!item.post_data) return null;
+    
+    return {
+      ...item.post_data,
+      _rankingMeta: {
+        score: item.score,
+        slot_type: item.slot_type,
+        position: item.position
+      }
+    };
+  }).filter(Boolean) as BackendPost[];
+
+  return {
+    posts: hydratedPosts,
+    // If we received fewer items than requested, or items is empty, there are no more posts.
+    nextCursor: items.length === 0 ? null : nextCursorString,
+    session_id
+  };
+};
+
+export const getFeedSession = async (): Promise<EngineFeedSession> => {
+  const response = await api.get<EngineFeedSession>("/feed/session");
+  return response.data;
+};
+
+export const resetFeedSession = async (): Promise<{ ok: boolean; message: string }> => {
+  const response = await api.delete<{ ok: boolean; message: string }>("/feed/session");
+  return response.data;
+};
+
+export const trackFeedEvent = async (data: TrackEventRequest): Promise<{ ok: boolean; message: string }> => {
+  const response = await api.post<{ ok: boolean; message: string }>("/feed/event", data);
   return response.data;
 };
 

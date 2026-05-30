@@ -20,7 +20,7 @@ export function EditableEducationItem({
     const displayDescription = React.useMemo(() => {
         if (!education.description) return "";
         if (isDescExpanded || !isLongDescription) return education.description;
-        
+
         const truncated = education.description.slice(0, 160);
         const lastSpace = truncated.lastIndexOf(" ");
         if (lastSpace > 50) {
@@ -106,7 +106,7 @@ export function EditableEducationItem({
             <div className="flex flex-row items-start justify-between md:justify-end flex-shrink-0 w-full md:w-[220px] gap-3 md:gap-0 md:ml-auto pl-[72px] md:pl-0 hidden md:flex">
                 <div className="flex flex-col items-start md:items-end w-full">
                     <div className="grid grid-cols-[75px_9px_auto] gap-x-[6px] items-center w-full text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
-                        <span className="whitespace-nowrap text-left">{formatDate(education.start_date)}</span>
+                        <span className="whitespace-nowrap text-right">{formatDate(education.start_date)}</span>
                         <span className="flex items-center justify-center w-[9px] h-[16px]">
                             <span className="text-center">—</span>
                         </span>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
@@ -8,6 +8,7 @@ import { FeedPostProps } from '../types';
 import { usePostInteractions } from '../hooks/use-post-interactions';
 import { usePostOptions } from '../hooks/use-post-options';
 import { usePostMediaObserver } from '../hooks/use-post-media-observer';
+import { trackFeedEvent } from '@/services/api/feed';
 
 // Parts
 import { PostHeader } from './parts/PostHeader';
@@ -67,13 +68,62 @@ export const FeedPost = (props: FeedPostProps) => {
     }
   };
 
+  const feedCardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!props.sessionId || !feedCardRef.current) return;
+    
+    let enterTime = 0;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          enterTime = Date.now();
+        } else if (enterTime > 0) {
+          const dwell_ms = Date.now() - enterTime;
+          if (dwell_ms > 1500) {
+            trackFeedEvent({
+              event_type: 'impression',
+              item_id: id,
+              item_type: props.isJob ? 'job' : 'post',
+              session_id: props.sessionId!,
+              position: props.position ?? 0,
+              dwell_ms,
+              context: 'home',
+              metadata: { slot_type: props.slotType, score: props.rankingScore }
+            }).catch(() => {});
+          }
+          enterTime = 0;
+        }
+      },
+      { threshold: 0.5 }
+    );
+    
+    observer.observe(feedCardRef.current);
+    return () => observer.disconnect();
+  }, [id, props.sessionId, props.position, props.slotType, props.rankingScore, props.isJob]);
+
+  // Click tracking
+  const handleCardClick = () => {
+    if (props.sessionId) {
+      trackFeedEvent({
+        event_type: 'click',
+        item_id: id,
+        item_type: props.isJob ? 'job' : 'post',
+        session_id: props.sessionId,
+        position: props.position ?? 0,
+        context: 'home'
+      }).catch(() => {});
+    }
+
+    if (isArticleFeedCard) {
+      router.push(`/post/${id}`);
+    }
+  };
+
   return (
     <div
-      onClick={() => {
-        if (isArticleFeedCard) {
-          router.push(`/post/${id}`);
-        }
-      }}
+      ref={feedCardRef}
+      onClick={handleCardClick}
       className={`feed-card-shell flex w-full flex-col gap-[16px] overflow-hidden py-[16px] ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
     >
       {/* Header & Content (Frame 2608598) */}

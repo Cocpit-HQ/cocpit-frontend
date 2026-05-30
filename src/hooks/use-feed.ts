@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { getFeed } from '@/services/api/feed';
+import { getFeed, resetFeedSession } from '@/services/api/feed';
 import { deletePost as apiDeletePost } from '@/services/api/posts';
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { Post } from '@/types/entities';
@@ -23,6 +23,8 @@ export const useFeed = (enableInitialFetch = true) => {
     () => ['feed', activeProfile?.type ?? 'USER', activeProfile?.id ?? currentUser.id] as const,
     [activeProfile?.id, activeProfile?.type, currentUser.id]
   );
+  
+  const [sessionId, setSessionId] = React.useState<string | null>(null);
 
   const {
     data,
@@ -34,13 +36,16 @@ export const useFeed = (enableInitialFetch = true) => {
     queryKey: feedQueryKey,
     queryFn: async ({ pageParam }) => {
       const companyId = activeProfile?.type !== 'USER' ? activeProfile?.id : undefined;
-      const response = await getFeed(pageParam?.cursorCreatedAt, pageParam?.cursorPostId, companyId);
+      const response = await getFeed(pageParam || undefined, companyId);
+      if (response.session_id) {
+        setSessionId(response.session_id);
+      }
       return {
         ...response,
         posts: response.posts.map(mapBackendPostToFrontend)
       };
     },
-    initialPageParam: null as { cursorCreatedAt: string; cursorPostId: string } | null,
+    initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     refetchOnWindowFocus: false,
     enabled: !!session && enableInitialFetch,
@@ -131,14 +136,26 @@ export const useFeed = (enableInitialFetch = true) => {
     });
   }, [feedQueryKey, queryClient]);
 
+  const resetSession = useCallback(async () => {
+    try {
+      await resetFeedSession();
+      setSessionId(null);
+      queryClient.invalidateQueries({ queryKey: feedQueryKey });
+    } catch (err) {
+      console.error("Failed to reset feed session", err);
+    }
+  }, [feedQueryKey, queryClient]);
+
   return {
     posts,
+    sessionId,
     currentUser,
     loadMorePosts,
     addPost,
     deletePost,
     togglePostVisibility,
     updatePostInFeed,
+    resetSession,
     hasMore: !!hasNextPage,
     loading: isLoading || isFetchingNextPage,
   };

@@ -255,6 +255,9 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     tags: backendPost.tags || [],
     sampleLikerUsername: backendPost.sample_liker_username || undefined,
     authorHeadline: backendPost.author_headline || undefined,
+    rankingScore: backendPost._rankingMeta?.score,
+    slotType: backendPost._rankingMeta?.slot_type,
+    position: backendPost._rankingMeta?.position,
   };
 };
 

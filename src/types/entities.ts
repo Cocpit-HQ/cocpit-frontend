@@ -150,4 +150,9 @@ export interface Post {
   broadcastOrgName?: string;
   tags?: any[];
   location?: string;
+  
+  // Feed Engine Ranking fields
+  rankingScore?: number;
+  slotType?: string;
+  position?: number;
 }

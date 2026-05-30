@@ -10,6 +10,7 @@ import { StoryRail } from './StoryRail';
 import { FeedSortDropdown } from './FeedSortDropdown';
 import { StoryDetail, StoryGroup } from '@/types/showcase';
 import { ApplicantInsightCard, CompactJobRecommendation, JobMatchesCard } from './FeedInsights';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 
 interface FeedSectionProps {
     groups: StoryGroup[];
@@ -30,7 +31,7 @@ export const FeedSection = ({
     activeTab,
     setActiveTab
 }: FeedSectionProps) => {
-    const { posts, currentUser, deletePost, togglePostVisibility, loadMorePosts, hasMore, loading: feedLoading } = useFeed();
+    const { posts, sessionId, currentUser, deletePost, togglePostVisibility, loadMorePosts, resetSession, hasMore, loading: feedLoading } = useFeed();
     const { activeProfile, isCompany } = useActiveProfile();
 
     const activeAccount = useMemo(() => (
@@ -72,82 +73,85 @@ export const FeedSection = ({
                 />
             </div>
 
-            {/* Mobile Story/Suggested Rail */}
-            <div className="md:hidden min-h-[120px] transition-all duration-500 overflow-hidden">
-                <div className="animate-in fade-in duration-500">
-                    <StoryRail
-                        groups={groups}
-                        isLoading={storyLoading}
-                        activeAccount={activeAccount}
-                        onCreateClick={() => setShowCreateStory(true)}
-                        onStoryClick={(story) => {
-                            const group = groups.find(g => g.stories.some(s => s.id === story.id));
-                            if (group) {
-                                setMobileSelectedGroupId(group.author.id || 0);
-                            }
-                        }}
-                    />
-                </div>
-            </div>
-
-            {/* Sort Dropdown */}
-            {/* <div className="flex justify-end mb-2 px-1 mt-1 md:mt-0">
-                <FeedSortDropdown activeTab={activeTab} setActiveTab={setActiveTab} />
-            </div> */}
-
-            {/* Posts */}
-            <div className="md:space-y-4">
-                {/* Skeletons appear when initial load is happening */}
-                {feedLoading && posts.length === 0 &&
-                    Array.from({ length: 3 }).map((_, i) => (
-                        <PostSkeleton key={i} />
-                    ))}
-
-                <div className="space-y-4">
-                    {sortedPosts.map((post, index) => {
-                        return (
-                            <div key={post.id}>
-                                <FeedPost
-                                    {...post}
-                                    initialComments={post.commentData}
-                                    isOwnPost={
-                                        post.isCompanyPost
-                                            // Company post: only the matching active company account is the owner
-                                            ? isCompany && !!activeProfile && post.authorId?.toString() === activeProfile.id?.toString()
-                                            // Personal post: only the personal account is the owner (not when acting as company)
-                                            : !isCompany && post.authorId?.toString() === currentUser?.id?.toString()
-                                    }
-                                    onDelete={deletePost}
-                                    onToggleVisibility={togglePostVisibility}
-                                    priority={index < 4}
-                                />
-                                {index === 0 && (
-                                    <div className="mt-4">
-                                        <ApplicantInsightCard />
-                                    </div>
-                                )}
-                                {index === 1 && (
-                                    <div className="mt-4">
-                                        <JobMatchesCard />
-                                    </div>
-                                )}
-                                {index === 2 && (
-                                    <div className="mt-4">
-                                        <CompactJobRecommendation />
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Infinite Scroll Sentinel */}
-                {hasMore && (
-                    <div ref={loadMoreRef} className="py-4 flex justify-center">
-                        {feedLoading && <div className="text-muted-foreground text-sm">Loading more...</div>}
+            <PullToRefresh onRefresh={resetSession}>
+                {/* Mobile Story/Suggested Rail */}
+                <div className="md:hidden min-h-[120px] transition-all duration-500 overflow-hidden">
+                    <div className="animate-in fade-in duration-500">
+                        <StoryRail
+                            groups={groups}
+                            isLoading={storyLoading}
+                            activeAccount={activeAccount}
+                            onCreateClick={() => setShowCreateStory(true)}
+                            onStoryClick={(story) => {
+                                const group = groups.find(g => g.stories.some(s => s.id === story.id));
+                                if (group) {
+                                    setMobileSelectedGroupId(group.author.id || 0);
+                                }
+                            }}
+                        />
                     </div>
-                )}
-            </div>
+                </div>
+
+                {/* Sort Dropdown */}
+                {/* <div className="flex justify-end mb-2 px-1 mt-1 md:mt-0">
+                    <FeedSortDropdown activeTab={activeTab} setActiveTab={setActiveTab} />
+                </div> */}
+
+                {/* Posts */}
+                <div className="md:space-y-4">
+                    {/* Skeletons appear when initial load is happening */}
+                    {feedLoading && posts.length === 0 &&
+                        Array.from({ length: 3 }).map((_, i) => (
+                            <PostSkeleton key={i} />
+                        ))}
+
+                    <div className="space-y-4">
+                        {sortedPosts.map((post, index) => {
+                            return (
+                                <div key={post.id}>
+                                    <FeedPost
+                                        {...post}
+                                        sessionId={sessionId}
+                                        initialComments={post.commentData}
+                                        isOwnPost={
+                                            post.isCompanyPost
+                                                // Company post: only the matching active company account is the owner
+                                                ? isCompany && !!activeProfile && post.authorId?.toString() === activeProfile.id?.toString()
+                                                // Personal post: only the personal account is the owner (not when acting as company)
+                                                : !isCompany && post.authorId?.toString() === currentUser?.id?.toString()
+                                        }
+                                        onDelete={deletePost}
+                                        onToggleVisibility={togglePostVisibility}
+                                        priority={index < 4}
+                                    />
+                                    {index === 0 && (
+                                        <div className="mt-4">
+                                            <ApplicantInsightCard />
+                                        </div>
+                                    )}
+                                    {index === 1 && (
+                                        <div className="mt-4">
+                                            <JobMatchesCard />
+                                        </div>
+                                    )}
+                                    {index === 2 && (
+                                        <div className="mt-4">
+                                            <CompactJobRecommendation />
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Infinite Scroll Sentinel */}
+                    {hasMore && (
+                        <div ref={loadMoreRef} className="py-4 flex justify-center">
+                            {feedLoading && <div className="text-muted-foreground text-sm">Loading more...</div>}
+                        </div>
+                    )}
+                </div>
+            </PullToRefresh>
         </section>
     );
 };
