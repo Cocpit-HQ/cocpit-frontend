@@ -24,8 +24,8 @@ export const useHashtagFeed = (tag: string) => {
         posts: response.posts.map(mapBackendPostToFrontend)
       };
     },
-    initialPageParam: null as { cursorCreatedAt: string; cursorPostId: string } | null,
-    getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
+    initialPageParam: null as { cursorCreatedAt?: string; cursorPostId?: string } | null,
+    getNextPageParam: (lastPage) => (lastPage.nextCursor as any) || undefined,
     refetchOnWindowFocus: false,
     enabled: !!session && !!tag,
   });

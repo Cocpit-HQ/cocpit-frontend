@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { EyeOff, Edit2, BarChart2, Trash2, Eye } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -73,6 +73,19 @@ export const PostHeader = ({
     setShowOptions(!showOptions);
   };
 
+  useEffect(() => {
+    if (!showOptions) return;
+
+    const handleScroll = () => setShowOptions(false);
+
+    // capture:true catches scroll on any scrollable ancestor
+    window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, { capture: true });
+    };
+  }, [showOptions, setShowOptions]);
+
   const authorLink = isCompanyPost ? `/organization/${authorSlug}` : `/profile/${authorSlug || authorId}`;
 
   return (
@@ -92,22 +105,12 @@ export const PostHeader = ({
                 <h3 className="text-foreground text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] cursor-default">
                   {author}
                 </h3>
-                {authorSlug && (
-                  <span className="text-[12px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
-                    @{authorSlug}
-                  </span>
-                )}
               </div>
             ) : (
               <Link href={authorLink} className="hover:underline flex items-baseline gap-1.5" onClick={(e) => e.stopPropagation()}>
                 <h3 className="text-foreground text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)]">
                   {author}
                 </h3>
-                {authorSlug && (
-                  <span className="text-[12px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
-                    @{authorSlug}
-                  </span>
-                )}
               </Link>
             )}
             {isCompanyPost && (
@@ -161,9 +164,9 @@ export const PostHeader = ({
                       <button
                         onClick={handleToggleFollowAuthor}
                         disabled={!authorUserId || isAuthorFollowLoading || isCompanyPost}
-                        className="flex items-center justify-between w-full px-4 py-2 cursor-pointer focus:bg-primary-tint focus:text-primary-tint-foreground rounded-3xl outline-none transition-colors"
+                        className="flex items-start justify-between w-full px-4 py-2 cursor-pointer focus:bg-primary-tint focus:text-primary-tint-foreground rounded-3xl outline-none transition-colors"
                       >
-                        <span className="text-sm font-normal font-poppins text-foreground truncate pr-2">
+                        <span className="text-sm font-normal font-poppins text-foreground break-words text-left pr-2">
                           {isAuthorFollowing ? `Remove ${author}` : `Follow ${author}`}
                         </span>
                         <img src={avatarSrc} alt={author} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
@@ -180,7 +183,7 @@ export const PostHeader = ({
                         className="flex items-center justify-between w-full px-4 py-2 cursor-pointer focus:bg-primary-tint focus:text-primary-tint-foreground rounded-3xl outline-none transition-colors"
                       >
                         <span className="text-sm font-normal font-poppins text-foreground">Not interested</span>
-                        <Icon icon="hugeicons:cancel-01" className="w-6 h-6 text-foreground" style={{ strokeWidth: '1.5px' }} />
+                        <Icon icon="fluent:eye-off-16-regular" className="w-6 h-6 text-foreground" />
                       </button>
                     </>
                   )}
