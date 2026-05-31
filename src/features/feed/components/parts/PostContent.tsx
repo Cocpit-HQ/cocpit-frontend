@@ -36,8 +36,9 @@ export const PostContent = ({
 }: PostContentProps) => {
   const isArticle = category === 'Article' || Boolean(articleBody);
   const articleHref = postId ? `/post/${postId}` : undefined;
-  const plainArticleBody = (articleBody || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-  const articleDescription = (content || '').trim() || plainArticleBody;
+  const normalizedArticleBody = (articleBody || '').trim();
+  const articleDescription = (content || '').trim();
+  const shouldShowArticleDescription = Boolean(articleDescription) && articleDescription !== normalizedArticleBody;
   const isLongArticleDescription = articleDescription.length > 180 || articleDescription.split('\n').length > 3;
   const hasArticleBody = Boolean(articleBody?.trim());
   const showFullArticle = isArticle && (isFullContent || isExpanded);
@@ -159,7 +160,7 @@ export const PostContent = ({
               </h4>
             )}
 
-            {articleDescription && (
+            {shouldShowArticleDescription && (
               <div className="relative">
                 <div
                   className={`font-normal font-[family-name:var(--font-poppins)] text-[13px] leading-[20px] text-foreground/85 whitespace-pre-wrap ${!showFullArticle ? 'line-clamp-3' : ''}`}

@@ -23,9 +23,9 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
   const { isOpen, onClose } = props;
   const isEdit = !!props.editPostId;
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
-  
+
   const { state, media, poll, actions } = useCreatePostForm({ ...props, isMobile });
-  
+
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const articleCoverInputRef = useRef<HTMLInputElement>(null);
@@ -120,15 +120,15 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent 
+      <DialogContent
         className={cn(
           "p-0 border-none shadow-2xl overflow-hidden z-[101] bg-background",
-          isMobile 
-            ? "w-full h-full max-w-none rounded-none flex flex-col pt-0 pb-0" 
+          isMobile
+            ? "w-full h-full max-w-none rounded-none flex flex-col pt-0 pb-0"
             : cn(
-                "fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full rounded-2xl max-h-[90vh] flex flex-col transition-all duration-300",
-                state.postType === 'article' ? "max-w-4xl h-[85vh]" : "max-w-3xl"
-              )
+              "fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full rounded-2xl max-h-[90vh] flex flex-col transition-all duration-300",
+              state.postType === 'article' ? "max-w-4xl h-[85vh]" : "max-w-3xl"
+            )
         )}
       >
         <div className="sr-only">
@@ -139,12 +139,12 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
         </div>
 
         {state.postType !== 'article' && (
-          <CreatePostHeader 
+          <CreatePostHeader
             onClose={onClose}
             isCompanyPost={state.isCompanyPost}
             currentPosterName={(state.currentPoster as any)?.name || state.currentUser?.name || 'User'}
-            currentPosterLogo={state.isCompanyPost 
-              ? ((state.currentPoster as any)?.logo_url || (state.currentPoster as any)?.avatar_url || '/assets/pngegg.png') 
+            currentPosterLogo={state.isCompanyPost
+              ? ((state.currentPoster as any)?.logo_url || (state.currentPoster as any)?.avatar_url || '/assets/pngegg.png')
               : (state.currentUser?.image || '/assets/pngegg.png')}
             visibility={state.visibility}
             onVisibilityToggle={() => state.setVisibility(v => v === 'public' ? 'private' : 'public')}
@@ -164,14 +164,14 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
         )}>
           {!isMobile && state.postType !== 'article' && (
             <>
-              <PostIdentity 
-                 isCompanyPost={state.isCompanyPost}
-                 currentPoster={state.currentPoster}
-                 currentUser={state.currentUser}
+              <PostIdentity
+                isCompanyPost={state.isCompanyPost}
+                currentPoster={state.currentPoster}
+                currentUser={state.currentUser}
               />
-              
+
               <div className="px-6 py-4 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-md z-30 border-b border-border/50">
-                <PostTypeSelector 
+                <PostTypeSelector
                   activeType={state.postType}
                   onTypeChange={state.setPostType}
                   isEdit={isEdit}
@@ -182,22 +182,22 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
           )}
 
           {isMobile && !isEdit && state.postType !== 'article' && (
-             <PostTypeSelector 
-                activeType={state.postType}
-                onTypeChange={state.setPostType}
-                isEdit={isEdit}
-                isMobile={true}
-                className="mb-4"
-             />
+            <PostTypeSelector
+              activeType={state.postType}
+              onTypeChange={state.setPostType}
+              isEdit={isEdit}
+              isMobile={true}
+              className="mb-4"
+            />
           )}
 
           {!isMobile && state.postType !== 'article' && (
-             <CategorySelector 
-                isCompanyPost={state.isCompanyPost}
-                currentPoster={state.currentPoster}
-                postCategory={state.postCategory}
-                onCategoryChange={state.handleSetPostCategory}
-             />
+            <CategorySelector
+              isCompanyPost={state.isCompanyPost}
+              currentPoster={state.currentPoster}
+              postCategory={state.postCategory}
+              onCategoryChange={state.handleSetPostCategory}
+            />
           )}
 
           <div className={cn(isMobile ? "" : (state.postType === 'article' ? "p-0 flex-1 flex flex-col" : "p-6"))}>
@@ -207,7 +207,7 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
         </div>
 
         {state.postType !== 'article' && (
-          <CreatePostFooter 
+          <CreatePostFooter
             onPost={actions.handlePost}
             isSubmitting={state.isSubmitting}
             isMobile={isMobile}
@@ -220,20 +220,20 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
             postType={state.postType}
           />
         )}
-        
+
         {state.showContextWarning && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in">
             <div className="bg-popover border rounded-2xl shadow-2xl p-6 max-w-sm w-full space-y-4">
               <h3 className="text-lg font-bold">Discard changes?</h3>
               <p className="text-sm text-muted-foreground">Switching accounts will discard your current draft. Do you want to proceed?</p>
               <div className="flex gap-3 justify-end">
-                <button 
+                <button
                   onClick={() => state.setShowContextWarning(false)}
                   className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-muted"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={actions.confirmContextSwitch}
                   className="px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >

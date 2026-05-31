@@ -80,8 +80,8 @@ export const usePostMedia = (
           if (!(e instanceof File) && e.target) e.target.value = '';
           return;
         }
-        if (uploadedImagesRef.current.length >= 10) {
-          toast.error("Maximum 10 images allowed");
+        if (uploadedImagesRef.current.length >= 5) {
+          toast.error("Maximum 5 images allowed");
           if (!(e instanceof File) && e.target) e.target.value = '';
           return;
         }
@@ -138,8 +138,8 @@ export const usePostMedia = (
       }
 
       // 5. Image count limit
-      if (uploadedImagesRef.current.length + imageFiles.length > 10) {
-        toast.error("Maximum 10 images allowed");
+      if (uploadedImagesRef.current.length + imageFiles.length > 5) {
+        toast.error("Maximum 5 images allowed");
         e.target.value = '';
         return;
       }
@@ -222,8 +222,8 @@ export const usePostMedia = (
       }
 
       // 5. Image count limit
-      if (uploadedImagesRef.current.length + imageFiles.length > 10) {
-        toast.error("Maximum 10 images allowed");
+      if (uploadedImagesRef.current.length + imageFiles.length > 5) {
+        toast.error("Maximum 5 images allowed");
         e.target.value = '';
         return;
       }

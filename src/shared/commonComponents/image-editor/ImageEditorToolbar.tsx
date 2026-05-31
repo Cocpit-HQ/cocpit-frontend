@@ -36,7 +36,7 @@ export const ImageEditorToolbar: React.FC<ImageEditorToolbarProps> = ({
         <button
           type="button"
           onClick={onToggleAspectRatio}
-          className="p-1.5 text-foreground hover:bg-secondary rounded-md transition-colors cursor-pointer"
+          className="p-1.5 text-foreground rounded-md transition-colors cursor-pointer"
           title="Aspect Ratio"
         >
           <Icon icon="ion:resize-outline" className="w-6 h-6" />
@@ -45,27 +45,21 @@ export const ImageEditorToolbar: React.FC<ImageEditorToolbarProps> = ({
       <button
         type="button"
         onClick={onToggleFlipV}
-        className={cn(
-          "p-1.5 rounded-md transition-colors cursor-pointer",
-          flipV ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"
-        )}
+        className="p-1.5 rounded-md transition-colors cursor-pointer text-foreground"
       >
         <Icon icon="hugeicons:flip-top" className="w-6 h-6" />
       </button>
       <button
         type="button"
         onClick={onToggleFlipH}
-        className={cn(
-          "p-1.5 rounded-md transition-colors cursor-pointer",
-          flipH ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"
-        )}
+        className="p-1.5 rounded-md transition-colors cursor-pointer text-foreground"
       >
         <Icon icon="hugeicons:flip-left" className="w-6 h-6" />
       </button>
       <button
         type="button"
         onClick={onRotate}
-        className="p-1.5 text-foreground hover:bg-secondary rounded-md transition-colors cursor-pointer"
+        className="p-1.5 text-foreground rounded-md transition-colors cursor-pointer"
       >
         <Icon icon="wordpress:rotate-left" className="w-6 h-6" />
       </button>
@@ -76,8 +70,8 @@ export const ImageEditorToolbar: React.FC<ImageEditorToolbarProps> = ({
         className={cn(
           "p-1.5 rounded-md transition-colors disabled:opacity-50 cursor-pointer",
           deleteIconRed
-            ? "text-[#FF6B6B] hover:bg-[#FF6B6B]/10"
-            : "text-red-500 hover:bg-red-500/10"
+            ? "text-[#FF6B6B]"
+            : "text-red-500"
         )}
       >
         {isDeleting ? (

@@ -1,11 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Bold, Italic, Heading1, Heading2, List, Link as LinkIcon, 
-  Image as ImageIcon, UploadCloud, X, ArrowLeft, Loader2, Sparkles, Smile
+import {
+  Bold, Italic, Heading1, Heading2, List, Link as LinkIcon,
+  Image as ImageIcon, X, ArrowLeft, Loader2, Sparkles, Send
 } from 'lucide-react';
+import { Icon } from '@iconify/react';
 import { MediaItem } from '../../types';
 import { cn } from '@/lib/utils';
 import { uploadMedia } from '@/services/api/upload';
+
+type ArticleIdentity = {
+  name?: string | null;
+  username?: string | null;
+  image?: string | null;
+  org_slug?: string | null;
+  logo_url?: string | null;
+  avatar_url?: string | null;
+} | null | undefined;
 
 interface ArticleFlowProps {
   title: string;
@@ -22,9 +32,10 @@ interface ArticleFlowProps {
   onPost: () => Promise<void>;
   isSubmitting: boolean;
   onClose: () => void;
-  currentUser: any;
-  currentPoster: any;
+  currentUser: ArticleIdentity;
+  currentPoster: ArticleIdentity;
   isCompanyPost: boolean;
+  onPreviewStepChange?: (isPreview: boolean) => void;
 }
 
 const ArticleFlow = ({
@@ -35,7 +46,6 @@ const ArticleFlow = ({
   coverImage,
   onCoverUpload,
   onRemoveCover,
-  isEdit,
   coverInputRef,
   caption,
   onCaptionChange,
@@ -44,7 +54,8 @@ const ArticleFlow = ({
   onClose,
   currentUser,
   currentPoster,
-  isCompanyPost
+  isCompanyPost,
+  onPreviewStepChange
 }: ArticleFlowProps) => {
   const [step, setStep] = useState(1);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
@@ -113,23 +124,46 @@ const ArticleFlow = ({
     setIsLinkModalOpen(true);
   };
 
+  const normalizeUrl = (url: string) => {
+    const trimmedUrl = url.trim();
+    if (!trimmedUrl) return '';
+    return /^https?:\/\//i.test(trimmedUrl) ? trimmedUrl : `https://${trimmedUrl}`;
+  };
+
+  const isValidUrl = (url: string) => {
+    try {
+      const parsed = new URL(normalizeUrl(url));
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+  const isLinkFormValid = linkTitle.trim().length > 0 && linkUrl.trim().length > 0 && isValidUrl(linkUrl);
+
   const handleAddLink = () => {
-    if (!linkUrl.trim()) return;
+    if (!isLinkFormValid) return;
     restoreSelection(savedRange);
 
-    let formattedUrl = linkUrl.trim();
-    if (!/^https?:\/\//i.test(formattedUrl)) {
-      formattedUrl = `https://${formattedUrl}`;
-    }
+    const formattedUrl = normalizeUrl(linkUrl);
+    const linkLabel = linkTitle.trim();
+    const safeUrl = escapeHtml(formattedUrl);
+    const safeTitle = escapeHtml(linkLabel);
 
-    const title = linkTitle.trim() || formattedUrl;
-    
     const linkHtml = `
-      <div class="inline-flex flex-col gap-1 my-1 align-bottom" contenteditable="false">
-        <a href="${formattedUrl}" target="_blank" class="text-[#6366F1] font-medium text-[16px] leading-[24px] no-underline hover:no-underline cursor-pointer" style="font-family: 'Poppins', sans-serif;">${title}</a>
-        <div class="inline-flex items-center gap-4 px-3 py-1.5 bg-[#EEF2FF] rounded-[24px]">
-          <span class="text-[12px] text-[#6366F1] max-w-[200px] truncate">${formattedUrl}</span>
-          <div class="flex items-center gap-2">
+      <div class="inline-flex flex-col gap-1 my-1 align-bottom group" contenteditable="false">
+        <a href="${safeUrl}" target="_blank" class="text-[#6366F1] font-medium text-[16px] leading-[24px] no-underline hover:no-underline cursor-pointer" style="font-family: 'Poppins', sans-serif;">${safeTitle}</a>
+        <div class="inline-flex items-center gap-4 px-3 py-1.5 bg-[#EEF2FF] rounded-[24px] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <span class="text-[12px] text-[#6366F1] max-w-[200px] truncate">${safeUrl}</span>
+          <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <button type="button" class="edit-link-btn cursor-pointer hover:bg-indigo-100 p-0.5 rounded transition-colors" title="Edit">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
             </button>
@@ -138,9 +172,9 @@ const ArticleFlow = ({
             </button>
           </div>
         </div>
-      </div>&nbsp;
+      </div><span> </span>
     `;
-    
+
     if (editingLinkNode) {
       editingLinkNode.outerHTML = linkHtml;
       setEditingLinkNode(null);
@@ -157,7 +191,7 @@ const ArticleFlow = ({
 
   const handleEditorClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-    
+
     // Handle inline link Edit button
     const editLinkBtn = target.closest('.edit-link-btn');
     if (editLinkBtn) {
@@ -209,7 +243,7 @@ const ArticleFlow = ({
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
                 </button>
               </div>
-            </div>&nbsp;
+            </div><span> </span>
           `;
           editorRef.current?.focus();
           document.execCommand('insertHTML', false, imageHtml);
@@ -229,71 +263,105 @@ const ArticleFlow = ({
 
   const authorName = isCompanyPost ? (currentPoster?.name || 'Company') : (currentUser?.name || 'User');
   const authorSlug = isCompanyPost ? (currentPoster?.org_slug || 'company') : (currentUser?.username || 'user');
-  const avatarSrc = isCompanyPost 
-    ? (currentPoster?.logo_url || currentPoster?.avatar_url || '/assets/pngegg.png') 
+  const avatarSrc = isCompanyPost
+    ? (currentPoster?.logo_url || currentPoster?.avatar_url || '/assets/pngegg.png')
     : (currentUser?.image || '/assets/pngegg.png');
+  const articleSlug = title
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'untitled-article';
+  const generatedArticleUrl = `/post/article/${articleSlug}`;
+  const plainArticleText = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
   if (step === 2) {
     return (
-      <div className="flex flex-col flex-1 bg-[#FFFFFF] select-none font-poppins relative animate-in fade-in slide-in-from-bottom-4 duration-300 w-full h-full p-8">
-        <button onClick={onClose} className="absolute top-6 right-6 text-red-400 hover:text-red-500 transition-colors z-10">
-          <X className="w-5 h-5" strokeWidth={1.5} />
+      <div className="flex flex-col gap-5 select-none font-poppins">
+        <button
+          type="button"
+          onClick={() => {
+            console.log("BACK CLICKED");
+            onPreviewStepChange?.(false);
+            setStep(1);
+          }}
+          className="flex w-fit items-center gap-2 text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to article
         </button>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col max-w-[600px] mx-auto w-full pt-4 pb-8 space-y-6">
-          <div className="text-center space-y-1">
-            <h3 className="font-semibold text-[18px] text-[#000000]">Create</h3>
-            <p className="text-[12px] text-[#6B7280]">Post jobs, insights, or milestones to grow your presence.</p>
+        <div className="flex items-center gap-3">
+          <img src={avatarSrc} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+          <div className="flex min-w-0 flex-col">
+            <h5 className="font-semibold text-[15px] text-foreground leading-tight truncate">{authorName}</h5>
+            <p className="text-[12px] text-muted-foreground truncate">@{authorSlug}</p>
           </div>
+        </div>
 
-          {/* Author */}
-          <div className="w-full flex items-center gap-3 pt-2">
-            <img src={avatarSrc} className="w-10 h-10 rounded-full object-cover" />
-            <div className="flex flex-col">
-              <h5 className="font-medium text-[15px] text-[#000000] leading-tight">{authorName}</h5>
-              <p className="text-[12px] text-[#6B7280]">@{authorSlug}</p>
-            </div>
-          </div>
-
-          {/* Article Card Preview */}
-          <div className="w-full max-w-[500px] mx-auto rounded-[24px] overflow-hidden flex flex-col shadow-sm border border-transparent">
-            <div className="w-full h-[220px] overflow-hidden">
-              {coverImage && (
-                <img src={coverImage.url} className="w-full h-full object-cover" />
+        <div className="flex justify-center">
+          <a
+            href={generatedArticleUrl}
+            onClick={(e) => e.preventDefault()}
+            className="group w-full max-w-[420px] bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md"
+          >
+            <div className="w-full h-[180px] bg-indigo-50 overflow-hidden">
+              {coverImage ? (
+                <img src={coverImage.url} alt={title || 'Article cover'} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-indigo-400">
+                  <Icon icon="ph:article" className="w-8 h-8" />
+                </div>
               )}
             </div>
-            <div className="w-full bg-[#EEF2FF] p-4 flex items-center justify-center">
-              <span className="font-semibold text-[14px] text-[#000000] text-center line-clamp-1">{title}</span>
+            <div className="flex flex-col gap-2 p-4">
+              <h3 className="line-clamp-2 text-[15px] font-semibold leading-5 text-foreground">
+                {title || 'Untitled Article'}
+              </h3>
+              {plainArticleText && (
+                <p className="line-clamp-2 text-[12px] leading-4 text-muted-foreground">
+                  {plainArticleText}
+                </p>
+              )}
+              <span className="text-[12px] font-medium text-[#6366F1] group-hover:text-[#4F46E5] transition-colors">
+                Read More
+              </span>
             </div>
-          </div>
+          </a>
+        </div>
 
-          {/* Caption block */}
-          <div className="w-full flex flex-col relative pt-4 pb-4">
-            <textarea
-              value={caption || ''}
-              onChange={(e) => onCaptionChange(e.target.value)}
-              placeholder="Say something about your article..."
-              rows={2}
-              className="w-full py-2 bg-transparent border-none outline-none focus:ring-0 text-[#000000] text-[14px] resize-none pr-10 placeholder-[#9CA3AF]"
-            />
-            <button type="button" onClick={triggerInlineImage} disabled={isUploadingInline} className="p-2 text-foreground/70 hover:bg-muted rounded-xl transition-colors disabled:opacity-50">
-            {isUploadingInline ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : <ImageIcon className="w-[18px] h-[18px]" />}
+        <textarea
+          value={caption || ''}
+          onChange={(e) => onCaptionChange(e.target.value)}
+          placeholder="Say something about your article..."
+          rows={4}
+          className="w-full min-h-[96px] resize-none rounded-xl border border-border bg-background px-4 py-3 text-[14px] text-foreground outline-none placeholder:text-muted-foreground focus:border-[#818CF8] focus:ring-2 focus:ring-[#818CF8]/20"
+        />
+
+        <div className="flex items-center gap-4 border-y border-border/50 py-3">
+          <button type="button" className="text-muted-foreground hover:text-foreground transition-colors p-1" title="Audience">
+            <Icon icon="ph:users-three" className="w-5 h-5" />
           </button>
-          </div>
+          <button type="button" className="text-muted-foreground hover:text-foreground transition-colors p-1" title="Location">
+            <Icon icon="ph:map-pin" className="w-5 h-5" />
+          </button>
+          <button type="button" className="text-muted-foreground hover:text-foreground transition-colors p-1" title="Feeling">
+            <Icon icon="ph:smiley" className="w-5 h-5" />
+          </button>
+        </div>
 
-          {/* Footer Actions */}
-          <div className="w-full flex items-center justify-between pt-2">
-            <button className="flex items-center justify-center px-6 py-2.5 border border-[#818CF8] text-[#818CF8] bg-[#FFFFFF] rounded-[24px] text-[14px] font-normal transition-all hover:bg-indigo-50">
-              Enhance with AI
-            </button>
-            <button 
-              disabled={isSubmitting}
-              onClick={onPost}
-              className="flex items-center justify-center px-10 py-2.5 bg-[#6366F1] hover:bg-[#4F46E5] text-[#FFFFFF] rounded-[24px] text-[14px] font-normal transition-all cursor-pointer disabled:opacity-70 shadow-sm"
-            >
-              {isSubmitting ? 'Posting...' : 'Post'}
-            </button>
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <button type="button" className="flex items-center gap-2 px-5 py-2 border border-[#818CF8] text-[#818CF8] bg-background rounded-full text-[14px] font-normal hover:bg-indigo-50 transition-colors">
+            <Sparkles className="w-4 h-4" />
+            Enhance with AI
+          </button>
+          <button
+            disabled={isSubmitting}
+            onClick={onPost}
+            className="flex items-center gap-2 px-8 py-2 bg-[#6366F1] hover:bg-[#4F46E5] text-white rounded-full text-[14px] font-normal transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {isSubmitting ? 'Posting...' : 'Post'}
+          </button>
         </div>
       </div>
     );
@@ -350,7 +418,7 @@ const ArticleFlow = ({
             {/* Frame 2608495 */}
             <div className="flex flex-row items-center gap-[12px]" style={{ height: '42px', padding: '0px', flex: 'none' }}>
               <img src={avatarSrc} className="w-[40px] h-[40px] rounded-full object-cover" style={{ flex: 'none' }} />
-              
+
               {/* Frame 2608493 */}
               <div className="flex flex-col items-start justify-center" style={{ height: '42px', padding: '0px', flex: 'none' }}>
                 <h4 className="text-[#000000]" style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 500, fontSize: '18px', lineHeight: '24px' }}>
@@ -365,58 +433,58 @@ const ArticleFlow = ({
 
           {/* Pill Toolbar */}
           <div className="flex flex-row justify-center items-center gap-[8px] bg-[#FFFFFF] border border-[#000000] rounded-[24px]" style={{ width: '472px', height: '56px', padding: '8px 16px', margin: '0 auto' }}>
-            <button 
-              onClick={() => format('bold')} 
-              className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] hover:bg-muted transition-all"
+            <button
+              onClick={() => format('bold')}
+              className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all"
               style={{ width: '56px', height: '40px' }}
               title="Bold"
             >
               <Bold className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
             </button>
-            <button 
-              onClick={() => format('italic')} 
-              className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] hover:bg-muted transition-all"
+            <button
+              onClick={() => format('italic')}
+              className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all"
               style={{ width: '56px', height: '40px' }}
               title="Italic"
             >
               <Italic className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
             </button>
-            <button 
-              onClick={() => format('formatBlock', 'H1')} 
-              className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] hover:bg-muted transition-all"
+            <button
+              onClick={() => format('formatBlock', 'H1')}
+              className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all"
               style={{ width: '56px', height: '40px' }}
               title="Heading 1"
             >
               <Heading1 className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
             </button>
-            <button 
-              onClick={() => format('formatBlock', 'H2')} 
-              className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] hover:bg-muted transition-all"
+            <button
+              onClick={() => format('formatBlock', 'H2')}
+              className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all"
               style={{ width: '56px', height: '40px' }}
               title="Heading 2"
             >
               <Heading2 className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
             </button>
-            <button 
-              onClick={() => format('insertUnorderedList')} 
-              className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] hover:bg-muted transition-all"
+            <button
+              onClick={() => format('insertUnorderedList')}
+              className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all"
               style={{ width: '56px', height: '40px' }}
               title="Unordered List"
             >
               <List className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
             </button>
-            <button 
-              onClick={openLinkModal} 
-              className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] hover:bg-muted transition-all"
+            <button
+              onClick={openLinkModal}
+              className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all"
               style={{ width: '56px', height: '40px' }}
               title="Insert Link capsule"
             >
               <LinkIcon className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
             </button>
-            <button 
-              onClick={triggerInlineImage} 
+            <button
+              onClick={triggerInlineImage}
               disabled={isUploadingInline}
-              className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] hover:bg-muted transition-all disabled:opacity-50"
+              className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all disabled:opacity-50"
               style={{ width: '56px', height: '40px' }}
               title="Insert Inline Image"
             >
@@ -430,8 +498,8 @@ const ArticleFlow = ({
 
           {/* Action Buttons */}
           <div className="flex flex-row justify-center items-start gap-[8px]" style={{ width: '188px', height: '40px' }}>
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               className="flex flex-row justify-center items-center bg-[#FFFFFF] border border-[#818CF8] rounded-[24px] transition-all"
               style={{ width: '90px', height: '40px', padding: '8px 16px', gap: '10px' }}
             >
@@ -439,14 +507,18 @@ const ArticleFlow = ({
                 Cancel
               </span>
             </button>
-            <button 
-              disabled={!isNextActive} 
-              onClick={() => setStep(2)}
+            <button
+              disabled={!isNextActive}
+              onClick={() => {
+                console.log("NEXT CLICKED");
+                onPreviewStepChange?.(true);
+                setStep(2);
+              }}
               className="flex flex-row justify-center items-center border border-[#FFFFFF] rounded-[24px] transition-all shadow-sm"
-              style={{ 
-                width: '90px', 
-                height: '40px', 
-                padding: '8px 16px', 
+              style={{
+                width: '90px',
+                height: '40px',
+                padding: '8px 16px',
                 gap: '10px',
                 background: isNextActive ? '#6366F1' : '#C7D2FE',
                 cursor: isNextActive ? 'pointer' : 'not-allowed'
@@ -469,40 +541,40 @@ const ArticleFlow = ({
             <div className="relative w-full aspect-[4/1] rounded-2xl overflow-hidden border border-border group bg-muted/20">
               <img src={coverImage.url} className="w-full h-full object-cover" />
               <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm">
-                <button 
+                <button
                   onClick={() => coverInputRef.current?.click()}
-                  className="cursor-pointer hover:bg-indigo-100 p-0.5 rounded transition-colors" 
+                  className="cursor-pointer hover:bg-indigo-100 p-0.5 rounded transition-colors"
                   title="Edit"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                 </button>
-                <button 
+                <button
                   onClick={onRemoveCover}
-                  className="cursor-pointer hover:bg-red-50 p-0.5 rounded transition-colors" 
+                  className="cursor-pointer hover:bg-red-50 p-0.5 rounded transition-colors"
                   title="Delete"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>
                 </button>
               </div>
             </div>
           ) : (
-            <div 
+            <div
               onClick={() => coverInputRef.current?.click()}
               className="flex flex-col items-center justify-center bg-[#FFFFFF] rounded-2xl cursor-pointer p-4 text-center"
               style={{ width: '600px', height: '178px', margin: '0 auto' }}
             >
               <h5 className="font-semibold text-[16px] text-foreground font-poppins">Cover image</h5>
               <p className="text-[12px] text-muted-foreground mt-1 mb-6 font-poppins">Add a cover image or video to your article.</p>
-              
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                viewBox="0 0 24 24" 
+
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
                 className="w-[40px] h-[40px] text-muted-foreground mb-4"
               >
-                <path fill="currentColor" fillRule="evenodd" d="M12 2.5a5.5 5.5 0 0 0-5.02 3.25a23 23 0 0 1-.186.41l-.068.132a.5.5 0 0 1-.127.14a.5.5 0 0 1-.18.058c-.036.007-.11.01-.419.01a3.5 3.5 0 1 0 0 7h.672l1-1H6a2.5 2.5 0 0 1 0-5h.054c.226 0 .413 0 .562-.03c.18-.036.358-.09.526-.2c.168-.108.29-.248.398-.398c.058-.08.11-.184.157-.283q.074-.159.193-.424l.002-.005a4.501 4.501 0 0 1 8.216 0l.002.006q.119.264.193.423c.047.099.099.202.157.283c.107.15.23.29.398.399s.346.163.526.2c.149.03.336.03.562.029H18a2.5 2.5 0 0 1 0 5h-1.672l1 1H18a3.5 3.5 0 1 0 0-7c-.309 0-.383-.003-.418-.01a.5.5 0 0 1-.18-.059a.5.5 0 0 1-.128-.14l-.016-.027l-.052-.105a23 23 0 0 1-.186-.409A5.5 5.5 0 0 0 12 2.5" clipRule="evenodd"/>
-                <path fill="currentColor" d="m12 12l-.354-.354l.354-.353l.354.353zm.5 9a.5.5 0 0 1-1 0zm-4.854-5.354l4-4l.708.708l-4 4zm4.708-4l4 4l-.708.708l-4-4zM12.5 12v9h-1v-9z"/>
+                <path fill="currentColor" fillRule="evenodd" d="M12 2.5a5.5 5.5 0 0 0-5.02 3.25a23 23 0 0 1-.186.41l-.068.132a.5.5 0 0 1-.127.14a.5.5 0 0 1-.18.058c-.036.007-.11.01-.419.01a3.5 3.5 0 1 0 0 7h.672l1-1H6a2.5 2.5 0 0 1 0-5h.054c.226 0 .413 0 .562-.03c.18-.036.358-.09.526-.2c.168-.108.29-.248.398-.398c.058-.08.11-.184.157-.283q.074-.159.193-.424l.002-.005a4.501 4.501 0 0 1 8.216 0l.002.006q.119.264.193.423c.047.099.099.202.157.283c.107.15.23.29.398.399s.346.163.526.2c.149.03.336.03.562.029H18a2.5 2.5 0 0 1 0 5h-1.672l1 1H18a3.5 3.5 0 1 0 0-7c-.309 0-.383-.003-.418-.01a.5.5 0 0 1-.18-.059a.5.5 0 0 1-.128-.14l-.016-.027l-.052-.105a23 23 0 0 1-.186-.409A5.5 5.5 0 0 0 12 2.5" clipRule="evenodd" />
+                <path fill="currentColor" d="m12 12l-.354-.354l.354-.353l.354.353zm.5 9a.5.5 0 0 1-1 0zm-4.854-5.354l4-4l.708.708l-4 4zm4.708-4l4 4l-.708.708l-4-4zM12.5 12v9h-1v-9z" />
               </svg>
-              
+
               <div className="flex flex-col gap-1 items-center font-poppins">
                 <span className="text-[10px] text-muted-foreground">
                   JPG, PNG, WEBP (Max 5MB)
@@ -557,7 +629,7 @@ const ArticleFlow = ({
       {isLinkModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-[#FFFFFF] rounded-[32px] shadow-2xl p-8 flex flex-col relative animate-in zoom-in-95 duration-200 font-poppins" style={{ width: '400px', height: '338px' }}>
-            
+
             <button onClick={() => { setIsLinkModalOpen(false); setEditingLinkNode(null); }} className="absolute top-6 right-6 text-red-400 hover:text-red-500 transition-all">
               <X className="w-5 h-5" strokeWidth={1.5} />
             </button>
@@ -582,29 +654,32 @@ const ArticleFlow = ({
               <div className="flex flex-col gap-2">
                 <label className="text-[12px] text-[#000000]">Link</label>
                 <input
-                  type="text"
+                  type="url"
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
                   placeholder="e.g. https://yourproject.com"
                   className="w-full px-4 py-2.5 border border-[#E5E7EB] bg-[#FFFFFF] outline-none rounded-[16px] text-[14px] text-[#000000] focus:border-[#818CF8] placeholder-[#9CA3AF]"
                 />
+                {linkUrl.trim() && !isValidUrl(linkUrl) && (
+                  <span className="text-[11px] text-red-500">Enter a valid URL.</span>
+                )}
               </div>
             </div>
 
             <div className="flex gap-4 justify-center mt-auto pb-1">
-              <button 
+              <button
                 onClick={() => { setIsLinkModalOpen(false); setEditingLinkNode(null); }}
                 className="flex items-center justify-center flex-1 py-2.5 border border-[#818CF8] bg-[#FFFFFF] text-[#818CF8] rounded-[24px] text-[14px] transition-all hover:bg-indigo-50"
               >
                 Cancel
               </button>
-              <button 
-                disabled={!linkUrl.trim()}
+              <button
+                disabled={!isLinkFormValid}
                 onClick={handleAddLink}
                 className={cn(
                   "flex items-center justify-center flex-1 py-2.5 rounded-[24px] text-[14px] transition-all",
-                  linkUrl.trim() 
-                    ? "bg-[#6366F1] text-[#FFFFFF] hover:bg-[#4F46E5] cursor-pointer" 
+                  isLinkFormValid
+                    ? "bg-[#6366F1] text-[#FFFFFF] hover:bg-[#4F46E5] cursor-pointer"
                     : "bg-[#C7D2FE] text-[#FFFFFF] cursor-not-allowed"
                 )}
               >

@@ -73,7 +73,7 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     authorId: backendPost.author_id,
     author: backendPost.author_name,
     authorAvatar: backendPost.author_avatar || undefined,
-    title: backendPost.title || backendPost.category_name || "",
+    title: backendPost.title || "",
     timeAgo: shortTimeAgo,
     content: content,
     imageSrc: images.length > 0 ? images[0] : undefined,

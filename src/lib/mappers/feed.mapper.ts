@@ -209,7 +209,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         authorSlug: sp.author.author_slug,
         isCompanyPost: sp.author.is_organization_post,
         location: sp.location || undefined,
-        title: sp.title || sp.category_name || sp.author.headline || "",
+        title: sp.title || sp.author.headline || "",
         isAvailable: true
       } as Post & { isAvailable?: boolean };
     }
@@ -228,8 +228,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     authorId: backendPost.author_id,
     author: backendPost.author_name,
     authorAvatar: backendPost.author_avatar || undefined,
-    // Fix article title bug: preserve title if it exists, otherwise fall back to category or empty string
-    title: backendPost.title || backendPost.category_name || "",
+    title: backendPost.title || "",
     timeAgo: shortTimeAgo,
     content: content,
     articleBody: articleBody,
