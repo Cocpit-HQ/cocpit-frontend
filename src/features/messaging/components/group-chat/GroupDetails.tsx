@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Icon } from "@iconify/react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuPortal } from "@radix-ui/react-dropdown-menu";
 import { CocpitProfileUpload } from "@/shared/commonComponents/Cocpitprofileupload";
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox";
 
@@ -309,11 +309,14 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     <style>{`div::-webkit-scrollbar { display: none; }`}</style>
                     {visibleMembers.map((member) => (
-                        <div key={member.user_id} className="flex flex-row justify-between items-center py-[8px] gap-[8px] w-full h-[56px] bg-[var(--card)] rounded-[24px]">
+                        <div 
+                            key={member.user_id} 
+                            className="flex flex-row justify-between items-center py-[8px] gap-[8px] w-full h-[56px] bg-[var(--card)] rounded-[24px] relative"
+                        >
                             {/* Left: Avatar */}
                             <div className={cn(
                                 "w-[32px] h-[32px] rounded-full overflow-hidden bg-muted shrink-0 self-stretch",
-                                member.isPending && "opacity-25 blur-[1.5px]"
+                                member.isPending && "opacity-50"
                             )}>
                                 {member.avatar_url ? (
                                     <Image src={member.avatar_url} alt={member.full_name} width={32} height={32} className="object-cover w-full h-full" />
@@ -327,10 +330,18 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                             {/* Middle: Name + Headline + Admin badge */}
                             <div className={cn(
                                 "flex flex-col flex-1 ml-[8px]",
-                                member.isPending && "opacity-25 blur-[1.5px]"
+                                member.isPending && "opacity-50"
                             )}>
-                                <span className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-[var(--foreground)] flex items-center">
-                                    {member.user_id === currentUserId ? "You" : member.full_name}
+                                <span className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-[var(--foreground)] flex items-center gap-2">
+                                    <span>{member.user_id === currentUserId ? "You" : member.full_name}</span>
+                                    {member.isPending && (
+                                        <span className="bg-[#EEF2FF] border border-[#6366F1] rounded-[24px] 
+                                            px-[6px] py-[2px] font-['Poppins'] font-medium 
+                                            text-[10px] leading-[14px] text-[#6366F1] 
+                                            whitespace-nowrap z-10">
+                                            Invited
+                                        </span>
+                                    )}
                                 </span>
                                 <div className="flex flex-row items-center">
                                     {member.headline != '' && (
@@ -360,68 +371,70 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                                             style={{ color: isDropdownOpen ? 'var(--primary)' : 'var(--foreground)' }}
                                         />
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent
-                                        align="end"
-                                        className="w-[220px] p-[8px] mr-4  bg-[var(--card)] border border-[var(--border)]"
-                                        style={{ borderRadius: '24px 0px 24px 24px' }}
-                                    >
-                                        {member.isPending ? (
-                                            <DropdownMenuItem
-                                                onClick={() => {
-                                                    if (member.invitation_id) {
-                                                        setInvitationToCancel(member.invitation_id);
-                                                    } else {
-                                                        toast({ title: "Error", description: "Invitation ID not found", variant: "destructive" });
-                                                    }
-                                                }}
-                                                className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
-                                            >
-                                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Cancel invitation</span>
-                                                <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
-                                            </DropdownMenuItem>
-                                        ) : member.user_id === currentUserId ? (
-                                            <DropdownMenuItem
-                                                onClick={() => setShowLeaveConfirm(true)}
-                                                className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
-                                            >
-                                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Leave group</span>
-                                                <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
-                                            </DropdownMenuItem>
-                                        ) : (
-                                            <>
-                                                {member.role !== 'admin' ? (
-                                                    <DropdownMenuItem onClick={() => setUserToMakeAdmin(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Make admin</span>
-                                                        <Icon icon="material-symbols:admin-panel-settings-outline" width={24} height={24} color="var(--foreground)" />
-                                                    </DropdownMenuItem>
-                                                ) : (
-                                                    <DropdownMenuItem onClick={() => setUserToDemote(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Dismiss as admin</span>
-                                                        <Icon icon="solar:shield-minus-linear" width={24} height={24} color="var(--foreground)" />
-                                                    </DropdownMenuItem>
-                                                )}
-                                                <DropdownMenuItem className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Share profile</span>
-                                                    <Icon icon="fluent:share-16-regular" width={24} height={24} color="var(--foreground)" />
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => setUserToReport(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Report profile</span>
-                                                    <Info className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => setUserToBlock(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Block profile</span>
-                                                    <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1} />
-                                                </DropdownMenuItem>
+                                    <DropdownMenuPortal>
+                                        <DropdownMenuContent
+                                            align="end"
+                                            className="w-[220px] p-[8px] mr-4  bg-[var(--card)] border border-[var(--border)] z-[100]"
+                                            style={{ borderRadius: '24px 0px 24px 24px' }}
+                                        >
+                                            {member.isPending ? (
                                                 <DropdownMenuItem
-                                                    onClick={() => setUserToRemove(member.user_id)}
+                                                    onClick={() => {
+                                                        if (member.invitation_id) {
+                                                            setInvitationToCancel(member.invitation_id);
+                                                        } else {
+                                                            toast({ title: "Error", description: "Invitation ID not found", variant: "destructive" });
+                                                        }
+                                                    }}
                                                     className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
                                                 >
-                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Remove</span>
+                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Cancel invitation</span>
                                                     <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
                                                 </DropdownMenuItem>
-                                            </>
-                                        )}
-                                    </DropdownMenuContent>
+                                            ) : member.user_id === currentUserId ? (
+                                                <DropdownMenuItem
+                                                    onClick={() => setShowLeaveConfirm(true)}
+                                                    className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
+                                                >
+                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Leave group</span>
+                                                    <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
+                                                </DropdownMenuItem>
+                                            ) : (
+                                                <>
+                                                    {member.role !== 'admin' ? (
+                                                        <DropdownMenuItem onClick={() => setUserToMakeAdmin(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Make admin</span>
+                                                            <Icon icon="material-symbols:admin-panel-settings-outline" width={24} height={24} color="var(--foreground)" />
+                                                        </DropdownMenuItem>
+                                                    ) : (
+                                                        <DropdownMenuItem onClick={() => setUserToDemote(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Dismiss as admin</span>
+                                                            <Icon icon="solar:shield-minus-linear" width={24} height={24} color="var(--foreground)" />
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    <DropdownMenuItem className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Share profile</span>
+                                                        <Icon icon="fluent:share-16-regular" width={24} height={24} color="var(--foreground)" />
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => setUserToReport(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Report profile</span>
+                                                        <Info className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => setUserToBlock(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Block profile</span>
+                                                        <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1} />
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onClick={() => setUserToRemove(member.user_id)}
+                                                        className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
+                                                    >
+                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Remove</span>
+                                                        <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
+                                                    </DropdownMenuItem>
+                                                </>
+                                            )}
+                                        </DropdownMenuContent>
+                                    </DropdownMenuPortal>
                                 </DropdownMenu>
                             )}
                         </div>

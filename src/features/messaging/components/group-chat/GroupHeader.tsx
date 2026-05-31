@@ -98,12 +98,19 @@ export default function GroupHeader({
                                         <Icon icon="fluent:edit-16-regular" width={24} height={24} color="var(--foreground)" />
                                     </DropdownMenuItem>
                                 )}
+                                <DropdownMenuItem
+                                    onClick={() => onMessageAction?.('delete_for_me')}
+                                    className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors border-none outline-none"
+                                >
+                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Delete for me</span>
+                                    <Icon icon="fluent:delete-16-regular" width={24} height={24} color="var(--destructive)" />
+                                </DropdownMenuItem>
                                 {((selectedMessage.sender === 'me' || selectedMessage.senderId === currentUserId || selectedMessage.senderId === 'me')) && (
                                     <DropdownMenuItem
-                                        onClick={() => onMessageAction?.('delete')}
+                                        onClick={() => onMessageAction?.('delete_for_everyone')}
                                         className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors border-none outline-none"
                                     >
-                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Delete</span>
+                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Delete for everyone</span>
                                         <Icon icon="fluent:delete-16-regular" width={24} height={24} color="var(--destructive)" />
                                     </DropdownMenuItem>
                                 )}

@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react"
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState, useRef } from "react"
 
 import { PostCarousel } from "@/components/shared/PostCarousel"
 import {
@@ -494,6 +494,8 @@ export default function ProfilePage() {
   // New TanStack Query Hook
   const { data: profileData, isLoading } = useMyProfile();
 
+
+
   // Mutation Hooks
   const expMutations = useExperienceMutations();
   const eduMutations = useEducationMutations();
@@ -547,6 +549,208 @@ export default function ProfilePage() {
   const { togglePostVisibility } = useFeed(false);
   const { isCompany } = useActiveProfile();
   const [previewPosts, setPreviewPosts] = useState<Post[]>([]);
+
+  // Scroll Restoration Logic
+  const hasRestoredScroll = useRef(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && 'scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
+    if (typeof window !== "undefined" && !(window as any).__cocpit_popstate_registered) {
+      (window as any).__cocpit_popstate_registered = true;
+      window.addEventListener("popstate", () => {
+        sessionStorage.setItem("cocpit_popstate_occurred", "true");
+      }, { capture: true });
+    }
+
+    if (typeof window !== "undefined" && !(window as any).__cocpit_history_patched) {
+      (window as any).__cocpit_history_patched = true;
+
+      const handleRouteScroll = (url: string | URL | null | undefined) => {
+        if (!url) return;
+        const urlStr = url.toString();
+        if (!urlStr.includes("/post/")) return;
+
+        const isComments = urlStr.includes("comments=true");
+
+        // Disconnect any existing observer
+        if ((window as any).__cocpit_scroll_observer) {
+          try {
+            (window as any).__cocpit_scroll_observer.disconnect();
+          } catch (e) {}
+        }
+
+        let observerTimeout: NodeJS.Timeout;
+
+        const cleanup = () => {
+          observer.disconnect();
+          clearTimeout(observerTimeout);
+          window.removeEventListener("wheel", handleUserInteraction);
+          window.removeEventListener("touchmove", handleUserInteraction);
+          window.removeEventListener("keydown", handleUserInteraction);
+        };
+
+        const handleUserInteraction = () => {
+          cleanup();
+        };
+
+        const observer = new MutationObserver(() => {
+          if (window.location.pathname.includes("/post/")) {
+            const hasPostDetails = document.querySelector(".feed-card-shell");
+            if (hasPostDetails) {
+              if (isComments) {
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
+              } else {
+                window.scrollTo({ top: 0, behavior: "instant" });
+                cleanup();
+              }
+            }
+          }
+        });
+
+        (window as any).__cocpit_scroll_observer = observer;
+
+        window.addEventListener("wheel", handleUserInteraction, { passive: true });
+        window.addEventListener("touchmove", handleUserInteraction, { passive: true });
+        window.addEventListener("keydown", handleUserInteraction, { passive: true });
+
+        // Run once immediately in case the elements are already rendered
+        if (window.location.pathname.includes("/post/")) {
+          const hasPostDetails = document.querySelector(".feed-card-shell");
+          if (hasPostDetails) {
+            if (isComments) {
+              window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
+            } else {
+              window.scrollTo({ top: 0, behavior: "instant" });
+              cleanup();
+              return;
+            }
+          }
+        }
+
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        observerTimeout = setTimeout(cleanup, 2500);
+      };
+
+      const originalPushState = window.history.pushState;
+      window.history.pushState = function(state, unused, url) {
+        originalPushState.apply(this, [state, unused, url]);
+        try {
+          handleRouteScroll(url);
+        } catch (e) {
+          console.error(e);
+        }
+      };
+
+      const originalReplaceState = window.history.replaceState;
+      window.history.replaceState = function(state, unused, url) {
+        originalReplaceState.apply(this, [state, unused, url]);
+        try {
+          handleRouteScroll(url);
+        } catch (e) {
+          console.error(e);
+        }
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    if (hasRestoredScroll.current) return;
+
+    const historyState = typeof window !== "undefined" ? window.history.state : null;
+
+    const savedPath = historyState?.cocpit_scroll_path || sessionStorage.getItem("cocpit_profile_scroll_path");
+    const savedScrollY = historyState?.cocpit_scroll_y !== undefined ? historyState.cocpit_scroll_y.toString() : sessionStorage.getItem("cocpit_profile_scroll_y");
+    const savedSource = historyState?.cocpit_scroll_source || sessionStorage.getItem("cocpit_profile_scroll_source");
+    const popstateOccurred = (historyState?.cocpit_popstate_occurred ? "true" : "") || sessionStorage.getItem("cocpit_popstate_occurred");
+
+    const isTargetPage = savedPath === window.location.pathname && savedSource === "post" && popstateOccurred === "true" && savedScrollY;
+
+    const clearScrollData = () => {
+      sessionStorage.removeItem("cocpit_profile_scroll_path");
+      sessionStorage.removeItem("cocpit_profile_scroll_y");
+      sessionStorage.removeItem("cocpit_profile_scroll_source");
+      sessionStorage.removeItem("cocpit_popstate_occurred");
+
+      if (typeof window !== "undefined") {
+        try {
+          const currentState = { ...window.history.state };
+          delete currentState.cocpit_scroll_y;
+          delete currentState.cocpit_scroll_source;
+          delete currentState.cocpit_scroll_path;
+          delete currentState.cocpit_popstate_occurred;
+          window.history.replaceState(currentState, "", window.location.href);
+        } catch (e) {}
+      }
+    };
+
+    if (isTargetPage) {
+      const targetScroll = parseInt(savedScrollY, 10);
+      if (!isNaN(targetScroll)) {
+        // Disconnect any existing observer
+        if ((window as any).__cocpit_profile_restore_observer) {
+          try {
+            (window as any).__cocpit_profile_restore_observer.disconnect();
+          } catch (e) {}
+        }
+
+        const cleanup = () => {
+          observer.disconnect();
+          window.removeEventListener("wheel", handleUserInteraction);
+          window.removeEventListener("touchmove", handleUserInteraction);
+          window.removeEventListener("keydown", handleUserInteraction);
+        };
+
+        const handleUserInteraction = () => {
+          // If user interacts manually, cancel auto-scrolling
+          hasRestoredScroll.current = true;
+          clearScrollData();
+          cleanup();
+        };
+
+        const observer = new MutationObserver(() => {
+          window.scrollTo(0, targetScroll);
+          const currentScroll = window.scrollY;
+
+          // Once the page height expands enough and scroll succeeds, finish and cleanup
+          if (Math.abs(currentScroll - targetScroll) < 5) {
+            hasRestoredScroll.current = true;
+            clearScrollData();
+            cleanup();
+          }
+        });
+
+        (window as any).__cocpit_profile_restore_observer = observer;
+
+        window.addEventListener("wheel", handleUserInteraction, { passive: true });
+        window.addEventListener("touchmove", handleUserInteraction, { passive: true });
+        window.addEventListener("keydown", handleUserInteraction, { passive: true });
+
+        // Run once immediately
+        window.scrollTo(0, targetScroll);
+        if (Math.abs(window.scrollY - targetScroll) < 5) {
+          hasRestoredScroll.current = true;
+          clearScrollData();
+          cleanup();
+          return;
+        }
+
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+
+        return () => {
+          // Clean up on component unmount
+          cleanup();
+        };
+      }
+    } else {
+      window.scrollTo(0, 0);
+      hasRestoredScroll.current = true;
+      clearScrollData();
+    }
+  }, []);
   const [isPostsExpanded, setIsPostsExpanded] = useState(false);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const isMobile = useIsMobile();

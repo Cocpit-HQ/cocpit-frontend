@@ -105,7 +105,7 @@ const useMessageEditor = (
 
 // --- Sub-Components ---
 
-const MessageMenu = ({ message, onAction }: { message: Message, onAction?: (action: string, message: Message) => void }) => {
+const MessageMenu = ({ message, onAction, currentUserId }: { message: Message, onAction?: (action: string, message: Message) => void, currentUserId?: string }) => {
   if (!onAction) return null;
   return (
     <DropdownMenu>
@@ -124,9 +124,14 @@ const MessageMenu = ({ message, onAction }: { message: Message, onAction?: (acti
         <DropdownMenuItem onClick={() => onAction('edit', message)}>
           <Pencil className="w-4 h-4 mr-2" /> Edit
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onAction('delete', message)} className="text-destructive focus:text-destructive">
-          <Trash2 className="w-4 h-4 mr-2" /> Delete
+        <DropdownMenuItem onClick={() => onAction('delete_for_me', message)} className="text-destructive focus:text-destructive">
+          <Trash2 className="w-4 h-4 mr-2" /> Delete for me
         </DropdownMenuItem>
+        {(message.senderId === currentUserId || message.sender === 'me') && (
+          <DropdownMenuItem onClick={() => onAction('delete_for_everyone', message)} className="text-destructive focus:text-destructive">
+            <Trash2 className="w-4 h-4 mr-2" /> Delete for everyone
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -881,14 +886,23 @@ function MessageBubble(props: MessageBubbleProps) {
                 <Pencil className="w-5 h-5 text-muted-foreground" />
                 <span>Edit</span>
               </button>
-              <button 
-                className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50 text-destructive"
-                onClick={() => handleMobileAction('delete')}
-              >
-                <Trash2 className="w-5 h-5" />
-                <span>Delete</span>
-              </button>
             </>
+          )}
+          <button 
+            className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50 text-destructive"
+            onClick={() => handleMobileAction('delete_for_me')}
+          >
+            <Trash2 className="w-5 h-5" />
+            <span>Delete for me</span>
+          </button>
+          {(message.senderId === currentUserId || isMe) && (
+            <button 
+              className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50 text-destructive"
+              onClick={() => handleMobileAction('delete_for_everyone')}
+            >
+              <Trash2 className="w-5 h-5" />
+              <span>Delete for everyone</span>
+            </button>
           )}
         </div>
       )}

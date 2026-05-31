@@ -37,10 +37,27 @@ export default function InlineArticleEditor() {
             setArticleMode(false);
         }}
         isSubmitting={state.isSubmitting}
-        onClose={() => setArticleMode(false)}
+        onClose={() => {
+          const { setArticleMode, setActiveModal, setArticleDraft } = useUIStore.getState();
+          setArticleDraft(null);
+          setArticleMode(false);
+          setActiveModal('create-post');
+        }}
         currentUser={state.currentUser}
         currentPoster={state.currentPoster}
         isCompanyPost={state.isCompanyPost}
+        onArticleComplete={(data) => {
+          const { setArticleMode, setActiveModal, setArticleDraft } = useUIStore.getState();
+          setArticleDraft({
+            title: state.articleTitle,
+            content: state.articleContent,
+            coverImage: media.uploadedImages[0] || null,
+            description: state.description,
+            articleData: data
+          });
+          setArticleMode(false);
+          setActiveModal('create-post');
+        }}
       />
     </div>
   );

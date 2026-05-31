@@ -5,6 +5,8 @@ import { Paperclip, Send, Smile, Mic, X, FileText, Film, Image as ImageIcon } fr
 import { MentionTextarea } from "@/components/ui/MentionTextarea"
 import { UserMention } from "@/services/api/users"
 import ReplyPreview from "../ReplyPreview"
+import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react"
+import { useTheme } from "next-themes"
 
 interface UnifiedMessageInputProps {
     onSendMessage: (text: string, files: File[]) => void
@@ -46,6 +48,14 @@ export default function UnifiedMessageInput({
     const pickerRef = useRef<HTMLDivElement>(null)
     const emojiButtonRef = useRef<HTMLButtonElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const { theme, resolvedTheme } = useTheme()
+    const isDarkTheme = resolvedTheme === "dark" || theme === "dark" || theme === "navy"
+
+    const handleInputEmojiSelect = (emojiData: EmojiClickData) => {
+        const emojiChar = emojiData.emoji;
+        insertEmoji(emojiChar);
+    };
 
     const isDisabled = disabled || isLoading;
 
@@ -99,8 +109,6 @@ export default function UnifiedMessageInput({
             textarea.style.height = 'auto';
             textarea.style.height = `${Math.min(textarea.scrollHeight, 128)}px`;
         }, 0);
-
-        setShowEmojiPicker(false);
     };
 
     useEffect(() => {
@@ -297,19 +305,15 @@ export default function UnifiedMessageInput({
 
                 {/* Emoji Picker Overlay */}
                 {showEmojiPicker && (
-                    <div ref={pickerRef} className="absolute bottom-[calc(100%+10px)] right-4 p-2 bg-card border border-border rounded-xl shadow-xl z-50 w-64">
-                        <div className="grid grid-cols-6 gap-1 max-h-48 overflow-y-auto">
-                            {EMOJI_LIST.map((emoji) => (
-                                <button
-                                    key={emoji}
-                                    onClick={() => insertEmoji(emoji)}
-                                    className="p-1.5 hover:bg-muted rounded-lg text-xl transition-colors flex items-center justify-center"
-                                    aria-label={`Insert ${emoji}`}
-                                >
-                                    {emoji}
-                                </button>
-                            ))}
-                        </div>
+                    <div ref={pickerRef} className="absolute bottom-[calc(100%+10px)] right-4 shadow-xl z-50 rounded-2xl overflow-hidden border border-border">
+                        <EmojiPicker
+                            onEmojiClick={handleInputEmojiSelect}
+                            lazyLoadEmojis
+                            width={310}
+                            height={340}
+                            previewConfig={{ showPreview: false }}
+                            theme={isDarkTheme ? Theme.DARK : Theme.LIGHT}
+                        />
                     </div>
                 )}
             </div>

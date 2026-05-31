@@ -21,25 +21,25 @@ export function ProfileEmptyState({
     if (!isOwnProfile) {
       // Public post empty state
       return (
-        <div className="flex flex-col justify-center items-center p-[10px] gap-4 w-[904px] h-[246.44px] bg-white shadow-[0px_0px_4px_rgba(99,102,241,0.05)] rounded-[24px] self-stretch ">
+        <div className="flex flex-col justify-center items-center p-4 md:p-[10px] gap-4 w-full md:w-[904px] h-auto md:h-[246.44px] bg-white shadow-[0px_0px_4px_rgba(99,102,241,0.05)] rounded-[24px] self-stretch ">
           {/* Content container */}
-          <div className="flex flex-col justify-center items-center p-0 gap-4 w-[218px] ">
+          <div className="flex flex-col justify-center items-center p-0 gap-4 w-full md:w-[218px] ">
             {/* Image */}
             <img
               src="/images/emptyScreenImages/emptyPost.svg"
               alt="No posts yet"
-              className="w-[218px] h-[162.44px] object-contain"
+              className="w-[160px] md:w-[218px] h-auto md:h-[162.44px] object-contain"
             />
 
             {/* Text container */}
-            <div className="flex flex-col items-center px-[7px] py-0 gap-2 w-[204px] h-12">
+            <div className="flex flex-col items-center px-4 py-0 gap-2 w-full md:w-[204px] h-auto md:h-12">
               {/* Title */}
-              <span className="w-[86px] h-6 font-[family-name:var(--font-poppins)] font-medium text-base leading-6 text-center text-black whitespace-nowrap">
+              <span className="w-auto md:w-[86px] h-auto md:h-6 font-[family-name:var(--font-poppins)] font-medium text-base leading-6 text-center text-black whitespace-normal md:whitespace-nowrap">
                 No activity
               </span>
 
               {/* Subtitle */}
-              <span className=" h-4 font-[family-name:var(--font-poppins)] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-nowrap overflow-hidden text-ellipsis">
+              <span className="w-full md:w-auto h-auto md:h-4 font-[family-name:var(--font-poppins)] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap overflow-visible md:overflow-hidden md:text-ellipsis">
                 <span className="font-medium">{userName || "User"}</span>
                 {" hasn't posted anything yet"}
               </span>
@@ -51,25 +51,25 @@ export function ProfileEmptyState({
 
     // Personal post empty state (isOwnProfile === true)
     return (
-      <div className="flex flex-col justify-center items-center p-[10px] gap-4 w-[904px] h-[298.44px] bg-white shadow-[0px_0px_4px_rgba(99,102,241,0.05)] rounded-[24px] self-stretch ">
+      <div className="flex flex-col justify-center items-center p-4 md:p-[10px] gap-4 w-full md:w-[904px] h-auto md:h-[298.44px] bg-white shadow-[0px_0px_4px_rgba(99,102,241,0.05)] rounded-[24px] self-stretch ">
         {/* Content container */}
-        <div className="flex flex-col items-center gap-4 w-[507px] ">
+        <div className="flex flex-col items-center gap-4 w-full md:w-[507px] ">
           {/* Image */}
           <img
             src="/images/emptyScreenImages/emptyPost.svg"
             alt="No posts yet"
-            className="w-[218px] h-[162.44px] object-contain"
+            className="w-[160px] md:w-[218px] h-auto md:h-[162.44px] object-contain"
           />
 
           {/* Text container */}
-          <div className="flex flex-col items-center p-0 gap-2 w-[507px] ">
+          <div className="flex flex-col items-center p-0 gap-2 w-full md:w-[507px] px-2 md:px-0">
             {/* Title */}
-            <span className="w-[260px] h-5 font-[family-name:var(--font-poppins)] font-normal text-sm leading-5 text-center text-black whitespace-nowrap">
+            <span className="w-auto md:w-[260px] h-auto md:h-5 font-[family-name:var(--font-poppins)] font-normal text-sm leading-5 text-center text-black whitespace-normal md:whitespace-nowrap">
               Start building your professional story
             </span>
 
             {/* Subtitle */}
-            <span className="w-[507px] h-4 font-[family-name:var(--font-poppins)] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-nowrap">
+            <span className="w-full md:w-[507px] h-auto md:h-4 font-[family-name:var(--font-poppins)] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap">
               Share projects, progress, ideas, or learning moments to grow your
               network presence.
             </span>
@@ -93,23 +93,23 @@ export function ProfileEmptyState({
   // ── Experience Empty State ───────────────────────────────────────────────────
   if (type === "experience") {
     return (
-      <div className="flex flex-col justify-center items-center p-0 gap-4 w-[904px] h-[254.44px] bg-white shadow-[0px_0px_4px_rgba(99,102,241,0.05)] rounded-[24px] self-stretch   ">
+      <div className="flex flex-col justify-center items-center p-4 md:p-0 gap-4 w-full md:w-[904px] h-auto md:h-[254.44px] bg-white shadow-[0px_0px_4px_rgba(99,102,241,0.05)] rounded-[24px] self-stretch   ">
         {/* Image */}
         <img
           src="/images/emptyScreenImages/emptyExp.svg"
           alt="No experience yet"
-          className="w-[218px] h-[162.44px] object-contain"
+          className="w-[160px] md:w-[218px] h-auto md:h-[162.44px] object-contain"
         />
 
         {/* Text container */}
-        <div className="flex flex-col items-center p-0 gap-2 w-[396px] h-11">
+        <div className="flex flex-col items-center p-0 gap-2 w-full md:w-[396px] h-auto md:h-11 px-2 md:px-0">
           {/* Title */}
-          <span className="w-[170px] h-5 font-[family-name:var(--font-poppins)] font-normal text-sm leading-5 text-center text-black whitespace-nowrap">
+          <span className="w-auto md:w-[170px] h-auto md:h-5 font-[family-name:var(--font-poppins)] font-normal text-sm leading-5 text-center text-black whitespace-normal md:whitespace-nowrap">
             Every experience counts
           </span>
 
           {/* Subtitle */}
-          <span className="w-[396px] h-4 font-[family-name:var(--font-poppins)] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-nowrap">
+          <span className="w-full md:w-[396px] h-auto md:h-4 font-[family-name:var(--font-poppins)] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap">
             Add internships, freelance work, projects, volunteering, or startups
           </span>
         </div>
@@ -120,25 +120,25 @@ export function ProfileEmptyState({
   // ── Education Empty State ────────────────────────────────────────────────────
   if (type === "education") {
     return (
-      <div className="flex flex-col justify-center items-center p-4 gap-4 w-[904px] h-[254.44px] bg-white rounded-[24px] self-stretch ">
+      <div className="flex flex-col justify-center items-center p-4 gap-4 w-full md:w-[904px] h-auto md:h-[254.44px] bg-white rounded-[24px] self-stretch ">
         {/* Center content container */}
-        <div className="flex flex-col items-center p-0 gap-4 w-[427px] h-[222.44px]">
+        <div className="flex flex-col items-center p-0 gap-4 w-full md:w-[427px] h-auto md:h-[222.44px]">
           {/* Image */}
           <img
             src="/images/emptyScreenImages/emptyEdu.svg"
             alt="No education yet"
-            className="w-[218px] h-[162.44px] object-contain"
+            className="w-[160px] md:w-[218px] h-auto md:h-[162.44px] object-contain"
           />
 
           {/* Text container */}
-          <div className="flex flex-col items-center p-0 gap-2 w-[427px] h-11">
+          <div className="flex flex-col items-center p-0 gap-2 w-full md:w-[427px] h-auto md:h-11 px-2 md:px-0">
             {/* Title */}
-            <span className="w-[195px] h-5 font-[family-name:var(--font-poppins)] font-normal text-sm leading-5 text-center text-black whitespace-nowrap">
+            <span className="w-auto md:w-[195px] h-auto md:h-5 font-[family-name:var(--font-poppins)] font-normal text-sm leading-5 text-center text-black whitespace-normal md:whitespace-nowrap">
               Add your education journey
             </span>
 
             {/* Subtitle */}
-            <span className="w-[427px] h-4 font-[family-name:var(--font-poppins)] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-nowrap">
+            <span className="w-full md:w-[427px] h-auto md:h-4 font-[family-name:var(--font-poppins)] font-normal text-xs leading-4 text-center text-[#6B7280] whitespace-normal md:whitespace-nowrap">
               Showcase courses, certifications, colleges, bootcamps, or
               self-learning.
             </span>

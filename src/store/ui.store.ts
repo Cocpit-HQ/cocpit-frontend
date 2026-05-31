@@ -19,12 +19,20 @@ interface UIState {
   isOptionsOpen: boolean; // For MobileCreateMenu
   pendingPosts: PendingPost[];
   isArticleMode: boolean; // To track if inline article editor is open
+  articleDraft: {
+    title: string;
+    content: string;
+    coverImage: any;
+    description: string;
+    articleData: any;
+  } | null;
   
   setSidebarOpen: (open: boolean) => void;
   setActiveModal: (modal: string | null, type?: PostType) => void;
   setOptionsOpen: (open: boolean) => void;
   setPendingPosts: (fn: (prev: PendingPost[]) => PendingPost[]) => void;
   setArticleMode: (mode: boolean) => void;
+  setArticleDraft: (draft: any) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -34,6 +42,7 @@ export const useUIStore = create<UIState>((set) => ({
   isOptionsOpen: false,
   pendingPosts: [],
   isArticleMode: false,
+  articleDraft: null,
   
   setSidebarOpen: (open) => set({ isSidebarOpen: open }),
   setActiveModal: (modal, type = 'text') =>
@@ -50,4 +59,5 @@ export const useUIStore = create<UIState>((set) => ({
       activeModal: mode ? null : state.activeModal,
       isOptionsOpen: mode ? false : state.isOptionsOpen,
     })),
+  setArticleDraft: (draft) => set({ articleDraft: draft }),
 }));

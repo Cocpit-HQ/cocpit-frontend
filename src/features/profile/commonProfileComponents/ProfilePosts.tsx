@@ -1,24 +1,24 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import Link from "next/link";
-import dynamic from "next/dynamic";
-import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { Icon } from "@iconify/react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 
-import { TaggedPeoplePopover } from "@/shared/commonComponents/TaggedPeoplePopover";
-import { ProfileEmptyState } from "./ProfileEmptyState";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { PostCarousel } from "@/components/shared/PostCarousel";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
+import { TaggedPeoplePopover } from "@/shared/commonComponents/TaggedPeoplePopover";
 import { CommentModal } from "../components/CommentModal";
 import { EditPostModal } from "../components/EditPostModal";
-import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
+import { ProfileEmptyState } from "./ProfileEmptyState";
 
-import { toggleLike, createRepost, updatePost, toggleSavePost } from "../services/profile.service";
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import type { Post } from "@/types/entities";
+import { createRepost, toggleLike, toggleSavePost, updatePost } from "../services/profile.service";
 
 const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 
@@ -49,6 +49,7 @@ const ProfilePostCard = ({
   onToggleVisibility?: (id: string) => void;
   onUpdate?: (post: Post) => void;
 }) => {
+  const router = useRouter();
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likesCount, setLikesCount] = useState(Number(post.likes) || 0);
   const [isSaved, setIsSaved] = useState(post.is_saved || false);
@@ -130,10 +131,58 @@ const ProfilePostCard = ({
     }
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest('[role="menu"]') ||
+      target.closest('[role="menuitem"]') ||
+      target.closest('[role="dialog"]') ||
+      target.closest('[data-radix-popper-content-wrapper]')
+    ) {
+      return;
+    }
+    router.push(`/post/${localPost.id}`);
+  };
+
+  const handleCardNavigationClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const linkEl = target.closest("a");
+    const isPostLink = linkEl && linkEl.getAttribute("href")?.includes("/post/");
+
+    const isInteractive =
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest('[role="menu"]') ||
+      target.closest('[role="menuitem"]') ||
+      target.closest('[role="dialog"]') ||
+      target.closest('[data-radix-popper-content-wrapper]');
+
+    if (isPostLink || !isInteractive) {
+      sessionStorage.setItem("cocpit_profile_scroll_y", window.scrollY.toString());
+      sessionStorage.setItem("cocpit_profile_scroll_source", "post");
+      sessionStorage.setItem("cocpit_profile_scroll_path", window.location.pathname);
+
+      if (typeof window !== "undefined") {
+        try {
+          const currentState = { ...window.history.state };
+          currentState.cocpit_scroll_y = window.scrollY;
+          currentState.cocpit_scroll_source = "post";
+          currentState.cocpit_scroll_path = window.location.pathname;
+          currentState.cocpit_popstate_occurred = true;
+          window.history.replaceState(currentState, "", window.location.href);
+        } catch (err) {
+          console.error("Failed to update history state:", err);
+        }
+      }
+    }
+  };
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="flex flex-col items-start py-4 w-[285.33px] h-[504px] bg-card border border-[#EEF2FF] dark:border-card-border-inner shadow-card-inner rounded-[24px] relative flex-shrink-0">
+    <div onClick={handleCardClick} onClickCapture={handleCardNavigationClick} className="cursor-pointer flex flex-col items-start py-4 w-[285.33px] h-[504px] bg-card border border-[#EEF2FF] dark:border-card-border-inner shadow-card-inner rounded-[24px] relative flex-shrink-0">
       {/* Header section */}
       <div className="w-full h-[40px] flex items-center justify-between px-4 z-10 mb-4">
         {/* Author Info */}

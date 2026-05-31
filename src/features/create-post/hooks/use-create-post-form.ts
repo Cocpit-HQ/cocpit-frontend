@@ -11,6 +11,7 @@ import { postApi } from '../api/post.api';
 import { sanitizeContent } from '@/lib/contentSanitizer';
 import { Post, PostVisibility } from '@/types/entities';
 import { LocationSuggestion, StructuredLocation } from '@/services/api/location';
+import { useUIStore } from '@/store/ui.store';
 
 const USER_CATEGORIES: CategoryType[] = ['Personal', 'Professional', 'Achievement'];
 const COMPANY_CATEGORIES: CategoryType[] = ['Update', 'Hiring', 'Milestone', 'Insight'];
@@ -41,6 +42,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
   const [postCategory, setPostCategory] = useState<CategoryType>('Professional');
   const [visibility, setVisibility] = useState<PostVisibility>('public');
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | StructuredLocation | null>(null);
+  const [articleData, setArticleData] = useState<any>(null);
 
   // --- Sub-hooks ---
   const media = usePostMedia([], [], (type) => setPostType(prev => prev === 'article' ? 'article' : type));
@@ -83,6 +85,40 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       setPostAsCompanyId(activeProfile?.type === 'COMPANY' ? activeProfile.id : null);
     }
   }, [isOpen, activeProfile, propCompanyId]);
+
+  // Sync with global article draft
+  useEffect(() => {
+    if (isOpen) {
+      const { articleDraft } = useUIStore.getState();
+      if (articleDraft) {
+        setArticleTitle(articleDraft.title);
+        setArticleContent(articleDraft.content);
+        if (articleDraft.coverImage) {
+          media.setUploadedImages([articleDraft.coverImage]);
+        } else {
+          media.clearMedia();
+        }
+        setDescription(articleDraft.description);
+        setArticleData(articleDraft.articleData);
+        setPostType('article');
+      }
+    }
+  }, [isOpen]);
+
+  // Clean form state on modal close
+  useEffect(() => {
+    if (!isOpen) {
+      const hasPendingDraft = !!useUIStore.getState().articleDraft;
+      resetForm(!hasPendingDraft);
+    }
+  }, [isOpen]);
+
+  // Clear article data if user switches post type
+  useEffect(() => {
+    if (postType !== 'text' && postType !== 'article') {
+      setArticleData(null);
+    }
+  }, [postType]);
 
   // Handle Category Persistence
   useEffect(() => {
@@ -217,6 +253,8 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       let finalContent = "";
       if (postType === 'article') {
         finalContent = `${description.trim()}<!-- article_divider -->${articleContent}`;
+      } else if (articleData) {
+        finalContent = `${description.trim()}<!-- article_divider -->${articleData.content}`;
       } else {
         finalContent = sanitizeContent(postType === 'poll' ? poll.pollQuestion : description);
       }
@@ -225,17 +263,23 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       const safeCategory = allowedCategories.includes(postCategory) ? postCategory : getDefaultCategory();
 
       const payload: any = {
-        title: postType === 'article' ? articleTitle.trim() : '',
+        title: postType === 'article' ? articleTitle.trim() : (articleData ? articleData.title : ''),
         content: finalContent,
         category: safeCategory,
         visibility: visibility,
-        post_type: postType === 'photo' ? 'image' : (postType === 'article' ? 'article' : postType),
+        post_type: postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType),
         companyId: isCompanyPost ? postAsCompanyId || undefined : undefined,
         ...(isCompanyPost && isBroadcast ? { is_broadcast: true } : {}),
         shared_post_id: sharedPostId,
         shared_job_id: sharedJobId,
         location: selectedLocation ? ("formattedAddress" in selectedLocation ? selectedLocation.formattedAddress : selectedLocation.name) : null
       };
+
+      if (articleData) {
+        payload.article_cover_image = articleData.coverImage;
+        payload.article_title = articleData.title;
+        payload.article_subtitle = articleData.subtitle;
+      }
 
       if (postType === 'poll') {
         if (!poll.isPollValid()) {
@@ -246,7 +290,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         payload.poll_duration = poll.pollDuration;
       }
 
-      const filesToUpload = await media.prepareFilesToUpload(postType, media.aspectRatio);
+      const filesToUpload = await media.prepareFilesToUpload(articleData ? 'article' : postType, media.aspectRatio);
 
       if (editPostId) {
         try {
@@ -286,7 +330,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     }
   };
 
-  const resetForm = () => {
+  const resetForm = (clearDraft: boolean = true) => {
     setPostType('text');
     setDescription('');
     setArticleTitle('');
@@ -296,6 +340,10 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     poll.clearPoll();
     setNotifyEmployees(false);
     setIsBroadcast(false);
+    setArticleData(null);
+    if (clearDraft) {
+      useUIStore.getState().setArticleDraft(null);
+    }
   };
 
   const requestContextSwitch = (newCompanyId: string | null) => {
@@ -316,6 +364,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       description, setDescription,
       articleTitle, setArticleTitle,
       articleContent, setArticleContent,
+      articleData, setArticleData,
       selectedLocation, setSelectedLocation,
       notifyEmployees, setNotifyEmployees,
       isBroadcast, setIsBroadcast,

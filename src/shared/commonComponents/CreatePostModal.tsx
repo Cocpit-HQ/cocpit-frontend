@@ -23,6 +23,7 @@ import { TagPeopleSelector } from '@/shared/commonComponents/TagPeopleSelector';
 import { LocationSelector } from '@/shared/commonComponents/LocationSelector';
 import { EmojiPickerPortal, EmojiPickerPosition } from '@/shared/commonComponents/EmojiPickerPortal';
 import { sanitizeContent } from '@/lib/contentSanitizer';
+import { useRouter } from 'next/navigation';
 
 export interface CreatePostCommonProps extends CreatePostModalProps {
   currentUser?: {
@@ -38,12 +39,23 @@ export interface CreatePostCommonProps extends CreatePostModalProps {
 export const CreatePostModal = (props: CreatePostCommonProps) => {
   const { isOpen, onClose } = props;
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+  const router = useRouter();
+  const isEdit = !!props.editPostId;
 
   const { state, media, poll, actions } = useCreatePostForm({
     ...props,
     initialPostType: props.initialType || props.initialPostType,
     isMobile
   });
+
+  useEffect(() => {
+    if (isOpen && state.postType === 'article' && !state.articleData && !isEdit) {
+      const { setArticleMode, setActiveModal } = useUIStore.getState();
+      setActiveModal(null);
+      setArticleMode(true);
+      router.push('/feed');
+    }
+  }, [isOpen, state.postType, state.articleData, isEdit, router]);
 
   const [showAccountSelector, setShowAccountSelector] = useState(false);
   const [photoStep, setPhotoStep] = useState<'edit' | 'caption'>('edit');
@@ -90,7 +102,6 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
   const activeEmojiTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
-  const isEdit = !!props.editPostId;
 
   useEffect(() => {
     if (isOpen) {
@@ -332,16 +343,18 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
       let finalContent = "";
       if (state.postType === 'article') {
         finalContent = `${state.description.trim()}<!-- article_divider -->${state.articleContent}`;
+      } else if (state.articleData) {
+        finalContent = `${state.description.trim()}<!-- article_divider -->${state.articleData.content}`;
       } else {
         finalContent = sanitizeContent(state.postType === 'poll' ? poll.pollQuestion : state.description);
       }
 
-      const payload = {
-        title: state.postType === 'article' ? state.articleTitle.trim() : '',
+      const payload: any = {
+        title: state.postType === 'article' ? state.articleTitle.trim() : (state.articleData ? state.articleData.title : ''),
         content: finalContent,
         category: safeCategory,
         visibility: state.visibility,
-        post_type: state.postType === 'photo' ? 'image' : (state.postType === 'article' ? 'article' : state.postType),
+        post_type: state.postType === 'photo' ? 'image' : ((state.postType === 'article' || state.articleData) ? 'article' : state.postType),
         companyId: state.isCompanyPost ? state.postAsCompanyId || undefined : undefined,
         shared_post_id: props.sharedPostId,
         shared_job_id: props.sharedJobId,
@@ -350,8 +363,14 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
         poll_duration: state.postType === 'poll' ? poll.pollDuration : undefined
       };
 
+      if (state.articleData) {
+        payload.article_cover_image = state.articleData.coverImage;
+        payload.article_title = state.articleData.title;
+        payload.article_subtitle = state.articleData.subtitle;
+      }
+
       try {
-        const filesToUpload = await media.prepareFilesToUpload(state.postType, media.aspectRatio);
+        const filesToUpload = await media.prepareFilesToUpload(state.articleData ? 'article' : state.postType, media.aspectRatio);
         await props.onPost({ payload, filesToUpload });
         if (props.onPostCreated) props.onPostCreated();
         actions.resetForm();
@@ -380,6 +399,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 const { setArticleMode } = useUIStore.getState();
                 onClose();
                 setArticleMode(true);
+                router.push('/feed');
               } else if (action.type === 'milestone') {
                 setShowAccountSelector(false);
                 setIsCreatePostOpen(false);
@@ -408,7 +428,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
     <>
       <Dialog open={isOpen && isCreatePostOpen} onOpenChange={(open) => { if (!open) handleRequestClose(); }}>
         <DialogContent
-          className={`w-full p-0 border-none rounded-[24px] sm:rounded-[24px] bg-card shadow-2xl overflow-hidden font-poppins flex flex-col z-[101] ${state.postType === 'article'
+          className={`w-full p-0 border-none rounded-[24px] sm:rounded-[24px] bg-card shadow-2xl overflow-hidden font-poppins flex flex-col z-[101] ${(state.postType === 'article' && !state.articleData)
             ? 'max-w-[1050px] h-[90vh]'
             : (isImageEditorMode || isVideoEditorMode)
               ? 'max-w-[700px]'
@@ -640,9 +660,9 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                NORMAL CREATE POST MODE
                ═══════════════════════════════════════════ */
             <>
-              <div className={`w-full flex flex-col flex-1 min-h-0 ${state.postType === 'article' ? 'p-0' : 'items-center p-4'}`}>
+              <div className={`w-full flex flex-col flex-1 min-h-0 ${(state.postType === 'article' && !state.articleData) ? 'p-0' : 'items-center p-4'}`}>
                 {/* Header — FIXED */}
-                {state.postType !== 'article' && (
+                {(state.postType !== 'article' || !!state.articleData) && (
                   state.postType === 'poll' && pollStep === 'edit' ? (
                     <div className="relative w-full flex flex-col items-center">
                       <h2 className="font-bold text-[19.5px] leading-[28px] text-foreground tracking-tight text-center font-poppins">Create a poll</h2>
@@ -677,7 +697,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 )}
 
                 {/* Profile — FIXED */}
-                {state.postType !== 'article' && (
+                {(state.postType !== 'article' || !!state.articleData) && (
                   <div className="relative flex flex-row items-center justify-start gap-3.5 w-full mt-5 z-[60]">
                     <div className="flex flex-row items-center justify-start gap-3.5 text-left font-poppins">
                       <img
@@ -702,9 +722,9 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
 
                 {/* Scrollable content area — overflow-y: auto */}
                 <div className={`flex flex-col w-full flex-1 min-h-0 ${
-                  state.postType === 'article' ? '' : 'mt-3 overflow-y-auto custom-scrollbar'
+                  (state.postType === 'article' && !state.articleData) ? '' : 'mt-3 overflow-y-auto custom-scrollbar'
                 } ${state.postType === 'poll' ? 'pb-24 overflow-visible' : ''}`}>
-                  {state.postType !== 'article' ? (
+                  {(state.postType !== 'article' || !!state.articleData) ? (
                     <div className="relative flex flex-col gap-4 w-full">
 
 
@@ -846,7 +866,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       )}
 
                       {/* Unified Content Textarea (Part of scroll unit) */}
-                      {state.postType !== 'poll' && (
+                      {(state.postType !== 'poll' && (state.postType !== 'article' || !!state.articleData)) && (
                         <div className="flex flex-col w-full">
                           <textarea
                             ref={composerTextareaRef}
@@ -856,6 +876,63 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                             onChange={(e) => state.setDescription(e.target.value)}
                             style={{ overflow: 'hidden', resize: 'none', height: 'auto', minHeight: '80px' }}
                           />
+                        </div>
+                      )}
+
+                      {/* Article Preview Card */}
+                      {state.postType === 'article' && state.articleData && (
+                        <div className="flex justify-center w-full mt-3">
+                          <div className="relative group w-full max-w-[420px]">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const { setArticleMode, setActiveModal, setArticleDraft } = useUIStore.getState();
+                                setArticleDraft({
+                                  title: state.articleTitle,
+                                  content: state.articleContent,
+                                  coverImage: media.uploadedImages[0] || null,
+                                  description: state.description,
+                                  articleData: null
+                                });
+                                state.setArticleData(null);
+                                setActiveModal(null);
+                                setArticleMode(true);
+                                router.push('/feed');
+                              }}
+                              className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-destructive transition-all duration-200 z-10 cursor-pointer"
+                              title="Edit article"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                            <a
+                              href="#"
+                              onClick={(e) => e.preventDefault()}
+                              className="block w-full bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md"
+                            >
+                              <div className="w-full h-[180px] bg-indigo-50 overflow-hidden">
+                                {state.articleData.coverImage ? (
+                                  <img src={state.articleData.coverImage.url} alt={state.articleData.title || 'Article cover'} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-indigo-400">
+                                    <Icon icon="ph:article" className="w-8 h-8" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-col gap-2 p-4 text-left">
+                                <h3 className="line-clamp-2 text-[15px] font-semibold leading-5 text-foreground font-poppins">
+                                  {state.articleData.title || 'Untitled Article'}
+                                </h3>
+                                {state.articleData.subtitle && (
+                                  <p className="line-clamp-2 text-[12px] leading-4 text-muted-foreground font-poppins">
+                                    {state.articleData.subtitle}
+                                  </p>
+                                )}
+                                <span className="text-[12px] font-medium text-[#6366F1] transition-colors font-poppins">
+                                  Read More
+                                </span>
+                              </div>
+                            </a>
+                          </div>
                         </div>
                       )}
 
@@ -927,7 +1004,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
 
                       <SharedPreview sharedPost={state.sharedPost} isMobile={isMobile} />
                     </div>
-                  ) : (
+                  ) : isEdit ? (
                     <ArticleFlow
                       title={state.articleTitle}
                       onTitleChange={state.setArticleTitle}
@@ -942,16 +1019,19 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       onCaptionChange={state.setDescription}
                       onPost={handlePostClick}
                       isSubmitting={state.isSubmitting}
-                      onClose={onClose}
+                      onClose={() => state.setPostType('text')}
                       currentUser={activeUser}
                       currentPoster={state.currentPoster}
                       isCompanyPost={state.isCompanyPost}
+                      onArticleComplete={(data) => {
+                        state.setArticleData(data);
+                      }}
                     />
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Footer — FIXED */}
-                {state.postType !== 'article' && (
+                {(state.postType !== 'article' || !!state.articleData) && (
                   state.postType === 'poll' && pollStep === 'edit' ? (
                     <div className="flex flex-row justify-end items-center gap-3.5 w-full mt-auto pt-5">
                       <button

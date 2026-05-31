@@ -93,12 +93,19 @@ function ChatHeaderMenu({ selectedMessage, onMessageAction, currentUserId }: { s
                 <Icon icon="fluent:edit-16-regular" width={24} height={24} color="var(--foreground)" />
               </DropdownMenuItem>
             )}
+            <DropdownMenuItem
+              onClick={() => onMessageAction('delete_for_me')}
+              className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors border-none outline-none"
+            >
+              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Delete for me</span>
+              <Icon icon="fluent:delete-16-regular" width={24} height={24} color="var(--destructive)" />
+            </DropdownMenuItem>
             {isMyMessage && (
               <DropdownMenuItem
-                onClick={() => onMessageAction('delete')}
+                onClick={() => onMessageAction('delete_for_everyone')}
                 className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors border-none outline-none"
               >
-                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Delete</span>
+                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Delete for everyone</span>
                 <Icon icon="fluent:delete-16-regular" width={24} height={24} color="var(--destructive)" />
               </DropdownMenuItem>
             )}
@@ -747,9 +754,10 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState<Message | null>(null);
 
-  const handleDeleteForMe = async () => {
-    if (!messageToDelete) return;
-    const msgId = messageToDelete.id;
+  const handleDeleteForMe = async (msg?: Message) => {
+    const targetMsg = msg || messageToDelete;
+    if (!targetMsg) return;
+    const msgId = targetMsg.id;
     try {
       // Optimistic/Immediate update since backend won't emit event for "me"
       queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
@@ -771,21 +779,33 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
       });
 
       await deleteMessage(msgId, false);
-      setIsDeleteModalOpen(false);
-      setMessageToDelete(null);
-    } catch (error) {
+      toast({ description: "Message deleted successfully" });
+    } catch (error: any) {
       console.error("Failed to delete message", error);
+      const errorMsg = error?.response?.data?.message || error?.message || "Failed to delete message";
+      toast({ title: "Error", description: errorMsg, variant: "destructive" });
       // Revert or invalidate on error
       queryClient.invalidateQueries({ queryKey: ['messages', chat.id] });
+    } finally {
+      setIsDeleteModalOpen(false);
+      setMessageToDelete(null);
     }
   };
 
-  const handleDeleteForEveryone = async () => {
-    if (!messageToDelete) return;
+  const handleDeleteForEveryone = async (msg?: Message) => {
+    const targetMsg = msg || messageToDelete;
+    if (!targetMsg) return;
+    const msgId = targetMsg.id;
     try {
-      await deleteMessage(messageToDelete.id, true);
-    } catch (error) {
+      await deleteMessage(msgId, true);
+      toast({ description: "Message deleted for everyone" });
+    } catch (error: any) {
       console.error("Failed to delete message for everyone", error);
+      const errorMsg = error?.response?.data?.message || error?.message || "Failed to delete message for everyone";
+      toast({ title: "Error", description: errorMsg, variant: "destructive" });
+    } finally {
+      setIsDeleteModalOpen(false);
+      setMessageToDelete(null);
     }
   };
 
@@ -821,6 +841,18 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
     if (action === 'delete') {
       setMessageToDelete(targetMsg);
       setIsDeleteModalOpen(true);
+      if (selectedMessage) {
+        setSelectedMessage(null);
+        setIsMessageSelected(false);
+      }
+    } else if (action === 'delete_for_me') {
+      if (targetMsg) handleDeleteForMe(targetMsg);
+      if (selectedMessage) {
+        setSelectedMessage(null);
+        setIsMessageSelected(false);
+      }
+    } else if (action === 'delete_for_everyone') {
+      if (targetMsg) handleDeleteForEveryone(targetMsg);
       if (selectedMessage) {
         setSelectedMessage(null);
         setIsMessageSelected(false);
@@ -1370,6 +1402,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
         }}
         onCancel={() => setShowDeleteConfirm(false)}
       />
+
 
       <CocpitConfirmBox
         isOpen={showMuteConfirm}

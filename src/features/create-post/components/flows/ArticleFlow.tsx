@@ -36,6 +36,7 @@ interface ArticleFlowProps {
   currentPoster: ArticleIdentity;
   isCompanyPost: boolean;
   onPreviewStepChange?: (isPreview: boolean) => void;
+  onArticleComplete?: (data: { coverImage: MediaItem | null; title: string; subtitle: string; content: string }) => void;
 }
 
 const ArticleFlow = ({
@@ -55,7 +56,8 @@ const ArticleFlow = ({
   currentUser,
   currentPoster,
   isCompanyPost,
-  onPreviewStepChange
+  onPreviewStepChange,
+  onArticleComplete
 }: ArticleFlowProps) => {
   const [step, setStep] = useState(1);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
@@ -513,6 +515,12 @@ const ArticleFlow = ({
                 console.log("NEXT CLICKED");
                 onPreviewStepChange?.(true);
                 setStep(2);
+                onArticleComplete?.({
+                  coverImage: coverImage,
+                  title: title,
+                  subtitle: plainArticleText,
+                  content: content
+                });
               }}
               className="flex flex-row justify-center items-center border border-[#FFFFFF] rounded-[24px] transition-all shadow-sm"
               style={{

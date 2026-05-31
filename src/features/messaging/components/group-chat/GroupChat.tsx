@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useGroupChat } from "./groupChat.context";
 import GroupHeader from "./GroupHeader";
 import GroupMessageList from "./GroupMessageList";
@@ -15,9 +15,7 @@ import { Message } from "@/types/messaging";
 import { formatTimeAgo } from "@/lib/mappers/messaging.mapper";
 import { useSocket } from "@/context/SocketContext";
 import { TypingPayload } from "@/types/socket";
-import { useRef } from "react";
 import MessageInfoModal from "../../MessageInfoModal";
-import { DeleteMessageModal } from "../ui/DeleteMessageModal";
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox";
 import MediaPreviewModal from "../ui/MediaPreviewModal";
 import { useToast } from "@/hooks/use-toast";
@@ -46,8 +44,6 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
     const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
     const [isMessageSelected, setIsMessageSelected] = useState(false);
     const [isMessageInfoOpen, setIsMessageInfoOpen] = useState(false);
-    const [messageToDelete, setMessageToDelete] = useState<Message | null>(null);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [previewMedia, setPreviewMedia] = useState<{ url: string, type: 'image' | 'video' | 'document', name?: string } | null>(null);
     const [replyingTo, setReplyingTo] = useState<{ messageId: string, senderName: string, content: string } | null>(null);
@@ -56,6 +52,65 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
     const handleMediaClick = (url: string, type: 'image' | 'video' | 'document', name?: string) => {
         setPreviewMedia({ url, type, name });
     };
+
+    const handleDeleteForMe = React.useCallback(async (targetMsg: Message) => {
+        const msgId = targetMsg.id;
+        // Optimistic Update
+        queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
+            if (!old) return undefined;
+            return {
+                ...old,
+                pages: old.pages.map(page => page.map(m => {
+                    if (m.id === msgId) {
+                        return {
+                            ...m,
+                            text: "This message is deleted for you",
+                            is_deleted_for_me: true
+                        };
+                    }
+                    return m;
+                }))
+            };
+        });
+
+        try {
+            await deleteMessage(msgId, false);
+            toast({ description: "Message deleted successfully" });
+        } catch (e: any) {
+            console.error("Failed to delete for me", e);
+            const errorMsg = e?.response?.data?.message || e?.message || "Failed to delete message";
+            toast({ title: "Error", description: errorMsg, variant: "destructive" });
+            queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
+        }
+    }, [groupId, queryClient, toast]);
+
+    const handleDeleteForEveryone = React.useCallback(async (targetMsg: Message) => {
+        const msgId = targetMsg.id;
+
+        // Optimistic Update
+        queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
+            if (!old) return undefined;
+            return {
+                ...old,
+                pages: old.pages.map(page => page.map(m => {
+                    if (m.id === msgId) {
+                        return { ...m, text: "This message was deleted for everyone", is_deleted_for_everyone: true };
+                    }
+                    return m;
+                }))
+            };
+        });
+
+        try {
+            await deleteMessage(msgId, true);
+            toast({ description: "Message deleted for everyone" });
+        } catch (e: any) {
+            console.error("Failed to delete for everyone", e);
+            const errorMsg = e?.response?.data?.message || e?.message || "Failed to delete message for everyone";
+            toast({ title: "Error", description: errorMsg, variant: "destructive" });
+            queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
+        }
+    }, [groupId, queryClient, toast]);
 
     const handleMessageAction = React.useCallback((action: string, msg?: Message) => {
         const targetMsg = msg || selectedMessage;
@@ -71,16 +126,19 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
             setEditingMessageId(targetMsg.id);
             setSelectedMessage(null);
             setIsMessageSelected(false);
-        } else if (action === 'delete') {
-            setMessageToDelete(targetMsg);
-            setIsDeleteModalOpen(true);
+        } else if (action === 'delete_for_me') {
+            handleDeleteForMe(targetMsg);
+            setSelectedMessage(null);
+            setIsMessageSelected(false);
+        } else if (action === 'delete_for_everyone') {
+            handleDeleteForEveryone(targetMsg);
             setSelectedMessage(null);
             setIsMessageSelected(false);
         } else if (action === 'close') {
             setSelectedMessage(null);
             setIsMessageSelected(false);
         }
-    }, [selectedMessage]);
+    }, [selectedMessage, handleDeleteForMe, handleDeleteForEveryone]);
 
     const handleMessageClick = React.useCallback((message: Message) => {
         if (selectedMessage?.id === message.id) {
@@ -739,77 +797,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                 />
             )}
 
-            {messageToDelete && (
-                <DeleteMessageModal
-                    open={isDeleteModalOpen}
-                    onOpenChange={(open) => {
-                        if (!open) {
-                            setIsDeleteModalOpen(false);
-                            setMessageToDelete(null);
-                        }
-                    }}
-                    onDeleteForMe={async () => {
-                        if (!messageToDelete) return;
-                        const msgId = messageToDelete.id;
-                        // Optimistic Update
-                        queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
-                            if (!old) return undefined;
-                            return {
-                                ...old,
-                                pages: old.pages.map(page => page.map(m => {
-                                    if (m.id === msgId) {
-                                        return {
-                                            ...m,
-                                            text: "This message is deleted for you",
-                                            is_deleted_for_me: true
-                                        };
-                                    }
-                                    return m;
-                                }))
-                            };
-                        });
 
-                        setIsDeleteModalOpen(false);
-                        setMessageToDelete(null);
-
-                        try {
-                            await deleteMessage(msgId, false);
-                        } catch (e) {
-                            console.error("Failed to delete for me", e);
-                            queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
-                        }
-                    }}
-                    onDeleteForEveryone={async () => {
-                        if (!messageToDelete) return;
-                        const msgId = messageToDelete.id;
-
-                        // Optimistic Update
-                        queryClient.setQueryData(['messages', groupId], (old: InfiniteData<Message[]> | undefined) => {
-                            if (!old) return undefined;
-                            return {
-                                ...old,
-                                pages: old.pages.map(page => page.map(m => {
-                                    if (m.id === msgId) {
-                                        return { ...m, text: "This message was deleted for everyone", is_deleted_for_everyone: true };
-                                    }
-                                    return m;
-                                }))
-                            };
-                        });
-
-                        setIsDeleteModalOpen(false);
-                        setMessageToDelete(null);
-
-                        try {
-                            await deleteMessage(msgId, true);
-                        } catch (e) {
-                            console.error("Failed to delete for everyone", e);
-                            queryClient.invalidateQueries({ queryKey: ['messages', groupId] });
-                        }
-                    }}
-                    isSender={!!(messageToDelete && (messageToDelete.sender === 'me' || (messageToDelete.senderId && String(messageToDelete.senderId) === String(currentUser.id || currentUser.user_id))))}
-                />
-            )}
 
             {previewMedia && (
                 <MediaPreviewModal
