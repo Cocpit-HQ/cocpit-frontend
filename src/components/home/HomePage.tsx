@@ -10,15 +10,15 @@ import UpdatesPanel from './UpdatesPanel'
 
 // Lazy-load heavy modal/overlay components (saves ~230KB from initial bundle)
 const MobileStoryViewer = dynamic(
-  () => import('@/components/showcase/MobileStoryViewer').then(mod => mod.MobileStoryViewer),
+  () => import('@/features/showcase/components/MobileStoryViewer').then(mod => mod.MobileStoryViewer),
   { ssr: false }
 )
 const StoryModal = dynamic(
-  () => import('@/components/showcase/StoryModal').then(mod => mod.StoryModal),
+  () => import('@/features/showcase/components/StoryModal').then(mod => mod.StoryModal),
   { ssr: false }
 )
 const CreateStoryForm = dynamic(
-  () => import('@/components/showcase/CreateStoryForm').then(mod => mod.CreateStoryForm),
+  () => import('@/features/showcase/components/CreateStoryForm').then(mod => mod.CreateStoryForm),
   { ssr: false }
 )
 
@@ -117,6 +117,7 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* Commented out for view-only experience
       {showCreateStory && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-card rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
@@ -142,6 +143,7 @@ export default function HomePage() {
           </div>
         </div>
       )}
+      */}
     </div>
   )
 }

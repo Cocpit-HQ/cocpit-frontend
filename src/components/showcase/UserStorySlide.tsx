@@ -94,9 +94,12 @@ export const UserStorySlide = ({
     const getLegacyVideoSrc = useCallback((story?: StoryLike): string => {
         if (!story || story.media_type !== "video") return "";
 
-        let url = story.media_url || "";
-        if (url && url.includes("cloudinary") && !url.endsWith(".mp4")) {
-            url = url.replace(/\.[^/.]+$/, ".mp4");
+        let url = story.media_url || story.image || "";
+        if (url && url.includes("cloudinary")) {
+            // Normalize extension to .mp4, handling query strings
+            if (!url.match(/\.mp4(\?|$)/i)) {
+                url = url.replace(/\.[^/.?]+(\?.*)?$/, '.mp4$1');
+            }
         }
         return url;
     }, []);
@@ -621,6 +624,43 @@ export const UserStorySlide = ({
 
         return () => clearInterval(timer);
     }, [isActiveUser, isPaused, showInteraction, isDescriptionExpanded, currentStory]);
+
+    // Check if legacy video slots are already ready (e.g., loaded from cache)
+    useEffect(() => {
+        const checkReady = () => {
+            if (videoSlotRef0.current && videoSlotRef0.current.readyState >= 2) {
+                markVideoSlotReady(0, true);
+            }
+            if (videoSlotRef1.current && videoSlotRef1.current.readyState >= 2) {
+                markVideoSlotReady(1, true);
+            }
+        };
+
+        checkReady();
+
+        const v0 = videoSlotRef0.current;
+        const v1 = videoSlotRef1.current;
+
+        if (v0) {
+            v0.addEventListener('canplay', checkReady);
+            v0.addEventListener('loadeddata', checkReady);
+        }
+        if (v1) {
+            v1.addEventListener('canplay', checkReady);
+            v1.addEventListener('loadeddata', checkReady);
+        }
+
+        return () => {
+            if (v0) {
+                v0.removeEventListener('canplay', checkReady);
+                v0.removeEventListener('loadeddata', checkReady);
+            }
+            if (v1) {
+                v1.removeEventListener('canplay', checkReady);
+                v1.removeEventListener('loadeddata', checkReady);
+            }
+        };
+    }, [videoSlotSrcs[0], videoSlotSrcs[1], currentLegacySrc, activeVideoSlot, isActiveUser, markVideoSlotReady]);
 
     // Keep next story warm in memory so auto-advance is instant.
     useEffect(() => {

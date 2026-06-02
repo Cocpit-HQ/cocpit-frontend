@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Plus, Play, Check, ChevronRight } from 'lucide-react'
+import { Plus, Play, Check, ChevronRight, ChevronLeft } from 'lucide-react'
 import { StoryDetail, StoryGroup } from '@/types/showcase'
 import { UserMention, getSuggestedUsers } from '@/services/api/users'
 import { followUser } from '@/services/api/social'
@@ -19,18 +19,25 @@ type StoryRailProps = {
   variant?: 'mobile' | 'desktop-showcase'
 }
 
-// Helper to determine image source
+// Helper to determine image source for story rail circle
 function getStoryImage(story: StoryDetail): string | null {
+  // 1. Try the dedicated thumbnail first (fastest path, always an image)
   const thumbnailUrl = getStoryThumbnailUrl(story);
   if (thumbnailUrl) return thumbnailUrl;
 
-  if (story.media_type === 'video' || (story.image && (story.image.endsWith('.mp4') || story.image.endsWith('.mov')))) {
-    if (story.image && story.image.includes('cloudinary')) {
-      return story.image.replace(/\.[^/.]+$/, ".jpg");
-    }
-    return null;
+  // 2. story.image is mapped from media_url — if it's an image URL, use it
+  if (story.image && !story.image.match(/\.(mp4|mov|webm)(\?|$)/i)) {
+    return story.image;
   }
-  return story.image || null;
+
+  // 3. Fallback: derive .jpg thumbnail from any Cloudinary video URL
+  const cloudinaryVideoUrl = [story.thumbnail_url, story.media_url, story.image]
+    .find((url) => url && url.includes('cloudinary') && url.match(/\.(mp4|mov|webm)(\?|$)/i));
+  if (cloudinaryVideoUrl) {
+    return cloudinaryVideoUrl.replace(/\.[^/.?]+(\?.*)?$/, '.jpg$1');
+  }
+
+  return null;
 }
 
 export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, activeAccount, variant = 'mobile' }: StoryRailProps) {
@@ -39,11 +46,52 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
   const { isStoryViewerOpen, setIsStoryViewerOpen } = useStories();
   const [frozenGroups, setFrozenGroups] = useState<StoryGroup[] | null>(null);
 
-  const myGroup = useMemo(() => groups.find(g => g.is_current_user), [groups]);
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const [showLeftScroll, setShowLeftScroll] = useState(false)
+  const [showRightScroll, setShowRightScroll] = useState(false)
+
+  const updateScrollButtons = React.useCallback(() => {
+    const container = scrollRef.current
+    if (!container) return
+
+    const { scrollLeft, scrollWidth, clientWidth } = container
+    setShowLeftScroll(scrollLeft > 5)
+    setShowRightScroll(scrollWidth - clientWidth - scrollLeft > 5)
+  }, [])
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      updateScrollButtons()
+    })
+    window.addEventListener('resize', updateScrollButtons)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('resize', updateScrollButtons)
+    }
+  }, [groups, updateScrollButtons])
+
+  const scrollLeft = () => {
+    scrollRef.current?.scrollBy({ left: -200, behavior: 'smooth' })
+  }
+
+  const scrollRight = () => {
+    scrollRef.current?.scrollBy({ left: 200, behavior: 'smooth' })
+  }
+
+  const processedGroups = useMemo(() => {
+    return groups.map(group => ({
+      ...group,
+      stories: [...group.stories].sort(
+        (a, b) => new Date(b.created_at || new Date()).getTime() - new Date(a.created_at || new Date()).getTime()
+      )
+    }))
+  }, [groups])
+
+  const myGroup = useMemo(() => processedGroups.find(g => g.is_current_user), [processedGroups]);
   const isDesktopShowcase = variant === 'desktop-showcase';
   
   const otherGroups = useMemo(() => {
-    const filtered = groups.filter(g => !g.is_current_user);
+    const filtered = processedGroups.filter(g => !g.is_current_user);
 
     const performSort = (items: StoryGroup[]) => {
       return [...items].sort((a, b) => {
@@ -69,7 +117,7 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
     }
 
     return performSort(filtered);
-  }, [groups, isStoryViewerOpen, frozenGroups]);
+  }, [processedGroups, isStoryViewerOpen, frozenGroups]);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -135,8 +183,22 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
         )}
       </div>
 
-      <div className="stories-scroll-container">
-        <div className={isDesktopShowcase ? "flex items-center gap-4 overflow-x-auto px-0 pb-1 pt-0 scrollbar-hide" : "flex gap-3 overflow-x-auto px-4 pb-2 pt-2 scrollbar-hide md:px-0"}>
+      <div className="stories-scroll-container relative w-full flex items-center">
+        {isDesktopShowcase && showLeftScroll && (
+          <button
+            onClick={scrollLeft}
+            className="absolute left-0 z-20 flex h-[60px] w-8 items-center justify-center rounded-full text-primary bg-background/80 hover:bg-background transition-colors hover:bg-primary/10 shadow-sm border border-border/50"
+            aria-label="Scroll showcase left"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+        )}
+
+        <div
+          ref={scrollRef}
+          onScroll={updateScrollButtons}
+          className={isDesktopShowcase ? "flex-1 flex items-center gap-4 overflow-x-auto px-0 pb-1 pt-0 scrollbar-hide" : "flex gap-3 overflow-x-auto px-4 pb-2 pt-2 scrollbar-hide md:px-0"}
+        >
           {isLoading ? (
             // Skeleton Loader
             Array.from({ length: 5 }).map((_, i) => (
@@ -156,7 +218,7 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
               {(() => {
                 // If myGroup exists and has stories, show the story circle
                 if (myGroup && myGroup.stories.length > 0) {
-                  const story = myGroup.stories[myGroup.stories.length - 1];
+                  const story = myGroup.stories[0];
                   const displayImage = getStoryImage(story);
 
                   return (
@@ -184,16 +246,18 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
                           </span>
                         </button>
 
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onCreateClick();
-                          }}
-                          className={isDesktopShowcase ? "hidden" : "absolute bottom-0 right-0 z-10 flex h-5 w-5 translate-x-1 translate-y-1 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground transition-colors hover:bg-primary/90 md:bottom-8 md:left-1/2 md:right-auto md:top-auto md:h-10 md:w-10 md:translate-x-[-50%] md:translate-y-0 md:border-4"}
-                          aria-label="Add new story"
-                        >
-                          <Plus className={isDesktopShowcase ? "h-3.5 w-3.5" : "h-3.5 w-3.5 md:h-6 md:w-6"} />
-                        </button>
+                        {false && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCreateClick();
+                            }}
+                            className={isDesktopShowcase ? "hidden" : "absolute bottom-0 right-0 z-10 flex h-5 w-5 translate-x-1 translate-y-1 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground transition-colors hover:bg-primary/90 md:bottom-8 md:left-1/2 md:right-auto md:top-auto md:h-10 md:w-10 md:translate-x-[-50%] md:translate-y-0 md:border-4"}
+                            aria-label="Add new story"
+                          >
+                            <Plus className={isDesktopShowcase ? "h-3.5 w-3.5" : "h-3.5 w-3.5 md:h-6 md:w-6"} />
+                          </button>
+                        )}
                       </div>
                       <span className={isDesktopShowcase ? "hidden" : "text-[10px] font-medium text-foreground md:hidden"}>Your Story</span>
                     </div>
@@ -201,53 +265,13 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
                 }
 
                 // Fallback: "Add Story" Button (My Story Empty)
-                return (
-                  <button
-                    key="my-empty"
-                    onClick={onCreateClick}
-                    className="group relative flex flex-shrink-0 flex-col items-center gap-2 text-left"
-                  >
-                    <div className="relative">
-                      <div className={isDesktopShowcase ? "relative flex h-[60px] w-[60px] items-center justify-center overflow-hidden rounded-full border border-primary bg-background text-primary transition-colors hover:bg-primary/10" : "relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-border bg-muted transition-colors hover:bg-muted/80 md:h-40 md:w-28 md:rounded-xl"}>
-                        {activeAccount?.image ? (
-                          <>
-                            <img
-                              src={activeAccount.image}
-                              alt={activeAccount.name}
-                              className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity"
-                            />
-                            {/* Desktop Overlay */}
-                            <div className={isDesktopShowcase ? "absolute inset-0 flex items-center justify-center bg-background" : "absolute inset-0 hidden items-center justify-center md:flex"}>
-                              <div className={isDesktopShowcase ? "flex h-full w-full items-center justify-center rounded-full bg-transparent" : "flex h-10 w-10 items-center justify-center rounded-full bg-primary/80 shadow-sm backdrop-blur-sm"}>
-                                <Plus className={isDesktopShowcase ? "h-5 w-5 text-primary" : "h-6 w-6 text-primary-foreground"} />
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          /* Fallback Empty State / Desktop Default */
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Plus className={isDesktopShowcase ? "h-5 w-5 text-primary" : "hidden h-6 w-6 text-primary md:block"} />
-                            {/* Mobile fallback icon inside circle if no image */}
-                            <Plus className="md:hidden w-6 h-6 text-muted-foreground/30" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Mobile Badge - Positioned Absolute Outside Overflow Container */}
-                      <div className={isDesktopShowcase ? "hidden" : "absolute bottom-0 right-0 z-10 translate-x-1 translate-y-1 md:hidden"}>
-                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center border-2 border-background shadow-sm">
-                          <Plus className="w-3.5 h-3.5 text-primary-foreground" />
-                        </div>
-                      </div>
-                    </div>
-                    <span className={isDesktopShowcase ? "hidden" : "text-[10px] font-medium text-foreground md:absolute md:bottom-2 md:left-0 md:w-full md:text-center md:text-xs"}>Add Story</span>
-                  </button>
-                );
+                // Return null directly in view-only experience; keep original creation button as dead code below
+                return null;
               })()}
 
               {/* 2. Other Users' Stories (Index 1+) */}
               {otherGroups.map((group) => {
-                const story = group.stories[group.stories.length - 1];
+                const story = group.stories[0];
                 const hasUnviewed = group.stories.some(s => !s.has_viewed && !s.isAuthor);
                 const displayImage = getStoryImage(story);
 
@@ -260,8 +284,15 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
                         setIsStoryViewerOpen(true);
                         onStoryClick(story);
                       }}
-                      className={`${isDesktopShowcase ? 'h-[60px] w-[60px] rounded-full border-2 border-primary p-0.5' : 'h-14 w-14 rounded-full md:h-40 md:w-28 md:rounded-xl'} relative overflow-hidden bg-black ${hasUnviewed && !isDesktopShowcase ? 'ring-2 ring-primary ring-offset-2' : 'border border-border'
-                        }`}
+                      className={`${
+                        isDesktopShowcase
+                          ? `h-[60px] w-[60px] rounded-full p-0.5 ${
+                              hasUnviewed ? 'border-2 border-primary' : 'border border-border'
+                            }`
+                          : `h-14 w-14 rounded-full md:h-40 md:w-28 md:rounded-xl ${
+                              hasUnviewed ? 'ring-2 ring-primary ring-offset-2' : 'border border-border'
+                            }`
+                      } relative overflow-hidden bg-black`}
                     >
                       {displayImage ? (
                         <img
@@ -309,15 +340,6 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
                 )
               })}
 
-              {isDesktopShowcase && (
-                <Link
-                  href="/showcase"
-                  className="ml-auto flex h-[60px] w-8 shrink-0 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary/10"
-                  aria-label="View all showcase"
-                >
-                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              )}
 
               {/* 3. Suggested People Fallback (Mobile Only) */}
               {otherGroups.length === 0 && suggestedUsers.length > 0 && (
@@ -367,6 +389,15 @@ export function StoryRail({ groups, onCreateClick, onStoryClick, isLoading, acti
             </>
           )}
         </div>
+        {isDesktopShowcase && showRightScroll && (
+          <button
+            onClick={scrollRight}
+            className="absolute right-0 z-20 flex h-[60px] w-8 items-center justify-center rounded-full text-primary bg-background/80 hover:bg-background transition-colors hover:bg-primary/10 shadow-sm border border-border/50"
+            aria-label="Scroll showcase right"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        )}
       </div>
     </div >
   )

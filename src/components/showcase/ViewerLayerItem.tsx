@@ -30,8 +30,22 @@ export function ViewerLayerItem({
     onReady?: () => void;
 }) {
     const videoRef = useRef<HTMLVideoElement>(null);
+    const imgRef = useRef<HTMLImageElement>(null);
+    const readyCalledRef = useRef(false);
     const videoEndTriggeredRef = useRef(false);
     const router = useRouter();
+
+    // Reset ready called flag when layer ID changes
+    useEffect(() => {
+        readyCalledRef.current = false;
+    }, [layer.id]);
+
+    const triggerReady = () => {
+        if (!readyCalledRef.current) {
+            readyCalledRef.current = true;
+            onReady?.();
+        }
+    };
 
     // Auto-play video layers when active
     useEffect(() => {
@@ -62,6 +76,42 @@ export function ViewerLayerItem({
             router.push(`/post/${layer.post_data.id}`);
         }
     };
+
+    // Check if video is already ready (e.g., from browser cache)
+    useEffect(() => {
+        if (layer.type === "video" && videoRef.current) {
+            const vid = videoRef.current;
+            const checkReady = () => {
+                if (vid.readyState >= 2) {
+                    triggerReady();
+                }
+            };
+            checkReady();
+            vid.addEventListener("loadeddata", checkReady);
+            vid.addEventListener("canplay", checkReady);
+            return () => {
+                vid.removeEventListener("loadeddata", checkReady);
+                vid.removeEventListener("canplay", checkReady);
+            };
+        }
+    }, [layer.type, getSource()]);
+
+    // Check if image is already loaded (e.g., from browser cache)
+    useEffect(() => {
+        if ((layer.type === "sticker" || layer.type === "image") && imgRef.current) {
+            const img = imgRef.current;
+            const checkLoaded = () => {
+                if (img.complete && img.naturalWidth > 0) {
+                    triggerReady();
+                }
+            };
+            checkLoaded();
+            img.addEventListener("load", checkLoaded);
+            return () => {
+                img.removeEventListener("load", checkLoaded);
+            };
+        }
+    }, [layer.type, getSource()]);
 
     const isEmoji = layer.type === "sticker" && !getSource().includes("/");
 
@@ -145,7 +195,7 @@ export function ViewerLayerItem({
                         videoEndTriggeredRef.current = false;
                         if (layer.trim) e.currentTarget.currentTime = layer.trim.start;
                     }}
-                    onLoadedData={() => onReady?.()}
+                    onLoadedData={() => triggerReady()}
                     onEnded={() => {
                         if (videoEndTriggeredRef.current) return;
                         videoEndTriggeredRef.current = true;
@@ -170,12 +220,13 @@ export function ViewerLayerItem({
                 </span>
             ) : (layer.type === "sticker" || layer.type === "image") && getSource() ? (
                 <img
+                    ref={imgRef}
                     src={getSource()}
                     draggable={false}
                     className={`w-full h-full select-none ${layer.type === "image" ? "object-cover" : "object-contain"}`}
                     alt=""
-                    onLoad={() => onReady?.()}
-                    onError={(e) => { e.currentTarget.style.display = 'none'; onReady?.(); }}
+                    onLoad={() => triggerReady()}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; triggerReady(); }}
                 />
             ) : layer.type === "post" ? (
                 <div

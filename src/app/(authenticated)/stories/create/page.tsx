@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Suspense } from "react"
-import { CreateStoryForm } from "@/components/showcase/CreateStoryForm"
+import { CreateStoryForm } from "@/features/showcase"
 
 function CreateStoryContent() {
     const searchParams = useSearchParams()

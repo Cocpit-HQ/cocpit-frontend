@@ -74,12 +74,17 @@ export function getStoryThumbnailUrl(story: StoryLikeWithMedia): string | undefi
   );
   if (directThumbnail) return directThumbnail;
 
+  // If story.image is set and is NOT a video URL, use it directly as a thumbnail
   if (isValidStoryMediaUrl(story.image) && !isVideoAssetUrl(story.image)) {
     return story.image!;
   }
 
-  if (story.image && story.image.includes("cloudinary") && isVideoAssetUrl(story.image)) {
-    return story.image.replace(/\.[^/.?]+(?=$|\?)/, ".jpg");
+  // Cloudinary video: story.image or media_url is a video URL → derive .jpg thumbnail
+  const cloudinaryVideoUrl = [story.image, story.media_url].find(
+    (url) => url && url.includes("cloudinary") && isVideoAssetUrl(url)
+  );
+  if (cloudinaryVideoUrl) {
+    return cloudinaryVideoUrl.replace(/\.[^/.?]+(\?.*)?$/, ".jpg$1");
   }
 
   return undefined;
