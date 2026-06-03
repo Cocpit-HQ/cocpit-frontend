@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Download, Upload, X, Plus } from "lucide-react";
+import { Download, Upload, X, Plus, Eye } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { Experience } from "@/types/entities";
 import { getResumeOverview } from "../components/ResumeOverview";
@@ -50,9 +50,14 @@ export function LivingResume({
   });
   if (totalYears === 0) totalYears = 1;
 
-  const handleDownload = () => {
+  const handleDownloadOrView = () => {
     if (resumeUrl) {
-      window.open(resumeUrl, '_blank');
+      if (isOwnProfile) {
+        window.open(resumeUrl, '_blank');
+      } else {
+        const viewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(resumeUrl)}&embedded=true`;
+        window.open(viewUrl, '_blank');
+      }
     } else {
       alert("No resume uploaded yet.");
     }
@@ -112,12 +117,19 @@ export function LivingResume({
         <div className="flex items-center gap-3">
           {/* PDF File Chip */}
           {resumeName && (
-            <div className="flex flex-row items-center justify-center gap-[10px] w-[148px] h-[40px] px-[16px] py-[8px] rounded-[24px] border border-border transition-colors box-border flex-none order-0 flex-grow-0">
+            <div 
+              onClick={handleDownloadOrView}
+              className="flex flex-row items-center justify-center gap-[10px] w-[148px] h-[40px] px-[16px] py-[8px] rounded-[24px] border border-border transition-colors box-border flex-none order-0 flex-grow-0 cursor-pointer hover:bg-secondary/30"
+              title={isOwnProfile ? "Download PDF" : "View Resume"}
+            >
               <Icon icon="material-icon-theme:pdf" width={24} height={24} className="flex-shrink-0 text-muted-foreground grayscale opacity-80" />
               <span className="font-[family-name:var(--font-poppins)] font-normal text-[14px] leading-[20px] text-muted-foreground truncate flex-1 min-w-0">{resumeName}</span>
               {isOwnProfile && (
                 <button
-                  onClick={removeCustomResume}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeCustomResume();
+                  }}
                   disabled={remove.isPending}
                   className="w-6 h-6 flex items-center justify-center transition-colors flex-shrink-0 hover:opacity-80 cursor-pointer disabled:opacity-50"
                   title="Remove"
@@ -143,11 +155,15 @@ export function LivingResume({
 
           {resumeUrl && (
             <button
-              onClick={handleDownload}
+              onClick={handleDownloadOrView}
               className="add-button-chip"
-              title="Download PDF"
+              title={isOwnProfile ? "Download PDF" : "View Resume"}
             >
-              <Download className="w-6 h-6 stroke-[2px]" />
+              {isOwnProfile ? (
+                <Download className="w-6 h-6 stroke-[2px]" />
+              ) : (
+                <Eye className="w-6 h-6 stroke-[2px]" />
+              )}
             </button>
           )}
         </div>

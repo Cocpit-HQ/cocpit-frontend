@@ -169,7 +169,25 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl text-foreground font-semibold">Posts</h2>
                 <button
-                  onClick={() => router.push(`/profile/${profileSlug}/posts`)}
+                  onClick={() => {
+                    sessionStorage.setItem("cocpit_profile_scroll_y", window.scrollY.toString());
+                    sessionStorage.setItem("cocpit_profile_scroll_source", "post");
+                    sessionStorage.setItem("cocpit_profile_scroll_path", window.location.pathname);
+
+                    if (typeof window !== "undefined") {
+                      try {
+                        const currentState = { ...window.history.state };
+                        currentState.cocpit_scroll_y = window.scrollY;
+                        currentState.cocpit_scroll_source = "post";
+                        currentState.cocpit_scroll_path = window.location.pathname;
+                        currentState.cocpit_popstate_occurred = true;
+                        window.history.replaceState(currentState, "", window.location.href);
+                      } catch (err) {
+                        console.error("Failed to update history state:", err);
+                      }
+                    }
+                    router.push(`/profile/${profileSlug}/posts`);
+                  }}
                   className="text-sm text-primary hover:underline font-medium"
                 >
                   See all posts

@@ -30,17 +30,17 @@ export default function ReplyGroup({ replies, onReply, onDelete, onEdit, current
     if (!replies || replies.length === 0) return null;
 
     return (
-        <div className="mt-1 ml-2 md:ml-2">
+        <div className="mt-1 ml-2 md:ml-2 font-poppins">
             {!isOpen ? (
                 <button
                     onClick={() => setIsOpen(true)}
                     className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-2 py-1 ml-8 md:ml-10"
                 >
-                    <div className="w-8 h-[1px] bg-border/60"></div>
+                    <div className="w-8 h-[1px]"></div>
                     View {replies.length} replies
                 </button>
             ) : (
-                <div className="ml-8 md:ml-10 border-l-2 border-border/30 pl-3 md:pl-4 space-y-3 mt-2">
+                <div className="ml-8 md:ml-10  pl-3 md:pl-4 space-y-3 mt-2">
                     {replies.map((reply) => (
                         <Comment
                             key={reply.id}
@@ -59,7 +59,7 @@ export default function ReplyGroup({ replies, onReply, onDelete, onEdit, current
 
                     <button
                         onClick={() => setIsOpen(false)}
-                        className="text-xs font-semibold text-muted-foreground hover:text-foreground mt-2"
+                        className="text-xs font-semibold text-muted-foreground hover:text-foreground mt-2 pl-10"
                     >
                         Hide replies
                     </button>

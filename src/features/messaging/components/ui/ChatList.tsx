@@ -15,6 +15,7 @@ import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { Button } from "@/components/ui/button"
 import InvitationCard from "../group-chat/InvitationCard"
 import Avatar from "@/components/shared/Avatar"
+import { ConversationListSkeleton } from "../skeletons/ConversationListSkeleton"
 
 // Reusable exact tag component
 const TagChip = ({ active, label, hasIndicator, onClick }: { active: boolean, label: string, hasIndicator?: boolean, onClick: () => void }) => (
@@ -222,7 +223,7 @@ export function ChatList({
       <div ref={parentRef} className="flex flex-col flex-1 w-full overflow-y-auto pb-24 md:pb-0 scrollbar-hide relative gap-[8px]">
 
         {/* ... */}
-        {isLoading && <div className="p-8 text-center text-muted-foreground">Loading conversations...</div>}
+        {isLoading && <ConversationListSkeleton />}
         {error && <div className="p-8 text-center text-red-500">Failed to load conversations</div>}
 
         {!isLoading && !error && filteredChats.length > 0 && (

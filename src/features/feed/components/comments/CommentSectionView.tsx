@@ -56,8 +56,8 @@ export default function CommentSectionView({
   };
 
   return (
-    <div className="flex flex-col flex-1 h-full min-h-0 md:max-h-[350px] bg-background md:bg-muted/30 relative">
-      <div className="flex-1 overflow-y-auto min-h-0 p-2 pb-6 scrollbar-hide">
+    <div className="flex flex-col flex-1 h-full min-h-0 md:max-h-[350px] bg-background relative font-poppins">
+      <div className="flex-1 overflow-y-auto min-h-0 p-4 pb-6 scrollbar-hide">
         {isLoading && !comments.length ? (
           <div className="flex items-center justify-center py-8">
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />

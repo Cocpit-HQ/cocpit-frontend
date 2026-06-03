@@ -33,7 +33,7 @@ export default function MobileCommentDrawer({ postId, isOpen, onClose, increment
     <Drawer.Root open={isOpen} onOpenChange={(open) => !open && onClose()} shouldScaleBackground>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/40 z-[99]" />
-        <Drawer.Content className="bg-background flex flex-col rounded-t-[20px] h-[90vh] mt-24 fixed bottom-0 left-0 right-0 z-[100] outline-none">
+        <Drawer.Content className="bg-background flex flex-col rounded-t-[20px] h-[90vh] mt-24 fixed bottom-0 left-0 right-0 z-[100] outline-none font-poppins">
           <div className="p-4 bg-background border-b border-border flex items-center justify-between rounded-t-[20px]">
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted mb-4 absolute top-3 left-1/2 -translate-x-1/2" />
             <Drawer.Title className="flex items-center gap-2 mt-2">

@@ -3,6 +3,8 @@
 import React, { useMemo, useEffect } from 'react';
 import FeedPost from '@/features/feed/components/FeedPost';
 import PostSkeleton from './PostSkeleton';
+import { CreatePostCardSkeleton } from '@/features/feed/components/skeletons/CreatePostCardSkeleton';
+import { FeedPostCardSkeleton } from '@/features/feed/components/skeletons/FeedPostCardSkeleton';
 import { useFeed } from '@/hooks/use-feed';
 import { useInView } from '@/hooks/use-in-view';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
@@ -100,10 +102,14 @@ export const FeedSection = ({
                 {/* Posts */}
                 <div className="md:space-y-4">
                     {/* Skeletons appear when initial load is happening */}
-                    {feedLoading && posts.length === 0 &&
-                        Array.from({ length: 3 }).map((_, i) => (
-                            <PostSkeleton key={i} />
-                        ))}
+                    {feedLoading && posts.length === 0 && (
+                        <div className="flex flex-col gap-4">
+                            <CreatePostCardSkeleton />
+                            {Array.from({ length: 3 }).map((_, i) => (
+                                <FeedPostCardSkeleton key={i} />
+                            ))}
+                        </div>
+                    )}
 
                     <div className="space-y-4">
                         {sortedPosts.map((post, index) => {
@@ -144,10 +150,9 @@ export const FeedSection = ({
                         })}
                     </div>
 
-                    {/* Infinite Scroll Sentinel */}
                     {hasMore && (
-                        <div ref={loadMoreRef} className="py-4 flex justify-center">
-                            {feedLoading && <div className="text-muted-foreground text-sm">Loading more...</div>}
+                        <div ref={loadMoreRef} className="py-4 flex justify-center w-full">
+                            {feedLoading && <FeedPostCardSkeleton />}
                         </div>
                     )}
                 </div>

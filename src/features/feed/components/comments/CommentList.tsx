@@ -79,7 +79,7 @@ export default function CommentList({ comments, onReply, onDelete, onEdit, curre
   }, [targetCommentId, comments]); // Re-run when comments load
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="space-y-4 pb-4 font-poppins">
       {rootComments.map((root, index) => (
         <React.Fragment key={root.id}>
           <Comment

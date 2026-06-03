@@ -53,7 +53,8 @@ export function useMyProfile() {
             const data = await getProfile();
             return data; // Returns UserProfile
         },
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        staleTime: Infinity,
+        refetchOnMount: false,
     });
 }
 

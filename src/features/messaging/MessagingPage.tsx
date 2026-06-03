@@ -21,6 +21,7 @@ import { GroupChatProvider } from "./components/group-chat/groupChat.context";
 import CreateGroupModal from "./components/group-chat/CreateGroupModal";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useToast } from "@/hooks/use-toast";
+import { ChatWindowSkeleton } from "./components/skeletons/ChatWindowSkeleton";
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -901,44 +902,35 @@ export default function MessagingPage() {
                 />
               )
             ) : (
-              <div className="hidden md:flex items-center justify-center h-full flex-col text-center px-8 bg-background">
-                <div className="w-20 h-20 mb-4 flex items-center justify-center bg-transparent">
-                  <svg
-                    width="72"
-                    height="72"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.25"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-foreground"
-                  >
-                    <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
-                    <path d="M8 12h8" />
-                    <path d="M8 8h5" />
-                  </svg>
+              (isLoading || searchParams.get("userId") || searchParams.get("groupId") || searchParams.get("conversationId")) ? (
+                <ChatWindowSkeleton />
+              ) : (
+                <div className="hidden md:flex items-center justify-center h-full flex-col text-center px-8 bg-background">
+                  <div className="w-20 h-20 mb-4 flex items-center justify-center bg-transparent">
+                    <svg
+                      width="72"
+                      height="72"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.25"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-foreground"
+                    >
+                      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+                      <path d="M8 12h8" />
+                      <path d="M8 8h5" />
+                    </svg>
+                  </div>
+                  <p className="font-semibold text-foreground text-[17px] tracking-tight mb-2">
+                    Select a conversation to start messaging
+                  </p>
+                  <p className="text-[13px] text-muted-foreground/80 max-w-[260px] leading-relaxed">
+                    Chats from your network and requests will appear here
+                  </p>
                 </div>
-                {isLoading || searchParams.get("userId") || searchParams.get("groupId") || searchParams.get("conversationId") ? (
-                  <>
-                    <p className="font-semibold text-foreground text-[17px] tracking-tight mb-2">
-                      Opening your chat...
-                    </p>
-                    <p className="text-[13px] text-muted-foreground/80 max-w-[260px] leading-relaxed">
-                      Please wait while we prepare your conversation
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="font-semibold text-foreground text-[17px] tracking-tight mb-2">
-                      Select a conversation to start messaging
-                    </p>
-                    <p className="text-[13px] text-muted-foreground/80 max-w-[260px] leading-relaxed">
-                      Chats from your network and requests will appear here
-                    </p>
-                  </>
-                )}
-              </div>
+              )
             )}
           </div>
         </div>

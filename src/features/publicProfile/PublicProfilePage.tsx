@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
@@ -84,7 +84,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
 
   // TanStack Query Hooks
   const { data: user, isLoading: isUserLoading, error: userError } = useProfile(userId);
-  const { data: publicPosts } = useProfilePosts(userId);
+  const { data: publicPosts, isLoading: isPostsLoading } = useProfilePosts(userId);
 
   // Scroll Restoration Logic
   const hasRestoredScroll = useRef(false);
@@ -292,7 +292,8 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     queryKey: ['profileStats', userId],
     queryFn: () => getProfileStats(userId),
     enabled: !!userId && !!user,
-    staleTime: 1000 * 30, // 30 seconds
+    staleTime: Infinity,
+    refetchOnMount: false,
   });
 
   // Record profile view
@@ -307,37 +308,37 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const isOwnProfile = session?.user?.id === userId;
   const isUserFollowing = user ? isFollowing(user.id) : false;
 
-  const handleFollowToggle = () => {
+  const handleFollowToggle = useCallback(() => {
     if (!user) return;
     if (isUserFollowing) {
       unfollowUser(user.id);
     } else {
       followUser(user.id);
     }
-  };
+  }, [user, isUserFollowing, unfollowUser, followUser]);
 
-  const handleMessage = () => {
+  const handleMessage = useCallback(() => {
     if (!user) return;
     const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
     startChat(user.id, companyId);
-  };
+  }, [user, activeProfile, startChat]);
 
-  const handleBlock = async () => {
+  const handleBlock = useCallback(async () => {
     if (!user) return;
     await blockUser(user.id);
     setShowBlockDialog(false);
     window.location.reload();
-  };
+  }, [user, blockUser]);
 
-  const handleRoleClick = (role: CompanyRole) => {
+  const handleRoleClick = useCallback((role: CompanyRole) => {
     setSelectedRole(role);
     setIsRoleModalOpen(true);
-  };
+  }, []);
 
-  const openFollowList = (tab: "followers" | "following" | "connections") => {
+  const openFollowList = useCallback((tab: "followers" | "following" | "connections") => {
     setActiveFollowTab(tab);
     setIsFollowListModalOpen(true);
-  };
+  }, []);
 
   // Sort and group experiences
   const flatExperiences = useMemo(() => {
@@ -511,6 +512,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
             isCompany={activeProfile?.type === 'COMPANY'}
             profileSlug={user?.account_name || user?.id || ""}
             userName={user?.name || ""}
+            isLoading={isPostsLoading}
           />
 
           <ProfileSkills

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, Search, Edit2, Trash2, MoreHorizontal } from "lucide-react";
 import { FeedPost } from "@/features/feed/components/FeedPost";
@@ -85,6 +85,22 @@ export default function ProfilePostsPage() {
     fetchPosts(true);
   }, [activeTab]);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+
+    if (typeof window !== "undefined" && !(window as any).__cocpit_popstate_registered) {
+      (window as any).__cocpit_popstate_registered = true;
+      const handlePopState = () => {
+        sessionStorage.setItem("cocpit_popstate_occurred", "true");
+      };
+      window.addEventListener("popstate", handlePopState, { capture: true });
+      return () => {
+        window.removeEventListener("popstate", handlePopState, { capture: true });
+        delete (window as any).__cocpit_popstate_registered;
+      };
+    }
+  }, []);
+
   const handleDeletePost = async (id: string) => {
     const previousPosts = [...posts];
     setPosts((prev) => prev.filter((post) => post.id !== id));
@@ -122,10 +138,12 @@ export default function ProfilePostsPage() {
 
   const filters: FilterType[] = ['Post', 'Repost', 'Comments', 'Private post', 'Save'];
 
-  const filteredPosts = posts.filter(post => 
-    post.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    post.author?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPosts = useMemo(() => {
+    return posts.filter(post => 
+      post.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.author?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [posts, searchQuery]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -133,7 +151,10 @@ export default function ProfilePostsPage() {
         {/* Navigation Header */}
         <div className="flex items-center gap-4 mb-8">
           <button
-            onClick={() => router.back()}
+            onClick={() => {
+              sessionStorage.setItem("cocpit_popstate_occurred", "true");
+              router.back();
+            }}
             className="p-2 rounded-full hover:bg-white transition-colors text-foreground"
           >
             <ArrowLeft className="w-5 h-5" />

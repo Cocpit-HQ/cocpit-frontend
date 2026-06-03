@@ -547,6 +547,22 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
   const { data: profileData, isLoading: isProfileLoading } = useMyProfile()
   const { setEditMode } = useUIStore()
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+
+    if (typeof window !== "undefined" && !(window as any).__cocpit_popstate_registered) {
+      (window as any).__cocpit_popstate_registered = true;
+      const handlePopState = () => {
+        sessionStorage.setItem("cocpit_popstate_occurred", "true");
+      };
+      window.addEventListener("popstate", handlePopState, { capture: true });
+      return () => {
+        window.removeEventListener("popstate", handlePopState, { capture: true });
+        delete (window as any).__cocpit_popstate_registered;
+      };
+    }
+  }, []);
+
   const handleToggleLike = async (postId: string) => {
     try {
       const result = await toggleLike(postId);
@@ -684,7 +700,10 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
           {/* Navigation Header */}
           <div className="w-full flex items-center gap-4">
             <button
-              onClick={() => router.back()}
+              onClick={() => {
+                sessionStorage.setItem("cocpit_popstate_occurred", "true");
+                router.back();
+              }}
               className="w-[48px] h-[48px] flex items-center justify-center rounded-full border border-border bg-background/80 backdrop-blur-[12px] hover:bg-accent transition-colors shadow-sm outline-none flex-shrink-0"
             >
               <ChevronLeft size={24} className="text-muted-foreground" strokeWidth={1.5} />

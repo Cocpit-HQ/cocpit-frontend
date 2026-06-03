@@ -16,6 +16,7 @@ import { CommentModal } from "../components/CommentModal";
 import { CreatePostModal } from "@/features/create-post/components/CreatePostModal";
 import { ProfileEmptyState } from "./ProfileEmptyState";
 import { useUIStore } from "@/store/ui.store";
+import { ProfilePostCardSkeleton } from "../components/skeletons/ProfilePostCardSkeleton";
 
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import type { Post } from "@/types/entities";
@@ -506,6 +507,7 @@ interface ProfilePostsProps {
   onToggleVisibility?: (id: string) => void;
   onUpdatePost?: (post: any) => void;
   onCreateClick?: () => void;
+  isLoading?: boolean;
 }
 
 export function ProfilePosts({
@@ -518,20 +520,39 @@ export function ProfilePosts({
   onToggleVisibility,
   onUpdatePost,
   onCreateClick,
+  isLoading = false,
 }: ProfilePostsProps) {
   const router = useRouter();
 
   return (
     <div
       className="w-full bg-transparent mt-[16px] transition-all duration-500 ease-in-out overflow-hidden"
-      style={posts.length > 0 ? { minHeight: '564px' } : undefined}
+      style={(posts.length > 0 || isLoading) ? { minHeight: '564px' } : undefined}
     >
       {/* Header */}
       <div className="flex items-center justify-between pt-4 pb-4 px-4 md:pl-10 md:pr-4">
         <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Post</h2>
         {posts.length > 3 && (
           <button
-            onClick={() => router.push(`/profile/${profileSlug}/posts`)}
+            onClick={() => {
+              sessionStorage.setItem("cocpit_profile_scroll_y", window.scrollY.toString());
+              sessionStorage.setItem("cocpit_profile_scroll_source", "post");
+              sessionStorage.setItem("cocpit_profile_scroll_path", window.location.pathname);
+
+              if (typeof window !== "undefined") {
+                try {
+                  const currentState = { ...window.history.state };
+                  currentState.cocpit_scroll_y = window.scrollY;
+                  currentState.cocpit_scroll_source = "post";
+                  currentState.cocpit_scroll_path = window.location.pathname;
+                  currentState.cocpit_popstate_occurred = true;
+                  window.history.replaceState(currentState, "", window.location.href);
+                } catch (err) {
+                  console.error("Failed to update history state:", err);
+                }
+              }
+              router.push(`/profile/${profileSlug}/posts`);
+            }}
             className="w-[78px] h-[36px] flex items-center justify-center px-4 py-2 border border-primary rounded-[24px] bg-card text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-primary whitespace-nowrap hover:bg-secondary transition-all duration-200 cursor-pointer"
           >
             See all
@@ -539,7 +560,13 @@ export function ProfilePosts({
         )}
       </div>
 
-      {posts.length === 0 ? (
+      {isLoading ? (
+        <div className="px-4 md:pl-10 md:pr-4 flex flex-row gap-4 overflow-x-auto pb-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          {[1, 2, 3].map((i) => (
+            <ProfilePostCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : posts.length === 0 ? (
         <div className="px-4 md:pl-10 md:pr-4">
           <ProfileEmptyState
             type="post"

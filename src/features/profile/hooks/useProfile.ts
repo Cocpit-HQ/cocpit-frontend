@@ -106,6 +106,7 @@ export function useProfile(userId: string) {
       return transformUserData(userData);
     },
     enabled: !!userId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: Infinity,
+    refetchOnMount: false,
   });
 }

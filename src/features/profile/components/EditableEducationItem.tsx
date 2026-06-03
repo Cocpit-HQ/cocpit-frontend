@@ -107,27 +107,33 @@ export function EditableEducationItem({
             </div>
 
             {/* Right Column: Metadata + Edit Button */}
-            <div className="flex flex-row items-start justify-between md:justify-end flex-shrink-0 w-full md:w-[220px] gap-3 md:gap-0 md:ml-auto pl-[72px] md:pl-0 hidden md:flex">
-                <div className="flex flex-col items-start md:items-end w-full">
-                    <div className="grid grid-cols-[75px_9px_auto] gap-x-[6px] items-center w-full text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground">
-                        <span className="whitespace-nowrap text-left">{formatDate(education.start_date)}</span>
-                        <span className="flex items-center justify-center w-[9px] h-[16px]">
-                            <span className="text-center">—</span>
+            <div className="flex flex-row items-start justify-between md:justify-end flex-shrink-0 w-full md:w-[220px] gap-[12px] md:gap-[16px] md:ml-auto pl-[72px] md:pl-0 hidden md:flex">
+                <div className="flex flex-col items-start p-0 gap-[8px] md:w-[130px]">
+                    <div className="flex flex-row flex-wrap md:flex-nowrap items-center gap-x-[8px] gap-y-[4px]">
+                        <span className="md:w-[60px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
+                            {formatDate(education.start_date)}
                         </span>
-                        <span className="whitespace-nowrap text-left">{education.end_date ? formatDate(education.end_date) : 'Present'}</span>
+                        <span className="md:w-[9px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-center text-muted-foreground">
+                            -
+                        </span>
+                        <span className="md:w-[75px] md:h-[16px] font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground whitespace-nowrap">
+                            {education.end_date ? formatDate(education.end_date) : 'Present'}
+                        </span>
                     </div>
                 </div>
-                {isOwnProfile && onEdit && (
-                    <button
-                        onClick={onEdit}
-                        className="flex-shrink-0 mt-0.5 md:ml-2 p-1 hover:bg-[color:var(--edit-btn-hover)] text-muted-foreground hover:text-primary rounded-full transition-colors"
-                    >
-                        <Icon
-                            icon="eva:edit-outline"
-                            className="w-[24px] h-[24px] stroke-[1.5px] transition-colors"
-                        />
-                    </button>
-                )}
+                <div className="w-[32px] flex justify-end flex-shrink-0">
+                    {isOwnProfile && onEdit && (
+                        <button
+                            onClick={onEdit}
+                            className="p-1 hover:bg-[color:var(--edit-btn-hover)] text-muted-foreground hover:text-primary rounded-full transition-colors mt-[-4px]"
+                        >
+                            <Icon
+                                icon="eva:edit-outline"
+                                className="w-[24px] h-[24px] stroke-[1.5px] transition-colors"
+                            />
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );

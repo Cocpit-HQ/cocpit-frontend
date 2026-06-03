@@ -518,7 +518,8 @@ export default function ProfilePage() {
     queryKey: ['profileStats', profileData?.user?.id],
     queryFn: () => getProfileStats(profileData!.user.id),
     enabled: !!profileData?.user?.id,
-    staleTime: 1000 * 30,
+    staleTime: Infinity,
+    refetchOnMount: false,
   });
 
 
@@ -793,15 +794,20 @@ export default function ProfilePage() {
     }
   }, [profileData]);
 
+  const [postsLoading, setPostsLoading] = useState(true);
+
   // Keep posts separate for now as it uses different pagination logic
   useEffect(() => {
     const fetchPosts = async () => {
       try {
+        setPostsLoading(true);
         const response = await getUserPosts({ limit: 4 });
         const mappedPosts = response.posts.map(mapProfilePostToPost);
         setPreviewPosts(mappedPosts);
       } catch (error) {
         console.error("Failed to fetch profile posts", error);
+      } finally {
+        setPostsLoading(false);
       }
     };
     fetchPosts();
@@ -1109,6 +1115,7 @@ export default function ProfilePage() {
               onToggleVisibility={handleToggleVisibility}
               onUpdatePost={handleUpdatePreviewPost}
               onCreateClick={() => router.push("/create-post")}
+              isLoading={postsLoading}
             />
 
             <ProfileSkills

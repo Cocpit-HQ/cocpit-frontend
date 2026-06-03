@@ -21,6 +21,7 @@ import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { Icon } from "@iconify/react";
+import { FollowListItemSkeleton } from "./skeletons/FollowListItemSkeleton";
 
 interface FollowListModalProps {
     isOpen: boolean;
@@ -488,14 +489,32 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
                         <div className="flex-1 overflow-hidden">
                             <TabsContent value="followers" className="h-full mt-0 px-4 pb-4 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                                {isLoadingFollowers ? <div className="py-8 text-center">Loading...</div> : renderUserList(followers || [], "followers")}
+                                {isLoadingFollowers ? (
+                                    <div className="space-y-1 mt-4">
+                                        {[1, 2, 3, 4].map((i) => (
+                                            <FollowListItemSkeleton key={i} />
+                                        ))}
+                                    </div>
+                                ) : renderUserList(followers || [], "followers")}
                             </TabsContent>
                             <TabsContent value="following" className="h-full mt-0 px-4 pb-4 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                                {isLoadingFollowing ? <div className="py-8 text-center">Loading...</div> : renderUserList(following || [], "following")}
+                                {isLoadingFollowing ? (
+                                    <div className="space-y-1 mt-4">
+                                        {[1, 2, 3, 4].map((i) => (
+                                            <FollowListItemSkeleton key={i} />
+                                        ))}
+                                    </div>
+                                ) : renderUserList(following || [], "following")}
                             </TabsContent>
                             <TabsContent value="connections" className="h-full mt-0 px-4 pb-4 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 {isOwnProfile ? (
-                                    isLoadingConnections ? <div className="py-8 text-center">Loading...</div> : renderUserList(connections || [], "connections")
+                                    isLoadingConnections ? (
+                                        <div className="space-y-1 mt-4">
+                                            {[1, 2, 3, 4].map((i) => (
+                                                <FollowListItemSkeleton key={i} />
+                                            ))}
+                                        </div>
+                                    ) : renderUserList(connections || [], "connections")
                                 ) : (
                                     <div className="text-center py-8 text-muted-foreground">
                                         Connection list is private.

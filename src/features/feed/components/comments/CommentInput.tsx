@@ -218,7 +218,7 @@ export default function CommentInput({
     }, []);
 
     return (
-        <div className={`bg-card ${className}`}>
+        <div className={`bg-card font-poppins ${className}`}>
             {/* Reply Context Bar */}
             {replyingTo && (
                 <div className="flex items-center justify-between px-4 py-2 bg-muted/50 border-t border-x border-border rounded-t-lg mx-0.5 text-sm">
@@ -261,7 +261,7 @@ export default function CommentInput({
                         onChange={handleTextChange}
                         onKeyDown={handleKeyDown}
                         placeholder={editingComment ? "Edit your comment..." : replyingTo ? `Reply to ${replyingTo.name}...` : "Add a comment..."}
-                        className="w-full bg-transparent border-none focus:ring-0 p-1.5 sm:p-2 min-h-[36px] max-h-32 resize-none text-sm sm:text-base placeholder:text-muted-foreground/60 scrollbar-hide focus:outline-none"
+                        className="w-full bg-transparent border-none focus:ring-0 p-1.5 sm:p-2 min-h-[36px] max-h-32 resize-none text-sm sm:text-base placeholder:text-muted-foreground/60 scrollbar-hide focus:outline-none font-poppins"
                         rows={1}
                         style={{ height: 'auto' }}
                     />

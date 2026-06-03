@@ -17,6 +17,7 @@ import {
   Globe
 } from "lucide-react"
 import { getPublicProfilePosts } from "../services/profile.service"
+import { useProfile } from "../hooks/useProfile"
 import { Icon } from "@iconify/react"
 import { getUserPosts } from "../services/profile.service"
 import { toggleSavePost } from "../services/profile.service"
@@ -546,6 +547,23 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
   const [saveModalPostId, setSaveModalPostId] = useState<string | null>(null)
   const { data: profileData, isLoading: isProfileLoading } = useMyProfile()
   const { setEditMode } = useUIStore()
+  const { data: targetProfile, isLoading: isTargetProfileLoading } = useProfile(userId)
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+
+    if (typeof window !== "undefined" && !(window as any).__cocpit_popstate_registered) {
+      (window as any).__cocpit_popstate_registered = true;
+      const handlePopState = () => {
+        sessionStorage.setItem("cocpit_popstate_occurred", "true");
+      };
+      window.addEventListener("popstate", handlePopState, { capture: true });
+      return () => {
+        window.removeEventListener("popstate", handlePopState, { capture: true });
+        delete (window as any).__cocpit_popstate_registered;
+      };
+    }
+  }, []);
 
   const handleToggleLike = async (postId: string) => {
     try {
@@ -619,16 +637,16 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
 
   useEffect(() => {
     const fetchPosts = async () => {
-      // Don't fetch if we're still loading profile data
-      if (isProfileLoading) return;
+      // Don't fetch if we're still loading profile data or target profile
+      if (isProfileLoading || !targetProfile) return;
 
       setLoading(true)
       try {
         const currentUser = profileData?.user;
-        const normalizedUserId = String(userId).toLowerCase();
+        const targetId = targetProfile.id;
+        const targetName = targetProfile.name;
         const isOwner = currentUser && (
-          normalizedUserId === String(currentUser.id).toLowerCase() ||
-          normalizedUserId === String(currentUser.account_name).toLowerCase()
+          String(targetId).toLowerCase() === String(currentUser.id).toLowerCase()
         );
 
         let mappedPosts: Post[] = [];
@@ -637,19 +655,17 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
           const data = await getUserPosts({ filter: activeTab as any });
           mappedPosts = data.posts.map(mapProfilePostToPost);
         } else {
-          // For visitors, use the public endpoint
-          const data = await getPublicProfilePosts(userId, activeTab as any);
+          // For visitors, use the public endpoint with 'All' category, then filter client-side
+          const data = await getPublicProfilePosts(userId, 'All');
           mappedPosts = data.posts.map(mapPublicPostToPost);
         }
         // Client-side safeguard: filter by author and tab type
         if (activeTab === 'Post') {
-          const targetId = isOwner ? currentUser?.id : userId;
-          // In Post tab, only show PUBLIC posts shared by the target user
-          mappedPosts = mappedPosts.filter(p => (p.authorId === targetId || p.author === currentUser?.name) && p.visibility !== 'private');
+          // In Post tab, only show PUBLIC posts shared by the target user (exclude reposts)
+          mappedPosts = mappedPosts.filter(p => !p.shared_post && (String(p.authorId) === String(targetId) || p.author === targetName) && p.visibility !== 'private');
         } else if (activeTab === 'Repost') {
-          const targetId = isOwner ? currentUser?.id : userId;
           // In Repost tab, only show posts that ARE reposts (have shared_post) and were shared by the target user
-          mappedPosts = mappedPosts.filter(p => p.shared_post && (p.authorId === targetId || p.author === currentUser?.name));
+          mappedPosts = mappedPosts.filter(p => p.shared_post && (String(p.authorId) === String(targetId) || p.author === targetName));
         } else if (activeTab === 'Like') {
           // In Like tab, only show posts the user has liked
           mappedPosts = mappedPosts.filter(p => p.isLiked);
@@ -657,8 +673,8 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
           // In Comments tab, only show posts where the user has actually commented
           mappedPosts = mappedPosts.filter(p => p.is_commented);
         } else if (activeTab === 'Private post') {
-          // In Private tab, only show private posts
-          mappedPosts = mappedPosts.filter(p => p.visibility === 'private');
+          // In Private tab, only show private posts (visitors shouldn't see private posts)
+          mappedPosts = isOwner ? mappedPosts.filter(p => p.visibility === 'private') : [];
         } else if (activeTab === 'Save') {
           // In Save tab, only show posts that the user has actually saved
           mappedPosts = mappedPosts.filter(p => p.is_saved);
@@ -674,7 +690,7 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
     }
 
     fetchPosts()
-  }, [userId, activeTab, profileData, isProfileLoading])
+  }, [userId, activeTab, profileData, isProfileLoading, targetProfile])
 
   return (
     <div className="min-h-screen bg-background flex justify-center py-10 px-4">
@@ -684,7 +700,10 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
           {/* Navigation Header */}
           <div className="w-full flex items-center gap-4">
             <button
-              onClick={() => router.back()}
+              onClick={() => {
+                sessionStorage.setItem("cocpit_popstate_occurred", "true");
+                router.back();
+              }}
               className="w-[48px] h-[48px] flex items-center justify-center rounded-full border border-border bg-background/80 backdrop-blur-[12px] hover:bg-accent transition-colors shadow-sm outline-none flex-shrink-0"
             >
               <ChevronLeft size={24} className="text-muted-foreground" strokeWidth={1.5} />
@@ -729,7 +748,7 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
                     setEditMode(true, post.id);
                     setIsEditModalOpen(true);
                   }}
-                  currentUser={profileData}
+                  currentUser={profileData?.user}
                   activeTab={activeTab}
                 />
               ))

@@ -1265,7 +1265,25 @@ export default function ProfilePage() {
                 <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Post</h2>
                 {previewPosts.length > 3 && (
                   <button
-                    onClick={() => router.push(`/profile/${user?.account_name || user?.id}/posts`)}
+                    onClick={() => {
+                      sessionStorage.setItem("cocpit_profile_scroll_y", window.scrollY.toString());
+                      sessionStorage.setItem("cocpit_profile_scroll_source", "post");
+                      sessionStorage.setItem("cocpit_profile_scroll_path", window.location.pathname);
+
+                      if (typeof window !== "undefined") {
+                        try {
+                          const currentState = { ...window.history.state };
+                          currentState.cocpit_scroll_y = window.scrollY;
+                          currentState.cocpit_scroll_source = "post";
+                          currentState.cocpit_scroll_path = window.location.pathname;
+                          currentState.cocpit_popstate_occurred = true;
+                          window.history.replaceState(currentState, "", window.location.href);
+                        } catch (err) {
+                          console.error("Failed to update history state:", err);
+                        }
+                      }
+                      router.push(`/profile/${user?.account_name || user?.id}/posts`);
+                    }}
                     className="w-[78px] h-[36px] flex items-center justify-center px-4 py-2 border border-primary rounded-[24px] bg-card text-[14px] leading-[20px] font-normal font-[family-name:var(--font-poppins)] text-primary whitespace-nowrap hover:bg-secondary transition-all duration-200"
                   >
                     See all

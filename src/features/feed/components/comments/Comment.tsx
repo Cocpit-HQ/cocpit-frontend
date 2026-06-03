@@ -38,7 +38,7 @@ const formatCommentText = (text: string, postId?: string | number, currentCommen
   return parts.map((part, index) => {
     if (part.startsWith('@')) {
       const accountName = part.substring(1);
-
+      
       const params = new URLSearchParams();
       if (postId) params.set('openPost', postId.toString());
       if (currentCommentId) params.set('commentId', currentCommentId.toString());
@@ -52,7 +52,7 @@ const formatCommentText = (text: string, postId?: string | number, currentCommen
           href={href}
           className="text-primary font-medium cursor-pointer hover:underline"
         >
-          {part}
+          {accountName}
         </Link>
       );
     }
@@ -136,7 +136,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
   return (
     <div 
       id={`comment-${id}`} 
-      className={`flex gap-3 relative group ${isReply ? 'mt-3 pl-4 border-l-2 border-border/30' : 'mt-6'} transition-all duration-300 ${isPending ? 'opacity-60 pointer-events-none' : ''}`}
+      className={`flex gap-3 relative group transition-all duration-300 font-poppins ${isPending ? 'opacity-60 pointer-events-none' : ''}`}
     >
       {/* Avatar Column */}
       <div className="flex-shrink-0">
@@ -154,11 +154,6 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
           <div className="flex flex-col">
             <Link href={authorLink} className="hover:underline leading-tight flex items-baseline gap-1.5 flex-wrap">
               <span className="text-sm font-bold text-black">{author?.name || 'Anonymous'}</span>
-              {author?.authorSlug && (
-                <span className="text-[11px] text-muted-foreground font-normal">
-                  @{author.authorSlug}
-                </span>
-              )}
             </Link>
             {author?.headline && (
               <span className="text-[12px] text-muted-foreground font-normal leading-tight mt-0.5">
@@ -179,26 +174,26 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                 <DropdownMenuContent
                   align="end"
                   className={cn(
-                    "w-[210px] p-2 bg-white border border-[#C7D2FE] rounded-[24px_0px_24px_24px] shadow-[0px_4px_12px_rgba(0,0,0,0.05)]",
+                    "w-[210px] p-2 bg-white border border-[#C7D2FE] rounded-[24px_0px_24px_24px] shadow-[0px_4px_12px_rgba(0,0,0,0.05)] font-poppins",
                     isOwner || isPostOwner ? "h-auto" : "h-auto"
                   )}
                 >
                   {isOwner && (
-		                    <DropdownMenuItem
-		                      onClick={(e) => { e.stopPropagation(); onEdit?.(id, text); }}
-		                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none hover:!bg-[#eef2ff] focus:!bg-[#eef2ff] data-[highlighted]:!bg-[#eef2ff]"
-		                    >
-                      <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Edit comment</span>
+                    <DropdownMenuItem
+                      onClick={(e) => { e.stopPropagation(); onEdit?.(id, text); }}
+                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-slate-50"
+                    >
+                      <span className="text-[14px] font-normal leading-[20px] text-black">Edit comment</span>
                       <Icon icon="fluent:edit-24-regular" width="24" height="24" className="text-black" />
                     </DropdownMenuItem>
                   )}
 
                   {(isOwner || isPostOwner) && (
-		                    <DropdownMenuItem
-		                      onClick={() => onDelete?.(id)}
-		                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none hover:!bg-[#fee2e2] focus:!bg-[#fee2e2] data-[highlighted]:!bg-[#fee2e2]"
-		                    >
-                      <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-[#FF6B6B]">Delete comment</span>
+                    <DropdownMenuItem
+                      onClick={() => onDelete?.(id)}
+                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none group/delete data-[highlighted]:bg-red-50"
+                    >
+                      <span className="text-[14px] font-normal leading-[20px] text-[#FF6B6B]">Delete comment</span>
                       <Icon icon="fluent:delete-24-regular" width="24" height="24" className="text-[#FF6B6B]" />
                     </DropdownMenuItem>
                   )}
@@ -209,7 +204,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                         onClick={() => onReport?.(id)}
                         className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-slate-50"
                       >
-                        <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Report comment</span>
+                        <span className="text-[14px] font-normal leading-[20px] text-black">Report comment</span>
                         <Icon icon="fluent:info-24-regular" width="24" height="24" className="text-black" />
                       </DropdownMenuItem>
 
@@ -219,7 +214,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                         }}
                         className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-slate-50"
                       >
-                        <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Hide comment</span>
+                        <span className="text-[14px] font-normal leading-[20px] text-black">Hide comment</span>
                         <Icon icon="fluent:eye-hide-24-regular" width="24" height="24" className="text-black" />
                       </DropdownMenuItem>
                     </>
@@ -246,7 +241,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
           <span className="font-normal text-muted-foreground">—</span>
           <span className="font-normal text-muted-foreground">{likes} {likes === 1 ? 'like' : 'likes'}</span>
           
-          <div className="w-[1px] h-3 bg-border/60 mx-1"></div>
+          <div className="w-[16px] h-[0px] border border-[#DADADA] rotate-90 flex-none self-stretch mt-2"></div>
 
           <button
             onClick={() => onReply?.(author?.name || 'User', id, author?.account_name)}
