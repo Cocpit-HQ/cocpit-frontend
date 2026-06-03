@@ -49,12 +49,14 @@
 
 .stepHeader {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
+  margin-bottom: 8px;
 }
 
 .stepText {
+  font-family: var(--font-poppins), sans-serif;
   font-size: 12px;
-  color: #71717a;
+  color: #000000;
   font-weight: 500;
 }
 
