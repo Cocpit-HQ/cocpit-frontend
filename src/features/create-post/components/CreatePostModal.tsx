@@ -84,6 +84,8 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
             onCropComplete={media.handleCropComplete}
             onAspectChange={media.setAspectRatio}
             galleryInputRef={galleryInputRef}
+            isEditingMedia={state.isEditingMedia}
+            setIsEditingMedia={state.setIsEditingMedia}
           />
         );
       case 'video':
@@ -97,6 +99,8 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
             onVideoUpload={(e) => media.handleVideoUpload(e, isEdit)}
             onRemoveVideo={(id) => media.removeMediaItem(id, media.setUploadedVideos, isEdit)}
             videoInputRef={videoInputRef}
+            isEditingMedia={state.isEditingMedia}
+            setIsEditingMedia={state.setIsEditingMedia}
           />
         );
       case 'poll':
@@ -117,68 +121,39 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
       case 'article':
         if (state.articleData) {
           return (
-            <div className="border rounded-lg p-4 space-y-4 bg-background border-border">
+            <div className="border rounded-lg p-4 bg-background border-border flex flex-col gap-4">
+              <div className="flex justify-center w-full">
+                <div className="relative group w-full max-w-[420px]">
+                  <a
+                    href="#"
+                    onClick={(e) => e.preventDefault()}
+                    className="block w-full bg-card border border-border rounded-[24px] overflow-hidden shadow-sm transition-all hover:shadow-md animate-in fade-in zoom-in-95 duration-200"
+                  >
+                    <div className="w-full h-[180px] overflow-hidden">
+                      {state.articleData.coverImage ? (
+                        <img src={state.articleData.coverImage.url} alt={state.articleData.title || 'Article cover'} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-400">
+                          <Icon icon="ph:article" className="w-8 h-8" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="bg-[#EEF2FF] py-3.5 px-5 text-center">
+                      <h3 className="line-clamp-2 text-[13px] font-semibold text-[#312E81] font-poppins leading-tight">
+                        {state.articleData.title || 'Untitled Article'}
+                      </h3>
+                    </div>
+                  </a>
+                </div>
+              </div>
+
               <RichTextEditor
                 content={state.description}
                 onChange={state.setDescription}
                 className="bg-transparent border-none min-h-[100px]"
                 editorClassName="min-h-[100px]"
-                placeholder="Add a caption..."
+                placeholder="Say something about your article..."
               />
-              
-              <div className="flex justify-center w-full">
-                <div className="relative group w-full max-w-[420px]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const { setArticleMode, setActiveModal, setArticleDraft } = useUIStore.getState();
-                      setArticleDraft({
-                        title: state.articleTitle,
-                        content: state.articleContent,
-                        coverImage: media.uploadedImages[0] || null,
-                        description: state.description,
-                        articleData: null
-                      });
-                      state.setArticleData(null);
-                      onClose();
-                      setArticleMode(true);
-                      router.push('/feed');
-                    }}
-                    className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-destructive transition-all duration-200 z-10 cursor-pointer"
-                    title="Edit article"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                  <a
-                    href="#"
-                    onClick={(e) => e.preventDefault()}
-                    className="block w-full bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md animate-in fade-in zoom-in-95 duration-200"
-                  >
-                    <div className="w-full h-[180px] bg-indigo-50 overflow-hidden">
-                      {state.articleData.coverImage ? (
-                        <img src={state.articleData.coverImage.url} alt={state.articleData.title || 'Article cover'} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-indigo-400">
-                          <Icon icon="ph:article" className="w-8 h-8" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-2 p-4 text-left">
-                      <h3 className="line-clamp-2 text-[15px] font-semibold leading-5 text-foreground font-poppins">
-                        {state.articleData.title || 'Untitled Article'}
-                      </h3>
-                      {state.articleData.subtitle && (
-                        <p className="line-clamp-2 text-[12px] leading-4 text-muted-foreground font-poppins">
-                          {state.articleData.subtitle}
-                        </p>
-                      )}
-                      <span className="text-[12px] font-medium text-[#6366F1] transition-colors font-poppins">
-                        Read More
-                      </span>
-                    </div>
-                  </a>
-                </div>
-              </div>
             </div>
           );
         }
@@ -251,7 +226,7 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
         )}
 
         <div className={cn(
-          "flex-1 overflow-y-auto custom-scrollbar bg-background/50",
+          "flex-1 overflow-y-auto min-h-0 custom-scrollbar bg-background/50",
           isMobile ? "px-4 py-4" : "p-0",
           (state.postType === 'article' && !state.articleData) && "flex flex-col"
         )}>
@@ -318,7 +293,7 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
           </div>
         </div>
 
-        {(state.postType !== 'article' || isArticleCompose) && (
+        {!state.isEditingMedia && (state.postType !== 'article' || isArticleCompose) && (
           <CreatePostFooter
             onPost={actions.handlePost}
             isSubmitting={state.isSubmitting}

@@ -184,20 +184,20 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                   )}
                 >
                   {isOwner && (
-                    <DropdownMenuItem
-                      onClick={(e) => { e.stopPropagation(); onEdit?.(id, text); }}
-                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-slate-50"
-                    >
+		                    <DropdownMenuItem
+		                      onClick={(e) => { e.stopPropagation(); onEdit?.(id, text); }}
+		                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none hover:!bg-[#eef2ff] focus:!bg-[#eef2ff] data-[highlighted]:!bg-[#eef2ff]"
+		                    >
                       <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-black">Edit comment</span>
                       <Icon icon="fluent:edit-24-regular" width="24" height="24" className="text-black" />
                     </DropdownMenuItem>
                   )}
 
                   {(isOwner || isPostOwner) && (
-                    <DropdownMenuItem
-                      onClick={() => onDelete?.(id)}
-                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none group/delete data-[highlighted]:bg-red-50"
-                    >
+		                    <DropdownMenuItem
+		                      onClick={() => onDelete?.(id)}
+		                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none hover:!bg-[#fee2e2] focus:!bg-[#fee2e2] data-[highlighted]:!bg-[#fee2e2]"
+		                    >
                       <span className="text-[14px] font-[family-name:var(--font-poppins)] font-normal leading-[20px] text-[#FF6B6B]">Delete comment</span>
                       <Icon icon="fluent:delete-24-regular" width="24" height="24" className="text-[#FF6B6B]" />
                     </DropdownMenuItem>

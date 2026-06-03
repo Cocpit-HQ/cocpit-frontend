@@ -20,7 +20,7 @@ export const usePostUpload = () => {
     const { pendingPosts, setPendingPosts } = useUIStore();
     const { addPost } = useFeed();
 
-    const startUpload = useCallback(async (content: CreatePostRequest, mediaFiles: File[]) => {
+    const startUpload = useCallback(async (content: CreatePostRequest, mediaFiles: File[], tagUserIds?: string[]) => {
         const id = Math.random().toString(36).substring(7);
         const newPendingPost: PendingUploadPost = {
             id,
@@ -43,7 +43,7 @@ export const usePostUpload = () => {
 
             try {
                 // 2. Use the centralized postApi for creation (handles media + post + fetch)
-                const { mappedPost } = await postApi.create(content, mediaFiles);
+                const { mappedPost } = await postApi.create(content, mediaFiles, tagUserIds);
                 addPost(mappedPost);
 
                 // 3. Update Store to success

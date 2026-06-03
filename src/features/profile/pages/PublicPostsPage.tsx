@@ -26,7 +26,8 @@ import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
 import { Post } from "@/types/entities"
 import Image from "next/image"
 import { useMyProfile } from "@/hooks/use-my-profile"
-import { EditPostModal } from "../components/EditPostModal"
+import { useUIStore } from "@/store/ui.store"
+import { CreatePostModal } from "@/features/create-post/components/CreatePostModal"
 import { PostCarousel } from "@/components/shared/PostCarousel"
 import {
   DropdownMenu,
@@ -544,6 +545,7 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
   const [editingPost, setEditingPost] = useState<Post | null>(null)
   const [saveModalPostId, setSaveModalPostId] = useState<string | null>(null)
   const { data: profileData, isLoading: isProfileLoading } = useMyProfile()
+  const { setEditMode } = useUIStore()
 
   const handleToggleLike = async (postId: string) => {
     try {
@@ -724,6 +726,7 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
                   onDelete={() => handleDeletePost(post.id)}
                   onEdit={() => {
                     setEditingPost(post);
+                    setEditMode(true, post.id);
                     setIsEditModalOpen(true);
                   }}
                   currentUser={profileData}
@@ -743,18 +746,17 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
         </div>
       </div>
 
-      {editingPost && (
-        <EditPostModal
+      {isEditModalOpen && editingPost && (
+        <CreatePostModal
           isOpen={isEditModalOpen}
           onClose={() => {
             setIsEditModalOpen(false);
+            setEditMode(false, null);
             setEditingPost(null);
           }}
-          post={editingPost}
-          onSuccess={(updatedPost) => {
-            setPosts(prev => prev.map(p => p.id === updatedPost.id ? mergePostState(p, updatedPost) : p));
-            setIsEditModalOpen(false);
-            setEditingPost(null);
+          editPostId={editingPost.id}
+          onUpdate={(updatedPost) => {
+            setPosts(prev => prev.map(p => p.id === updatedPost.id ? mergePostState(p, updatedPost as any) : p));
           }}
         />
       )}

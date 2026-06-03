@@ -114,7 +114,7 @@ export const PostContent = ({
 
       {/* Inline Article Card */}
       {isArticle && (
-        <div className="w-full mt-2 border border-border bg-card/60 rounded-2xl overflow-hidden shadow-sm transition-all duration-300 flex flex-col">
+        <div className="w-full mt-2 mb-2 border border-border bg-card/60 rounded-2xl overflow-hidden shadow-sm transition-all duration-300 flex flex-col">
           {articleHref ? (
             <Link href={articleHref} className="block" onClick={(e) => e.stopPropagation()}>
               <div className="w-full aspect-[21/9] overflow-hidden relative border-b border-border/40">

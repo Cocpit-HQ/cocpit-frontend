@@ -2,9 +2,8 @@
 
 import React, { useEffect } from 'react';
 import Link from 'next/link';
-import { EyeOff, Edit2, BarChart2, Trash2, Eye } from 'lucide-react';
+import { BarChart2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { cn } from '@/lib/utils';
 import { Icon } from "@iconify/react";
 import { TaggedPeoplePopover } from "@/shared/commonComponents/TaggedPeoplePopover";
 import { useSocial } from '@/context/SocialContext';
@@ -144,11 +143,11 @@ export const PostHeader = ({
           )}
 
           <div className="relative">
-            <button
-              ref={optionsBtnRef}
-              onClick={handleOptionsClick}
-              className="text-muted-foreground hover:text-foreground transition-colors p-1"
-            >
+	            <button
+	              ref={optionsBtnRef}
+	              onClick={handleOptionsClick}
+	              className="text-[#000000] p-1"
+	            >
               <Icon icon="ph:dots-three-outline-vertical-light" className="w-6 h-6" />
             </button>
 
@@ -156,7 +155,7 @@ export const PostHeader = ({
               <>
                 <div className="fixed inset-0 z-[199]" onClick={() => setShowOptions(false)} />
                 <div
-                  className="fixed w-44 p-2 bg-card border border-indigo-200 dark:border-[#818CF8] rounded-tl-3xl rounded-bl-3xl rounded-br-3xl rounded-tr-none shadow-lg z-[200]"
+                  className="fixed w-[180px] p-2 bg-card border border-[#EEF2FF] dark:border-card-border-inner rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg z-[200]"
                   style={{ top: optionsPos.top, right: optionsPos.right }}
                 >
                   {!isOwnPost && (
@@ -188,44 +187,48 @@ export const PostHeader = ({
                     </>
                   )}
 
-                  {isOwnPost && (
-                    <>
-                      {!poll && (
-                        <button
-                          onClick={() => { onEdit(); setShowOptions(false); }}
-                          className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          <span>Edit Post</span>
-                        </button>
-                      )}
-                      {poll && (
-                        <button
-                          onClick={() => { onShowAnalytics(); setShowOptions(false); }}
-                          className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors border-b border-border"
-                        >
-                          <BarChart2 className="w-4 h-4" />
-                          <span>View Poll Analytics</span>
-                        </button>
-                      )}
-                      <button
-                        onClick={onToggleVisibility}
-                        className={cn(
-                          "w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm transition-colors border-b border-border text-foreground hover:bg-muted"
-                        )}
-                      >
-                        {visibility === 'private' ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                        <span>{visibility === 'private' ? 'Make Public' : 'Make Private'}</span>
-                      </button>
-                      <button
-                        onClick={onDelete}
-                        className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        <span>Delete</span>
-                      </button>
-                    </>
-                  )}
+	                  {isOwnPost && (
+	                    <div className="flex flex-col gap-1">
+	                      {!poll && (
+	                        <button
+	                          onClick={(e) => { e.stopPropagation(); onEdit(); setShowOptions(false); }}
+	                          className="flex items-center justify-between w-full px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] hover:text-[#6366F1] focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors group"
+	                        >
+	                          <span className="text-[14px] font-[family-name:var(--font-poppins)] text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]">Edit post</span>
+	                          <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
+	                        </button>
+	                      )}
+	                      {poll && (
+	                        <button
+	                          onClick={(e) => { e.stopPropagation(); onShowAnalytics(); setShowOptions(false); }}
+	                          className="flex items-center justify-between w-full px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] hover:text-[#6366F1] focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors group"
+	                        >
+	                          <span className="text-[14px] font-[family-name:var(--font-poppins)] text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]">View analytics</span>
+	                          <BarChart2 className="w-6 h-6 text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]" strokeWidth={1.5} />
+	                        </button>
+	                      )}
+	                      <button
+	                        onClick={(e) => { e.stopPropagation(); onToggleVisibility(); }}
+	                        className="flex items-center justify-between w-full px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] hover:text-[#6366F1] focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors group"
+	                      >
+	                        <span className="text-[14px] font-[family-name:var(--font-poppins)] text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]">
+	                          {visibility === 'private' ? 'Make public' : 'Make private'}
+	                        </span>
+	                        {visibility === 'private' ? (
+	                          <Icon icon="hugeicons:view" className="w-6 h-6 text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
+	                        ) : (
+	                          <Icon icon="hugeicons:view-off-slash" className="w-6 h-6 text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
+	                        )}
+	                      </button>
+	                      <button
+	                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+	                        className="flex items-center justify-between w-full px-3 py-2 cursor-pointer hover:bg-red-50 focus:bg-red-50 text-[#FF6B6B] rounded-xl outline-none transition-colors"
+	                      >
+	                        <span className="text-[14px] font-[family-name:var(--font-poppins)]">Delete post</span>
+	                        <Icon icon="hugeicons:delete-02" className="w-6 h-6 text-[#FF6B6B]" style={{ strokeWidth: '1.5px' }} />
+	                      </button>
+	                    </div>
+	                  )}
                 </div>
               </>,
               document.body

@@ -11,6 +11,7 @@ interface RichTextEditorProps {
   className?: string;
   editorClassName?: string;
   placeholder?: string;
+  style?: React.CSSProperties;
 }
 
 const RichTextEditor = ({
@@ -18,7 +19,8 @@ const RichTextEditor = ({
   onChange,
   className = "",
   editorClassName = "",
-  placeholder
+  placeholder,
+  style
 }: RichTextEditorProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
@@ -157,7 +159,7 @@ const RichTextEditor = ({
         onPaste={handlePaste}
         onKeyDown={(e) => mentionKeyDown(e, onSelect)}
         className={`prose prose-sm dark:prose-invert max-w-none focus:outline-none px-4 py-3 ${editorClassName}`}
-        style={{ outline: "none" }}
+        style={{ outline: "none", ...style }}
         data-placeholder={placeholder}
       />
 

@@ -19,7 +19,7 @@ export default function InlineArticleEditor() {
   });
 
   return (
-    <div className="w-full bg-white dark:bg-[#1a1a2e] rounded-2xl shadow-sm border border-border min-h-[800px] flex flex-col relative z-10 lg:col-span-12 xl:col-span-12 max-w-none">
+    <div className="w-full bg-white dark:bg-[#1a1a2e] rounded-2xl min-h-[800px] flex flex-col relative z-10 lg:col-span-12 xl:col-span-12 max-w-none">
       <ArticleFlow
         title={state.articleTitle}
         onTitleChange={state.setArticleTitle}

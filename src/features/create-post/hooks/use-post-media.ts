@@ -47,7 +47,6 @@ export const usePostMedia = (
   }, []);
 
   const handlePhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement> | File, isEdit: boolean) => {
-    if (isEdit) return;
     let file: File | undefined = e instanceof File ? e : e.target.files?.[0];
     
     if (file) {
@@ -96,7 +95,6 @@ export const usePostMedia = (
   }, [createMediaItem, onTypeChange]);
 
   const handleDesktopPhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
-    if (isEdit) return;
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
       const videoFiles = files.filter(f => f.type.startsWith('video/'));
@@ -165,7 +163,6 @@ export const usePostMedia = (
   }, [createMediaItem, onTypeChange]);
 
   const removeMediaItem = useCallback((mediaId: string, setMedia: React.Dispatch<React.SetStateAction<MediaItem[]>>, isEdit: boolean) => {
-    if (isEdit) return;
     setMedia(prev => {
       const itemToRemove = prev.find(item => item.id === mediaId);
       if (itemToRemove && !itemToRemove.isExisting) {
@@ -180,7 +177,6 @@ export const usePostMedia = (
   }, [activeImageIndex]);
 
   const handleVideoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
-    if (isEdit) return;
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
       const videoFiles = files.filter(f => f.type.startsWith('video/'));

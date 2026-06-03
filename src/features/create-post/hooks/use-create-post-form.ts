@@ -12,6 +12,7 @@ import { sanitizeContent } from '@/lib/contentSanitizer';
 import { Post, PostVisibility } from '@/types/entities';
 import { LocationSuggestion, StructuredLocation } from '@/services/api/location';
 import { useUIStore } from '@/store/ui.store';
+import { uploadMedia } from '@/services/api/upload';
 
 const USER_CATEGORIES: CategoryType[] = ['Personal', 'Professional', 'Achievement'];
 const COMPANY_CATEGORIES: CategoryType[] = ['Update', 'Hiring', 'Milestone', 'Insight'];
@@ -57,6 +58,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
   // Edit Mode state
   const [isLoadingPost, setIsLoadingPost] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditingMedia, setIsEditingMedia] = useState(false);
   const [originalPost, setOriginalPost] = useState<Post | null>(null);
   const [sharedPost, setSharedPost] = useState<any>(initialSharedPost || null);
 
@@ -207,7 +209,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     }
   }, [isOpen, editPostId, sharedPostId]);
 
-  const handlePost = async () => {
+  const handlePost = async (tagUserIds?: string[]) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
@@ -294,13 +296,76 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
 
       if (editPostId) {
         try {
-          const updatePayload: any = { content: finalContent, category: postCategory, visibility };
+          // 1. Identify new files that need to be uploaded to Cloudinary
+          const newImageFiles = media.uploadedImages.filter(img => img.file).map(img => img.file as File);
+          const newVideoFiles = media.uploadedVideos.filter(v => v.file).map(v => v.file as File);
+
+          // 2. Upload any new files
+          let uploadedImageUrls: string[] = [];
+          if (newImageFiles.length > 0) {
+            uploadedImageUrls = await uploadMedia(newImageFiles);
+          }
+          let uploadedVideoUrls: string[] = [];
+          if (newVideoFiles.length > 0) {
+            uploadedVideoUrls = await uploadMedia(newVideoFiles);
+          }
+
+          // 3. Re-assemble final media URL list keeping the correct order
+          let media_urls: string[] | undefined = undefined;
+          if (postType === 'photo') {
+            let uploadedIdx = 0;
+            media_urls = media.uploadedImages.map(img => {
+              if (img.file) {
+                const item = uploadedImageUrls[uploadedIdx++];
+                return typeof item === 'object' && item !== null ? (item as any).url : item;
+              }
+              return img.url;
+            });
+          } else if (postType === 'video') {
+            media_urls = media.uploadedVideos.map(v => {
+              if (v.file) {
+                const item = uploadedVideoUrls[0];
+                return typeof item === 'object' && item !== null ? (item as any).url : item;
+              }
+              return v.url;
+            });
+          }
+
+
+          const updatePayload: any = {
+            content: finalContent,
+            category: postCategory,
+            visibility,
+            location: selectedLocation ? ("formattedAddress" in selectedLocation ? selectedLocation.formattedAddress : selectedLocation.name) : null,
+          };
           if (postType === 'article') updatePayload.title = articleTitle;
+          if (media_urls !== undefined) {
+            updatePayload.media_urls = media_urls;
+          }
+
           await postApi.update(editPostId, updatePayload);
-          if (onUpdate) onUpdate({ ...originalPost, ...updatePayload } as any);
+          
+          if (onUpdate) {
+            // Map the frontend fields for the feed optimistic/immediate update
+            const updatedPost: any = {
+              ...originalPost,
+              ...updatePayload,
+              category: postCategory,
+            };
+            if (media_urls !== undefined) {
+              const images = media_urls.filter(url => !url.match(/\.(mp4|webm|mov)(\?|#|$)/i));
+              const video = media_urls.find(url => url.match(/\.(mp4|webm|mov)(\?|#|$)/i));
+              updatedPost.images = images.length > 0 ? images : undefined;
+              updatedPost.imageSrc = images.length > 0 ? images[0] : undefined;
+              updatedPost.videoSrc = video || undefined;
+            }
+            onUpdate(updatedPost);
+          }
+
           toast.success("Post updated");
           onClose();
         } catch (e) {
+          console.error("Failed to update post:", e);
           toast.error("Failed to update post");
           setIsSubmitting(false);
         }
@@ -308,7 +373,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       }
 
       if (isCompanyPost) {
-        const { mappedPost } = await postApi.create(payload, filesToUpload);
+        const { mappedPost } = await postApi.create(payload, filesToUpload, tagUserIds);
         addPost(mappedPost);
         if (notifyEmployees) {
           await postApi.notifyEmployees(postAsCompanyId!, mappedPost.id);
@@ -318,7 +383,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         resetForm();
         onClose();
       } else {
-        await startUpload(payload, filesToUpload);
+        await startUpload(payload, filesToUpload, tagUserIds);
         if (onPostCreated) onPostCreated();
         resetForm();
         onClose();
@@ -340,6 +405,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     poll.clearPoll();
     setNotifyEmployees(false);
     setIsBroadcast(false);
+    setIsEditingMedia(false);
     setArticleData(null);
     if (clearDraft) {
       useUIStore.getState().setArticleDraft(null);
@@ -370,6 +436,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       isBroadcast, setIsBroadcast,
       postAsCompanyId, setPostAsCompanyId,
       isLoadingPost, isSubmitting,
+      isEditingMedia, setIsEditingMedia,
       originalPost, sharedPost,
       showContextWarning, setShowContextWarning,
       isCompanyPost, currentPoster, currentUser,
