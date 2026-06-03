@@ -38,11 +38,12 @@ import { CommentModal } from "../components/CommentModal"
 import { CompanyRoleModal } from "../components/CompanyRoleModal"
 import { ContactInfoModal } from "../components/ContactInfoModal"
 import { EditAvatarModal } from "../components/EditAvatarModal"
-import { EditPostModal } from "../components/EditPostModal"
+import { CreatePostModal } from "@/features/create-post/components/CreatePostModal"
 import { FollowListModal } from "../components/FollowListModal"
 import { SkillModal } from "../components/SkillModal"
 import { deletePost as apiDeletePost, createRepost, getFollowing, getProfileStats, getUserPosts, toggleLike, toggleSavePost, updatePost } from "../services/profile.service"
 import { ProfileIdentity } from "../types/profile.types"
+import { useUIStore } from "@/store/ui.store"
 
 import { ProfileAbout } from "../commonProfileComponents/ProfileAbout"
 import { ProfileEducation } from "../commonProfileComponents/ProfileEducation"
@@ -90,6 +91,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
   const [localPost, setLocalPost] = useState(post);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const { setEditMode } = useUIStore();
 
   useEffect(() => {
     setLocalPost(post);
@@ -215,7 +217,10 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
               <div className="flex flex-col gap-1">
                 {isOwnPost && (
                   <DropdownMenuItem
-                    onClick={() => setIsEditModalOpen(true)}
+                    onClick={() => {
+                      setEditMode(true, localPost.id);
+                      setIsEditModalOpen(true);
+                    }}
                     className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"
                   >
                     <span className="text-[14px] font-[family-name:var(--font-poppins)]">Edit post</span>
@@ -448,16 +453,21 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
         }}
       />
 
-      <EditPostModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        post={localPost}
-        onSuccess={(updated) => {
-          const mergedPost = mergeProfilePostState(localPost, updated);
-          setLocalPost(mergedPost);
-          onUpdate?.(mergedPost);
-        }}
-      />
+      {isEditModalOpen && (
+        <CreatePostModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditMode(false, null);
+          }}
+          editPostId={localPost.id}
+          onUpdate={(updated) => {
+            const mergedPost = mergeProfilePostState(localPost, updated as any);
+            setLocalPost(mergedPost);
+            onUpdate?.(mergedPost);
+          }}
+        />
+      )}
 
       {isSaveModalOpen && (
         <SavePostModal

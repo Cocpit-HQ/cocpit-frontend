@@ -23,11 +23,13 @@ export const PostMedia = ({
 
   if (validImages.length === 0 && !videoSrc) return null;
 
+  const hasMedia = validImages.length > 0 || !!videoSrc;
+
   return (
     <div
       className={`w-full overflow-hidden bg-card relative group flex flex-col justify-center ${
         isProfileView ? 'aspect-square' : (isVerticalVideo ? '' : (aspectRatio ? '' : 'h-[420px]'))
-      }`}
+      } ${!isProfileView && hasMedia ? 'mt-2 mb-2' : ''}`}
       style={
         !isProfileView
           ? (isVerticalVideo ? { height: '550px' } : (aspectRatio ? { aspectRatio, maxHeight: '700px' } : undefined))

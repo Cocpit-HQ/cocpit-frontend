@@ -23,6 +23,7 @@ import {
 import { CreatePostModal } from '@/features/create-post/components/CreatePostModal';
 import { useFeed } from '@/hooks/use-feed';
 import { updatePost } from '@/services/api/posts';
+import { useUIStore } from '@/store/ui.store';
 import { ReportModal } from '@/components/shared/ReportModal';
 
 interface PostOptionsMenuProps {
@@ -53,6 +54,7 @@ export function PostOptionsMenu({
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const { updatePostInFeed } = useFeed();
   const { mutate: notifyEmployees } = useNotifyEmployees();
+  const { setEditMode } = useUIStore();
 
   // If not own post and no specific actions allowed, we still show the menu for Reporting
   // if (!isOwnPost) return null; 
@@ -95,6 +97,7 @@ export function PostOptionsMenu({
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation();
+                        setEditMode(true, postId);
                         setIsEditModalOpen(true);
                       }}
                       className="cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl px-3 py-1.5 transition-colors group"
@@ -175,12 +178,17 @@ export function PostOptionsMenu({
         </DialogContent>
       </Dialog>
 
-      <CreatePostModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        editPostId={postId}
-        onUpdate={(updatedPost) => updatePostInFeed(postId, updatedPost)}
-      />
+      {isEditModalOpen && (
+        <CreatePostModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditMode(false, null);
+          }}
+          editPostId={postId}
+          onUpdate={(updatedPost) => updatePostInFeed(postId, updatedPost)}
+        />
+      )}
 
       <ReportModal 
         isOpen={isReportModalOpen}

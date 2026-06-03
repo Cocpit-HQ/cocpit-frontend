@@ -30,13 +30,13 @@ const CreatePostFooter = ({
 }: CreatePostFooterProps) => {
 
   const getButtonText = () => {
-    if (isSubmitting) return isEdit ? 'Updating...' : 'Publishing...';
-    if (isEdit) return 'Update Post';
+    if (isSubmitting) return isEdit ? 'Saving...' : 'Publishing...';
+    if (isEdit) return 'Save';
     return isBroadcast ? 'Broadcast Now' : 'Publish Post';
   };
 
   return (
-    <div className={`flex flex-col gap-4 px-6 py-4 border-t border-border ${isMobile ? 'bg-background' : 'bg-card'}`}>
+    <div className={`flex flex-col gap-4 px-6 py-4 border-t border-border shrink-0 ${isMobile ? 'bg-background' : 'bg-card'}`}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           {isCompanyPost && !isEdit && (

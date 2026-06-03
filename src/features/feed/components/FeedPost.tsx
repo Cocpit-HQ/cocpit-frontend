@@ -16,6 +16,8 @@ import { PostContent } from './parts/PostContent';
 import { PostMedia } from './parts/PostMedia';
 import { PostActions } from './parts/PostActions';
 import { PostPoll } from './parts/PostPoll';
+import { useFeed } from '@/hooks/use-feed';
+
 
 // Lazy loaded modals and sections
 const CommentSection = dynamic(() => import('./comments/CommentSection'), { ssr: false });
@@ -24,7 +26,7 @@ const ReportModal = dynamic(() => import('@/components/shared/ReportModal').then
 const PollAnalyticsModal = dynamic(() => import('@/components/home/PollAnalyticsModal').then(m => m.PollAnalyticsModal), { ssr: false });
 const CocpitShareModel = dynamic(() => import('@/shared/commonComponents/cocpitsharemodel'), { ssr: false });
 const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
-const CreatePostModal = dynamic(() => import('@/features/create-post/components/CreatePostModal').then(m => m.CreatePostModal), { ssr: false });
+const CreatePostModal = dynamic(() => import('@/shared/commonComponents/CreatePostModal').then(m => m.CreatePostModal), { ssr: false });
 
 export const FeedPost = (props: FeedPostProps) => {
   const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, sampleLikerUsername, category, title, articleBody } = props;
@@ -34,6 +36,8 @@ export const FeedPost = (props: FeedPostProps) => {
   const isArticleFeedCard = isArticlePost && !props.isFullContent;
 
   // Custom Hooks
+  const { updatePostInFeed } = useFeed(false);
+
   const {
     isLiked, likeCount, isCommented, isSaved, pollData, isVoting, commentCount, shareCount,
     handleLike, handleVote, setIsSaved, setIsCommented, incrementCommentCount, decrementCommentCount, incrementShareCount
@@ -44,7 +48,7 @@ export const FeedPost = (props: FeedPostProps) => {
     isEditModalOpen, setIsEditModalOpen, isReportModalOpen, setIsReportModalOpen,
     handleToggleVisibility, handleDelete
   } = usePostOptions(props, (id, data) => {
-    // Parent handle refresh logic
+    updatePostInFeed(id.toString(), data);
   });
 
   const { videoRef, finalAspectRatio, isVerticalVideo, handleMediaLoad } = usePostMediaObserver(id, videoSrc, props.aspectRatio);
@@ -72,7 +76,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
   useEffect(() => {
     if (!props.sessionId || !feedCardRef.current) return;
-    
+
     let enterTime = 0;
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -90,14 +94,14 @@ export const FeedPost = (props: FeedPostProps) => {
               dwell_ms,
               context: 'home',
               metadata: { slot_type: props.slotType, score: props.rankingScore }
-            }).catch(() => {});
+            }).catch(() => { });
           }
           enterTime = 0;
         }
       },
       { threshold: 0.5 }
     );
-    
+
     observer.observe(feedCardRef.current);
     return () => observer.disconnect();
   }, [id, props.sessionId, props.position, props.slotType, props.rankingScore, props.isJob]);
@@ -112,7 +116,7 @@ export const FeedPost = (props: FeedPostProps) => {
         session_id: props.sessionId,
         position: props.position ?? 0,
         context: 'home'
-      }).catch(() => {});
+      }).catch(() => { });
     }
 
     if (isArticleFeedCard) {
@@ -193,7 +197,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
       {/* Social Proof (Frame 2608624) */}
       {likeCount > 0 && (
-        <div className="px-[16px] h-[20px] flex items-center">
+        <div className="px-[16px] h-[20px] flex items-center mb-4">
           <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
             Liked by {isLiked ? (
               likeCount === 1 ? (
@@ -301,6 +305,17 @@ export const FeedPost = (props: FeedPostProps) => {
           onPostCreated={() => {
             incrementShareCount();
             setIsRepostModalOpen(false);
+          }}
+        />
+      )}
+
+      {isEditModalOpen && (
+        <CreatePostModal
+          isOpen={true}
+          onClose={() => setIsEditModalOpen(false)}
+          editPostId={id.toString()}
+          onUpdate={(updatedPost) => {
+            updatePostInFeed(id.toString(), updatedPost);
           }}
         />
       )}

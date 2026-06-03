@@ -27,7 +27,7 @@ import { useFeed } from '@/hooks/use-feed';
 import { useFeedUIStore } from '@/store/feed.store'
 import { useUIStore } from '@/store/ui.store';
 
-import InlineArticleEditor from './InlineArticleEditor';
+import InlineArticleEditor from '@/features/create-post/components/InlineArticleEditor';
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false)

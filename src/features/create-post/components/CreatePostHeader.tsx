@@ -37,7 +37,7 @@ const CreatePostHeader = ({
 
   if (isMobile) {
     return (
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50 shrink-0">
         <button onClick={onClose} className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors">
           <X className="w-6 h-6" />
         </button>
@@ -69,7 +69,7 @@ const CreatePostHeader = ({
   }
 
   return (
-    <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
+    <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card shrink-0">
       <div className="flex items-center gap-3">
         <div className="relative">
           <button

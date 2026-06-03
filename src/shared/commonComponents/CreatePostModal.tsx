@@ -58,8 +58,8 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
   }, [isOpen, state.postType, state.articleData, isEdit, router]);
 
   const [showAccountSelector, setShowAccountSelector] = useState(false);
-  const [photoStep, setPhotoStep] = useState<'edit' | 'caption'>('edit');
-  const [videoStep, setVideoStep] = useState<'edit' | 'caption'>('edit');
+  const [photoStep, setPhotoStep] = useState<'edit' | 'caption'>(isEdit ? 'caption' : 'edit');
+  const [videoStep, setVideoStep] = useState<'edit' | 'caption'>(isEdit ? 'caption' : 'edit');
   const [pollStep, setPollStep] = useState<'edit' | 'preview'>('edit');
   const [isGeneratingPreviews, setIsGeneratingPreviews] = useState(false);
   const [previewActiveIndex, setPreviewActiveIndex] = useState(0);
@@ -181,13 +181,13 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
       composerTextareaRef.current.style.height = 'auto';
       composerTextareaRef.current.style.height = `${composerTextareaRef.current.scrollHeight}px`;
     }
-  }, [state.description, state.postType]);
+  }, [state.description, state.postType, photoStep, videoStep]);
 
   // Sync state & reset step on close or postType change
   useEffect(() => {
     if (!isOpen) {
-      setPhotoStep('edit');
-      setVideoStep('edit');
+      setPhotoStep(isEdit ? 'caption' : 'edit');
+      setVideoStep(isEdit ? 'caption' : 'edit');
       setPollStep('edit');
       setShowDiscardConfirm(false);
       setSelectedAchievementOptionId(null);
@@ -197,19 +197,19 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
       setShowEmojiPicker(false);
       setEmojiPickerPos(null);
     }
-  }, [isOpen]);
+  }, [isOpen, isEdit]);
 
   useEffect(() => {
-    if (state.postType !== 'photo' || media.uploadedImages.length === 0) {
+    if (!isEdit && (state.postType !== 'photo' || media.uploadedImages.length === 0)) {
       setPhotoStep('edit');
     }
-  }, [state.postType, media.uploadedImages.length]);
+  }, [state.postType, media.uploadedImages.length, isEdit]);
 
   useEffect(() => {
-    if (state.postType !== 'video' || media.uploadedVideos.length === 0) {
+    if (!isEdit && (state.postType !== 'video' || media.uploadedVideos.length === 0)) {
       setVideoStep('edit');
     }
-  }, [state.postType, media.uploadedVideos.length]);
+  }, [state.postType, media.uploadedVideos.length, isEdit]);
 
   useEffect(() => {
     if (state.postType !== 'poll') {
@@ -222,6 +222,31 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
 
     setSelectedAchievementOptionId(null);
   }, [state.postCategory, state.postType, milestoneCategory]);
+
+  useEffect(() => {
+    if (isOpen && isEdit && state.originalPost) {
+      const post = state.originalPost;
+      const category = post.category as string;
+      const isAchievement = category === 'Achievement' || category === 'Milestone' || category === 'Academic';
+      if (isAchievement && post.images && post.images.length > 0) {
+        const imageUrl = post.images[0].toLowerCase();
+        const isTemplateUrl = imageUrl.endsWith('.svg') || imageUrl.includes('/images/achievement/');
+        
+        if (isTemplateUrl) {
+          let optionId: AchievementOptionId = 'certificate';
+          if (imageUrl.includes('project') || imageUrl.includes('new-project') || imageUrl.includes('helpingpartner')) {
+            optionId = 'new-project';
+          } else if (imageUrl.includes('role') || imageUrl.includes('new-role') || imageUrl.includes('newmember') || imageUrl.includes('newteammember') || imageUrl.includes('work anniversary')) {
+            optionId = 'new-role';
+          } else if (imageUrl.includes('academic') || imageUrl.includes('graduation') || imageUrl.includes('celebration')) {
+            optionId = 'academic-milestone';
+          }
+          setSelectedAchievementOptionId(optionId);
+          state.setPostType('photo');
+        }
+      }
+    }
+  }, [isOpen, isEdit, state.originalPost]);
 
   useEffect(() => {
     if (!isOpen || !isMilestoneComposerActive) return;
@@ -360,7 +385,8 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
         shared_job_id: props.sharedJobId,
         location: state.selectedLocation ? ("formattedAddress" in state.selectedLocation ? state.selectedLocation.formattedAddress : state.selectedLocation.name) : null,
         poll_options: state.postType === 'poll' ? poll.pollOptions.filter(o => o.text.trim()).map(o => sanitizeContent(o.text)) : undefined,
-        poll_duration: state.postType === 'poll' ? poll.pollDuration : undefined
+        poll_duration: state.postType === 'poll' ? poll.pollDuration : undefined,
+        tags: taggedUsers.map(u => u.id)
       };
 
       if (state.articleData) {
@@ -379,7 +405,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
         console.error("Custom posting callback failed", err);
       }
     } else {
-      await actions.handlePost();
+      await actions.handlePost(taggedUsers.map(u => u.id));
     }
   };
 
@@ -522,7 +548,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         transform: `scaleX(${activeImage.flipH ? -1 : 1}) scaleY(${activeImage.flipV ? -1 : 1})`
                       }}
                     >
-                      {isEdit ? (
+                      {activeImage?.isExisting ? (
                         <img src={activeImage.url} className="w-full h-full object-cover" alt="Post media" />
                       ) : (
                         <div className="relative w-full h-full">
@@ -679,9 +705,11 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                     </div>
                   ) : (
                     <div className="relative flex flex-col items-center gap-1.5 w-full">
-                      <h2 className="font-semibold text-[19px] leading-[28px] text-foreground tracking-tight text-center">Create</h2>
+                      <h2 className="font-semibold text-[19px] leading-[28px] text-foreground tracking-tight text-center">
+                        {isEdit ? 'Edit Post' : 'Create'}
+                      </h2>
                       <p className="font-normal text-[12.5px] leading-[17px] text-muted-foreground text-center">
-                        Post jobs, insights, or milestones to grow your presence.
+                        {isEdit ? 'Update your post details and share changes.' : 'Post jobs, insights, or milestones to grow your presence.'}
                       </p>
                       {state.postType === 'poll' && (
                         <button
@@ -721,9 +749,8 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 )}
 
                 {/* Scrollable content area — overflow-y: auto */}
-                <div className={`flex flex-col w-full flex-1 min-h-0 ${
-                  (state.postType === 'article' && !state.articleData) ? '' : 'mt-3 overflow-y-auto custom-scrollbar'
-                } ${state.postType === 'poll' ? 'pb-24 overflow-visible' : ''}`}>
+                <div className={`flex flex-col w-full flex-1 min-h-0 ${(state.postType === 'article' && !state.articleData) ? '' : 'mt-3 overflow-y-auto custom-scrollbar'
+                  } ${state.postType === 'poll' ? 'pb-24 overflow-visible' : ''}`}>
                   {(state.postType !== 'article' || !!state.articleData) ? (
                     <div className="relative flex flex-col gap-4 w-full">
 
@@ -732,7 +759,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       {selectedAchievementOption && state.postType === 'photo' && hasImages ? (
                         <div className="flex flex-col gap-2 w-full items-center">
                           {/* Photo preview attachment */}
-                          <div 
+                          <div
                             className="relative w-full bg-muted border border-border rounded-[24px] overflow-hidden flex flex-col items-center justify-center shadow-sm"
                             style={{ aspectRatio: media.aspectRatio, maxHeight: '320px' }}
                           >
@@ -783,7 +810,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         <div className="flex flex-col gap-2 w-full items-center">
                           {/* Photo preview attachment */}
                           {state.postType === 'photo' && hasImages && (
-                            <div 
+                            <div
                               className="relative w-full bg-muted border border-border rounded-[24px] overflow-hidden flex flex-col items-center justify-center shadow-sm"
                               style={{ aspectRatio: media.aspectRatio, maxHeight: '320px' }}
                             >
@@ -865,74 +892,45 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         </div>
                       )}
 
+                      {/* Article Preview Card */}
+                      {state.postType === 'article' && state.articleData && (
+                        <div className="flex justify-center w-full mt-3 mb-4">
+                          <div className="relative group w-full max-w-[420px]">
+                            <a
+                              href="#"
+                              onClick={(e) => e.preventDefault()}
+                              className="block w-full bg-card border border-border rounded-[24px] overflow-hidden shadow-sm transition-all hover:shadow-md"
+                            >
+                              <div className="w-full h-[180px] overflow-hidden">
+                                {state.articleData.coverImage ? (
+                                  <img src={state.articleData.coverImage.url} alt={state.articleData.title || 'Article cover'} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-400">
+                                    <Icon icon="ph:article" className="w-8 h-8" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="bg-[#EEF2FF] py-3.5 px-5 text-center">
+                                <h3 className="line-clamp-2 text-[13px] font-semibold text-[#312E81] font-poppins leading-tight">
+                                  {state.articleData.title || 'Untitled Article'}
+                                </h3>
+                              </div>
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Unified Content Textarea (Part of scroll unit) */}
                       {(state.postType !== 'poll' && (state.postType !== 'article' || !!state.articleData)) && (
                         <div className="flex flex-col w-full">
                           <textarea
                             ref={composerTextareaRef}
                             className="w-full resize-none outline-none font-normal text-[15px] leading-[23px] text-foreground placeholder:text-[#6B7280] bg-transparent font-poppins whitespace-pre-wrap"
-                            placeholder={composerPlaceholder}
+                            placeholder={state.postType === 'article' ? "Say something about your article..." : composerPlaceholder}
                             value={state.description}
                             onChange={(e) => state.setDescription(e.target.value)}
                             style={{ overflow: 'hidden', resize: 'none', height: 'auto', minHeight: '80px' }}
                           />
-                        </div>
-                      )}
-
-                      {/* Article Preview Card */}
-                      {state.postType === 'article' && state.articleData && (
-                        <div className="flex justify-center w-full mt-3">
-                          <div className="relative group w-full max-w-[420px]">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const { setArticleMode, setActiveModal, setArticleDraft } = useUIStore.getState();
-                                setArticleDraft({
-                                  title: state.articleTitle,
-                                  content: state.articleContent,
-                                  coverImage: media.uploadedImages[0] || null,
-                                  description: state.description,
-                                  articleData: null
-                                });
-                                state.setArticleData(null);
-                                setActiveModal(null);
-                                setArticleMode(true);
-                                router.push('/feed');
-                              }}
-                              className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-destructive transition-all duration-200 z-10 cursor-pointer"
-                              title="Edit article"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                            <a
-                              href="#"
-                              onClick={(e) => e.preventDefault()}
-                              className="block w-full bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md"
-                            >
-                              <div className="w-full h-[180px] bg-indigo-50 overflow-hidden">
-                                {state.articleData.coverImage ? (
-                                  <img src={state.articleData.coverImage.url} alt={state.articleData.title || 'Article cover'} className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-indigo-400">
-                                    <Icon icon="ph:article" className="w-8 h-8" />
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex flex-col gap-2 p-4 text-left">
-                                <h3 className="line-clamp-2 text-[15px] font-semibold leading-5 text-foreground font-poppins">
-                                  {state.articleData.title || 'Untitled Article'}
-                                </h3>
-                                {state.articleData.subtitle && (
-                                  <p className="line-clamp-2 text-[12px] leading-4 text-muted-foreground font-poppins">
-                                    {state.articleData.subtitle}
-                                  </p>
-                                )}
-                                <span className="text-[12px] font-medium text-[#6366F1] transition-colors font-poppins">
-                                  Read More
-                                </span>
-                              </div>
-                            </a>
-                          </div>
                         </div>
                       )}
 
@@ -1062,7 +1060,6 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         </button>
                         <button className="relative transition-colors" title="Location" onClick={() => { setIsCreatePostOpen(false); setShowLocationSelector(true); }}>
                           <Icon icon="hugeicons:location-05" className="w-6 h-6 text-foreground" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
-                          {state.selectedLocation && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full" />}
                         </button>
                         <button
                           ref={emojiButtonRef}
@@ -1090,7 +1087,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                             <Loader2 className="w-4 h-4 text-white animate-spin" />
                           ) : null}
                           <span className="font-medium text-[13.5px] leading-[20px] text-white">
-                            {state.isSubmitting ? 'Posting...' : 'Post'}
+                            {state.isSubmitting ? (isEdit ? 'Saving...' : 'Posting...') : (isEdit ? 'Save' : 'Post')}
                           </span>
                         </button>
                       </div>

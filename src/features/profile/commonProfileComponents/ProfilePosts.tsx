@@ -13,8 +13,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
 import { TaggedPeoplePopover } from "@/shared/commonComponents/TaggedPeoplePopover";
 import { CommentModal } from "../components/CommentModal";
-import { EditPostModal } from "../components/EditPostModal";
+import { CreatePostModal } from "@/features/create-post/components/CreatePostModal";
 import { ProfileEmptyState } from "./ProfileEmptyState";
+import { useUIStore } from "@/store/ui.store";
 
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import type { Post } from "@/types/entities";
@@ -53,12 +54,12 @@ const ProfilePostCard = ({
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likesCount, setLikesCount] = useState(Number(post.likes) || 0);
   const [isSaved, setIsSaved] = useState(post.is_saved || false);
-
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [localPost, setLocalPost] = useState(post);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const { setEditMode } = useUIStore();
 
   useEffect(() => {
     setLocalPost(post);
@@ -230,7 +231,10 @@ const ProfilePostCard = ({
               <div className="flex flex-col gap-1">
                 {isOwnPost && (
                   <DropdownMenuItem
-                    onClick={() => setIsEditModalOpen(true)}
+                    onClick={() => {
+                      setEditMode(true, localPost.id);
+                      setIsEditModalOpen(true);
+                    }}
                     className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"
                   >
                     <span className="text-[14px] font-[family-name:var(--font-poppins)]">Edit post</span>
@@ -447,16 +451,21 @@ const ProfilePostCard = ({
         }}
       />
 
-      <EditPostModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        post={localPost}
-        onSuccess={(updated) => {
-          const mergedPost = mergeProfilePostState(localPost, updated);
-          setLocalPost(mergedPost);
-          onUpdate?.(mergedPost);
-        }}
-      />
+      {isEditModalOpen && (
+        <CreatePostModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditMode(false, null);
+          }}
+          editPostId={localPost.id}
+          onUpdate={(updated) => {
+            const mergedPost = mergeProfilePostState(localPost, updated as any);
+            setLocalPost(mergedPost);
+            onUpdate?.(mergedPost);
+          }}
+        />
+      )}
 
       {isSaveModalOpen && (
         <SavePostModal

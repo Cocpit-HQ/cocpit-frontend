@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Bold, Italic, Heading1, Heading2, List, Link as LinkIcon,
-  Image as ImageIcon, X, ArrowLeft, Loader2, Sparkles, Send
+  Image as ImageIcon, X, ArrowLeft, ChevronLeft, Loader2, Sparkles, Send
 } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import { MediaItem } from '../../types';
@@ -47,6 +47,7 @@ const ArticleFlow = ({
   coverImage,
   onCoverUpload,
   onRemoveCover,
+  isEdit,
   coverInputRef,
   caption,
   onCaptionChange,
@@ -235,14 +236,14 @@ const ArticleFlow = ({
         if (urls && urls.length > 0) {
           const imageUrl = typeof urls[0] === 'string' ? urls[0] : urls[0].url;
           const imageHtml = `
-            <div class="relative my-4 inline-block w-full" contenteditable="false" onmouseenter="this.querySelector('.img-tools').style.opacity='1'" onmouseleave="this.querySelector('.img-tools').style.opacity='0'">
-              <img src="${imageUrl}" class="w-full object-cover max-h-[350px]" />
+            <div class="relative my-4 w-full h-[178px] overflow-hidden border border-border group bg-[#D9D9D9]" contenteditable="false" onmouseenter="this.querySelector('.img-tools').style.opacity='1'" onmouseleave="this.querySelector('.img-tools').style.opacity='0'">
+              <img src="${imageUrl}" class="w-full h-full object-cover" />
               <div class="img-tools absolute bottom-3 right-3 flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm transition-opacity duration-200" style="opacity: 0;">
-                <button type="button" class="cursor-pointer hover:bg-indigo-100 p-0.5 rounded transition-colors" title="Edit">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                <button type="button" class="p-1.5 text-zinc-500 hover:text-[#6366F1] hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer" title="Edit">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.44 5.78L4.198 16.02a2 2 0 0 0-.565 1.125l-.553 3.774l3.775-.553A2 2 0 0 0 7.98 19.8L18.22 9.56m-3.78-3.78l2.229-2.23a1.6 1.6 0 0 1 2.263 0l1.518 1.518a1.6 1.6 0 0 1 0 2.263l-2.23 2.23M14.44 5.78l3.78 3.78"/></svg>
                 </button>
-                <button type="button" class="cursor-pointer hover:bg-red-50 p-0.5 rounded transition-colors" title="Delete" onclick="this.closest('.relative').remove();">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                <button type="button" class="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors cursor-pointer" title="Delete" onclick="this.closest('.relative').remove();">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 16 16"><path fill="currentColor" d="M7 3h2a1 1 0 0 0-2 0M6 3a2 2 0 1 1 4 0h4a.5.5 0 0 1 0 1h-.564l-1.205 8.838A2.5 2.5 0 0 1 9.754 15H6.246a2.5 2.5 0 0 1-2.477-2.162L2.564 4H2a.5.5 0 0 1 0-1zm1 3.5a.5.5 0 0 0-1 0v5a.5.5 0 0 0 1 0zM9.5 6a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0v-5a.5.5 0 0 1 .5-.5m-4.74 6.703A1.5 1.5 0 0 0 6.246 14h3.508a1.5 1.5 0 0 0 1.487-1.297L12.427 4H3.573z"/></svg>
                 </button>
               </div>
             </div><span> </span>
@@ -304,29 +305,21 @@ const ArticleFlow = ({
           <a
             href={generatedArticleUrl}
             onClick={(e) => e.preventDefault()}
-            className="group w-full max-w-[420px] bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md"
+            className="group w-full max-w-[420px] bg-card border border-border rounded-[24px] overflow-hidden shadow-sm transition-all hover:shadow-md"
           >
-            <div className="w-full h-[180px] bg-indigo-50 overflow-hidden">
+            <div className="w-full h-[180px] overflow-hidden">
               {coverImage ? (
                 <img src={coverImage.url} alt={title || 'Article cover'} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-indigo-400">
+                <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-indigo-400">
                   <Icon icon="ph:article" className="w-8 h-8" />
                 </div>
               )}
             </div>
-            <div className="flex flex-col gap-2 p-4">
-              <h3 className="line-clamp-2 text-[15px] font-semibold leading-5 text-foreground">
+            <div className="bg-[#EEF2FF] py-3.5 px-5 text-center">
+              <h3 className="line-clamp-2 text-[13px] font-semibold text-[#312E81] font-poppins leading-tight">
                 {title || 'Untitled Article'}
               </h3>
-              {plainArticleText && (
-                <p className="line-clamp-2 text-[12px] leading-4 text-muted-foreground">
-                  {plainArticleText}
-                </p>
-              )}
-              <span className="text-[12px] font-medium text-[#6366F1] group-hover:text-[#4F46E5] transition-colors">
-                Read More
-              </span>
             </div>
           </a>
         </div>
@@ -336,7 +329,8 @@ const ArticleFlow = ({
           onChange={(e) => onCaptionChange(e.target.value)}
           placeholder="Say something about your article..."
           rows={4}
-          className="w-full min-h-[96px] resize-none rounded-xl border border-border bg-background px-4 py-3 text-[14px] text-foreground outline-none placeholder:text-muted-foreground focus:border-[#818CF8] focus:ring-2 focus:ring-[#818CF8]/20"
+          style={{ minHeight: '96px', maxHeight: '200px' }}
+          className="w-full overflow-y-auto custom-scrollbar resize-none rounded-xl border border-border bg-background px-4 py-3 text-[14px] text-foreground outline-none placeholder:text-muted-foreground focus:border-[#818CF8] focus:ring-2 focus:ring-[#818CF8]/20"
         />
 
         <div className="flex items-center gap-4 border-y border-border/50 py-3">
@@ -362,7 +356,7 @@ const ArticleFlow = ({
             className="flex items-center gap-2 px-8 py-2 bg-[#6366F1] hover:bg-[#4F46E5] text-white rounded-full text-[14px] font-normal transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            {isSubmitting ? 'Posting...' : 'Post'}
+            {isSubmitting ? (isEdit ? 'Saving...' : 'Posting...') : (isEdit ? 'Save' : 'Post')}
           </button>
         </div>
       </div>
@@ -375,7 +369,11 @@ const ArticleFlow = ({
       <style>{`
         [contenteditable]:empty:before {
           content: attr(placeholder);
-          color: #9ca3af;
+          color: #6B7280;
+          font-family: 'Poppins', sans-serif;
+          font-weight: 500;
+          font-size: 16px;
+          line-height: 24px;
           cursor: text;
         }
         .article-editor h1 {
@@ -401,20 +399,23 @@ const ArticleFlow = ({
       `}</style>
 
       {/* Header Area */}
-      <div className="flex flex-col border-b border-border/40">
+      <div className="flex flex-col">
         {/* Top Row: Title & Back */}
-        <div className="flex items-center gap-3 px-6 pt-6 pb-4">
-          <button onClick={onClose} className="w-10 h-10 border border-border/60 hover:bg-muted flex items-center justify-center rounded-full transition-colors text-muted-foreground">
-            <ArrowLeft className="w-5 h-5" />
+        <div className="flex items-center gap-3 px-[16px] pt-4 pb-4">
+          <button 
+            onClick={onClose} 
+            className="w-12 h-12 p-2 rounded-full outline outline-1 outline-offset-[-1px] outline-zinc-300 backdrop-blur-md flex items-center justify-center transition-colors text-gray-500 hover:bg-muted"
+          >
+            <ChevronLeft className="w-5 h-5" />
           </button>
           <div>
-            <h2 className="text-[16px] font-bold text-foreground leading-tight">Articles</h2>
+            <h2 className="text-[18px] font-medium text-black leading-tight font-poppins">Articles</h2>
             <p className="text-[12px] text-muted-foreground mt-0.5">Write and share your ideas</p>
           </div>
         </div>
 
         {/* Second Row: Profile, Toolbar, Actions */}
-        <div className="flex flex-row items-center justify-between px-[16px] pb-[16px] w-full" style={{ height: '56px' }}>
+        <div className="relative flex items-center px-[16px] w-full" style={{ height: '56px' }}>
           {/* Author Line (Frame 43) */}
           <div className="flex flex-row items-center gap-[8px]" style={{ height: '42px', padding: '0px' }}>
             {/* Frame 2608495 */}
@@ -434,14 +435,14 @@ const ArticleFlow = ({
           </div>
 
           {/* Pill Toolbar */}
-          <div className="flex flex-row justify-center items-center gap-[8px] bg-[#FFFFFF] border border-[#000000] rounded-[24px]" style={{ width: '472px', height: '56px', padding: '8px 16px', margin: '0 auto' }}>
+          <div className="absolute left-1/2 -translate-x-1/2 flex flex-row justify-center items-center gap-[8px] bg-[#FFFFFF] border border-[#000000] rounded-[24px]" style={{ width: '472px', height: '56px', padding: '8px 16px' }}>
             <button
               onClick={() => format('bold')}
               className="flex justify-center items-center bg-[#FFFFFF] rounded-[24px] transition-all"
               style={{ width: '56px', height: '40px' }}
               title="Bold"
             >
-              <Bold className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
+              <Bold className="w-[20px] h-[20px] text-[#000000]" strokeWidth={1.5} />
             </button>
             <button
               onClick={() => format('italic')}
@@ -449,7 +450,7 @@ const ArticleFlow = ({
               style={{ width: '56px', height: '40px' }}
               title="Italic"
             >
-              <Italic className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
+              <Italic className="w-[20px] h-[20px] text-[#000000]" strokeWidth={1.5} />
             </button>
             <button
               onClick={() => format('formatBlock', 'H1')}
@@ -481,7 +482,7 @@ const ArticleFlow = ({
               style={{ width: '56px', height: '40px' }}
               title="Insert Link capsule"
             >
-              <LinkIcon className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
+              <Icon icon="ant-design:link-outlined" className="w-[24px] h-[24px] text-[#000000]" />
             </button>
             <button
               onClick={triggerInlineImage}
@@ -493,19 +494,19 @@ const ArticleFlow = ({
               {isUploadingInline ? (
                 <Loader2 className="w-[24px] h-[24px] text-[#000000] animate-spin" strokeWidth={1.5} />
               ) : (
-                <ImageIcon className="w-[24px] h-[24px] text-[#000000]" strokeWidth={1.5} />
+                <Icon icon="stash:image" className="w-[24px] h-[24px] text-[#000000]" />
               )}
             </button>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-row justify-center items-start gap-[8px]" style={{ width: '188px', height: '40px' }}>
+          <div className="ml-auto flex flex-row justify-center items-center gap-[8px]" style={{ width: '188px', height: '40px' }}>
             <button
               onClick={onClose}
               className="flex flex-row justify-center items-center bg-[#FFFFFF] border border-[#818CF8] rounded-[24px] transition-all"
               style={{ width: '90px', height: '40px', padding: '8px 16px', gap: '10px' }}
             >
-              <span className="text-center text-[#818CF8]" style={{ fontFamily: 'Poppins', fontWeight: 400, fontSize: '14px', lineHeight: '20px' }}>
+              <span className="text-center text-[#818CF8]" style={{ display: 'inline-block', width: '50px', height: '20px', fontFamily: 'Poppins', fontWeight: 400, fontSize: '14px', lineHeight: '20px' }}>
                 Cancel
               </span>
             </button>
@@ -522,7 +523,7 @@ const ArticleFlow = ({
                   content: content
                 });
               }}
-              className="flex flex-row justify-center items-center border border-[#FFFFFF] rounded-[24px] transition-all shadow-sm"
+              className="flex flex-row justify-center items-center border border-[#FFFFFF] rounded-[24px] transition-all"
               style={{
                 width: '90px',
                 height: '40px',
@@ -532,7 +533,7 @@ const ArticleFlow = ({
                 cursor: isNextActive ? 'pointer' : 'not-allowed'
               }}
             >
-              <span className="text-center text-[#FFFFFF]" style={{ fontFamily: 'Poppins', fontWeight: 400, fontSize: '14px', lineHeight: '20px' }}>
+              <span className="text-center text-[#FFFFFF]" style={{ display: 'inline-block', width: '31px', height: '20px', fontFamily: 'Poppins', fontWeight: 400, fontSize: '14px', lineHeight: '20px' }}>
                 Next
               </span>
             </button>
@@ -541,55 +542,59 @@ const ArticleFlow = ({
       </div>
 
       {/* Editor Body Area */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-8 flex flex-col space-y-6 max-w-[600px] mx-auto w-full">
+      <div className="flex-1 overflow-y-auto custom-scrollbar px-8 pt-6 pb-8 flex flex-col space-y-6 max-w-[600px] mx-auto w-full">
 
         {/* Cover Image cloud box / preview */}
         <div className="w-full">
           {coverImage ? (
-            <div className="relative w-full aspect-[4/1] rounded-2xl overflow-hidden border border-border group bg-muted/20">
+            <div className="relative w-full h-[178px] overflow-hidden border border-border group bg-[#D9D9D9]">
               <img src={coverImage.url} className="w-full h-full object-cover" />
               <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 bg-[#EEF2FF] px-3 py-1.5 rounded-[24px] shadow-sm">
                 <button
+                  type="button"
                   onClick={() => coverInputRef.current?.click()}
-                  className="cursor-pointer hover:bg-indigo-100 p-0.5 rounded transition-colors"
+                  className="p-1.5 text-gray-500 hover:text-[#6366F1] hover:bg-secondary rounded-full transition-colors"
                   title="Edit"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                  <Icon icon="proicons:pencil" className="w-[24px] h-[24px] text-foreground" style={{ strokeWidth: '1.5px', stroke: 'currentColor' }} />
                 </button>
                 <button
+                  type="button"
                   onClick={onRemoveCover}
-                  className="cursor-pointer hover:bg-red-50 p-0.5 rounded transition-colors"
+                  className="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors"
                   title="Delete"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>
+                  <Icon icon="fluent:delete-16-regular" className="w-[24px] h-[24px]" />
                 </button>
               </div>
             </div>
           ) : (
             <div
               onClick={() => coverInputRef.current?.click()}
-              className="flex flex-col items-center justify-center bg-[#FFFFFF] rounded-2xl cursor-pointer p-4 text-center"
-              style={{ width: '600px', height: '178px', margin: '0 auto' }}
+              className="flex flex-col items-center justify-center bg-[#FFFFFF] rounded-2xl cursor-pointer p-4 text-center w-full gap-10"
+              style={{ minHeight: '178px', margin: '0 auto' }}
             >
-              <h5 className="font-semibold text-[16px] text-foreground font-poppins">Cover image</h5>
-              <p className="text-[12px] text-muted-foreground mt-1 mb-6 font-poppins">Add a cover image or video to your article.</p>
+              {/* First Group: Title + Subtitle */}
+              <div className="flex flex-col items-center gap-2">
+                <h5 className="w-[118px] h-[26px] font-medium text-[18px] leading-[26px] text-[#000000] text-center font-poppins">Cover image</h5>
+                <p className="w-[255px] h-[16px] font-normal text-[12px] leading-[16px] text-[#6B7280] text-center font-poppins">Add a cover image or video to your article.</p>
+              </div>
 
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                className="w-[40px] h-[40px] text-muted-foreground mb-4"
-              >
-                <path fill="currentColor" fillRule="evenodd" d="M12 2.5a5.5 5.5 0 0 0-5.02 3.25a23 23 0 0 1-.186.41l-.068.132a.5.5 0 0 1-.127.14a.5.5 0 0 1-.18.058c-.036.007-.11.01-.419.01a3.5 3.5 0 1 0 0 7h.672l1-1H6a2.5 2.5 0 0 1 0-5h.054c.226 0 .413 0 .562-.03c.18-.036.358-.09.526-.2c.168-.108.29-.248.398-.398c.058-.08.11-.184.157-.283q.074-.159.193-.424l.002-.005a4.501 4.501 0 0 1 8.216 0l.002.006q.119.264.193.423c.047.099.099.202.157.283c.107.15.23.29.398.399s.346.163.526.2c.149.03.336.03.562.029H18a2.5 2.5 0 0 1 0 5h-1.672l1 1H18a3.5 3.5 0 1 0 0-7c-.309 0-.383-.003-.418-.01a.5.5 0 0 1-.18-.059a.5.5 0 0 1-.128-.14l-.016-.027l-.052-.105a23 23 0 0 1-.186-.409A5.5 5.5 0 0 0 12 2.5" clipRule="evenodd" />
-                <path fill="currentColor" d="m12 12l-.354-.354l.354-.353l.354.353zm.5 9a.5.5 0 0 1-1 0zm-4.854-5.354l4-4l.708.708l-4 4zm4.708-4l4 4l-.708.708l-4-4zM12.5 12v9h-1v-9z" />
-              </svg>
+              {/* Second Group: Upload Icon + File Type Hints */}
+              <div className="flex flex-col items-center gap-4">
+                <Icon
+                  icon="iconoir:cloud-upload"
+                  className="w-[40px] h-[40px] text-muted-foreground flex-shrink-0"
+                />
 
-              <div className="flex flex-col gap-1 items-center font-poppins">
-                <span className="text-[10px] text-muted-foreground">
-                  JPG, PNG, WEBP (Max 5MB)
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  Recommended: 1200 x 300 px
-                </span>
+                <div className="flex flex-col items-center font-poppins">
+                  <span className="inline-block w-[105px] h-[16px] font-normal text-[8px] leading-[16px] text-[#6B7280] text-center font-poppins">
+                    JPG, PNG, WEBP (Max 5MB)
+                  </span>
+                  <span className="inline-block w-[119px] h-[16px] font-normal text-[8px] leading-[16px] text-[#6B7280] text-center font-poppins">
+                    Recommended: 1200 x 300 px
+                  </span>
+                </div>
               </div>
             </div>
           )}
