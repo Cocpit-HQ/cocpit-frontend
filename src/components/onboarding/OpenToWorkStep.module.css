@@ -61,9 +61,9 @@
 }
 
 .progressBar {
-  height: 2px;
+  height: 6px;
   background-color: #f4f4f5;
-  border-radius: 4px;
+  border-radius: 12px;
   overflow: hidden;
   width: 100%;
 }
@@ -71,7 +71,7 @@
 .progressFill {
   height: 100%;
   background-color: #6366F1;
-  border-radius: 2px;
+  border-radius: 12px;
   transition: width 0.3s ease;
 }
 
@@ -195,8 +195,9 @@
 }
 
 .backButton:hover {
-  background-color: #f4f4f5;
-  border-color: #d4d4d8;
+  background-color: #EEF2FF;
+  border-color: #EEF2FF;
+  color: #6366F1;
 }
 
 .continueButton {

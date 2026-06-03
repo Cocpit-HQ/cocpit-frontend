@@ -121,7 +121,7 @@ const LoginForm = () => {
   };
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-theme="light">
       {/* Header */}
       <div className={styles.header}>
         <h2 className={styles.title}>

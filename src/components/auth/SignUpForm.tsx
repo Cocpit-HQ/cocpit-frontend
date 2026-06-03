@@ -214,7 +214,7 @@ export default function SignUpForm() {
   };
 
   return (
-    <div className={styles.pageWrapper}>
+    <div className={styles.pageWrapper} data-theme="light">
       {/* Left side - Branded overlay */}
       <AuthImagePanel />
       {/* Right side - Form container */}

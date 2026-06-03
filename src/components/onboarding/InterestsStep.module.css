@@ -60,9 +60,9 @@
 }
 
 .progressBar {
-  height: 2px;
+  height: 6px;
   background-color: #f4f4f5;
-  border-radius: 4px;
+  border-radius: 12px;
   overflow: hidden;
   width: 100%;
 }
@@ -70,7 +70,7 @@
 .progressFill {
   height: 100%;
   background-color: #6366F1;
-  border-radius: 2px;
+  border-radius: 12px;
   transition: width 0.3s ease;
 }
 
@@ -95,9 +95,14 @@
   margin: 0;
 }
 
-.countText {
+.selectionCountText {
+  position: absolute;
+  bottom: -20px;
+  right: 0;
   color: #6366F1;
+  font-size: 11px;
   font-weight: 500;
+  margin: 0;
 }
 
 .textGroup {
@@ -159,17 +164,11 @@
   min-height: 0;
   max-height: 260px;
   padding-right: 4px;
-  scrollbar-width: thin;
-  scrollbar-color: #c7d2fe transparent;
+  scrollbar-width: none; /* Hide scrollbar in Firefox */
 }
 
 .tagsScrollable::-webkit-scrollbar {
-  width: 4px;
-}
-
-.tagsScrollable::-webkit-scrollbar-thumb {
-  background-color: #c7d2fe;
-  border-radius: 4px;
+  display: none; /* Hide scrollbar in Webkit/Chrome/Safari */
 }
 
 /* Interests Grid */
@@ -215,13 +214,14 @@
   color: #71717a;
 }
 
+/* Interest / Skill chip — no border, soft background only */
 .tag {
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0 16px;
-  border: 1px solid #818CF8;
+  border: none;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
@@ -260,8 +260,9 @@
 }
 
 .backButton:hover {
-  background-color: #f4f4f5;
-  border-color: #d4d4d8;
+  background-color: #EEF2FF;
+  border-color: #EEF2FF;
+  color: #6366F1;
 }
 
 .continueButton {
