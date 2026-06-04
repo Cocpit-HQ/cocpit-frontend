@@ -10,8 +10,11 @@ import { resetPassword, requestOTP, verifyOTP } from "@/services/api/auth";
 import Image from "next/image";
 import AuthImagePanel from "@/components/auth/AuthImagePanel";
 import styles from "./ForgotPasswordForm.module.css";
+import { useForceLightTheme } from "@/hooks/use-force-light-theme";
 
 export default function ForgotPasswordForm() {
+  useForceLightTheme();
+
   const [email, setEmail] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
@@ -112,7 +115,7 @@ export default function ForgotPasswordForm() {
   return (
     <>
     {resetSuccess ? (
-      <div className={styles.pageWrapper}>
+      <div className={styles.pageWrapper} data-theme="light">
         {/* Left side - Rectangle 4 image */}
         <AuthImagePanel />
 
@@ -145,7 +148,7 @@ export default function ForgotPasswordForm() {
         </div>
       </div>
     ) : (
-    <div className={styles.pageWrapper}>
+    <div className={styles.pageWrapper} data-theme="light">
       {/* Left side - Branded overlay */}
       <AuthImagePanel />
 

@@ -9,8 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 import styles from "./LoginForm.module.css";
 import { signIn, getSession } from "next-auth/react";
 import { GoogleLogin } from "@react-oauth/google";
+import { useForceLightTheme } from "@/hooks/use-force-light-theme";
 
 const LoginForm = () => {
+  useForceLightTheme();
+
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

@@ -10,10 +10,13 @@ import { registrationSchema } from "@/lib/validators";
 import { useRouter } from "next/navigation";
 import { signIn, getSession } from "next-auth/react";
 import { GoogleLogin } from "@react-oauth/google";
+import { useForceLightTheme } from "@/hooks/use-force-light-theme";
 
 import styles from "./SignUpForm.module.css";
 
 export default function SignUpForm() {
+  useForceLightTheme();
+
   const router = useRouter();
   const [step, setStep] = useState(1); // Step 1: Email/OTP, Step 2: Details
   const [email, setEmail] = useState("");
