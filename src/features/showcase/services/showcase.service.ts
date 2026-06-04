@@ -54,6 +54,11 @@ export const showcaseService = {
         await api.post(`/stories/${id}/view${params}`);
     },
 
+    markShowcaseSeen: async (id: number, companyId?: string) => {
+        const params = companyId ? `?companyId=${companyId}` : '';
+        await api.post(`/stories/${id}/view${params}`);
+    },
+
     reactToStory: async (id: number, reaction: boolean, companyId?: string) => {
         const params = companyId ? `?companyId=${companyId}` : '';
         const { data } = await api.post(`/stories/${id}/react${params}`, { reaction });

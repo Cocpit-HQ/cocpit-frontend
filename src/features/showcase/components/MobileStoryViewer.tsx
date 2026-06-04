@@ -50,13 +50,14 @@ export function MobileStoryViewer({ groups, initialGroupId, onClose, isDark, onS
     }, [emblaApi, initialIndex, onSelect])
 
     const handleNextUser = useCallback(() => {
-        if (emblaApi && emblaApi.canScrollNext()) {
-            emblaApi.scrollNext()
+        if (!emblaApi) return;
+        if (currentIndex < validGroups.length - 1) {
+            emblaApi.scrollTo(currentIndex + 1);
         } else {
             setIsStoryViewerOpen(false);
-            onClose()
+            onClose();
         }
-    }, [emblaApi, onClose, setIsStoryViewerOpen]);
+    }, [emblaApi, currentIndex, validGroups, onClose, setIsStoryViewerOpen]);
 
     const handlePrevUser = useCallback(() => {
         if (emblaApi && emblaApi.canScrollPrev()) {

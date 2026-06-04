@@ -117,12 +117,12 @@ export default function ShowcaseContent() {
     }
 
     // 2. Sort stories within each group once
-    return result.map(group => {
+    const sortedStoriesGroups = result.map(group => {
       if (!group.stories || group.stories.length === 0) return group;
 
-      // Create a shallow copy of stories to sort safely
+      // Create a shallow copy of stories to sort safely (ascending / oldest first)
       const sortedStories = [...group.stories].sort(
-        (a, b) => new Date(b.created_at || new Date()).getTime() - new Date(a.created_at || new Date()).getTime()
+        (a, b) => new Date(a.created_at || new Date()).getTime() - new Date(b.created_at || new Date()).getTime()
       );
 
       // Only return a new object if order changed or strict equality fails (optimization)
@@ -132,6 +132,43 @@ export default function ShowcaseContent() {
         stories: sortedStories
       };
     });
+
+    const getUserIsUnseen = (user: StoryGroup) => {
+      if (user.stories && Array.isArray(user.stories)) {
+        return user.stories.some(story => !story.is_seen);
+      }
+      return false;
+    };
+
+    const getLatestStoryTime = (user: StoryGroup) => {
+      if (user.stories && Array.isArray(user.stories)) {
+        return Math.max(...user.stories.map(s => 
+          new Date(s.created_at || '').getTime()
+        ));
+      }
+      return new Date(user.latest_story_at || '').getTime();
+    };
+
+    // 3. Sort groups: Unseen first then seen, newest first within each group
+    const sortedShowcases = [...sortedStoriesGroups].sort((a, b) => {
+      // Keep current user first
+      if (a.is_current_user && !b.is_current_user) return -1;
+      if (!a.is_current_user && b.is_current_user) return 1;
+
+      const aUnseen = getUserIsUnseen(a);
+      const bUnseen = getUserIsUnseen(b);
+
+      // unseen before seen
+      if (aUnseen && !bUnseen) return -1;
+      if (!aUnseen && bUnseen) return 1;
+
+      // within same group: newest first
+      const aTime = getLatestStoryTime(a);
+      const bTime = getLatestStoryTime(b);
+      return bTime - aTime;
+    });
+
+    return sortedShowcases;
   }, [groups, searchQuery]);
 
   // Helper to find the group of the currently selected story
@@ -203,14 +240,14 @@ export default function ShowcaseContent() {
                         if (isMobile) {
                           setMobileSelectedGroupId(group.author.id || 0)
                         } else {
-                          // Find the first unviewed story, or the first one if all viewed
-                          const sortedStories = group.stories
-                          const firstUnviewed = sortedStories.find(s => !s.has_viewed) || sortedStories[0];
-                          const selected = { ...firstUnviewed, author: group.author };
-                          console.log("Opening StoryViewer with:", selected);
-                          setSelectedStory(selected)
-                        }
-                      }}
+                           // Find the first unseen story, or the first one if all viewed
+                           const sortedStories = group.stories
+                           const firstUnseen = sortedStories.find(s => !s.is_seen) || sortedStories[0];
+                           const selected = { ...firstUnseen, author: group.author };
+                           console.log("Opening StoryViewer with:", selected);
+                           setSelectedStory(selected)
+                         }
+                       }}
                     />
                   )
                 })}
@@ -239,46 +276,54 @@ export default function ShowcaseContent() {
           onStoryUpdate={handleStoryUpdate}
           onStoryViewed={markStoryViewed}
           groupStories={selectedStoryGroup.stories}
-          onNext={() => {
-            const currentIndex = selectedStoryGroup.stories.findIndex(s => s.id === selectedStory.id);
-            if (currentIndex < selectedStoryGroup.stories.length - 1) {
-              setSelectedStory({ ...selectedStoryGroup.stories[currentIndex + 1], author: selectedStoryGroup.author });
-            } else {
-              const currentGroupIndex = processedGroups.findIndex(g => g.author.id === selectedStoryGroup.author.id);
-              if (currentGroupIndex !== -1 && currentGroupIndex < processedGroups.length - 1) {
-                const nextGroup = processedGroups[currentGroupIndex + 1];
-                if (nextGroup.stories.length > 0) {
-                  setSelectedStory({ ...nextGroup.stories[0], author: nextGroup.author });
+            onNext={() => {
+              const currentIndex = selectedStoryGroup.stories.findIndex(s => s.id === selectedStory.id);
+              if (currentIndex < selectedStoryGroup.stories.length - 1) {
+                setSelectedStory({ ...selectedStoryGroup.stories[currentIndex + 1], author: selectedStoryGroup.author });
+              } else {
+                const currentGroupIndex = processedGroups.findIndex(g => g.author.id === selectedStoryGroup.author.id);
+                if (currentGroupIndex !== -1 && currentGroupIndex < processedGroups.length - 1) {
+                  const nextUser = processedGroups[currentGroupIndex + 1];
+                  if (nextUser && nextUser.stories.length > 0) {
+                    const nextSorted = [...nextUser.stories].sort(
+                      (a, b) => new Date(a.created_at || new Date()).getTime() - new Date(b.created_at || new Date()).getTime()
+                    );
+                    const firstUnseenIdx = nextSorted.findIndex(s => !s.is_seen);
+                    const startStory = firstUnseenIdx !== -1 ? nextSorted[firstUnseenIdx] : nextSorted[0];
+                    setSelectedStory({ ...startStory, author: nextUser.author });
+                  } else {
+                    setSelectedStory(null);
+                  }
                 } else {
                   setSelectedStory(null);
                 }
-              } else {
-                setSelectedStory(null);
               }
-            }
-          }}
-          onPrev={() => {
-            const currentIndex = selectedStoryGroup.stories.findIndex(s => s.id === selectedStory.id);
-            if (currentIndex > 0) {
-              setSelectedStory({ ...selectedStoryGroup.stories[currentIndex - 1], author: selectedStoryGroup.author });
-            } else {
-              const currentGroupIndex = processedGroups.findIndex(g => g.author.id === selectedStoryGroup.author.id);
-              if (currentGroupIndex > 0) {
-                const prevGroup = processedGroups[currentGroupIndex - 1];
-                if (prevGroup.stories.length > 0) {
-                  setSelectedStory({ ...prevGroup.stories[prevGroup.stories.length - 1], author: prevGroup.author });
+            }}
+            onPrev={() => {
+              const currentIndex = selectedStoryGroup.stories.findIndex(s => s.id === selectedStory.id);
+              if (currentIndex > 0) {
+                setSelectedStory({ ...selectedStoryGroup.stories[currentIndex - 1], author: selectedStoryGroup.author });
+              } else {
+                const currentGroupIndex = processedGroups.findIndex(g => g.author.id === selectedStoryGroup.author.id);
+                if (currentGroupIndex > 0) {
+                  const prevGroup = processedGroups[currentGroupIndex - 1];
+                  if (prevGroup.stories.length > 0) {
+                    const prevSorted = [...prevGroup.stories].sort(
+                      (a, b) => new Date(a.created_at || new Date()).getTime() - new Date(b.created_at || new Date()).getTime()
+                    );
+                    setSelectedStory({ ...prevSorted[prevSorted.length - 1], author: prevGroup.author });
+                  }
                 }
               }
+            }}
+            hasNext={
+              selectedStoryGroup.stories.findIndex(s => s.id === selectedStory.id) < selectedStoryGroup.stories.length - 1 ||
+              processedGroups.findIndex(pg => pg.author.id === selectedStoryGroup.author.id) < processedGroups.length - 1
             }
-          }}
-          hasNext={
-            selectedStoryGroup.stories.findIndex(s => s.id === selectedStory.id) < selectedStoryGroup.stories.length - 1 ||
-            processedGroups.findIndex(g => g.author.id === selectedStoryGroup.author.id) < processedGroups.length - 1
-          }
-          hasPrev={
-            selectedStoryGroup.stories.findIndex(s => s.id === selectedStory.id) > 0 ||
-            processedGroups.findIndex(g => g.author.id === selectedStoryGroup.author.id) > 0
-          }
+            hasPrev={
+              selectedStoryGroup.stories.findIndex(s => s.id === selectedStory.id) > 0 ||
+              processedGroups.findIndex(g => g.author.id === selectedStoryGroup.author.id) > 0
+            }
         />
       )}
 
