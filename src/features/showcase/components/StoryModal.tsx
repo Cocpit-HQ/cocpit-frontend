@@ -53,7 +53,7 @@ export function StoryModal({
       list = foundGroup ? foundGroup.stories : [story]
     }
     return [...list].sort(
-      (a, b) => new Date(b.created_at || new Date()).getTime() - new Date(a.created_at || new Date()).getTime()
+      (a, b) => new Date(a.created_at || new Date()).getTime() - new Date(b.created_at || new Date()).getTime()
     )
   }, [story, groups, groupStories])
 
@@ -99,8 +99,23 @@ export function StoryModal({
   const [isPlaying, setIsPlaying] = useState(true)
   // By default, story should be unmuted
   const [isMuted, setIsMuted] = useState(false)
-  const [showPauseOverlay, setShowPauseOverlay] = useState(false)
+  const [activeOverlay, setActiveOverlay] = useState<"play" | "pause" | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+
+  const isInitialOpenRef = useRef(true)
+
+  // Redirect to first unseen story (or oldest story if all seen) on initial open/mount
+  useEffect(() => {
+    if (isInitialOpenRef.current && activeStories.length > 0) {
+      isInitialOpenRef.current = false
+      const firstUnseenIdx = activeStories.findIndex(s => !s.is_seen)
+      const startStoryIdx = firstUnseenIdx !== -1 ? firstUnseenIdx : 0
+      const startStory = activeStories[startStoryIdx]
+      if (startStory && startStory.id !== story.id) {
+        setSelectedStory({ ...startStory, author: activeStory.author || startStory.author })
+      }
+    }
+  }, [activeStories, story.id, activeStory.author, setSelectedStory])
 
   // Reset timer/playback state when changing story segments
   useEffect(() => {
@@ -124,10 +139,11 @@ export function StoryModal({
     if (!activeStory) return
     const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined
     
-    markStoryViewed(activeStory.id)
-    if (onStoryViewed) onStoryViewed(activeStory.id)
-    
-    showcaseService.viewStory(activeStory.id, companyId)
+    showcaseService.markShowcaseSeen(activeStory.id, companyId)
+      .then(() => {
+        markStoryViewed(activeStory.id)
+        if (onStoryViewed) onStoryViewed(activeStory.id)
+      })
       .catch(err => console.error("Failed to register view", err))
   }, [activeStory?.id, activeProfile, markStoryViewed, onStoryViewed])
 
@@ -140,7 +156,12 @@ export function StoryModal({
       } else {
         // It's the last story segment of this user group
         if (nextGroup && nextGroup.stories.length > 0) {
-          setSelectedStory({ ...nextGroup.stories[0], author: nextGroup.author })
+          const nextSorted = [...nextGroup.stories].sort(
+            (a, b) => new Date(a.created_at || new Date()).getTime() - new Date(b.created_at || new Date()).getTime()
+          )
+          const firstUnseenIdx = nextSorted.findIndex(s => !s.is_seen)
+          const startStory = firstUnseenIdx !== -1 ? nextSorted[firstUnseenIdx] : nextSorted[0]
+          setSelectedStory({ ...startStory, author: nextGroup.author })
         } else {
           onClose() // Absolute end reached -> close modal
         }
@@ -157,7 +178,10 @@ export function StoryModal({
       } else {
         // It's the first story segment of this user group
         if (prevGroup && prevGroup.stories.length > 0) {
-          setSelectedStory({ ...prevGroup.stories[prevGroup.stories.length - 1], author: prevGroup.author })
+          const prevSorted = [...prevGroup.stories].sort(
+            (a, b) => new Date(a.created_at || new Date()).getTime() - new Date(b.created_at || new Date()).getTime()
+          )
+          setSelectedStory({ ...prevSorted[prevSorted.length - 1], author: prevGroup.author })
         }
       }
     }
@@ -195,11 +219,15 @@ export function StoryModal({
     e.stopPropagation()
     if (isPlaying) {
       setIsPlaying(false)
+      setActiveOverlay("pause")
+      setTimeout(() => {
+        setActiveOverlay(null)
+      }, 600)
     } else {
       setIsPlaying(true)
-      setShowPauseOverlay(true)
+      setActiveOverlay("play")
       setTimeout(() => {
-        setShowPauseOverlay(false)
+        setActiveOverlay(null)
       }, 600)
     }
   }
@@ -229,12 +257,7 @@ export function StoryModal({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center select-none"
-      style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)'
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center select-none bg-black/80 backdrop-blur-sm"
       onClick={onClose}
     >
       <style>{`
@@ -247,70 +270,30 @@ export function StoryModal({
       {/* Screen-level Close Button */}
       <button 
         onClick={(e) => { e.stopPropagation(); onClose(); }} 
-        className="absolute z-50 text-[#FF5C5C] hover:opacity-80 active:scale-95 transition-all flex items-center justify-center p-0 cursor-pointer"
-        style={{
-          top: '40px',
-          right: '40px',
-          width: '24px',
-          height: '24px',
-          flex: 'none',
-          order: 0,
-          flexGrow: 0,
-        }}
+        className="absolute top-10 right-10 z-50 text-[#FF5C5C] hover:opacity-80 active:scale-95 transition-all flex items-center justify-center p-0 cursor-pointer w-6 h-6 shrink-0 order-0 grow-0"
         aria-label="Close story viewer"
       >
-        <Icon icon="lucide:x" style={{ width: '24px', height: '24px' }} />
+        <Icon icon="lucide:x" width="24" height="24" />
       </button>
 
       {/* Center Wrapper: (48px left btn) + (100px gap) + (420px card) + (100px gap) + (48px right btn) = 716px width */}
       <div 
-        className="flex flex-row justify-center items-center"
-        style={{
-          width: '716px',
-          height: '620px',
-          gap: '100px',
-        }}
+        className="flex flex-row justify-center items-center w-[716px] h-[620px] gap-[100px]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Left Navigation Chevron */}
         <button
           onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-          className="flex items-center justify-center text-white cursor-pointer hover:bg-white/10 active:bg-white/20 active:scale-95 transition-all"
-          style={{
-            boxSizing: 'border-box',
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '8px',
-            gap: '10px',
-            width: '48px',
-            height: '48px',
-            border: '1px solid #FFFFFF',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            borderRadius: '100px',
-            flex: 'none',
-            order: 0,
-            flexGrow: 0,
-            background: 'transparent',
-            visibility: showLeftButton ? 'visible' : 'hidden'
-          }}
+          className={`flex items-center justify-center text-white cursor-pointer hover:bg-white/10 active:bg-white/20 active:scale-95 transition-all box-border flex flex-row p-2 gap-2.5 w-12 h-12 border border-white backdrop-blur-md rounded-[100px] shrink-0 grow-0 order-0 bg-transparent ${showLeftButton ? 'visible' : 'invisible'}`}
           aria-label="Previous story"
         >
-          <Icon icon="lucide:chevron-left" style={{ width: '24px', height: '24px' }} />
+          <Icon icon="lucide:chevron-left" width="24" height="24" />
         </button>
 
         {/* Story Card */}
         <div
           onClick={togglePlayPause}
-          className="relative overflow-hidden cursor-pointer"
-          style={{
-            width: '420px',
-            height: '620px',
-            borderRadius: '24px',
-            background: '#000',
-          }}
+          className="relative overflow-hidden cursor-pointer w-[420px] h-[620px] rounded-[24px] bg-black"
         >
           {/* Media Rendering */}
           {isVideo ? (
@@ -340,26 +323,10 @@ export function StoryModal({
 
           {/* Top Gradient Overlay & Information */}
           <div 
-            className="absolute top-0 left-0 z-30 pointer-events-none"
-            style={{
-              width: '420px',
-              height: '102px',
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-              background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)'
-            }}
+            className="absolute top-0 left-0 z-30 pointer-events-none w-[420px] h-[102px] p-4 flex flex-col gap-2 bg-gradient-to-b from-black/50 to-transparent"
           >
             {/* Timeline Segment Bars */}
-            <div 
-              style={{
-                display: 'flex',
-                gap: '8px',
-                height: '4px',
-                width: '100%'
-              }}
-            >
+            <div className="flex gap-2 h-1 w-full">
               {activeStories.map((s, index) => {
                 let segmentWidth = "0%"
                 if (index < currentIndex) {
@@ -371,17 +338,12 @@ export function StoryModal({
                 return (
                   <div 
                     key={s.id} 
-                    className="flex-1 rounded-full overflow-hidden"
-                    style={{
-                      height: '4px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.3)'
-                    }}
+                    className="flex-1 rounded-full overflow-hidden h-1 bg-white/30"
                   >
                     <div 
+                      className="h-full bg-white"
                       style={{
-                        height: '100%',
                         width: segmentWidth,
-                        backgroundColor: '#FFFFFF',
                         transition: index === currentIndex && isPlaying ? 'width 0.2s linear' : 'none'
                       }}
                     />
@@ -391,85 +353,28 @@ export function StoryModal({
             </div>
 
             {/* Profile Row */}
-            <div 
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginTop: '4px'
-              }}
-            >
+            <div className="flex items-center gap-2 mt-1">
               <img 
                 src={activeStory.author?.avatar || "/assets/pngegg.png"} 
                 alt={activeStory.author?.name || "Profile"}
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  border: '1px solid rgba(255, 255, 255, 0.2)'
-                }}
+                className="w-10 h-10 rounded-full object-cover border border-white/20"
                 onError={(e) => {
                   e.currentTarget.src = "/assets/pngegg.png"
                 }}
               />
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span 
-                  style={{
-                    fontSize: '18px',
-                    fontWeight: 500,
-                    color: '#FFFFFF',
-                    lineHeight: '1.2'
-                  }}
-                >
+              <div className="flex flex-col">
+                <span className="text-lg font-medium text-white leading-tight">
                   {activeStory.author?.name || "Cocpit"}
                 </span>
-                <span 
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 400,
-                    color: '#FFFFFF',
-                    opacity: 0.8,
-                    lineHeight: '1.2'
-                  }}
-                >
+                <span className="text-xs font-normal text-white/80 leading-tight">
                   {storyTimestamp}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Central Play Feedback Overlay */}
-          {!isPlaying && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/10 z-30 pointer-events-none">
-              <div 
-                style={{
-                  boxSizing: 'border-box',
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  padding: '8px',
-                  gap: '10px',
-                  width: '48px',
-                  height: '48px',
-                  border: '1px solid #FFFFFF',
-                  backdropFilter: 'blur(12px)',
-                  WebkitBackdropFilter: 'blur(12px)',
-                  borderRadius: '100px',
-                  flex: 'none',
-                  order: 0,
-                  flexGrow: 0,
-                  background: 'transparent'
-                }}
-              >
-                <Icon icon="lucide:play" style={{ width: '24px', height: '24px', color: '#FFFFFF' }} className="ml-0.5 fill-white text-white" />
-              </div>
-            </div>
-          )}
-
-          {/* Pause Flash Overlay */}
-          {showPauseOverlay && (
+          {/* Central Play/Pause Flash Overlay */}
+          {activeOverlay && (
             <div 
               className="absolute inset-0 flex items-center justify-center bg-black/10 z-30 pointer-events-none"
               style={{
@@ -477,27 +382,14 @@ export function StoryModal({
               }}
             >
               <div 
-                style={{
-                  boxSizing: 'border-box',
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  padding: '8px',
-                  gap: '10px',
-                  width: '48px',
-                  height: '48px',
-                  border: '1px solid #FFFFFF',
-                  backdropFilter: 'blur(12px)',
-                  WebkitBackdropFilter: 'blur(12px)',
-                  borderRadius: '100px',
-                  flex: 'none',
-                  order: 0,
-                  flexGrow: 0,
-                  background: 'transparent'
-                }}
+                className="box-border flex flex-row items-center justify-center p-2 gap-2.5 w-12 h-12 border border-white backdrop-blur-md rounded-[100px] shrink-0 grow-0 order-0 bg-transparent"
               >
-                <Icon icon="lucide:pause" style={{ width: '24px', height: '24px', color: '#FFFFFF' }} className="text-white" />
+                <Icon 
+                  icon={activeOverlay === "play" ? "lucide:play" : "lucide:pause"} 
+                  width="24"
+                  height="24"
+                  className={activeOverlay === "play" ? "ml-0.5 text-white" : "text-white"} 
+                />
               </div>
             </div>
           )}
@@ -517,30 +409,10 @@ export function StoryModal({
         {/* Right Navigation Chevron */}
         <button
           onClick={(e) => { e.stopPropagation(); handleNext(); }}
-          className="flex items-center justify-center text-white cursor-pointer hover:bg-white/10 active:bg-white/20 active:scale-95 transition-all"
-          style={{
-            boxSizing: 'border-box',
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '8px',
-            gap: '10px',
-            width: '48px',
-            height: '48px',
-            border: '1px solid #FFFFFF',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            borderRadius: '100px',
-            flex: 'none',
-            order: 0,
-            flexGrow: 0,
-            background: 'transparent',
-            visibility: showRightButton ? 'visible' : 'hidden'
-          }}
+          className={`flex items-center justify-center text-white cursor-pointer hover:bg-white/10 active:bg-white/20 active:scale-95 transition-all box-border flex flex-row p-2 gap-2.5 w-12 h-12 border border-white backdrop-blur-md rounded-[100px] shrink-0 grow-0 order-0 bg-transparent ${showRightButton ? 'visible' : 'invisible'}`}
           aria-label="Next story"
         >
-          <Icon icon="lucide:chevron-right" style={{ width: '24px', height: '24px' }} />
+          <Icon icon="lucide:chevron-right" width="24" height="24" />
         </button>
       </div>
     </div>

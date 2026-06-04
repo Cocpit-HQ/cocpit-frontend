@@ -56,6 +56,7 @@ export const mapStory = (story: RawStory): StoryDetail => {
         isAuthor: story.is_author,
         isLiked: story.has_liked,
         has_viewed: story.has_viewed,
+        is_seen: story.has_viewed,
         media_type: story.media_type,
         media_url,
         thumbnail_url,

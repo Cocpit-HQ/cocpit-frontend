@@ -54,7 +54,7 @@ export function useStoryGroups(initialGroups: StoryGroup[] = []) {
             const storyIndex = group.stories.findIndex(s => s.id === storyId);
             if (storyIndex === -1) return group;
             const updatedStories = [...group.stories];
-            updatedStories[storyIndex] = { ...updatedStories[storyIndex], has_viewed: true };
+            updatedStories[storyIndex] = { ...updatedStories[storyIndex], has_viewed: true, is_seen: true };
             return { ...group, stories: updatedStories };
         }));
     }, []);

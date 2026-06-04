@@ -114,10 +114,13 @@ export function StoryModal({ story, onClose, onStoryUpdate, onStoryViewed, onNex
   // View Story effect & Fetch Details if Author
   useEffect(() => {
     const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
-    // Optimistically mark as viewed so the blue ring disappears immediately
-    markStoryViewed(story.id);
-    if (onStoryViewed) onStoryViewed(story.id);
-    showcaseService.viewStory(story.id, companyId).catch(err => console.error("View story failed", err));
+    
+    showcaseService.markShowcaseSeen(story.id, companyId)
+      .then(() => {
+        markStoryViewed(story.id);
+        if (onStoryViewed) onStoryViewed(story.id);
+      })
+      .catch(err => console.error("View story failed", err));
 
     if (story.isAuthor) {
       showcaseService.getStoryDetails(story.id, companyId).then(data => {

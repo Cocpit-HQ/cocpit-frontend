@@ -300,7 +300,7 @@ export default function OnboardingPage() {
 
   if (isCompleted) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white" data-theme="light">
         <div className="flex flex-col items-center" style={{ width: "208px", gap: "8px" }}>
           <img
             src="/assets/profilecompletion.svg"
@@ -321,7 +321,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white overflow-hidden relative">
+    <div className="min-h-screen bg-white overflow-hidden relative" data-theme="light">
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={showSubStep ? `substep-${userRole}` : `step-${step}`}

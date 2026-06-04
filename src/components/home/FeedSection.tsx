@@ -8,7 +8,7 @@ import { FeedPostCardSkeleton } from '@/features/feed/components/skeletons/FeedP
 import { useFeed } from '@/hooks/use-feed';
 import { useInView } from '@/hooks/use-in-view';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
-import { StoryRail } from './StoryRail';
+import { StoryRail } from '@/features/home/components/StoryRail';
 import { FeedSortDropdown } from './FeedSortDropdown';
 import { StoryDetail, StoryGroup } from '@/types/showcase';
 import { ApplicantInsightCard, CompactJobRecommendation, JobMatchesCard } from './FeedInsights';

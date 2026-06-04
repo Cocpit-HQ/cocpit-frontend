@@ -22,7 +22,7 @@ export function StoryCard({ group, onClick }: StoryCardProps) {
     if (!latestStory) return null
 
     // Check if there are any unviewed stories in the group (excluding own)
-    const hasUnviewed = group.stories.some(s => !s.has_viewed) && !group.is_current_user
+    const hasUnviewed = group.stories.some(s => !s.is_seen) && !group.is_current_user
 
     // Direct click to open
     const handleClick = (e: React.MouseEvent) => {
@@ -35,13 +35,13 @@ export function StoryCard({ group, onClick }: StoryCardProps) {
                 ? 'border-blue-500'
                 : hasUnviewed
                     ? 'border-primary ring-1 ring-primary/20'
-                    : 'border-border hover:border-primary/50'
+                    : 'border-border'
                 }`}
             onClick={handleClick}
         >
             <div className="relative h-48 overflow-hidden">
                 {/* Content Wrapper that gets blurred */}
-                <div className={`w-full h-full transition-all duration-500 filter blur-xl group-hover:blur-lg`}>
+                <div className="w-full h-full filter blur-xl">
                     {/* Background Image/Color */}
                     <div className="w-full h-full absolute inset-0">
                         {previewImage ? (
@@ -58,7 +58,7 @@ export function StoryCard({ group, onClick }: StoryCardProps) {
                         )}
                     </div>
 
-                    {/* Video Icon - Now Blurred */}
+                    {/* Video Icon */}
                     {latestStory.isVideo && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none z-10">
                             <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
@@ -67,12 +67,12 @@ export function StoryCard({ group, onClick }: StoryCardProps) {
                         </div>
                     )}
 
-                    {/* Author Badge - Now Blurred */}
+                    {/* Author Badge */}
                     <div className="relative z-10">
                         <AuthorBadge story={{ ...latestStory, author: group.author }} />
                     </div>
 
-                    {/* Top Right Story Count Badge - Now Blurred */}
+                    {/* Top Right Story Count Badge */}
                     {storiesCount > 1 && (
                         <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2 py-1 rounded-md flex items-center gap-1 z-10 border border-white/10">
                             <Layers className="w-3 h-3" />
@@ -88,9 +88,7 @@ export function StoryCard({ group, onClick }: StoryCardProps) {
             </div>
 
             <div className="p-3 relative z-10 bg-card">
-                <h3
-                    className="mb-1 group-hover:text-primary transition-colors text-foreground"
-                >
+                <h3 className="mb-1 text-foreground">
                     {group.is_current_user ? "Your Story" : group.author.name}
                 </h3>
                 <div className="flex flex-wrap items-center justify-between text-xs gap-y-1 text-muted-foreground">

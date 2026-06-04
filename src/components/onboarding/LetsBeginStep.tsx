@@ -84,9 +84,9 @@ export default function LetsBeginStep({
             {uploadedName && !error ? (
               <>
                 <div className={styles.iconWrapper}>
-                  <FileText color="#ef4444" size={35} />
+                  <Icon icon="material-icon-theme:pdf" width={40} height={40} />
                 </div>
-                <span className={styles.optionTitle} style={{ color: '#009DDF' }}>Change document</span>
+                <span className={styles.optionTitle} style={{ color: '#6366F1' }}>Change document</span>
                 <span className={styles.optionSubtitle}>We'll auto-fill your details</span>
               </>
             ) : (

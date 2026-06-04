@@ -227,10 +227,12 @@ export const UserStorySlide = ({
     useEffect(() => {
         if (isActiveUser && currentStory && !currentStory.isAuthor) {
             const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
-            // Optimistically mark as viewed so the blue ring disappears immediately
-            markStoryViewed(currentStory.id);
-            if (onStoryViewed) onStoryViewed(currentStory.id);
-            showcaseService.viewStory(currentStory.id, companyId).catch(err => console.error("View story failed", err));
+            showcaseService.markShowcaseSeen(currentStory.id, companyId)
+                .then(() => {
+                    markStoryViewed(currentStory.id);
+                    if (onStoryViewed) onStoryViewed(currentStory.id);
+                })
+                .catch(err => console.error("View story failed", err));
         }
     }, [currentStory?.id, currentStory?.isAuthor, isActiveUser, activeProfile?.id, activeProfile?.type, markStoryViewed])
 

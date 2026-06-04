@@ -62,7 +62,9 @@ export const UserStorySlide = ({
         const stories = group.stories || [];
         const unique = new Map();
         stories.forEach(s => unique.set(s.id, s));
-        return Array.from(unique.values());
+        return Array.from(unique.values()).sort(
+            (a, b) => new Date(a.created_at || new Date()).getTime() - new Date(b.created_at || new Date()).getTime()
+        );
     }, [group?.stories]);
 
     // Ensure storyIndex is within bounds
@@ -185,17 +187,19 @@ export const UserStorySlide = ({
             // Just became active
             wasActiveRef.current = true
             if (sortedStories.length > 0) {
-                setStoryIndex(0)
+                const firstUnseenIdx = sortedStories.findIndex(story => !story.is_seen);
+                const initialStoryIdx = firstUnseenIdx !== -1 ? firstUnseenIdx : 0;
+                setStoryIndex(initialStoryIdx)
                 setProgress(0)
-                const firstStory = sortedStories[0];
-                setIsLiked(!!firstStory?.isLiked)
+                const initialStory = sortedStories[initialStoryIdx];
+                setIsLiked(!!initialStory?.isLiked)
                 setIsDescriptionExpanded(false)
             }
         } else if (!isActiveUser) {
             // Became inactive
             wasActiveRef.current = false
         }
-    }, [isActiveUser]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [isActiveUser, sortedStories])
 
     // Reset like/description when story changes
     useEffect(() => {
@@ -227,10 +231,12 @@ export const UserStorySlide = ({
     useEffect(() => {
         if (isActiveUser && currentStory && !currentStory.isAuthor) {
             const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
-            // Optimistically mark as viewed so the blue ring disappears immediately
-            markStoryViewed(currentStory.id);
-            if (onStoryViewed) onStoryViewed(currentStory.id);
-            showcaseService.viewStory(currentStory.id, companyId).catch(err => console.error("View story failed", err));
+            showcaseService.markShowcaseSeen(currentStory.id, companyId)
+                .then(() => {
+                    markStoryViewed(currentStory.id);
+                    if (onStoryViewed) onStoryViewed(currentStory.id);
+                })
+                .catch(err => console.error("View story failed", err));
         }
     }, [currentStory?.id, currentStory?.isAuthor, isActiveUser, activeProfile?.id, activeProfile?.type, markStoryViewed])
 
@@ -877,20 +883,22 @@ export const UserStorySlide = ({
 
                             <div className="mt-1 px-3 pb-1.5 flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-2 min-w-0">
-                                    <div className="w-8 h-8 rounded-full overflow-hidden bg-white/20 border border-white/30 shrink-0">
-                                        <img
-                                            src={uploaderAvatar}
-                                            alt={uploaderName}
-                                            className="w-full h-full object-cover"
-                                            onError={(e) => {
-                                                e.currentTarget.src = "/assets/pngegg.png";
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="min-w-0 flex items-center gap-2">
-                                        <p className="text-white text-sm font-semibold truncate">{uploaderName}</p>
+                                    <img 
+                                        src={uploaderAvatar} 
+                                        alt={uploaderName}
+                                        className="w-10 h-10 rounded-full object-cover border border-white/20"
+                                        onError={(e) => {
+                                            e.currentTarget.src = "/assets/pngegg.png";
+                                        }}
+                                    />
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-semibold text-white leading-tight truncate">
+                                            {uploaderName}
+                                        </span>
                                         {storyTimestamp && (
-                                            <p className="text-white/75 text-xs whitespace-nowrap">{storyTimestamp}</p>
+                                            <span className="text-xs font-normal text-white/80 leading-tight whitespace-nowrap">
+                                                {storyTimestamp}
+                                            </span>
                                         )}
                                     </div>
                                 </div>

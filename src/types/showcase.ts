@@ -37,6 +37,7 @@ export interface StoryDetail extends StoryCard {
   isAuthor?: boolean;
   isLiked?: boolean;
   has_viewed?: boolean;
+  is_seen?: boolean;
   created_at?: string;
   media_type?: 'image' | 'video';
   media_url?: string;
