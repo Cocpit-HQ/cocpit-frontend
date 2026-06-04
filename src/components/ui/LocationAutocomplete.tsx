@@ -1,8 +1,15 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { MapPin, Loader2, X, ChevronDown } from "lucide-react";
-import { searchLocations, LocationSuggestion, searchPlaces, PlacesSuggestion, getPlaceDetails, StructuredLocation } from "@/services/api/location";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { MapPin, X, ChevronDown, Loader2 } from "lucide-react";
+import {
+  StructuredLocation,
+  LocationSuggestion,
+  PlacesSuggestion,
+  searchPlaces,
+  getPlaceDetails,
+} from "@/services/api/location";
+import { POPULAR_LOCATIONS, StaticLocation } from "@/data/staticLocations";
 import { useDebounce } from "@/hooks/use-debounce";
 import { v4 as uuidv4 } from "uuid";
 import styles from "./LocationAutocomplete.module.css";
@@ -13,80 +20,120 @@ interface LocationAutocompleteProps {
   mode?: "legacy" | "places";
 }
 
-export default function LocationAutocomplete({ onSelect, value, mode = "places" }: LocationAutocompleteProps) {
+type DisplaySuggestion =
+  | { kind: "static"; data: StaticLocation }
+  | { kind: "api"; data: PlacesSuggestion };
+
+function staticToStructured(loc: StaticLocation): StructuredLocation {
+  return {
+    placeId: loc.id,
+    country: loc.country,
+    state: loc.state,
+    city: loc.city,
+    formattedAddress: loc.formattedAddress,
+    latitude: loc.latitude,
+    longitude: loc.longitude,
+  };
+}
+
+export default function LocationAutocomplete({ onSelect, value }: LocationAutocompleteProps) {
   const [query, setQuery] = useState(value ?? "");
-  const [suggestions, setSuggestions] = useState<(LocationSuggestion | PlacesSuggestion)[]>([]);
+  // "idle" = showing popular static cities; "searching" = user typed, use API
+  const [mode, setMode] = useState<"idle" | "searching">("idle");
+  const [staticSuggestions] = useState<StaticLocation[]>(POPULAR_LOCATIONS);
+  const [apiSuggestions, setApiSuggestions] = useState<PlacesSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const debouncedQuery = useDebounce(query, 300);
+
+  const debouncedQuery = useDebounce(query, 350);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const sessionToken = useRef<string>(uuidv4());
 
-  const resetSession = () => {
-    sessionToken.current = uuidv4();
-  };
+  const resetSession = () => { sessionToken.current = uuidv4(); };
 
-  // Sync external value if it changes
+  // Sync external value
   useEffect(() => {
-    if (value !== query) {
-      setQuery(value ?? "");
-    }
+    if (value !== query) setQuery(value ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  // Fetch suggestions when debounced query changes
+  // When debounced query changes AND user is actively searching → call API
   useEffect(() => {
-    if (value && query === value) return; // Don't re-search if query matches value
-    if (debouncedQuery.length < 1) {
-      setSuggestions([]);
-      setOpen(false);
+    if (mode !== "searching") return;
+    // If query matches current selection, don't re-search
+    if (value && debouncedQuery === value) return;
+    if (debouncedQuery.length < 2) {
+      setApiSuggestions([]);
       return;
     }
 
+    let cancelled = false;
     const fetch = async () => {
       setLoading(true);
       try {
-        let results;
-        if (mode === "legacy") {
-          results = await searchLocations(debouncedQuery);
-        } else {
-          results = await searchPlaces(debouncedQuery, sessionToken.current);
-        }
-        setSuggestions(results);
-        setOpen(results.length > 0);
+        const results = await searchPlaces(debouncedQuery, sessionToken.current);
+        if (!cancelled) setApiSuggestions(results);
       } catch {
-        setSuggestions([]);
+        if (!cancelled) setApiSuggestions([]);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
-
     fetch();
-  }, [debouncedQuery, value]);
+    return () => { cancelled = true; };
+  }, [debouncedQuery, mode, value]);
 
-  // Close dropdown on outside click
+  // Close on outside click
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handler = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setOpen(false);
-        // If user typed without selecting, revert to the last valid selection
         if (!value) setQuery("");
         else setQuery(value);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [value]);
 
-  const handleSelect = async (loc: LocationSuggestion | PlacesSuggestion) => {
-    if (mode === "legacy") {
-      onSelect(loc as LocationSuggestion);
-      setQuery((loc as LocationSuggestion).name);
-      setSuggestions([]);
-      setOpen(false);
+  // Build the display list
+  const displaySuggestions: DisplaySuggestion[] =
+    mode === "idle"
+      ? staticSuggestions.map((d) => ({ kind: "static", data: d }))
+      : apiSuggestions.map((d) => ({ kind: "api", data: d }));
+
+  const isShowingPopular = mode === "idle";
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setQuery(val);
+    if (value) onSelect(null); // clear selection when re-typing
+    if (val.trim().length === 0) {
+      // User cleared the input → go back to popular cities mode
+      setMode("idle");
+      setApiSuggestions([]);
     } else {
-      setLoading(true);
-      const details = await getPlaceDetails((loc as PlacesSuggestion).placeId, sessionToken.current);
+      setMode("searching");
+    }
+    setOpen(true);
+  };
+
+  const handleSelectStatic = (loc: StaticLocation) => {
+    const structured = staticToStructured(loc);
+    onSelect(structured);
+    setQuery(loc.formattedAddress);
+    setApiSuggestions([]);
+    setOpen(false);
+  };
+
+  const handleSelectApi = useCallback(async (suggestion: PlacesSuggestion) => {
+    setLoading(true);
+    setOpen(false);
+    try {
+      const details = await getPlaceDetails(suggestion.placeId, sessionToken.current);
       resetSession();
       if (details) {
         onSelect(details);
@@ -94,41 +141,49 @@ export default function LocationAutocomplete({ onSelect, value, mode = "places" 
       } else {
         onSelect(null);
       }
-      setSuggestions([]);
-      setOpen(false);
+    } catch {
+      onSelect(null);
+    } finally {
       setLoading(false);
+      setApiSuggestions([]);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onSelect]);
 
   const handleClear = () => {
     onSelect(null);
     setQuery("");
-    setSuggestions([]);
+    setApiSuggestions([]);
+    setMode("idle");
     setOpen(false);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
-    if (value) onSelect(null); // Clear selection when user starts re-typing
-  };
-
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleFocus = () => {
-    if (suggestions.length > 0) {
-      setOpen(true);
-    }
-  };
+  const handleFocus = () => setOpen(true);
 
   const handleWrapperClick = () => {
     inputRef.current?.focus();
     setOpen(true);
   };
 
+  const handleChevronClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (open) {
+      setOpen(false);
+    } else {
+      setMode("idle"); // always show popular when toggling via chevron
+      setOpen(true);
+      inputRef.current?.focus();
+    }
+  };
+
+  // Show "no results" only when actively searching via API and not loading
+  const showNoResults =
+    open && mode === "searching" && !loading && debouncedQuery.length >= 2 && apiSuggestions.length === 0;
+
   return (
     <div ref={wrapperRef} className={styles.wrapper}>
       <div
-        className={`${styles.inputWrapper} ${open ? styles.isOpen : ''}`}
+        className={`${styles.inputWrapper} ${open ? styles.isOpen : ""}`}
         onClick={handleWrapperClick}
         style={{ cursor: "pointer" }}
       >
@@ -155,20 +210,86 @@ export default function LocationAutocomplete({ onSelect, value, mode = "places" 
               <X className={styles.clearIcon} />
             </button>
           ) : (
-            <ChevronDown className="w-4 h-4 text-gray-400" />
+            <button
+              type="button"
+              onClick={handleChevronClick}
+              className={styles.chevronBtn}
+              title="Show location suggestions"
+              aria-label="Open location dropdown"
+            >
+              <ChevronDown
+                className={`${styles.chevronIcon} ${open ? styles.chevronOpen : ""}`}
+              />
+            </button>
           )}
         </div>
       </div>
 
-      {open && suggestions.length > 0 && (
+      {/* Dropdown suggestions */}
+      {open && displaySuggestions.length > 0 && (
         <ul className={styles.dropdown}>
-          {suggestions.map((loc: any) => (
-            <li key={loc.id || loc.placeId} className={styles.item} onMouseDown={() => handleSelect(loc)}>
-              <MapPin className={styles.itemIcon} />
-              <span>{loc.name || loc.description}</span>
+          {isShowingPopular && (
+            <li className={styles.sectionHeader}>Popular cities</li>
+          )}
+          {displaySuggestions.map((item) => {
+            if (item.kind === "static") {
+              const loc = item.data;
+              return (
+                <li
+                  key={loc.id}
+                  className={styles.item}
+                  onMouseDown={() => handleSelectStatic(loc)}
+                >
+                  <MapPin className={styles.itemIcon} />
+                  <div className={styles.itemText}>
+                    <span className={styles.itemCity}>{loc.city}</span>
+                    <span className={styles.itemCountry}>
+                      {loc.state ? `${loc.state}, ` : ""}{loc.country}
+                    </span>
+                  </div>
+                </li>
+              );
+            } else {
+              const sug = item.data;
+              return (
+                <li
+                  key={sug.placeId}
+                  className={styles.item}
+                  onMouseDown={() => handleSelectApi(sug)}
+                >
+                  <MapPin className={styles.itemIcon} />
+                  <div className={styles.itemText}>
+                    <span className={styles.itemCity}>{sug.displayName}</span>
+                    <span className={styles.itemCountry}>{sug.description}</span>
+                  </div>
+                </li>
+              );
+            }
+          })}
+        </ul>
+      )}
+
+      {/* Searching but no API results yet (skeleton feel) */}
+      {open && mode === "searching" && loading && (
+        <ul className={styles.dropdown}>
+          {[1, 2, 3].map((i) => (
+            <li key={i} className={styles.skeletonItem}>
+              <div className={styles.skeletonIcon} />
+              <div className={styles.skeletonText}>
+                <div className={styles.skeletonLine} style={{ width: `${50 + i * 15}%` }} />
+                <div className={styles.skeletonLine} style={{ width: `${30 + i * 10}%` }} />
+              </div>
             </li>
           ))}
         </ul>
+      )}
+
+      {/* No results */}
+      {showNoResults && (
+        <div className={styles.noResults}>
+          <span>No locations found for &quot;{query}&quot;</span>
+          <span className={styles.noResultsHint}>Try a different city or region</span>
+        </div>
       )}
     </div>
   );

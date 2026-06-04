@@ -139,13 +139,7 @@ export default function InterestsStep({
         {/* Title & Subtitle */}
         <div className={styles.textGroup}>
           <h1 className={styles.title}>{title}</h1>
-          <p className={styles.subtitle}>
-            {selectedItems.length > 0 ? (
-              <span className={styles.countText}>
-                {selectedItems.length} {maxSelection ? `/ ${maxSelection}` : ""} selected
-              </span>
-            ) : subtitle}
-          </p>
+          {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
         </div>
 
         {/* Search */}
@@ -161,6 +155,11 @@ export default function InterestsStep({
           {showError && (
             <p className={styles.errorText}>
               *Select {maxSelection ? `${minSelection}-${maxSelection}` : `at least ${minSelection}`} items
+            </p>
+          )}
+          {selectedItems.length > 0 && (
+            <p className={styles.selectionCountText}>
+              {selectedItems.length} {maxSelection ? `/ ${maxSelection}` : ""} selected
             </p>
           )}
         </div>

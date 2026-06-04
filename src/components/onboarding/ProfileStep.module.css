@@ -46,20 +46,21 @@
 
 .stepHeader {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   margin-bottom: 8px;
 }
 
 .stepText {
-  font-size: 0.75rem;
-  color: #18181b;
+  font-family: var(--font-poppins), sans-serif;
+  font-size: 12px;
+  color: #000000;
   font-weight: 500;
 }
 
 .progressBar {
-  height: 2px;
+  height: 6px;
   background-color: #e4e4e7;
-  border-radius: 4px;
+  border-radius: 12px;
   overflow: hidden;
   width: 100%;
 }
@@ -68,7 +69,7 @@
   height: 100%;
   width: 20%;
   background-color: #6366F1;
-  border-radius: 2px;
+  border-radius: 12px;
 }
 
 .title {
@@ -240,8 +241,9 @@
 }
 
 .backButton:hover {
-  background-color: #f4f4f5;
-  color: #18181b;
+  background-color: #EEF2FF;
+  border-color: #EEF2FF;
+  color: #6366F1;
 }
 
 .continueButton {

@@ -49,19 +49,21 @@
 
 .stepHeader {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
+  margin-bottom: 8px;
 }
 
 .stepText {
+  font-family: var(--font-poppins), sans-serif;
   font-size: 12px;
-  color: #71717a;
+  color: #000000;
   font-weight: 500;
 }
 
 .progressBar {
-  height: 2px;
+  height: 6px;
   background-color: #f4f4f5;
-  border-radius: 4px;
+  border-radius: 12px;
   overflow: hidden;
   width: 100%;
 }
@@ -69,7 +71,7 @@
 .progressFill {
   height: 100%;
   background-color: #6366F1;
-  border-radius: 2px;
+  border-radius: 12px;
   transition: width 0.3s ease;
 }
 
@@ -102,11 +104,11 @@
   margin-bottom: 8px;
 }
 
+/* Selection area — no flex:1, sits naturally after the title */
 .selectionArea {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex: 1;
 }
 
 .label {
@@ -221,17 +223,11 @@
   color: #18181b;
 }
 
-/* .optionSelected {
-  background-color: #E0E7FF;
-  color: #6366F1;
-  font-weight: 500;
-} */
-
+/* Action row — sits directly after the dropdown, no auto margin */
 .actionRow {
   display: flex;
   width: 100%;
   gap: 16px;
-  margin-top: auto;
 }
 
 .backButton {
@@ -250,8 +246,9 @@
 }
 
 .backButton:hover {
-  background-color: #f4f4f5;
-  border-color: #d4d4d8;
+  background-color: #EEF2FF;
+  border-color: #EEF2FF;
+  color: #6366F1;
 }
 
 .continueButton {
