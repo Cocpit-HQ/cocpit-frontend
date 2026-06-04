@@ -127,11 +127,19 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
             <Link href={`/post/${post.id}`} className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground truncate w-full block cursor-pointer" title={post.authorHeadline || post.title || (post.isCompanyPost ? 'Organization' : '')}>
               {post.authorHeadline || post.title || (post.isCompanyPost ? 'Organization' : '')}
             </Link>
-            <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)] mt-0.5">
-              <span>{post.location || 'Kolhapur'}</span>
-              <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
-              <span>{post.timeAgo || '6 days ago'}</span>
-            </div>
+              <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] mt-0.5">
+                {post.location && (() => {
+                  const displayLoc = post.location.split(',')[0].trim();
+                  const truncatedLoc = displayLoc.length > 15 ? displayLoc.slice(0, 15) + '..' : displayLoc;
+                  return (
+                    <>
+                      <span title={post.location}>{truncatedLoc}</span>
+                      <span className="w-1 h-1 rounded-full bg-[#DADADA] flex-none" />
+                    </>
+                  );
+                })()}
+                <span className="flex-none">{post.timeAgo || '6 days ago'}</span>
+              </div>
           </div>
         </div>
 

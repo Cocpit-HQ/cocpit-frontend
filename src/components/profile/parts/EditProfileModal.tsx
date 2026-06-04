@@ -122,8 +122,8 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   const handleSave = async () => {
     const now = Date.now()
     if (now - lastClickTime < 2000 || isSaving || !hasChanges()) return
-    if (getWordCount(formData.headline) > 200) {
-      alert("Headline cannot exceed 200 words");
+    if (formData.headline.length > 200) {
+      alert("Headline cannot exceed 200 characters");
       return;
     }
     setLastClickTime(now)
@@ -213,11 +213,12 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                 <Input
                   value={formData.headline}
                   onChange={(e) => setFormData(prev => ({ ...prev, headline: e.target.value }))}
-                  className={cn(inputStyles, getWordCount(formData.headline) > 200 && "border-destructive focus:border-destructive")}
+                  maxLength={200}
+                  className={cn(inputStyles, formData.headline.length > 200 && "border-destructive focus:border-destructive")}
                   placeholder="Headline"
                 />
-                <span className={cn("text-[10px] mt-1 text-right", getWordCount(formData.headline) > 200 ? "text-destructive" : "text-muted-foreground")}>
-                  {getWordCount(formData.headline)}/200 words
+                <span className={cn("text-[10px] mt-1 text-right", formData.headline.length > 200 ? "text-destructive" : "text-muted-foreground")}>
+                  {formData.headline.length}/200 characters
                 </span>
               </div>
               <div className="flex flex-col">

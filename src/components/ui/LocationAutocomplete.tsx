@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from "uuid";
 import styles from "./LocationAutocomplete.module.css";
 
 interface LocationAutocompleteProps {
-  onSelect: (location: LocationSuggestion | StructuredLocation | null) => void;
+  onSelect: (location: LocationSuggestion | StructuredLocation | string | null) => void;
   value: string | null;
   mode?: "legacy" | "places";
 }
@@ -110,7 +110,7 @@ export default function LocationAutocomplete({ onSelect, value }: LocationAutoco
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setQuery(val);
-    if (value) onSelect(null); // clear selection when re-typing
+    onSelect(val);
     if (val.trim().length === 0) {
       // User cleared the input → go back to popular cities mode
       setMode("idle");

@@ -209,9 +209,17 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
               {localPost.authorHeadline || localPost.title || ""}
             </Link>
             <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] mt-0.5">
-              <span>{localPost.location || "Kolhapur"}</span>
-              <span className="w-1 h-1 rounded-full bg-[#DADADA] flex-none" />
-              <span>{localPost.timeAgo || "6 days ago"}</span>
+              {localPost.location && (() => {
+                const displayLoc = localPost.location.split(',')[0].trim();
+                const truncatedLoc = displayLoc.length > 15 ? displayLoc.slice(0, 15) + '..' : displayLoc;
+                return (
+                  <>
+                    <span title={localPost.location}>{truncatedLoc}</span>
+                    <span className="w-1 h-1 rounded-full bg-[#DADADA] flex-none" />
+                  </>
+                );
+              })()}
+              <span className="flex-none">{localPost.timeAgo || "6 days ago"}</span>
             </div>
           </div>
         </div>
@@ -829,6 +837,7 @@ export default function ProfilePage() {
           start_date: data.start_date,
           end_date: data.end_date,
           description: data.description,
+          location: data.location,
         }
       });
     } else {
@@ -838,6 +847,7 @@ export default function ProfilePage() {
         field_of_study: data.field_of_study!,
         start_date: data.start_date!,
         description: data.description!,
+        location: data.location,
       };
       if (data.end_date) payload.end_date = data.end_date;
       await eduMutations.add.mutateAsync(payload);

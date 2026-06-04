@@ -24,6 +24,14 @@ import { Post } from "@/types/entities";
 import { cn } from "@/lib/utils";
 import { mapBackendPostToFrontend } from "@/lib/mappers/feed.mapper";
 import { CocpitSelectedUserChips } from "@/shared/commonComponents/CocpitSelectedUserChips";
+import { POPULAR_LOCATIONS } from "@/data/staticLocations";
+
+const DEFAULT_LOCATIONS: LocationSuggestion[] = POPULAR_LOCATIONS.map((loc, i) => ({
+  id: -(i + 1),
+  name: loc.formattedAddress,
+  latitude: String(loc.latitude),
+  longitude: String(loc.longitude)
+}));
 
 interface EditPostModalProps {
     isOpen: boolean;
@@ -383,10 +391,11 @@ export function EditPostModal({ isOpen, onClose, post, onSuccess }: EditPostModa
     );
 
     const renderLocationView = () => {
-        // Filter out duplicate locations by name to avoid the repetition seen in the screenshot
-        const uniqueResults = locationResults.filter((loc, index, self) =>
-            index === self.findIndex((t) => t.name === loc.name)
-        );
+        const uniqueResults = locationSearchQuery.trim() === "" 
+            ? DEFAULT_LOCATIONS
+            : locationResults.filter((loc, index, self) =>
+                index === self.findIndex((t) => t.name === loc.name)
+            );
 
         return (
             <div className="flex flex-col flex-1 relative min-h-0">

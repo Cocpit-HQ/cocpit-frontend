@@ -173,6 +173,7 @@ export interface AddEducationPayload {
   field_of_study: string;
   start_date: string;
   end_date?: string | null;
+  location?: string;
   description: string | null;
 }
 

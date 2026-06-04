@@ -38,7 +38,8 @@ export default function TellUsAboutYouStep({ onNext, onBack, currentStep, totalS
     };
   }, [locationPlaceId, locationFormatted, locationCountry, locationState, locationCity, locationLat, locationLng]);
 
-  const setSelectedLocation = (loc: LocationSuggestion | StructuredLocation | null) => {
+  const setSelectedLocation = (loc: LocationSuggestion | StructuredLocation | string | null) => {
+    if (typeof loc === "string") return; // Onboarding requires a structured location
     setLocation(loc);
   };
 

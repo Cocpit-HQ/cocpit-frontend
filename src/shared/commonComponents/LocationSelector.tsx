@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Loader2, MapPin, Search, X } from "lucide-react";
+import { Check, Loader2, Search, X } from "lucide-react";
+import { Icon } from "@iconify/react";
 import {
   DialogDescription,
   DialogHeader,
@@ -17,6 +18,7 @@ import {
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
+import { POPULAR_LOCATIONS, STATIC_LOCATIONS } from "@/data/staticLocations";
 
 interface LocationSelectorProps {
   selectedLocation: LocationSuggestion | StructuredLocation | null;
@@ -33,6 +35,12 @@ const getLocationLabel = (location: LocationSuggestion | StructuredLocation | nu
 const getSuggestionLabel = (location: PlacesSuggestion) => (
   location.description || location.displayName
 );
+
+const DEFAULT_LOCATIONS: PlacesSuggestion[] = POPULAR_LOCATIONS.map((loc) => ({
+  placeId: loc.id,
+  displayName: loc.city,
+  description: loc.formattedAddress
+}));
 
 export function LocationSelector({
   selectedLocation,
@@ -81,10 +89,28 @@ export function LocationSelector({
     };
   }, [debouncedQuery]);
 
-  const visibleLocations = suggestions;
+  const visibleLocations = query.trim().length === 0 ? DEFAULT_LOCATIONS : suggestions;
 
   const handleSelect = async (location: PlacesSuggestion) => {
     setSelectingPlaceId(location.placeId);
+    
+    // Check if it's a static location first
+    const staticLoc = STATIC_LOCATIONS.find(loc => loc.id === location.placeId);
+    if (staticLoc) {
+      setDraftLocation({
+        placeId: staticLoc.id,
+        country: staticLoc.country,
+        state: staticLoc.state,
+        city: staticLoc.city,
+        formattedAddress: staticLoc.formattedAddress,
+        latitude: staticLoc.latitude,
+        longitude: staticLoc.longitude
+      });
+      setQuery(getSuggestionLabel(location));
+      setSelectingPlaceId(null);
+      return;
+    }
+
     const details = await getPlaceDetails(location.placeId, sessionToken.current);
     sessionToken.current = uuidv4();
     if (details) {
@@ -100,7 +126,7 @@ export function LocationSelector({
   };
 
   return (
-    <div className="relative w-[400px] max-w-[calc(100vw-32px)] h-[568px] max-h-[calc(100vh-32px)] bg-white dark:bg-[#1a1a2e] rounded-[24px] p-4 flex flex-col items-center shadow-xl font-poppins overflow-hidden">
+    <div className="relative w-[400px] max-w-[calc(100vw-32px)] h-[568px] max-h-[calc(100vh-32px)] bg-card text-foreground rounded-[24px] p-4 flex flex-col items-center shadow-xl font-poppins overflow-hidden border border-border">
       <DialogHeader className="sr-only">
         <DialogTitle>Add Location</DialogTitle>
         <DialogDescription>Search and select a location for your post.</DialogDescription>
@@ -124,7 +150,7 @@ export function LocationSelector({
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search"
             autoFocus
-            className="w-full h-10 rounded-[24px] border border-[#6B7280] bg-transparent px-4 pr-12 text-[16px] font-medium leading-6 text-black dark:text-white placeholder:text-[#6B7280] outline-none focus:border-[#6366F1]"
+            className="w-full h-10 rounded-[24px] border border-border bg-card px-4 pr-12 text-[16px] font-medium leading-6 text-foreground placeholder:text-muted-foreground outline-none focus:border-[#6366F1]"
           />
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B7280]">
             {loading ? (
@@ -136,23 +162,23 @@ export function LocationSelector({
         </div>
 
         <div className="w-full h-96 overflow-y-auto space-y-2 shrink-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {draftLabel && !visibleLocations.some((location) => getSuggestionLabel(location) === draftLabel) && (
+          {draftLabel && query.trim().length > 0 && !visibleLocations.some((location) => getSuggestionLabel(location) === draftLabel) && (
             <button
               type="button"
               onClick={() => setDraftLocation(null)}
-              className="w-full h-12 flex items-center justify-between gap-4 text-left"
+              className="w-full h-12 flex items-center justify-between gap-4 text-left p-3 rounded-xl hover:bg-secondary transition-colors group"
             >
-              <span className="flex items-center gap-2 min-w-0">
-                <MapPin className="w-8 h-8 text-[#6366F1] shrink-0" strokeWidth={1.5} />
-                <span className="text-[16px] leading-6 font-normal text-black dark:text-white truncate">
+              <span className="flex items-center gap-3 flex-1 min-w-0">
+                <Icon icon="hugeicons:location-05" className="w-5 h-5 text-[#6366F1] flex-shrink-0" />
+                <span className="text-[15px] font-semibold text-foreground font-[family-name:var(--font-poppins)] truncate">
                   {draftLabel}
                 </span>
               </span>
-              <span className="w-12 h-12 flex items-center justify-center shrink-0">
-                <span className="w-[18px] h-[18px] rounded-[2px] bg-[#6366F1] flex items-center justify-center">
-                  <Check className="w-4 h-4 text-white" strokeWidth={3} />
-                </span>
-              </span>
+              <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                <div className="w-6 h-6 rounded-md bg-[#6366F1] flex items-center justify-center transition-colors">
+                  <Icon icon="ph:check-bold" className="w-3.5 h-3.5 text-white" />
+                </div>
+              </div>
             </button>
           )}
 
@@ -165,26 +191,28 @@ export function LocationSelector({
 
             return (
               <button
-                key={location.placeId}
+                key={`${location.placeId}-${label}`}
                 type="button"
                 onClick={() => handleSelect(location)}
-                className="w-full h-12 flex items-center justify-between gap-4 text-left"
+                className="w-full flex items-center justify-between gap-3 p-3 rounded-xl text-left hover:bg-secondary transition-colors group"
               >
-                <span className="flex items-center gap-2 min-w-0">
-                  <MapPin className="w-8 h-8 text-[#6366F1] shrink-0" strokeWidth={1.5} />
-                  <span className="text-[16px] leading-6 font-normal text-black dark:text-white truncate">
+                <span className="flex items-center gap-3 flex-1 min-w-0">
+                  <Icon icon="hugeicons:location-05" className="w-5 h-5 text-[#6366F1] flex-shrink-0" />
+                  <span className="text-[15px] font-semibold text-foreground font-[family-name:var(--font-poppins)] truncate">
                     {label}
                   </span>
                 </span>
-                <span className="w-12 h-12 flex items-center justify-center shrink-0">
+                <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
                   {isSelecting ? (
                     <Loader2 className="w-[18px] h-[18px] animate-spin text-[#6366F1]" />
                   ) : isSelected ? (
-                    <span className="w-[18px] h-[18px] rounded-[2px] bg-[#6366F1] flex items-center justify-center">
-                      <Check className="w-4 h-4 text-white" strokeWidth={3} />
-                    </span>
-                  ) : null}
-                </span>
+                    <div className="w-6 h-6 rounded-md bg-[#6366F1] flex items-center justify-center transition-colors">
+                      <Icon icon="ph:check-bold" className="w-3.5 h-3.5 text-white" />
+                    </div>
+                  ) : (
+                    <div className="w-6 h-6" />
+                  )}
+                </div>
               </button>
             );
           })}
@@ -193,7 +221,7 @@ export function LocationSelector({
         <div className="w-[300px] h-10 flex gap-4 justify-center items-start shrink-0">
           <button
             onClick={onCancel}
-            className="w-[142px] h-10 rounded-[24px] border border-[#818CF8] bg-white dark:bg-[#1a1a2e] text-[#818CF8] text-sm font-normal leading-5 hover:bg-slate-50 transition-colors"
+            className="w-[142px] h-10 rounded-[24px] border border-[#818CF8] bg-transparent text-[#818CF8] text-sm font-normal leading-5 hover:bg-secondary transition-colors"
           >
             Cancel
           </button>

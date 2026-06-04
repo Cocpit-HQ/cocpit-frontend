@@ -120,6 +120,11 @@ export function EditableEducationItem({
                             {education.end_date ? formatDate(education.end_date) : 'Present'}
                         </span>
                     </div>
+                    {education.field_of_study && (
+                        <div className="w-full break-words font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-muted-foreground">
+                            {education.field_of_study}
+                        </div>
+                    )}
                 </div>
                 <div className="w-[32px] flex justify-end flex-shrink-0">
                     {isOwnProfile && onEdit && (

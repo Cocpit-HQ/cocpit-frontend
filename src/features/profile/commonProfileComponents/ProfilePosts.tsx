@@ -69,8 +69,9 @@ const ProfilePostCard = ({
     setIsSaved(post.is_saved || false);
   }, [post]);
 
-  const image = localPost.imageSrc || (localPost.images && localPost.images.length > 0 ? localPost.images[0] : null);
-  const videoSrc = localPost.videoSrc || null;
+  const _rawImage = localPost.imageSrc || (localPost.images && localPost.images.length > 0 ? localPost.images[0] : null);
+  const image = _rawImage && _rawImage.trim() !== '' ? _rawImage : null;
+  const videoSrc = (localPost.videoSrc && localPost.videoSrc.trim() !== '') ? localPost.videoSrc : null;
   const isArticlePost = localPost.category === 'Article' || Boolean(localPost.articleBody);
   const isPollPost = Boolean(localPost.poll);
   const articleExcerpt = localPost.content?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
@@ -204,9 +205,17 @@ const ProfilePostCard = ({
               {localPost.authorHeadline || localPost.title || ""}
             </Link>
             <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] mt-0.5">
-              <span>{localPost.location || "Kolhapur"}</span>
-              <span className="w-1 h-1 rounded-full bg-[#DADADA] flex-none" />
-              <span>{localPost.timeAgo || "6 days ago"}</span>
+              {localPost.location && (() => {
+                const displayLoc = localPost.location.split(',')[0].trim();
+                const truncatedLoc = displayLoc.length > 15 ? displayLoc.slice(0, 15) + '..' : displayLoc;
+                return (
+                  <>
+                    <span title={localPost.location}>{truncatedLoc}</span>
+                    <span className="w-1 h-1 rounded-full bg-[#DADADA] flex-none" />
+                  </>
+                );
+              })()}
+              <span className="flex-none">{localPost.timeAgo || "6 days ago"}</span>
             </div>
           </div>
         </div>
@@ -283,19 +292,19 @@ const ProfilePostCard = ({
           >
             {pollQuestion}
           </Link>
-        ) : (
+        ) : (image || videoSrc || localPost.shared_post) ? (
           <Link
             href={`/post/${localPost.id}`}
             className="text-[12px] leading-[20px] text-foreground font-[family-name:var(--font-poppins)] truncate h-[20px] cursor-pointer"
           >
             {localPost.content}
           </Link>
-        )}
+        ) : null}
       </div>
 
-      {/* Main Image/Shared Content */}
-      <div className="w-full h-[300px] mb-4 bg-muted relative overflow-hidden">
-        {localPost.shared_post ? (
+      {/* Main Image / Shared / Poll / Article / Text block */}
+      {localPost.shared_post ? (
+        <div className="w-full h-[300px] mb-4 bg-muted relative overflow-hidden">
           <div className="w-full h-full p-3 bg-card overflow-hidden flex flex-col">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100">
@@ -310,7 +319,9 @@ const ProfilePostCard = ({
               </div>
             )}
           </div>
-        ) : isPollPost ? (
+        </div>
+      ) : isPollPost ? (
+        <div className="w-full h-[300px] mb-4 bg-muted relative overflow-hidden">
           <Link href={`/post/${localPost.id}`} className="block w-full h-full p-4 bg-[#F8FAFF]">
             <div className="w-full h-full rounded-[20px] border border-[#E3E9FF] bg-white p-4 flex flex-col">
               <div className="flex items-center justify-between gap-2 mb-4">
@@ -347,7 +358,9 @@ const ProfilePostCard = ({
               )}
             </div>
           </Link>
-        ) : isArticlePost ? (
+        </div>
+      ) : isArticlePost ? (
+        <div className="w-full h-[300px] mb-4 bg-muted relative overflow-hidden">
           <Link href={`/post/${localPost.id}`} className="block w-full h-full relative">
             {image ? (
               <img
@@ -363,7 +376,9 @@ const ProfilePostCard = ({
               </div>
             )}
           </Link>
-        ) : videoSrc ? (
+        </div>
+      ) : videoSrc ? (
+        <div className="w-full h-[300px] mb-4 bg-muted relative overflow-hidden">
           <Link href={`/post/${localPost.id}`} className="block w-full h-full bg-black">
             <video
               src={videoSrc}
@@ -373,20 +388,36 @@ const ProfilePostCard = ({
               preload="metadata"
             />
           </Link>
-        ) : (
+        </div>
+      ) : image ? (
+        <div className="w-full h-[300px] mb-4 bg-muted relative overflow-hidden">
           <div className="w-full h-full">
             {localPost.images && localPost.images.length > 1 ? (
               <PostCarousel images={localPost.images} />
             ) : (
               <img
-                src={image || "/assets/placeholder.png"}
+                src={image}
                 alt="Content"
                 className="w-full h-full object-cover"
               />
             )}
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        /* Text-only post: show full content inline */
+        <Link href={`/post/${localPost.id}`} className="block w-full px-4 mb-3 overflow-hidden">
+          <p
+            className="text-[13px] leading-[22px] text-foreground font-[family-name:var(--font-poppins)] overflow-hidden whitespace-pre-wrap"
+            style={{ display: '-webkit-box', WebkitLineClamp: 10, WebkitBoxOrient: 'vertical' }}
+          >
+            {(localPost.content || '').split(/(#\w+)/g).map((part, i) =>
+              /^#\w+/.test(part)
+                ? <span key={i} className="text-[#6366F1]">{part}</span>
+                : part
+            )}
+          </p>
+        </Link>
+      )}
 
       {isArticlePost && (
         <div className="w-full px-4 mb-3">
@@ -413,31 +444,31 @@ const ProfilePostCard = ({
 
       {/* Interaction Footer */}
       <div className="w-full h-[40px] px-4 py-2 mt-auto border-t border-transparent">
-        <div className="flex items-center justify-between w-full h-[24px]">
-          <div className="flex items-center gap-[16px]">
-            <button onClick={handleLike} className="flex items-center gap-1 min-w-0 flex-shrink-0 cursor-pointer">
-              <Icon icon={isLiked ? "solar:like-bold" : "solar:like-broken"} className={cn("w-5 h-5", isLiked ? "text-[#6366F1]" : "text-foreground")} />
-              <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{likesCount}</span>
-            </button>
-            <Link href={`/post/${localPost.id}?comments=true`} className="flex items-center gap-1 min-w-0 flex-shrink-0">
-              <Icon icon="hugeicons:comment-01" className="w-5 h-5 text-foreground" />
-              <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.comments || 0}</span>
-            </Link>
-            <button onClick={handleRepost} className="flex items-center gap-1 min-w-0 flex-shrink-0 cursor-pointer">
-              <Icon icon="hugeicons:repost" className="w-5 h-5 text-foreground" />
-              <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.shares || 0}</span>
-            </button>
-            <button onClick={handleShare} className="flex items-center min-w-0 flex-shrink-0 cursor-pointer">
-              <Icon icon="fluent:share-16-regular" className="w-5 h-5 text-foreground" />
+          <div className="flex items-center justify-between w-full h-[24px]">
+            <div className="flex items-center gap-[16px]">
+              <button onClick={handleLike} className="flex items-center gap-1 min-w-0 flex-shrink-0 cursor-pointer">
+                <Icon icon={isLiked ? "solar:like-bold" : "solar:like-broken"} className={cn("w-5 h-5", isLiked ? "text-[#6366F1]" : "text-foreground")} />
+                <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{likesCount}</span>
+              </button>
+              <Link href={`/post/${localPost.id}?comments=true`} className="flex items-center gap-1 min-w-0 flex-shrink-0">
+                <Icon icon="hugeicons:comment-01" className="w-5 h-5 text-foreground" />
+                <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.comments || 0}</span>
+              </Link>
+              <button onClick={handleRepost} className="flex items-center gap-1 min-w-0 flex-shrink-0 cursor-pointer">
+                <Icon icon="hugeicons:repost" className="w-5 h-5 text-foreground" />
+                <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.shares || 0}</span>
+              </button>
+              <button onClick={handleShare} className="flex items-center min-w-0 flex-shrink-0 cursor-pointer">
+                <Icon icon="fluent:share-16-regular" className="w-5 h-5 text-foreground" />
+              </button>
+            </div>
+            <button onClick={handleBookmark} className="flex-shrink-0 cursor-pointer">
+              <Icon
+                icon={isSaved ? "solar:bookmark-bold" : "solar:bookmark-linear"}
+                className={cn("w-5 h-5", isSaved ? "text-[#6366F1]" : "text-foreground")}
+              />
             </button>
           </div>
-          <button onClick={handleBookmark} className="flex-shrink-0 cursor-pointer">
-            <Icon
-              icon={isSaved ? "solar:bookmark-bold" : "solar:bookmark-linear"}
-              className={cn("w-5 h-5", isSaved ? "text-[#6366F1]" : "text-foreground")}
-            />
-          </button>
-        </div>
       </div>
 
       <CommentModal

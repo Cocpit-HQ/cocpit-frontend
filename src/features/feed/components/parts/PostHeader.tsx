@@ -124,13 +124,17 @@ export const PostHeader = ({
           <Link href={`/post/${id}`} className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground truncate w-full block cursor-pointer" title={authorRole || title || ''} onClick={(e) => e.stopPropagation()}>
             {authorRole || title || ''}
           </Link>
-          {(location || timeAgo) && (
-            <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
-              {location && <span>{location}</span>}
-              {location && timeAgo && <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />}
-              {timeAgo && <span>{timeAgo}</span>}
-            </div>
-          )}
+          {(location || timeAgo) && (() => {
+            const displayLocation = location ? location.split(',')[0].trim() : '';
+            const truncatedLocation = displayLocation.length > 15 ? displayLocation.slice(0, 15) + '..' : displayLocation;
+            return (
+              <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
+                {location && <span title={location}>{truncatedLocation}</span>}
+                {location && timeAgo && <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />}
+                {timeAgo && <span className="shrink-0">{timeAgo}</span>}
+              </div>
+            );
+          })()}
         </div>
       </div>
 
