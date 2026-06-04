@@ -231,7 +231,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
       if (isAchievement && post.images && post.images.length > 0) {
         const imageUrl = post.images[0].toLowerCase();
         const isTemplateUrl = imageUrl.endsWith('.svg') || imageUrl.includes('/images/achievement/');
-        
+
         if (isTemplateUrl) {
           let optionId: AchievementOptionId = 'certificate';
           if (imageUrl.includes('project') || imageUrl.includes('new-project') || imageUrl.includes('helpingpartner')) {
@@ -511,35 +511,57 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                     }}
                     deleteIconRed={true}
                     className="mb-0 gap-2"
-                    onToggleAspectRatio={!isVideoEditorMode ? () => {
+                    onToggleAspectRatio={() => {
                       const ratios = [4 / 5, 1, 16 / 9];
                       const current = media.aspectRatio;
                       const closestIdx = ratios.findIndex(r => Math.abs(r - current) < 0.01);
                       const nextIdx = (closestIdx + 1) % ratios.length;
                       media.handleAspectChange(ratios[nextIdx]);
-                    } : undefined}
+                    }}
                   />
 
                   {/* Counter */}
-                  <span className="text-[16px] leading-[24px] font-normal text-foreground font-poppins text-center min-w-[38px]">
-                    {isVideoEditorMode
-                      ? "01/01"
-                      : `${String(media.activeImageIndex + 1).padStart(2, '0')}/${String(media.uploadedImages.length).padStart(2, '0')}`
-                    }
-                  </span>
+                  {isVideoEditorMode ? (
+                    <div className="w-[38px]" />
+                  ) : (
+                    <span className="text-[16px] leading-[24px] font-normal text-foreground font-poppins text-center min-w-[38px]">
+                      {`${String(media.activeImageIndex + 1).padStart(2, '0')}/${String(media.uploadedImages.length).padStart(2, '0')}`}
+                    </span>
+                  )}
                 </div>
 
                 {/* Image / Video Preview */}
                 <div className="w-[570px] h-96 bg-white rounded-3xl shadow-[0px_2px_4px_0px_rgba(99,102,241,0.05)] outline outline-1 outline-offset-[-1px] outline-indigo-50 overflow-hidden flex items-center justify-center">
                   {isVideoEditorMode && media.uploadedVideos[0] ? (
-                    <div className="relative w-full h-full flex items-center justify-center bg-black">
-                      <CustomVideoPlayer
-                        src={media.uploadedVideos[0].url}
-                        className="transition-transform duration-200"
-                        style={{
-                          transform: `scaleX(${media.uploadedVideos[0].flipH ? -1 : 1}) scaleY(${media.uploadedVideos[0].flipV ? -1 : 1}) rotate(${media.uploadedVideos[0].rotation || 0}deg)`
-                        }}
-                      />
+                    <div className="relative w-full h-full">
+                      {media.uploadedVideos[0].isExisting ? (
+                        <div className="relative w-full h-full flex items-center justify-center bg-black">
+                          <CustomVideoPlayer
+                            src={media.uploadedVideos[0].url}
+                            className="transition-transform duration-200"
+                            style={{
+                              transform: `scaleX(${media.uploadedVideos[0].flipH ? -1 : 1}) scaleY(${media.uploadedVideos[0].flipV ? -1 : 1}) rotate(${media.uploadedVideos[0].rotation || 0}deg)`
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <Cropper
+                          video={media.uploadedVideos[0].url}
+                          crop={media.uploadedVideos[0].crop || { x: 0, y: 0 }}
+                          zoom={media.uploadedVideos[0].zoom || 1}
+                          rotation={media.uploadedVideos[0].rotation || 0}
+                          aspect={media.aspectRatio}
+                          onCropChange={media.handleVideoCropChange}
+                          onZoomChange={media.handleVideoZoomChange}
+                          onCropComplete={media.handleVideoCropComplete}
+                          showGrid={true}
+                          objectFit="cover"
+                          style={{
+                            containerStyle: { background: '#000000', borderRadius: '24px', width: '100%', height: '100%' },
+                            cropAreaStyle: { border: '2px solid rgba(99,102,241,0.3)', borderRadius: '8px' },
+                          }}
+                        />
+                      )}
                     </div>
                   ) : activeImage ? (
                     <div
@@ -604,7 +626,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 )}
 
                 {/* Zoom Slider */}
-                {!isEdit && !isVideoEditorMode && (
+                {!isEdit && (isImageEditorMode || isVideoEditorMode) && (
                   <div className="w-72 flex flex-col justify-start items-start">
                     <span className="text-center text-black text-xs font-normal font-['Poppins'] leading-4">
                       Zoom
@@ -612,7 +634,10 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                     <div className="relative flex flex-row items-center w-full h-8 gap-0">
                       <div
                         className="h-2 rounded-l-[16px] rounded-r-[2px] bg-[#6366F1]"
-                        style={{ width: `${((activeImage?.zoom || 1) - 1) / 2 * 100}%`, minWidth: '4px' }}
+                        style={{
+                          width: `${(((isVideoEditorMode ? media.uploadedVideos[0] : activeImage)?.zoom || 1) - 1) / 2 * 100}%`,
+                          minWidth: '4px'
+                        }}
                       />
                       <div className="w-[2px] h-8 bg-[#6366F1] rounded-[2px] flex-shrink-0" />
                       <div className="h-2 rounded-l-[2px] rounded-r-[16px] bg-[#E0E7FF] dark:bg-[#2a2a4a] flex-1 relative">
@@ -620,11 +645,18 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       </div>
                       <input
                         type="range"
-                        value={activeImage?.zoom || 1}
+                        value={(isVideoEditorMode ? media.uploadedVideos[0] : activeImage)?.zoom || 1}
                         min={1}
                         max={3}
                         step={0.1}
-                        onChange={(e) => media.handleZoomChange(Number(e.target.value))}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          if (isVideoEditorMode) {
+                            media.handleVideoZoomChange(val);
+                          } else {
+                            media.handleZoomChange(val);
+                          }
+                        }}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       />
                     </div>
@@ -784,7 +816,9 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                           <div className="flex justify-end gap-3.5 w-full pr-2 mt-1">
                             <button
                               type="button"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
                                 setIsCreatePostOpen(false);
                                 setShowAchievementPhotoPicker(true);
                               }}
@@ -826,12 +860,16 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
 
                           {/* Video preview attachment */}
                           {state.postType === 'video' && hasVideos && (
-                            <div className="relative w-full h-[232px] bg-muted border border-border rounded-[24px] overflow-hidden flex flex-col items-center justify-center shadow-sm">
-                              <div className="w-full flex-1 flex items-center justify-center p-3">
-                                <div className="w-full h-full rounded-lg overflow-hidden bg-black">
+                            <div
+                              className="relative w-full bg-muted border border-border rounded-[24px] overflow-hidden flex flex-col items-center justify-center shadow-sm"
+                              style={{ aspectRatio: media.aspectRatio, maxHeight: '320px' }}
+                            >
+                              <div className="w-full h-full flex items-center justify-center p-3">
+                                <div className="w-full h-full rounded-lg overflow-hidden bg-black relative flex items-center justify-center">
                                   <CustomVideoPlayer
                                     src={media.previewMediaUrls[0] || media.uploadedVideos[0]?.url}
                                     hideControls={true}
+                                    className="object-cover w-full h-full"
                                     style={{
                                       transform: `scaleX(${media.uploadedVideos[0]?.flipH ? -1 : 1}) scaleY(${media.uploadedVideos[0]?.flipV ? -1 : 1}) rotate(${media.uploadedVideos[0]?.rotation || 0}deg)`
                                     }}
@@ -845,7 +883,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                           <div className="flex items-center justify-between w-full px-1">
                             {/* Left: counter pill */}
                             {state.postType === 'photo' && hasImages && media.uploadedImages.length > 1 ? (
-                              <div className="flex items-center gap-3.5 bg-card px-4 py-1.5 rounded-full shadow-[0px_4px_12px_rgba(99,102,241,0.08)] border border-border/50">
+                              <div className="flex items-center gap-3.5 bg-card px-4 py-1.5 rounded-full">
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setPreviewActiveIndex(prev => (prev === 0 ? media.uploadedImages.length - 1 : prev - 1)); }}
@@ -898,7 +936,10 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                           <div className="relative group w-full max-w-[420px]">
                             <a
                               href="#"
-                              onClick={(e) => e.preventDefault()}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}
                               className="block w-full bg-card border border-border rounded-[24px] overflow-hidden shadow-sm transition-all hover:shadow-md"
                             >
                               <div className="w-full h-[180px] overflow-hidden">
@@ -916,6 +957,29 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                 </h3>
                               </div>
                             </a>
+                            {state.postType === 'article' && (
+                              <div className="flex justify-end gap-3 w-full mt-2 pr-1">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    if (isEdit) {
+                                      state.setArticleData(null);
+                                      state.setPostType('article');
+                                    } else {
+                                      const { setArticleMode, setActiveModal } = useUIStore.getState();
+                                      setActiveModal(null);
+                                      setArticleMode(true);
+                                    }
+                                  }}
+                                  className="p-1 text-gray-500 hover:text-[#6366F1] transition-colors"
+                                  title="Edit article"
+                                >
+                                  <Icon icon="proicons:pencil" className="w-[24px] h-[24px] text-foreground" />
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}

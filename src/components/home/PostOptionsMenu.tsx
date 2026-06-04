@@ -190,7 +190,7 @@ export function PostOptionsMenu({
         />
       )}
 
-      <ReportModal 
+      <ReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
         targetType="POST"

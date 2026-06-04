@@ -12,10 +12,11 @@ interface PostMediaProps {
   priority?: boolean;
   isProfileView?: boolean;
   isVerticalVideo?: boolean;
+  hasNoCaption?: boolean;
 }
 
 export const PostMedia = ({
-  imageSrc, images = [], videoSrc, videoRef, aspectRatio, onLoad, priority, isProfileView, isVerticalVideo
+  imageSrc, images = [], videoSrc, videoRef, aspectRatio, onLoad, priority, isProfileView, isVerticalVideo, hasNoCaption
 }: PostMediaProps) => {
   const validImages = images.length > 0 ? images : (imageSrc ? [imageSrc] : []);
   const hasMultipleImages = validImages.length > 1;
@@ -27,9 +28,8 @@ export const PostMedia = ({
 
   return (
     <div
-      className={`w-full overflow-hidden bg-card relative group flex flex-col justify-center ${
-        isProfileView ? 'aspect-square' : (isVerticalVideo ? '' : (aspectRatio ? '' : 'h-[420px]'))
-      } ${!isProfileView && hasMedia ? 'mt-2 mb-2' : ''}`}
+      className={`w-full overflow-hidden bg-card relative group flex flex-col justify-center ${isProfileView ? 'aspect-square' : (isVerticalVideo ? '' : (aspectRatio ? '' : 'h-[420px]'))
+        } ${!isProfileView && hasMedia ? (hasNoCaption ? 'mt-0 mb-0' : 'mt-2 mb-0') : ''}`}
       style={
         !isProfileView
           ? (isVerticalVideo ? { height: '550px' } : (aspectRatio ? { aspectRatio, maxHeight: '700px' } : undefined))

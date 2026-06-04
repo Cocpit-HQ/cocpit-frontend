@@ -257,6 +257,7 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     rankingScore: backendPost._rankingMeta?.score,
     slotType: backendPost._rankingMeta?.slot_type,
     position: backendPost._rankingMeta?.position,
+    post_type: backendPost.post_type,
   };
 };
 

@@ -86,7 +86,7 @@ export default function HomePage() {
                 {/* Sideboards */}
                 <aside className="w-full min-w-0 space-y-6 px-0 md:px-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:w-[406px] lg:shrink-0 lg:self-start lg:overflow-y-auto scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   <div className="space-y-6">
-                    <UpdatesPanel />
+                    {/* <UpdatesPanel /> */}
                     <TrendingHashtags />
                   </div>
                 </aside>

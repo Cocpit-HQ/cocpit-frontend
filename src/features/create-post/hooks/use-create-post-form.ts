@@ -154,19 +154,47 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
           setOriginalPost(post);
           // Determine type
           let type: PostType = 'text';
-          if (post.images && post.images.length > 0) type = 'photo';
-          if (post.videoSrc) type = 'video';
-          if (post.poll) type = 'poll';
-          if (post.title && !post.images?.length && !post.videoSrc && !post.poll) type = 'article';
+          const isArticlePost =
+            post.category === 'Article' ||
+            Boolean(post.articleBody) ||
+            post.post_type === 'article' ||
+            post.type === 'ARTICLE' ||
+            post.type === 'article' ||
+            (Boolean(post.title) && !post.poll);
 
-          setPostType(type);
+          if (isArticlePost) {
+            type = 'article';
+            setPostType('article');
+            setArticleData({
+              id: post.id,
+              title: post.title || '',
+              content: post.articleBody || post.content || '',
+              subtitle: post.content || '',
+              coverImage: post.images?.[0]
+                ? { url: post.images[0], file: null }
+                : null,
+            });
+            setArticleTitle(post.title || '');
+            setArticleContent(post.articleBody || post.content || '');
+            setDescription(post.content || '');
+          } else if (post.images && post.images.length > 0) {
+            type = 'photo';
+            setPostType('photo');
+          } else if (post.videoSrc) {
+            type = 'video';
+            setPostType('video');
+          } else if (post.poll) {
+            type = 'poll';
+            setPostType('poll');
+          } else {
+            setPostType('text');
+          }
+
           setPostCategory(post.category as any || (isCompanyPost ? 'Update' : 'Professional'));
           setVisibility(post.visibility || 'public');
 
-          if (type === 'text' || type === 'photo' || type === 'video') setDescription(post.content);
-          if (type === 'article') {
-            setArticleTitle(post.title || '');
-            setArticleContent(post.content);
+          if (!isArticlePost && (type === 'text' || type === 'photo' || type === 'video')) {
+            setDescription(post.content);
           }
 
           setSelectedLocation(post.location ? { id: 0, name: post.location, latitude: '', longitude: '' } : null);
@@ -344,7 +372,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
           }
 
           await postApi.update(editPostId, updatePayload);
-          
+
           if (onUpdate) {
             // Map the frontend fields for the feed optimistic/immediate update
             const updatedPost: any = {
@@ -456,3 +484,5 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     }
   };
 };
+
+
