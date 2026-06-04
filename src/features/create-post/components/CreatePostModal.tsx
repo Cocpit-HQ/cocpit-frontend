@@ -126,7 +126,10 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
                 <div className="relative group w-full max-w-[420px]">
                   <a
                     href="#"
-                    onClick={(e) => e.preventDefault()}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
                     className="block w-full bg-card border border-border rounded-[24px] overflow-hidden shadow-sm transition-all hover:shadow-md animate-in fade-in zoom-in-95 duration-200"
                   >
                     <div className="w-full h-[180px] overflow-hidden">
@@ -144,6 +147,29 @@ export const CreatePostModal = (props: CreatePostModalProps) => {
                       </h3>
                     </div>
                   </a>
+                  {state.postType === 'article' && (
+                    <div className="flex justify-end gap-3 w-full mt-2 pr-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+	                          e.preventDefault();
+	                          if (isEdit) {
+	                            state.setArticleData(null);
+	                            state.setPostType('article');
+	                          } else {
+                            const { setArticleMode, setActiveModal } = useUIStore.getState();
+                            setActiveModal(null);
+                            setArticleMode(true);
+                          }
+                        }}
+                        className="p-1 text-gray-500 hover:text-[#6366F1] transition-colors"
+                        title="Edit article"
+                      >
+                        <Icon icon="proicons:pencil" className="w-[24px] h-[24px] text-foreground" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -161,22 +161,7 @@ const ArticleFlow = ({
     const safeUrl = escapeHtml(formattedUrl);
     const safeTitle = escapeHtml(linkLabel);
 
-    const linkHtml = `
-      <div class="inline-flex flex-col gap-1 my-1 align-bottom group" contenteditable="false">
-        <a href="${safeUrl}" target="_blank" class="text-[#6366F1] font-medium text-[16px] leading-[24px] no-underline hover:no-underline cursor-pointer" style="font-family: 'Poppins', sans-serif;">${safeTitle}</a>
-        <div class="inline-flex items-center gap-4 px-3 py-1.5 bg-[#EEF2FF] rounded-[24px] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <span class="text-[12px] text-[#6366F1] max-w-[200px] truncate">${safeUrl}</span>
-          <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <button type="button" class="edit-link-btn cursor-pointer hover:bg-indigo-100 p-0.5 rounded transition-colors" title="Edit">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-            </button>
-            <button type="button" class="delete-link-btn cursor-pointer hover:bg-red-50 p-0.5 rounded transition-colors" title="Delete">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-            </button>
-          </div>
-        </div>
-      </div><span> </span>
-    `;
+    const linkHtml = `&nbsp;<span class="inline group" contenteditable="false" style="position:relative;"><a href="${safeUrl}" target="_blank" class="text-[#6366F1] font-medium no-underline hover:underline cursor-pointer" style="font-family: 'Poppins', sans-serif; font-size: inherit; line-height: inherit;">${safeTitle}</a><span class="inline-flex items-center gap-4 px-3 py-1.5 bg-[#EEF2FF] rounded-[24px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute left-0 top-full mt-1 z-10 whitespace-nowrap" style="font-size:12px;"><span class="text-[12px] text-[#6366F1] max-w-[200px] truncate">${safeUrl}</span><span class="flex items-center gap-2"><button type="button" class="edit-link-btn cursor-pointer hover:bg-indigo-100 p-0.5 rounded transition-colors" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button><button type="button" class="delete-link-btn cursor-pointer hover:bg-red-50 p-0.5 rounded transition-colors" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></button></span></span></span>&nbsp;`;
 
     if (editingLinkNode) {
       editingLinkNode.outerHTML = linkHtml;
@@ -198,7 +183,7 @@ const ArticleFlow = ({
     // Handle inline link Edit button
     const editLinkBtn = target.closest('.edit-link-btn');
     if (editLinkBtn) {
-      const linkBlock = editLinkBtn.closest('.inline-flex.flex-col') as HTMLElement | null;
+      const linkBlock = editLinkBtn.closest('span.inline.group') as HTMLElement | null;
       if (linkBlock) {
         const aTag = linkBlock.querySelector('a');
         if (aTag) {
@@ -214,7 +199,7 @@ const ArticleFlow = ({
     // Handle inline link Delete button
     const deleteLinkBtn = target.closest('.delete-link-btn');
     if (deleteLinkBtn) {
-      const linkBlock = deleteLinkBtn.closest('.inline-flex.flex-col');
+      const linkBlock = deleteLinkBtn.closest('span.inline.group');
       if (linkBlock) {
         linkBlock.remove();
         onContentChange(editorRef.current?.innerHTML || '');

@@ -85,7 +85,7 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug }: RichT
         if (structuredMatch) {
           const displayName = structuredMatch[1];
           const handle = structuredMatch[2];
-          
+
           return (
             <Link
               key={i}
@@ -103,7 +103,7 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug }: RichT
         if (legacyMatch) {
           const leadingSpace = legacyMatch[1];
           const handle = legacyMatch[2];
-          
+
           return (
             <Fragment key={i}>
               {leadingSpace}
@@ -123,7 +123,7 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug }: RichT
         if (hashtagMatch) {
           const leadingSpace = hashtagMatch[1];
           const tag = hashtagMatch[2].toLowerCase();
-          
+
           if (tag.length >= 2 && tag.length <= 30) {
             return (
               <Fragment key={i}>
@@ -155,9 +155,9 @@ export const RichTextRenderer = memo(({ content, authorName, authorSlug }: RichT
         }
 
         // 5. Handle URLs (Full, www, or Naked)
-        const isUrl = new RegExp(`^${FULL_URL_PATTERN}$`, 'i').test(part) || 
-                      new RegExp(`^${NAKED_DOMAIN_PATTERN}$`, 'i').test(part);
-        
+        const isUrl = new RegExp(`^${FULL_URL_PATTERN}$`, 'i').test(part) ||
+          new RegExp(`^${NAKED_DOMAIN_PATTERN}$`, 'i').test(part);
+
         if (isUrl) {
           let href = part;
           if (!/^https?:\/\//i.test(part)) {

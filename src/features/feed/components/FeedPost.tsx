@@ -107,7 +107,19 @@ export const FeedPost = (props: FeedPostProps) => {
   }, [id, props.sessionId, props.position, props.slotType, props.rankingScore, props.isJob]);
 
   // Click tracking
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest('[role="menu"]') ||
+      target.closest('[role="menuitem"]') ||
+      target.closest('[role="dialog"]') ||
+      target.closest('[data-radix-popper-content-wrapper]')
+    ) {
+      return;
+    }
+
     if (props.sessionId) {
       trackFeedEvent({
         event_type: 'click',
@@ -185,6 +197,7 @@ export const FeedPost = (props: FeedPostProps) => {
           onLoad={handleMediaLoad}
           priority={props.priority}
           isVerticalVideo={isVerticalVideo}
+          hasNoCaption={!content && !shared_post}
         />
       )}
 
@@ -195,49 +208,71 @@ export const FeedPost = (props: FeedPostProps) => {
         handleVote={(optId) => handleVote(optId, isCompany, activeProfile?.id)}
       />
 
-      {/* Social Proof (Frame 2608624) */}
-      {likeCount > 0 && (
-        <div className="px-[16px] h-[20px] flex items-center mb-4">
-          <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
-            Liked by {isLiked ? (
-              likeCount === 1 ? (
-                'you'
+      {/* Social Proof & Actions (Frame 2608624 & 2608574) */}
+      {likeCount > 0 ? (
+        <div className="flex flex-col mt-[-16px]">
+          {/* Social Proof (Frame 2608624) */}
+          <div className="px-[16px] h-[20px] flex items-center mt-2">
+            <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
+              Liked by {isLiked ? (
+                likeCount === 1 ? (
+                  'you'
+                ) : (
+                  <>
+                    you and {likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}
+                  </>
+                )
               ) : (
-                <>
-                  you and {likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}
-                </>
-              )
-            ) : (
-              likeCount === 1 ? (
-                `@${sampleLikerUsername || 'someone'}`
-              ) : (
-                <>
-                  @{sampleLikerUsername || 'someone'} and {likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}
-                </>
-              )
-            )}
-          </p>
-        </div>
-      )}
+                likeCount === 1 ? (
+                  `@${sampleLikerUsername || 'someone'}`
+                ) : (
+                  <>
+                    @{sampleLikerUsername || 'someone'} and {likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}
+                  </>
+                )
+              )}
+            </p>
+          </div>
 
-      {/* Actions (Frame 2608574) */}
-      <PostActions
-        id={id}
-        isLiked={isLiked}
-        likeCount={likeCount}
-        handleLike={() => handleLike(isCompany, activeProfile?.id)}
-        isCommentSectionOpen={isCommentSectionOpen}
-        isMobileDrawerOpen={isMobileDrawerOpen}
-        isCommented={isCommented}
-        commentsCount={commentCount}
-        handleToggleCommentSection={handleToggleCommentSection}
-        shares={shareCount}
-        handleShare={() => setIsShareModalOpen(true)}
-        handleRepost={() => setIsRepostModalOpen(true)}
-        isSaved={isSaved || false}
-        setIsSaved={setIsSaved}
-        handleSaveToggle={() => setIsSaveModalOpen(true)}
-      />
+          <div className="mt-4">
+            <PostActions
+              id={id}
+              isLiked={isLiked}
+              likeCount={likeCount}
+              handleLike={() => handleLike(isCompany, activeProfile?.id)}
+              isCommentSectionOpen={isCommentSectionOpen}
+              isMobileDrawerOpen={isMobileDrawerOpen}
+              isCommented={isCommented}
+              commentsCount={commentCount}
+              handleToggleCommentSection={handleToggleCommentSection}
+              shares={shareCount}
+              handleShare={() => setIsShareModalOpen(true)}
+              handleRepost={() => setIsRepostModalOpen(true)}
+              isSaved={isSaved || false}
+              setIsSaved={setIsSaved}
+              handleSaveToggle={() => setIsSaveModalOpen(true)}
+            />
+          </div>
+        </div>
+      ) : (
+        <PostActions
+          id={id}
+          isLiked={isLiked}
+          likeCount={likeCount}
+          handleLike={() => handleLike(isCompany, activeProfile?.id)}
+          isCommentSectionOpen={isCommentSectionOpen}
+          isMobileDrawerOpen={isMobileDrawerOpen}
+          isCommented={isCommented}
+          commentsCount={commentCount}
+          handleToggleCommentSection={handleToggleCommentSection}
+          shares={shareCount}
+          handleShare={() => setIsShareModalOpen(true)}
+          handleRepost={() => setIsRepostModalOpen(true)}
+          isSaved={isSaved || false}
+          setIsSaved={setIsSaved}
+          handleSaveToggle={() => setIsSaveModalOpen(true)}
+        />
+      )}
 
       {/* Lazy Modals */}
       {isCommentSectionOpen && (

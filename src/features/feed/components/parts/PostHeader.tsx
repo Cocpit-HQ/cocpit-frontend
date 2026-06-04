@@ -153,10 +153,11 @@ export const PostHeader = ({
 
             {showOptions && optionsPos && typeof document !== 'undefined' && createPortal(
               <>
-                <div className="fixed inset-0 z-[199]" onClick={() => setShowOptions(false)} />
+                <div className="fixed inset-0 z-[199]" onClick={(e) => { e.stopPropagation(); setShowOptions(false); }} />
                 <div
                   className="fixed w-[180px] p-2 bg-card border border-[#EEF2FF] dark:border-card-border-inner rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-[0px] shadow-lg z-[200]"
                   style={{ top: optionsPos.top, right: optionsPos.right }}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   {!isOwnPost && (
                     <>

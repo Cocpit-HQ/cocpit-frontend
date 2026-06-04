@@ -43,9 +43,7 @@ export const PostContent = ({
   const hasArticleBody = Boolean(articleBody?.trim());
   const showFullArticle = isArticle && (isFullContent || isExpanded);
 
-  const hasMetadata = Boolean(location || timeAgo);
-
-  if (!content && !shared_post && !hasMetadata && !isArticle) {
+  if (!content && !shared_post && !isArticle) {
     return null;
   }
 
@@ -88,12 +86,43 @@ export const PostContent = ({
         .article-body-view li {
           margin-bottom: 0.4rem;
         }
+        /* Hide editor-only controls in feed view */
+        .article-body-view .edit-link-btn,
+        .article-body-view .delete-link-btn,
+        .article-body-view .img-tools {
+          display: none !important;
+        }
+        /* Link wrapper: relative for tooltip anchor */
+        .article-body-view span.inline.group {
+          position: relative;
+        }
+        /* Tooltip: hidden by default, visible on hover, high z-index */
+        .article-body-view span.inline.group > span:last-of-type {
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.2s ease;
+          z-index: 50;
+        }
+        .article-body-view span.inline.group:hover > span:last-of-type {
+          opacity: 1;
+          pointer-events: auto;
+        }
+        /* Style links in feed view */
+        .article-body-view a {
+          color: #6366F1;
+          font-weight: 500;
+          text-decoration: none;
+          cursor: pointer;
+        }
+        .article-body-view a:hover {
+          text-decoration: underline;
+        }
       `}</style>
 
       {/* Main post description/caption */}
       {content && !isArticle && (
         <div className="w-full">
-          <div 
+          <div
             className={`font-normal font-[family-name:var(--font-poppins)] text-[12px] leading-[16px] text-foreground whitespace-pre-wrap ${!isFullContent && !isExpanded ? 'line-clamp-2' : ''}`}
           >
             <RichTextRenderer content={content} authorName={author} authorSlug={authorSlug} />
@@ -119,9 +148,9 @@ export const PostContent = ({
             <Link href={articleHref} className="block" onClick={(e) => e.stopPropagation()}>
               <div className="w-full aspect-[21/9] overflow-hidden relative border-b border-border/40">
                 {imageSrc ? (
-                  <img 
-                    src={imageSrc} 
-                    alt={title || "Article cover"} 
+                  <img
+                    src={imageSrc}
+                    alt={title || "Article cover"}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -134,9 +163,9 @@ export const PostContent = ({
           ) : (
             <div className="w-full aspect-[21/9] overflow-hidden relative border-b border-border/40">
               {imageSrc ? (
-                <img 
-                  src={imageSrc} 
-                  alt={title || "Article cover"} 
+                <img
+                  src={imageSrc}
+                  alt={title || "Article cover"}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -175,9 +204,9 @@ export const PostContent = ({
 
             {hasArticleBody && showFullArticle && (
               <div
-                className={`grid overflow-hidden transition-all duration-300 ease-out ${showFullArticle ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+                className={`grid transition-all duration-300 ease-out ${showFullArticle ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 overflow-hidden'}`}
               >
-                <div className="overflow-hidden">
+                <div className={showFullArticle ? 'overflow-visible' : 'overflow-hidden'}>
                   <div
                     dangerouslySetInnerHTML={{ __html: articleBody || '' }}
                     className="article-body-view border-t border-border/40 pt-4"

@@ -272,6 +272,33 @@ export const usePostMedia = (
     }));
   }, [activeImageIndex]);
 
+  const handleVideoCropChange = useCallback((crop: { x: number; y: number }) => {
+    setUploadedVideos(prev => prev.map((vid, idx) => {
+      if (idx === 0) {
+        return { ...vid, crop };
+      }
+      return vid;
+    }));
+  }, []);
+
+  const handleVideoZoomChange = useCallback((zoom: number) => {
+    setUploadedVideos(prev => prev.map((vid, idx) => {
+      if (idx === 0) {
+        return { ...vid, zoom };
+      }
+      return vid;
+    }));
+  }, []);
+
+  const handleVideoCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
+    setUploadedVideos(prev => prev.map((vid, idx) => {
+      if (idx === 0) {
+        return { ...vid, pixelCrop: croppedAreaPixels };
+      }
+      return vid;
+    }));
+  }, []);
+
   const handleFlipHChange = useCallback(() => {
     setUploadedImages(prev => prev.map((img, idx) => {
       if (idx === activeImageIndex) {
@@ -415,6 +442,9 @@ export const usePostMedia = (
     handleCropChange,
     handleZoomChange,
     handleCropComplete,
+    handleVideoCropChange,
+    handleVideoZoomChange,
+    handleVideoCropComplete,
     handleAspectChange,
     handleFlipHChange,
     handleFlipVChange,
