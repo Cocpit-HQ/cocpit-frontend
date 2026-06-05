@@ -8,7 +8,8 @@ import { FeedPostProps } from '../types';
 import { usePostInteractions } from '../hooks/use-post-interactions';
 import { usePostOptions } from '../hooks/use-post-options';
 import { usePostMediaObserver } from '../hooks/use-post-media-observer';
-import { trackFeedEvent } from '@/services/api/feed';
+import { trackFeedEvent, hidePost } from '@/services/api/feed';
+import { useToast } from "@/hooks/use-toast";
 
 // Parts
 import { PostHeader } from './parts/PostHeader';
@@ -37,6 +38,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
   // Custom Hooks
   const { updatePostInFeed } = useFeed(false);
+  const { toast } = useToast();
 
   const {
     isLiked, likeCount, isCommented, isSaved, pollData, isVoting, commentCount, shareCount,
@@ -61,6 +63,8 @@ export const FeedPost = (props: FeedPostProps) => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isRepostModalOpen, setIsRepostModalOpen] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const optionsBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -136,6 +140,39 @@ export const FeedPost = (props: FeedPostProps) => {
     }
   };
 
+  const handleNotInterested = () => {
+    setIsHidden(true);
+    
+    toast({
+      title: "Post hidden",
+      description: "We'll show fewer posts like this.",
+      action: (
+        <button
+          onClick={() => {
+            if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+            setIsHidden(false);
+          }}
+          className="bg-transparent text-primary hover:underline text-sm font-medium"
+        >
+          Undo
+        </button>
+      ),
+      duration: 5000,
+    });
+
+    hideTimeoutRef.current = setTimeout(() => {
+      if (props.sessionId) {
+        hidePost({
+          item_id: id.toString(),
+          session_id: props.sessionId,
+          position: props.position || 0
+        }).catch(console.error);
+      }
+    }, 5000);
+  };
+
+  if (isHidden) return null;
+
   return (
     <div
       ref={feedCardRef}
@@ -160,6 +197,7 @@ export const FeedPost = (props: FeedPostProps) => {
           onToggleVisibility={handleToggleVisibility}
           onShowAnalytics={() => setShowPollAnalytics(true)}
           onReport={() => setIsReportModalOpen(true)}
+          onNotInterested={handleNotInterested}
           location={location}
           tags={tags}
           authorRole={props.authorHeadline || undefined}

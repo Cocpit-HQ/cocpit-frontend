@@ -264,3 +264,8 @@ export const getPostById = async (id: string, companyId?: string): Promise<Backe
   const response = await api.get<BackendPost>(`/post/${id}`);
   return response.data;
 };
+
+export const hidePost = async (data: { item_id: string; session_id: string; position: number }): Promise<{ ok: boolean; message: string }> => {
+  const response = await api.post<{ ok: boolean; message: string }>("/feed/hide", data);
+  return response.data;
+};

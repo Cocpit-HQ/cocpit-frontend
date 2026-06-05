@@ -35,13 +35,14 @@ interface PostHeaderProps {
   tags?: any[];
   authorRole?: string;
   title?: string | null;
+  onNotInterested?: () => void;
 }
 
 export const PostHeader = ({
   id, author, authorId, authorAvatar, authorSlug, timeAgo, visibility,
   isMe, isOwnPost, isCompanyPost, poll, shared_post,
   optionsBtnRef, showOptions, setShowOptions, optionsPos, setOptionsPos,
-  onEdit, onDelete, onToggleVisibility, onShowAnalytics, onReport,
+  onEdit, onDelete, onToggleVisibility, onShowAnalytics, onReport, onNotInterested,
   location, tags, authorRole, title
 }: PostHeaderProps) => {
   const avatarSrc = authorAvatar || '/assets/pngegg.png';
@@ -183,7 +184,10 @@ export const PostHeader = ({
                         <Icon icon="mdi:information-outline" className="w-6 h-6 text-foreground" />
                       </button>
                       <button
-                        onClick={() => setShowOptions(false)}
+                        onClick={() => {
+                          setShowOptions(false);
+                          if (onNotInterested) onNotInterested();
+                        }}
                         className="flex items-center justify-between w-full px-4 py-2 cursor-pointer focus:bg-primary-tint focus:text-primary-tint-foreground rounded-3xl outline-none transition-colors"
                       >
                         <span className="text-sm font-normal font-poppins text-foreground">Not interested</span>
