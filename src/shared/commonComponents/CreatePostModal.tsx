@@ -98,6 +98,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(true);
   const [taggedUsers, setTaggedUsers] = useState<UserMention[]>([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isCompactView, setIsCompactView] = useState(false);
   const [emojiPickerPos, setEmojiPickerPos] = useState<EmojiPickerPosition | null>(null);
   const activeEmojiTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
@@ -791,14 +792,14 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       {selectedAchievementOption && state.postType === 'photo' && hasImages ? (
                         <div className="flex flex-col gap-2 w-full items-center">
                           {/* Photo preview attachment */}
-                          <div
-                            className="relative w-full bg-muted border border-border rounded-[24px] overflow-hidden flex flex-col items-center justify-center shadow-sm"
-                            style={{ aspectRatio: media.aspectRatio, maxHeight: '320px' }}
-                          >
-                            <div className="w-full h-full flex items-center justify-center p-3">
+                          <div className="box-border flex flex-row justify-between items-start p-0 gap-4 w-full h-[200px] border border-[#EEF2FF] rounded-[24px] overflow-hidden">
+                            <div
+                              className="flex flex-col items-center p-0 gap-2 mx-auto h-[200px]"
+                              style={{ aspectRatio: media.aspectRatio }}
+                            >
                               <img
                                 src={media.previewMediaUrls[0] || media.uploadedImages[0]?.url}
-                                className="w-full h-full object-contain rounded-lg"
+                                className="w-full h-full object-cover"
                                 alt="Cropped post media"
                               />
                             </div>
@@ -844,89 +845,194 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         <div className="flex flex-col gap-2 w-full items-center">
                           {/* Photo preview attachment */}
                           {state.postType === 'photo' && hasImages && (
-                            <div
-                              className="relative w-full bg-muted border border-border rounded-[24px] overflow-hidden flex flex-col items-center justify-center shadow-sm"
-                              style={{ aspectRatio: media.aspectRatio, maxHeight: '320px' }}
-                            >
-                              <div className="w-full h-full flex items-center justify-center p-3">
-                                <img
-                                  src={media.previewMediaUrls[previewActiveIndex] || media.uploadedImages[previewActiveIndex]?.url}
-                                  className="w-full h-full object-contain rounded-lg"
-                                  alt="Cropped post media"
-                                />
+                            isCompactView ? (
+                              <div className="flex items-center justify-between w-full p-2 bg-card border border-[#EEF2FF] rounded-[16px]">
+                                {/* Left: Thumbnail + File Info */}
+                                <div className="flex items-center gap-3">
+                                  <div className="w-[56px] h-[56px] rounded-[12px] overflow-hidden flex-shrink-0 bg-muted border border-border/50">
+                                    <img
+                                      src={media.previewMediaUrls[previewActiveIndex] || media.uploadedImages[previewActiveIndex]?.url}
+                                      className="w-full h-full object-cover"
+                                      alt="Attached media"
+                                    />
+                                  </div>
+                                  <div className="flex flex-col overflow-hidden max-w-[200px]">
+                                    <span className="text-[14px] font-medium text-foreground truncate font-poppins">
+                                      {media.uploadedImages[previewActiveIndex]?.file?.name || 'Attached_Image.jpg'}
+                                    </span>
+                                    <span className="text-[12px] text-gray-500 uppercase font-poppins">
+                                      {media.uploadedImages[previewActiveIndex]?.file?.type?.split('/')[1] || 'JPEG'}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Right: Controls */}
+                                <div className="flex items-center gap-2">
+                                  {media.uploadedImages.length > 1 && (
+                                    <div className="flex items-center gap-2 bg-secondary/50 px-2 py-1 rounded-full mr-1">
+                                      <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); setPreviewActiveIndex(prev => (prev === 0 ? media.uploadedImages.length - 1 : prev - 1)); }}
+                                        className="p-0.5 text-gray-500 hover:text-foreground transition-colors"
+                                      >
+                                        <ArrowLeft className="w-3.5 h-3.5" strokeWidth={2.5} />
+                                      </button>
+                                      <span className="text-[12px] font-semibold text-foreground min-w-[16px] text-center font-poppins">
+                                        {previewActiveIndex + 1}/{media.uploadedImages.length}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); setPreviewActiveIndex(prev => (prev === media.uploadedImages.length - 1 ? 0 : prev + 1)); }}
+                                        className="p-0.5 text-gray-500 hover:text-foreground transition-colors"
+                                      >
+                                        <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.5} />
+                                      </button>
+                                    </div>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsCompactView(false)}
+                                    className="p-1.5 text-[#000000] rounded-full transition-colors"
+                                    title="Show full preview"
+                                  >
+                                    <Icon icon="fluent:eye-off-24-regular" className="w-[24px] h-[24px]" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setPhotoStep('edit')}
+                                    className="p-1.5 text-[#000000] rounded-full transition-colors"
+                                    title="Edit image"
+                                  >
+                                    <Icon icon="proicons:pencil" className="w-[24px] h-[24px]" style={{ strokeWidth: '1.5px', stroke: 'currentColor' }} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => media.clearMedia()}
+                                    className="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors"
+                                    title="Remove image"
+                                  >
+                                    <Icon icon="fluent:delete-16-regular" className="w-[24px] h-[24px]" />
+                                  </button>
+                                </div>
                               </div>
-                            </div>
+                            ) : (
+                              <>
+                                {/* Large Full-Width Preview */}
+                                <div className="box-border flex flex-row justify-between items-start p-0 gap-4 w-full h-[200px] border border-[#EEF2FF] rounded-[24px] overflow-hidden">
+                                  <div
+                                    className="flex flex-col items-center p-0 gap-2 mx-auto h-[200px]"
+                                    style={{ aspectRatio: media.aspectRatio }}
+                                  >
+                                    <img
+                                      src={media.previewMediaUrls[previewActiveIndex] || media.uploadedImages[previewActiveIndex]?.url}
+                                      className="w-full h-full object-cover"
+                                      alt="Cropped post media"
+                                    />
+                                  </div>
+                                </div>
+                                
+                                {/* Controls row for large preview */}
+                                <div className="flex items-center justify-between w-full px-1">
+                                  {/* Left: counter pill */}
+                                  {media.uploadedImages.length > 1 ? (
+                                    <div className="flex items-center gap-3.5 bg-card px-4 py-1.5 rounded-full">
+                                      <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); setPreviewActiveIndex(prev => (prev === 0 ? media.uploadedImages.length - 1 : prev - 1)); }}
+                                        className="p-0.5 text-primary hover:opacity-70 transition-opacity"
+                                        title="Previous image"
+                                      >
+                                        <ArrowLeft className="w-4 h-4" strokeWidth={2.5} />
+                                      </button>
+                                      <span className="text-[13px] font-semibold text-foreground min-w-[18px] text-center font-poppins">
+                                        {String(previewActiveIndex + 1).padStart(2, '0')}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); setPreviewActiveIndex(prev => (prev === media.uploadedImages.length - 1 ? 0 : prev + 1)); }}
+                                        className="p-0.5 text-primary hover:opacity-70 transition-opacity"
+                                        title="Next image"
+                                      >
+                                        <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div />
+                                  )}
+                                  {/* Right: eye + edit + delete */}
+                                  <div className="flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => setIsCompactView(true)}
+                                        className="p-1.5 text-[#000000] rounded-full transition-colors"
+                                        title="Hide full preview"
+                                      >
+                                        <Icon icon="fluent:eye-24-regular" className="w-[24px] h-[24px]" />
+                                      </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setPhotoStep('edit')}
+                                      className="p-1.5 text-[#000000] rounded-full transition-colors"
+                                      title="Edit media"
+                                    >
+                                      <Icon icon="proicons:pencil" className="w-[24px] h-[24px]" style={{ strokeWidth: '1.5px', stroke: 'currentColor' }} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => media.clearMedia()}
+                                      className="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors"
+                                      title="Remove media"
+                                    >
+                                      <Icon icon="fluent:delete-16-regular" className="w-[24px] h-[24px]" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </>
+                            )
                           )}
 
                           {/* Video preview attachment */}
                           {state.postType === 'video' && hasVideos && (
-                            <div
-                              className="relative w-full bg-muted border border-border rounded-[24px] overflow-hidden flex flex-col items-center justify-center shadow-sm"
-                              style={{ aspectRatio: media.aspectRatio, maxHeight: '320px' }}
-                            >
-                              <div className="w-full h-full flex items-center justify-center p-3">
-                                <div className="w-full h-full rounded-lg overflow-hidden bg-black relative flex items-center justify-center">
+                            <>
+                              <div className="box-border flex flex-row justify-between items-start p-0 gap-4 w-full h-[200px] border border-[#EEF2FF] rounded-[24px] overflow-hidden">
+                                <div
+                                  className="flex flex-col items-center p-0 gap-2 mx-auto h-[200px]"
+                                  style={{ aspectRatio: media.aspectRatio }}
+                                >
                                   <CustomVideoPlayer
                                     src={media.previewMediaUrls[0] || media.uploadedVideos[0]?.url}
                                     hideControls={true}
-                                    className="object-cover w-full h-full"
+                                    className="object-cover w-full h-full bg-black"
                                     style={{
                                       transform: `scaleX(${media.uploadedVideos[0]?.flipH ? -1 : 1}) scaleY(${media.uploadedVideos[0]?.flipV ? -1 : 1}) rotate(${media.uploadedVideos[0]?.rotation || 0}deg)`
                                     }}
                                   />
                                 </div>
                               </div>
-                            </div>
-                          )}
-
-                          {/* Controls row */}
-                          <div className="flex items-center justify-between w-full px-1">
-                            {/* Left: counter pill */}
-                            {state.postType === 'photo' && hasImages && media.uploadedImages.length > 1 ? (
-                              <div className="flex items-center gap-3.5 bg-card px-4 py-1.5 rounded-full">
-                                <button
-                                  type="button"
-                                  onClick={(e) => { e.stopPropagation(); setPreviewActiveIndex(prev => (prev === 0 ? media.uploadedImages.length - 1 : prev - 1)); }}
-                                  className="p-0.5 text-primary hover:opacity-70 transition-opacity"
-                                  title="Previous image"
-                                >
-                                  <ArrowLeft className="w-4 h-4" strokeWidth={2.5} />
-                                </button>
-                                <span className="text-[13px] font-semibold text-foreground min-w-[18px] text-center font-poppins">
-                                  {String(previewActiveIndex + 1).padStart(2, '0')}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => { e.stopPropagation(); setPreviewActiveIndex(prev => (prev === media.uploadedImages.length - 1 ? 0 : prev + 1)); }}
-                                  className="p-0.5 text-primary hover:opacity-70 transition-opacity"
-                                  title="Next image"
-                                >
-                                  <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
-                                </button>
+                              {/* Controls row for video */}
+                              <div className="flex items-center justify-between w-full px-1">
+                                <div />
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setVideoStep('edit')}
+                                    className="p-1.5 text-gray-500 hover:text-[#6366F1] hover:bg-secondary rounded-full transition-colors"
+                                    title="Edit video"
+                                  >
+                                    <Icon icon="proicons:pencil" className="w-[24px] h-[24px] text-foreground" style={{ strokeWidth: '1.5px', stroke: 'currentColor' }} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => media.clearMedia()}
+                                    className="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors"
+                                    title="Remove video"
+                                  >
+                                    <Icon icon="fluent:delete-16-regular" className="w-[24px] h-[24px]" />
+                                  </button>
+                                </div>
                               </div>
-                            ) : (
-                              <div />
-                            )}
-                            {/* Right: edit + delete */}
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => state.postType === 'video' ? setVideoStep('edit') : setPhotoStep('edit')}
-                                className="p-1.5 text-gray-500 hover:text-[#6366F1] hover:bg-secondary rounded-full transition-colors"
-                                title="Edit media"
-                              >
-                                <Icon icon="proicons:pencil" className="w-[24px] h-[24px] text-foreground" style={{ strokeWidth: '1.5px', stroke: 'currentColor' }} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => media.clearMedia()}
-                                className="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors"
-                                title="Remove media"
-                              >
-                                <Icon icon="fluent:delete-16-regular" className="w-[24px] h-[24px]" />
-                              </button>
-                            </div>
-                          </div>
+                            </>
+                          )}
                         </div>
                       )}
 

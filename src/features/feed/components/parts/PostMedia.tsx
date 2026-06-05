@@ -29,7 +29,7 @@ export const PostMedia = ({
   return (
     <div
       className={`w-full overflow-hidden bg-card relative group flex flex-col justify-center ${isProfileView ? 'aspect-square' : (isVerticalVideo ? '' : (aspectRatio ? '' : 'h-[420px]'))
-        } ${!isProfileView && hasMedia ? (hasNoCaption ? 'mt-0 mb-0' : 'mt-2 mb-0') : ''}`}
+        } ${!isProfileView && hasMedia ? 'mt-2 mb-0' : ''}`}
       style={
         !isProfileView
           ? (isVerticalVideo ? { height: '550px' } : (aspectRatio ? { aspectRatio, maxHeight: '700px' } : undefined))

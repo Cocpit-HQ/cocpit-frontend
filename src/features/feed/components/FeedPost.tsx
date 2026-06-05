@@ -226,17 +226,19 @@ export const FeedPost = (props: FeedPostProps) => {
 
       {/* Media (Rectangle 14) */}
       {!isArticlePost && (
-        <PostMedia
-          imageSrc={imageSrc}
-          images={props.images}
-          videoSrc={videoSrc}
-          videoRef={videoRef}
-          aspectRatio={finalAspectRatio}
-          onLoad={handleMediaLoad}
-          priority={props.priority}
-          isVerticalVideo={isVerticalVideo}
-          hasNoCaption={!content && !shared_post}
-        />
+        <div className="mt-[-16px]">
+          <PostMedia
+            imageSrc={imageSrc}
+            images={props.images}
+            videoSrc={videoSrc}
+            videoRef={videoRef}
+            aspectRatio={finalAspectRatio}
+            onLoad={handleMediaLoad}
+            priority={props.priority}
+            isVerticalVideo={isVerticalVideo}
+            hasNoCaption={!content && !shared_post}
+          />
+        </div>
       )}
 
       {/* Poll */}

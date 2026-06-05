@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { SaveButton } from '@/components/home/SaveButton';
+import { RepostMenu } from './RepostMenu';
 
 interface PostActionsProps {
   id: string | number;
@@ -88,31 +89,14 @@ export const PostActions = ({
           </span>
         </button>
 
-        {/* Repost is presentational until backend support is wired. */}
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); handleRepost(); }}
-          aria-label="Repost"
-          title="Repost"
-          className="flex h-[24px] flex-row items-center gap-[16px]"
-        >
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            width="24" 
-            height="24" 
-            viewBox="0 0 24 24" 
-            className="text-foreground"
-          >
-            <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
-              <path d="M8.5 15S5 17.578 5 18.5S8.5 22 8.5 22"/>
-              <path d="M5.5 18.5h8c3.288 0 4.931 0 6.038-.908q.304-.25.554-.554C21 15.93 21 14.288 21 11m-5.5-2S19 6.422 19 5.5S15.5 2 15.5 2"/>
-              <path d="M18.5 5.5h-8c-3.287 0-4.931 0-6.038.908a4 4 0 0 0-.554.554C3 8.07 3 9.712 3 13"/>
-            </g>
-          </svg>
-          <span className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground">
-            {shares}
-          </span>
-        </button>
+        <RepostMenu 
+          shares={shares}
+          onRepostWithThoughts={handleRepost}
+          onRepost={() => {
+            // Future backend wiring for direct repost
+            console.log('Direct repost clicked');
+          }}
+        />
 
         {/* Share (Frame 2608597) */}
         <button 
