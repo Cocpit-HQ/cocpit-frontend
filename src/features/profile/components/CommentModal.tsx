@@ -16,6 +16,7 @@ import { formatDistanceToNow } from "date-fns";
 import { getComments, addComment } from "@/services/api/posts";
 import { toast } from "sonner";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
+import CommentListSkeleton from "@/features/feed/components/comments/CommentSkeleton";
 
 interface Comment {
     comment_id: string;
@@ -97,10 +98,7 @@ export function CommentModal({ isOpen, onClose, postId, onCommentAdded }: Commen
 
                 <ScrollArea className="flex-1 p-4">
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center h-full gap-2 opacity-50 py-20">
-                            <div className="w-8 h-8 border-4 border-[#6366F1] border-t-transparent rounded-full animate-spin" />
-                            <span className="text-sm">Loading comments...</span>
-                        </div>
+                        <CommentListSkeleton />
                     ) : comments.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 opacity-40">
                             <MessageSquare className="w-12 h-12 mb-2" />

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Comment as CommentType } from '@/types/entities';
 import CommentList from './CommentList';
 import CommentInput from './CommentInput';
+import CommentListSkeleton from './CommentSkeleton';
 import { ReportModal } from '@/components/shared/ReportModal';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 
@@ -77,9 +78,7 @@ export default function CommentSectionView({
 
       <div className="flex-1 overflow-y-auto min-h-0 p-4 pb-6 scrollbar-hide">
         {isLoading && !comments.length ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
+          <CommentListSkeleton />
         ) : comments.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">
             No comments yet. Be the first to say something!
