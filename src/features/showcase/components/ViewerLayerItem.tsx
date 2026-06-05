@@ -47,12 +47,20 @@ export function ViewerLayerItem({
         }
     };
 
+    // Set initial video trim start when layer changes
+    useEffect(() => {
+        if (layer.type !== "video" || !videoRef.current) return;
+        const vid = videoRef.current;
+        if (layer.trim) {
+            vid.currentTime = layer.trim.start;
+        }
+    }, [layer]);
+
     // Auto-play video layers when active
     useEffect(() => {
         if (layer.type !== "video" || !videoRef.current) return;
         videoEndTriggeredRef.current = false;
         const vid = videoRef.current;
-        if (layer.trim) vid.currentTime = layer.trim.start;
         if (isActive !== false) {
             vid.play().catch((err) => {
                 if (err.name !== "AbortError") console.error("Video play failed:", err);
@@ -60,7 +68,7 @@ export function ViewerLayerItem({
         } else {
             vid.pause();
         }
-    }, [layer, isActive]);
+    }, [isActive]);
 
     const getSource = (): string => {
         if (layer.type === "text" || layer.type === "post") return "";

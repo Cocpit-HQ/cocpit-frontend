@@ -34,10 +34,9 @@ export default function ReplyGroup({ replies, onReply, onDelete, onEdit, current
             {!isOpen ? (
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-2 py-1 ml-8 md:ml-10"
+                    className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-2 py-1 pl-9"
                 >
-                    <div className="w-8 h-[1px]"></div>
-                    View {replies.length} replies
+                    View replies
                 </button>
             ) : (
                 <div className="ml-8 md:ml-10  pl-3 md:pl-4 space-y-3 mt-2">
@@ -59,7 +58,7 @@ export default function ReplyGroup({ replies, onReply, onDelete, onEdit, current
 
                     <button
                         onClick={() => setIsOpen(false)}
-                        className="text-xs font-semibold text-muted-foreground hover:text-foreground mt-2 pl-10"
+                        className="text-xs font-semibold text-muted-foreground hover:text-foreground mt-2 pl-11"
                     >
                         Hide replies
                     </button>

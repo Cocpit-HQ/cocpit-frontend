@@ -239,7 +239,7 @@ export function StoryRail({
           onScroll={updateScrollButtons}
           className={
             isDesktopShowcase
-              ? "flex-1 flex items-center gap-[41px] overflow-x-auto px-0 pb-1 pt-0 scrollbar-hide"
+              ? "flex-1 flex items-center gap-[16px] overflow-x-auto px-0 pb-1 pt-0 scrollbar-hide"
               : "flex gap-3 overflow-x-auto px-4 pb-2 pt-2 scrollbar-hide md:px-0"
           }
         >

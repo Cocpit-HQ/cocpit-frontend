@@ -32,7 +32,7 @@ export default function CommentInput({
     className = "",
     autoFocus = false,
 }: CommentInputProps) {
-    const [text, setText] = useState('');
+    const [commentText, setCommentText] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [mentions, setMentions] = useState<UserMention[]>([]);
     const [showMentionDropdown, setShowMentionDropdown] = useState(false);
@@ -57,12 +57,12 @@ export default function CommentInput({
             // Automatically add reply mention if not present
             const mentionHandle = replyingTo.account_name || replyingTo.name.replace(/\s+/g, '_').toLowerCase();
             const mention = `@${mentionHandle} `;
-            if (!text.startsWith(mention)) {
-                setText(prev => mention + prev);
+            if (!commentText.startsWith(mention)) {
+                setCommentText(prev => mention + prev);
             }
         }
         if (editingComment && textareaRef.current) {
-            setText(editingComment.text);
+            setCommentText(editingComment.text);
             textareaRef.current.focus();
             // Trigger auto-resize
             textareaRef.current.style.height = 'auto';
@@ -96,7 +96,7 @@ export default function CommentInput({
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const value = e.target.value;
         const cursorPos = e.target.selectionStart;
-        setText(value);
+        setCommentText(value);
 
         // Auto-resize logic
         e.target.style.height = 'auto';
@@ -124,14 +124,14 @@ export default function CommentInput({
     const insertMention = (user: UserMention) => {
         if (!textareaRef.current) return;
         const cursorPos = textareaRef.current.selectionStart;
-        const textBeforeCursor = text.substring(0, cursorPos);
+        const textBeforeCursor = commentText.substring(0, cursorPos);
         const lastAtIndex = textBeforeCursor.lastIndexOf('@');
 
-        const textAfterCursor = text.substring(cursorPos);
+        const textAfterCursor = commentText.substring(cursorPos);
         const mentionText = `@${user.account_name || user.full_name.replace(/\s+/g, '_').toLowerCase()} `;
 
-        const newText = text.substring(0, lastAtIndex) + mentionText + textAfterCursor;
-        setText(newText);
+        const newText = commentText.substring(0, lastAtIndex) + mentionText + textAfterCursor;
+        setCommentText(newText);
         setMentionQuery('');
         setShowMentionDropdown(false);
 
@@ -147,10 +147,10 @@ export default function CommentInput({
 
     const handleSubmit = (e?: React.FormEvent) => {
         e?.preventDefault();
-        if (!text.trim()) return;
+        if (!commentText.trim()) return;
 
-        onAddComment(text.trim());
-        setText('');
+        onAddComment(commentText.trim());
+        setCommentText('');
         setShowEmojiPicker(false);
         setMentionQuery('');
         setShowMentionDropdown(false);
@@ -189,9 +189,9 @@ export default function CommentInput({
 
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const newText = text.substring(0, start) + emoji + text.substring(end);
+        const newText = commentText.substring(0, start) + emoji + commentText.substring(end);
 
-        setText(newText);
+        setCommentText(newText);
 
         // Restore cursor position
         setTimeout(() => {
@@ -249,86 +249,95 @@ export default function CommentInput({
                 </div>
             )}
 
-            <div className={`relative flex items-end gap-2 p-1 sm:p-2 border border-border bg-muted/20 ${replyingTo ? 'rounded-b-xl border-t-0' : 'rounded-xl'} focus-within:ring-1 focus-within:ring-primary/50 transition-all`}>
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 overflow-hidden flex-shrink-0 mb-1 hidden sm:block">
+            <div className="flex flex-row items-center p-0 gap-[8px] w-[524px] max-w-full h-[56px] flex-none order-4 flex-grow-0">
+                <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0 flex-none order-0 flex-grow-0 bg-[#D9D9D9]">
                     <img src={currentUserAvatar} alt="User" className="w-full h-full object-cover" />
                 </div>
 
-                <div className="flex-1 relative">
-                    <textarea
-                        ref={textareaRef}
-                        value={text}
-                        onChange={handleTextChange}
-                        onKeyDown={handleKeyDown}
-                        placeholder={editingComment ? "Edit your comment..." : replyingTo ? `Reply to ${replyingTo.name}...` : "Add a comment..."}
-                        className="w-full bg-transparent border-none focus:ring-0 p-1.5 sm:p-2 min-h-[36px] max-h-32 resize-none text-sm sm:text-base placeholder:text-muted-foreground/60 scrollbar-hide focus:outline-none font-poppins"
-                        rows={1}
-                        style={{ height: 'auto' }}
-                    />
+                <div className={`box-border flex flex-row items-center py-[8px] px-[16px] gap-[8px] w-[476px] h-[56px] bg-white border border-[#E0E7FF] ${replyingTo ? 'rounded-b-[24px] border-t-0' : 'rounded-[24px]'} flex-none order-1 flex-grow focus-within:ring-1 focus-within:ring-primary/50 focus-within:border-primary transition-all relative`}>
+                    <div className="flex-1 relative flex items-center h-full">
+                        <textarea
+                            ref={textareaRef}
+                            value={commentText}
+                            onChange={(e) => {
+                                handleTextChange(e);
+                                setCommentText(e.target.value);
+                            }}
+                            onKeyDown={handleKeyDown}
+                            placeholder={editingComment ? "Edit your comment..." : replyingTo ? `Reply to ${replyingTo.name}...` : "Write your thoughts"}
+                            className="w-full bg-transparent border-none focus:ring-0 p-0 resize-none text-sm sm:text-base placeholder:text-muted-foreground/60 scrollbar-hide focus:outline-none font-poppins"
+                            rows={1}
+                            style={{ height: 'auto' }}
+                        />
 
-                    {/* Mention Autocomplete Dropdown */}
-                    {showMentionDropdown && (
-                        <div
-                            ref={mentionDropdownRef}
-                            className="absolute bottom-full left-0 mb-2 w-64 bg-popover border border-border rounded-xl shadow-2xl z-50 overflow-hidden pointer-events-auto"
+                        {/* Mention Autocomplete Dropdown */}
+                        {showMentionDropdown && (
+                            <div
+                                ref={mentionDropdownRef}
+                                className="absolute bottom-full left-0 mb-2 w-64 bg-popover border border-border rounded-xl shadow-2xl z-50 overflow-hidden pointer-events-auto"
+                            >
+                                <div className="p-1 max-h-60 overflow-y-auto custom-scrollbar">
+                                    {mentions.map((user, index) => (
+                                        <button
+                                            key={user.id}
+                                            onClick={() => insertMention(user)}
+                                            onMouseEnter={() => setMentionIndex(index)}
+                                            className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${index === mentionIndex ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`}
+                                        >
+                                            <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex-shrink-0">
+                                                <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div className="flex flex-col items-start min-w-0">
+                                                <span className="text-sm font-semibold truncate w-full">{user.full_name}</span>
+                                                <span className="text-[10px] text-muted-foreground truncate w-full">@{user.account_name}</span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-[24px] flex-none">
+                        <button
+                            ref={buttonRef}
+                            type="button"
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            className="w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors flex-none order-0 flex-grow-0"
                         >
-                            <div className="p-1 max-h-60 overflow-y-auto custom-scrollbar">
-                                {mentions.map((user, index) => (
+                            <Smile className="w-6 h-6" />
+                        </button>
+                        <button
+                            onClick={() => handleSubmit()}
+                            disabled={!commentText.trim()}
+                            className={`w-6 h-6 flex items-center justify-center transition-all flex-none order-0 flex-grow-0
+                                ${commentText.trim().length > 0
+                                    ? 'text-[#6366F1] hover:text-[#6366F1]/80'
+                                    : 'text-muted-foreground/40 cursor-not-allowed'
+                                }`}
+                        >
+                            <Send className="w-6 h-6" />
+                        </button>
+                    </div>
+
+                    {/* Emoji Picker Popover */}
+                    {showEmojiPicker && (
+                        <div ref={pickerRef} className="absolute bottom-full right-0 mb-2 z-50 shadow-xl rounded-xl overflow-hidden bg-popover border border-border w-72">
+                            <div className="p-2 grid grid-cols-7 gap-1 max-h-48 overflow-y-auto custom-scrollbar">
+                                {EMOJI_LIST.map((emoji) => (
                                     <button
-                                        key={user.id}
-                                        onClick={() => insertMention(user)}
-                                        onMouseEnter={() => setMentionIndex(index)}
-                                        className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${index === mentionIndex ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`}
+                                        key={emoji}
+                                        type="button"
+                                        onClick={() => insertEmoji(emoji)}
+                                        className="p-2 hover:bg-muted rounded-md text-xl transition-colors flex items-center justify-center leading-none"
                                     >
-                                        <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex-shrink-0">
-                                            <img src={user.avatar_url || '/assets/pngegg.png'} alt={user.full_name} className="w-full h-full object-cover" />
-                                        </div>
-                                        <div className="flex flex-col items-start min-w-0">
-                                            <span className="text-sm font-semibold truncate w-full">{user.full_name}</span>
-                                            <span className="text-[10px] text-muted-foreground truncate w-full">@{user.account_name}</span>
-                                        </div>
+                                        {emoji}
                                     </button>
                                 ))}
                             </div>
                         </div>
                     )}
                 </div>
-
-                <div className="flex items-center gap-1 mb-1">
-                    <button
-                        ref={buttonRef}
-                        type="button"
-                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        className="p-2 text-muted-foreground hover:text-primary transition-colors rounded-full hover:bg-muted"
-                    >
-                        <Smile className="w-5 h-5" />
-                    </button>
-                    <button
-                        onClick={() => handleSubmit()}
-                        disabled={!text.trim()}
-                        className="p-2 text-green-500 hover:text-green-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                    >
-                        <Send className="w-5 h-5" />
-                    </button>
-                </div>
-
-                {/* Emoji Picker Popover */}
-                {showEmojiPicker && (
-                    <div ref={pickerRef} className="absolute bottom-full right-0 mb-2 z-50 shadow-xl rounded-xl overflow-hidden bg-popover border border-border w-72">
-                        <div className="p-2 grid grid-cols-7 gap-1 max-h-48 overflow-y-auto custom-scrollbar">
-                            {EMOJI_LIST.map((emoji) => (
-                                <button
-                                    key={emoji}
-                                    type="button"
-                                    onClick={() => insertEmoji(emoji)}
-                                    className="p-2 hover:bg-muted rounded-md text-xl transition-colors flex items-center justify-center leading-none"
-                                >
-                                    {emoji}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );

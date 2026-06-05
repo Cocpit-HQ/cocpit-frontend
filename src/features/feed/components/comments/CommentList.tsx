@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { Comment as CommentType } from '@/types/entities';
 import Comment from './Comment';
 import ReplyGroup from './ReplyGroup';
@@ -18,6 +18,7 @@ interface CommentListProps {
 }
 
 export default function CommentList({ comments, onReply, onDelete, onEdit, currentUserId, isPostOwner, postId, onReport, onHide }: CommentListProps) {
+  const [showAllComments, setShowAllComments] = useState(false);
 
   // ✅ CORRECTED: Use parent_id, not heuristics
   const { rootComments, replyMap } = useMemo(() => {
@@ -78,9 +79,13 @@ export default function CommentList({ comments, onReply, onDelete, onEdit, curre
     }
   }, [targetCommentId, comments]); // Re-run when comments load
 
+  const visibleRootComments = showAllComments
+    ? rootComments
+    : rootComments.slice(0, 3);
+
   return (
     <div className="space-y-4 pb-4 font-poppins">
-      {rootComments.map((root, index) => (
+      {visibleRootComments.map((root, index) => (
         <React.Fragment key={root.id}>
           <Comment
             comment={root}
@@ -111,6 +116,27 @@ export default function CommentList({ comments, onReply, onDelete, onEdit, curre
           )}
         </React.Fragment>
       ))}
+
+      {!showAllComments && rootComments.length > 3 && (
+        <div className="flex justify-center w-full mt-4">
+          <button
+            onClick={() => setShowAllComments(true)}
+            className="text-sm font-semibold text-[#6366F1] hover:underline cursor-pointer"
+          >
+            View more
+          </button>
+        </div>
+      )}
+      {showAllComments && rootComments.length > 3 && (
+        <div className="flex justify-center w-full mt-4">
+          <button
+            onClick={() => setShowAllComments(false)}
+            className="text-sm font-semibold text-[#6366F1] hover:underline cursor-pointer"
+          >
+            Show less
+          </button>
+        </div>
+      )}
     </div>
   );
 }

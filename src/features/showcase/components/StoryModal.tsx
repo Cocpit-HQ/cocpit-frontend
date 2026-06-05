@@ -293,14 +293,14 @@ export function StoryModal({
         {/* Story Card */}
         <div
           onClick={togglePlayPause}
-          className="relative overflow-hidden cursor-pointer w-[420px] h-[620px] rounded-[24px] bg-black"
+          className="relative overflow-hidden cursor-pointer w-[420px] h-[620px] rounded-[24px] bg-transparent"
         >
           {/* Media Rendering */}
           {isVideo ? (
             <video
               ref={videoRef}
               src={storyVideoSrc}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
               playsInline
               autoPlay={isPlaying}
               muted={isMuted}
@@ -312,7 +312,7 @@ export function StoryModal({
             <img
               src={storyImageSrc}
               alt={activeStory.title || "Story"}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center text-white/50 gap-2">

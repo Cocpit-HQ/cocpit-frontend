@@ -167,7 +167,7 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
             {!isPending && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="text-black hover:bg-muted p-0.5 rounded-full transition-colors flex items-center justify-center">
+                  <button className="text-black p-0.5 rounded-full flex items-center justify-center">
                     <Icon icon="ph:dots-three-outline-vertical-light" className="w-6 h-6" />
                   </button>
                 </DropdownMenuTrigger>
@@ -181,20 +181,20 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                   {isOwner && (
                     <DropdownMenuItem
                       onClick={(e) => { e.stopPropagation(); onEdit?.(id, text); }}
-                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-slate-50"
+                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-[#EEF2FF] data-[highlighted]:text-[#6366F1] text-black"
                     >
-                      <span className="text-[14px] font-normal leading-[20px] text-black">Edit comment</span>
-                      <Icon icon="fluent:edit-24-regular" width="24" height="24" className="text-black" />
+                      <span className="text-[14px] font-normal leading-[20px]">Edit comment</span>
+                      <Icon icon="fluent:edit-24-regular" width="24" height="24" />
                     </DropdownMenuItem>
                   )}
 
                   {(isOwner || isPostOwner) && (
                     <DropdownMenuItem
                       onClick={() => onDelete?.(id)}
-                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none group/delete data-[highlighted]:bg-red-50"
+                      className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-red-50 data-[highlighted]:text-[#FF6B6B] text-[#FF6B6B]"
                     >
-                      <span className="text-[14px] font-normal leading-[20px] text-[#FF6B6B]">Delete comment</span>
-                      <Icon icon="fluent:delete-24-regular" width="24" height="24" className="text-[#FF6B6B]" />
+                      <span className="text-[14px] font-normal leading-[20px]">Delete comment</span>
+                      <Icon icon="fluent:delete-24-regular" width="24" height="24" />
                     </DropdownMenuItem>
                   )}
 
@@ -202,20 +202,20 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
                     <>
                       <DropdownMenuItem
                         onClick={() => onReport?.(id)}
-                        className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-slate-50"
+                        className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-[#EEF2FF] data-[highlighted]:text-[#6366F1] text-black"
                       >
-                        <span className="text-[14px] font-normal leading-[20px] text-black">Report comment</span>
-                        <Icon icon="fluent:info-24-regular" width="24" height="24" className="text-black" />
+                        <span className="text-[14px] font-normal leading-[20px]">Report comment</span>
+                        <Icon icon="fluent:info-24-regular" width="24" height="24" />
                       </DropdownMenuItem>
 
                       <DropdownMenuItem
                         onClick={() => {
                           if (onHide) onHide(id);
                         }}
-                        className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-slate-50"
+                        className="flex items-center justify-between cursor-pointer rounded-[24px] px-4 py-2 h-10 outline-none data-[highlighted]:bg-[#EEF2FF] data-[highlighted]:text-[#6366F1] text-black"
                       >
-                        <span className="text-[14px] font-normal leading-[20px] text-black">Hide comment</span>
-                        <Icon icon="fluent:eye-hide-24-regular" width="24" height="24" className="text-black" />
+                        <span className="text-[14px] font-normal leading-[20px]">Hide comment</span>
+                        <Icon icon="fluent:eye-hide-24-regular" width="24" height="24" />
                       </DropdownMenuItem>
                     </>
                   )}
@@ -231,17 +231,17 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
         </div>
 
         {/* Action Bar (Styled like Figma) */}
-        <div className="flex items-center gap-2 text-[12px] font-semibold text-black">
+        <div className="flex items-center gap-1.5 text-[12px] font-semibold text-black">
           <button
             onClick={handleLike}
             className={`hover:underline transition-colors ${isLiked ? 'text-primary' : ''}`}
           >
             Like
           </button>
-          <span className="font-normal text-muted-foreground">—</span>
+          <span className="font-normal text-muted-foreground">-</span>
           <span className="font-normal text-muted-foreground">{likes} {likes === 1 ? 'like' : 'likes'}</span>
           
-          <div className="w-[16px] h-[0px] border border-[#DADADA] rotate-90 flex-none self-stretch mt-2"></div>
+          <span className="font-normal text-[#DADADA] mx-1">|</span>
 
           <button
             onClick={() => onReply?.(author?.name || 'User', id, author?.account_name)}
@@ -249,8 +249,8 @@ export default function Comment({ comment, onReply, onDelete, onEdit, currentUse
           >
             Reply
           </button>
-          <span className="font-normal text-muted-foreground">—</span>
-          <span className="font-normal text-muted-foreground">{comment.reply_count || 0} {comment.reply_count === 1 ? 'reply' : 'replies'}</span>
+          <span className="font-normal text-muted-foreground">-</span>
+          <span className="font-normal text-muted-foreground">{comment.reply_count || 0} reply</span>
         </div>
       </div>
     </div>

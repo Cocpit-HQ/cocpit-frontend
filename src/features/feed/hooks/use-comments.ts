@@ -70,7 +70,18 @@ export const useComments = (postId: string) => {
     };
 
     // 2️⃣ Optimistically update local state
-    setComments(prev => [optimisticComment, ...prev]);
+    setComments(prev => {
+      let updated = [optimisticComment, ...prev];
+      if (parent_id) {
+        const parentIdStr = parent_id.toString();
+        updated = updated.map(c => 
+          c.id && c.id.toString() === parentIdStr
+            ? { ...c, reply_count: (c.reply_count || 0) + 1 }
+            : c
+        );
+      }
+      return updated;
+    });
     onOptimisticAdd?.();
 
     try {
@@ -91,7 +102,18 @@ export const useComments = (postId: string) => {
       toast.error('Failed to add comment');
       
       // 3️⃣ Rollback on failure
-      setComments(prev => prev.filter(c => c.id !== tempId));
+      setComments(prev => {
+        let rolledBack = prev.filter(c => c.id !== tempId);
+        if (parent_id) {
+          const parentIdStr = parent_id.toString();
+          rolledBack = rolledBack.map(c => 
+            c.id && c.id.toString() === parentIdStr
+              ? { ...c, reply_count: Math.max(0, (c.reply_count || 0) - 1) }
+              : c
+          );
+        }
+        return rolledBack;
+      });
       onFailure?.();
       return false;
     }
@@ -100,10 +122,21 @@ export const useComments = (postId: string) => {
   const handleDeleteComment = useCallback(async (commentId: string | number, onSuccess?: () => void) => {
     const prevComments = [...comments];
     
-    // ✅ Optimistic: Remove comment AND its threaded children atomically
-    setComments(prev => prev.filter(
-      c => c.id !== commentId && c.parent_id !== commentId
-    ));
+    // ✅ Optimistic: Remove comment AND its threaded children atomically, and decrement parent's reply_count if it is a reply
+    setComments(prev => {
+      const targetIdStr = commentId.toString();
+      const targetComment = prev.find(c => c.id && c.id.toString() === targetIdStr);
+      let filtered = prev.filter(c => c.id !== commentId && c.parent_id !== commentId);
+      if (targetComment && targetComment.parent_id) {
+        const parentIdStr = targetComment.parent_id.toString();
+        filtered = filtered.map(c => 
+          c.id && c.id.toString() === parentIdStr
+            ? { ...c, reply_count: Math.max(0, (c.reply_count || 0) - 1) }
+            : c
+        );
+      }
+      return filtered;
+    });
 
     try {
       const companyId = isCompany ? activeProfile?.id : undefined;
@@ -166,7 +199,16 @@ export const useComments = (postId: string) => {
         // Prevent duplicates
         if (prev.some(c => c.id === data.comment.comment_id)) return prev;
         const mapped = mapBackendCommentToFrontend(data.comment);
-        return [mapped, ...prev];
+        let updated = [mapped, ...prev];
+        if (data.comment.parent_id) {
+          const parentIdStr = data.comment.parent_id.toString();
+          updated = updated.map(c =>
+            c.id && c.id.toString() === parentIdStr
+              ? { ...c, reply_count: (c.reply_count || 0) + 1 }
+              : c
+          );
+        }
+        return updated;
       });
     }
   }, [isCompany, activeProfile?.id, session?.user?.id]);

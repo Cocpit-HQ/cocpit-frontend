@@ -277,7 +277,7 @@ export default function UnifiedMessageInput({
                     />
 
                     {/* Right side controls */}
-                    <div className="flex items-center gap-1.5 mb-0.5 shrink-0 mr-1">
+                    <div className="flex items-center gap-[16px] mb-0.5 shrink-0 mr-1">
                         <button
                             ref={emojiButtonRef}
                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}

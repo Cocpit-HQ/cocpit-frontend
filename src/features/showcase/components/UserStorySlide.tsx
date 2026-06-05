@@ -41,7 +41,7 @@ export const UserStorySlide = ({
     const [progress, setProgress] = useState(0)
     const [showInteraction, setShowInteraction] = useState(false)
     const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
-    const [isPaused] = useState(false)
+    const [isPaused, setIsPaused] = useState(false)
     const [isMuted, setIsMuted] = useState(true)
     const { activeProfile } = useActiveProfile();
     const { markStoryViewed } = useStories();
@@ -706,9 +706,11 @@ export const UserStorySlide = ({
             y: e.touches[0].clientY,
             time: Date.now()
         })
+        setIsPaused(true)
     }
 
     const handleTouchEnd = (e: React.TouchEvent) => {
+        setIsPaused(false)
         if (!touchStart) return
 
         const touchEnd = {
@@ -757,6 +759,12 @@ export const UserStorySlide = ({
                 handleNext()
             }
         }
+        setTouchStart(null)
+    }
+
+    const handleTouchCancel = () => {
+        setIsPaused(false)
+        setTouchStart(null)
     }
 
     // Guard clause AFTER all hooks - check if we have no stories at all
@@ -828,6 +836,7 @@ export const UserStorySlide = ({
             className="w-full h-full relative flex-shrink-0 overflow-hidden"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchCancel}
         >
             {/* Interaction Panel */}
             <StoryInteractionPanel
@@ -1038,11 +1047,11 @@ export const UserStorySlide = ({
                     ) : hasValidCurrentImageSrc ? (
                         <>
                             {/* Snapshot-based: render the baked composite image directly */}
-                            <div className="absolute inset-0 z-0 pointer-events-none">
+                            <div className="absolute inset-0 w-full h-full overflow-hidden z-0 pointer-events-none bg-transparent">
                                 <img
                                     src={currentImageSrc}
                                     alt={currentStory?.title || "Story"}
-                                    className={`w-full h-full object-contain transition-opacity duration-300 ease-in ${isImageReady ? 'opacity-100' : 'opacity-0'}`}
+                                    className={`w-full h-full object-cover transition-opacity duration-300 ease-in ${isImageReady ? 'opacity-100' : 'opacity-0'}`}
                                     onLoad={() => setIsImageReady(true)}
                                     onError={(e) => {
                                         e.currentTarget.style.display = 'none';
@@ -1102,7 +1111,7 @@ export const UserStorySlide = ({
                             <VirtualLayerCanvas
                                 layers={metadata.layers}
                                 fallbackVideoUrl={currentStory.media_url}
-                                isActive={isActiveUser}
+                                isActive={isActiveUser && !isPaused && !showInteraction && !isDescriptionExpanded}
                                 onVideoEnd={handleAutoNext}
                                 onVideoProgress={setProgress}
                                 background={metadata.background}
