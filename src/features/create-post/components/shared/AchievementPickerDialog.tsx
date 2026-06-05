@@ -1,7 +1,8 @@
 'use client';
 
 import { Dialog, BareDialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { FolderKanban, BriefcaseBusiness, GraduationCap, BadgeCheck, X, type LucideIcon } from 'lucide-react';
+import { X } from 'lucide-react';
+import { Icon } from '@iconify/react';
 
 type AchievementOption = 'new_project' | 'new_role' | 'academic_milestone' | 'certificate';
 
@@ -16,7 +17,7 @@ export interface AchievementOptionData {
   label: string;
   description: string;
   placeholder: string;
-  icon: LucideIcon;
+  icon: string;
 }
 
 export const ACHIEVEMENT_OPTIONS: AchievementOptionData[] = [
@@ -25,28 +26,28 @@ export const ACHIEVEMENT_OPTIONS: AchievementOptionData[] = [
     label: 'New Project',
     description: "Share something you've built",
     placeholder: 'Share your new project...',
-    icon: FolderKanban,
+    icon: 'codicon:github-project',
   },
   {
     id: 'new-role',
     label: 'New Role',
     description: 'Let your network know your latest update',
     placeholder: 'Share your new role...',
-    icon: BriefcaseBusiness,
+    icon: 'hugeicons:job-search',
   },
   {
     id: 'academic-milestone',
     label: 'Academic Milestone',
     description: 'Share your learning progress',
     placeholder: 'Share your academic milestone...',
-    icon: GraduationCap,
+    icon: 'ph:graduation-cap-light',
   },
   {
     id: 'certificate',
     label: 'Certificate',
     description: 'Show your latest achievement',
     placeholder: 'Share your certificate...',
-    icon: BadgeCheck,
+    icon: 'catppuccin:certificate',
   },
 ];
 
@@ -63,7 +64,7 @@ interface AchievementPickerDialogProps {
 export const AchievementPickerDialog = ({ isOpen, onClose, onSelect }: AchievementPickerDialogProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <BareDialogContent className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden">
+      <BareDialogContent hideOverlay={true} className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden">
         <div className="sr-only">
           <DialogTitle>Select Milestone Option</DialogTitle>
           <DialogDescription>
@@ -89,7 +90,7 @@ export const AchievementPickerDialog = ({ isOpen, onClose, onSelect }: Achieveme
               onClick={() => { onSelect('new_project'); onClose(); }}
               className="self-stretch px-4 py-2 achievement-btn achievement-btn-selected rounded-xl inline-flex justify-start items-center gap-4 transition-colors"
             >
-              <FolderKanban className="w-6 h-6 text-black" />
+              <Icon icon="codicon:github-project" className="w-6 h-6 text-black" style={{ strokeWidth: '1px' }} />
               <div className="inline-flex flex-col justify-center items-start gap-2">
                 <div className="text-black text-base font-medium font-['Poppins'] leading-6">New Project</div>
                 <div className="text-gray-500 text-sm font-normal font-['Poppins'] leading-5">Share something you've built</div>
@@ -101,7 +102,7 @@ export const AchievementPickerDialog = ({ isOpen, onClose, onSelect }: Achieveme
               onClick={() => { onSelect('new_role'); onClose(); }}
               className="self-stretch px-4 py-2 achievement-btn rounded-xl inline-flex justify-start items-center gap-4 transition-colors"
             >
-              <BriefcaseBusiness className="w-6 h-6 text-black" />
+              <Icon icon="hugeicons:job-search" className="w-6 h-6 text-black" style={{ strokeWidth: '1.5px' }} />
               <div className="inline-flex flex-col justify-center items-start gap-2">
                 <div className="text-black text-base font-medium font-['Poppins'] leading-6">New Role</div>
                 <div className="text-gray-500 text-sm font-normal font-['Poppins'] leading-5">Let your network know your latest update</div>
@@ -113,7 +114,7 @@ export const AchievementPickerDialog = ({ isOpen, onClose, onSelect }: Achieveme
               onClick={() => { onSelect('academic_milestone'); onClose(); }}
               className="self-stretch px-4 py-2 achievement-btn rounded-xl inline-flex justify-start items-center gap-4 transition-colors"
             >
-              <GraduationCap className="w-6 h-6 text-black" />
+              <Icon icon="ph:graduation-cap-light" className="w-6 h-6 text-black" />
               <div className="inline-flex flex-col justify-center items-start gap-2">
                 <div className="text-black text-base font-medium font-['Poppins'] leading-6">Academic Milestone</div>
                 <div className="text-gray-500 text-sm font-normal font-['Poppins'] leading-5">Share your learning progress</div>
@@ -125,7 +126,7 @@ export const AchievementPickerDialog = ({ isOpen, onClose, onSelect }: Achieveme
               onClick={() => { onSelect('certificate'); onClose(); }}
               className="self-stretch px-4 py-2 achievement-btn rounded-xl inline-flex justify-start items-center gap-4 transition-colors"
             >
-              <BadgeCheck className="w-6 h-6 text-black" />
+              <Icon icon="catppuccin:certificate" className="w-6 h-6 text-black [&_*]:!stroke-current" />
               <div className="inline-flex flex-col justify-center items-start gap-2">
                 <div className="text-black text-base font-medium font-['Poppins'] leading-6">Certificate</div>
                 <div className="text-gray-500 text-sm font-normal font-['Poppins'] leading-5">Show your latest achievement</div>

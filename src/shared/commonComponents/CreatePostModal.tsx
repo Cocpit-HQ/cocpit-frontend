@@ -83,12 +83,13 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
       // Simulate a file upload event to populate the usePostMedia hook
       media.handlePhotoUpload(file, isEdit);
 
+      // Skip the editor screen for default images
+      setPhotoStep('caption');
+
       setShowAchievementPhotoPicker(false);
-      setIsCreatePostOpen(true);
     } catch (e) {
       console.error("Failed to select achievement photo", e);
       setShowAchievementPhotoPicker(false);
-      setIsCreatePostOpen(true);
     }
   };
 
@@ -429,7 +430,6 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 router.push('/feed');
               } else if (action.type === 'milestone') {
                 setShowAccountSelector(false);
-                setIsCreatePostOpen(false);
                 setShowAchievementDialog(true);
               } else {
                 state.setPostType(action.type as any);
@@ -820,7 +820,6 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 e.preventDefault();
-                                setIsCreatePostOpen(false);
                                 setShowAchievementPhotoPicker(true);
                               }}
                               className="p-1 text-gray-500 hover:text-[#6366F1] transition-colors"
@@ -1092,7 +1091,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
 
                       {/* Unified Content Textarea (Part of scroll unit) */}
                       {(state.postType !== 'poll' && (state.postType !== 'article' || !!state.articleData)) && (
-                        <div className="flex flex-col w-full">
+                        <div className="flex flex-col w-full pr-3">
                           <textarea
                             ref={composerTextareaRef}
                             className="w-full resize-none outline-none font-normal text-[15px] leading-[23px] text-foreground placeholder:text-[#6B7280] bg-transparent font-poppins whitespace-pre-wrap"
@@ -1224,12 +1223,22 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                   ) : (
                     <div className="flex flex-col gap-4 w-full mt-auto pt-5">
                       {/* Tag, Location, Smile icons row */}
-                      <div className="flex items-center gap-3 px-1">
-                        <button className="relative transition-colors" title="Tag people" onClick={() => { setIsCreatePostOpen(false); setShowTagSelector(true); }}>
+                      <div className="flex items-center gap-4 px-1">
+                        <button className="flex items-center gap-2 relative transition-colors group" title="Tag people" onClick={() => { setShowTagSelector(true); }}>
                           <Icon icon="la:user-tag" className="w-6 h-6 text-foreground" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
+                          {taggedUsers.length > 0 && (
+                            <span className="text-[14px] leading-[20px] font-normal text-[#818CF8] font-poppins">
+                              + {taggedUsers.length}
+                            </span>
+                          )}
                         </button>
-                        <button className="relative transition-colors" title="Location" onClick={() => { setIsCreatePostOpen(false); setShowLocationSelector(true); }}>
+                        <button className="flex items-center gap-2 relative transition-colors group" title="Location" onClick={() => { setShowLocationSelector(true); }}>
                           <Icon icon="hugeicons:location-05" className="w-6 h-6 text-foreground" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
+                          {state.selectedLocation && (
+                            <span className="text-[14px] leading-[20px] font-normal text-[#818CF8] font-poppins truncate max-w-[200px] text-left">
+                              {(state.selectedLocation as any).name || (state.selectedLocation as any).formattedAddress}
+                            </span>
+                          )}
                         </button>
                         <button
                           ref={emojiButtonRef}
@@ -1328,21 +1337,18 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
         onOpenChange={(open) => {
           if (!open) {
             setShowTagSelector(false);
-            setIsCreatePostOpen(true);
           }
         }}
       >
-        <BareDialogContent className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden">
+        <BareDialogContent hideOverlay={true} className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden">
           <TagPeopleSelector
             taggedUsers={taggedUsers}
             onTaggedUsersChange={setTaggedUsers}
             onCancel={() => {
               setShowTagSelector(false);
-              setIsCreatePostOpen(true);
             }}
             onConfirm={() => {
               setShowTagSelector(false);
-              setIsCreatePostOpen(true);
             }}
           />
         </BareDialogContent>
@@ -1354,21 +1360,18 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
         onOpenChange={(open) => {
           if (!open) {
             setShowLocationSelector(false);
-            setIsCreatePostOpen(true);
           }
         }}
       >
-        <BareDialogContent className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden">
+        <BareDialogContent hideOverlay={true} className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden">
           <LocationSelector
             selectedLocation={state.selectedLocation}
             onLocationChange={state.setSelectedLocation}
             onCancel={() => {
               setShowLocationSelector(false);
-              setIsCreatePostOpen(true);
             }}
             onConfirm={() => {
               setShowLocationSelector(false);
-              setIsCreatePostOpen(true);
             }}
           />
         </BareDialogContent>
@@ -1380,17 +1383,15 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
         onOpenChange={(open) => {
           if (!open) {
             setShowAchievementDialog(false);
-            setIsCreatePostOpen(true);
           }
         }}
       >
-        <BareDialogContent className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden">
+        <BareDialogContent hideOverlay={true} className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden">
           <DialogTitle className="sr-only">Select Milestone Option</DialogTitle>
           <AchievementPickerDialog
             isOpen={showAchievementDialog}
             onClose={() => {
               setShowAchievementDialog(false);
-              setIsCreatePostOpen(true);
             }}
             onSelect={(option) => {
               handleAchievementDialogSelect(option);
@@ -1407,18 +1408,16 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
         onOpenChange={(open) => {
           if (!open) {
             setShowAchievementPhotoPicker(false);
-            setIsCreatePostOpen(true);
           }
         }}
       >
-        <BareDialogContent className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden">
+        <BareDialogContent hideOverlay={true} className="p-0 bg-transparent border-none shadow-none w-fit overflow-visible [&>button]:hidden">
           <DialogTitle className="sr-only">Select Achievement Photo</DialogTitle>
           <AchievementPhotoPickerDialog
             isOpen={showAchievementPhotoPicker}
             selectedOption={selectedAchievementOption ? (selectedAchievementOption.id.replace('-', '_') as any) : null}
             onClose={() => {
               setShowAchievementPhotoPicker(false);
-              setIsCreatePostOpen(true);
             }}
             onBack={() => {
               setShowAchievementPhotoPicker(false);
@@ -1427,7 +1426,6 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
             onPhotoSelect={handleAchievementPhotoSelect}
             onUploadPhoto={() => {
               setShowAchievementPhotoPicker(false);
-              setIsCreatePostOpen(true);
               setTimeout(() => galleryInputRef.current?.click(), 0);
             }}
           />
