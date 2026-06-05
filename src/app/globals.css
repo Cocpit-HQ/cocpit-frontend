@@ -45,6 +45,11 @@
 
   --radius-card: 24px;
   --radius-feed-card: 24px;
+
+  --color-profile-hover: var(--profile-hover);
+  --color-profile-active-bg: var(--profile-active-bg);
+  --color-profile-active-border: var(--profile-active-border);
+  --color-profile-text: var(--profile-text);
 }
 
 @layer base {
@@ -118,6 +123,11 @@
 
     --card-shadow-inner: 0px 0px 4px rgba(99, 102, 241, 0.05);
     --card-border-inner: transparent;
+
+    --profile-hover: #EEF2FF;
+    --profile-active-bg: #F5F7FF;
+    --profile-active-border: #EEF2FF;
+    --profile-text: #000000;
   }
 
   [data-theme="navy"] {
@@ -156,6 +166,11 @@
     --edit-btn-hover: #2A3150;
     --pill-text-refined: #F9FAFB;
     --pill-border-refined: #F9FAFB;
+
+    --profile-hover: #2A3150;
+    --profile-active-bg: #2A3150;
+    --profile-active-border: #2d3548;
+    --profile-text: #ffffff;
   }
 
   [data-theme="light"] {
@@ -203,6 +218,11 @@
     --card-shadow-inner: 0px 0px 4px 0px #6366F10D;
     --card-border-inner: transparent;
     --edit-btn-hover: #C7D2FE;
+
+    --profile-hover: #EEF2FF;
+    --profile-active-bg: #F5F7FF;
+    --profile-active-border: #EEF2FF;
+    --profile-text: #000000;
   }
 
   [data-theme="dark"] {
@@ -290,6 +310,11 @@
     --card-shadow-inner: 0px 0px 4px 0px rgba(99, 102, 241, 0.05);
     --card-border-inner: transparent;
     --edit-btn-hover: #2A3150;
+
+    --profile-hover: #2A3150;
+    --profile-active-bg: #2A3150;
+    --profile-active-border: #1C2840;
+    --profile-text: #ffffff;
   }
 }
 
@@ -965,8 +990,8 @@
 }
 
 /* ── Dropdown hover states ──────────────────────────────── */
-[data-theme="dark"] [role="menuitem"]:hover,
-[data-theme="dark"] [role="menuitem"][data-highlighted],
+[data-theme="dark"] [role="menuitem"]:not(.profile-switcher-item):hover,
+[data-theme="dark"] [role="menuitem"]:not(.profile-switcher-item)[data-highlighted],
 [data-theme="dark"] .focus\:bg-\[\#EEF2FF\]:focus,
 [data-theme="dark"] [class*="focus:bg-[#EEF2FF]"]:focus,
 [data-theme="dark"] .hover\:bg-\[\#EEF2FF\]:hover,
@@ -976,8 +1001,8 @@
   color: #FFFFFF !important;
 }
 
-[data-theme="dark"] [role="menuitem"]:hover *,
-[data-theme="dark"] [role="menuitem"][data-highlighted] *,
+[data-theme="dark"] [role="menuitem"]:not(.profile-switcher-item):hover *,
+[data-theme="dark"] [role="menuitem"]:not(.profile-switcher-item)[data-highlighted] *,
 [data-theme="dark"] [class*="hover:bg-[#EEF2FF]"]:hover *,
 [data-theme="dark"] [class*="data-[highlighted]:bg-[#EEF2FF]"][data-highlighted] * {
   color: #FFFFFF !important;
