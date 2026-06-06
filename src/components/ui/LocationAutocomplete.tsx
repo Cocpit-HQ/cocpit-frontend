@@ -60,11 +60,18 @@ export default function LocationAutocomplete({ onSelect, value }: LocationAutoco
 
   // When debounced query changes AND user is actively searching → call API
   useEffect(() => {
-    if (mode !== "searching") return;
+    if (mode !== "searching") {
+      setLoading(false);
+      return;
+    }
     // If query matches current selection, don't re-search
-    if (value && debouncedQuery === value) return;
+    if (value && debouncedQuery === value) {
+      setLoading(false);
+      return;
+    }
     if (debouncedQuery.length < 2) {
       setApiSuggestions([]);
+      setLoading(false);
       return;
     }
 
@@ -75,7 +82,11 @@ export default function LocationAutocomplete({ onSelect, value }: LocationAutoco
         const results = await searchPlaces(debouncedQuery, sessionToken.current);
         if (!cancelled) setApiSuggestions(results);
       } catch {
-        if (!cancelled) setApiSuggestions([]);
+        if (!cancelled) {
+          setApiSuggestions([]);
+          // Fall back to static mode if the API fails entirely
+          setMode("idle");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
