@@ -68,7 +68,9 @@ export const usePostUpload = () => {
                     error.message)
                 : 'Failed to upload';
 
-            console.error("Upload failed", error);
+            const errObj = error as any;
+            const errMsg = errObj?.response?.data?.message || errObj?.message || "Unknown error";
+            console.error("Upload failed specifically because:", errMsg);
             setPendingPosts(prev => prev.map(p =>
                 p.id === id ? { ...p, status: 'error', error: message } : p
             ));

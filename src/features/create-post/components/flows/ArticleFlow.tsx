@@ -496,21 +496,25 @@ const ArticleFlow = ({
               </span>
             </button>
             <button
-              disabled={!isNextActive}
+              disabled={!isNextActive || isSubmitting}
               onClick={() => {
-                console.log("NEXT CLICKED");
-                onPreviewStepChange?.(true);
-                setStep(2);
-                onArticleComplete?.({
-                  coverImage: coverImage,
-                  title: title,
-                  subtitle: plainArticleText,
-                  content: content
-                });
+                if (isEdit) {
+                  onPost();
+                } else {
+                  console.log("NEXT CLICKED");
+                  onPreviewStepChange?.(true);
+                  setStep(2);
+                  onArticleComplete?.({
+                    coverImage: coverImage,
+                    title: title,
+                    subtitle: plainArticleText,
+                    content: content
+                  });
+                }
               }}
               className="flex flex-row justify-center items-center border border-[#FFFFFF] rounded-[24px] transition-all"
               style={{
-                width: '90px',
+                width: isEdit ? '100px' : '90px',
                 height: '40px',
                 padding: '8px 16px',
                 gap: '10px',
@@ -518,8 +522,9 @@ const ArticleFlow = ({
                 cursor: isNextActive ? 'pointer' : 'not-allowed'
               }}
             >
-              <span className="text-center text-[#FFFFFF]" style={{ display: 'inline-block', width: '31px', height: '20px', fontFamily: 'Poppins', fontWeight: 400, fontSize: '14px', lineHeight: '20px' }}>
-                Next
+              {isSubmitting && isEdit && <Loader2 className="w-4 h-4 animate-spin text-white" />}
+              <span className="text-center text-[#FFFFFF]" style={{ display: 'inline-block', fontFamily: 'Poppins', fontWeight: 400, fontSize: '14px', lineHeight: '20px' }}>
+                {isEdit ? (isSubmitting ? 'Saving' : 'Save') : 'Next'}
               </span>
             </button>
           </div>

@@ -81,6 +81,7 @@ const mergeProfilePostState = (current: Post, incoming: Post): Post => ({
 });
 
 const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpdate }: { post: Post, isOwnPost?: boolean, onDelete?: (id: string) => void, onToggleVisibility?: (id: string) => void, onUpdate?: (post: Post) => void }) => {
+  const router = useRouter();
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likesCount, setLikesCount] = useState(Number(post.likes) || 0);
   const [isSaved, setIsSaved] = useState(post.is_saved || false);
@@ -227,8 +228,12 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
                 {isOwnPost && (
                   <DropdownMenuItem
                     onClick={() => {
-                      setEditMode(true, localPost.id);
-                      setIsEditModalOpen(true);
+                      if (isArticlePost) {
+                        router.push(`/article/edit/${localPost.id}`);
+                      } else {
+                        setEditMode(true, localPost.id);
+                        setIsEditModalOpen(true);
+                      }
                     }}
                     className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"
                   >

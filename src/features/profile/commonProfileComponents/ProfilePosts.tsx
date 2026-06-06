@@ -72,7 +72,7 @@ const ProfilePostCard = ({
   const _rawImage = localPost.imageSrc || (localPost.images && localPost.images.length > 0 ? localPost.images[0] : null);
   const image = _rawImage && _rawImage.trim() !== '' ? _rawImage : null;
   const videoSrc = (localPost.videoSrc && localPost.videoSrc.trim() !== '') ? localPost.videoSrc : null;
-  const isArticlePost = localPost.category === 'Article' || Boolean(localPost.articleBody);
+  const isArticlePost = localPost.category === 'Article' || Boolean(localPost.articleBody) || localPost.post_type === 'article';
   const isPollPost = Boolean(localPost.poll);
   const articleExcerpt = localPost.content?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
   const pollQuestion = articleExcerpt || localPost.title || "Untitled poll";
@@ -242,8 +242,12 @@ const ProfilePostCard = ({
                 {isOwnPost && (
                   <DropdownMenuItem
                     onClick={() => {
-                      setEditMode(true, localPost.id);
-                      setIsEditModalOpen(true);
+                      if (isArticlePost) {
+                        router.push(`/article/edit/${localPost.id}`);
+                      } else {
+                        setEditMode(true, localPost.id);
+                        setIsEditModalOpen(true);
+                      }
                     }}
                     className="flex items-center justify-between w-full px-3 py-2 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors"
                   >

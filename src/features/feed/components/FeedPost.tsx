@@ -9,6 +9,7 @@ import { usePostInteractions } from '../hooks/use-post-interactions';
 import { usePostOptions } from '../hooks/use-post-options';
 import { usePostMediaObserver } from '../hooks/use-post-media-observer';
 import { trackFeedEvent, hidePost } from '@/services/api/feed';
+import { createRepost } from '@/services/api/posts';
 import { useToast } from "@/hooks/use-toast";
 
 // Parts
@@ -33,7 +34,7 @@ export const FeedPost = (props: FeedPostProps) => {
   const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, sampleLikerUsername, category, title, articleBody } = props;
   const { activeProfile, isCompany } = useActiveProfile();
   const router = useRouter();
-  const isArticlePost = category === 'Article' || Boolean(articleBody);
+  const isArticlePost = category === 'Article' || Boolean(articleBody) || props.post_type === 'article';
   const isArticleFeedCard = isArticlePost && !props.isFullContent;
 
   // Custom Hooks
@@ -73,6 +74,16 @@ export const FeedPost = (props: FeedPostProps) => {
       setIsMobileDrawerOpen(true);
     } else {
       setIsCommentSectionOpen(!isCommentSectionOpen);
+    }
+  };
+
+  const handleDirectRepost = async () => {
+    try {
+      await createRepost(id.toString());
+      incrementShareCount();
+      toast({ title: "Reposted!" });
+    } catch (error) {
+      toast({ title: "Error reposting", variant: "destructive" });
     }
   };
 
@@ -192,7 +203,13 @@ export const FeedPost = (props: FeedPostProps) => {
           setShowOptions={setShowOptions}
           optionsPos={optionsPos}
           setOptionsPos={setOptionsPos}
-          onEdit={() => setIsEditModalOpen(true)}
+          onEdit={() => {
+            if (isArticlePost) {
+              router.push(`/article/edit/${id}`);
+            } else {
+              setIsEditModalOpen(true);
+            }
+          }}
           onDelete={handleDelete}
           onToggleVisibility={handleToggleVisibility}
           onShowAnalytics={() => setShowPollAnalytics(true)}
@@ -287,7 +304,8 @@ export const FeedPost = (props: FeedPostProps) => {
               handleToggleCommentSection={handleToggleCommentSection}
               shares={shareCount}
               handleShare={() => setIsShareModalOpen(true)}
-              handleRepost={() => setIsRepostModalOpen(true)}
+              handleRepostWithThoughts={() => setIsRepostModalOpen(true)}
+              handleDirectRepost={handleDirectRepost}
               isSaved={isSaved || false}
               setIsSaved={setIsSaved}
               handleSaveToggle={() => setIsSaveModalOpen(true)}
@@ -307,7 +325,8 @@ export const FeedPost = (props: FeedPostProps) => {
           handleToggleCommentSection={handleToggleCommentSection}
           shares={shareCount}
           handleShare={() => setIsShareModalOpen(true)}
-          handleRepost={() => setIsRepostModalOpen(true)}
+          handleRepostWithThoughts={() => setIsRepostModalOpen(true)}
+          handleDirectRepost={handleDirectRepost}
           isSaved={isSaved || false}
           setIsSaved={setIsSaved}
           handleSaveToggle={() => setIsSaveModalOpen(true)}

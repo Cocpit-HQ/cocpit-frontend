@@ -52,6 +52,7 @@ export interface ProfilePost {
   poll: ProfilePostPoll | null;
   sample_liker_username?: string | null;
   author_headline?: string;
+  post_type?: string;
   shared_post?: {
     is_accessible: boolean;
     reason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';

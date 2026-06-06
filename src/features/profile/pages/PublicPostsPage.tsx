@@ -752,9 +752,13 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
                   onTogglePrivacy={() => handleTogglePrivacy(post.id, post.visibility || 'public')}
                   onDelete={() => handleDeletePost(post.id)}
                   onEdit={() => {
-                    setEditingPost(post);
-                    setEditMode(true, post.id);
-                    setIsEditModalOpen(true);
+                    if (post.category === 'Article' || Boolean(post.articleBody)) {
+                      router.push(`/article/edit/${post.id}`);
+                    } else {
+                      setEditingPost(post);
+                      setEditMode(true, post.id);
+                      setIsEditModalOpen(true);
+                    }
                   }}
                   currentUser={profileData?.user}
                   activeTab={activeTab}

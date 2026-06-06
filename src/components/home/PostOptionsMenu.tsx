@@ -3,6 +3,7 @@
 
 // Refactored to use standalone useFeed hook
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Trash2, Eye, EyeOff, Flag } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import {
@@ -55,6 +56,7 @@ export function PostOptionsMenu({
   const { updatePostInFeed } = useFeed();
   const { mutate: notifyEmployees } = useNotifyEmployees();
   const { setEditMode } = useUIStore();
+  const router = useRouter();
 
   // If not own post and no specific actions allowed, we still show the menu for Reporting
   // if (!isOwnPost) return null; 
@@ -97,8 +99,12 @@ export function PostOptionsMenu({
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation();
-                        setEditMode(true, postId);
-                        setIsEditModalOpen(true);
+                        if (postType === 'Article' || postType === 'article') {
+                          router.push(`/article/edit/${postId}`);
+                        } else {
+                          setEditMode(true, postId);
+                          setIsEditModalOpen(true);
+                        }
                       }}
                       className="cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl px-3 py-1.5 transition-colors group"
                     >

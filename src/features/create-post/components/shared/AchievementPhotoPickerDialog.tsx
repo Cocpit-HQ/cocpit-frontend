@@ -67,10 +67,10 @@ export const AchievementPhotoPickerDialog = ({
           <img src={selectedPhoto} alt="Selected preview" className="w-full h-full object-contain p-2" />
           <button
             onClick={() => setSelectedPhoto(null)}
-            className="absolute bottom-3 right-3 p-2 bg-white rounded-full shadow-md text-red-500 hover:bg-red-50 hover:scale-105 active:scale-95 transition-all border border-red-100"
+            className="absolute bottom-3 right-3 p-2 bg-white rounded-full shadow-md text-red-500 transition-all border border-red-100"
             title="Remove photo"
           >
-            <Icon icon="hugeicons:delete-02" className="w-5 h-5 text-red-500" />
+            <Icon icon="fluent:delete-16-regular" className="w-5 h-5 text-red-500" />
           </button>
         </div>
       ) : (

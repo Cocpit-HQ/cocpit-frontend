@@ -75,6 +75,8 @@ export const PostContent = ({
           line-height: 1.6;
           color: var(--foreground);
           opacity: 0.9;
+          white-space: pre-wrap;
+          word-break: break-word;
         }
         .article-body-view ul {
           list-style-type: disc;
@@ -82,6 +84,8 @@ export const PostContent = ({
           margin-bottom: 1rem;
           font-size: 0.95rem;
           line-height: 1.6;
+          white-space: pre-wrap;
+          word-break: break-word;
         }
         .article-body-view li {
           margin-bottom: 0.4rem;
@@ -204,12 +208,13 @@ export const PostContent = ({
 
             {hasArticleBody && showFullArticle && (
               <div
-                className={`grid transition-all duration-300 ease-out ${showFullArticle ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 overflow-hidden'}`}
+                className={`grid min-w-0 transition-all duration-300 ease-out ${showFullArticle ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 overflow-hidden'}`}
               >
-                <div className={showFullArticle ? 'overflow-visible' : 'overflow-hidden'}>
+                <div className={`min-w-0 ${showFullArticle ? 'overflow-visible' : 'overflow-hidden'}`}>
                   <div
                     dangerouslySetInnerHTML={{ __html: articleBody || '' }}
-                    className="article-body-view border-t border-border/40 pt-4"
+                    className="article-body-view border-t border-border/40 pt-4 break-words"
+                    style={{ overflowWrap: 'break-word', wordWrap: 'break-word', wordBreak: 'break-word' }}
                   />
                 </div>
               </div>

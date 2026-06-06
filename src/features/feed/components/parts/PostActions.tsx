@@ -16,7 +16,8 @@ interface PostActionsProps {
   handleToggleCommentSection: () => void;
   shares: string | number;
   handleShare: () => void;
-  handleRepost: () => void;
+  handleRepostWithThoughts: () => void;
+  handleDirectRepost: () => void;
   isSaved: boolean;
   setIsSaved: (val: boolean) => void;
   handleSaveToggle: () => void;
@@ -25,7 +26,7 @@ interface PostActionsProps {
 export const PostActions = ({
   id, isLiked, likeCount, handleLike,
   isCommentSectionOpen, isMobileDrawerOpen, isCommented, commentsCount, handleToggleCommentSection,
-  shares, handleShare, handleRepost, isSaved, setIsSaved, handleSaveToggle
+  shares, handleShare, handleRepostWithThoughts, handleDirectRepost, isSaved, setIsSaved, handleSaveToggle
 }: PostActionsProps) => {
   return (
     <div className="flex flex-row justify-between items-center px-[16px] py-[8px] w-full h-[40px]">
@@ -91,11 +92,8 @@ export const PostActions = ({
 
         <RepostMenu 
           shares={shares}
-          onRepostWithThoughts={handleRepost}
-          onRepost={() => {
-            // Future backend wiring for direct repost
-            console.log('Direct repost clicked');
-          }}
+          onRepostWithThoughts={handleRepostWithThoughts}
+          onRepost={handleDirectRepost}
         />
 
         {/* Share (Frame 2608597) */}

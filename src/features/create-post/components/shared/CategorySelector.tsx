@@ -18,7 +18,7 @@ const CategorySelector = ({
 }: CategorySelectorProps) => {
   const getCategories = (): string[] => {
     if (!isCompanyPost) {
-      return ['Professional', 'Personal', 'Achievement'];
+      return ['Professional', 'Achievement'];
     }
     if ((currentPoster as any)?.entity_type === 'INSTITUTION') {
       return ['Announcement', 'Academic', 'Admission', 'Campus Life', 'Research', 'Club Activity', 'General'];

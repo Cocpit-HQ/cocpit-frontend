@@ -172,7 +172,7 @@ export const PostHeader = ({
                         className="flex items-start justify-between w-full px-4 py-2 cursor-pointer focus:bg-primary-tint focus:text-primary-tint-foreground rounded-3xl outline-none transition-colors"
                       >
                         <span className="text-sm font-normal font-poppins text-foreground break-words text-left pr-2">
-                          {isAuthorFollowing ? `Remove ${author}` : `Follow ${author}`}
+                          {isAuthorFollowing ? `Unfollow user` : `Follow user`}
                         </span>
                         <img src={avatarSrc} alt={author} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
                       </button>

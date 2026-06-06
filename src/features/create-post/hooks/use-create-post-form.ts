@@ -14,7 +14,7 @@ import { LocationSuggestion, StructuredLocation } from '@/services/api/location'
 import { useUIStore } from '@/store/ui.store';
 import { uploadMedia } from '@/services/api/upload';
 
-const USER_CATEGORIES: CategoryType[] = ['Personal', 'Professional', 'Achievement'];
+const USER_CATEGORIES: CategoryType[] = ['Professional', 'Achievement'];
 const COMPANY_CATEGORIES: CategoryType[] = ['Update', 'Hiring', 'Milestone', 'Insight'];
 const INSTITUTION_CATEGORIES: CategoryType[] = ['Announcement', 'Academic', 'Admission', 'Campus Life', 'Research', 'Club Activity', 'General'];
 
@@ -227,12 +227,19 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             })));
           }
         })
+        .catch((error) => {
+          console.error("Failed to load post for editing:", error);
+          toast.error("Failed to load post. It may have been deleted.");
+        })
         .finally(() => setIsLoadingPost(false));
     } else if (isOpen && sharedPostId) {
       postApi.getById(sharedPostId).then(post => {
         setSharedPost(post);
         setPostCategory(post.category as any || (isCompanyPost ? 'Update' : 'Professional'));
         setVisibility(post.visibility || 'public');
+      }).catch((error) => {
+        console.error("Failed to load shared post:", error);
+        toast.error("Failed to load shared post. It may have been deleted.");
       });
     }
   }, [isOpen, editPostId, sharedPostId]);
@@ -365,6 +372,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             category: postCategory,
             visibility,
             location: selectedLocation ? ("formattedAddress" in selectedLocation ? selectedLocation.formattedAddress : selectedLocation.name) : null,
+            post_type: postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType)
           };
           if (postType === 'article') updatePayload.title = articleTitle;
           if (media_urls !== undefined) {
@@ -416,8 +424,10 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         resetForm();
         onClose();
       }
-    } catch (err) {
-      toast.error("Failed to process post");
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || "Failed to process post";
+      console.error("Post creation failed:", errorMessage, err.response?.data);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

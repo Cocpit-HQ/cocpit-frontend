@@ -42,7 +42,6 @@ export interface PollOption {
 }
 
 export type CategoryType =
-  | 'Personal'
   | 'Professional'
   | 'Achievement'
   | 'Update'

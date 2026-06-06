@@ -460,7 +460,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
             : (isImageEditorMode || isVideoEditorMode)
               ? 'max-w-[700px]'
               : 'max-w-[600px] h-[552px] max-h-[90vh]'
-            } ${(state.postType === 'poll' || showAchievementDialog) ? '[&>button:last-child]:hidden' : ''}`}
+            } [&>button:last-child]:hidden ${showAchievementDialog || showAchievementPhotoPicker ? 'opacity-0 pointer-events-none' : ''}`}
           onPointerDownOutside={(e) => {
             const target = e.target as HTMLElement;
             if (
@@ -473,6 +473,11 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
           }}
         >
           <DialogTitle className="sr-only">{(isImageEditorMode || isVideoEditorMode) ? 'Edit Media' : 'Create Post'}</DialogTitle>
+
+          {/* Dimmer Overlay for Tag/Location Selectors */}
+          {(showTagSelector || showLocationSelector) && (
+            <div className="absolute inset-0 bg-black/80 z-[300] pointer-events-auto transition-opacity" />
+          )}
 
           {/* ═══════════════════════════════════════════
             IMAGE / VIDEO EDITOR MODE
@@ -719,40 +724,34 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                NORMAL CREATE POST MODE
                ═══════════════════════════════════════════ */
             <>
-              <div className={`w-full flex flex-col flex-1 min-h-0 ${(state.postType === 'article' && !state.articleData) ? 'p-0' : 'items-center p-4'}`}>
+              <div className="w-full flex flex-col flex-1 min-h-0 items-center p-4">
+                {/* Frame 2608580: Close Button Block */}
+                <div className="w-full flex flex-col items-end mb-2">
+                  <button
+                    type="button"
+                    onClick={handleRequestClose}
+                    className="flex items-center justify-center w-[24px] h-[24px] text-[#FF6B6B] transition-colors"
+                  >
+                    <X className="w-full h-full stroke-[1.5px]" />
+                  </button>
+                </div>
                 {/* Header — FIXED */}
                 {(state.postType !== 'article' || !!state.articleData) && (
                   state.postType === 'poll' && pollStep === 'edit' ? (
                     <div className="relative w-full flex flex-col items-center">
-                      <h2 className="font-bold text-[19.5px] leading-[28px] text-foreground tracking-tight text-center font-poppins">Create a poll</h2>
+                      <h2 className="font-medium text-[18px] leading-[26px] text-[#000000] dark:text-white text-center font-poppins">Create a poll</h2>
                       <p className="font-normal text-[12.5px] leading-[17px] text-muted-foreground text-center mt-1 font-poppins">
                         Let people vote on your question
                       </p>
-                      <button
-                        type="button"
-                        onClick={handleRequestClose}
-                        className="absolute top-0 right-1 p-1 text-[#FF6B6B] hover:bg-[#FF6B6B]/10 rounded-full transition-colors"
-                      >
-                        <X className="w-5 h-5 stroke-[2.5]" />
-                      </button>
                     </div>
                   ) : (
                     <div className="relative flex flex-col items-center gap-1.5 w-full">
-                      <h2 className="font-semibold text-[19px] leading-[28px] text-foreground tracking-tight text-center">
+                      <h2 className="font-medium text-[18px] leading-[26px] text-[#000000] dark:text-white text-center font-poppins">
                         {isEdit ? 'Edit Post' : 'Create'}
                       </h2>
                       <p className="font-normal text-[12.5px] leading-[17px] text-muted-foreground text-center">
                         {isEdit ? 'Update your post details and share changes.' : 'Post jobs, insights, or milestones to grow your presence.'}
                       </p>
-                      {state.postType === 'poll' && (
-                        <button
-                          type="button"
-                          onClick={handleRequestClose}
-                          className="absolute top-0 right-1 p-1 text-[#FF6B6B] hover:bg-[#FF6B6B]/10 rounded-full transition-colors"
-                        >
-                          <X className="w-5 h-5 stroke-[2.5]" />
-                        </button>
-                      )}
                     </div>
                   )
                 )}
@@ -775,7 +774,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 )}
 
                 {/* Media Action Icons — FIXED */}
-                {state.postType !== 'article' && !(state.postType === 'photo' && hasImages) && !(state.postType === 'video' && hasVideos) && state.postType !== 'poll' && (
+                {state.postType !== 'article' && !(state.postType === 'photo' && hasImages) && !(state.postType === 'video' && hasVideos) && state.postType !== 'poll' && !state.sharedPost && (
                   <div className="mt-4 w-full">
                     {renderMediaIcons()}
                   </div>
@@ -1103,6 +1102,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         </div>
                       )}
 
+
                       {/* Poll Flow Options (Step === edit) */}
                       {state.postType === 'poll' && pollStep === 'edit' && (
                         <PollFlow
@@ -1170,6 +1170,8 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       )}
 
                       <SharedPreview sharedPost={state.sharedPost} isMobile={isMobile} />
+
+
                     </div>
                   ) : isEdit ? (
                     <ArticleFlow
@@ -1260,7 +1262,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         <button
                           onClick={handlePostClick}
                           disabled={isPostButtonDisabled}
-                          className="flex flex-row items-center justify-center gap-2 px-7 py-2.5 bg-[#C7D2FE] enabled:bg-[#6366F1] border border-white/60 rounded-full  transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none group shadow-sm"
+                          className={`flex flex-row items-center justify-center gap-2 px-7 py-2.5 border border-white/60 rounded-full transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none group shadow-sm ${isPostButtonDisabled ? 'bg-indigo-200' : 'bg-indigo-500'}`}
                         >
                           {state.isSubmitting ? (
                             <Loader2 className="w-4 h-4 text-white animate-spin" />

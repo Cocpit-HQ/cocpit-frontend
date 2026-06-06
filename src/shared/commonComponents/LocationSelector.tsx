@@ -170,7 +170,7 @@ export function LocationSelector({
             >
               <span className="flex items-center gap-3 flex-1 min-w-0">
                 <Icon icon="hugeicons:location-05" className="w-5 h-5 text-[#6366F1] flex-shrink-0" />
-                <span className="text-[15px] font-semibold text-foreground font-[family-name:var(--font-poppins)] truncate">
+                <span className="text-[16px] font-normal text-foreground leading-[24px] font-[family-name:var(--font-poppins)] truncate">
                   {draftLabel}
                 </span>
               </span>
@@ -198,7 +198,7 @@ export function LocationSelector({
               >
                 <span className="flex items-center gap-3 flex-1 min-w-0">
                   <Icon icon="hugeicons:location-05" className="w-5 h-5 text-[#6366F1] flex-shrink-0" />
-                  <span className="text-[15px] font-semibold text-foreground font-[family-name:var(--font-poppins)] truncate">
+                  <span className="text-[16px] font-normal text-foreground leading-[24px] font-[family-name:var(--font-poppins)] truncate">
                     {label}
                   </span>
                 </span>

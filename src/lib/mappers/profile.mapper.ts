@@ -157,5 +157,6 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     tags: backendPost.tags || [],
     sampleLikerUsername: backendPost.sample_liker_username || undefined,
     authorHeadline: backendPost.author_headline || undefined,
+    post_type: backendPost.post_type,
   };
 };
