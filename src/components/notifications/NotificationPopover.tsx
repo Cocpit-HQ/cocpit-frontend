@@ -252,37 +252,152 @@ export function NotificationPopover({
   const todayNotifications = notifications.filter(n => n.created_at && isToday(new Date(n.created_at)));
   const olderNotifications = notifications.filter(n => !n.created_at || !isToday(new Date(n.created_at)));
 
-  const renderNotificationItem = (notification: Notification) => (
-    <div
-      key={notification.notification_id}
-      onClick={() => handleNotificationClick(notification)}
-      className="flex items-start justify-between gap-3 py-3 cursor-pointer group hover:bg-muted/30 transition-colors rounded-xl px-2 -mx-2"
-    >
-      <div className="flex gap-3 min-w-0">
-        <div className="flex-shrink-0 pt-0.5">
-          <Avatar
-            url={notification.actor_avatar || undefined}
-            name={notification.actor_name || 'User'}
-            size="md"
-          />
+  const renderNotificationItem = (notification: Notification) => {
+    const text = notification.text ? notification.text.replace(notification.actor_name || '', '').trim() : '';
+    return (
+      <div
+        key={notification.notification_id}
+        onClick={() => handleNotificationClick(notification)}
+        className="w-full flex flex-row justify-between items-center px-4 bg-white dark:bg-background hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50 transition-colors cursor-pointer select-none"
+        style={{
+          height: '60px',
+          flex: 'none',
+          alignSelf: 'stretch',
+          flexGrow: 0,
+        }}
+      >
+        {/* Frame 2608774 */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: '0px',
+            gap: '8px',
+            flex: 'none',
+            order: 0,
+            flexGrow: 0,
+          }}
+        >
+          {/* Ellipse 24 */}
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              flex: 'none',
+              order: 0,
+              flexGrow: 0,
+            }}
+          >
+            <Avatar
+              url={notification.actor_avatar || undefined}
+              name={notification.actor_name || 'User'}
+              size="md"
+            />
+          </div>
+
+          {/* Frame 2608715 */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              padding: '0px',
+              flex: 'none',
+              order: 1,
+              flexGrow: 0,
+            }}
+          >
+            {/* Sarah chen */}
+            <span
+              className="font-poppins text-black dark:text-white truncate"
+              style={{
+                width: '93px',
+                height: '24px',
+                fontStyle: 'normal',
+                fontWeight: 500,
+                fontSize: '16px',
+                lineHeight: '24px',
+                color: 'currentColor',
+                textAlign: 'center',
+                flex: 'none',
+                order: 0,
+                flexGrow: 0,
+              }}
+            >
+              {notification.actor_name}
+            </span>
+            {/* Sent a photo */}
+            <span
+              className="font-poppins text-muted-foreground truncate max-w-[170px]"
+              style={{
+                fontStyle: 'normal',
+                fontWeight: 400,
+                fontSize: '14px',
+                lineHeight: '20px',
+                color: '#6B7280',
+                flex: 'none',
+                order: 1,
+                flexGrow: 0,
+              }}
+            >
+              {text}
+            </span>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[15px] font-semibold text-foreground leading-tight truncate">
-            {notification.actor_name}
-          </p>
-          <p className="text-[14px] text-muted-foreground leading-tight mt-1 truncate">
-            {notification.text ? notification.text.replace(notification.actor_name || '', '').trim() : ''}
-          </p>
+
+        {/* Frame 2608646 */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: '0px',
+            gap: '8px',
+            flex: 'none',
+            order: 1,
+            flexGrow: 0,
+          }}
+        >
+          {/* 42m ago */}
+          <span
+            className="font-poppins text-black dark:text-white"
+            style={{
+              width: '54px',
+              height: '16px',
+              fontStyle: 'normal',
+              fontWeight: 400,
+              fontSize: '12px',
+              lineHeight: '16px',
+              color: 'currentColor',
+              display: 'flex',
+              alignItems: 'center',
+              flex: 'none',
+              order: 0,
+              flexGrow: 0,
+            }}
+          >
+            {formatShortTime(notification.created_at)}
+          </span>
+
+          {/* Ellipse 15 */}
+          {!notification.is_read && (
+            <div
+              style={{
+                width: '6px',
+                height: '6px',
+                background: '#6366F1',
+                borderRadius: '50%',
+                flex: 'none',
+                order: 1,
+                flexGrow: 0,
+              }}
+            />
+          )}
         </div>
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0 pt-0.5">
-        <span className="text-xs text-muted-foreground font-medium">
-          {formatShortTime(notification.created_at)}
-        </span>
-        <div className={`w-1.5 h-1.5 rounded-full ${!notification.is_read ? 'bg-blue-600' : 'bg-transparent'}`} />
-      </div>
-    </div>
-  );
+    );
+  };
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
@@ -305,48 +420,197 @@ export function NotificationPopover({
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        className="w-[340px] p-5 overflow-hidden bg-background border border-border/40 shadow-xl rounded-3xl"
+        className="w-[375px] h-[366px] overflow-hidden bg-white dark:bg-[#1a1a2e] border border-[#C7D2FE] shadow-xl rounded-[24px_0px_24px_24px] flex flex-col items-start relative py-4 px-0"
+        style={{
+          boxSizing: 'border-box',
+          gap: '16px',
+        }}
       >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-foreground">Notifications</h3>
-          {unreadCount > 0 && (
-            <button
-              onClick={markAllAsRead}
-              className="text-xs text-primary hover:underline font-medium"
-            >
-              Mark all as read
-            </button>
-          )}
+        {/* Frame 2608712 */}
+        <div
+          className="w-full flex flex-row items-center justify-between px-4"
+          style={{
+            height: '26px',
+            gap: '10px',
+            flex: 'none',
+            order: 0,
+            alignSelf: 'stretch',
+            flexGrow: 0,
+          }}
+        >
+          <h3
+            className="font-poppins text-black dark:text-white"
+            style={{
+              width: '114px',
+              height: '26px',
+              fontStyle: 'normal',
+              fontWeight: 500,
+              fontSize: '18px',
+              lineHeight: '26px',
+              color: 'currentColor',
+              flex: 'none',
+              order: 0,
+              flexGrow: 0,
+            }}
+          >
+            Notifications
+          </h3>
+
         </div>
-        <div className="max-h-[350px] overflow-y-auto pr-1 scrollbar-hide">
+        
+        {/* Scrollable area for notifications */}
+        <div className="w-full flex-1 overflow-y-auto scrollbar-hide flex flex-col gap-4">
           {todayNotifications.length > 0 && (
-            <div className="mb-4">
-              <h4 className="text-xs text-muted-foreground/70 font-semibold mb-2 uppercase tracking-wider">Today</h4>
-              <div className="flex flex-col gap-1">
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                padding: '0px',
+                gap: '8px',
+                width: '100%',
+                flex: 'none',
+                order: 1,
+                alignSelf: 'stretch',
+                flexGrow: 0,
+              }}
+            >
+              {/* Frame 2608713 */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: '0px 16px',
+                  gap: '10px',
+                  width: '100%',
+                  height: '16px',
+                  flex: 'none',
+                  order: 0,
+                  alignSelf: 'stretch',
+                  flexGrow: 0,
+                }}
+              >
+                {/* Today */}
+                <span
+                  className="font-poppins text-[#6B7280]"
+                  style={{
+                    width: '38px',
+                    height: '16px',
+                    fontStyle: 'normal',
+                    fontWeight: 400,
+                    fontSize: '12px',
+                    lineHeight: '16px',
+                    color: '#6B7280',
+                    flex: 'none',
+                    order: 0,
+                    flexGrow: 0,
+                  }}
+                >
+                  Today
+                </span>
+              </div>
+
+              {/* Today list */}
+              <div className="flex flex-col gap-2 w-full">
                 {todayNotifications.map(renderNotificationItem)}
               </div>
             </div>
           )}
 
           {olderNotifications.length > 0 && (
-            <div className="mb-2">
-              <h4 className="text-xs text-muted-foreground/70 font-semibold mb-2 uppercase tracking-wider">Older</h4>
-              <div className="flex flex-col gap-1">
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                padding: '0px',
+                gap: '8px',
+                width: '100%',
+                flex: 'none',
+                order: 2,
+                alignSelf: 'stretch',
+                flexGrow: 0,
+              }}
+            >
+              {/* Frame 2608716 */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: '0px 16px',
+                  gap: '10px',
+                  width: '100%',
+                  height: '16px',
+                  flex: 'none',
+                  order: 0,
+                  alignSelf: 'stretch',
+                  flexGrow: 0,
+                }}
+              >
+                {/* Older */}
+                <span
+                  className="font-poppins text-[#6B7280]"
+                  style={{
+                    width: '33px',
+                    height: '16px',
+                    fontStyle: 'normal',
+                    fontWeight: 400,
+                    fontSize: '12px',
+                    lineHeight: '16px',
+                    color: '#6B7280',
+                    flex: 'none',
+                    order: 0,
+                    flexGrow: 0,
+                  }}
+                >
+                  Older
+                </span>
+              </div>
+
+              {/* Older list */}
+              <div className="flex flex-col gap-2 w-full">
                 {olderNotifications.map(renderNotificationItem)}
               </div>
             </div>
           )}
 
           {notifications.length === 0 && (
-            <div className="py-8 text-center text-sm text-muted-foreground">
+            <div className="py-8 text-center text-sm text-muted-foreground w-full">
               No notifications
             </div>
           )}
         </div>
-        <div className="pt-4 pb-1 mt-2 flex justify-center">
+
+        {/* Frame 2608719 */}
+        <div
+          className="w-full flex flex-row justify-center items-center px-4"
+          style={{
+            height: '24px',
+            gap: '10px',
+            flex: 'none',
+            order: 3,
+            alignSelf: 'stretch',
+            flexGrow: 0,
+          }}
+        >
+          {/* See all */}
           <Link
             href="/notifications"
-            className="text-[14px] font-medium text-blue-600 hover:text-blue-700 transition-colors"
+            className="font-poppins text-[#6366F1] hover:text-[#6366F1]/80 transition-colors"
+            style={{
+              width: '53px',
+              height: '24px',
+              fontStyle: 'normal',
+              fontWeight: 500,
+              fontSize: '16px',
+              lineHeight: '24px',
+              color: '#6366F1',
+              flex: 'none',
+              order: 0,
+              flexGrow: 0,
+            }}
             onClick={() => setIsOpen(false)}
           >
             See all

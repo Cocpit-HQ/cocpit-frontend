@@ -1093,7 +1093,7 @@ export default function AddExperienceForm({
   const modalTitle = isEditing ? "Edit experience" : "Add experience"
 
   return (
-    <div className="relative bg-card rounded-none sm:rounded-[24px] p-0 sm:p-[16px] w-full sm:w-[800px] h-[100dvh] sm:h-auto sm:max-h-[90vh] mx-auto shadow-sm flex flex-col overflow-hidden outline-none">
+    <form onSubmit={handleSubmit} className="relative bg-card rounded-none sm:rounded-[24px] p-0 sm:p-[16px] w-full sm:w-[800px] h-[100dvh] sm:h-auto sm:max-h-[90vh] mx-auto shadow-sm flex flex-col outline-none">
 
       {/* ── Mobile Header ── */}
       <div className="sm:hidden flex items-center justify-between sticky top-0 bg-card z-50 px-4 py-4 border-b border-border">
@@ -1116,7 +1116,7 @@ export default function AddExperienceForm({
       </div>
 
       {/* ── Scrollable Body ── */}
-      <div className="flex-1 overflow-y-auto  scrollbar-hide  relative">
+      <div className="flex-1 overflow-y-auto scrollbar-hide relative px-4 sm:px-[16px] pb-4">
         {/* Top Close Row (Desktop only) */}
         <div className="hidden sm:flex justify-end w-full ">
           <button
@@ -1156,7 +1156,7 @@ export default function AddExperienceForm({
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-6">
 
           {/* Company + Location — shared across roles */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -1268,46 +1268,47 @@ export default function AddExperienceForm({
             </button>
           )}
 
-          {/* Desktop footer actions */}
-          <div className="hidden sm:flex justify-center items-center gap-4 pt-8 border-t border-[#E5E7EB]">
-            {isEditing ? (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  if (initialExperiences && initialExperiences.length > 0) {
-                    const allIds = initialExperiences
-                      .map(exp => exp.experience_id)
-                      .filter((id): id is string => !!id);
-                    onDelete?.(allIds);
-                  }
-                }}
-                disabled={isSaving}
-                className="h-10 px-8 rounded-full border-red-200 text-red-500 hover:bg-transparent bg-transparent font-medium w-[142px] font-[family-name:var(--font-poppins)]"
-              >
-                Delete
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
-                disabled={isSaving}
-                className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-transparent bg-white font-medium w-[142px] font-[family-name:var(--font-poppins)]"
-              >
-                Cancel
-              </Button>
-            )}
-            <Button
-              type="submit"
-              disabled={!isFormValid || isSaving}
-              className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed font-[family-name:var(--font-poppins)]"
-            >
-              {isSaving ? "Saving..." : "Save"}
-            </Button>
-          </div>
-        </form>
+        </div>
       </div>
-    </div>
+
+      {/* Desktop footer actions */}
+      <div className="hidden sm:flex justify-center items-center gap-4 pt-6 pb-4 px-[16px] border-t border-[#E5E7EB] flex-shrink-0 bg-card">
+        {isEditing ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              if (initialExperiences && initialExperiences.length > 0) {
+                const allIds = initialExperiences
+                  .map(exp => exp.experience_id)
+                  .filter((id): id is string => !!id);
+                onDelete?.(allIds);
+              }
+            }}
+            disabled={isSaving}
+            className="h-10 px-8 rounded-full border-red-200 text-red-500 hover:bg-transparent bg-transparent font-medium w-[142px] font-[family-name:var(--font-poppins)]"
+          >
+            Delete
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSaving}
+            className="h-10 px-8 rounded-full border-[#818CF8] text-[#818CF8] hover:bg-transparent bg-white font-medium w-[142px] font-[family-name:var(--font-poppins)]"
+          >
+            Cancel
+          </Button>
+        )}
+        <Button
+          type="submit"
+          disabled={!isFormValid || isSaving}
+          className="h-10 px-8 rounded-full bg-[#6366F1] text-white hover:bg-[#4F46E5] font-medium w-[142px] disabled:opacity-40 disabled:cursor-not-allowed font-[family-name:var(--font-poppins)]"
+        >
+          {isSaving ? "Saving..." : "Save"}
+        </Button>
+      </div>
+    </form>
   )
 }

@@ -119,7 +119,23 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
             </div>
             
             <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-xs text-foreground">
+                <span
+                    className="font-poppins text-black dark:text-white"
+                    style={{
+                        width: '54px',
+                        height: '16px',
+                        fontStyle: 'normal',
+                        fontWeight: 400,
+                        fontSize: '12px',
+                        lineHeight: '16px',
+                        color: 'currentColor',
+                        display: 'flex',
+                        alignItems: 'center',
+                        flex: 'none',
+                        order: 0,
+                        flexGrow: 0,
+                    }}
+                >
                     {formatShortTime(notification.created_at)}
                 </span>
                 {!notification.is_read && (

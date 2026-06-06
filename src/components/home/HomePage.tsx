@@ -32,7 +32,7 @@ import InlineArticleEditor from '@/features/create-post/components/InlineArticle
 export default function HomePage() {
   const [mounted, setMounted] = useState(false)
   const { loading: isFeedLoading } = useFeed(true);
-  
+
   // Render control: Block scroll setting until Feed Data is verified and DOM is rendered (mounted)
   useScrollRestoration(mounted && !isFeedLoading);
 
@@ -66,8 +66,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="pt-4 md:pt-6 pb-4 md:pb-8">
-        <div className="mx-auto w-full max-w-[1128px] px-0 md:px-4 xl:px-0">
-          <div className="flex w-full flex-col gap-6 md:gap-8 lg:flex-row lg:gap-[20px] lg:items-start lg:justify-center">
+        <div className="mx-auto md:mx-0 md:ml-20 xl:ml-[200px] w-full max-w-[1128px] px-0 md:px-4 xl:px-0">
+          <div className="flex w-full flex-col items-center gap-6 md:gap-8 xl:flex-row xl:gap-[32px] xl:items-start xl:justify-start">
             {isArticleMode ? (
               <InlineArticleEditor />
             ) : (
@@ -84,7 +84,7 @@ export default function HomePage() {
                 />
 
                 {/* Sideboards */}
-                <aside className="w-full min-w-0 space-y-6 px-0 md:px-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:w-[406px] lg:shrink-0 lg:self-start lg:overflow-y-auto scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                <aside className="w-full min-w-0 space-y-6 px-0 md:px-0 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:w-[406px] xl:shrink-0 xl:self-start xl:overflow-y-auto scrollbar-hide [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   <div className="space-y-6">
                     {/* <UpdatesPanel /> */}
                     <TrendingHashtags />

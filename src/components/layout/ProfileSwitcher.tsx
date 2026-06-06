@@ -68,9 +68,9 @@ export function ProfileSwitcher({
         ) : (
           <Button
             variant="ghost"
-            className="relative h-9 w-auto rounded-full p-0 overflow-hidden border border-border focus-visible:ring-0 focus-visible:ring-offset-0 flex items-center gap-1 pr-1 shadow-none outline-none"
+            className="relative h-6 w-6 rounded-full p-0 overflow-hidden border border-border focus-visible:ring-0 focus-visible:ring-offset-0 flex items-center justify-center shadow-none outline-none"
           >
-            <Avatar className="h-9 w-9">
+            <Avatar className="h-6 w-6">
               <AvatarImage
                 src={activeProfile.avatar_url || user.image || ""}
                 alt={activeProfile.name}
@@ -152,7 +152,7 @@ export function ProfileSwitcher({
             <DropdownMenuItem
               onClick={() => switchProfile("USER", user.id)}
               className={cn(
-                "profile-switcher-item flex items-center gap-3 p-2 h-[52px] cursor-pointer rounded-[12px] transition-colors focus:bg-transparent hover:bg-transparent focus:text-inherit outline-none border border-transparent",
+                "profile-switcher-item flex items-center gap-3 p-2 h-[52px] cursor-pointer rounded-[12px] transition-colors focus:bg-profile-hover hover:bg-profile-hover focus:text-inherit outline-none border border-transparent",
                 !isCompany &&
                   "bg-profile-active-bg border-profile-active-border",
               )}
@@ -189,7 +189,7 @@ export function ProfileSwitcher({
                       switchProfile("COMPANY", inst.org_id || inst.company_id)
                     }
                     className={cn(
-                      "profile-switcher-item flex items-center gap-3 p-2 h-[52px] cursor-pointer rounded-[12px] transition-colors focus:bg-transparent hover:bg-transparent focus:text-inherit outline-none border border-transparent",
+                      "profile-switcher-item flex items-center gap-3 p-2 h-[52px] cursor-pointer rounded-[12px] transition-colors focus:bg-profile-hover hover:bg-profile-hover focus:text-inherit outline-none border border-transparent",
                       activeProfile.id === (inst.org_id || inst.company_id) &&
                         "bg-profile-active-bg border-profile-active-border",
                     )}
@@ -221,7 +221,7 @@ export function ProfileSwitcher({
                       )
                     }
                     className={cn(
-                      "profile-switcher-item flex items-center gap-3 p-2 h-[52px] cursor-pointer rounded-[12px] transition-colors focus:bg-transparent hover:bg-transparent focus:text-inherit outline-none border border-transparent",
+                      "profile-switcher-item flex items-center gap-3 p-2 h-[52px] cursor-pointer rounded-[12px] transition-colors focus:bg-profile-hover hover:bg-profile-hover focus:text-inherit outline-none border border-transparent",
                       activeProfile.id ===
                         (company.org_id || company.company_id) &&
                         "bg-profile-active-bg border-profile-active-border",
@@ -253,7 +253,7 @@ export function ProfileSwitcher({
         <div className="pt-2 border-t border-profile-active-border space-y-1">
           <DropdownMenuItem
             onClick={() => router.push("/create-organization")}
-            className="profile-switcher-item flex items-center gap-3 p-2 h-[44px] cursor-pointer rounded-[12px] transition-colors focus:bg-transparent hover:bg-transparent focus:text-inherit outline-none"
+            className="profile-switcher-item flex items-center gap-3 p-2 h-[44px] cursor-pointer rounded-[12px] transition-colors focus:bg-profile-hover hover:bg-profile-hover focus:text-inherit outline-none"
           >
             <Plus className="w-5 h-5" />
             <span className="text-[15px] leading-[22px] font-normal">
@@ -268,7 +268,7 @@ export function ProfileSwitcher({
                 router.push("/settings");
               }
             }}
-            className="profile-switcher-item flex items-center gap-3 p-2 h-[44px] cursor-pointer rounded-[12px] transition-colors focus:bg-transparent hover:bg-transparent focus:text-inherit outline-none"
+            className="profile-switcher-item flex items-center gap-3 p-2 h-[44px] cursor-pointer rounded-[12px] transition-colors focus:bg-profile-hover hover:bg-profile-hover focus:text-inherit outline-none"
           >
             <Settings className="w-5 h-5" />
             <span className="text-[15px] leading-[22px] font-normal">
@@ -277,7 +277,7 @@ export function ProfileSwitcher({
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={handleLogout}
-            className="profile-switcher-item flex items-center gap-3 p-2 h-[44px] cursor-pointer rounded-[12px] text-[#F87171] focus:bg-transparent hover:bg-transparent focus:text-[#F87171] transition-colors outline-none"
+            className="profile-switcher-item flex items-center gap-3 p-2 h-[44px] cursor-pointer rounded-[12px] text-[#F87171] focus:bg-profile-hover hover:bg-profile-hover focus:text-[#F87171] transition-colors outline-none"
           >
             <LogOut className="w-5 h-5" />
             <span className="text-[15px] leading-[22px] font-normal">

@@ -40,7 +40,7 @@ export function ProfileSkills({
                 {/* Skills Nested Card Wrapper */}
                 <div className="px-4 md:pl-10 md:pr-4">
                     <div className="bg-card rounded-[24px] min-h-[100px] flex items-center p-4 md:p-8">
-                        <div className="flex flex-wrap gap-3 sm:gap-4 md:gap-[40px]">
+                        <div className="flex flex-wrap gap-3 sm:gap-4 md:gap-[24px]">
                             {skills.map((skill: any, index) => {
                                 const skillName = skill.name || (typeof skill === 'string' ? skill : '');
                                 if (!skillName) return null;

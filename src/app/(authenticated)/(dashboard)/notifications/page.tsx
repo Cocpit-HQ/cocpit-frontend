@@ -160,7 +160,23 @@ export default function NotificationsPage() {
                   <ArrowLeft className="h-5 w-5 text-muted-foreground" />
                 </Button>
                 <div className="flex flex-col">
-                    <h1 className="text-lg font-medium tracking-tight text-foreground text-left">Notifications</h1>
+                    <h1
+                      className="font-poppins text-black dark:text-white text-left"
+                      style={{
+                        width: '114px',
+                        height: '26px',
+                        fontStyle: 'normal',
+                        fontWeight: 500,
+                        fontSize: '18px',
+                        lineHeight: '26px',
+                        color: 'currentColor',
+                        flex: 'none',
+                        order: 0,
+                        flexGrow: 0,
+                      }}
+                    >
+                      Notifications
+                    </h1>
                     <p className="text-xs text-muted-foreground">Stay update with your account activity</p>
                 </div>
               </div>

@@ -207,7 +207,7 @@ export function StoryRail({
         <h2
           className={
             isDesktopShowcase
-              ? "text-[15px] font-medium leading-6 text-foreground"
+              ? "font-[family-name:var(--font-poppins)] text-[18px] font-medium leading-[26px] text-[#000000]"
               : "text-lg font-semibold text-foreground"
           }
         >
