@@ -449,7 +449,7 @@
     padding: 6px 16px;
     height: 40px;
     border-radius: 8px;
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font-poppins), 'Poppins', sans-serif;
     font-weight: 500;
     font-size: 14px;
     line-height: 20px;
