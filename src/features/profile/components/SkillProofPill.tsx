@@ -59,7 +59,7 @@ export function SkillProofPill({ skill, experiences, posts, onDelete, readOnly =
                   e.stopPropagation();
                   onDelete(skill);
                 }}
-                className="flex items-center justify-center overflow-hidden transition-all duration-1000 ease-in-out max-w-0 opacity-0 group-hover:max-w-[24px] group-hover:opacity-100 group-hover:ml-2"
+                className="flex items-center justify-center overflow-hidden transition-all duration-500 ease-in-out max-w-0 opacity-0 group-hover:max-w-[24px] group-hover:opacity-100 group-hover:ml-2"
               >
                 <Icon icon="fluent:delete-32-regular" className="w-[24px] h-[24px] text-[#FF6B6B]" />
               </div>

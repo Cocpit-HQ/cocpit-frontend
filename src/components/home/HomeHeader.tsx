@@ -205,14 +205,14 @@ export const HomeHeader = () => {
 
     return (
         <header
-            className={`sticky top-0 z-50 bg-background/85 px-3 py-2 backdrop-blur-md transition-transform duration-300 ease-in-out supports-[backdrop-filter]:bg-background/70 md:px-4 md:py-0 ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
+            className={`sticky top-0 z-50 bg-background/85 px-3 py-2 backdrop-blur-md transition-transform duration-300 ease-in-out supports-[backdrop-filter]:bg-background/70 md:px-0 md:py-0 ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
                 } md:translate-y-0`}
         >
-            <div className="mx-auto md:mx-0 md:ml-20 xl:ml-[200px] flex min-h-12 w-full max-w-[1128px] items-center px-1 md:min-h-[72px] md:px-4 xl:px-0">
+            <div className="mx-auto md:mx-0 md:ml-20 xl:ml-[200px] flex min-h-12 min-w-0 max-w-[1128px] items-center px-1 md:min-h-[72px] md:px-4 xl:px-0">
                 {/* --- Desktop Header (Visible from md screens up) --- */}
-                <div className="hidden w-full md:flex items-center justify-between md:mx-0 max-w-[998px] h-full">
+                <div className="hidden flex-1 min-w-0 md:flex items-center justify-between md:mx-0 max-w-[998px] h-full gap-4">
                     {/* Header Left Section (Search Bar) */}
-                    <div className="relative flex flex-row justify-between items-center w-[360px] h-10 px-4 py-2 gap-[10px] rounded-[24px] border border-[#6B7280] bg-transparent transition-all duration-300">
+                    <div className="relative flex flex-row justify-between items-center flex-1 min-w-0 max-w-[360px] h-10 px-4 py-2 gap-[10px] rounded-[24px] border border-[#6B7280] bg-transparent transition-all duration-300">
                         <input
                             type="text"
                             placeholder="Search"
@@ -223,7 +223,7 @@ export const HomeHeader = () => {
                                 setTimeout(() => setIsSearchFocused(false), 200);
                             }}
                             onKeyDown={handleKeyDown}
-                            className="flex-grow bg-transparent text-[#6B7280] dark:text-white placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none"
+                            className="flex-grow min-w-0 bg-transparent text-[#6B7280] dark:text-white placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none"
                         />
                         <Search
                             className="w-6 h-6 text-[#6B7280] cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
@@ -592,10 +592,10 @@ export const HomeHeader = () => {
                     </div>
 
                     {/* Header Right Section (Action Buttons) */}
-                    <div className="flex items-center gap-4 flex-shrink-0 lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 xl:static xl:translate-y-0 xl:w-[406px] xl:justify-end">
+                    <div className="flex items-center gap-4 shrink-0 xl:w-[406px] xl:justify-end">
                         <button
                             onClick={() => setActiveModal('create-post')}
-                            className="flex items-center justify-center gap-[10px] w-[122px] h-10 rounded-[24px] bg-[#6366F1] hover:bg-[#5558e3] text-white font-[family-name:var(--font-poppins)] text-[16px] font-medium leading-[24px] text-center transition-all shadow-sm"
+                            className="flex items-center justify-center gap-[10px] w-[122px] h-10 rounded-[24px] bg-[#6366F1] hover:bg-[#5558e3] text-white font-[family-name:var(--font-poppins)] text-[16px] font-normal leading-[24px] text-center transition-all shadow-sm"
                         >
                             <span>Create</span>
                             <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
