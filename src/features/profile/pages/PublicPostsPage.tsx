@@ -384,22 +384,15 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
         {Number(post.likes || 0) > 0 && (
           <div className="pt-3 px-0 mb-4 border-t border-transparent">
             <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-foreground">
-              Liked by {post.isLiked ? (
-                Number(post.likes || 0) === 1 ? (
-                  'you'
-                ) : (
-                  <>
-                    you and {Number(post.likes || 0) - 1} {Number(post.likes || 0) - 1 === 1 ? 'other' : 'others'}
-                  </>
-                )
+              {Number(post.likes || 0) === 1 && post.isLiked ? (
+                `${Number(post.likes || 0)} like`
               ) : (
-                Number(post.likes || 0) === 1 ? (
-                  <span className="font-semibold">@{post.sampleLikerUsername || 'someone'}</span>
-                ) : (
-                  <>
-                    <span className="font-semibold">@{post.sampleLikerUsername || 'someone'}</span> and {Number(post.likes || 0) - 1} {Number(post.likes || 0) - 1 === 1 ? 'other' : 'others'}
-                  </>
-                )
+                <>
+                  Liked by <span className="font-semibold">@{post.sampleLikerUsername || 'someone'}</span>
+                  {Number(post.likes || 0) > 1 && (
+                    <> and {Number(post.likes || 0) - 1} {Number(post.likes || 0) - 1 === 1 ? 'other' : 'others'}</>
+                  )}
+                </>
               )}
             </p>
           </div>

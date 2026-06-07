@@ -266,27 +266,14 @@ export const FeedPost = (props: FeedPostProps) => {
       />
 
       {/* Social Proof & Actions (Frame 2608624 & 2608574) */}
-      {likeCount > 0 ? (
+      {likeCount > 0 && !(likeCount === 1 && isLiked) ? (
         <div className="flex flex-col mt-[-16px]">
           {/* Social Proof (Frame 2608624) */}
           <div className="px-[16px] h-[20px] flex items-center mt-2">
             <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
-              Liked by {isLiked ? (
-                likeCount === 1 ? (
-                  'you'
-                ) : (
-                  <>
-                    you and {likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}
-                  </>
-                )
-              ) : (
-                likeCount === 1 ? (
-                  `@${sampleLikerUsername || 'someone'}`
-                ) : (
-                  <>
-                    @{sampleLikerUsername || 'someone'} and {likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}
-                  </>
-                )
+              Liked by @{sampleLikerUsername || 'someone'}
+              {likeCount > 1 && (
+                <> and {likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}</>
               )}
             </p>
           </div>

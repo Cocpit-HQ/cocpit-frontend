@@ -418,11 +418,11 @@ export default function OnboardingPage() {
               onBack={handleBack}
               currentStep={5}
               totalSteps={totalSteps}
-              title="What are your skills?"
-              subtitle="List your top skills to help you stand out"
-              placeholder="Search skills"
+              title="Add your skills to continue"
+              subtitle="Help us match you with better opportunities"
+              placeholder="Search"
               initialData={skillItems}
-              actionLabel="Finish"
+              actionLabel="Continue"
               selectedItems={selectedSkills}
               onChange={setSelectedSkills}
               isLoading={isSubmitting}
@@ -433,6 +433,7 @@ export default function OnboardingPage() {
               onLoadMore={fetchNextSkills}
               onSearchChange={setSkillSearch}
               minSelection={3}
+              maxSelection={15}
             />
           )}
         </motion.div>

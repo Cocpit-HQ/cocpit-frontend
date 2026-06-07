@@ -437,10 +437,15 @@ const ProfilePostCard = ({
       {likesCount > 0 && (
         <div className="w-full h-[20px] px-4 mb-4 flex items-center">
           <p className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)] truncate">
-            Liked by {isLiked ? (
-              likesCount === 1 ? 'you' : <>you and {likesCount - 1} {likesCount - 1 === 1 ? 'other' : 'others'}</>
+            {likesCount === 1 && isLiked ? (
+              `${likesCount} like`
             ) : (
-              likesCount === 1 ? <span>@{localPost.sampleLikerUsername || 'someone'}</span> : <><span>@{localPost.sampleLikerUsername || 'someone'}</span> and {likesCount - 1} {likesCount - 1 === 1 ? 'other' : 'others'}</>
+              <>
+                Liked by <span>@{localPost.sampleLikerUsername || 'someone'}</span>
+                {likesCount > 1 && (
+                  <> and {likesCount - 1} {likesCount - 1 === 1 ? 'other' : 'others'}</>
+                )}
+              </>
             )}
           </p>
         </div>

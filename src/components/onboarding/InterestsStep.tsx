@@ -65,7 +65,7 @@ export default function InterestsStep({
     const isSelected = selectedItems.includes(item);
     
     if (!isSelected && maxSelection && selectedItems.length >= maxSelection) {
-      // Potentially show a toast or just ignore
+      setShowError(true);
       return;
     }
 
@@ -208,7 +208,7 @@ export default function InterestsStep({
             type="button"
             className={actionLabel === "Finish" ? styles.finishButton : styles.continueButton}
             onClick={handleAction}
-            disabled={isLoading}
+            disabled={isLoading || selectedItems.length < minSelection}
           >
             {isLoading ? "Saving..." : actionLabel}
           </button>
