@@ -117,14 +117,16 @@ export const PostHeader = ({
               <Icon icon="solar:check-circle-bold" className="w-4 h-4 text-primary" />
             )}
             {shared_post && (
-              <span className="text-muted-foreground text-[14px] leading-[24px] font-normal font-[family-name:var(--font-poppins)] ml-1">
+              <span className="text-[#6B7280] text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] ml-1 w-[45px] h-[16px] flex-none text-center">
                 reposted
               </span>
             )}
           </div>
-          <Link href={`/post/${id}`} className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground truncate w-full block cursor-pointer" title={authorRole || title || ''} onClick={(e) => e.stopPropagation()}>
-            {authorRole || title || ''}
-          </Link>
+          {!shared_post && (
+            <Link href={`/post/${id}`} className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground truncate w-full block cursor-pointer" title={authorRole || title || ''} onClick={(e) => e.stopPropagation()}>
+              {authorRole || title || ''}
+            </Link>
+          )}
           {(location || timeAgo) && (() => {
             const displayLocation = location ? location.split(',')[0].trim() : '';
             const truncatedLocation = displayLocation.length > 15 ? displayLocation.slice(0, 15) + '..' : displayLocation;
@@ -148,11 +150,11 @@ export const PostHeader = ({
           )}
 
           <div className="relative">
-	            <button
-	              ref={optionsBtnRef}
-	              onClick={handleOptionsClick}
-	              className="text-[#000000] p-1"
-	            >
+            <button
+              ref={optionsBtnRef}
+              onClick={handleOptionsClick}
+              className="text-[#000000] p-1"
+            >
               <Icon icon="ph:dots-three-outline-vertical-light" className="w-6 h-6" />
             </button>
 
@@ -196,48 +198,48 @@ export const PostHeader = ({
                     </>
                   )}
 
-	                  {isOwnPost && (
-	                    <div className="flex flex-col gap-1">
-	                      {!poll && (
-	                        <button
-	                          onClick={(e) => { e.stopPropagation(); onEdit(); setShowOptions(false); }}
-	                          className="flex items-center justify-between w-full px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] hover:text-[#6366F1] focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors group"
-	                        >
-	                          <span className="text-[14px] font-[family-name:var(--font-poppins)] text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]">Edit post</span>
-	                          <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
-	                        </button>
-	                      )}
-	                      {poll && (
-	                        <button
-	                          onClick={(e) => { e.stopPropagation(); onShowAnalytics(); setShowOptions(false); }}
-	                          className="flex items-center justify-between w-full px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] hover:text-[#6366F1] focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors group"
-	                        >
-	                          <span className="text-[14px] font-[family-name:var(--font-poppins)] text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]">View analytics</span>
-	                          <BarChart2 className="w-6 h-6 text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]" strokeWidth={1.5} />
-	                        </button>
-	                      )}
-	                      <button
-	                        onClick={(e) => { e.stopPropagation(); onToggleVisibility(); }}
-	                        className="flex items-center justify-between w-full px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] hover:text-[#6366F1] focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors group"
-	                      >
-	                        <span className="text-[14px] font-[family-name:var(--font-poppins)] text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]">
-	                          {visibility === 'private' ? 'Make public' : 'Make private'}
-	                        </span>
-	                        {visibility === 'private' ? (
-	                          <Icon icon="hugeicons:view" className="w-6 h-6 text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
-	                        ) : (
-	                          <Icon icon="hugeicons:view-off-slash" className="w-6 h-6 text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
-	                        )}
-	                      </button>
-	                      <button
-	                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-	                        className="flex items-center justify-between w-full px-3 py-2 cursor-pointer hover:bg-red-50 focus:bg-red-50 text-[#FF6B6B] rounded-xl outline-none transition-colors"
-	                      >
-	                        <span className="text-[14px] font-[family-name:var(--font-poppins)]">Delete post</span>
-	                        <Icon icon="hugeicons:delete-02" className="w-6 h-6 text-[#FF6B6B]" style={{ strokeWidth: '1.5px' }} />
-	                      </button>
-	                    </div>
-	                  )}
+                  {isOwnPost && (
+                    <div className="flex flex-col gap-1">
+                      {!poll && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onEdit(); setShowOptions(false); }}
+                          className="flex items-center justify-between w-full px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] hover:text-[#6366F1] focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors group"
+                        >
+                          <span className="text-[14px] font-[family-name:var(--font-poppins)] text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]">Edit post</span>
+                          <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
+                        </button>
+                      )}
+                      {poll && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onShowAnalytics(); setShowOptions(false); }}
+                          className="flex items-center justify-between w-full px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] hover:text-[#6366F1] focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors group"
+                        >
+                          <span className="text-[14px] font-[family-name:var(--font-poppins)] text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]">View analytics</span>
+                          <BarChart2 className="w-6 h-6 text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]" strokeWidth={1.5} />
+                        </button>
+                      )}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onToggleVisibility(); }}
+                        className="flex items-center justify-between w-full px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] hover:text-[#6366F1] focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors group"
+                      >
+                        <span className="text-[14px] font-[family-name:var(--font-poppins)] text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]">
+                          {visibility === 'private' ? 'Make public' : 'Make private'}
+                        </span>
+                        {visibility === 'private' ? (
+                          <Icon icon="hugeicons:view" className="w-6 h-6 text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
+                        ) : (
+                          <Icon icon="hugeicons:view-off-slash" className="w-6 h-6 text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
+                        )}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                        className="flex items-center justify-between w-full px-3 py-2 cursor-pointer hover:bg-red-50 focus:bg-red-50 text-[#FF6B6B] rounded-xl outline-none transition-colors"
+                      >
+                        <span className="text-[14px] font-[family-name:var(--font-poppins)]">Delete post</span>
+                        <Icon icon="hugeicons:delete-02" className="w-6 h-6 text-[#FF6B6B]" style={{ strokeWidth: '1.5px' }} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </>,
               document.body

@@ -9,14 +9,14 @@ import { usePostSync } from './use-post-sync';
 import { useCallback } from 'react';
 
 export const usePostInteractions = (props: FeedPostProps) => {
-  const { 
-    id, 
-    likes = 0, 
-    isLiked: initialIsLiked = false, 
-    is_saved, 
+  const {
+    id,
+    likes = 0,
+    isLiked: initialIsLiked = false,
+    is_saved,
     is_commented: initialIsCommented = false,
     poll,
-    onSaveChange 
+    onSaveChange
   } = props;
 
   const [isLiked, setIsLiked] = useState(initialIsLiked);
@@ -25,10 +25,10 @@ export const usePostInteractions = (props: FeedPostProps) => {
   const [likeCount, setLikeCount] = useState(typeof likes === 'string' ? parseInt(likes) : likes);
   const [commentCount, setCommentCount] = useState(typeof props.comments === 'string' ? parseInt(props.comments || '0') : (props.comments || 0));
   const [shareCount, setShareCount] = useState(typeof props.shares === 'string' ? parseInt(props.shares || '0') : (props.shares || 0));
-  
+
   const { data: session } = useSession();
   const { isCompany, activeProfile } = useActiveProfile();
-  
+
   // Poll State
   const [pollData, setPollData] = useState(poll);
   const [isVoting, setIsVoting] = useState(false);

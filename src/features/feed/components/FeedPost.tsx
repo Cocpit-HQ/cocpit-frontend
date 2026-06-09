@@ -34,7 +34,7 @@ export const FeedPost = (props: FeedPostProps) => {
   const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, sampleLikerUsername, category, title, articleBody } = props;
   const { activeProfile, isCompany } = useActiveProfile();
   const router = useRouter();
-  const isArticlePost = category === 'Article' || Boolean(articleBody) || props.post_type === 'article';
+  const isArticlePost = category === 'Article' || props.post_type === 'article';
   const isArticleFeedCard = isArticlePost && !props.isFullContent;
 
   // Custom Hooks
@@ -82,8 +82,12 @@ export const FeedPost = (props: FeedPostProps) => {
       await createRepost(id.toString());
       incrementShareCount();
       toast({ title: "Reposted!" });
-    } catch (error) {
-      toast({ title: "Error reposting", variant: "destructive" });
+    } catch (error: any) {
+      if (error?.response?.status === 409) {
+        toast({ title: "You have already reposted this post." });
+      } else {
+        toast({ title: "Error reposting", variant: "destructive" });
+      }
     }
   };
 
@@ -153,7 +157,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
   const handleNotInterested = () => {
     setIsHidden(true);
-    
+
     toast({
       title: "Post hidden",
       description: "We'll show fewer posts like this.",
@@ -191,7 +195,7 @@ export const FeedPost = (props: FeedPostProps) => {
       className={`feed-card-shell flex w-full flex-col gap-[16px] overflow-hidden py-[16px] ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
     >
       {/* Header & Content (Frame 2608598) */}
-      <div className="flex flex-col gap-[16px] px-[16px]">
+      <div className="flex flex-col gap-[16px] px-0">
         <PostHeader
           {...props}
           isMe={props.isOwnPost || false}
@@ -265,11 +269,10 @@ export const FeedPost = (props: FeedPostProps) => {
         handleVote={(optId) => handleVote(optId, isCompany, activeProfile?.id)}
       />
 
-      {/* Social Proof & Actions (Frame 2608624 & 2608574) */}
-      {likeCount > 0 && !(likeCount === 1 && isLiked) ? (
-        <div className="flex flex-col mt-[-16px]">
-          {/* Social Proof (Frame 2608624) */}
-          <div className="px-[16px] h-[20px] flex items-center mt-2">
+      {/* Social Proof & Actions */}
+      <div className="flex flex-col mt-[-16px]">
+        {likeCount > 0 && !(likeCount === 1 && isLiked) && (
+          <div className="px-0 flex items-center mt-2">
             <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
               Liked by @{sampleLikerUsername || 'someone'}
               {likeCount > 1 && (
@@ -277,48 +280,29 @@ export const FeedPost = (props: FeedPostProps) => {
               )}
             </p>
           </div>
+        )}
 
-          <div className="mt-4">
-            <PostActions
-              id={id}
-              isLiked={isLiked}
-              likeCount={likeCount}
-              handleLike={() => handleLike(isCompany, activeProfile?.id)}
-              isCommentSectionOpen={isCommentSectionOpen}
-              isMobileDrawerOpen={isMobileDrawerOpen}
-              isCommented={isCommented}
-              commentsCount={commentCount}
-              handleToggleCommentSection={handleToggleCommentSection}
-              shares={shareCount}
-              handleShare={() => setIsShareModalOpen(true)}
-              handleRepostWithThoughts={() => setIsRepostModalOpen(true)}
-              handleDirectRepost={handleDirectRepost}
-              isSaved={isSaved || false}
-              setIsSaved={setIsSaved}
-              handleSaveToggle={() => setIsSaveModalOpen(true)}
-            />
-          </div>
+        <div className={likeCount > 0 && !(likeCount === 1 && isLiked) ? "mt-0" : "mt-2"}>
+          <PostActions
+            id={id}
+            isLiked={isLiked}
+            likeCount={likeCount}
+            handleLike={() => handleLike(isCompany, activeProfile?.id)}
+            isCommentSectionOpen={isCommentSectionOpen}
+            isMobileDrawerOpen={isMobileDrawerOpen}
+            isCommented={isCommented}
+            commentsCount={commentCount}
+            handleToggleCommentSection={handleToggleCommentSection}
+            shares={shareCount}
+            handleShare={() => setIsShareModalOpen(true)}
+            handleRepostWithThoughts={() => setIsRepostModalOpen(true)}
+            handleDirectRepost={handleDirectRepost}
+            isSaved={isSaved || false}
+            setIsSaved={setIsSaved}
+            handleSaveToggle={() => setIsSaveModalOpen(true)}
+          />
         </div>
-      ) : (
-        <PostActions
-          id={id}
-          isLiked={isLiked}
-          likeCount={likeCount}
-          handleLike={() => handleLike(isCompany, activeProfile?.id)}
-          isCommentSectionOpen={isCommentSectionOpen}
-          isMobileDrawerOpen={isMobileDrawerOpen}
-          isCommented={isCommented}
-          commentsCount={commentCount}
-          handleToggleCommentSection={handleToggleCommentSection}
-          shares={shareCount}
-          handleShare={() => setIsShareModalOpen(true)}
-          handleRepostWithThoughts={() => setIsRepostModalOpen(true)}
-          handleDirectRepost={handleDirectRepost}
-          isSaved={isSaved || false}
-          setIsSaved={setIsSaved}
-          handleSaveToggle={() => setIsSaveModalOpen(true)}
-        />
-      )}
+      </div>
 
       {/* Lazy Modals */}
       {isCommentSectionOpen && (

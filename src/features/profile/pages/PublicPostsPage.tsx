@@ -44,6 +44,7 @@ import {
 import { cn } from "@/lib/utils"
 const CommentSection = dynamic(() => import('@/features/feed/components/comments/CommentSection'), { ssr: false });
 const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
+const CocpitShareModel = dynamic(() => import('@/shared/commonComponents/cocpitsharemodel'), { ssr: false });
 
 const mergePostState = (current: Post, incoming: Post): Post => ({
   ...current,
@@ -83,10 +84,11 @@ const FilterChip = ({ label, active, onClick }: { label: string, active: boolean
   </button>
 )
 
-const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdit, currentUser, activeTab }: {
+const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDelete, onEdit, currentUser, activeTab }: {
   post: Post,
   onLike?: () => void,
   onSave?: () => void,
+  onShare?: () => void,
   onTogglePrivacy?: () => void,
   onDelete?: () => void,
   onEdit?: () => void,
@@ -99,7 +101,7 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const image = post.imageSrc || (post.images && post.images.length > 0 ? post.images[0] : null);
   const videoSrc = post.videoSrc || null;
-  const isArticlePost = post.category === 'Article' || Boolean(post.articleBody);
+  const isArticlePost = post.category === 'Article' || post.post_type === 'article';
   const isPollPost = Boolean(post.poll);
   const articleExcerpt = post.content?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
   const pollQuestion = articleExcerpt || post.title || "Untitled poll";
@@ -127,19 +129,19 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
             <Link href={`/post/${post.id}`} className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground truncate w-full block cursor-pointer" title={post.authorHeadline || post.title || (post.isCompanyPost ? 'Organization' : '')}>
               {post.authorHeadline || post.title || (post.isCompanyPost ? 'Organization' : '')}
             </Link>
-              <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] mt-0.5">
-                {post.location && (() => {
-                  const displayLoc = post.location.split(',')[0].trim();
-                  const truncatedLoc = displayLoc.length > 15 ? displayLoc.slice(0, 15) + '..' : displayLoc;
-                  return (
-                    <>
-                      <span title={post.location}>{truncatedLoc}</span>
-                      <span className="w-1 h-1 rounded-full bg-[#DADADA] flex-none" />
-                    </>
-                  );
-                })()}
-                <span className="flex-none">{post.timeAgo || '6 days ago'}</span>
-              </div>
+            <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] mt-0.5">
+              {post.location && (() => {
+                const displayLoc = post.location.split(',')[0].trim();
+                const truncatedLoc = displayLoc.length > 15 ? displayLoc.slice(0, 15) + '..' : displayLoc;
+                return (
+                  <>
+                    <span title={post.location}>{truncatedLoc}</span>
+                    <span className="w-1 h-1 rounded-full bg-[#DADADA] flex-none" />
+                  </>
+                );
+              })()}
+              <span className="flex-none">{post.timeAgo || '6 days ago'}</span>
+            </div>
           </div>
         </div>
 
@@ -452,8 +454,8 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
                 )}
               >
                 <g fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5">
-                  <path strokeLinejoin="round" d="M8 13.5h8m-8-5h4"/>
-                  <path d="M6.099 19q-1.949-.192-2.927-1.172C2 16.657 2 14.771 2 11v-.5c0-3.771 0-5.657 1.172-6.828S6.229 2.5 10 2.5h4c3.771 0 5.657 0 6.828 1.172S22 6.729 22 10.5v.5c0 3.771 0 5.657-1.172 6.828S17.771 19 14 19c-.56.012-1.007.055-1.445.155c-1.199.276-2.309.89-3.405 1.424c-1.563.762-2.344 1.143-2.834.786c-.938-.698-.021-2.863.184-3.865"/>
+                  <path strokeLinejoin="round" d="M8 13.5h8m-8-5h4" />
+                  <path d="M6.099 19q-1.949-.192-2.927-1.172C2 16.657 2 14.771 2 11v-.5c0-3.771 0-5.657 1.172-6.828S6.229 2.5 10 2.5h4c3.771 0 5.657 0 6.828 1.172S22 6.729 22 10.5v.5c0 3.771 0 5.657-1.172 6.828S17.771 19 14 19c-.56.012-1.007.055-1.445.155c-1.199.276-2.309.89-3.405 1.424c-1.563.762-2.344 1.143-2.834.786c-.938-.698-.021-2.863.184-3.865" />
                 </g>
               </svg>
               <span className="font-[family-name:var(--font-poppins)] text-[12px] text-foreground">{commentsCount}</span>
@@ -467,14 +469,14 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
                 className={cn("transition-all", post.shared_post ? "text-primary" : "text-foreground group-hover:text-primary")}
               >
                 <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
-                  <path d="M8.5 15S5 17.578 5 18.5S8.5 22 8.5 22"/>
-                  <path d="M5.5 18.5h8c3.288 0 4.931 0 6.038-.908q.304-.25.554-.554C21 15.93 21 14.288 21 11m-5.5-2S19 6.422 19 5.5S15.5 2 15.5 2"/>
-                  <path d="M18.5 5.5h-8c-3.287 0-4.931 0-6.038.908a4 4 0 0 0-.554.554C3 8.07 3 9.712 3 13"/>
+                  <path d="M8.5 15S5 17.578 5 18.5S8.5 22 8.5 22" />
+                  <path d="M5.5 18.5h8c3.288 0 4.931 0 6.038-.908q.304-.25.554-.554C21 15.93 21 14.288 21 11m-5.5-2S19 6.422 19 5.5S15.5 2 15.5 2" />
+                  <path d="M18.5 5.5h-8c-3.287 0-4.931 0-6.038.908a4 4 0 0 0-.554.554C3 8.07 3 9.712 3 13" />
                 </g>
               </svg>
               <span className="font-[family-name:var(--font-poppins)] text-[12px] text-foreground">{post.shares || 0}</span>
             </div>
-            <div className="flex items-center cursor-pointer group">
+            <div className="flex items-center cursor-pointer group" onClick={(e) => { e.stopPropagation(); onShare?.(); }}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="20"
@@ -482,7 +484,7 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
                 viewBox="0 0 28 28"
                 className="text-foreground group-hover:text-primary transition-all"
               >
-                <path fill="currentColor" d="M12.25 3a.75.75 0 1 1 0 1.5h-5A2.75 2.75 0 0 0 4.5 7.25v13.5a2.75 2.75 0 0 0 2.75 2.75h13.5a2.75 2.75 0 0 0 2.75-2.75v-5a.75.75 0 0 1 1.5 0v5A4.25 4.25 0 0 1 20.75 25H7.25A4.25 4.25 0 0 1 3 20.75V7.25A4.25 4.25 0 0 1 7.25 3zm5.179-.928a.75.75 0 0 1 .796.098l8.25 6.75a.75.75 0 0 1 .039 1.127l-8.25 7.75A.75.75 0 0 1 17 17.25v-3.74c-1.166.036-2.463.189-3.854.802c-1.584.698-3.35 2.021-5.16 4.577l-.362.527A.75.75 0 0 1 6.25 19c0-4.406 1.34-7.56 3.51-9.608C11.738 7.527 14.325 6.656 17 6.52V2.75a.75.75 0 0 1 .429-.679m1.07 5.178a.75.75 0 0 1-.75.75c-2.66 0-5.145.772-6.959 2.483c-1.413 1.334-2.474 3.292-2.87 6.046c1.56-1.823 3.12-2.93 4.621-3.59C14.532 12.06 16.349 12 17.75 12a.75.75 0 0 1 .75.75v2.766l6.363-5.978L18.5 4.332z"/>
+                <path fill="currentColor" d="M12.25 3a.75.75 0 1 1 0 1.5h-5A2.75 2.75 0 0 0 4.5 7.25v13.5a2.75 2.75 0 0 0 2.75 2.75h13.5a2.75 2.75 0 0 0 2.75-2.75v-5a.75.75 0 0 1 1.5 0v5A4.25 4.25 0 0 1 20.75 25H7.25A4.25 4.25 0 0 1 3 20.75V7.25A4.25 4.25 0 0 1 7.25 3zm5.179-.928a.75.75 0 0 1 .796.098l8.25 6.75a.75.75 0 0 1 .039 1.127l-8.25 7.75A.75.75 0 0 1 17 17.25v-3.74c-1.166.036-2.463.189-3.854.802c-1.584.698-3.35 2.021-5.16 4.577l-.362.527A.75.75 0 0 1 6.25 19c0-4.406 1.34-7.56 3.51-9.608C11.738 7.527 14.325 6.656 17 6.52V2.75a.75.75 0 0 1 .429-.679m1.07 5.178a.75.75 0 0 1-.75.75c-2.66 0-5.145.772-6.959 2.483c-1.413 1.334-2.474 3.292-2.87 6.046c1.56-1.823 3.12-2.93 4.621-3.59C14.532 12.06 16.349 12 17.75 12a.75.75 0 0 1 .75.75v2.766l6.363-5.978L18.5 4.332z" />
               </svg>
             </div>
           </div>
@@ -509,7 +511,7 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
                 />
               ) : (
                 <>
-                  <path fill="currentColor" d="M9 5.25a.75.75 0 0 0 0 1.5h6a.75.75 0 0 0 0-1.5z"/>
+                  <path fill="currentColor" d="M9 5.25a.75.75 0 0 0 0 1.5h6a.75.75 0 0 0 0-1.5z" />
                   <path
                     fill="currentColor"
                     fillRule="evenodd"
@@ -546,6 +548,7 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editingPost, setEditingPost] = useState<Post | null>(null)
   const [saveModalPostId, setSaveModalPostId] = useState<string | null>(null)
+  const [shareModalPostId, setShareModalPostId] = useState<string | null>(null)
   const { data: profileData, isLoading: isProfileLoading } = useMyProfile()
   const { setEditMode } = useUIStore()
   const { data: targetProfile, isLoading: isTargetProfileLoading } = useProfile(userId)
@@ -719,10 +722,10 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
           <div className="flex flex-row gap-4 w-full overflow-x-auto scrollbar-hide py-1">
             <FilterChip label="Post" active={activeTab === 'Post'} onClick={() => setActiveTab('Post')} />
             <FilterChip label="Repost" active={activeTab === 'Repost'} onClick={() => setActiveTab('Repost')} />
-            <FilterChip label="Like" active={activeTab === 'Like'} onClick={() => setActiveTab('Like')} />
+            {/* <FilterChip label="Like" active={activeTab === 'Like'} onClick={() => setActiveTab('Like')} /> */}
             <FilterChip label="Comments" active={activeTab === 'Comments'} onClick={() => setActiveTab('Comments')} />
             <FilterChip label="Private post" active={activeTab === 'Private post'} onClick={() => setActiveTab('Private post')} />
-            <FilterChip label="Save" active={activeTab === 'Save'} onClick={() => setActiveTab('Save')} />
+            {/* <FilterChip label="Save" active={activeTab === 'Save'} onClick={() => setActiveTab('Save')} /> */}
           </div>
         </div>
 
@@ -742,6 +745,7 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
                   post={post}
                   onLike={() => handleToggleLike(post.id)}
                   onSave={() => handleSaveClick(post.id, !!post.is_saved)}
+                  onShare={() => setShareModalPostId(post.id)}
                   onTogglePrivacy={() => handleTogglePrivacy(post.id, post.visibility || 'public')}
                   onDelete={() => handleDeletePost(post.id)}
                   onEdit={() => {
@@ -795,6 +799,19 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
               p.id === saveModalPostId ? { ...p, is_saved: isSaved } : p
             ));
             setSaveModalPostId(null);
+          }}
+        />
+      )}
+
+      {shareModalPostId && (
+        <CocpitShareModel
+          isOpen={!!shareModalPostId}
+          onClose={() => setShareModalPostId(null)}
+          postId={shareModalPostId}
+          onShare={() => {
+            setPosts(prev => prev.map(p => 
+              p.id === shareModalPostId ? { ...p, shares: String(Number(p.shares) + 1) } : p
+            ));
           }}
         />
       )}

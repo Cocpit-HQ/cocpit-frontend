@@ -84,7 +84,7 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     is_commented: backendPost.is_commented,
     is_saved: backendPost.is_saved,
     comments: (backendPost.comment_count || 0).toString(),
-    shares: "0", // Backend does not provide shares yet
+    shares: (backendPost.share_count || 0).toString(),
     commentData: [],
     category: backendPost.category_name as Post["category"],
     visibility: backendPost.visibility,
@@ -132,7 +132,7 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
           likes: sp.like_count || 0,
           isLiked: sp.is_liked,
           comments: (sp.comment_count || 0).toString(),
-          shares: "0",
+          shares: (sp.share_count || 0).toString(),
           images: sp.media?.filter(m => m.media_type === 'image').map(m => m.url),
           videoSrc: sp.media?.find(m => m.media_type === 'video')?.url,
           isAvailable: true,

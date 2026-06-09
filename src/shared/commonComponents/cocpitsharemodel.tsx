@@ -237,20 +237,18 @@ export default function CocpitShareModel({
             }}
             className="fixed left-1/2 top-1/2 z-[9999] w-[420px] h-[506px] -translate-x-1/2 -translate-y-1/2 rounded-[24px] bg-[var(--card)] border border-[var(--border)] p-[16px] shadow-2xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 flex flex-col"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex flex-col items-center flex-1">
-                <DialogPrimitive.Title className="text-[18px] font-semibold text-[var(--foreground)] font-['Poppins']">
-                  Share
-                </DialogPrimitive.Title>
-                <DialogPrimitive.Description className="mt-1 text-[12px] text-[var(--muted-foreground)] font-normal font-['Poppins']">
-                  Share this with others
-                </DialogPrimitive.Description>
-              </div>
+            <div className="relative text-center">
+              <DialogPrimitive.Title className="text-[18px] font-semibold text-[var(--foreground)] font-['Poppins']">
+                Share
+              </DialogPrimitive.Title>
+              <DialogPrimitive.Description className="mt-1 text-[12px] text-[var(--muted-foreground)] font-normal font-['Poppins']">
+                Share this with others
+              </DialogPrimitive.Description>
               <button
                 type="button"
                 onClick={handleClose}
                 disabled={isSending}
-                className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-[var(--primary-tint)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="absolute -top-1 -right-1 h-8 w-8 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-1"
                 aria-label="Close"
               >
                 <X className="h-5 w-5 text-[var(--destructive)]" strokeWidth={1} />
@@ -272,12 +270,22 @@ export default function CocpitShareModel({
 
               {!isSearching ? (
                 <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-                  <div onScroll={handleScroll} className="mt-5 grid grid-cols-3 gap-4 text-center max-h-[280px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2">
+                  <div onScroll={handleScroll} tabIndex={-1} className="mt-5 grid grid-cols-3 gap-4 text-center max-h-[280px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2">
                     {users.map((u, index) => (
                       <div
                         key={`${u.id}-${index}`}
-                        className="flex flex-col items-center cursor-pointer hover:bg-[var(--primary-tint)] rounded-lg p-2 transition-colors relative"
+                        className="flex flex-col items-center cursor-pointer hover:bg-[var(--primary-tint)] rounded-lg p-2 transition-colors relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-1"
                         onClick={() => toggleSelected(u.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            toggleSelected(u.id);
+                          }
+                        }}
+                        tabIndex={0}
+                        role="checkbox"
+                        aria-checked={selectedUsers.includes(u.id)}
+                        aria-label={u.name}
                       >
                         <div className="relative h-12 w-12">
                           <div className="h-full w-full rounded-full overflow-hidden bg-[var(--primary-tint)] flex items-center justify-center">
@@ -327,8 +335,18 @@ export default function CocpitShareModel({
                           className="flex items-center justify-between py-2"
                         >
                           <div
-                            className="flex items-center gap-3 cursor-pointer hover:bg-[var(--primary-tint)] flex-1 p-1 rounded transition-colors"
+                            className="flex items-center gap-3 cursor-pointer hover:bg-[var(--primary-tint)] flex-1 p-1 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-1"
                             onClick={() => toggleSelected(u.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                toggleSelected(u.id);
+                              }
+                            }}
+                            tabIndex={0}
+                            role="checkbox"
+                            aria-checked={selectedUsers.includes(u.id)}
+                            aria-label={u.name}
                           >
                             <div className="relative h-8 w-8 rounded-full overflow-hidden bg-[var(--primary-tint)] flex items-center justify-center shrink-0">
                               {u.avatar ? (
@@ -357,6 +375,7 @@ export default function CocpitShareModel({
                           <label className="flex items-center cursor-pointer select-none">
                             <input
                               type="checkbox"
+                              tabIndex={-1}
                               className="h-4 w-4 accent-[var(--primary)]"
                               checked={checked}
                               onChange={() => toggleSelected(u.id)}
@@ -395,7 +414,7 @@ export default function CocpitShareModel({
                           key={opt.label}
                           type="button"
                           onClick={opt.onClick}
-                          className="h-10 w-10 flex items-center justify-center hover:bg-[var(--primary-tint)] transition-colors rounded-full group cursor-pointer"
+                          className="h-10 w-10 flex items-center justify-center hover:bg-[var(--primary-tint)] transition-colors rounded-full group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-1"
                           aria-label={opt.label}
                           title={opt.label}
                         >

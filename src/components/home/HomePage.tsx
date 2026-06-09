@@ -66,7 +66,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="pt-4 md:pt-6 pb-4 md:pb-8">
-        <div className="mx-auto md:mx-0 md:ml-20 xl:ml-[200px] max-w-[1128px] px-0 md:px-4 xl:px-0">
+        <div className="mx-auto md:mx-0 md:ml-10 xl:ml-[400px] max-w-[1128px] px-0 md:px-4 xl:px-0">
           <div className="flex w-full flex-col items-center gap-6 md:gap-8 xl:flex-row xl:gap-[32px] xl:items-start xl:justify-start">
             {isArticleMode ? (
               <InlineArticleEditor />

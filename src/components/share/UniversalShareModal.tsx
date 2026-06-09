@@ -250,7 +250,7 @@ export function UniversalShareModal({
 
             <div className="flex flex-col gap-4 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {(entityType === 'post' || entityType === 'job') && (
-                    <button 
+                    <button
                         onClick={handleRepost}
                         disabled={postCategory === 'Personal'}
                         className={`flex items-center gap-4 w-full h-[56px] px-6 rounded-[24px] bg-white border border-[#F8FAFC] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50 transition-colors ${postCategory === 'Personal' ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -260,7 +260,7 @@ export function UniversalShareModal({
                     </button>
                 )}
 
-                <button 
+                <button
                     onClick={handleShareToStory}
                     className="flex items-center gap-4 w-full h-[56px] px-6 rounded-[24px] bg-white border border-[#F8FAFC] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50 transition-colors"
                 >
@@ -268,7 +268,7 @@ export function UniversalShareModal({
                     <span className="text-[14px] leading-[20px] font-medium font-[family-name:var(--font-poppins)] text-[#000000]">Share in story</span>
                 </button>
 
-                <button 
+                <button
                     onClick={() => setMode('message')}
                     className="flex items-center gap-4 w-full h-[56px] px-6 rounded-[24px] bg-white border border-[#F8FAFC] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50 transition-colors"
                 >
@@ -277,7 +277,7 @@ export function UniversalShareModal({
                 </button>
 
                 {(entityType === 'profile' || entityType === 'post') && (
-                    <button 
+                    <button
                         onClick={() => toast({ title: "Coming soon", description: "Sharing to business page will be available soon." })}
                         className="flex items-center gap-4 w-full h-[56px] px-6 rounded-[24px] bg-white border border-[#F8FAFC] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50 transition-colors"
                     >
@@ -286,7 +286,7 @@ export function UniversalShareModal({
                     </button>
                 )}
 
-                <button 
+                <button
                     onClick={() => setMode('notification')}
                     className="flex items-center gap-4 w-full h-[56px] px-6 rounded-[24px] bg-white border border-[#F8FAFC] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50 transition-colors"
                 >
@@ -294,7 +294,7 @@ export function UniversalShareModal({
                     <span className="text-[14px] leading-[20px] font-medium font-[family-name:var(--font-poppins)] text-[#000000]">Share via Notification</span>
                 </button>
 
-                <button 
+                <button
                     onClick={handleCopyLink}
                     className="flex items-center gap-4 w-full h-[56px] px-6 rounded-[24px] bg-white border border-[#F8FAFC] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50 transition-colors"
                 >
@@ -328,7 +328,7 @@ export function UniversalShareModal({
                 </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto" tabIndex={-1}>
                 <div className="p-5 space-y-4 border-b border-border">
                     {/* Entity Preview Header */}
                     {(entityType === 'profile' || entityType === 'company' || entityType === 'job') && entityName && (
@@ -379,7 +379,20 @@ export function UniversalShareModal({
                                     }
 
                                     return (
-                                        <div key={id} className="flex items-center gap-1.5 bg-primary/10 text-primary px-2.5 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:bg-primary/20 transition-colors" onClick={() => toggleTarget(id)}>
+                                        <div
+                                            key={id}
+                                            className="flex items-center gap-1.5 bg-primary/10 text-primary px-2.5 py-1.5 rounded-full text-xs font-medium cursor-pointer hover:bg-primary/20 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                                            onClick={() => toggleTarget(id)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault();
+                                                    toggleTarget(id);
+                                                }
+                                            }}
+                                            tabIndex={0}
+                                            role="button"
+                                            aria-label={`Remove ${name}`}
+                                        >
                                             {avatar ? (
                                                 <img src={avatar} className="w-4 h-4 rounded-full object-cover" alt="" />
                                             ) : (
@@ -409,7 +422,17 @@ export function UniversalShareModal({
                                     <div
                                         key={conv.id}
                                         onClick={() => conv.otherUserId && toggleTarget(conv.otherUserId)}
-                                        className={`flex items-center gap-3 p-3 mx-1 my-0.5 rounded-xl cursor-pointer transition-all duration-200 ${isSelected ? "bg-muted/80 shadow-sm" : "hover:bg-muted/60"}`}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                conv.otherUserId && toggleTarget(conv.otherUserId);
+                                            }
+                                        }}
+                                        tabIndex={0}
+                                        role="checkbox"
+                                        aria-checked={isSelected}
+                                        aria-label={conv.name}
+                                        className={`flex items-center gap-3 p-3 mx-1 my-0.5 rounded-xl cursor-pointer transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${isSelected ? "bg-muted/80 shadow-sm" : "hover:bg-muted/60"}`}
                                     >
                                         <div className={`w-10 h-10 rounded-full flex-shrink-0 bg-gradient-to-br ${getAvatarGradient(conv.avatar)} flex items-center justify-center text-white font-medium text-sm`}>
                                             {(conv.name || "?").charAt(0)}
@@ -437,7 +460,17 @@ export function UniversalShareModal({
                                     <div
                                         key={user.id}
                                         onClick={() => toggleTarget(user.id)}
-                                        className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${isSelected ? "bg-muted" : "hover:bg-muted/50"}`}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                toggleTarget(user.id);
+                                            }
+                                        }}
+                                        tabIndex={0}
+                                        role="checkbox"
+                                        aria-checked={isSelected}
+                                        aria-label={user.full_name}
+                                        className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${isSelected ? "bg-muted" : "hover:bg-muted/50"}`}
                                     >
                                         <Avatar className="w-10 h-10">
                                             <AvatarImage src={user.avatar_url} />
@@ -508,9 +541,9 @@ export function UniversalShareModal({
                 <DrawerContent className="max-h-[85vh] p-0 bg-transparent border-none shadow-none outline-none">
                     <div className="relative bg-white rounded-t-[24px] p-[24px] w-full shadow-sm flex flex-col outline-none max-h-[85vh] overflow-hidden">
                         {mode === 'options' && (
-                            <button 
+                            <button
                                 onClick={() => onClose()}
-                                className="absolute top-6 right-6 p-1 text-[#F87171] hover:bg-red-50 rounded-full transition-colors z-10"
+                                className="absolute top-6 right-6 p-1 text-[#F87171] rounded-full transition-colors z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
                             >
                                 <X className="w-5 h-5" strokeWidth={1.5} />
                             </button>
@@ -527,9 +560,9 @@ export function UniversalShareModal({
             <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[400px] sm:rounded-[24px] [&>button]:hidden outline-none">
                 <div className="relative bg-white rounded-[24px] p-[24px] sm:p-[32px] w-full shadow-sm flex flex-col outline-none max-h-[85vh] overflow-hidden">
                     {mode === 'options' && (
-                        <button 
+                        <button
                             onClick={() => onClose()}
-                            className="absolute top-6 right-6 p-1 text-[#F87171] hover:bg-red-50 rounded-full transition-colors z-10"
+                            className="absolute top-6 right-6 p-1 text-[#F87171] rounded-full transition-colors z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
                         >
                             <X className="w-5 h-5" strokeWidth={1.5} />
                         </button>

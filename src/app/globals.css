@@ -343,9 +343,9 @@
 
   .feed-card-shell {
     background-color: #ffffff;
-    border: 1px solid var(--feed-card-border, #EEF2FF);
+    border: none;
     border-radius: var(--radius-feed-card, 24px);
-    box-shadow: var(--feed-card-shadow, 0px 0px 4px rgba(99, 102, 241, 0.05));
+    box-shadow: none;
   }
 
   [data-theme="dark"] .feed-card-shell,

@@ -76,7 +76,7 @@ export const PostSharedContent = ({
                   {shared_post.author}
                 </span>
                 <span className="text-[10px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-muted-foreground">
-                  {shared_post.title || 'Member'}
+                  {shared_post.authorHeadline || shared_post.title || 'Member'}
                 </span>
                 <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
                   {shared_post.location && <span>{shared_post.location}</span>}
