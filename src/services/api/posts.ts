@@ -133,9 +133,9 @@ export const createRepost = async (postId: string, content: string = "", categor
 };
 
 export const syncPostTags = async (postId: string, userIds: string[]): Promise<{ message: string }> => {
-    const response = await api.post<{ message: string }>(`/posts/tags/sync`, {
-        postId,
-        tags: userIds
-    });
-    return response.data;
+  const response = await api.post<{ message: string }>(`/posts/tags/sync`, {
+    postId,
+    tags: userIds
+  });
+  return response.data;
 };

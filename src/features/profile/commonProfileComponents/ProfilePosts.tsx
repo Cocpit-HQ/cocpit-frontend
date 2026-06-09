@@ -72,7 +72,7 @@ const ProfilePostCard = ({
   const _rawImage = localPost.imageSrc || (localPost.images && localPost.images.length > 0 ? localPost.images[0] : null);
   const image = _rawImage && _rawImage.trim() !== '' ? _rawImage : null;
   const videoSrc = (localPost.videoSrc && localPost.videoSrc.trim() !== '') ? localPost.videoSrc : null;
-  const isArticlePost = localPost.category === 'Article' || Boolean(localPost.articleBody) || localPost.post_type === 'article';
+  const isArticlePost = localPost.category === 'Article' || localPost.post_type === 'article';
   const isPollPost = Boolean(localPost.poll);
   const articleExcerpt = localPost.content?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
   const pollQuestion = articleExcerpt || localPost.title || "Untitled poll";
@@ -112,7 +112,11 @@ const ProfilePostCard = ({
       }));
       toast.success("Post reposted successfully!");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to repost");
+      if (err?.response?.status === 409) {
+        toast.error("You have already reposted this post.");
+      } else {
+        toast.error(err.response?.data?.message || "Failed to repost");
+      }
     }
   };
 
@@ -435,7 +439,7 @@ const ProfilePostCard = ({
 
       {/* Liked by Section */}
       {likesCount > 0 && (
-        <div className="w-full h-[20px] px-4 mb-4 flex items-center">
+        <div className="w-full px-4 mb-4 flex items-center">
           <p className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)] truncate">
             {likesCount === 1 && isLiked ? (
               `${likesCount} like`
@@ -453,31 +457,31 @@ const ProfilePostCard = ({
 
       {/* Interaction Footer */}
       <div className="w-full h-[40px] px-4 py-2 mt-auto border-t border-transparent">
-          <div className="flex items-center justify-between w-full h-[24px]">
-            <div className="flex items-center gap-[16px]">
-              <button onClick={handleLike} className="flex items-center gap-1 min-w-0 flex-shrink-0 cursor-pointer">
-                <Icon icon={isLiked ? "solar:like-bold" : "solar:like-broken"} className={cn("w-5 h-5", isLiked ? "text-[#6366F1]" : "text-foreground")} />
-                <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{likesCount}</span>
-              </button>
-              <Link href={`/post/${localPost.id}?comments=true`} className="flex items-center gap-1 min-w-0 flex-shrink-0">
-                <Icon icon="hugeicons:comment-01" className="w-5 h-5 text-foreground" />
-                <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.comments || 0}</span>
-              </Link>
-              <button onClick={handleRepost} className="flex items-center gap-1 min-w-0 flex-shrink-0 cursor-pointer">
-                <Icon icon="hugeicons:repost" className="w-5 h-5 text-foreground" />
-                <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.shares || 0}</span>
-              </button>
-              <button onClick={handleShare} className="flex items-center min-w-0 flex-shrink-0 cursor-pointer">
-                <Icon icon="fluent:share-16-regular" className="w-5 h-5 text-foreground" />
-              </button>
-            </div>
-            <button onClick={handleBookmark} className="flex-shrink-0 cursor-pointer">
-              <Icon
-                icon={isSaved ? "solar:bookmark-bold" : "solar:bookmark-linear"}
-                className={cn("w-5 h-5", isSaved ? "text-[#6366F1]" : "text-foreground")}
-              />
+        <div className="flex items-center justify-between w-full h-[24px]">
+          <div className="flex items-center gap-[16px]">
+            <button onClick={handleLike} className="flex items-center gap-1 min-w-0 flex-shrink-0 cursor-pointer">
+              <Icon icon={isLiked ? "solar:like-bold" : "solar:like-broken"} className={cn("w-5 h-5", isLiked ? "text-[#6366F1]" : "text-foreground")} />
+              <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{likesCount}</span>
+            </button>
+            <Link href={`/post/${localPost.id}?comments=true`} className="flex items-center gap-1 min-w-0 flex-shrink-0">
+              <Icon icon="hugeicons:comment-01" className="w-5 h-5 text-foreground" />
+              <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.comments || 0}</span>
+            </Link>
+            <button onClick={handleRepost} className="flex items-center gap-1 min-w-0 flex-shrink-0 cursor-pointer">
+              <Icon icon="hugeicons:repost" className="w-5 h-5 text-foreground" />
+              <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.shares || 0}</span>
+            </button>
+            <button onClick={handleShare} className="flex items-center min-w-0 flex-shrink-0 cursor-pointer">
+              <Icon icon="fluent:share-16-regular" className="w-5 h-5 text-foreground" />
             </button>
           </div>
+          <button onClick={handleBookmark} className="flex-shrink-0 cursor-pointer">
+            <Icon
+              icon={isSaved ? "solar:bookmark-bold" : "solar:bookmark-linear"}
+              className={cn("w-5 h-5", isSaved ? "text-[#6366F1]" : "text-foreground")}
+            />
+          </button>
+        </div>
       </div>
 
       <CommentModal
@@ -572,7 +576,7 @@ export function ProfilePosts({
       {/* Header */}
       <div className="flex items-center justify-between pt-4 pb-4 px-4 md:pl-10 md:pr-4">
         <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Post</h2>
-        {posts.length > 3 && (
+        {posts.length > 0 && (
           <button
             onClick={() => {
               sessionStorage.setItem("cocpit_profile_scroll_y", window.scrollY.toString());

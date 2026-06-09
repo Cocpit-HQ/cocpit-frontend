@@ -102,7 +102,7 @@ export interface BackendPost {
       avatar_url: string | null;
       author_slug?: string;
       is_organization_post?: boolean;
-      headline?: string;
+      author_headline?: string;
     };
     media?: BackendMedia[];
     like_count?: number;
@@ -202,7 +202,7 @@ export const getFeed = async (cursor?: string, companyId?: string): Promise<Feed
   void companyId; // Feed context might not use this in the same way, but keeping it for now
 
   const response = await api.get<EngineFeedResponse>(`/feed?${params.toString()}`);
-  
+
   if (!response.data.ok || !response.data.data) {
     return { posts: [], nextCursor: null };
   }
@@ -220,7 +220,7 @@ export const getFeed = async (cursor?: string, companyId?: string): Promise<Feed
   // Use backend-hydrated posts directly
   const hydratedPosts = items.map((item) => {
     if (!item.post_data) return null;
-    
+
     return {
       ...item.post_data,
       _rankingMeta: {

@@ -1266,7 +1266,7 @@ export default function ProfilePage() {
               {/* Header */}
               <div className="flex items-center justify-between pt-4 pb-4 px-4 md:pl-10 md:pr-4">
                 <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Post</h2>
-                {previewPosts.length > 3 && (
+                {previewPosts.length > 0 && (
                   <button
                     onClick={() => {
                       sessionStorage.setItem("cocpit_profile_scroll_y", window.scrollY.toString());

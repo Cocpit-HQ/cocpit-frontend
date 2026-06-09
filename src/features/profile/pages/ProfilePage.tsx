@@ -104,7 +104,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
   const _rawImage = localPost.imageSrc || (localPost.images && localPost.images.length > 0 ? localPost.images[0] : null);
   const image = _rawImage && _rawImage.trim() !== '' ? _rawImage : null;
   const videoSrc = (localPost.videoSrc && localPost.videoSrc.trim() !== '') ? localPost.videoSrc : null;
-  const isArticlePost = localPost.category === 'Article' || Boolean(localPost.articleBody);
+  const isArticlePost = localPost.category === 'Article' || localPost.post_type === 'article';
   const isPollPost = Boolean(localPost.poll);
   const articleExcerpt = localPost.content?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
   const pollQuestion = articleExcerpt || localPost.title || "Untitled poll";
@@ -424,7 +424,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
 
       {/* Liked by Section (Frame 2608573) */}
       {likesCount > 0 && (
-        <div className="w-full h-[20px] px-4 mb-4 flex items-center">
+        <div className="w-full px-4 mb-4 flex items-center">
           <p className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)] truncate">
             {likesCount === 1 && isLiked ? (
               `${likesCount} like`
@@ -442,8 +442,8 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
 
       {/* Interaction Footer (Frame 2608574) */}
       <div className="w-full h-[40px] px-4 py-2 mt-auto border-t border-transparent">
-          {/* Frame 2608620 */}
-          <div className="flex items-center justify-between w-full h-[24px]">
+        {/* Frame 2608620 */}
+        <div className="flex items-center justify-between w-full h-[24px]">
           <div className="flex items-center gap-[16px]">
             <button onClick={handleLike} className="flex items-center gap-1 min-w-0 flex-shrink-0">
               <Icon icon={isLiked ? "solar:like-bold" : "solar:like-broken"} className={cn("w-5 h-5", isLiked ? "text-[#6366F1]" : "text-foreground")} />
@@ -619,7 +619,7 @@ export default function ProfilePage() {
         if ((window as any).__cocpit_scroll_observer) {
           try {
             (window as any).__cocpit_scroll_observer.disconnect();
-          } catch (e) {}
+          } catch (e) { }
         }
 
         let observerTimeout: NodeJS.Timeout;
@@ -676,7 +676,7 @@ export default function ProfilePage() {
       };
 
       const originalPushState = window.history.pushState;
-      window.history.pushState = function(state, unused, url) {
+      window.history.pushState = function (state, unused, url) {
         originalPushState.apply(this, [state, unused, url]);
         try {
           handleRouteScroll(url);
@@ -686,7 +686,7 @@ export default function ProfilePage() {
       };
 
       const originalReplaceState = window.history.replaceState;
-      window.history.replaceState = function(state, unused, url) {
+      window.history.replaceState = function (state, unused, url) {
         originalReplaceState.apply(this, [state, unused, url]);
         try {
           handleRouteScroll(url);
@@ -723,7 +723,7 @@ export default function ProfilePage() {
           delete currentState.cocpit_scroll_path;
           delete currentState.cocpit_popstate_occurred;
           window.history.replaceState(currentState, "", window.location.href);
-        } catch (e) {}
+        } catch (e) { }
       }
     };
 
@@ -734,7 +734,7 @@ export default function ProfilePage() {
         if ((window as any).__cocpit_profile_restore_observer) {
           try {
             (window as any).__cocpit_profile_restore_observer.disconnect();
-          } catch (e) {}
+          } catch (e) { }
         }
 
         const cleanup = () => {
