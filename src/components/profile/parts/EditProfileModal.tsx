@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { UserData } from "@/types/user"
+import LocationAutocomplete from "@/components/ui/LocationAutocomplete"
 
 interface EditProfileModalProps {
   isOpen: boolean
@@ -240,13 +241,20 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               <div className="flex flex-col">
                 <Label className={labelStyles}>Location</Label>
                 <div className="relative">
-                  <Input
+                  <LocationAutocomplete
                     value={formData.location}
-                    onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                    className={cn(inputStyles, "pr-10")}
-                    placeholder="Location"
+                    onSelect={(loc) => {
+                      if (typeof loc === 'string') {
+                        setFormData(prev => ({ ...prev, location: loc }));
+                      } else if (loc && 'formattedAddress' in loc) {
+                        setFormData(prev => ({ ...prev, location: loc.formattedAddress }));
+                      } else if (loc && 'name' in loc) {
+                        setFormData(prev => ({ ...prev, location: loc.name }));
+                      } else {
+                        setFormData(prev => ({ ...prev, location: '' }));
+                      }
+                    }}
                   />
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 text-muted-foreground" />
                 </div>
               </div>
               <div className="flex flex-col">
