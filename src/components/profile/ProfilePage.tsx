@@ -53,7 +53,7 @@ import { getUserPosts } from "@/services/api/profile"
 import { deletePost as apiDeletePost, toggleLike, createRepost, updatePost } from "@/services/api/posts"
 import { toggleSavePost } from "@/services/api/savedPost"
 import { CommentModal } from "./parts/CommentModal"
-import { CreatePostModal } from "@/features/create-post/components/CreatePostModal"
+import { EditPostModal } from "@/shared/commonComponents/EditPostModal"
 import { UserData, Skill, AddSkillsPayload } from "@/types/user"
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper"
 import type { Post } from "@/types/entities"
@@ -475,7 +475,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
       />
 
       {isEditModalOpen && (
-        <CreatePostModal
+        <EditPostModal
           isOpen={isEditModalOpen}
           onClose={() => {
             setIsEditModalOpen(false);

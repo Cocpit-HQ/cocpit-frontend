@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { CreatePostModal } from '@/features/create-post/components/CreatePostModal';
+import { EditPostModal } from '@/shared/commonComponents/EditPostModal';
 import { useFeed } from '@/hooks/use-feed';
 import { updatePost } from '@/services/api/posts';
 import { useUIStore } from '@/store/ui.store';
@@ -185,7 +185,7 @@ export function PostOptionsMenu({
       </Dialog>
 
       {isEditModalOpen && (
-        <CreatePostModal
+        <EditPostModal
           isOpen={isEditModalOpen}
           onClose={() => {
             setIsEditModalOpen(false);

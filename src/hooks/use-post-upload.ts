@@ -45,6 +45,7 @@ export const usePostUpload = () => {
                 // 2. Use the centralized postApi for creation (handles media + post + fetch)
                 const { mappedPost } = await postApi.create(content, mediaFiles, tagUserIds);
                 addPost(mappedPost);
+                window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
 
                 // 3. Update Store to success
                 setPendingPosts(prev => prev.map(p =>

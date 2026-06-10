@@ -1,8 +1,18 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { Area } from 'react-easy-crop';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { Area, MediaSize } from 'react-easy-crop';
 import { MediaItem } from '../types';
-import getCroppedImg from '@/lib/canvasUtils';
+import getCroppedImg, { getPaddedImg } from '@/lib/canvasUtils';
 import { toast } from 'sonner';
+
+type AspectRatioMode = '1:1' | '4:5' | '16:9';
+
+const DEFAULT_ASPECT_RATIO = 4 / 5;
+
+const getAspectModeFromValue = (aspect: number): AspectRatioMode => {
+  if (Math.abs(aspect - 1) < 0.001) return '1:1';
+  if (Math.abs(aspect - 16 / 9) < 0.001) return '16:9';
+  return '4:5';
+};
 
 export const usePostMedia = (
   initialImages: MediaItem[] = [],
@@ -12,7 +22,8 @@ export const usePostMedia = (
   const [uploadedImages, setUploadedImages] = useState<MediaItem[]>(initialImages);
   const [uploadedVideos, setUploadedVideos] = useState<MediaItem[]>(initialVideos);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [aspectRatio, setAspectRatio] = useState(4 / 5);
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState(DEFAULT_ASPECT_RATIO);
+  const [aspectRatioMode, setAspectRatioMode] = useState<AspectRatioMode>('4:5');
   const [previewMediaUrls, setPreviewMediaUrls] = useState<string[]>([]);
 
   // Refs for cleanup
@@ -24,6 +35,8 @@ export const usePostMedia = (
   useEffect(() => { uploadedVideosRef.current = uploadedVideos; }, [uploadedVideos]);
   useEffect(() => { previewMediaUrlsRef.current = previewMediaUrls; }, [previewMediaUrls]);
 
+
+
   const createMediaItem = useCallback((file: File): MediaItem => ({
     id: `${Date.now()}-${Math.random()}`,
     url: URL.createObjectURL(file),
@@ -32,6 +45,8 @@ export const usePostMedia = (
     crop: { x: 0, y: 0 },
     zoom: 1
   }), []);
+
+  const aspectRatio = selectedAspectRatio;
 
   const revokeAllMediaUrls = useCallback(() => {
     uploadedImagesRef.current.forEach(img => {
@@ -47,7 +62,7 @@ export const usePostMedia = (
   }, []);
 
   const handlePhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement> | File, isEdit: boolean) => {
-    let file: File | undefined = e instanceof File ? e : e.target.files?.[0];
+    const file: File | undefined = e instanceof File ? e : e.target.files?.[0];
     
     if (file) {
       const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
@@ -346,8 +361,55 @@ export const usePostMedia = (
     }));
   }, [activeImageIndex]);
 
+  const resetActiveImageViewport = useCallback(() => {
+    setUploadedImages(prev => prev.map((img, idx) => {
+      if (idx !== activeImageIndex) return img;
+
+      return {
+        ...img,
+        crop: { x: 0, y: 0 },
+        zoom: 1,
+      };
+    }));
+  }, [activeImageIndex]);
+
+  const resetActiveVideoViewport = useCallback(() => {
+    setUploadedVideos(prev => prev.map((vid, idx) => {
+      if (idx !== 0) return vid;
+
+      return {
+        ...vid,
+        crop: { x: 0, y: 0 },
+        zoom: 1,
+      };
+    }));
+  }, []);
+
   const handleAspectChange = useCallback((newAspect: number) => {
-    setAspectRatio(newAspect);
+    setAspectRatioMode(getAspectModeFromValue(newAspect));
+    setSelectedAspectRatio(newAspect);
+
+    resetActiveImageViewport();
+    resetActiveVideoViewport();
+  }, [resetActiveImageViewport, resetActiveVideoViewport]);
+
+  const handleActiveMediaLoaded = useCallback((mediaSize: MediaSize) => {
+    setUploadedImages(prev => prev.map((img, idx) => {
+      if (idx !== activeImageIndex) return img;
+      if (img.naturalWidth === mediaSize.naturalWidth && img.naturalHeight === mediaSize.naturalHeight) {
+        return img;
+      }
+
+      return {
+        ...img,
+        naturalWidth: mediaSize.naturalWidth,
+        naturalHeight: mediaSize.naturalHeight,
+      };
+    }));
+  }, [activeImageIndex]);
+
+  const shouldPadImageToAspect = useCallback((item: MediaItem, targetAspect: number) => {
+    return false;
   }, []);
 
   const generatePreviewBlobs = async (postType: string) => {
@@ -362,7 +424,20 @@ export const usePostMedia = (
         }
 
         try {
-          if (img.pixelCrop) {
+          const shouldPad = shouldPadImageToAspect(img, aspectRatio);
+
+          if (shouldPad) {
+            const blob = await getPaddedImg(
+              img.url,
+              aspectRatio,
+              '#000000',
+              img.rotation || 0,
+              { horizontal: !!img.flipH, vertical: !!img.flipV },
+              img.file?.type
+            );
+            const blobUrl = URL.createObjectURL(blob);
+            newUrls.push(blobUrl);
+          } else if (img.pixelCrop) {
             const blob = await getCroppedImg(
               img.url,
               img.pixelCrop,
@@ -396,6 +471,8 @@ export const usePostMedia = (
      setUploadedImages([]);
      setUploadedVideos([]);
      setActiveImageIndex(0);
+     setSelectedAspectRatio(DEFAULT_ASPECT_RATIO);
+     setAspectRatioMode('4:5');
      setPreviewMediaUrls([]);
   }, [revokeAllMediaUrls]);
 
@@ -406,7 +483,19 @@ export const usePostMedia = (
       const processedFiles = await Promise.all(uploadedImages.map(async (item) => {
         if (item.isExisting) return undefined;
         if (item.file) {
-          if (item.pixelCrop) {
+          if (shouldPadImageToAspect(item, currentAspectRatio)) {
+            try {
+              const blob = await getPaddedImg(
+                item.url,
+                currentAspectRatio,
+                '#000000',
+                item.rotation || 0,
+                { horizontal: !!item.flipH, vertical: !!item.flipV },
+                item.file?.type
+              );
+              if (blob) return new File([blob], item.file.name, { type: item.file.type || 'image/jpeg' });
+            } catch (e) { console.error("Padding failed", e); }
+          } else if (item.pixelCrop) {
             try {
               const blob = await getCroppedImg(
                 item.url,
@@ -433,7 +522,8 @@ export const usePostMedia = (
     uploadedImages, setUploadedImages,
     uploadedVideos, setUploadedVideos,
     activeImageIndex, setActiveImageIndex,
-    aspectRatio, setAspectRatio,
+    aspectRatio,
+    aspectRatioMode,
     previewMediaUrls,
     handlePhotoUpload,
     handleDesktopPhotoUpload,
@@ -446,6 +536,7 @@ export const usePostMedia = (
     handleVideoZoomChange,
     handleVideoCropComplete,
     handleAspectChange,
+    handleActiveMediaLoaded,
     handleFlipHChange,
     handleFlipVChange,
     handleRotateChange,

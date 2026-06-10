@@ -13,7 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
 import { TaggedPeoplePopover } from "@/shared/commonComponents/TaggedPeoplePopover";
 import { CommentModal } from "../components/CommentModal";
-import { CreatePostModal } from "@/features/create-post/components/CreatePostModal";
+import { EditPostModal } from "@/shared/commonComponents/EditPostModal";
 import { ProfileEmptyState } from "./ProfileEmptyState";
 import { useUIStore } from "@/store/ui.store";
 import { ProfilePostCardSkeleton } from "../components/skeletons/ProfilePostCardSkeleton";
@@ -497,7 +497,7 @@ const ProfilePostCard = ({
       />
 
       {isEditModalOpen && (
-        <CreatePostModal
+        <EditPostModal
           isOpen={isEditModalOpen}
           onClose={() => {
             setIsEditModalOpen(false);

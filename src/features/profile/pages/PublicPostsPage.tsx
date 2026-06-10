@@ -28,7 +28,7 @@ import { Post } from "@/types/entities"
 import Image from "next/image"
 import { useMyProfile } from "@/hooks/use-my-profile"
 import { useUIStore } from "@/store/ui.store"
-import { CreatePostModal } from "@/features/create-post/components/CreatePostModal"
+import { EditPostModal } from "@/shared/commonComponents/EditPostModal"
 import { PostCarousel } from "@/components/shared/PostCarousel"
 import {
   DropdownMenu,
@@ -45,6 +45,7 @@ import { cn } from "@/lib/utils"
 const CommentSection = dynamic(() => import('@/features/feed/components/comments/CommentSection'), { ssr: false });
 const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 const CocpitShareModel = dynamic(() => import('@/shared/commonComponents/cocpitsharemodel'), { ssr: false });
+import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
 
 const mergePostState = (current: Post, incoming: Post): Post => ({
   ...current,
@@ -552,6 +553,8 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
   const { data: profileData, isLoading: isProfileLoading } = useMyProfile()
   const { setEditMode } = useUIStore()
   const { data: targetProfile, isLoading: isTargetProfileLoading } = useProfile(userId)
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  const [isDeletingPost, setIsDeletingPost] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -629,13 +632,22 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
     }
   };
 
-  const handleDeletePost = async (postId: string) => {
-    if (!window.confirm("Are you sure you want to delete this post?")) return;
+  const handleDeletePost = (postId: string) => {
+    setPostToDelete(postId);
+  };
+
+  const confirmDeletePost = async () => {
+    if (!postToDelete) return;
+    const postId = postToDelete;
+    setIsDeletingPost(true);
     try {
       await deletePost(postId);
       setPosts(prev => prev.filter(p => p.id !== postId));
     } catch (error) {
       console.error("Failed to delete post:", error);
+    } finally {
+      setIsDeletingPost(false);
+      setPostToDelete(null);
     }
   };
 
@@ -775,7 +787,7 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
       </div>
 
       {isEditModalOpen && editingPost && (
-        <CreatePostModal
+        <EditPostModal
           isOpen={isEditModalOpen}
           onClose={() => {
             setIsEditModalOpen(false);
@@ -815,6 +827,13 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
           }}
         />
       )}
+
+      <DeleteConfirmationModal
+        isOpen={!!postToDelete}
+        onClose={() => setPostToDelete(null)}
+        onConfirm={confirmDeletePost}
+        isDeleting={isDeletingPost}
+      />
     </div>
   )
 }

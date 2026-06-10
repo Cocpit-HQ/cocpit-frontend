@@ -416,19 +416,16 @@ export function StoryRail({
                         setIsStoryViewerOpen(true);
                         onStoryClick(story);
                       }}
-                      className={`${
-                        isDesktopShowcase
-                          ? `h-[68px] w-[68px] rounded-full p-[4px] border-2 ${
-                              hasUnviewed
-                                ? "border-[#6366F1]"
-                                : "border-[#DADADA]"
-                            }`
-                          : `h-14 w-14 rounded-full md:h-40 md:w-28 md:rounded-xl ${
-                              hasUnviewed
-                                ? "ring-2 ring-[#6366F1] ring-offset-2"
-                                : "border border-[#DADADA]"
-                            }`
-                      } relative overflow-hidden `}
+                      className={`${isDesktopShowcase
+                        ? `h-[68px] w-[68px] rounded-full p-[4px] border-2 ${hasUnviewed
+                          ? "border-[#6366F1]"
+                          : "border-[#DADADA]"
+                        }`
+                        : `h-14 w-14 rounded-full md:h-40 md:w-28 md:rounded-xl ${hasUnviewed
+                          ? "ring-2 ring-[#6366F1] ring-offset-2"
+                          : "border border-[#DADADA]"
+                        }`
+                        } relative overflow-hidden `}
                     >
                       {displayImage ? (
                         <img
@@ -540,11 +537,10 @@ export function StoryRail({
                       <button
                         onClick={(e) => handleFollow(e, user.id)}
                         disabled={followingIds.has(user.id)}
-                        className={`absolute top-10 left-11 w-5 h-5 rounded-full flex items-center justify-center border-2 border-background z-10 transition-colors ${
-                          followingIds.has(user.id)
-                            ? "bg-green-500 text-white"
-                            : "bg-primary text-primary-foreground hover:bg-primary/90"
-                        }`}
+                        className={`absolute top-10 left-11 w-5 h-5 rounded-full flex items-center justify-center border-2 border-background z-10 transition-colors ${followingIds.has(user.id)
+                          ? "bg-green-500 text-white"
+                          : "bg-primary text-primary-foreground hover:bg-primary/90"
+                          }`}
                       >
                         {followingIds.has(user.id) ? (
                           <Check className="w-3 h-3" />

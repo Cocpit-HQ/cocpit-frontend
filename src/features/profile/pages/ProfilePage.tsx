@@ -38,7 +38,7 @@ import { CommentModal } from "../components/CommentModal"
 import { CompanyRoleModal } from "../components/CompanyRoleModal"
 import { ContactInfoModal } from "../components/ContactInfoModal"
 import { EditAvatarModal } from "../components/EditAvatarModal"
-import { CreatePostModal } from "@/features/create-post/components/CreatePostModal"
+import { EditPostModal } from "@/shared/commonComponents/EditPostModal"
 import { FollowListModal } from "../components/FollowListModal"
 import { SkillModal } from "../components/SkillModal"
 import { deletePost as apiDeletePost, createRepost, getFollowing, getProfileStats, getUserPosts, toggleLike, toggleSavePost, updatePost } from "../services/profile.service"
@@ -53,6 +53,7 @@ import { ProfilePosts } from "../commonProfileComponents/ProfilePosts"
 import { ProfileSkills } from "../commonProfileComponents/ProfileSkills"
 
 import { useAvatarMutations, useEducationMutations, useExperienceMutations, useMyProfile, useProfileMutation, useSkillMutations } from "@/hooks/use-my-profile"
+import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
 import { EditProfileModal } from "../components/EditProfileModal"
 const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 
@@ -483,7 +484,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
       />
 
       {isEditModalOpen && (
-        <CreatePostModal
+        <EditPostModal
           isOpen={isEditModalOpen}
           onClose={() => {
             setIsEditModalOpen(false);
@@ -529,6 +530,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
 
 export default function ProfilePage() {
   const router = useRouter()
+  const { setActiveModal } = useUIStore()
 
   // New TanStack Query Hook
   const { data: profileData, isLoading } = useMyProfile();
@@ -840,18 +842,47 @@ export default function ProfilePage() {
       }
     };
     fetchPosts();
+
+    const handlePostCreated = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const newPost = customEvent.detail;
+      // Only show personal posts on personal profile
+      if (!newPost.isCompanyPost) {
+        setPreviewPosts((prev) => {
+          if (prev.some(p => p.id === newPost.id)) return prev;
+          return [newPost, ...prev].slice(0, 4);
+        });
+      }
+    };
+
+    window.addEventListener('postCreated', handlePostCreated);
+    return () => window.removeEventListener('postCreated', handlePostCreated);
   }, []);
 
-  const handleDeletePost = useCallback(async (id: string) => {
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  const [isDeletingPost, setIsDeletingPost] = useState(false);
+
+  const handleDeletePost = useCallback((id: string) => {
+    setPostToDelete(id);
+  }, []);
+
+  const confirmDeletePost = async () => {
+    if (!postToDelete) return;
+    const id = postToDelete;
+    setIsDeletingPost(true);
     const previousPosts = [...previewPosts];
-    setPreviewPosts((prev) => prev.filter((post) => post.id !== id));
     try {
       await apiDeletePost(id);
+      setPreviewPosts((prev) => prev.filter((post) => post.id !== id));
+      toast.success("Post deleted successfully");
     } catch (error) {
       console.error("Failed to delete post", error);
-      setPreviewPosts(previousPosts);
+      toast.error("Failed to delete post");
+    } finally {
+      setIsDeletingPost(false);
+      setPostToDelete(null);
     }
-  }, [previewPosts]);
+  };
 
   const handleToggleVisibility = useCallback((id: string) => {
     setPreviewPosts(prev => prev.filter(post => post.id !== id));
@@ -1145,7 +1176,7 @@ export default function ProfilePage() {
               onDeletePost={handleDeletePost}
               onToggleVisibility={handleToggleVisibility}
               onUpdatePost={handleUpdatePreviewPost}
-              onCreateClick={() => router.push("/create-post")}
+              onCreateClick={() => setActiveModal('create-post')}
               isLoading={postsLoading}
             />
 
@@ -1276,6 +1307,13 @@ export default function ProfilePage() {
           console.log("Shared profile with:", selectedIds);
           setIsShareModalOpen(false);
         }}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={!!postToDelete}
+        onClose={() => setPostToDelete(null)}
+        onConfirm={confirmDeletePost}
+        isDeleting={isDeletingPost}
       />
     </div>
   )

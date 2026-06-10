@@ -29,6 +29,8 @@ const PollAnalyticsModal = dynamic(() => import('@/components/home/PollAnalytics
 const CocpitShareModel = dynamic(() => import('@/shared/commonComponents/cocpitsharemodel'), { ssr: false });
 const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 const CreatePostModal = dynamic(() => import('@/shared/commonComponents/CreatePostModal').then(m => m.CreatePostModal), { ssr: false });
+const EditPostModal = dynamic(() => import('@/shared/commonComponents/EditPostModal').then(m => m.EditPostModal), { ssr: false });
+const DeleteConfirmationModal = dynamic(() => import('@/components/shared/DeleteConfirmationModal').then(m => m.DeleteConfirmationModal), { ssr: false });
 
 export const FeedPost = (props: FeedPostProps) => {
   const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, sampleLikerUsername, category, title, articleBody } = props;
@@ -49,6 +51,7 @@ export const FeedPost = (props: FeedPostProps) => {
   const {
     showOptions, setShowOptions, optionsPos, setOptionsPos,
     isEditModalOpen, setIsEditModalOpen, isReportModalOpen, setIsReportModalOpen,
+    isDeleteDialogOpen, setIsDeleteDialogOpen, confirmDelete,
     handleToggleVisibility, handleDelete
   } = usePostOptions(props, (id, data) => {
     updatePostInFeed(id.toString(), data);
@@ -375,13 +378,21 @@ export const FeedPost = (props: FeedPostProps) => {
       )}
 
       {isEditModalOpen && (
-        <CreatePostModal
+        <EditPostModal
           isOpen={true}
           onClose={() => setIsEditModalOpen(false)}
           editPostId={id.toString()}
           onUpdate={(updatedPost) => {
             updatePostInFeed(id.toString(), updatedPost);
           }}
+        />
+      )}
+
+      {isDeleteDialogOpen && (
+        <DeleteConfirmationModal
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={confirmDelete}
         />
       )}
     </div>

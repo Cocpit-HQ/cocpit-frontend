@@ -411,6 +411,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       if (isCompanyPost) {
         const { mappedPost } = await postApi.create(payload, filesToUpload, tagUserIds);
         addPost(mappedPost);
+        window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
         if (notifyEmployees) {
           await postApi.notifyEmployees(postAsCompanyId!, mappedPost.id);
           toast.success("Post created and employees notified!");

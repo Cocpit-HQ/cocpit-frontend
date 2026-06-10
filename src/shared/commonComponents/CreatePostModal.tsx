@@ -2,9 +2,9 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Dialog, DialogContent, BareDialogContent, DialogTitle } from '@/components/ui/dialog';
 import { X, ChevronDown, Check, Sparkles, Smile, Loader2, Plus, Square, RectangleHorizontal, RectangleVertical, ArrowLeft, ArrowRight, Pencil, Trash2 } from 'lucide-react';
 import { Icon } from '@iconify/react';
-import Cropper from 'react-easy-crop';
 import { CategoryType, CreatePostModalProps, PostType } from '@/features/create-post/types';
 import { useCreatePostForm } from '@/features/create-post/hooks/use-create-post-form';
+import { AdaptiveCropper } from '@/features/create-post/components/AdaptiveCropper';
 
 // Post Flows
 import VideoFlow from '@/features/create-post/components/flows/VideoFlow';
@@ -99,7 +99,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(true);
   const [taggedUsers, setTaggedUsers] = useState<UserMention[]>([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [isCompactView, setIsCompactView] = useState(false);
+  const [isCompactView, setIsCompactView] = useState(true);
   const [emojiPickerPos, setEmojiPickerPos] = useState<EmojiPickerPosition | null>(null);
   const activeEmojiTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
@@ -450,16 +450,15 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
       })}
     </div>
   );
-
   return (
     <>
       <Dialog open={isOpen && isCreatePostOpen} onOpenChange={(open) => { if (!open) handleRequestClose(); }}>
         <DialogContent
-          className={`w-full p-0 border-none rounded-[24px] sm:rounded-[24px] bg-card shadow-2xl overflow-hidden font-poppins flex flex-col z-[101] ${(state.postType === 'article' && !state.articleData)
-            ? 'max-w-[1050px] h-[90vh]'
+          className={`w-full p-0 border-none rounded-none sm:rounded-[24px] bg-card shadow-2xl overflow-hidden font-poppins flex flex-col z-[101] ${(state.postType === 'article' && !state.articleData)
+            ? 'max-w-[1050px] h-[100dvh] max-h-[100dvh] sm:h-[90vh] sm:max-h-[90vh]'
             : (isImageEditorMode || isVideoEditorMode)
-              ? 'max-w-[700px]'
-              : 'max-w-[600px] h-[552px] max-h-[90vh]'
+              ? 'max-w-[700px] h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-none'
+              : 'max-w-[600px] h-[100dvh] max-h-[100dvh] sm:h-[552px] sm:max-h-[90vh]'
             } [&>button:last-child]:hidden ${showAchievementDialog || showAchievementPhotoPicker ? 'opacity-0 pointer-events-none' : ''}`}
           onPointerDownOutside={(e) => {
             const target = e.target as HTMLElement;
@@ -551,7 +550,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                           />
                         </div>
                       ) : (
-                        <Cropper
+                        <AdaptiveCropper
                           video={media.uploadedVideos[0].url}
                           crop={media.uploadedVideos[0].crop || { x: 0, y: 0 }}
                           zoom={media.uploadedVideos[0].zoom || 1}
@@ -560,12 +559,8 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                           onCropChange={media.handleVideoCropChange}
                           onZoomChange={media.handleVideoZoomChange}
                           onCropComplete={media.handleVideoCropComplete}
-                          showGrid={true}
-                          objectFit="cover"
-                          style={{
-                            containerStyle: { background: '#000000', borderRadius: '24px', width: '100%', height: '100%' },
-                            cropAreaStyle: { border: '2px solid rgba(99,102,241,0.3)', borderRadius: '8px' },
-                          }}
+                          containerStyle={{ background: '#000000', borderRadius: '24px', width: '100%', height: '100%' }}
+                          cropAreaStyle={{ border: '2px solid rgba(99,102,241,0.3)', borderRadius: '8px' }}
                         />
                       )}
                     </div>
@@ -580,7 +575,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         <img src={activeImage.url} className="w-full h-full object-cover" alt="Post media" />
                       ) : (
                         <div className="relative w-full h-full">
-                          <Cropper
+                          <AdaptiveCropper
                             image={activeImage.url}
                             crop={activeImage.crop || { x: 0, y: 0 }}
                             zoom={activeImage.zoom || 1}
@@ -589,12 +584,9 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                             onCropChange={media.handleCropChange}
                             onZoomChange={media.handleZoomChange}
                             onCropComplete={media.handleCropComplete}
-                            showGrid={true}
-                            objectFit="cover"
-                            style={{
-                              containerStyle: { background: '#ffffff', borderRadius: '24px', width: '100%', height: '100%' },
-                              cropAreaStyle: { border: '2px solid rgba(99,102,241,0.3)', borderRadius: '8px' },
-                            }}
+                            onMediaLoaded={media.handleActiveMediaLoaded}
+                            containerStyle={{ background: '#ffffff', borderRadius: '24px', width: '100%', height: '100%' }}
+                            cropAreaStyle={{ border: '2px solid rgba(99,102,241,0.3)', borderRadius: '8px' }}
                           />
                         </div>
                       )}

@@ -27,7 +27,7 @@ import { Post } from "@/types/entities"
 import Image from "next/image"
 import { useMyProfile } from "@/hooks/use-my-profile"
 import { useUIStore } from "@/store/ui.store"
-import { CreatePostModal } from "@/features/create-post/components/CreatePostModal"
+import { EditPostModal } from "@/shared/commonComponents/EditPostModal"
 import { PostCarousel } from "@/components/shared/PostCarousel"
 import {
   DropdownMenu,
@@ -759,7 +759,7 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
       </div>
 
       {isEditModalOpen && editingPost && (
-        <CreatePostModal
+        <EditPostModal
           isOpen={isEditModalOpen}
           onClose={() => {
             setIsEditModalOpen(false);

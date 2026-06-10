@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import api from '@/lib/axios';
 import { useQueryClient } from '@tanstack/react-query';
 import { Company } from '@/services/organization.service';
-import { CreatePostModal } from '@/features/create-post/components/CreatePostModal';
+import { EditPostModal } from '@/shared/commonComponents/EditPostModal';
 
 interface OrganizationPostsProps {
     companyId: string;
@@ -135,14 +135,11 @@ export function OrganizationPosts({ companyId, company }: OrganizationPostsProps
             <div ref={ref} className="h-2 w-full col-span-full" />
 
             {editingPostId && (
-                <CreatePostModal
+                <EditPostModal
                     isOpen={!!editingPostId}
                     onClose={() => setEditingPostId(null)}
                     editPostId={editingPostId}
-                    companyId={companyId}
-                    companyName={company?.name}
-                    companyLogo={company?.logo_url}
-                    onPostCreated={() => {
+                    onUpdate={() => {
                         queryClient.invalidateQueries({ queryKey: ['company-posts', companyId] });
                         setEditingPostId(null);
                     }}

@@ -1,7 +1,7 @@
 import React from 'react';
-import Cropper from 'react-easy-crop';
-import { Slider } from '@/components/ui/slider'; // Assuming we have shadcn UI components, otherwise standard input
-import { Monitor, Smartphone, Grid, Crop, Square, RectangleHorizontal, RectangleVertical } from 'lucide-react';
+import { Area, MediaSize } from 'react-easy-crop';
+import { Square, RectangleHorizontal, RectangleVertical } from 'lucide-react';
+import { AdaptiveCropper } from './AdaptiveCropper';
 
 interface MediaCropperProps {
   imageSrc: string;
@@ -10,8 +10,10 @@ interface MediaCropperProps {
   aspect: number;
   onCropChange: (crop: { x: number; y: number }) => void;
   onZoomChange: (zoom: number) => void;
-  onCropComplete: (croppedArea: any, croppedAreaPixels: any) => void;
+  onCropComplete: (croppedArea: Area, croppedAreaPixels: Area) => void;
   onAspectChange: (aspect: number) => void;
+  onMediaLoaded?: (mediaSize: MediaSize) => void;
+  aspectMode?: '1:1' | '4:5' | '16:9';
   isMobile: boolean;
   readOnly?: boolean;
 }
@@ -31,6 +33,8 @@ export function MediaCropper({
   onZoomChange,
   onCropComplete,
   onAspectChange,
+  onMediaLoaded,
+  aspectMode = '4:5',
   isMobile,
   readOnly,
 }: MediaCropperProps) {
@@ -41,8 +45,7 @@ export function MediaCropper({
         {readOnly ? (
           <img src={imageSrc} className="w-full h-full object-contain" alt="Post media" />
         ) : (
-          // Cover Mode: Standard Cropper
-          <Cropper
+          <AdaptiveCropper
             image={imageSrc}
             crop={crop}
             zoom={zoom}
@@ -50,12 +53,8 @@ export function MediaCropper({
             onCropChange={onCropChange}
             onZoomChange={onZoomChange}
             onCropComplete={onCropComplete}
-            showGrid={true}
-            objectFit="contain" // This ensures initial load is sane, but zoom allows covering
-            style={{
-              containerStyle: { background: '#000' },
-              cropAreaStyle: { border: '2px solid rgba(255, 255, 255, 0.5)' },
-            }}
+            onMediaLoaded={onMediaLoaded}
+            cropAreaStyle={{ border: '2px solid rgba(255, 255, 255, 0.5)' }}
           />
         )}
       </div>
@@ -85,7 +84,7 @@ export function MediaCropper({
             <div className="flex gap-2 bg-muted/50 p-1 rounded-lg">
               {ASPECT_RATIOS.map((ratio) => {
                 const Icon = ratio.icon;
-                const isActive = aspect === ratio.value;
+                const isActive = Math.abs(aspect - ratio.value) < 0.001;
 
                 return (
                   <button

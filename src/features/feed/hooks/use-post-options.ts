@@ -11,6 +11,8 @@ export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any,
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
   const handleToggleVisibility = async () => {
     const newVisibility = initialVisibility === 'public' ? 'private' : 'public';
 
@@ -30,9 +32,14 @@ export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any,
     setShowOptions(false);
   };
 
-  const handleDelete = async () => {
-    if (onDelete) onDelete(id.toString());
+  const handleDelete = () => {
+    setIsDeleteDialogOpen(true);
     setShowOptions(false);
+  };
+
+  const confirmDelete = async () => {
+    if (onDelete) onDelete(id.toString());
+    setIsDeleteDialogOpen(false);
   };
 
   return {
@@ -44,7 +51,10 @@ export const usePostOptions = (props: FeedPostProps, updatePostInFeed: (id: any,
     setIsEditModalOpen,
     isReportModalOpen,
     setIsReportModalOpen,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
     handleToggleVisibility,
-    handleDelete
+    handleDelete,
+    confirmDelete
   };
 };

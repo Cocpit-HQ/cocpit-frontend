@@ -15,7 +15,7 @@ export function AppShell({
   children,
   hideBottomNav = false,
 }: AppShellProps) {
-  const { setOptionsOpen } = useUIStore();
+  const { setActiveModal } = useUIStore();
 
   return (
     <div className="relative flex min-h-screen bg-background text-foreground">
@@ -32,7 +32,7 @@ export function AppShell({
 
       {/* Mobile bottom navigation */}
       {!hideBottomNav && (
-        <MobileBottomNav onAdd={() => setOptionsOpen(true)} />
+        <MobileBottomNav onAdd={() => setActiveModal('create-post')} />
       )}
     </div>
   );

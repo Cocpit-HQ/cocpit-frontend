@@ -4,7 +4,7 @@ import { Icon } from '@iconify/react';
 import { MediaCropper } from '../MediaCropper';
 import RichTextEditor from '../shared/RichTextEditor';
 import { MediaItem } from '../../types';
-import { Area } from 'react-easy-crop';
+import { Area, MediaSize } from 'react-easy-crop';
 
 interface PhotoFlowProps {
   uploadedImages: MediaItem[];
@@ -21,6 +21,8 @@ interface PhotoFlowProps {
   onZoomChange: (zoom: number) => void;
   onCropComplete: (croppedArea: Area, croppedAreaPixels: Area) => void;
   onAspectChange: (aspect: number) => void;
+  onMediaLoaded?: (mediaSize: MediaSize) => void;
+  aspectMode?: '1:1' | '4:5' | '16:9';
   galleryInputRef: React.RefObject<HTMLInputElement | null>;
   isEditingMedia?: boolean;
   setIsEditingMedia?: (isEditing: boolean) => void;
@@ -41,6 +43,8 @@ const PhotoFlow = ({
   onZoomChange,
   onCropComplete,
   onAspectChange,
+  onMediaLoaded,
+  aspectMode,
   galleryInputRef,
   isEditingMedia,
   setIsEditingMedia
@@ -84,6 +88,8 @@ const PhotoFlow = ({
                 onZoomChange={onZoomChange}
                 onCropComplete={onCropComplete}
                 onAspectChange={onAspectChange}
+                onMediaLoaded={onMediaLoaded}
+                aspectMode={aspectMode}
                 isMobile={true}
                 readOnly={isEdit && !isEditingMedia}
               />
@@ -184,6 +190,8 @@ const PhotoFlow = ({
               onZoomChange={onZoomChange}
               onCropComplete={onCropComplete}
               onAspectChange={onAspectChange}
+              onMediaLoaded={onMediaLoaded}
+              aspectMode={aspectMode}
               isMobile={false}
               readOnly={isEdit && !isEditingMedia}
             />
