@@ -34,6 +34,11 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     }
   });
 
+  // Inject achievement image if available
+  if (backendPost.achievement_image_url && images.length === 0) {
+    images.push(backendPost.achievement_image_url);
+  }
+
   // Calculate timeAgo
   const now = dayjs();
   const created = dayjs(backendPost.created_at);
@@ -158,5 +163,7 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     sampleLikerUsername: backendPost.sample_liker_username || undefined,
     authorHeadline: backendPost.author_headline || undefined,
     post_type: backendPost.post_type,
+    achievementImageId: backendPost.achievement_image_id || undefined,
+    achievementImageUrl: backendPost.achievement_image_url || undefined,
   };
 };

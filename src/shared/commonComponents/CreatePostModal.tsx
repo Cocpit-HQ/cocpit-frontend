@@ -73,24 +73,19 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
   const [showAchievementDialog, setShowAchievementDialog] = useState(false);
   const [showAchievementPhotoPicker, setShowAchievementPhotoPicker] = useState(false);
 
-  const handleAchievementPhotoSelect = async (imagePath: string) => {
-    try {
-      const response = await fetch(imagePath);
-      const blob = await response.blob();
-      const filename = imagePath.split('/').pop() || 'achievement.svg';
-      const file = new File([blob], filename, { type: blob.type || 'image/svg+xml' });
-
-      // Simulate a file upload event to populate the usePostMedia hook
-      media.handlePhotoUpload(file, isEdit);
-
-      // Skip the editor screen for default images
-      setPhotoStep('caption');
-
-      setShowAchievementPhotoPicker(false);
-    } catch (e) {
-      console.error("Failed to select achievement photo", e);
-      setShowAchievementPhotoPicker(false);
-    }
+  const handleAchievementPhotoSelect = (image: { id: number; url: string }) => {
+    state.setAchievementImageId(image.id);
+    media.setUploadedImages([{
+      id: 'achievement-preset',
+      url: image.url,
+      type: 'image',
+      crop: { x: 0, y: 0 },
+      zoom: 1,
+      isExisting: true,
+    }]);
+    state.setPostType('photo');
+    setPhotoStep('caption');
+    setShowAchievementPhotoPicker(false);
   };
 
   // Tag People State
@@ -220,7 +215,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
   }, [state.postType]);
 
   useEffect(() => {
-    if (state.postType === 'text' && state.postCategory === milestoneCategory) return;
+    if ((state.postType === 'text' || state.postType === 'photo') && state.postCategory === milestoneCategory) return;
 
     setSelectedAchievementOptionId(null);
   }, [state.postCategory, state.postType, milestoneCategory]);
@@ -386,6 +381,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
         shared_post_id: props.sharedPostId,
         shared_job_id: props.sharedJobId,
         location: state.selectedLocation ? ("formattedAddress" in state.selectedLocation ? state.selectedLocation.formattedAddress : state.selectedLocation.name) : null,
+        achievement_image_id: state.achievementImageId,
         poll_options: state.postType === 'poll' ? poll.pollOptions.filter(o => o.text.trim()).map(o => sanitizeContent(o.text)) : undefined,
         poll_duration: state.postType === 'poll' ? poll.pollDuration : undefined,
         tags: taggedUsers.map(u => u.id)
@@ -782,54 +778,112 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       {/* Media preview and controls wrapper */}
                       {selectedAchievementOption && state.postType === 'photo' && hasImages ? (
                         <div className="flex flex-col gap-2 w-full items-center">
-                          {/* Photo preview attachment */}
-                          <div className="box-border flex flex-row justify-between items-start p-0 gap-4 w-full h-[200px] border border-[#EEF2FF] rounded-[24px] overflow-hidden">
-                            <div
-                              className="flex flex-col items-center p-0 gap-2 mx-auto h-[200px]"
-                              style={{ aspectRatio: media.aspectRatio }}
-                            >
-                              <img
-                                src={media.previewMediaUrls[0] || media.uploadedImages[0]?.url}
-                                className="w-full h-full object-cover"
-                                alt="Cropped post media"
-                              />
+                          {isCompactView ? (
+                            <div className="flex items-center justify-between w-full p-2 bg-card border border-[#EEF2FF] rounded-[16px]">
+                              {/* Left: Thumbnail + Title */}
+                              <div className="flex items-center gap-3">
+                                <div className="w-[56px] h-[56px] rounded-[12px] overflow-hidden flex-shrink-0 bg-muted border border-border/50">
+                                  <img
+                                    src={media.previewMediaUrls[0] || media.uploadedImages[0]?.url}
+                                    className="w-full h-full object-cover"
+                                    alt="Achievement media"
+                                  />
+                                </div>
+                                <div className="flex flex-col overflow-hidden max-w-[200px]">
+                                  <span className="text-[14px] font-medium text-foreground truncate font-poppins">
+                                    {{
+                                      'new-project': 'Launched a project',
+                                      'new-role': 'New role',
+                                      'academic-milestone': 'Academic milestone',
+                                      'certificate': 'Certificate',
+                                    }[selectedAchievementOption.id] || 'Achievement'}
+                                  </span>
+                                  <span className="text-[12px] text-gray-500 uppercase font-poppins">
+                                    PRESET
+                                  </span>
+                                </div>
+                              </div>
+                              {/* Right: Controls */}
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setIsCompactView(false)}
+                                  className="p-1.5 text-[#000000] rounded-full transition-colors"
+                                  title="Show full preview"
+                                >
+                                  <Icon icon="fluent:eye-off-24-regular" className="w-[24px] h-[24px]" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); setShowAchievementPhotoPicker(true); }}
+                                  className="p-1.5 text-[#000000] rounded-full transition-colors"
+                                  title="Edit achievement photo"
+                                >
+                                  <Icon icon="proicons:pencil" className="w-[24px] h-[24px]" style={{ strokeWidth: '1.5px', stroke: 'currentColor' }} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => { media.clearMedia(); setSelectedAchievementOptionId(null); }}
+                                  className="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors"
+                                  title="Remove achievement"
+                                >
+                                  <Icon icon="fluent:delete-16-regular" className="w-[24px] h-[24px]" />
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                          {/* Centered translated category label */}
-                          <div className="text-center text-gray-500 text-[12px] font-normal font-poppins mt-1">
-                            {{
-                              'new-project': 'Launched a project',
-                              'new-role': 'New role',
-                              'academic-milestone': 'Academic milestone',
-                              'certificate': 'Certificate',
-                            }[selectedAchievementOption.id] || 'Achievement'}
-                          </div>
-                          {/* Right aligned edit and delete controls */}
-                          <div className="flex justify-end gap-3.5 w-full pr-2 mt-1">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                setShowAchievementPhotoPicker(true);
-                              }}
-                              className="p-1 text-gray-500 hover:text-[#6366F1] transition-colors"
-                              title="Edit achievement photo"
-                            >
-                              <Icon icon="proicons:pencil" className="w-[24px] h-[24px] text-foreground" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                media.clearMedia();
-                                setSelectedAchievementOptionId(null);
-                              }}
-                              className="p-1 text-[#FF6B6B] hover:text-red-600 transition-colors"
-                              title="Remove achievement"
-                            >
-                              <Icon icon="fluent:delete-16-regular" className="w-[24px] h-[24px]" />
-                            </button>
-                          </div>
+                          ) : (
+                            <>
+                              {/* Full size preview */}
+                              <div className="box-border flex flex-row justify-between items-start p-0 gap-4 w-full h-[200px] border border-[#EEF2FF] rounded-[24px] overflow-hidden">
+                                <div
+                                  className="flex flex-col items-center p-0 gap-2 mx-auto h-[200px]"
+                                  style={{ aspectRatio: media.aspectRatio }}
+                                >
+                                  <img
+                                    src={media.previewMediaUrls[0] || media.uploadedImages[0]?.url}
+                                    className="w-full h-full object-cover"
+                                    alt="Achievement media"
+                                  />
+                                </div>
+                              </div>
+                              {/* Centered translated category label */}
+                              <div className="text-center text-gray-500 text-[12px] font-normal font-poppins mt-1">
+                                {{
+                                  'new-project': 'Launched a project',
+                                  'new-role': 'New role',
+                                  'academic-milestone': 'Academic milestone',
+                                  'certificate': 'Certificate',
+                                }[selectedAchievementOption.id] || 'Achievement'}
+                              </div>
+                              {/* Right aligned edit and delete controls */}
+                              <div className="flex justify-end gap-3 w-full pr-2 mt-1">
+                                <button
+                                  type="button"
+                                  onClick={() => setIsCompactView(true)}
+                                  className="p-1 text-gray-500 hover:text-[#6366F1] transition-colors"
+                                  title="Show compact preview"
+                                >
+                                  <Icon icon="fluent:eye-24-regular" className="w-[24px] h-[24px]" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); setShowAchievementPhotoPicker(true); }}
+                                  className="p-1 text-gray-500 hover:text-[#6366F1] transition-colors"
+                                  title="Edit achievement photo"
+                                >
+                                  <Icon icon="proicons:pencil" className="w-[24px] h-[24px] text-foreground" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => { media.clearMedia(); setSelectedAchievementOptionId(null); }}
+                                  className="p-1 text-[#FF6B6B] hover:text-red-600 transition-colors"
+                                  title="Remove achievement"
+                                >
+                                  <Icon icon="fluent:delete-16-regular" className="w-[24px] h-[24px]" />
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </div>
                       ) : ((state.postType === 'photo' && hasImages) || (state.postType === 'video' && hasVideos)) && (
                         <div className="flex flex-col gap-2 w-full items-center">

@@ -54,6 +54,8 @@ export interface ProfilePost {
   sample_liker_username?: string | null;
   author_headline?: string;
   post_type?: string;
+  achievement_image_id?: number | null;
+  achievement_image_url?: string | null;
   shared_post?: {
     is_accessible: boolean;
     reason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';

@@ -44,6 +44,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
   const [visibility, setVisibility] = useState<PostVisibility>('public');
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | StructuredLocation | null>(null);
   const [articleData, setArticleData] = useState<any>(null);
+  const [achievementImageId, setAchievementImageId] = useState<number | undefined>(undefined);
 
   // --- Sub-hooks ---
   const media = usePostMedia([], [], (type) => setPostType(prev => prev === 'article' ? 'article' : type));
@@ -309,7 +310,8 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         ...(isCompanyPost && isBroadcast ? { is_broadcast: true } : {}),
         shared_post_id: sharedPostId,
         shared_job_id: sharedJobId,
-        location: selectedLocation ? ("formattedAddress" in selectedLocation ? selectedLocation.formattedAddress : selectedLocation.name) : null
+        location: selectedLocation ? ("formattedAddress" in selectedLocation ? selectedLocation.formattedAddress : selectedLocation.name) : null,
+        achievement_image_id: achievementImageId
       };
 
       if (articleData) {
@@ -446,6 +448,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
     setIsBroadcast(false);
     setIsEditingMedia(false);
     setArticleData(null);
+    setAchievementImageId(undefined);
     if (clearDraft) {
       useUIStore.getState().setArticleDraft(null);
     }
@@ -479,7 +482,8 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       originalPost, sharedPost,
       showContextWarning, setShowContextWarning,
       isCompanyPost, currentPoster, currentUser,
-      userCompanies
+      userCompanies,
+      achievementImageId, setAchievementImageId
     },
     media,
     poll,

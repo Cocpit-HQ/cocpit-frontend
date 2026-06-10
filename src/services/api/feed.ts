@@ -129,6 +129,10 @@ export interface BackendPost {
   is_broadcast?: boolean;
   sample_liker_username?: string | null;
   author_headline?: string;
+  achievement_image_id?: number | null;
+  achievement_image_key?: string | null;
+  achievement_image_url?: string | null;
+  achievement_image_title?: string | null;
   _rankingMeta?: {
     score: number;
     slot_type: string;
@@ -173,6 +177,7 @@ export interface CreatePostRequest {
   shared_job_id?: string;
   companyId?: string;
   is_broadcast?: boolean;
+  achievement_image_id?: number;
 }
 
 export interface CreatePostResponse {
@@ -268,4 +273,9 @@ export const getPostById = async (id: string, companyId?: string): Promise<Backe
 export const hidePost = async (data: { item_id: string; session_id: string; position: number }): Promise<{ ok: boolean; message: string }> => {
   const response = await api.post<{ ok: boolean; message: string }>("/feed/hide", data);
   return response.data;
+};
+
+export const getAchievementImages = async (): Promise<{ id: number; key: string; title: string; url: string; }[]> => {
+  const response = await api.get<{ success: boolean; data: { id: number; key: string; title: string; url: string; }[] }>("/achievement-images");
+  return response.data.data;
 };

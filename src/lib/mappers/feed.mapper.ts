@@ -44,6 +44,11 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     }
   });
 
+  // Inject achievement image if available
+  if (backendPost.achievement_image_url && images.length === 0) {
+    images.push(backendPost.achievement_image_url);
+  }
+
   // Calculate timeAgo
   const timeAgo = dayjs(backendPost.created_at).fromNow(true); // "true" removes "ago" suffix if desired, but UI usually has "ago" appended or not.
   // FeedPost says "{timeAgo} ago", so we need just "2h" or "5m".
@@ -259,6 +264,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     slotType: backendPost._rankingMeta?.slot_type,
     position: backendPost._rankingMeta?.position,
     post_type: backendPost.post_type,
+    achievementImageId: backendPost.achievement_image_id || undefined,
+    achievementImageUrl: backendPost.achievement_image_url || undefined,
   };
 };
 
