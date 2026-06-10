@@ -38,6 +38,7 @@ export interface PublicPost {
   is_commented: boolean;
   is_saved: boolean;
   comment_count: number;
+  share_count?: number;
   poll: PublicPostPoll | null;
   location?: string | null;
   tags?: any[];
@@ -58,6 +59,7 @@ export interface PublicPost {
     media?: { url: string; media_type: 'image' | 'video' }[];
     like_count?: number;
     comment_count?: number;
+    share_count?: number;
     is_liked?: boolean;
     is_commented?: boolean;
     is_saved?: boolean;

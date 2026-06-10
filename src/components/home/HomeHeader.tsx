@@ -208,9 +208,9 @@ export const HomeHeader = () => {
             className={`sticky top-0 z-50 bg-background/85 px-3 py-2 backdrop-blur-md transition-transform duration-300 ease-in-out supports-[backdrop-filter]:bg-background/70 md:px-0 md:py-0 ${!isHeaderVisible && !isSearchFocused ? '-translate-y-full' : 'translate-y-0'
                 } md:translate-y-0`}
         >
-            <div className="mx-auto md:mx-0 md:ml-20 xl:ml-[200px] flex min-h-12 min-w-0 max-w-[1128px] items-center px-1 md:min-h-[72px] md:px-4 xl:px-0">
+            <div className="mx-auto flex min-h-12 min-w-0 max-w-[1128px] items-center px-0 md:min-h-[72px] md:px-4 xl:px-0">
                 {/* --- Desktop Header (Visible from md screens up) --- */}
-                <div className="hidden flex-1 min-w-0 md:flex items-center justify-between md:mx-0 max-w-[998px] h-full gap-4">
+                <div className="hidden flex-1 min-w-0 md:flex items-center justify-between md:mx-auto max-w-[998px] h-full gap-4">
                     {/* Header Left Section (Search Bar) */}
                     <div className="relative flex flex-row justify-between items-center flex-1 min-w-0 max-w-[360px] h-10 px-4 py-2 gap-[10px] rounded-[24px] border border-[#6B7280] bg-transparent transition-all duration-300">
                         <input

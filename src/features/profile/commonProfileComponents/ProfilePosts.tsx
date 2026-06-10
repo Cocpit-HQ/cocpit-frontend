@@ -427,7 +427,7 @@ const ProfilePostCard = ({
         </Link>
       )}
 
-      {isArticlePost && (
+      {isArticlePost && !localPost.shared_post && (
         <div className="w-full px-4 mb-3">
           <Link href={`/post/${localPost.id}`} className="block">
             <h3 className="text-[14px] leading-[20px] text-foreground font-semibold font-[family-name:var(--font-poppins)] line-clamp-2">
