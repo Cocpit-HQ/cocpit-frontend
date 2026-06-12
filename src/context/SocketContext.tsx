@@ -180,8 +180,21 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     // Handle incoming events
+    const refreshMessagingCaches = (conversationId?: string | null) => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+
+      if (conversationId) {
+        queryClient.invalidateQueries({
+          queryKey: ['messages', conversationId],
+          refetchType: 'none',
+        });
+      }
+    };
+
     const handleNotification = (payload: NotificationPayload) => {
       if (payload.type === 'message') {
+        refreshMessagingCaches(payload.conversationId);
+
         // Suppress notification if user is currently viewing this conversation
         if (payload.conversationId && payload.conversationId === activeConversationRef.current) {
           return;
@@ -298,6 +311,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
+    const handleNewMessage = (payload: { conversation_id?: string; conversationId?: string }) => {
+      refreshMessagingCaches(payload.conversation_id || payload.conversationId);
+    };
+
+    const handleConversationUpdated = (payload: { conversation_id?: string; conversationId?: string }) => {
+      refreshMessagingCaches(payload.conversation_id || payload.conversationId);
+    };
+
     const handleUserStatus = (payload: UserStatusPayload) => {
       setOnlineUsers(prev => {
         const next = new Set(prev);
@@ -330,6 +351,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     newSocket.on('notification', handleNotification);
+    newSocket.on('new_message', handleNewMessage);
+    newSocket.on('conversation_updated', handleConversationUpdated);
+    newSocket.on('conversation-updated', handleConversationUpdated);
     newSocket.on('userStatusChanged', handleUserStatus);
     newSocket.on('isTyping', handleTyping);
     newSocket.on('stoppedTyping', handleStopTyping);
@@ -350,13 +374,16 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       // Note: In strict mode, verify if this disconnects prematurely.
       console.log("Socket cleanup triggered for token:", token.substring(0, 10) + "...");
       newSocket.off('notification', handleNotification);
+      newSocket.off('new_message', handleNewMessage);
+      newSocket.off('conversation_updated', handleConversationUpdated);
+      newSocket.off('conversation-updated', handleConversationUpdated);
       newSocket.off('userStatusChanged', handleUserStatus);
       newSocket.off('isTyping', handleTyping);
       newSocket.off('stoppedTyping', handleStopTyping);
       newSocket.disconnect();
       setTypingConversations({});
     };
-  }, [session?.user?.accessToken, session?.user?.error, toast, router]);
+  }, [session?.user?.accessToken, session?.user?.error, toast, router, queryClient]);
 
   const isUserOnlineMemo = React.useCallback((userId: string) => onlineUsers.has(userId), [onlineUsers]);
 
