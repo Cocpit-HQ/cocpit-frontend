@@ -1,0 +1,334 @@
+"use client";
+
+import React, { useState } from "react";
+import { Icon } from "@iconify/react";
+import ProjectFilterTabs from "./ProjectFilterTabs";
+import ProjectChatList from "./ProjectChatList";
+import type { ProjectChat, ProjectFile } from "./project.types";
+import ProjectFilesTab from "./ProjectFilesTab";
+import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox";
+import ProjectInstructions from "./components/ProjectInstructions";
+
+interface ProjectSidebarProps {
+  chatCount?: number;
+  onSearch?: (query: string) => void;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+  // Project Chat List Props
+  chats: ProjectChat[];
+  activeChatId: string | null;
+  onSelectChat: (id: string) => void;
+  onRenameChat: (id: string) => void;
+  onTogglePinChat: (id: string) => void;
+  onRemoveChat: (id: string) => void;
+  onShareChat: (id: string) => void;
+  onDeleteChat: (id: string) => void;
+  instructions?: string;
+  onSaveInstructions?: (instructions: string) => void;
+}
+
+export default function ProjectSidebar({
+  chatCount = 0,
+  onSearch,
+  activeTab: externalActiveTab,
+  onTabChange,
+  chats,
+  activeChatId,
+  onSelectChat,
+  onRenameChat,
+  onTogglePinChat,
+  onRemoveChat,
+  onShareChat,
+  onDeleteChat,
+  instructions = "",
+  onSaveInstructions,
+}: ProjectSidebarProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [internalActiveTab, setInternalActiveTab] = useState("Chats");
+  const [files, setFiles] = useState<ProjectFile[]>([]);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [fileToDeleteId, setFileToDeleteId] = useState<string | null>(null);
+
+  const handleUploadFiles = (fileList: FileList) => {
+    const newFiles: ProjectFile[] = Array.from(fileList).map((file) => {
+      const isImage = file.type.startsWith("image/");
+      return {
+        id: Math.random().toString(36).substring(2, 9),
+        name: file.name,
+        type: isImage ? "image" : "document",
+        uploadedAt: new Date(),
+        size: file.size,
+        url: isImage ? URL.createObjectURL(file) : undefined,
+      };
+    });
+    setFiles((prev) => [...prev, ...newFiles]);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setFileToDeleteId(id);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDeleteFile = () => {
+    if (fileToDeleteId) {
+      setFiles((prev) => {
+        const fileToDelete = prev.find((f) => f.id === fileToDeleteId);
+        if (fileToDelete?.url) {
+          URL.revokeObjectURL(fileToDelete.url);
+        }
+        return prev.filter((f) => f.id !== fileToDeleteId);
+      });
+      setFileToDeleteId(null);
+      setIsDeleteConfirmOpen(false);
+    }
+  };
+
+  const activeTab = externalActiveTab !== undefined ? externalActiveTab : internalActiveTab;
+  const handleTabChange = (tab: string) => {
+    if (onTabChange) {
+      onTabChange(tab);
+    } else {
+      setInternalActiveTab(tab);
+    }
+  };
+
+  const handleSend = () => {
+    if (searchQuery.trim() && onSearch) {
+      onSearch(searchQuery.trim());
+      setSearchQuery("");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSend();
+    }
+  };
+
+  const computedChatCount = chats.length;
+
+  return (
+    <div
+      style={{
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "stretch",
+        padding: "16px",
+        gap: "16px",
+        width: "380px",
+        minWidth: "380px",
+        background: "#FFFFFF",
+        border: "1px solid #EEF2FF",
+        borderRadius: "24px",
+        height: "100%",
+        overflow: "hidden", // Prevent card content from bleeding
+      }}
+      className="project-sidebar-card"
+    >
+      {/* Top Search / Chat Action Bar */}
+      <div
+        style={{
+          boxSizing: "border-box",
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          padding: "8px 16px",
+          gap: "12px",
+          width: "100%",
+          height: "56px",
+          background: "#FFFFFF",
+          border: "1px solid #E0E7FF",
+          borderRadius: "24px",
+          boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+          flexShrink: 0,
+        }}
+      >
+        {/* Search Input Area */}
+        <div style={{ display: "flex", flex: 1, alignItems: "center", gap: "8px", minWidth: 0 }}>
+          <Icon 
+            icon="ri:link" 
+            width="24" 
+            height="24" 
+            style={{ color: "#6B7280", flexShrink: 0 }} 
+          />
+          <input
+            type="text"
+            placeholder="Ask anything"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            style={{
+              border: "none",
+              outline: "none",
+              background: "transparent",
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 400,
+              fontSize: "14px",
+              lineHeight: "20px",
+              color: "#000000",
+              width: "100%",
+            }}
+          />
+        </div>
+
+        {/* Send Button */}
+        <button
+          type="button"
+          onClick={handleSend}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "56px",
+            height: "40px",
+            background: "#FFFFFF",
+            borderRadius: "24px",
+            border: "none",
+            cursor: searchQuery.trim() ? "pointer" : "default",
+            padding: 0,
+            outline: "none",
+            boxSizing: "border-box",
+            flexShrink: 0,
+          }}
+          className="hover:bg-[#F9FAFB] transition-all"
+          title="Send"
+        >
+          <Icon
+            icon="lucide:send"
+            width="24"
+            height="24"
+            style={{
+              color: searchQuery.trim() ? "#6366F1" : "#6B7280",
+            }}
+          />
+        </button>
+      </div>
+
+      {/* Filter Chip Section */}
+      <div style={{ flexShrink: 0 }}>
+        <ProjectFilterTabs
+          activeTab={activeTab}
+          onChangeTab={handleTabChange}
+        />
+      </div>
+
+      {/* Chat Count */}
+      {activeTab === "Chats" && (
+        <div
+          style={{
+            fontFamily: "'Poppins', sans-serif",
+            fontWeight: 400,
+            fontSize: "14px",
+            lineHeight: "20px",
+            color: "#6B7280",
+            marginTop: "4px",
+            flexShrink: 0,
+          }}
+        >
+          {computedChatCount} {computedChatCount === 1 ? "chat" : "chats"}
+        </div>
+      )}
+
+      {/* Files Section Title */}
+      {activeTab === "Files" && (
+        <div
+          style={{
+            fontFamily: "'Poppins', sans-serif",
+            fontWeight: 400,
+            fontSize: "14px",
+            lineHeight: "20px",
+            color: "#000000",
+            marginTop: "4px",
+            flexShrink: 0,
+          }}
+        >
+          Add project source
+        </div>
+      )}
+
+      {/* Empty Chat Message or Chat List */}
+      {activeTab === "Chats" && (
+        computedChatCount === 0 ? (
+          <div
+            style={{
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 400,
+              fontSize: "12px",
+              lineHeight: "16px",
+              color: "#6B7280",
+              width: "100%",
+              boxSizing: "border-box",
+              flexShrink: 0,
+            }}
+          >
+            Start a chat to keep conversations organized and re-use project knowledge.
+          </div>
+        ) : (
+          <div
+            style={{
+              marginTop: "16px",
+              flex: 1,
+              minHeight: 0,
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <ProjectChatList
+              chats={chats}
+              activeChatId={activeChatId}
+              onSelectChat={onSelectChat}
+              onRenameChat={onRenameChat}
+              onTogglePinChat={onTogglePinChat}
+              onRemoveChat={onRemoveChat}
+              onShareChat={onShareChat}
+              onDeleteChat={onDeleteChat}
+            />
+          </div>
+        )
+      )}
+
+      {/* Files Tab Content */}
+      {activeTab === "Files" && (
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <ProjectFilesTab
+            files={files}
+            onUploadFiles={handleUploadFiles}
+            onDeleteFile={handleDeleteClick}
+          />
+        </div>
+      )}
+
+      {/* Instructions Tab Content */}
+      {activeTab === "Instructions" && (
+        <ProjectInstructions
+          instructions={instructions}
+          onSave={onSaveInstructions || (() => {})}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <CocpitConfirmBox
+        isOpen={isDeleteConfirmOpen}
+        title="Delete file"
+        message="Are you sure you want to delete this file?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDeleteFile}
+        onCancel={() => {
+          setIsDeleteConfirmOpen(false);
+          setFileToDeleteId(null);
+        }}
+      />
+    </div>
+  );
+}
