@@ -6,13 +6,14 @@ import type { Page } from "@/types/common";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ChatList from "./components/ui/ChatList";
 import ChatWindow from "./components/ui/ChatWindow";
-import { ChatThread } from "@/types/messaging";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChatThread, Message } from "@/types/messaging";
+import { InfiniteData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getConversations, getActiveSession } from "@/services/api/messaging";
 import { getUserById } from "@/services/api/user";
 import {
   mapBackendChatToChatThread,
   formatTimeAgo,
+  mapBackendMessageToMessage,
 } from "@/lib/mappers/messaging.mapper";
 import { useSocket } from "@/context/SocketContext";
 import { useAuth } from "@/hooks/use-auth";
@@ -321,6 +322,44 @@ export default function MessagingPage() {
       if (message.message_id) {
         if (processedMessagesRef.current.has(message.message_id)) return;
         processedMessagesRef.current.add(message.message_id);
+      }
+
+      const conversationId = message.conversation_id || message.conversationId;
+      if (conversationId) {
+        const messagesQueryKey = ["messages", conversationId];
+        const uiMessage = mapBackendMessageToMessage(
+          message,
+          user?.id,
+          activeProfile?.type === "COMPANY" ? activeProfile.id : undefined,
+        );
+
+        queryClient.setQueryData(
+          messagesQueryKey,
+          (oldData: InfiniteData<Message[]> | undefined) => {
+            if (!oldData) return oldData;
+
+            const existingPageIndex = oldData.pages.findIndex((page) =>
+              page.some((existingMessage) => existingMessage.id === uiMessage.id),
+            );
+
+            if (existingPageIndex !== -1) {
+              const pages = [...oldData.pages];
+              pages[existingPageIndex] = pages[existingPageIndex].map((existingMessage) =>
+                existingMessage.id === uiMessage.id ? uiMessage : existingMessage,
+              );
+              return { ...oldData, pages };
+            }
+
+            const pages = [...oldData.pages];
+            pages[0] = [...(pages[0] || []), uiMessage];
+            return { ...oldData, pages };
+          },
+        );
+
+        queryClient.invalidateQueries({
+          queryKey: messagesQueryKey,
+          refetchType: "none",
+        });
       }
 
       const queryKey = [

@@ -424,7 +424,8 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
 
       // Mark as read if we are focused
       if (!isMe) {
-        markAsRead(chat.id).catch(console.error);
+        const companyId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+        markAsRead(chat.id, companyId).catch(console.error);
       }
     };
 
