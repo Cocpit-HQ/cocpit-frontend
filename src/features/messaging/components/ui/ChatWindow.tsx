@@ -363,8 +363,8 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
     }
 
     const handleNewMessage = (msg: SocketMessage) => {
-      // Only handle messages for this conversation
-      if (msg.conversation_id !== chat.id) return;
+      // Only handle messages for this conversation — use String() to avoid type mismatch
+      if (String(msg.conversation_id) !== String(chat.id)) return;
 
       const isMe = msg.sender_id === session?.user?.id;
 
@@ -383,13 +383,16 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
       const uiMessage = mapBackendMessageToMessage(msg as any, session?.user?.id, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined);
 
       queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
-        if (!old) return undefined; // Should we create structure? Maybe not if not loaded yet.
+        // If cache is empty (not loaded yet), create a minimal structure so the message isn't lost
+        if (!old) {
+          return { pages: [[uiMessage]], pageParams: [null] };
+        }
 
         // Check if real ID already exists in ANY page
         const existsPage = old.pages.findIndex(page => page.some(m => m.id === uiMessage.id));
 
         if (existsPage !== -1) {
-          // Update existing message
+          // Update existing message in place
           const newPages = [...old.pages];
           newPages[existsPage] = newPages[existsPage].map(m => m.id === uiMessage.id ? uiMessage : m);
           return { ...old, pages: newPages };
@@ -397,9 +400,10 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
 
         const newPages = [...old.pages];
 
-        // If it's my message, check for optimistic match in FIRST page
+        // If it's my message, check for any pending temp placeholder in the FIRST page
         if (isMe) {
           const firstPage = newPages[0];
+          // Match by temp id prefix AND text content to avoid replacing the wrong placeholder
           const optimisticMatch = firstPage.find(m =>
             m.id.startsWith('temp-') &&
             m.text === uiMessage.text
@@ -410,7 +414,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
           }
         }
 
-        // Just append to first page (most recent)
+        // Append to the first (most-recent) page
         newPages[0] = [...newPages[0], uiMessage];
         return { ...old, pages: newPages };
       });
@@ -665,17 +669,35 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
       setTypingMap(new Map());
       setTypingUser(null);
 
+      const realMessage = mapBackendMessageToMessage(data.data || data, session?.user?.id, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined);
+
       queryClient.setQueryData(['messages', chat.id], (old: InfiniteData<Message[]> | undefined) => {
-        if (!old) return old;
+        // If cache is empty for any reason, seed it with the real message
+        if (!old) {
+          return { pages: [[realMessage]], pageParams: [null] };
+        }
 
-        const realMessage = mapBackendMessageToMessage(data.data || data, session?.user?.id, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined);
-
-        // Find and replace in the first page
         const newPages = [...old.pages];
-        newPages[0] = newPages[0].map(m => m.id === context.tempId ? realMessage : m);
+
+        // Check if the real message is already in cache (e.g. socket arrived first)
+        const alreadyExists = newPages[0].some(m => m.id === realMessage.id);
+        if (alreadyExists) {
+          // Just ensure the temp placeholder is cleaned up
+          newPages[0] = newPages[0].filter(m => m.id !== context?.tempId);
+          return { ...old, pages: newPages };
+        }
+
+        // Replace the temp placeholder with the real confirmed message
+        const tempReplaced = newPages[0].map(m => m.id === context?.tempId ? realMessage : m);
+
+        // If temp was not found (e.g. cache was refreshed between onMutate and onSuccess),
+        // append the real message so it's never silently lost
+        const tempExists = newPages[0].some(m => m.id === context?.tempId);
+        newPages[0] = tempExists ? tempReplaced : [...newPages[0], realMessage];
 
         return { ...old, pages: newPages };
       });
+
       queryClient.invalidateQueries({ queryKey: ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'] });
     },
   });
