@@ -1,3 +1,4 @@
+// Invalidate cache for Tailwind CSS v4 custom variants
 import type { Config } from "tailwindcss";
 
 const config: Config = {

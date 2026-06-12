@@ -223,7 +223,7 @@ export const HomeHeader = () => {
                                 setTimeout(() => setIsSearchFocused(false), 200);
                             }}
                             onKeyDown={handleKeyDown}
-                            className="flex-grow min-w-0 bg-transparent text-[#6B7280] dark:text-white placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none"
+                            className="flex-grow min-w-0 bg-transparent text-foreground placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none"
                         />
                         <Search
                             className="w-6 h-6 text-[#6B7280] cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
@@ -606,13 +606,13 @@ export const HomeHeader = () => {
                         {/* Icons group — gap-2 (8px) between each, each icon 56×40 */}
                         <div className="flex items-center gap-2">
                             <NotificationPopover
-                                className={`relative flex items-center justify-center transition-colors w-14 h-10 rounded-[24px] ${isNotificationsActive || isPopoverOpen ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-[#6366F1] dark:text-[#818CF8]' : 'text-[#000000] dark:text-white hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50'}`}
+                                className={`relative flex items-center justify-center transition-colors w-14 h-10 rounded-[24px] ${isNotificationsActive || isPopoverOpen ? 'bg-primary-tint text-primary-tint-foreground' : 'text-foreground hover:bg-profile-hover'}`}
                                 icon={<Bell width={24} height={24} strokeWidth={1.5} />}
                                 onOpenChange={setIsPopoverOpen}
                             />
                             <Link
                                 href="/messaging"
-                                className={`flex items-center justify-center w-14 h-10 rounded-[24px] transition-colors ${pathname === '/messaging' || pathname.startsWith('/messaging') ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-[#6366F1] dark:text-[#818CF8]' : 'text-[#000000] dark:text-white hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50'}`}
+                                className={`flex items-center justify-center w-14 h-10 rounded-[24px] transition-colors ${pathname === '/messaging' || pathname.startsWith('/messaging') ? 'bg-primary-tint text-primary-tint-foreground' : 'text-foreground hover:bg-profile-hover'}`}
                             >
                                 <MessageCircle width={24} height={24} strokeWidth={1.5} />
                             </Link>

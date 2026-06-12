@@ -1,6 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, [data-theme=navy], [data-theme=navy] *));
+
+
+
 @theme {
   --font-sans: 'Inter', var(--font-geist-sans), sans-serif;
   --font-heading: 'Sora', var(--font-geist-sans), sans-serif;
@@ -171,7 +175,10 @@
     --profile-active-bg: #2A3150;
     --profile-active-border: #2d3548;
     --profile-text: #ffffff;
+    --primary-tint: #242b3d;
+    --primary-tint-foreground: #818CF8;
   }
+
 
   [data-theme="light"] {
     --background: #ffffff;
