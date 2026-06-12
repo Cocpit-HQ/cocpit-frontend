@@ -158,6 +158,11 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         });
       }
 
+      // Inject achievement image if available
+      if (sp.achievement_image_url && spImages.length === 0) {
+        spImages.push(sp.achievement_image_url);
+      }
+
       // Process shared post time
       const spCreated = dayjs(sp.created_at);
       const spDiffMinutes = now.diff(spCreated, "minute");

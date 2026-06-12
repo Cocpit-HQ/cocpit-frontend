@@ -288,23 +288,23 @@ const MessageText = ({
 
   const renderTextWithMentions = (text: string) => {
     if (!text) return null
-    
+
     // Support structured @[Name](username) and legacy @username
     const mentionRegex = /(@\[[^\]]+\]\([^)]+\)|@[a-zA-Z0-9_.\-]+)/g
     const parts = text.split(mentionRegex)
-    
+
     if (parts.length <= 1) return text
-    
+
     return parts.map((part, i) => {
       // 1. Handle Structured Mentions (@[Display Name](handle))
       const structuredMatch = part.match(/^@\[([^\]]+)\]\(([^)]+)\)$/);
       if (structuredMatch) {
         const displayName = structuredMatch[1];
         const username = structuredMatch[2];
-        
+
         return (
           <Mention key={i} username={username} isMe={isMe}>
-            <span 
+            <span
               className={cn(
                 "hover:underline cursor-pointer font-bold",
                 isMe ? "text-white" : "text-[#818cf8]"
@@ -322,7 +322,7 @@ const MessageText = ({
         const username = simpleMatch[1];
         return (
           <Mention key={i} username={username} isMe={isMe}>
-            <span 
+            <span
               className={cn(
                 "hover:underline cursor-pointer font-bold",
                 isMe ? "text-white" : "text-[#818cf8]"
@@ -333,7 +333,7 @@ const MessageText = ({
           </Mention>
         )
       }
-      
+
       return <span key={i}>{part}</span>
     })
   }
@@ -342,9 +342,9 @@ const MessageText = ({
     <div className={cn(message.media && message.media.length > 0 ? "px-3 py-2 md:px-4 md:py-2.5" : "")}>
       <span className="leading-snug block whitespace-pre-wrap break-words">
         {message.is_deleted_for_everyone
-          ? "This message deleted for everyone"
+          ? "This message was deleted for everyone."
           : message.is_deleted_for_me
-            ? "This message deleted for you"
+            ? "This message was deleted for you."
             : renderTextWithMentions(message.text || message.text_content || "")}
         {message.is_edited && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
           <span className="text-[10px] opacity-60 ml-1 italic">(edited)</span>
@@ -467,9 +467,9 @@ function MessageBubble(props: MessageBubbleProps) {
   return (
     <>
       {showMobileActions && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/50 md:hidden transition-opacity" 
-          onClick={() => setShowMobileActions(false)} 
+        <div
+          className="fixed inset-0 z-50 bg-black/50 md:hidden transition-opacity"
+          onClick={() => setShowMobileActions(false)}
         />
       )}
       <div
@@ -484,116 +484,116 @@ function MessageBubble(props: MessageBubbleProps) {
         onTouchMove={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
       >
-      <div className={cn("max-w-[75%] md:max-w-[60%] flex flex-col", isMe ? "items-end" : "items-start")}>
-        {showSenderName && !isMe && (
-          <span className="text-xs text-muted-foreground mb-1 ml-1 font-medium">
-            {message.senderName || "Unknown"}
-          </span>
-        )}
-
-        <div
-          className={cn(
-            "relative break-words text-sm md:text-base w-full transition-colors",
-            paddingClasses,
-            getBubbleClasses(),
-            (isSelected || showMobileActions) && "ring-2 ring-primary ring-offset-1 ring-offset-background"
+        <div className={cn("max-w-[75%] md:max-w-[60%] flex flex-col", isMe ? "items-end" : "items-start")}>
+          {showSenderName && !isMe && (
+            <span className="text-xs text-muted-foreground mb-1 ml-1 font-medium">
+              {message.senderName || "Unknown"}
+            </span>
           )}
-        >
-          {isEditing ? (
-            <MessageEditor
-              message={message}
-              isEditing={isEditing}
-              onSaveEdit={onSaveEdit}
-              onCancelEdit={onCancelEdit}
-            />
-          ) : (
-            <>
-              <SharedPostCard message={message} onMediaLoad={onMediaLoad} />
-              {message.sharedProfileId && message.sharedProfileType && (
-                <div className="mt-1 mb-2">
-                  <ProfilePreviewCard
-                    profile={message.sharedProfile || { name: "Profile", avatar: null }}
-                    profileId={message.sharedProfileId}
-                    profileType={message.sharedProfileType}
-                  />
-                </div>
-              )}
-              {/* Universal Entity Preview — for new share messages */}
-              {message.entityType && message.entityId && !message.sharedPost && !message.sharedProfileId && (
-                <div className="mt-1 mb-2">
-                  <EntityPreviewCard
-                    entityType={message.entityType}
-                    entityId={message.entityId}
-                  />
-                </div>
-              )}
-              <MessageMedia
+
+          <div
+            className={cn(
+              "relative break-words text-sm md:text-base w-full transition-colors",
+              paddingClasses,
+              getBubbleClasses(),
+              (isSelected || showMobileActions) && "ring-2 ring-primary ring-offset-1 ring-offset-background"
+            )}
+          >
+            {isEditing ? (
+              <MessageEditor
                 message={message}
-                isMediaOnly={isMediaOnly}
-                onMediaClick={onMediaClick}
-                onMediaLoad={onMediaLoad}
+                isEditing={isEditing}
+                onSaveEdit={onSaveEdit}
+                onCancelEdit={onCancelEdit}
               />
-              <MessageText
-                message={message}
-                isMediaOnly={isMediaOnly}
-                isMe={isMe}
-              />
-            </>
+            ) : (
+              <>
+                <SharedPostCard message={message} onMediaLoad={onMediaLoad} />
+                {message.sharedProfileId && message.sharedProfileType && (
+                  <div className="mt-1 mb-2">
+                    <ProfilePreviewCard
+                      profile={message.sharedProfile || { name: "Profile", avatar: null }}
+                      profileId={message.sharedProfileId}
+                      profileType={message.sharedProfileType}
+                    />
+                  </div>
+                )}
+                {/* Universal Entity Preview — for new share messages */}
+                {message.entityType && message.entityId && !message.sharedPost && !message.sharedProfileId && (
+                  <div className="mt-1 mb-2">
+                    <EntityPreviewCard
+                      entityType={message.entityType}
+                      entityId={message.entityId}
+                    />
+                  </div>
+                )}
+                <MessageMedia
+                  message={message}
+                  isMediaOnly={isMediaOnly}
+                  onMediaClick={onMediaClick}
+                  onMediaLoad={onMediaLoad}
+                />
+                <MessageText
+                  message={message}
+                  isMediaOnly={isMediaOnly}
+                  isMe={isMe}
+                />
+              </>
+            )}
+          </div>
+
+          {/* Desktop Action Menu (Three dots) */}
+          {!isEditing && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
+            <div className={cn(
+              "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity bg-background/50 rounded-full hidden md:block",
+              isMe ? "-left-8" : "-right-8"
+            )}>
+              <MessageMenu message={message} onAction={onAction} />
+            </div>
           )}
         </div>
 
-        {/* Desktop Action Menu (Three dots) */}
-        {!isEditing && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
-          <div className={cn(
-            "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity bg-background/50 rounded-full hidden md:block",
-            isMe ? "-left-8" : "-right-8"
-          )}>
-            <MessageMenu message={message} onAction={onAction} />
+        {/* Mobile Action Bottom Sheet */}
+        {showMobileActions && (
+          <div className="fixed bottom-0 left-0 right-0 z-[60] bg-background border-t border-border rounded-t-2xl shadow-xl overflow-hidden md:hidden animate-in slide-in-from-bottom flex flex-col text-sm font-medium">
+            <div className="flex justify-center p-3 pb-1">
+              <div className="w-10 h-1.5 rounded-full bg-muted-foreground/30" />
+            </div>
+            <button
+              className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left"
+              onClick={() => handleMobileAction('copy')}
+            >
+              <Copy className="w-5 h-5 text-muted-foreground" />
+              <span>Copy</span>
+            </button>
+            {isMe && (
+              <>
+                <button
+                  className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50"
+                  onClick={() => handleMobileAction('info')}
+                >
+                  <Info className="w-5 h-5 text-muted-foreground" />
+                  <span>Info</span>
+                </button>
+                <button
+                  className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50"
+                  onClick={() => handleMobileAction('edit')}
+                >
+                  <Pencil className="w-5 h-5 text-muted-foreground" />
+                  <span>Edit</span>
+                </button>
+                <button
+                  className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50 text-destructive"
+                  onClick={() => handleMobileAction('delete')}
+                >
+                  <Trash2 className="w-5 h-5" />
+                  <span>Delete</span>
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
-
-      {/* Mobile Action Bottom Sheet */}
-      {showMobileActions && (
-        <div className="fixed bottom-0 left-0 right-0 z-[60] bg-background border-t border-border rounded-t-2xl shadow-xl overflow-hidden md:hidden animate-in slide-in-from-bottom flex flex-col text-sm font-medium">
-          <div className="flex justify-center p-3 pb-1">
-            <div className="w-10 h-1.5 rounded-full bg-muted-foreground/30" />
-          </div>
-          <button 
-            className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left"
-            onClick={() => handleMobileAction('copy')}
-          >
-            <Copy className="w-5 h-5 text-muted-foreground" />
-            <span>Copy</span>
-          </button>
-          {isMe && (
-            <>
-              <button 
-                className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50"
-                onClick={() => handleMobileAction('info')}
-              >
-                <Info className="w-5 h-5 text-muted-foreground" />
-                <span>Info</span>
-              </button>
-              <button 
-                className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50"
-                onClick={() => handleMobileAction('edit')}
-              >
-                <Pencil className="w-5 h-5 text-muted-foreground" />
-                <span>Edit</span>
-              </button>
-              <button 
-                className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50 text-destructive"
-                onClick={() => handleMobileAction('delete')}
-              >
-                <Trash2 className="w-5 h-5" />
-                <span>Delete</span>
-              </button>
-            </>
-          )}
-        </div>
-      )}
-    </div>
     </>
   )
 }

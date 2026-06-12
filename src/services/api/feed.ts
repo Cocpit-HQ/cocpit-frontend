@@ -125,6 +125,7 @@ export interface BackendPost {
     company_logo?: string;
     is_active?: boolean;
     company_slug?: string;
+    achievement_image_url?: string | null;
   } | null;
   is_broadcast?: boolean;
   sample_liker_username?: string | null;

@@ -64,7 +64,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                     if (m.id === msgId) {
                         return {
                             ...m,
-                            text: "This message is deleted for you",
+                            text: "This message was deleted for you.",
                             is_deleted_for_me: true
                         };
                     }
@@ -94,7 +94,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                 ...old,
                 pages: old.pages.map(page => page.map(m => {
                     if (m.id === msgId) {
-                        return { ...m, text: "This message was deleted for everyone", is_deleted_for_everyone: true };
+                        return { ...m, text: "This message was deleted for everyone.", is_deleted_for_everyone: true };
                     }
                     return m;
                 }))
@@ -312,7 +312,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                         if (m.id === payload.messageId) {
                             return {
                                 ...m,
-                                text: "This message is deleted for you",
+                                text: "This message was deleted for you.",
                                 is_deleted_for_me: true
                             };
                         }
@@ -333,7 +333,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                     ...old,
                     pages: old.pages.map(page => page.map(m => {
                         if (m.id === payload.messageId) {
-                            return { ...m, text: "This message deleted for everyone", is_deleted_for_everyone: true };
+                            return { ...m, text: "This message was deleted for everyone.", is_deleted_for_everyone: true };
                         }
                         return m;
                     }))

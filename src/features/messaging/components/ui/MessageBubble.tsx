@@ -205,7 +205,7 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
 
 const MessageMedia = ({ message, isMediaOnly, onMediaClick, onMediaLoad }: { message: Message, isMediaOnly: boolean, onMediaClick?: (url: string, type: 'image' | 'video' | 'document', name?: string) => void, onMediaLoad?: () => void }) => {
   if (!message.media || message.media.length === 0) return null
-  
+
   // Decide if we should show timestamp inside media based on if there's text
   const text = message.text || message.text_content
   const isDefaultMediaText = ["Sent a photo", "Sent a video", "Sent a document", "Attachment", "Sent an attachment"].includes(text?.trim() || "")
@@ -314,23 +314,23 @@ const MessageText = ({
 
   const renderTextWithMentions = (text: string) => {
     if (!text) return null
-    
+
     // Support structured @[Name](username) and legacy @username
     const mentionRegex = /(@\[[^\]]+\]\([^)]+\)|@[a-zA-Z0-9_.\-]+)/g
     const parts = text.split(mentionRegex)
-    
+
     if (parts.length <= 1) return text
-    
+
     return parts.map((part, i) => {
       // 1. Handle Structured Mentions (@[Display Name](handle))
       const structuredMatch = part.match(/^@\[([^\]]+)\]\(([^)]+)\)$/);
       if (structuredMatch) {
         const displayName = structuredMatch[1];
         const username = structuredMatch[2];
-        
+
         return (
           <Mention key={i} username={username} isMe={isMe}>
-            <span 
+            <span
               className={cn(
                 "hover:underline cursor-pointer font-bold font-['Poppins'] font-medium text-[12px]",
                 isMe ? "text-[var(--primary-foreground)]" : "text-[var(--primary)]"
@@ -348,7 +348,7 @@ const MessageText = ({
         const username = simpleMatch[1];
         return (
           <Mention key={i} username={username} isMe={isMe}>
-            <span 
+            <span
               className={cn(
                 "hover:underline cursor-pointer font-['Poppins'] font-medium text-[12px]",
                 isMe ? "text-[var(--primary-foreground)]" : "text-[var(--primary)]"
@@ -359,7 +359,7 @@ const MessageText = ({
           </Mention>
         )
       }
-      
+
       return <span key={i}>{part}</span>
     })
   }
@@ -373,27 +373,27 @@ const MessageText = ({
     <div className={cn(message.media && message.media.length > 0 ? "px-3 py-2 md:px-4 md:py-2.5" : "")}>
       <span className="leading-snug block whitespace-pre-wrap break-words">
         {message.is_deleted_for_everyone
-          ? "This message deleted for everyone"
+          ? "This message was deleted for everyone."
           : message.is_deleted_for_me
-            ? "This message deleted for you"
+            ? "This message was deleted for you."
             : renderTextWithMentions(textToShow)}
         {isLong && !isExpanded && (
-          <span 
+          <span
             className={cn(
-              "font-['Poppins'] font-normal text-[12px] cursor-pointer ml-[4px] inline underline-offset-2 hover:underline", 
+              "font-['Poppins'] font-normal text-[12px] cursor-pointer ml-[4px] inline underline-offset-2 hover:underline",
               isMe ? "text-[var(--primary-foreground)]" : "text-[var(--primary)]"
-            )} 
+            )}
             onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}
           >
             Read more
           </span>
         )}
         {isLong && isExpanded && (
-          <span 
+          <span
             className={cn(
-              "font-['Poppins'] font-normal text-[12px] cursor-pointer ml-[4px] inline underline-offset-2 hover:underline", 
+              "font-['Poppins'] font-normal text-[12px] cursor-pointer ml-[4px] inline underline-offset-2 hover:underline",
               isMe ? "text-[var(--primary-foreground)]" : "text-[var(--primary)]"
-            )} 
+            )}
             onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
           >
             Read less
@@ -525,18 +525,18 @@ function MessageBubble(props: MessageBubbleProps) {
     const popupW = 320
     const numReactions = message.reactions?.filter(r => r.emoji && r.emoji !== '').length || 0
     const estimatedH = Math.min(300, 60 + numReactions * 50)
-    
+
     let top = rect.bottom + 8
-    
+
     if (top + estimatedH > window.innerHeight - 10) {
       top = rect.top - estimatedH - 8
       if (top < 10) top = 10
     }
-    
+
     let left = isMe ? rect.left - popupW + rect.width : rect.left
     if (left < 10) left = 10
     if (left + popupW > window.innerWidth - 10) left = window.innerWidth - popupW - 10
-    
+
     setReactionPopupPos({ top, left })
     setReactionListOpen(true)
   }
@@ -553,25 +553,25 @@ function MessageBubble(props: MessageBubbleProps) {
     // New 25% smaller picker size
     const pickerH = 340
     const pickerW = 310
-    
+
     // Default position: below the icon
     let top = rect.bottom + 8
-    
+
     // If it goes off the bottom of the screen, flip it above
     if (top + pickerH > window.innerHeight - 10) {
       top = rect.top - pickerH - 8
-      
+
       // If it also goes off the top (e.g. very small screen), cap it to stay on screen
       if (top < 10) {
         top = 10
       }
     }
-    
+
     // Horizontal positioning: align to the right edge if it's "my" message, else left
     let left = isMe ? rect.right - pickerW : rect.left
     if (left < 10) left = 10
     if (left + pickerW > window.innerWidth - 10) left = window.innerWidth - pickerW - 10
-    
+
     setPickerPos({ top, left })
     setShowEmojiPicker(true)
   }
@@ -618,9 +618,9 @@ function MessageBubble(props: MessageBubbleProps) {
   return (
     <>
       {showMobileActions && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/50 md:hidden transition-opacity" 
-          onClick={() => setShowMobileActions(false)} 
+        <div
+          className="fixed inset-0 z-50 bg-black/50 md:hidden transition-opacity"
+          onClick={() => setShowMobileActions(false)}
         />
       )}
       <div
@@ -640,23 +640,23 @@ function MessageBubble(props: MessageBubbleProps) {
         onTouchCancel={handleTouchEnd}
       >
         <div className={cn("flex flex-col relative w-full gap-[4px]", isMe ? "items-end" : "items-start")}>
-          
+
           {/* ROW 1: Bubble — indented 32px to align after avatar space */}
           <div className={cn("flex w-full group/message items-center", isMe ? "justify-end" : "justify-start pl-[32px]")}>
-            
+
             {/* Action Icons for isMe */}
             {isMe && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
               <div className={cn("flex flex-row items-center gap-[8px] bg-transparent opacity-0 transition-opacity px-2 shrink-0 z-20 relative", (isSelected || showMobileActions) ? "opacity-100 flex md:group-hover/message:opacity-100" : "group-hover/message:opacity-100 hidden md:flex")}>
-                <button 
-                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative" 
+                <button
+                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative"
                   onClick={handleEmojiButtonClick}
                   onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                   onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                 >
                   <Smile className="w-[20px] h-[20px]" />
                 </button>
-                <button 
-                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative" 
+                <button
+                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative"
                   onClick={(e) => { e.stopPropagation(); onReply?.(message); }}
                   onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                   onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
@@ -679,57 +679,57 @@ function MessageBubble(props: MessageBubbleProps) {
                 )}
               >
                 {isEditing ? (
-                <MessageEditor
-                  message={message}
-                  isEditing={isEditing}
-                  onSaveEdit={onSaveEdit}
-                  onCancelEdit={onCancelEdit}
-                />
-              ) : (
-                <>
-                  {message.repliedMessage && message.repliedMessage.senderName && (
-                    <RepliedMessageBox
-                      senderName={message.repliedMessage.senderName}
-                      content={message.repliedMessage.content}
-                      isDeleted={message.repliedMessage.isDeleted}
-                      isSent={isMe}
-                      onClick={() => onReplyClick?.(message.repliedMessage!.messageId)}
+                  <MessageEditor
+                    message={message}
+                    isEditing={isEditing}
+                    onSaveEdit={onSaveEdit}
+                    onCancelEdit={onCancelEdit}
+                  />
+                ) : (
+                  <>
+                    {message.repliedMessage && message.repliedMessage.senderName && (
+                      <RepliedMessageBox
+                        senderName={message.repliedMessage.senderName}
+                        content={message.repliedMessage.content}
+                        isDeleted={message.repliedMessage.isDeleted}
+                        isSent={isMe}
+                        onClick={() => onReplyClick?.(message.repliedMessage!.messageId)}
+                      />
+                    )}
+                    <SharedPostCard message={message} onMediaLoad={onMediaLoad} />
+                    {message.sharedProfileId && message.sharedProfileType && (
+                      <div className="mt-1 mb-2">
+                        <ProfilePreviewCard
+                          profile={message.sharedProfile || { name: "Profile", avatar: null }}
+                          profileId={message.sharedProfileId}
+                          profileType={message.sharedProfileType}
+                        />
+                      </div>
+                    )}
+                    {/* Universal Entity Preview — for new share messages */}
+                    {message.entityType && message.entityId && !message.sharedPost && !message.sharedProfileId && (
+                      <div className="mt-1 mb-2">
+                        <EntityPreviewCard
+                          entityType={message.entityType}
+                          entityId={message.entityId}
+                        />
+                      </div>
+                    )}
+                    <MessageMedia
+                      message={message}
+                      isMediaOnly={isMediaOnly}
+                      onMediaClick={onMediaClick}
+                      onMediaLoad={onMediaLoad}
                     />
-                  )}
-                  <SharedPostCard message={message} onMediaLoad={onMediaLoad} />
-                  {message.sharedProfileId && message.sharedProfileType && (
-                    <div className="mt-1 mb-2">
-                      <ProfilePreviewCard
-                        profile={message.sharedProfile || { name: "Profile", avatar: null }}
-                        profileId={message.sharedProfileId}
-                        profileType={message.sharedProfileType}
-                      />
-                    </div>
-                  )}
-                  {/* Universal Entity Preview — for new share messages */}
-                  {message.entityType && message.entityId && !message.sharedPost && !message.sharedProfileId && (
-                    <div className="mt-1 mb-2">
-                      <EntityPreviewCard
-                        entityType={message.entityType}
-                        entityId={message.entityId}
-                      />
-                    </div>
-                  )}
-                  <MessageMedia
-                    message={message}
-                    isMediaOnly={isMediaOnly}
-                    onMediaClick={onMediaClick}
-                    onMediaLoad={onMediaLoad}
-                  />
-                  <MessageText
-                    message={message}
-                    isMediaOnly={isMediaOnly}
-                    isMe={isMe}
-                  />
-                </>
-              )}
+                    <MessageText
+                      message={message}
+                      isMediaOnly={isMediaOnly}
+                      isMe={isMe}
+                    />
+                  </>
+                )}
               </div>
-              
+
               {/* Overlapping Reaction Badge */}
               {validReactions.length > 0 && displayReaction && (
                 <button
@@ -753,16 +753,16 @@ function MessageBubble(props: MessageBubbleProps) {
             {/* Action Icons for !isMe */}
             {!isMe && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
               <div className={cn("flex flex-row items-center gap-[8px] bg-transparent opacity-0 transition-opacity px-2 shrink-0 z-20 relative", (isSelected || showMobileActions) ? "opacity-100 flex md:group-hover/message:opacity-100" : "group-hover/message:opacity-100 hidden md:flex")}>
-                <button 
-                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative" 
+                <button
+                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative"
                   onClick={handleEmojiButtonClick}
                   onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                   onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                 >
                   <Smile className="w-[20px] h-[20px]" />
                 </button>
-                <button 
-                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative" 
+                <button
+                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 z-50 relative"
                   onClick={(e) => { e.stopPropagation(); onReply?.(message); }}
                   onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
                   onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
@@ -818,95 +818,95 @@ function MessageBubble(props: MessageBubbleProps) {
 
         </div>
 
-      {/* Emoji Picker — fixed position portal */}
-      {showEmojiPicker && pickerPos && typeof document !== 'undefined' && createPortal(
-        <>
-          <div
-            className="fixed inset-0 z-[99]"
-            onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(false); setPickerPos(null) }}
-          />
-          <div
-            className="fixed z-[100] shadow-2xl rounded-2xl overflow-hidden"
-            style={{ top: pickerPos.top, left: pickerPos.left }}
-            onClick={e => e.stopPropagation()}
-          >
-            <EmojiPicker 
-              onEmojiClick={handleEmojiSelect} 
-              lazyLoadEmojis 
-              width={310} 
-              height={340} 
-              previewConfig={{ showPreview: false }} 
-              theme={isDarkTheme ? Theme.DARK : Theme.LIGHT}
+        {/* Emoji Picker — fixed position portal */}
+        {showEmojiPicker && pickerPos && typeof document !== 'undefined' && createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-[99]"
+              onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(false); setPickerPos(null) }}
             />
-          </div>
-        </>,
-        document.body
-      )}
+            <div
+              className="fixed z-[100] shadow-2xl rounded-2xl overflow-hidden"
+              style={{ top: pickerPos.top, left: pickerPos.left }}
+              onClick={e => e.stopPropagation()}
+            >
+              <EmojiPicker
+                onEmojiClick={handleEmojiSelect}
+                lazyLoadEmojis
+                width={310}
+                height={340}
+                previewConfig={{ showPreview: false }}
+                theme={isDarkTheme ? Theme.DARK : Theme.LIGHT}
+              />
+            </div>
+          </>,
+          document.body
+        )}
 
-      {/* Reaction list popup */}
-      {reactionListOpen && validReactions.length > 0 && reactionPopupPos && typeof document !== 'undefined' && createPortal(
-        <ReactionListPopup
-          reactions={validReactions}
-          currentUserId={currentUserId || ''}
-          messageId={message.id}
-          onClose={() => { setReactionListOpen(false); setReactionPopupPos(null); }}
-          onRemoveReaction={() => { onReaction?.(message, ''); setReactionListOpen(false); setReactionPopupPos(null); }}
-          position={reactionPopupPos}
-        />,
-        document.body
-      )}
+        {/* Reaction list popup */}
+        {reactionListOpen && validReactions.length > 0 && reactionPopupPos && typeof document !== 'undefined' && createPortal(
+          <ReactionListPopup
+            reactions={validReactions}
+            currentUserId={currentUserId || ''}
+            messageId={message.id}
+            onClose={() => { setReactionListOpen(false); setReactionPopupPos(null); }}
+            onRemoveReaction={() => { onReaction?.(message, ''); setReactionListOpen(false); setReactionPopupPos(null); }}
+            position={reactionPopupPos}
+          />,
+          document.body
+        )}
 
 
-      {/* Mobile Action Bottom Sheet */}
-      {showMobileActions && (
-        <div className="fixed bottom-0 left-0 right-0 z-[60] bg-background border-t border-border rounded-t-2xl shadow-xl overflow-hidden md:hidden animate-in slide-in-from-bottom flex flex-col text-sm font-medium">
-          <div className="flex justify-center p-3 pb-1">
-            <div className="w-10 h-1.5 rounded-full bg-muted-foreground/30" />
-          </div>
-          <button 
-            className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left"
-            onClick={() => handleMobileAction('copy')}
-          >
-            <Copy className="w-5 h-5 text-muted-foreground" />
-            <span>Copy</span>
-          </button>
-          {isMe && (
-            <>
-              <button 
-                className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50"
-                onClick={() => handleMobileAction('info')}
-              >
-                <Info className="w-5 h-5 text-muted-foreground" />
-                <span>Info</span>
-              </button>
-              <button 
-                className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50"
-                onClick={() => handleMobileAction('edit')}
-              >
-                <Pencil className="w-5 h-5 text-muted-foreground" />
-                <span>Edit</span>
-              </button>
-            </>
-          )}
-          <button 
-            className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50 text-destructive"
-            onClick={() => handleMobileAction('delete_for_me')}
-          >
-            <Trash2 className="w-5 h-5" />
-            <span>Delete for me</span>
-          </button>
-          {(message.senderId === currentUserId || isMe) && (
-            <button 
+        {/* Mobile Action Bottom Sheet */}
+        {showMobileActions && (
+          <div className="fixed bottom-0 left-0 right-0 z-[60] bg-background border-t border-border rounded-t-2xl shadow-xl overflow-hidden md:hidden animate-in slide-in-from-bottom flex flex-col text-sm font-medium">
+            <div className="flex justify-center p-3 pb-1">
+              <div className="w-10 h-1.5 rounded-full bg-muted-foreground/30" />
+            </div>
+            <button
+              className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left"
+              onClick={() => handleMobileAction('copy')}
+            >
+              <Copy className="w-5 h-5 text-muted-foreground" />
+              <span>Copy</span>
+            </button>
+            {isMe && (
+              <>
+                <button
+                  className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50"
+                  onClick={() => handleMobileAction('info')}
+                >
+                  <Info className="w-5 h-5 text-muted-foreground" />
+                  <span>Info</span>
+                </button>
+                <button
+                  className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50"
+                  onClick={() => handleMobileAction('edit')}
+                >
+                  <Pencil className="w-5 h-5 text-muted-foreground" />
+                  <span>Edit</span>
+                </button>
+              </>
+            )}
+            <button
               className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50 text-destructive"
-              onClick={() => handleMobileAction('delete_for_everyone')}
+              onClick={() => handleMobileAction('delete_for_me')}
             >
               <Trash2 className="w-5 h-5" />
-              <span>Delete for everyone</span>
+              <span>Delete for me</span>
             </button>
-          )}
-        </div>
-      )}
-    </div>
+            {(message.senderId === currentUserId || isMe) && (
+              <button
+                className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors w-full text-left border-t border-border/50 text-destructive"
+                onClick={() => handleMobileAction('delete_for_everyone')}
+              >
+                <Trash2 className="w-5 h-5" />
+                <span>Delete for everyone</span>
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </>
   )
 }
@@ -932,6 +932,10 @@ export default React.memo(MessageBubble, (prevProps, nextProps) => {
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.isHighlighted === nextProps.isHighlighted &&
     prevProps.message.reactions === nextProps.message.reactions &&
-    prevProps.currentUserId === nextProps.currentUserId
+    prevProps.currentUserId === nextProps.currentUserId &&
+    prevProps.message.read_at === nextProps.message.read_at &&
+    prevProps.message.seen_count === nextProps.message.seen_count &&
+    prevProps.message.delivered_count === nextProps.message.delivered_count &&
+    prevProps.message.active_member_count === nextProps.message.active_member_count
   )
 })
