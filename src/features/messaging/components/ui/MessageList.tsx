@@ -76,6 +76,16 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
         setShouldScrollToBottom(false);
       } else if (shouldScrollToBottom && messages.length > 0) {
         rowVirtualizer.scrollToIndex(messages.length - 1, { align: "end" });
+        
+        // Fallback: React Virtualizer sometimes underestimates sizes on first render.
+        // A slight delay ensures we truly hit the bottom after layout calculations.
+        const timer = setTimeout(() => {
+          if (scrollRef.current && shouldScrollToBottom) {
+            rowVirtualizer.scrollToIndex(messages.length - 1, { align: "end" });
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+          }
+        }, 150);
+        return () => clearTimeout(timer);
       }
     }, [
       messages.length,
