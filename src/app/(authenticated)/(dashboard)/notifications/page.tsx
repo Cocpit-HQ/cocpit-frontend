@@ -2,17 +2,12 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Notification, ConnectionRequest } from '@/types/social'
+import { Notification } from '@/types/social'
 import { getNotifications, deleteNotifications, markAllNotificationsRead } from '@/services/api/notifications'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
 import { NotificationCard } from '@/components/notifications/NotificationCard'
-import { ConnectionRequestList } from '@/components/notifications/ConnectionRequestList'
-import { getPendingRequests, getConnectionRequestHistory } from '@/services/api/social'
-import { format } from 'date-fns'
-import Avatar from '@/components/shared/Avatar'
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { ArrowLeft, Bell, CircleAlert } from 'lucide-react'
 
@@ -38,8 +33,6 @@ export default function NotificationsPage() {
   const [activeTab, setActiveTab] = useState("all")
   const [loading, setLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
-  const [pendingRequests, setPendingRequests] = useState<ConnectionRequest[]>([])
-  const [history, setHistory] = useState<ConnectionRequest[]>([])
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const { data: session } = useSession()
   const user = session?.user
@@ -52,15 +45,8 @@ export default function NotificationsPage() {
         setHasError(false)
         const companyId = (isCompany && activeProfile) ? activeProfile.id : undefined;
 
-        // Connections are currently user-only features
-        const [notifsData, pendingData, historyData] = await Promise.all([
-          getNotifications(companyId),
-          getPendingRequests(),
-          getConnectionRequestHistory()
-        ])
+        const notifsData = await getNotifications(companyId)
         setNotifications(notifsData)
-        setPendingRequests(pendingData)
-        setHistory(historyData)
       } catch (error) {
         console.error("Failed to fetch data:", error)
         setHasError(true)
@@ -113,17 +99,6 @@ export default function NotificationsPage() {
     } catch (error) {
       console.error("Failed to clear notifications:", error)
     }
-  }
-
-  // When a request is accepted/rejected in the list, update local state
-  // ideally ConnectionRequestCard calls onAction with the status, but current logic is slightly different.
-  // We need to refactor this slightly or just fetch history again? 
-  // Let's simply remove from pending. History update is tricky without the full object return from action.
-  // For now, removing from pending is enough to sync badge.
-  const handleRequestAction = (requestId: string) => {
-    setPendingRequests(prev => prev.filter(req => req.id !== requestId))
-    // Optionally fetch history again to show the new item
-    getConnectionRequestHistory().then(setHistory).catch(console.error)
   }
 
   // Filter helpers
@@ -200,17 +175,6 @@ export default function NotificationsPage() {
               All
             </TabsTrigger>
             <TabsTrigger 
-              value="requests" 
-              className="rounded-full px-5 py-2 border transition-all data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=active]:border-primary data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:border-border data-[state=active]:shadow-none data-[state=inactive]:shadow-none hover:bg-muted/10 dark:hover:bg-white/5 relative"
-            >
-              Requests
-              {pendingRequests.length > 0 && (
-                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px] border-none">
-                  {pendingRequests.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger 
               value="mentions" 
               className="rounded-full px-5 py-2 border transition-all data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=active]:border-primary data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:border-border data-[state=active]:shadow-none data-[state=inactive]:shadow-none hover:bg-muted/10 dark:hover:bg-white/5"
             >
@@ -264,86 +228,6 @@ export default function NotificationsPage() {
                   title="You're all caught up."
                   description="We'll notify you when there's activity on your account"
                 />
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="requests" className="space-y-8">
-            {/* Pending Requests */}
-            <div className="bg-card rounded-xl border border-border/40 shadow-none p-4 md:p-6">
-              <h2 className="text-lg font-semibold mb-4">Connection Requests</h2>
-              <ConnectionRequestList
-                requests={pendingRequests}
-                loading={loading}
-                onAction={handleRequestAction}
-              />
-            </div>
-
-            {/* Request History */}
-            <div className="bg-card rounded-xl border border-border/40 shadow-none p-4 md:p-6 opacity-90">
-              <h2 className="text-lg font-semibold mb-4 text-muted-foreground">History</h2>
-              {history.length > 0 ? (
-                <div className="space-y-2">
-                  {history.map(req => {
-                    const userDisplay = req.otherUser || req.sender;
-                    if (!userDisplay) return null;
-
-                    const isIncoming = req.direction === 'incoming';
-                    const isAccepted = req.status === 'accepted' || req.status === 'connected';
-
-                    return (
-                      <div key={req.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <Avatar
-                            url={userDisplay.avatar || undefined}
-                            name={userDisplay.name}
-                            size="sm"
-                          />
-                          <div>
-                            <p className="font-medium text-sm text-foreground">{userDisplay.name}</p>
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                              {req.direction && (
-                                <span className={isIncoming ? "text-blue-500 font-medium" : "text-amber-500 font-medium"} title={isIncoming ? "Received Request" : "Sent Request"}>
-                                  {isIncoming ? "↙ Received" : "↗ Sent"}
-                                </span>
-                              )}
-                              <span className="text-muted-foreground/50">•</span>
-                              <span>
-                                {req.updated_at ? format(new Date(req.updated_at), 'PPP p') : format(new Date(req.created_at), 'PPP p')}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline"
-                            className={`gap-1.5 px-2.5 py-0.5 border-0 ${isAccepted
-                              ? 'bg-green-500/15 text-green-700 dark:text-green-400'
-                              : 'bg-red-500/15 text-red-700 dark:text-red-400'}`}>
-                            {isAccepted ? (
-                              <>
-                                <span className="relative flex h-2 w-2">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                </span>
-                                Connected
-                              </>
-                            ) : (
-                              <>
-                                <span className="h-2 w-2 rounded-full bg-red-500"></span>
-                                Rejected
-                              </>
-                            )}
-                          </Badge>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-sm text-muted-foreground border border-dashed rounded-lg">
-                  No history available
-                </div>
               )}
             </div>
           </TabsContent>

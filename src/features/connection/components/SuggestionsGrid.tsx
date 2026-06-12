@@ -15,11 +15,11 @@ export function SuggestionsGrid({ enabled }: SuggestionsGridProps) {
 
   if (isLoading) {
     return (
-      <section className="conn-suggestions" aria-label="People you may know">
-        <div className="conn-suggestions__header">
-          <h2 className="conn-section-title">Suggestions</h2>
+      <section className="mt-8" aria-label="People you may know">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-foreground">Suggestions</h2>
         </div>
-        <div className="conn-suggestions__grid">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <SuggestionCardSkeleton key={i} />
           ))}
@@ -32,11 +32,11 @@ export function SuggestionsGrid({ enabled }: SuggestionsGridProps) {
 
   if (!data?.data?.length) {
     return (
-      <section className="conn-suggestions" aria-label="People you may know">
-        <div className="conn-suggestions__header">
-          <h2 className="conn-section-title">Suggestions</h2>
+      <section className="mt-8" aria-label="People you may know">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-foreground">Suggestions</h2>
         </div>
-        <div className="conn-suggestions__empty" style={{ textAlign: 'center', color: '#6B7280', padding: '20px 0' }}>
+        <div className="text-center text-muted-foreground py-5">
           No suggestions available at this time.
         </div>
       </section>
@@ -44,11 +44,11 @@ export function SuggestionsGrid({ enabled }: SuggestionsGridProps) {
   }
 
   return (
-    <section className="conn-suggestions" aria-label="People you may know">
-      <div className="conn-suggestions__header">
-        <h2 className="conn-section-title">Suggestions</h2>
+    <section className="mt-8" aria-label="People you may know">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-foreground">Suggestions</h2>
       </div>
-      <div className="conn-suggestions__grid">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
         {data.data.map((user) => (
           <SuggestionCard key={user.id} user={user} />
         ))}

@@ -1,7 +1,5 @@
 'use client';
 
-import './connection.css';
-
 import { useConnectionStore } from '@/store/connection.store';
 import { useConnectionRequests }   from './hooks/useConnectionRequests';
 import { useConnectionCounts }     from './hooks/useConnectionCounts';
@@ -72,8 +70,8 @@ export function ConnectionPage({ view = 'main' }: ConnectionPageProps) {
   const showSuggestions = activeTab === 'received' && !isExpanded;
 
   return (
-    <main className="conn-root">
-      <div className="conn-content">
+    <main className="min-h-screen bg-background px-4 sm:px-5 py-4 sm:py-6">
+      <div className="mx-auto max-w-[960px]">
 
         {/* Back header — only in expanded view */}
         {isExpanded && <ConnectionHeader />}
@@ -91,7 +89,7 @@ export function ConnectionPage({ view = 'main' }: ConnectionPageProps) {
         >
           {/* Loading skeletons */}
           {showSkeleton && (
-            <div className="conn-request-list">
+            <div className="flex flex-col bg-transparent">
               <RequestCardSkeleton />
               <RequestCardSkeleton />
               <RequestCardSkeleton />
@@ -117,7 +115,7 @@ export function ConnectionPage({ view = 'main' }: ConnectionPageProps) {
 
           {/* Request cards */}
           {showContent && (
-            <div className="conn-request-list-wrapper">
+            <div className="flex flex-col bg-card">
               <RequestList
                 requests={displayRequests}
                 mode={activeTab}

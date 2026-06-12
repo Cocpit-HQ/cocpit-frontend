@@ -21,7 +21,7 @@ export function RequestList({ requests, mode }: RequestListProps) {
 
   return (
     <div
-      className="conn-request-list"
+      className="flex flex-col bg-card"
       role="list"
       aria-label={mode === 'received' ? 'Received connection requests' : 'Sent connection requests'}
     >

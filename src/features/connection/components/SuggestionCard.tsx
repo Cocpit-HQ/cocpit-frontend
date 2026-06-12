@@ -34,65 +34,55 @@ function MetaRow({ user }: { user: SuggestedUser }) {
   const { reasonSignal, mutuals, worksAt, studiedAt, sharedSkills } = user;
 
   // 1. Mutuals
-  if (reasonSignal === 'mutual' && mutuals.count > 0) {
+  if (mutuals.count > 0) {
     return (
-      <div className="conn-suggest-card__mutuals">
+      <div className="flex items-center gap-1.5 mt-2 justify-center">
         {mutuals.avatars.length > 0 && (
-          <div className="conn-mutuals__avatars" aria-hidden="true">
+          <div className="flex items-center -space-x-1.5" aria-hidden="true">
             {mutuals.avatars.map((src, i) => (
               <img
                 key={i}
                 src={src}
                 alt=""
-                className="conn-mutuals__avatar"
+                className="w-4 h-4 rounded-full border border-card object-cover"
                 style={{ zIndex: mutuals.avatars.length - i }}
               />
             ))}
           </div>
         )}
-        <p className="conn-suggest-card__meta">
+        <p className="text-xs text-foreground">
           {mutuals.count} mutual{mutuals.count !== 1 ? 's' : ''}
         </p>
       </div>
     );
   }
 
-  // 2. Company / city
-  if ((reasonSignal === 'company' || reasonSignal === 'city') && worksAt) {
+  // 2. Company / Workplace
+  if (worksAt) {
     return (
-      <div className="conn-suggest-card__meta-row">
-        <Icon icon="hugeicons:job-search" className="conn-suggest-card__meta-icon" />
-        <p className="conn-suggest-card__meta-text">Works at {worksAt}</p>
+      <div className="flex items-center justify-center gap-1 mt-2 text-xs text-foreground">
+        <Icon icon="hugeicons:job-search" className="w-3.5 h-3.5" />
+        <p className="truncate max-w-[120px]">Works at {worksAt}</p>
       </div>
     );
   }
 
-  // 3. Shared skills — show actual skill names as chips
-  if (reasonSignal === 'skill' && sharedSkills.length > 0) {
+  // 3. Shared skills / Interests
+  if (sharedSkills.length > 0) {
     return (
-      <p className="conn-suggest-card__meta">
+      <p className="text-xs text-foreground mt-2 truncate w-full px-2">
         {sharedSkills.join(' • ')}
       </p>
     );
   }
 
-  // 4. School / university
+  // 4. Education / School
   if (studiedAt) {
     return (
-      <p className="conn-suggest-card__meta conn-suggest-card__meta--icon">
+      <p className="flex items-center justify-center gap-1 mt-2 text-xs text-foreground truncate w-full px-2">
         <GraduationIcon />
         {studiedAt}
       </p>
-    );
-  }
-
-  // 5. Fallback — works at if available but signal was something else
-  if (worksAt) {
-    return (
-      <div className="conn-suggest-card__meta-row">
-        <Icon icon="hugeicons:job-search" className="conn-suggest-card__meta-icon" />
-        <p className="conn-suggest-card__meta-text">Works at {worksAt}</p>
-      </div>
     );
   }
 
@@ -110,44 +100,48 @@ export function SuggestionCard({ user }: SuggestionCardProps) {
   const showAvatar  = !!user.avatarUrl && !imgError;
 
   return (
-    <div className="conn-suggest-card">
+    <div className="flex flex-col items-center text-center gap-2 p-4 h-full bg-card rounded-[24px] border border-border shadow-sm transition hover:shadow-md">
       {/* Avatar */}
-      <Link href={`/profile/${user.id}`} className="conn-profile-link" tabIndex={-1}>
+      <Link href={`/profile/${user.id}`} className="shrink-0 outline-none rounded-full focus-visible:ring-2 focus-visible:ring-primary" tabIndex={-1}>
         {showAvatar ? (
           <Image
             src={user.avatarUrl}
             alt={user.name}
             width={80}
             height={80}
-            className="conn-suggest-card__avatar"
+            className="w-[100px] h-[100px] rounded-full object-cover bg-primary/10"
             onError={() => setImgError(true)}
           />
         ) : (
-          <div className="conn-suggest-card__avatar--initials" aria-hidden="true">
+          <div className="flex items-center justify-center w-[100px] h-[100px] rounded-full bg-primary/10 text-primary text-3xl font-medium tracking-wide" aria-hidden="true">
             {getInitials(user.name)}
           </div>
         )}
       </Link>
 
-      <div className="conn-suggest-card__text-group">
-        <div className="conn-suggest-card__name-group">
-          <Link href={`/profile/${user.id}`} className="conn-profile-link conn-profile-link--name">
-            <p className="conn-suggest-card__name">{user.name}</p>
+      <div className="flex flex-col w-full flex-1">
+        <div className="flex flex-col items-center min-h-[40px]">
+          <Link href={`/profile/${user.id}`} className="shrink-0 outline-none rounded-sm focus-visible:ring-2 focus-visible:ring-primary group max-w-[90%]">
+            <p className="text-base font-medium text-foreground leading-6 truncate w-full group-hover:text-primary transition-colors">{user.name}</p>
           </Link>
-          <p className="conn-suggest-card__headline">{user.headline}</p>
+          <p className="text-[13px] text-muted-foreground leading-4 line-clamp-2 mt-1 w-full">{user.headline}</p>
         </div>
         <MetaRow user={user} />
       </div>
 
       <button
-        className={`conn-btn ${isRequested ? 'conn-btn--following' : 'conn-btn--follow'}`}
+        className={`inline-flex items-center justify-center h-10 w-full rounded-full text-sm font-medium transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:pointer-events-none mt-auto ${
+          isRequested 
+            ? 'bg-muted text-foreground border border-border' 
+            : 'bg-transparent text-primary border border-primary hover:bg-[var(--primary-tint)]'
+        }`}
         disabled={isLoading || isRequested}
         onClick={() => !isRequested && connect.mutate(user.id)}
         aria-label={isRequested ? `Request sent to ${user.name}` : `Connect with ${user.name}`}
         aria-pressed={isRequested}
       >
         {isLoading
-          ? <span className="conn-btn__spinner" />
+          ? <span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
           : isRequested ? 'Requested' : 'Connect'}
       </button>
     </div>
