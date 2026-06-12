@@ -1212,6 +1212,18 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                               <Icon icon="fluent:delete-16-regular" className="w-5 h-5" />
                             </button>
                           </div>
+
+                          {/* Poll Description Input */}
+                          <div className="w-full pt-2 pb-1">
+                            <textarea
+                              ref={composerTextareaRef}
+                              className="w-full resize-none outline-none font-normal text-[14px] leading-[20px] text-foreground placeholder:text-[#6B7280] bg-transparent font-poppins whitespace-pre-wrap"
+                              placeholder="What would you like to share today?"
+                              value={state.description}
+                              onChange={(e) => state.setDescription(e.target.value)}
+                              style={{ overflow: 'hidden', resize: 'none', height: 'auto', minHeight: '40px' }}
+                            />
+                          </div>
                         </div>
                       )}
 
