@@ -420,7 +420,7 @@ export function NotificationPopover({
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        className="w-[375px] h-[366px] overflow-hidden bg-white dark:bg-[#1a1a2e] border border-[#C7D2FE] shadow-xl rounded-[24px_0px_24px_24px] flex flex-col items-start relative py-4 px-0"
+        className="w-[375px] h-[366px] overflow-hidden notification-popover-custom border shadow-none rounded-[24px_0px_24px_24px] flex flex-col items-start relative py-4 px-0"
         style={{
           boxSizing: 'border-box',
           gap: '16px',

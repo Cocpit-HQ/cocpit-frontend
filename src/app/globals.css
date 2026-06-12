@@ -570,6 +570,33 @@
     background-color: transparent !important;
     border-color: #818CF8 !important;
   }
+
+  /* Custom popovers layouts to match 3-dot dropdown */
+  .notification-popover-custom {
+    background-color: #ffffff !important;
+    border-color: #C7D2FE !important;
+    box-shadow: none !important;
+  }
+
+  [data-theme="dark"] .notification-popover-custom,
+  [data-theme="navy"] .notification-popover-custom {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    box-shadow: none !important;
+  }
+
+  .profile-popover-custom {
+    background-color: var(--popover) !important;
+    border-color: var(--profile-active-border) !important;
+    box-shadow: none !important;
+  }
+
+  [data-theme="dark"] .profile-popover-custom,
+  [data-theme="navy"] .profile-popover-custom {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+    box-shadow: none !important;
+  }
 }
 
 @layer utilities {

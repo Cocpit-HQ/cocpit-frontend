@@ -332,7 +332,7 @@ export const HomeHeader = () => {
                         )}
                         {isSearchFocused && !searchQuery && (
                             <div
-                                className="absolute top-full left-0 mt-2 bg-white dark:bg-[#1a1a2e] border border-[#C7D2FE] rounded-[24px] shadow-lg overflow-hidden z-50 flex flex-col items-start py-4 px-0"
+                                className="absolute top-full left-0 mt-2 notification-popover-custom border rounded-[24px] shadow-lg overflow-hidden z-50 flex flex-col items-start py-4 px-0"
                                 style={{
                                     boxSizing: 'border-box',
                                     width: '421px',
