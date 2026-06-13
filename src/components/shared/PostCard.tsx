@@ -20,7 +20,8 @@ export default function PostCard({ post, href, onDelete, isOwnPost, companyId }:
     const impressionRef = usePostImpression(post.post_id || post.id);
     // Support both backend (post_id, image_url, media[]) and frontend (id, imageSrc, images[])
     const id = post.post_id || post.id;
-    const content = post.content || '';
+    const isPoll = Boolean(post.poll);
+    const content = isPoll ? (post.title || post.content || '') : (post.content || '');
 
     // Refined image detection
     const image = post.image_url ||

@@ -101,7 +101,7 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
   const isArticlePost = post.category === 'Article' || Boolean(post.articleBody);
   const isPollPost = Boolean(post.poll);
   const articleExcerpt = post.content?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
-  const pollQuestion = articleExcerpt || post.title || "Untitled poll";
+  const pollQuestion = post.title || articleExcerpt || "Untitled poll";
   const pollOptions = post.poll?.options?.slice(0, 4) || [];
 
   const handleToggleComments = (e: React.MouseEvent) => {
@@ -240,11 +240,7 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
 
       <div className="mt-4 w-full px-4">
         <div className="px-0 mb-2">
-          {isArticlePost ? null : isPollPost ? (
-            <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-foreground break-words whitespace-pre-wrap line-clamp-2">
-              {pollQuestion}
-            </p>
-          ) : (
+          {isArticlePost ? null : (
             <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-foreground break-words whitespace-pre-wrap">
               {post.content}
             </p>
@@ -296,9 +292,9 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
 
         {!post.shared_post && (
           isPollPost ? (
-            <div className="mb-4 rounded-[20px] border border-[#E3E9FF] bg-[#F8FAFF] p-4">
+            <div className="w-full h-full rounded-[20px] border border-[#E3E9FF] dark:border-[#232F45] bg-white dark:bg-[#131C2E] p-4 flex flex-col mb-4">
               <div className="flex items-center justify-between gap-2 mb-4">
-                <span className="inline-flex items-center rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1]">
+                <span className="inline-flex items-center rounded-full bg-[#EEF2FF] dark:bg-indigo-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1] dark:text-indigo-400">
                   Poll
                 </span>
                 <span className="text-[10px] text-muted-foreground font-[family-name:var(--font-poppins)]">
@@ -306,11 +302,19 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
                 </span>
               </div>
 
+              {pollQuestion && (
+                <div className="mb-4">
+                  <p className="font-[family-name:var(--font-poppins)] font-medium text-[14px] leading-[20px] text-foreground break-words whitespace-pre-wrap">
+                    {pollQuestion}
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2.5">
                 {pollOptions.map((option, index) => (
                   <div
                     key={option.option_id || `${option.option_text}-${index}`}
-                    className="rounded-[14px] border border-[#E8ECFF] bg-white px-3 py-2.5"
+                    className="rounded-[14px] border border-[#E8ECFF] dark:border-[#232F45] bg-[#F8FAFF] dark:bg-[#1C2840] px-3 py-2.5"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[12px] leading-[18px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-1">

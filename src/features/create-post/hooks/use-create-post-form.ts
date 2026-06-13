@@ -221,7 +221,10 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             }]);
           }
           if (post.poll && post.poll.options) {
-            poll.setPollQuestion(post.content);
+            poll.setPollQuestion(post.title || post.content);
+            if (post.title) {
+              setDescription(post.content);
+            }
             poll.setPollOptions(post.poll.options.map(o => ({
               id: o.option_id,
               text: o.option_text
@@ -294,14 +297,14 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       } else if (articleData) {
         finalContent = `${description.trim()}<!-- article_divider -->${articleData.content}`;
       } else {
-        finalContent = sanitizeContent(postType === 'poll' ? poll.pollQuestion : description);
+        finalContent = sanitizeContent(description);
       }
 
       const allowedCategories = getAllowedCategories();
       const safeCategory = allowedCategories.includes(postCategory) ? postCategory : getDefaultCategory();
 
       const payload: any = {
-        title: postType === 'article' ? articleTitle.trim() : (articleData ? articleData.title : ''),
+        title: postType === 'poll' ? poll.pollQuestion : (postType === 'article' ? articleTitle.trim() : (articleData ? articleData.title : '')),
         content: finalContent,
         category: safeCategory,
         visibility: visibility,
@@ -377,6 +380,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
             post_type: postType === 'photo' ? 'image' : ((postType === 'article' || articleData) ? 'article' : postType)
           };
           if (postType === 'article') updatePayload.title = articleTitle;
+          if (postType === 'poll') updatePayload.title = poll.pollQuestion;
           if (media_urls !== undefined) {
             updatePayload.media_urls = media_urls;
           }

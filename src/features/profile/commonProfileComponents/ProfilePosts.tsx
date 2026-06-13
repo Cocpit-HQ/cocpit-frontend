@@ -75,7 +75,7 @@ const ProfilePostCard = ({
   const isArticlePost = localPost.category === 'Article' || localPost.post_type === 'article';
   const isPollPost = Boolean(localPost.poll);
   const articleExcerpt = localPost.content?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
-  const pollQuestion = articleExcerpt || localPost.title || "Untitled poll";
+  const pollQuestion = localPost.title || articleExcerpt || "Untitled poll";
   const pollOptions = localPost.poll?.options?.slice(0, 4) || [];
 
   const handleLike = async () => {
@@ -298,7 +298,7 @@ const ProfilePostCard = ({
             href={`/post/${localPost.id}`}
             className="text-[12px] leading-[20px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-2 min-h-[40px] cursor-pointer"
           >
-            {pollQuestion}
+            {localPost.content}
           </Link>
         ) : (image || videoSrc || localPost.shared_post) ? (
           <Link
@@ -330,10 +330,10 @@ const ProfilePostCard = ({
         </div>
       ) : isPollPost ? (
         <div className="w-full h-[300px] mb-4 bg-muted relative overflow-hidden">
-          <Link href={`/post/${localPost.id}`} className="block w-full h-full p-4 bg-[#F8FAFF]">
-            <div className="w-full h-full rounded-[20px] border border-[#E3E9FF] bg-white p-4 flex flex-col">
+          <Link href={`/post/${localPost.id}`} className="block w-full h-full p-4 bg-[#F8FAFF] dark:bg-transparent">
+            <div className="w-full h-full rounded-[20px] border border-[#E3E9FF] dark:border-[#232F45] bg-white dark:bg-[#131C2E] p-4 flex flex-col">
               <div className="flex items-center justify-between gap-2 mb-4">
-                <span className="inline-flex items-center rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1]">
+                <span className="inline-flex items-center rounded-full bg-[#EEF2FF] dark:bg-indigo-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1] dark:text-indigo-400">
                   Poll
                 </span>
                 <span className="text-[10px] text-muted-foreground font-[family-name:var(--font-poppins)]">
@@ -341,11 +341,19 @@ const ProfilePostCard = ({
                 </span>
               </div>
 
+              {pollQuestion && (
+                <div className="mb-3">
+                  <p className="font-[family-name:var(--font-poppins)] font-medium text-[13px] leading-[18px] text-foreground line-clamp-2">
+                    {pollQuestion}
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2.5">
                 {pollOptions.map((option, index) => (
                   <div
                     key={option.option_id || `${option.option_text}-${index}`}
-                    className="rounded-[14px] border border-[#E8ECFF] bg-[#F8FAFF] px-3 py-2.5"
+                    className="rounded-[14px] border border-[#E8ECFF] dark:border-[#232F45] bg-[#F8FAFF] dark:bg-[#1C2840] px-3 py-2.5"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[12px] leading-[18px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-1">

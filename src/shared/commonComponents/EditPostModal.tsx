@@ -331,15 +331,15 @@ export function EditPostModal({ isOpen, onClose, editPostId, onUpdate }: EditPos
                   )}
 
                   {postType === 'poll' && poll && (
-                    <div className="w-full border border-border bg-[#F8FAFF] rounded-[16px] p-4 mt-2 mb-2 space-y-3 text-left shrink-0">
-                      <span className="inline-flex items-center rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1]">
+                    <div className="w-full border border-border bg-[#F8FAFF] dark:bg-transparent rounded-[16px] p-4 mt-2 mb-2 space-y-3 text-left shrink-0">
+                      <span className="inline-flex items-center rounded-full bg-[#EEF2FF] dark:bg-indigo-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1] dark:text-indigo-400">
                         Poll Options (Read-only)
                       </span>
                       <div className="space-y-2">
                         {poll.options?.map((option: any) => (
                           <div
                             key={option.option_id}
-                            className="w-full py-2.5 px-4 bg-white border border-[#E8ECFF] text-foreground text-[13px] font-medium rounded-[14px] font-poppins"
+                            className="w-full py-2.5 px-4 bg-white dark:bg-[#1C2840] border border-[#E8ECFF] dark:border-[#232F45] text-foreground text-[13px] font-medium rounded-[14px] font-poppins"
                           >
                             {option.option_text}
                           </div>
@@ -349,8 +349,8 @@ export function EditPostModal({ isOpen, onClose, editPostId, onUpdate }: EditPos
                   )}
 
                   {postType === 'article' && articleTitle && (
-                    <div className="w-full border border-border rounded-[16px] p-4 mt-2 mb-2 bg-[#F8FAFF] text-left shrink-0">
-                      <span className="inline-flex items-center rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1] mb-2">
+                    <div className="w-full border border-border rounded-[16px] p-4 mt-2 mb-2 bg-[#F8FAFF] dark:bg-transparent text-left shrink-0">
+                      <span className="inline-flex items-center rounded-full bg-[#EEF2FF] dark:bg-indigo-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1] dark:text-indigo-400 mb-2">
                         Article Cover (Read-only)
                       </span>
                       <h4 className="font-semibold text-[15px] text-foreground font-poppins line-clamp-1">{articleTitle}</h4>

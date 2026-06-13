@@ -265,11 +265,11 @@ export const FeedPost = (props: FeedPostProps) => {
         </div>
       )}
 
-      {/* Poll */}
       <PostPoll
         pollData={pollData}
         isVoting={isVoting}
         handleVote={(optId) => handleVote(optId, isCompany, activeProfile?.id)}
+        title={title}
       />
 
       {/* Social Proof & Actions */}
