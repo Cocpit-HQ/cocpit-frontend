@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import Link from 'next/link';
 import { BarChart2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Icon } from "@iconify/react";
 import { TaggedPeoplePopover } from "@/shared/commonComponents/TaggedPeoplePopover";
 import { useSocial } from '@/context/SocialContext';
@@ -50,6 +51,7 @@ export const PostHeader = ({
   const authorUserId = authorId?.toString();
   const isAuthorFollowing = authorUserId ? isFollowing(authorUserId) : false;
   const isAuthorFollowLoading = authorUserId ? isFollowLoading(authorUserId) : false;
+  const router = useRouter();
 
   const handleToggleFollowAuthor = () => {
     if (!authorUserId || isAuthorFollowLoading || isCompanyPost) return;
@@ -91,7 +93,13 @@ export const PostHeader = ({
   return (
     <div className="flex flex-row justify-between items-start p-0 gap-[8px] w-full">
       {/* Author Info (Frame 2608571) */}
-      <div className="flex flex-row items-center p-0 gap-[8px] flex-1 min-w-0 overflow-hidden">
+      <div 
+        onClick={(e) => {
+          e.stopPropagation();
+          router.push(authorLink);
+        }}
+        className="flex flex-row items-center p-0 gap-[8px] flex-1 min-w-0 overflow-hidden cursor-pointer group"
+      >
         {/* Avatar (Ellipse 10) */}
         <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0 bg-muted">
           <img src={avatarSrc} alt={author} className="w-full h-full object-cover" />
@@ -123,15 +131,15 @@ export const PostHeader = ({
             )}
           </div>
           {!shared_post && (
-            <Link href={`/post/${id}`} className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground truncate w-full block cursor-pointer" title={authorRole || title || ''} onClick={(e) => e.stopPropagation()}>
+            <div className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground truncate w-full block" title={authorRole || title || ''}>
               {authorRole || title || ''}
-            </Link>
+            </div>
           )}
           {(location || timeAgo) && (() => {
             const displayLocation = location ? location.split(',')[0].trim() : '';
             const truncatedLocation = displayLocation.length > 15 ? displayLocation.slice(0, 15) + '..' : displayLocation;
             return (
-              <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
+              <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)] mt-0.5">
                 {location && <span title={location}>{truncatedLocation}</span>}
                 {location && timeAgo && <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />}
                 {timeAgo && <span className="shrink-0">{timeAgo}</span>}

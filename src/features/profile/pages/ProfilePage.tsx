@@ -174,7 +174,14 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
       {/* Header section (Frame 2608569) */}
       <div className="w-full h-[40px] flex items-center justify-between px-4 z-10 mb-4">
         {/* Author Info (Frame 2608571) */}
-        <div className="flex items-center gap-2 overflow-hidden flex-1">
+        <div 
+          className="flex items-center gap-2 overflow-hidden flex-1 cursor-pointer group"
+          onClick={(e) => {
+            e.stopPropagation();
+            const authorLink = localPost.isCompanyPost ? `/organization/${localPost.authorSlug}` : `/profile/${localPost.authorSlug || localPost.authorId}`;
+            router.push(authorLink);
+          }}
+        >
           {/* Avatar (Ellipse 10) */}
           <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
             <img
@@ -188,9 +195,9 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
             <span className="text-[16px] leading-[24px] font-normal text-foreground truncate font-[family-name:var(--font-poppins)]">
               {localPost.author || "Anonymous"}
             </span>
-            <Link href={`/post/${localPost.id}`} className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] truncate block w-full cursor-pointer" title={localPost.authorHeadline || localPost.title || ""}>
+            <div className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] truncate block w-full" title={localPost.authorHeadline || localPost.title || ""}>
               {localPost.authorHeadline || localPost.title || ""}
-            </Link>
+            </div>
             <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] mt-0.5">
               {localPost.location && (() => {
                 const displayLoc = localPost.location.split(',')[0].trim();
@@ -385,7 +392,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
         </div>
       ) : image ? (
         <div className="w-full h-[300px] mb-4 bg-muted relative overflow-hidden">
-          <div className="w-full h-full">
+          <Link href={`/post/${localPost.id}`} className="block w-full h-full cursor-pointer">
             {localPost.images && localPost.images.length > 1 ? (
               <PostCarousel images={localPost.images} />
             ) : (
@@ -395,7 +402,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
                 className="w-full h-full object-cover"
               />
             )}
-          </div>
+          </Link>
         </div>
       ) : (
         /* Text-only post: show full content inline */
@@ -431,9 +438,9 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
               `${likesCount} like`
             ) : (
               <>
-                Liked by <span>@{localPost.sampleLikerUsername || 'someone'}</span>
+                Liked by <span className="font-semibold hover:underline cursor-pointer">@{localPost.sampleLikerUsername || 'someone'}</span>
                 {likesCount > 1 && (
-                  <> and {likesCount - 1} {likesCount - 1 === 1 ? 'other' : 'others'}</>
+                  <> and <span className="font-semibold hover:underline cursor-pointer">{likesCount - 1} {likesCount - 1 === 1 ? 'other' : 'others'}</span></>
                 )}
               </>
             )}

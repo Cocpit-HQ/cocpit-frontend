@@ -261,6 +261,10 @@ export const FeedPost = (props: FeedPostProps) => {
             priority={props.priority}
             isVerticalVideo={isVerticalVideo}
             hasNoCaption={!content && !shared_post}
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push(`/post/${id}`);
+            }}
           />
         </div>
       )}
@@ -277,9 +281,9 @@ export const FeedPost = (props: FeedPostProps) => {
         {likeCount > 0 && !(likeCount === 1 && isLiked) && (
           <div className="px-0 flex items-center mt-2">
             <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
-              Liked by @{sampleLikerUsername || 'someone'}
+              Liked by <span className="font-semibold hover:underline cursor-pointer">@{sampleLikerUsername || 'someone'}</span>
               {likeCount > 1 && (
-                <> and {likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}</>
+                <> and <span className="font-semibold hover:underline cursor-pointer">{likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}</span></>
               )}
             </p>
           </div>

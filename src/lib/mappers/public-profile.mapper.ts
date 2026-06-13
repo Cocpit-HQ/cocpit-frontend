@@ -30,9 +30,9 @@ export const mapPublicPostToPost = (publicPost: PublicPost): Post => {
   if (diffMinutes <= 0) {
     timeAgo = "Just now";
   } else if (diffMinutes < 60) {
-    timeAgo = `${diffMinutes} ${diffMinutes === 1 ? 'minute' : 'minutes'} ago`;
+    timeAgo = `${diffMinutes}Min ago`;
   } else if (diffHours < 24) {
-    timeAgo = `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+    timeAgo = `${diffHours}Hr ago`;
   } else {
     timeAgo = `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
   }
