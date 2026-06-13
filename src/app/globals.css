@@ -1269,3 +1269,9 @@
   background-color: #C7D2FE !important;
   color: #111827 !important;
 }
+
+@media (max-width: 768px) {
+  .post-image {
+    border-radius: 0 !important;
+  }
+}

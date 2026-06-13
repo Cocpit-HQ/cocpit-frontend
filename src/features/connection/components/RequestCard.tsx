@@ -39,9 +39,9 @@ export function RequestCard({
   const profileId = mode === 'received' ? request.sender_id : request.receiver_id;
 
   return (
-    <article className="flex items-center justify-between py-2 px-4 bg-card min-h-[92px] rounded-xl transition-all hover:bg-[var(--primary-tint)] border-b border-border last:border-b-0" aria-label={`Connection request ${mode === 'received' ? 'from' : 'to'} ${user.name}`}>
-      <div className="flex items-center gap-3 w-[calc(100%-230px)]">
-        <Link href={`/profile/${profileId}`} className="shrink-0 outline-none rounded-full focus-visible:ring-2 focus-visible:ring-primary" tabIndex={-1}>
+    <article className="flex flex-col sm:flex-row sm:items-center justify-between py-4 sm:py-2 px-4 bg-card min-h-[92px] rounded-xl transition-all hover:bg-[var(--primary-tint)] border-b border-border last:border-b-0 gap-3 sm:gap-0" aria-label={`Connection request ${mode === 'received' ? 'from' : 'to'} ${user.name}`}>
+      <div className="flex items-start sm:items-center gap-3 w-full sm:w-[calc(100%-230px)]">
+        <Link href={`/profile/${profileId}`} className="shrink-0 outline-none rounded-full focus-visible:ring-2 focus-visible:ring-primary mt-1 sm:mt-0" tabIndex={-1}>
           {showAvatar ? (
             <Image
               src={user.avatar}
@@ -86,7 +86,7 @@ export function RequestCard({
               </span>
             </div>
           ) : reason_tag ? (
-            <span className="inline-flex items-center gap-1 px-2 py-1 h-6 rounded-xl bg-primary/5 text-primary text-xs max-w-[260px] truncate mt-2 w-max" title={reason_tag}>
+            <span className="inline-flex items-center gap-1 px-2 py-1 h-6 rounded-xl bg-primary/5 text-primary dark:bg-[#2A3150] dark:!text-[#818CF8] text-xs max-w-[260px] truncate mt-2 w-max" title={reason_tag}>
               {reason_tag}
             </span>
           ) : null}
@@ -94,11 +94,11 @@ export function RequestCard({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-4 shrink-0">
+      <div className="flex items-center gap-3 w-full sm:w-auto sm:shrink-0 mt-2 sm:mt-0">
         {mode === 'received' && (
           <>
             <button
-              className="inline-flex items-center justify-center h-10 w-[100px] rounded-[24px] text-sm font-medium transition-all bg-transparent text-primary/70 border border-primary/70 hover:bg-[var(--primary-tint)] hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:pointer-events-none"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center h-10 sm:w-[100px] rounded-[24px] text-sm font-medium transition-all bg-transparent text-primary/70 border border-primary/70 hover:bg-[var(--primary-tint)] hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:pointer-events-none"
               disabled={isActing}
               onClick={() => onDecline?.(request.id)}
               aria-label={`Decline request from ${user.name}`}
@@ -106,7 +106,7 @@ export function RequestCard({
               {isActing ? <span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /> : 'Decline'}
             </button>
             <button
-              className="inline-flex items-center justify-center h-10 w-[100px] rounded-[24px] text-sm font-medium transition-all bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-[1px] shadow-[0_1px_2px_rgba(99,102,241,0.2)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:pointer-events-none"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center h-10 sm:w-[100px] rounded-[24px] text-sm font-medium transition-all bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-[1px] shadow-[0_1px_2px_rgba(99,102,241,0.2)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:pointer-events-none"
               disabled={isActing}
               onClick={() => onAccept?.(request.id)}
               aria-label={`Accept request from ${user.name}`}
@@ -118,7 +118,7 @@ export function RequestCard({
 
         {mode === 'sent' && (
           <button
-            className="inline-flex items-center justify-center h-10 w-[100px] rounded-[24px] text-sm font-medium transition-all bg-transparent text-primary/70 border border-primary/70 hover:bg-[var(--primary-tint)] hover:text-primary hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:pointer-events-none"
+            className="w-1/2 sm:w-[100px] sm:flex-none inline-flex items-center justify-center h-10 rounded-[24px] text-sm font-medium transition-all bg-transparent text-primary/70 border border-primary/70 hover:bg-[var(--primary-tint)] hover:text-primary hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:pointer-events-none"
             disabled={isActing}
             onClick={() => onUndo?.(request.id)}
             aria-label={`Withdraw request to ${user.name}`}

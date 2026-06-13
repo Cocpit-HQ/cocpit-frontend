@@ -9,6 +9,7 @@ export interface GroupDetails {
     created_at: string;
     members: GroupMember[];
     is_inactive?: boolean;
+    was_removed?: boolean;
     left_at?: string | null;
 }
 

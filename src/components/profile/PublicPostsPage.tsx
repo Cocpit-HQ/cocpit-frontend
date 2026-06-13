@@ -93,6 +93,7 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
   activeTab?: string
 }) => {
   const isOwner = post.authorId === currentUser?.id || post.author === currentUser?.name;
+  const router = useRouter();
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(parseInt(post.comments) || 0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -101,7 +102,7 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
   const isArticlePost = post.category === 'Article' || Boolean(post.articleBody);
   const isPollPost = Boolean(post.poll);
   const articleExcerpt = post.content?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
-  const pollQuestion = articleExcerpt || post.title || "Untitled poll";
+  const pollQuestion = post.title || articleExcerpt || "Untitled poll";
   const pollOptions = post.poll?.options?.slice(0, 4) || [];
 
   const handleToggleComments = (e: React.MouseEvent) => {
@@ -113,7 +114,14 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
     <div className="relative mb-6 flex w-full max-w-none flex-col items-start overflow-hidden rounded-[24px] border border-border bg-card py-4 shadow-sm md:w-[560px] md:max-w-[560px]">
       {/* Header */}
       <div className="flex w-full flex-row items-start justify-between px-4">
-        <div className="flex items-start gap-2">
+        <div 
+          className="flex items-start gap-2 cursor-pointer group"
+          onClick={(e) => {
+            e.stopPropagation();
+            const authorLink = post.isCompanyPost ? `/organization/${post.authorSlug}` : `/profile/${post.authorSlug || post.authorId}`;
+            router.push(authorLink);
+          }}
+        >
           <div className="w-8 h-8 rounded-full overflow-hidden bg-[#D9D9D9] relative flex-shrink-0 mt-0.5">
             <img
               src={post.authorAvatar || "/assets/pngegg.png"}
@@ -123,9 +131,9 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
           </div>
           <div className="flex flex-col min-w-0 overflow-hidden flex-1">
             <span className="font-[family-name:var(--font-poppins)] font-semibold text-[16px] text-foreground leading-tight truncate">{post.author}</span>
-            <Link href={`/post/${post.id}`} className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground truncate w-full block cursor-pointer" title={post.authorHeadline || post.title || (post.isCompanyPost ? 'Organization' : '')}>
+            <div className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground truncate w-full block" title={post.authorHeadline || post.title || (post.isCompanyPost ? 'Organization' : '')}>
               {post.authorHeadline || post.title || (post.isCompanyPost ? 'Organization' : '')}
-            </Link>
+            </div>
             <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)] mt-0.5">
               <span>{post.location || 'Kolhapur'}</span>
               <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
@@ -240,11 +248,7 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
 
       <div className="mt-4 w-full px-4">
         <div className="px-0 mb-2">
-          {isArticlePost ? null : isPollPost ? (
-            <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-foreground break-words whitespace-pre-wrap line-clamp-2">
-              {pollQuestion}
-            </p>
-          ) : (
+          {isArticlePost ? null : (
             <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] leading-[16px] text-foreground break-words whitespace-pre-wrap">
               {post.content}
             </p>
@@ -296,9 +300,9 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
 
         {!post.shared_post && (
           isPollPost ? (
-            <div className="mb-4 rounded-[20px] border border-[#E3E9FF] bg-[#F8FAFF] p-4">
+            <div className="w-full h-full rounded-[20px] border border-[#E3E9FF] dark:border-[#232F45] bg-white dark:bg-[#131C2E] p-4 flex flex-col mb-4">
               <div className="flex items-center justify-between gap-2 mb-4">
-                <span className="inline-flex items-center rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1]">
+                <span className="inline-flex items-center rounded-full bg-[#EEF2FF] dark:bg-indigo-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1] dark:text-indigo-400">
                   Poll
                 </span>
                 <span className="text-[10px] text-muted-foreground font-[family-name:var(--font-poppins)]">
@@ -306,11 +310,19 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
                 </span>
               </div>
 
+              {pollQuestion && (
+                <div className="mb-4">
+                  <p className="font-[family-name:var(--font-poppins)] font-medium text-[14px] leading-[20px] text-foreground break-words whitespace-pre-wrap">
+                    {pollQuestion}
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2.5">
                 {pollOptions.map((option, index) => (
                   <div
                     key={option.option_id || `${option.option_text}-${index}`}
-                    className="rounded-[14px] border border-[#E8ECFF] bg-white px-3 py-2.5"
+                    className="rounded-[14px] border border-[#E8ECFF] dark:border-[#232F45] bg-[#F8FAFF] dark:bg-[#1C2840] px-3 py-2.5"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[12px] leading-[18px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-1">
@@ -352,7 +364,13 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
               </div>
             </>
           ) : videoSrc ? (
-            <div className="relative -mx-4 mb-4 h-[360px] w-[calc(100%+2rem)] overflow-hidden bg-black sm:h-[420px] md:h-[501px]">
+            <div 
+              className="relative -mx-4 mb-4 h-[360px] w-[calc(100%+2rem)] overflow-hidden bg-black sm:h-[420px] md:h-[501px] cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/post/${post.id}`);
+              }}
+            >
               <video
                 src={videoSrc}
                 className="w-full h-full object-cover"
@@ -362,7 +380,13 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
               />
             </div>
           ) : ((post.images && post.images.length > 0) || post.imageSrc) ? (
-            <div className="relative -mx-4 mb-4 h-[360px] w-[calc(100%+2rem)] overflow-hidden bg-slate-50 sm:h-[420px] md:h-[501px]">
+            <div 
+              className="relative -mx-4 mb-4 h-[360px] w-[calc(100%+2rem)] overflow-hidden bg-slate-50 sm:h-[420px] md:h-[501px] cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/post/${post.id}`);
+              }}
+            >
               {post.images && post.images.length > 1 ? (
                 <PostCarousel images={post.images} />
               ) : (
@@ -379,9 +403,9 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
                 `${Number(post.likes || 0)} like`
               ) : (
                 <>
-                  Liked by <span className="font-semibold">@{post.sampleLikerUsername || 'someone'}</span>
+                  Liked by <span className="font-semibold hover:underline cursor-pointer">@{post.sampleLikerUsername || 'someone'}</span>
                   {Number(post.likes || 0) > 1 && (
-                    <> and {Number(post.likes || 0) - 1} {Number(post.likes || 0) - 1 === 1 ? 'other' : 'others'}</>
+                    <> and <span className="font-semibold hover:underline cursor-pointer">{Number(post.likes || 0) - 1} {Number(post.likes || 0) - 1 === 1 ? 'other' : 'others'}</span></>
                   )}
                 </>
               )}

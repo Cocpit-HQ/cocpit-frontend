@@ -101,6 +101,7 @@ const mergeProfilePostState = (current: Post, incoming: Post): Post => ({
 });
 
 const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpdate }: { post: Post, isOwnPost?: boolean, onDelete?: (id: string) => void, onToggleVisibility?: (id: string) => void, onUpdate?: (post: Post) => void }) => {
+  const router = useRouter();
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likesCount, setLikesCount] = useState(Number(post.likes) || 0);
   const [isSaved, setIsSaved] = useState(post.is_saved || false);
@@ -125,7 +126,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
   const isArticlePost = localPost.category === 'Article' || Boolean(localPost.articleBody);
   const isPollPost = Boolean(localPost.poll);
   const articleExcerpt = localPost.content?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || '';
-  const pollQuestion = articleExcerpt || localPost.title || "Untitled poll";
+  const pollQuestion = localPost.title || articleExcerpt || "Untitled poll";
   const pollOptions = localPost.poll?.options?.slice(0, 4) || [];
 
   const handleLike = async () => {
@@ -190,8 +191,15 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
     <div className="flex flex-col items-start py-4 w-[285.33px] h-[504px] bg-card border border-[#EEF2FF] dark:border-card-border-inner shadow-card-inner rounded-[24px] relative flex-shrink-0">
       {/* Header section (Frame 2608569) */}
       <div className="w-full h-[40px] flex items-center justify-between px-4 z-10 mb-4">
-        {/* Author Info (Frame 2608571) */}
-        <div className="flex items-center gap-2 overflow-hidden flex-1">
+        {/* Author Info */}
+        <div 
+          className="flex items-center gap-2 overflow-hidden flex-1 cursor-pointer group"
+          onClick={(e) => {
+            e.stopPropagation();
+            const authorLink = localPost.isCompanyPost ? `/organization/${localPost.authorSlug}` : `/profile/${localPost.authorSlug || localPost.authorId}`;
+            router.push(authorLink);
+          }}
+        >
           {/* Avatar (Ellipse 10) */}
           <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
             <img
@@ -205,9 +213,9 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
             <span className="text-[16px] leading-[24px] font-normal text-foreground truncate font-[family-name:var(--font-poppins)]">
               {localPost.author || "Anonymous"}
             </span>
-            <Link href={`/post/${localPost.id}`} className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] truncate block w-full cursor-pointer" title={localPost.authorHeadline || localPost.title || ""}>
+            <div className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] truncate block w-full" title={localPost.authorHeadline || localPost.title || ""}>
               {localPost.authorHeadline || localPost.title || ""}
-            </Link>
+            </div>
             <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] mt-0.5">
               {localPost.location && (() => {
                 const displayLoc = localPost.location.split(',')[0].trim();
@@ -292,13 +300,6 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
         {/* Text Content (Frame 2608573) */}
         {isArticlePost ? (
           null
-        ) : isPollPost ? (
-          <Link
-            href={`/post/${localPost.id}`}
-            className="text-[12px] leading-[20px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-2 min-h-[40px] cursor-pointer"
-          >
-            {pollQuestion}
-          </Link>
         ) : (
           <Link
             href={`/post/${localPost.id}`}
@@ -327,10 +328,10 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
             )}
           </div>
         ) : isPollPost ? (
-          <Link href={`/post/${localPost.id}`} className="block w-full h-full p-4 bg-[#F8FAFF]">
-            <div className="w-full h-full rounded-[20px] border border-[#E3E9FF] bg-white p-4 flex flex-col">
+          <Link href={`/post/${localPost.id}`} className="block w-full h-full p-4 bg-[#F8FAFF] dark:bg-transparent">
+            <div className="w-full h-full rounded-[20px] border border-[#E3E9FF] dark:border-[#232F45] bg-white dark:bg-[#131C2E] p-4 flex flex-col">
               <div className="flex items-center justify-between gap-2 mb-4">
-                <span className="inline-flex items-center rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1]">
+                <span className="inline-flex items-center rounded-full bg-[#EEF2FF] dark:bg-indigo-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1] dark:text-indigo-400">
                   Poll
                 </span>
                 <span className="text-[10px] text-muted-foreground font-[family-name:var(--font-poppins)]">
@@ -338,11 +339,19 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
                 </span>
               </div>
 
+              {pollQuestion && (
+                <div className="mb-3">
+                  <p className="font-[family-name:var(--font-poppins)] font-medium text-[13px] leading-[18px] text-foreground line-clamp-2">
+                    {pollQuestion}
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2.5">
                 {pollOptions.map((option, index) => (
                   <div
                     key={option.option_id || `${option.option_text}-${index}`}
-                    className="rounded-[14px] border border-[#E8ECFF] bg-[#F8FAFF] px-3 py-2.5"
+                    className="rounded-[14px] border border-[#E8ECFF] dark:border-[#232F45] bg-[#F8FAFF] dark:bg-[#1C2840] px-3 py-2.5"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[12px] leading-[18px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-1">
@@ -390,7 +399,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
             />
           </Link>
         ) : (
-          <div className="w-full h-full">
+          <Link href={`/post/${localPost.id}`} className="block w-full h-full cursor-pointer">
             {localPost.images && localPost.images.length > 1 ? (
               <PostCarousel images={localPost.images} />
             ) : (
@@ -400,7 +409,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
                 className="w-full h-full object-cover"
               />
             )}
-          </div>
+          </Link>
         )}
       </div>
 
@@ -422,9 +431,9 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
               `${likesCount} like`
             ) : (
               <>
-                Liked by <span>@{localPost.sampleLikerUsername || 'someone'}</span>
+                Liked by <span className="font-semibold hover:underline cursor-pointer">@{localPost.sampleLikerUsername || 'someone'}</span>
                 {likesCount > 1 && (
-                  <> and {likesCount - 1} {likesCount - 1 === 1 ? 'other' : 'others'}</>
+                  <> and <span className="font-semibold hover:underline cursor-pointer">{likesCount - 1} {likesCount - 1 === 1 ? 'other' : 'others'}</span></>
                 )}
               </>
             )}

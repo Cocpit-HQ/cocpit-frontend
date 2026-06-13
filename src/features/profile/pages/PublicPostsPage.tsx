@@ -97,6 +97,7 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
   activeTab?: string
 }) => {
   const isOwner = post.authorId === currentUser?.id || post.author === currentUser?.name;
+  const router = useRouter();
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(parseInt(post.comments) || 0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -117,7 +118,14 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
     <div className="relative mb-6 flex w-full max-w-none flex-col items-start overflow-hidden rounded-[24px] border border-border bg-card py-4 shadow-sm md:w-[560px] md:max-w-[560px]">
       {/* Header */}
       <div className="flex w-full flex-row items-start justify-between px-4">
-        <div className="flex items-start gap-2">
+        <div 
+          className="flex items-start gap-2 cursor-pointer group"
+          onClick={(e) => {
+            e.stopPropagation();
+            const authorLink = post.isCompanyPost ? `/organization/${post.authorSlug}` : `/profile/${post.authorSlug || post.authorId}`;
+            router.push(authorLink);
+          }}
+        >
           <div className="w-8 h-8 rounded-full overflow-hidden bg-[#D9D9D9] relative flex-shrink-0 mt-0.5">
             <img
               src={post.authorAvatar || "/assets/pngegg.png"}
@@ -127,9 +135,9 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
           </div>
           <div className="flex flex-col min-w-0 overflow-hidden flex-1">
             <span className="font-[family-name:var(--font-poppins)] font-semibold text-[16px] text-foreground leading-tight truncate">{post.author}</span>
-            <Link href={`/post/${post.id}`} className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground truncate w-full block cursor-pointer" title={post.authorHeadline || post.title || (post.isCompanyPost ? 'Organization' : '')}>
+            <div className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-muted-foreground truncate w-full block" title={post.authorHeadline || post.title || (post.isCompanyPost ? 'Organization' : '')}>
               {post.authorHeadline || post.title || (post.isCompanyPost ? 'Organization' : '')}
-            </Link>
+            </div>
             <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] mt-0.5">
               {post.location && (() => {
                 const displayLoc = post.location.split(',')[0].trim();
@@ -364,7 +372,13 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
               </div>
             </>
           ) : videoSrc ? (
-            <div className="relative -mx-4 mb-4 h-[360px] w-[calc(100%+2rem)] overflow-hidden bg-black sm:h-[420px] md:h-[501px]">
+            <div 
+              className="relative -mx-4 mb-4 h-[360px] w-[calc(100%+2rem)] overflow-hidden bg-black sm:h-[420px] md:h-[501px] cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/post/${post.id}`);
+              }}
+            >
               <video
                 src={videoSrc}
                 className="w-full h-full object-cover"
@@ -374,7 +388,13 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
               />
             </div>
           ) : ((post.images && post.images.length > 0) || post.imageSrc) ? (
-            <div className="relative -mx-4 mb-4 h-[360px] w-[calc(100%+2rem)] overflow-hidden bg-slate-50 sm:h-[420px] md:h-[501px]">
+            <div 
+              className="relative -mx-4 mb-4 h-[360px] w-[calc(100%+2rem)] overflow-hidden bg-slate-50 sm:h-[420px] md:h-[501px] cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/post/${post.id}`);
+              }}
+            >
               {post.images && post.images.length > 1 ? (
                 <PostCarousel images={post.images} />
               ) : (
@@ -391,9 +411,9 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
                 `${Number(post.likes || 0)} like`
               ) : (
                 <>
-                  Liked by <span className="font-semibold">@{post.sampleLikerUsername || 'someone'}</span>
+                  Liked by <span className="font-semibold hover:underline cursor-pointer">@{post.sampleLikerUsername || 'someone'}</span>
                   {Number(post.likes || 0) > 1 && (
-                    <> and {Number(post.likes || 0) - 1} {Number(post.likes || 0) - 1 === 1 ? 'other' : 'others'}</>
+                    <> and <span className="font-semibold hover:underline cursor-pointer">{Number(post.likes || 0) - 1} {Number(post.likes || 0) - 1 === 1 ? 'other' : 'others'}</span></>
                   )}
                 </>
               )}

@@ -67,11 +67,11 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
   if (diffMinutes <= 0) {
     shortTimeAgo = "Just now";
   } else if (diffMinutes < 60) {
-    shortTimeAgo = `${diffMinutes}m`;
+    shortTimeAgo = `${diffMinutes}Min ago`;
   } else if (diffHours < 24) {
-    shortTimeAgo = `${diffHours}h`;
+    shortTimeAgo = `${diffHours}Hr ago`;
   } else {
-    shortTimeAgo = `${diffDays}d`;
+    shortTimeAgo = `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
   }
 
   // Handle poll mapping
@@ -171,9 +171,9 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
 
       let spShortTimeAgo = "";
       if (spDiffMinutes <= 0) spShortTimeAgo = "Just now";
-      else if (spDiffMinutes < 60) spShortTimeAgo = `${spDiffMinutes}m`;
-      else if (spDiffHours < 24) spShortTimeAgo = `${spDiffHours}h`;
-      else spShortTimeAgo = `${spDiffDays}d`;
+      else if (spDiffMinutes < 60) spShortTimeAgo = `${spDiffMinutes}Min ago`;
+      else if (spDiffHours < 24) spShortTimeAgo = `${spDiffHours}Hr ago`;
+      else spShortTimeAgo = `${spDiffDays} ${spDiffDays === 1 ? 'day' : 'days'} ago`;
 
       // Handle shared post poll
       const spPoll = sp.poll ? {
@@ -285,11 +285,11 @@ export const mapBackendCommentToFrontend = (backendComment: BackendComment): Com
   if (diffMinutes <= 0) {
     shortTimeAgo = "Just now";
   } else if (diffMinutes < 60) {
-    shortTimeAgo = `${diffMinutes}m`;
+    shortTimeAgo = `${diffMinutes}Min ago`;
   } else if (diffHours < 24) {
-    shortTimeAgo = `${diffHours}h`;
+    shortTimeAgo = `${diffHours}Hr ago`;
   } else {
-    shortTimeAgo = `${diffDays}d`;
+    shortTimeAgo = `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
   }
 
   return {

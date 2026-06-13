@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import Link from 'next/link';
 import { BarChart2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Icon } from "@iconify/react";
 import { TaggedPeoplePopover } from "@/shared/commonComponents/TaggedPeoplePopover";
 import { useSocial } from '@/context/SocialContext';
@@ -50,6 +51,7 @@ export const PostHeader = ({
   const authorUserId = authorId?.toString();
   const isAuthorFollowing = authorUserId ? isFollowing(authorUserId) : false;
   const isAuthorFollowLoading = authorUserId ? isFollowLoading(authorUserId) : false;
+  const router = useRouter();
 
   const handleToggleFollowAuthor = () => {
     if (!authorUserId || isAuthorFollowLoading || isCompanyPost) return;
@@ -91,7 +93,13 @@ export const PostHeader = ({
   return (
     <div className="flex flex-row justify-between items-start p-0 gap-[8px] w-full">
       {/* Author Info (Frame 2608571) */}
-      <div className="flex flex-row items-center p-0 gap-[8px] flex-1 min-w-0 overflow-hidden">
+      <div 
+        onClick={(e) => {
+          e.stopPropagation();
+          router.push(authorLink);
+        }}
+        className="flex flex-row items-center p-0 gap-[8px] flex-1 min-w-0 overflow-hidden cursor-pointer group"
+      >
         {/* Avatar (Ellipse 10) */}
         <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0 bg-muted">
           <img src={avatarSrc} alt={author} className="w-full h-full object-cover" />
@@ -107,7 +115,7 @@ export const PostHeader = ({
                 </h3>
               </div>
             ) : (
-              <Link href={authorLink} className="hover:underline flex items-baseline gap-1.5" onClick={(e) => e.stopPropagation()}>
+              <Link href={authorLink} className=" flex items-baseline gap-1.5" onClick={(e) => e.stopPropagation()}>
                 <h3 className="text-foreground text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)]">
                   {author}
                 </h3>
@@ -123,15 +131,15 @@ export const PostHeader = ({
             )}
           </div>
           {!shared_post && (
-            <Link href={`/post/${id}`} className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground truncate w-full block cursor-pointer" title={authorRole || title || ''} onClick={(e) => e.stopPropagation()}>
+            <div className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground truncate w-full block" title={authorRole || title || ''}>
               {authorRole || title || ''}
-            </Link>
+            </div>
           )}
           {(location || timeAgo) && (() => {
             const displayLocation = location ? location.split(',')[0].trim() : '';
             const truncatedLocation = displayLocation.length > 15 ? displayLocation.slice(0, 15) + '..' : displayLocation;
             return (
-              <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
+              <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)] mt-0.5">
                 {location && <span title={location}>{truncatedLocation}</span>}
                 {location && timeAgo && <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />}
                 {timeAgo && <span className="shrink-0">{timeAgo}</span>}
@@ -200,7 +208,6 @@ export const PostHeader = ({
 
                   {isOwnPost && (
                     <div className="flex flex-col gap-1">
-                      {!poll && (
                         <button
                           onClick={(e) => { e.stopPropagation(); onEdit(); setShowOptions(false); }}
                           className="flex items-center justify-between w-full px-3 py-2 cursor-pointer hover:bg-[#EEF2FF] hover:text-[#6366F1] focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none transition-colors group"
@@ -208,7 +215,6 @@ export const PostHeader = ({
                           <span className="text-[14px] font-[family-name:var(--font-poppins)] text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]">Edit post</span>
                           <Icon icon="hugeicons:edit-03" className="w-6 h-6 text-black group-hover:text-[#6366F1] group-focus:text-[#6366F1]" style={{ strokeWidth: '1.5px' }} />
                         </button>
-                      )}
                       {poll && (
                         <button
                           onClick={(e) => { e.stopPropagation(); onShowAnalytics(); setShowOptions(false); }}

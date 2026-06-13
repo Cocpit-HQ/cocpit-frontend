@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import { useConnectionStore } from '@/store/connection.store';
 import { useConnectionRequests }   from './hooks/useConnectionRequests';
 import { useConnectionCounts }     from './hooks/useConnectionCounts';
@@ -34,11 +36,18 @@ interface ConnectionPageProps {
    * expanded → shows all cards + back header, no suggestions
    */
   view?: ConnectionPageView;
+  initialTab?: 'received' | 'sent';
 }
 
-export function ConnectionPage({ view = 'main' }: ConnectionPageProps) {
-  const { activeTab } = useConnectionStore();
+export function ConnectionPage({ view = 'main', initialTab }: ConnectionPageProps) {
+  const { activeTab, setActiveTab } = useConnectionStore();
   const isExpanded    = view === 'expanded';
+
+  useEffect(() => {
+    if (initialTab && initialTab !== activeTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, activeTab, setActiveTab]);
 
   const {
     data,
@@ -49,10 +58,9 @@ export function ConnectionPage({ view = 'main' }: ConnectionPageProps) {
 
   const { data: counts } = useConnectionCounts();
 
-  // How many to show on main view (preview 3 for received, show all for sent)
   const allRequests     = data?.data ?? [];
   const totalCount      = data?.totalCount ?? 0;
-  const previewLimit    = (isExpanded || activeTab === 'sent') ? allRequests.length : 3;
+  const previewLimit    = isExpanded ? allRequests.length : 3;
   const displayRequests = allRequests.slice(0, previewLimit);
 
   // Which inbox count to show for active tab
@@ -66,8 +74,8 @@ export function ConnectionPage({ view = 'main' }: ConnectionPageProps) {
   const showEmpty     = !isLoading && !isError && allRequests.length === 0;
   const showContent   = !isLoading && !isError && allRequests.length > 0;
 
-  // Suggestions: only on received tab in main view
-  const showSuggestions = activeTab === 'received' && !isExpanded;
+  // Suggestions: shown on both tabs in main view
+  const showSuggestions = !isExpanded;
 
   return (
     <main className="min-h-screen bg-background px-4 sm:px-5 py-4 sm:py-6">
@@ -121,9 +129,9 @@ export function ConnectionPage({ view = 'main' }: ConnectionPageProps) {
                 mode={activeTab}
               />
 
-              {/* See All — full-width bottom bar, only in main view when received tab has > 3 */}
-              {!isExpanded && activeTab === 'received' && (
-                <SeeAllLink count={totalCount} />
+              {/* See All — full-width bottom bar, only in main view when we have > 3 */}
+              {!isExpanded && (
+                <SeeAllLink count={totalCount} href={`/connections/${activeTab}`} />
               )}
             </div>
           )}

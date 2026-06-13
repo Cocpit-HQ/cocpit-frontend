@@ -95,6 +95,7 @@ export const useConnectionActions = () => {
     onSuccess: (_data, userId) => {
       // Mark as requested for instant UI toggle (Requested state)
       setFollowed(userId);
+      invalidateAll();
       // After short delay, refetch suggestions so a new user fills the slot
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['connection-suggestions'] });

@@ -368,11 +368,11 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
       } else if (state.articleData) {
         finalContent = `${state.description.trim()}<!-- article_divider -->${state.articleData.content}`;
       } else {
-        finalContent = sanitizeContent(state.postType === 'poll' ? poll.pollQuestion : state.description);
+        finalContent = sanitizeContent(state.description);
       }
 
       const payload: any = {
-        title: state.postType === 'article' ? state.articleTitle.trim() : (state.articleData ? state.articleData.title : ''),
+        title: state.postType === 'poll' ? poll.pollQuestion : (state.postType === 'article' ? state.articleTitle.trim() : (state.articleData ? state.articleData.title : '')),
         content: finalContent,
         category: safeCategory,
         visibility: state.visibility,

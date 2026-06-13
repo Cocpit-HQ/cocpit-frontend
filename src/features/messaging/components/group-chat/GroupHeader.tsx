@@ -45,7 +45,7 @@ export default function GroupHeader({
     currentUserId,
     isMuted = false
 }: GroupHeaderProps) {
-    const { activeGroup, isInactive } = useGroupChat();
+    const { activeGroup, isInactive, deleteGroup } = useGroupChat();
     const { activeProfile } = useActiveProfile();
     const isMobile = useIsMobile();
     const { user } = useAuth();
@@ -219,13 +219,27 @@ export default function GroupHeader({
                                     <BellOff className="w-4 h-4" />
                                 </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem
-                                onClick={onLeaveGroup}
-                                className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[var(--primary-tint)] text-[var(--destructive)] focus:text-[var(--destructive)] rounded-md transition-colors"
-                            >
-                                <span className="text-sm font-normal">Leave Group</span>
-                                <LogOut className="w-4 h-4" />
-                            </DropdownMenuItem>
+                            {(!isInactive && activeGroup.members.some(m => m.user_id === currentUserId)) ? (
+                                <DropdownMenuItem
+                                    onClick={onLeaveGroup}
+                                    className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[var(--primary-tint)] text-[var(--destructive)] focus:text-[var(--destructive)] rounded-md transition-colors"
+                                >
+                                    <span className="text-sm font-normal">Leave Group</span>
+                                    <LogOut className="w-4 h-4" />
+                                </DropdownMenuItem>
+                            ) : (
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        if (confirm("Delete group from your list? This will not affect other members.")) {
+                                            deleteGroup(activeGroup.conversation_id);
+                                        }
+                                    }}
+                                    className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[var(--primary-tint)] text-[var(--destructive)] focus:text-[var(--destructive)] rounded-md transition-colors"
+                                >
+                                    <span className="text-sm font-normal">Delete Group</span>
+                                    <Trash2 className="w-4 h-4" />
+                                </DropdownMenuItem>
+                            )}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </>

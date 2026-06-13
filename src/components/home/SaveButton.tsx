@@ -70,8 +70,8 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
             disabled={isLoading}
             aria-label={isSaved ? "Remove from saved" : "Save post"}
             className={cn(
-                "flex flex-col items-center justify-center gap-0.5 transition-all duration-200 flex-1 py-1.5 rounded-xl hover:bg-muted/50 active:scale-95 group",
-                isSaved ? "text-primary" : "text-foreground hover:text-primary",
+                "flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 group",
+                isSaved ? "text-primary hover:opacity-80" : "text-foreground hover:text-primary",
                 className
             )}
         >
@@ -81,9 +81,7 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
                     width="24"
                     height="24"
                     viewBox="0 0 24 24"
-                    className={cn(
-                        "w-4 h-4 md:w-5 md:h-5 transition-transform duration-200 group-hover:scale-110"
-                    )}
+                    className="w-4 h-4 md:w-5 md:h-5"
                 >
                     {isSaved ? (
                         <path 

@@ -31,7 +31,7 @@ interface GroupDetailsProps {
 }
 
 export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMember, activeView, setActiveView }: GroupDetailsProps) {
-    const { activeGroup, leaveGroup, deleteGroup, removeMember, promoteToAdmin, updateMemberRole, isInactive, refreshGroup, cancelInvitation } = useGroupChat();
+    const { activeGroup, leaveGroup, deleteGroup, removeMember, promoteToAdmin, updateMemberRole, isInactive, refreshGroup, cancelInvitation, sentInvitations } = useGroupChat();
     const { isUserOnline } = useSocket();
     const { blockUser } = useSocial();
     const { toast } = useToast();
@@ -209,21 +209,16 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
 
     const visibleMembers = activeGroup.members
         .filter(m => !isInactive || m.user_id !== currentUserId)
-        .filter(m => !m.isPending || isAdmin) // ONLY SHOW PENDING IF ADMIN
         .sort((a, b) => {
-            // 1. Accepted first, pending after (per rule 10)
-            if (a.isPending && !b.isPending) return 1;
-            if (!a.isPending && b.isPending) return -1;
-
-            // 2. Current user always first among accepted
+            // 1. Current user always first among accepted
             if (a.user_id === currentUserId) return -1;
             if (b.user_id === currentUserId) return 1;
 
-            // 3. Admins before members (among accepted)
+            // 2. Admins before members (among accepted)
             if (a.role === 'admin' && b.role !== 'admin') return -1;
             if (b.role === 'admin' && a.role !== 'admin') return 1;
 
-            // 4. Alphabetical by name
+            // 3. Alphabetical by name
             return (a.full_name || "").localeCompare(b.full_name || "");
         });
 
@@ -304,7 +299,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                     )}
                 </div>
 
-                {/* 6. MEMBER LIST (scrollable) - FIX 2 — MEMBER LIST OVERLAP */}
+                {/* 6. MEMBER LIST (scrollable) */}
                 <div className="flex flex-col  overflow-y-auto  max-h-[400px] pr-[2px]"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     <style>{`div::-webkit-scrollbar { display: none; }`}</style>
@@ -314,10 +309,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                             className="flex flex-row justify-between items-center py-[8px] gap-[8px] w-full h-[56px] bg-[var(--card)] rounded-[24px] relative"
                         >
                             {/* Left: Avatar */}
-                            <div className={cn(
-                                "w-[32px] h-[32px] rounded-full overflow-hidden bg-muted shrink-0 self-stretch",
-                                member.isPending && "opacity-50"
-                            )}>
+                            <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-muted shrink-0 self-stretch">
                                 {member.avatar_url ? (
                                     <Image src={member.avatar_url} alt={member.full_name} width={32} height={32} className="object-cover w-full h-full" />
                                 ) : (
@@ -328,20 +320,9 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                             </div>
 
                             {/* Middle: Name + Headline + Admin badge */}
-                            <div className={cn(
-                                "flex flex-col flex-1 ml-[8px]",
-                                member.isPending && "opacity-50"
-                            )}>
+                            <div className="flex flex-col flex-1 ml-[8px]">
                                 <span className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-[var(--foreground)] flex items-center gap-2">
                                     <span>{member.user_id === currentUserId ? "You" : member.full_name}</span>
-                                    {member.isPending && (
-                                        <span className="bg-[#EEF2FF] border border-[#6366F1] rounded-[24px] 
-                                            px-[6px] py-[2px] font-['Poppins'] font-medium 
-                                            text-[10px] leading-[14px] text-[#6366F1] 
-                                            whitespace-nowrap z-10">
-                                            Invited
-                                        </span>
-                                    )}
                                 </span>
                                 <div className="flex flex-row items-center">
                                     {member.headline != '' && (
@@ -377,21 +358,7 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                                             className="w-[220px] p-[8px] mr-4  bg-[var(--card)] border border-[var(--border)] z-[100]"
                                             style={{ borderRadius: '24px 0px 24px 24px' }}
                                         >
-                                            {member.isPending ? (
-                                                <DropdownMenuItem
-                                                    onClick={() => {
-                                                        if (member.invitation_id) {
-                                                            setInvitationToCancel(member.invitation_id);
-                                                        } else {
-                                                            toast({ title: "Error", description: "Invitation ID not found", variant: "destructive" });
-                                                        }
-                                                    }}
-                                                    className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
-                                                >
-                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Cancel invitation</span>
-                                                    <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
-                                                </DropdownMenuItem>
-                                            ) : member.user_id === currentUserId ? (
+                                            {member.user_id === currentUserId ? (
                                                 <DropdownMenuItem
                                                     onClick={() => setShowLeaveConfirm(true)}
                                                     className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
@@ -439,6 +406,66 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                             )}
                         </div>
                     ))}
+                    
+                    {/* Pending Invitations Section (Admin Only) */}
+                    {isAdmin && sentInvitations && sentInvitations.length > 0 && (
+                        <>
+                            <div className="flex flex-row items-center justify-between mt-[24px] mb-[12px]">
+                                <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">
+                                    Pending Invitations
+                                </span>
+                            </div>
+                            {sentInvitations.map((invitation) => (
+                                <div 
+                                    key={invitation.invitation_id} 
+                                    className="flex flex-row justify-between items-center py-[8px] gap-[8px] w-full h-[56px] bg-[var(--card)] rounded-[24px] relative"
+                                >
+                                    <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-muted shrink-0 self-stretch opacity-50">
+                                        {invitation.invitee_avatar ? (
+                                            <Image src={invitation.invitee_avatar} alt={invitation.invitee_name || ""} width={32} height={32} className="object-cover w-full h-full" />
+                                        ) : (
+                                            <div className="flex items-center justify-center h-full w-full bg-primary/10 text-primary text-[10px] font-bold">
+                                                {(invitation.invitee_name || "U").substring(0, 2).toUpperCase()}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col flex-1 ml-[8px] opacity-50">
+                                        <span className="font-['Poppins'] font-normal text-[16px] leading-[24px] text-[var(--foreground)] flex items-center gap-2">
+                                            <span>{invitation.invitee_name || "Invited User"}</span>
+                                            <span className="bg-[#EEF2FF] border border-[#6366F1] rounded-[24px] px-[6px] py-[2px] font-['Poppins'] font-medium text-[10px] leading-[14px] text-[#6366F1] whitespace-nowrap z-10">
+                                                Invited
+                                            </span>
+                                        </span>
+                                    </div>
+                                    <DropdownMenu onOpenChange={setIsDropdownOpen}>
+                                        <DropdownMenuTrigger asChild>
+                                            <Icon
+                                                icon="mdi-light:dots-vertical"
+                                                width={24}
+                                                height={24}
+                                                style={{ color: isDropdownOpen ? 'var(--primary)' : 'var(--foreground)' }}
+                                            />
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuPortal>
+                                            <DropdownMenuContent
+                                                align="end"
+                                                className="w-[220px] p-[8px] mr-4  bg-[var(--card)] border border-[var(--border)] z-[100]"
+                                                style={{ borderRadius: '24px 0px 24px 24px' }}
+                                            >
+                                                <DropdownMenuItem
+                                                    onClick={() => setInvitationToCancel(invitation.invitation_id)}
+                                                    className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"
+                                                >
+                                                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Cancel invitation</span>
+                                                    <Trash2 className="w-[19px] h-[20px] text-[var(--destructive)]" strokeWidth={1} />
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenuPortal>
+                                    </DropdownMenu>
+                                </div>
+                            ))}
+                        </>
+                    )}
                 </div>
 
                 {/* 7. LEAVE GROUP & DELETE GROUP BUTTONS */}
