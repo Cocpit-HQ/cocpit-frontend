@@ -1,9 +1,13 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useConnectionStore } from '@/store/connection.store';
 
 export function ConnectionHeader() {
   const router = useRouter();
+  const { activeTab } = useConnectionStore();
+
+  const title = activeTab === 'received' ? 'Received requests' : 'Sent requests';
 
   return (
     <header className="flex items-start gap-3 mb-6">
@@ -15,7 +19,7 @@ export function ConnectionHeader() {
         &#8249;
       </button>
       <div className="flex flex-col">
-        <h1 className="text-xl font-semibold text-foreground">Received requests</h1>
+        <h1 className="text-xl font-semibold text-foreground">{title}</h1>
         <p className="text-sm text-muted-foreground">
           Stay update with your account activity
         </p>

@@ -100,7 +100,7 @@ export function SuggestionCard({ user }: SuggestionCardProps) {
   const showAvatar  = !!user.avatarUrl && !imgError;
 
   return (
-    <div className="flex flex-col items-center text-center gap-2 p-4 h-full bg-card rounded-[24px] border border-border shadow-sm transition hover:shadow-md">
+    <div className="flex flex-col items-center text-center gap-2 p-3 sm:p-4 h-full bg-card rounded-[24px] border border-border shadow-sm transition hover:shadow-md">
       {/* Avatar */}
       <Link href={`/profile/${user.id}`} className="shrink-0 outline-none rounded-full focus-visible:ring-2 focus-visible:ring-primary" tabIndex={-1}>
         {showAvatar ? (
@@ -109,11 +109,11 @@ export function SuggestionCard({ user }: SuggestionCardProps) {
             alt={user.name}
             width={80}
             height={80}
-            className="w-[100px] h-[100px] rounded-full object-cover bg-primary/10"
+            className="w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] rounded-full object-cover bg-primary/10"
             onError={() => setImgError(true)}
           />
         ) : (
-          <div className="flex items-center justify-center w-[100px] h-[100px] rounded-full bg-primary/10 text-primary text-3xl font-medium tracking-wide" aria-hidden="true">
+          <div className="flex items-center justify-center w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] rounded-full bg-primary/10 text-primary text-2xl sm:text-3xl font-medium tracking-wide" aria-hidden="true">
             {getInitials(user.name)}
           </div>
         )}
@@ -121,10 +121,10 @@ export function SuggestionCard({ user }: SuggestionCardProps) {
 
       <div className="flex flex-col w-full flex-1">
         <div className="flex flex-col items-center min-h-[40px]">
-          <Link href={`/profile/${user.id}`} className="shrink-0 outline-none rounded-sm focus-visible:ring-2 focus-visible:ring-primary group max-w-[90%]">
-            <p className="text-base font-medium text-foreground leading-6 truncate w-full group-hover:text-primary transition-colors">{user.name}</p>
+          <Link href={`/profile/${user.id}`} className="shrink-0 outline-none rounded-sm focus-visible:ring-2 focus-visible:ring-primary group max-w-[95%] sm:max-w-[90%]">
+            <p className="text-[15px] sm:text-base font-medium text-foreground leading-[20px] sm:leading-6 truncate w-full group-hover:text-primary transition-colors">{user.name}</p>
           </Link>
-          <p className="text-[13px] text-muted-foreground leading-4 line-clamp-2 mt-1 w-full">{user.headline}</p>
+          <p className="text-xs sm:text-[13px] text-muted-foreground leading-[18px] sm:leading-4 line-clamp-2 mt-1 w-full">{user.headline}</p>
         </div>
         <MetaRow user={user} />
       </div>

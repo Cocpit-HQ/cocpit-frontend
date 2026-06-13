@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function ConnectionReceivedRoute() {
-  return <ConnectionPage view="expanded" />;
+  return <ConnectionPage view="expanded" initialTab="received" />;
 }
