@@ -54,6 +54,7 @@
   --color-profile-active-bg: var(--profile-active-bg);
   --color-profile-active-border: var(--profile-active-border);
   --color-profile-text: var(--profile-text);
+  --color-subtle: var(--subtle);
 }
 
 @layer base {
@@ -128,10 +129,12 @@
     --card-shadow-inner: 0px 0px 4px rgba(99, 102, 241, 0.05);
     --card-border-inner: transparent;
 
-    --profile-hover: #EEF2FF;
-    --profile-active-bg: #F5F7FF;
+    --profile-hover: #2A3150;
+    --profile-active-bg: #2A3150;
     --profile-active-border: #EEF2FF;
     --profile-text: #000000;
+    --edit-btn-hover: #2A3150;
+    --subtle: #2A3150;
   }
 
   [data-theme="navy"] {
@@ -177,18 +180,19 @@
     --profile-text: #ffffff;
     --primary-tint: #242b3d;
     --primary-tint-foreground: #818CF8;
+    --subtle: #2A3150;
   }
 
 
   [data-theme="light"] {
     --background: #ffffff;
-    --foreground: #1A1A1A;
+    --foreground: #000000;
 
     --card: #ffffff;
-    --card-foreground: #1A1A1A;
+    --card-foreground: #000000;
 
     --popover: #ffffff;
-    --popover-foreground: #1A1A1A;
+    --popover-foreground: #000000;
 
     --primary: #6366F1;
     --primary-foreground: #ffffff;
@@ -202,7 +206,7 @@
     --accent: #f3f4f6;
     --accent-foreground: #1f2937;
 
-    --destructive: #ef4444;
+    --destructive: #FF6B6B;
     --destructive-foreground: #ffffff;
 
     --border: #e5e7eb;
@@ -224,12 +228,13 @@
 
     --card-shadow-inner: 0px 0px 4px 0px #6366F10D;
     --card-border-inner: transparent;
-    --edit-btn-hover: #C7D2FE;
+    --edit-btn-hover: #EEF2FF;
 
     --profile-hover: #EEF2FF;
-    --profile-active-bg: #F5F7FF;
+    --profile-active-bg: #EEF2FF;
     --profile-active-border: #EEF2FF;
     --profile-text: #000000;
+    --subtle: #EEF2FF;
   }
 
   [data-theme="dark"] {
@@ -243,7 +248,7 @@
     --surface-1: #111827;
     --surface-2: #161D2E;
     --surface-3: #1A2236;
-    --accent-primary: #6366F1;
+    --accent-primary: #818CF8;
     --accent-secondary: #818CF8;
     --text-heading: #F9FAFB;
     --text-body: #9CA3AF;
@@ -264,45 +269,45 @@
 
     /* ── Core Design Tokens ─────────────────────────── */
     --background: #0B0F19;
-    --foreground: #F1F5F9;
+    --foreground: #F9FAFB;
 
     --card: #0B0F19;
-    --card-foreground: #F1F5F9;
+    --card-foreground: #F9FAFB;
 
     --popover: #161D2E;
-    --popover-foreground: #F1F5F9;
+    --popover-foreground: #F9FAFB;
 
-    --primary: #6366F1;
+    --primary: #818CF8;
     --primary-foreground: #ffffff;
 
     --secondary: #1A2236;
-    --secondary-foreground: #F1F5F9;
+    --secondary-foreground: #F9FAFB;
 
     --muted: #1A2236;
     --muted-foreground: #9CA3AF;
 
     --accent: #1A2236;
-    --accent-foreground: #F1F5F9;
+    --accent-foreground: #F9FAFB;
 
-    --destructive: #991b1b;
+    --destructive: #F87171;
     --destructive-foreground: #f8fafc;
 
     --border: #1C2840;
     --input: #1A2236;
-    --ring: #6366F1;
+    --ring: #818CF8;
 
     /* ── Sidebar ────────────────────────────────────── */
     --sidebar-background: #0B0F19;
-    --sidebar-foreground: #F1F5F9;
-    --sidebar-primary: #6366F1;
+    --sidebar-foreground: #F9FAFB;
+    --sidebar-primary: #818CF8;
     --sidebar-primary-foreground: #ffffff;
     --sidebar-accent: #1A2236;
-    --sidebar-accent-foreground: #F1F5F9;
+    --sidebar-accent-foreground: #F9FAFB;
     --sidebar-border: #1C2840;
-    --sidebar-ring: #6366F1;
+    --sidebar-ring: #818CF8;
 
     /* ── Gradients & Shadows ────────────────────────── */
-    --gradient-primary: linear-gradient(120deg, #6366F1 0%, #818CF8 100%);
+    --gradient-primary: linear-gradient(120deg, #818CF8 0%, #A5B4FC 100%);
     --gradient-subtle: linear-gradient(180deg, #111827 0%, #0B0F19 100%);
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
@@ -322,6 +327,7 @@
     --profile-active-bg: #2A3150;
     --profile-active-border: #1C2840;
     --profile-text: #ffffff;
+    --subtle: #2A3150;
   }
 }
 
@@ -1031,16 +1037,36 @@
 [data-theme="dark"] [class*="focus:bg-[#EEF2FF]"]:focus,
 [data-theme="dark"] .hover\:bg-\[\#EEF2FF\]:hover,
 [data-theme="dark"] .data-\[highlighted\]\:bg-\[\#EEF2FF\][data-highlighted],
-[data-theme="dark"] .data-\[highlighted\]\:bg-white[data-highlighted] {
-  background-color: #A5B4FC !important;
+[data-theme="dark"] .data-\[highlighted\]\:bg-white[data-highlighted],
+[data-theme="navy"] [role="menuitem"]:not(.profile-switcher-item):hover,
+[data-theme="navy"] [role="menuitem"]:not(.profile-switcher-item)[data-highlighted],
+[data-theme="navy"] .focus\:bg-\[\#EEF2FF\]:focus,
+[data-theme="navy"] [class*="focus:bg-[#EEF2FF]"]:focus,
+[data-theme="navy"] .hover\:bg-\[\#EEF2FF\]:hover,
+[data-theme="navy"] .data-\[highlighted\]\:bg-\[\#EEF2FF\][data-highlighted],
+[data-theme="navy"] .data-\[highlighted\]\:bg-white[data-highlighted] {
+  background-color: #2A3150 !important;
   color: #FFFFFF !important;
 }
 
 [data-theme="dark"] [role="menuitem"]:not(.profile-switcher-item):hover *,
 [data-theme="dark"] [role="menuitem"]:not(.profile-switcher-item)[data-highlighted] *,
 [data-theme="dark"] [class*="hover:bg-[#EEF2FF]"]:hover *,
-[data-theme="dark"] [class*="data-[highlighted]:bg-[#EEF2FF]"][data-highlighted] * {
+[data-theme="dark"] [class*="data-[highlighted]:bg-[#EEF2FF]"][data-highlighted] *,
+[data-theme="navy"] [role="menuitem"]:not(.profile-switcher-item):hover *,
+[data-theme="navy"] [role="menuitem"]:not(.profile-switcher-item)[data-highlighted] *,
+[data-theme="navy"] [class*="hover:bg-[#EEF2FF]"]:hover *,
+[data-theme="navy"] [class*="data-[highlighted]:bg-[#EEF2FF]"][data-highlighted] * {
   color: #FFFFFF !important;
+}
+
+[data-theme="light"] .focus\:bg-\[\#EEF2FF\]:focus,
+[data-theme="light"] [class*="focus:bg-[#EEF2FF]"]:focus,
+[data-theme="light"] .hover\:bg-\[\#EEF2FF\]:hover,
+[data-theme="light"] .data-\[highlighted\]\:bg-\[\#EEF2FF\][data-highlighted],
+[data-theme="light"] [role="menuitem"]:not(.profile-switcher-item):hover,
+[data-theme="light"] [role="menuitem"]:not(.profile-switcher-item)[data-highlighted] {
+  background-color: #EEF2FF !important;
 }
 
 /* ── Remove Open State Background Effect ───────────────── */
@@ -1050,9 +1076,91 @@
 }
 
 /* ── Hover states ───────────────────────────────────────── */
-[data-theme="dark"] .hover\:bg-slate-50:hover {
-  background-color: var(--surface-2) !important;
+[data-theme="dark"] .hover\:bg-slate-50:hover,
+[data-theme="navy"] .hover\:bg-slate-50:hover,
+[data-theme="dark"] .hover\:bg-slate-100:hover,
+[data-theme="navy"] .hover\:bg-slate-100:hover {
+  background-color: #2A3150 !important;
 }
+
+[data-theme="light"] .hover\:bg-slate-50:hover,
+[data-theme="light"] .hover\:bg-slate-100:hover {
+  background-color: #EEF2FF !important;
+}
+
+/* ── Red / Destructive Hover Overrides for Logout/Delete ── */
+[data-theme="light"] .hover\:bg-red-50:hover,
+[data-theme="light"] .focus\:bg-red-50:focus,
+[data-theme="light"] .hover\:bg-\[\#FFF0F0\]:hover,
+[data-theme="light"] .focus\:bg-\[\#FFF0F0\]:focus,
+[data-theme="light"] .hover\:bg-red-500\/10:hover,
+[data-theme="light"] .focus\:bg-red-500\/10:focus,
+[data-theme="light"] .hover\:bg-red-500\/20:hover,
+[data-theme="light"] .focus\:bg-red-500\/20:focus,
+[data-theme="light"] [class*="hover:bg-red-50"]:hover,
+[data-theme="light"] [class*="focus:bg-red-50"]:focus,
+[data-theme="light"] [class*="hover:bg-[#FFF0F0]"]:hover,
+[data-theme="light"] [class*="focus:bg-[#FFF0F0]"]:focus,
+[data-theme="light"] [class*="hover:bg-red-500/"]:hover,
+[data-theme="light"] [class*="focus:bg-red-500/"]:focus,
+[data-theme="light"] [class*="hover:bg-destructive/"]:hover,
+[data-theme="light"] [class*="focus:bg-destructive/"]:focus,
+.hover\:bg-red-50:hover,
+.focus\:bg-red-50:focus,
+.hover\:bg-\[\#FFF0F0\]:hover,
+.focus\:bg-\[\#FFF0F0\]:focus,
+.hover\:bg-red-500\/10:hover,
+.focus\:bg-red-500\/10:focus,
+.hover\:bg-red-500\/20:hover,
+.focus\:bg-red-500\/20:focus,
+[class*="hover:bg-red-50"]:hover,
+[class*="focus:bg-red-50"]:focus,
+[class*="hover:bg-[#FFF0F0]"]:hover,
+[class*="focus:bg-[#FFF0F0]"]:focus,
+[class*="hover:bg-red-500/"]:hover,
+[class*="focus:bg-red-500/"]:focus,
+[class*="hover:bg-destructive/"]:hover,
+[class*="focus:bg-destructive/"]:focus {
+  background-color: #FEE2E2 !important;
+}
+
+[data-theme="dark"] .hover\:bg-red-50:hover,
+[data-theme="dark"] .focus\:bg-red-50:focus,
+[data-theme="dark"] .hover\:bg-\[\#FFF0F0\]:hover,
+[data-theme="dark"] .focus\:bg-\[\#FFF0F0\]:focus,
+[data-theme="dark"] .hover\:bg-red-950\/20:hover,
+[data-theme="dark"] .hover\:bg-red-500\/10:hover,
+[data-theme="dark"] .focus\:bg-red-500\/10:focus,
+[data-theme="dark"] [class*="hover:bg-red-50"]:hover,
+[data-theme="dark"] [class*="focus:bg-red-50"]:focus,
+[data-theme="dark"] [class*="hover:bg-[#FFF0F0]"]:hover,
+[data-theme="dark"] [class*="focus:bg-[#FFF0F0]"]:focus,
+[data-theme="dark"] [class*="hover:bg-red-500/"]:hover,
+[data-theme="dark"] [class*="focus:bg-red-500/"]:focus,
+[data-theme="dark"] [class*="hover:bg-red-950/"]:hover,
+[data-theme="dark"] [class*="focus:bg-red-950/"]:focus,
+[data-theme="dark"] [class*="hover:bg-destructive/"]:hover,
+[data-theme="dark"] [class*="focus:bg-destructive/"]:focus,
+[data-theme="navy"] .hover\:bg-red-50:hover,
+[data-theme="navy"] .focus\:bg-red-50:focus,
+[data-theme="navy"] .hover\:bg-\[\#FFF0F0\]:hover,
+[data-theme="navy"] .focus\:bg-\[\#FFF0F0\]:focus,
+[data-theme="navy"] .hover\:bg-red-950\/20:hover,
+[data-theme="navy"] .hover\:bg-red-500\/10:hover,
+[data-theme="navy"] .focus\:bg-red-500\/10:focus,
+[data-theme="navy"] [class*="hover:bg-red-50"]:hover,
+[data-theme="navy"] [class*="focus:bg-red-50"]:focus,
+[data-theme="navy"] [class*="hover:bg-[#FFF0F0]"]:hover,
+[data-theme="navy"] [class*="focus:bg-[#FFF0F0]"]:focus,
+[data-theme="navy"] [class*="hover:bg-red-500/"]:hover,
+[data-theme="navy"] [class*="focus:bg-red-500/"]:focus,
+[data-theme="navy"] [class*="hover:bg-red-950/"]:hover,
+[data-theme="navy"] [class*="focus:bg-red-950/"]:focus,
+[data-theme="navy"] [class*="hover:bg-destructive/"]:hover,
+[data-theme="navy"] [class*="focus:bg-destructive/"]:focus {
+  background-color: #7F1D1D !important;
+}
+
 
 [data-theme="dark"] .bg-slate-50 {
   background-color: var(--surface-2) !important;
