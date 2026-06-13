@@ -87,7 +87,7 @@ export function ProfileSwitcher({
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-[320px] h-auto pt-2 pb-2 px-2 flex flex-col gap-2 rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-0 border-profile-active-border shadow-[0px_4px_20px_rgba(99,102,241,0.1)] font-[family-name:var(--font-poppins)]"
+        className="w-[320px] h-auto pt-2 pb-2 px-2 flex flex-col gap-2 rounded-tl-[24px] rounded-bl-[24px] rounded-br-[24px] rounded-tr-0 profile-popover-custom border shadow-none font-[family-name:var(--font-poppins)]"
         align={align}
         forceMount
       >
@@ -277,9 +277,9 @@ export function ProfileSwitcher({
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={handleLogout}
-            className="profile-switcher-item flex items-center gap-3 p-2 h-[44px] cursor-pointer rounded-[12px] text-[#F87171] focus:bg-profile-hover hover:bg-profile-hover focus:text-[#F87171] transition-colors outline-none"
+            className="profile-switcher-item flex items-center gap-3 p-2 h-[44px] cursor-pointer rounded-[12px] text-[#FF6B6B] focus:bg-[#FFF0F0] hover:bg-[#FFF0F0] dark:focus:bg-red-500/10 dark:hover:bg-red-500/10 focus:text-[#FF6B6B] hover:text-[#FF6B6B] transition-colors outline-none"
           >
-            <LogOut className="w-5 h-5" />
+            <LogOut className="w-5 h-5 text-current" />
             <span className="text-[15px] leading-[22px] font-normal">
               Log out
             </span>

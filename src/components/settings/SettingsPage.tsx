@@ -515,13 +515,6 @@ export default function SettingsPage() {
                         isSelected={pendingTheme === "dark"}
                         onClick={() => setPendingTheme("dark")}
                       />
-                      <ThemeOption
-                        icon={<Monitor className="w-5 h-5" />}
-                        title="System"
-                        description="Follow your device's setting"
-                        isSelected={pendingTheme === "system"}
-                        onClick={() => setPendingTheme("system")}
-                      />
                     </div>
                   </div>
 

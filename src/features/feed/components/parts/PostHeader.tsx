@@ -107,7 +107,7 @@ export const PostHeader = ({
                 </h3>
               </div>
             ) : (
-              <Link href={authorLink} className="hover:underline flex items-baseline gap-1.5" onClick={(e) => e.stopPropagation()}>
+              <Link href={authorLink} className=" flex items-baseline gap-1.5" onClick={(e) => e.stopPropagation()}>
                 <h3 className="text-foreground text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)]">
                   {author}
                 </h3>
