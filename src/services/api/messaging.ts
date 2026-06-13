@@ -2,15 +2,14 @@ import api from "@/lib/axios";
 import { BackendChat, BackendMessage } from "@/types/messaging";
 
 export const getConversations = async (params?: { companyId?: string }): Promise<BackendChat[]> => {
-  const { companyId, ...rest } = params || {};
-  const response = await api.get("/conversations", { params: rest });
+  const response = await api.get("/conversations", { params });
   return response.data;
 };
 
 export const getMessages = async (conversationId: string, limit: number = 50, before?: string | null, companyId?: string): Promise<BackendMessage[]> => {
   const params: any = { limit };
   if (before) params.before = before;
-  void companyId;
+  if (companyId) params.companyId = companyId;
   const response = await api.get(`/conversations/${conversationId}/messages`, { params });
   return response.data;
 };
@@ -47,8 +46,7 @@ export const sendMessage = async (targetUserId: string, text_content: string, sh
 };
 
 export const markAsRead = async (conversationId: string, companyId?: string) => {
-  void companyId;
-  const response = await api.patch(`/conversations/${conversationId}/read`);
+  const response = await api.patch(`/conversations/${conversationId}/read`, companyId ? { companyId } : undefined);
   return response.data;
 };
 
