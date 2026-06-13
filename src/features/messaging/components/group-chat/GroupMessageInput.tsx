@@ -101,13 +101,15 @@ export default function GroupMessageInput({ onSendMessage, onTyping, isLoading }
         return <FileText className="w-4 h-4" />;
     };
 
-    const { isInactive } = useGroupChat();
+    const { activeGroup, isInactive } = useGroupChat();
 
     if (isInactive) {
         return (
             <div className="p-4 border-t w-full bg-muted/50 border-border shrink-0 flex items-center justify-center">
-                <p className="text-sm font-medium text-muted-foreground bg-background px-4 py-2 rounded-full border border-border shadow-sm">
-                    You left this group. You can no longer send messages.
+                <p className="text-sm font-medium text-muted-foreground bg-background px-4 py-2 rounded-full border border-border shadow-sm text-center">
+                    {activeGroup?.was_removed 
+                        ? "You have been removed from this group by the admin"
+                        : "You left this group. You can no longer send messages."}
                 </p>
             </div>
         );

@@ -124,26 +124,58 @@ export const PostContent = ({
       `}</style>
 
       {/* Main post description/caption */}
-      {content && !isArticle && (
-        <div className="w-full">
-          <div
-            className={`font-normal font-[family-name:var(--font-poppins)] text-[12px] leading-[16px] text-foreground whitespace-pre-wrap ${!isFullContent && !isExpanded ? 'line-clamp-2' : ''}`}
-          >
-            <RichTextRenderer content={content} authorName={author} authorSlug={authorSlug} />
-          </div>
-          {!isFullContent && (content.length > 150 || content.split('\n').length > 3) && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleExpand?.();
-              }}
-              className="text-[12px] text-[#6366F1] hover:text-[#6366F1]/80 mt-1 font-medium font-[family-name:var(--font-poppins)] focus:outline-none transition-colors inline-block"
+      {content && !isArticle && (() => {
+        const truncateLength = 240;
+        const isLong = !isFullContent && (content.length > truncateLength || content.split('\n').length > 3);
+        let displayContent = content;
+        
+        if (isLong && !isExpanded) {
+          const lines = content.split('\n');
+          if (lines.length > 3) {
+            displayContent = lines.slice(0, 3).join('\n');
+          }
+          if (displayContent.length > truncateLength) {
+            displayContent = displayContent.slice(0, truncateLength).trimEnd();
+          }
+        }
+
+        return (
+          <div className="w-full">
+            <div
+              className={`font-normal font-[family-name:var(--font-poppins)] text-[12px] leading-[16px] text-foreground whitespace-pre-wrap ${!isFullContent && !isExpanded ? 'line-clamp-3' : ''}`}
             >
-              {isExpanded ? 'Show less' : 'Read more'}
-            </button>
-          )}
-        </div>
-      )}
+              <span className="inline">
+                <RichTextRenderer content={displayContent} authorName={author} authorSlug={authorSlug} />
+              </span>
+              {isLong && !isExpanded && (
+                <span className="inline">
+                  ...{' '}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleExpand?.();
+                    }}
+                    className="inline text-[#6366F1] hover:text-[#6366F1]/80 font-medium font-[family-name:var(--font-poppins)] focus:outline-none transition-colors"
+                  >
+                    Read more
+                  </button>
+                </span>
+              )}
+            </div>
+            {isLong && isExpanded && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleExpand?.();
+                }}
+                className="text-[12px] text-[#6366F1] hover:text-[#6366F1]/80 mt-1 font-medium font-[family-name:var(--font-poppins)] focus:outline-none transition-colors inline-block"
+              >
+                Show less
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Inline Article Card */}
       {isArticle && (
