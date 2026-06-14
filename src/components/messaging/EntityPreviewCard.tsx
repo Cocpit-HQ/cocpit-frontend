@@ -10,6 +10,7 @@ import { fetchEntityPreview, EntityPreview, EntityType } from "@/services/api/sh
 interface EntityPreviewCardProps {
     entityType: EntityType;
     entityId: string;
+    onLoad?: () => void;
 }
 
 // ─── Icon Map ───────────────────────────────────────────────
@@ -32,7 +33,7 @@ const ENTITY_LABELS: Record<EntityType, string> = {
 
 // ─── Component ──────────────────────────────────────────────
 
-export function EntityPreviewCard({ entityType, entityId }: EntityPreviewCardProps) {
+export function EntityPreviewCard({ entityType, entityId, onLoad }: EntityPreviewCardProps) {
     const router = useRouter();
     const [preview, setPreview] = useState<EntityPreview | null>(null);
     const [loading, setLoading] = useState(true);
@@ -58,11 +59,33 @@ export function EntityPreviewCard({ entityType, entityId }: EntityPreviewCardPro
         return () => { cancelled = true; };
     }, [entityType, entityId]);
 
+    useEffect(() => {
+        if (!loading) {
+            onLoad?.();
+        }
+    }, [loading, onLoad]);
+
     if (loading) {
         return (
-            <div className="mt-1 mb-2 rounded-xl bg-background/60 backdrop-blur-sm border border-white/10 p-4 max-w-[280px] flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Loading preview…</span>
+            <div className="mt-1 mb-2 rounded-xl bg-background/60 backdrop-blur-sm border border-white/10 overflow-hidden max-w-[280px] w-full animate-pulse">
+                {/* Header — Avatar + Title */}
+                <div className="p-3 border-b border-white/10 flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-muted shrink-0" />
+                    <div className="flex flex-col gap-1.5 flex-1">
+                        <div className="h-3 bg-muted rounded w-2/3" />
+                        <div className="h-2.5 bg-muted rounded w-1/3" />
+                    </div>
+                </div>
+                {/* Content / Subtitle */}
+                <div className="p-3 space-y-1.5">
+                    <div className="h-2.5 bg-muted rounded w-full" />
+                    <div className="h-2.5 bg-muted rounded w-5/6" />
+                    
+                    <div className="flex items-center gap-1 pt-1.5">
+                        <div className="w-3 h-3 bg-muted rounded" />
+                        <div className="h-2.5 bg-muted rounded w-1/3" />
+                    </div>
+                </div>
             </div>
         );
     }
@@ -90,6 +113,7 @@ export function EntityPreviewCard({ entityType, entityId }: EntityPreviewCardPro
                             src={preview.image}
                             alt={preview.title}
                             className="w-full h-full object-cover"
+                            onLoad={onLoad}
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-white">

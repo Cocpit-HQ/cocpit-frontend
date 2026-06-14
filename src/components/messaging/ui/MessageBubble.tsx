@@ -524,6 +524,7 @@ function MessageBubble(props: MessageBubbleProps) {
                     <EntityPreviewCard
                       entityType={message.entityType}
                       entityId={message.entityId}
+                      onLoad={onMediaLoad}
                     />
                   </div>
                 )}

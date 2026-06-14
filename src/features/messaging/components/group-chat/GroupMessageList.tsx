@@ -3,6 +3,7 @@ import { Message } from "@/types/messaging";
 import SystemMessage from "./SystemMessage";
 import { Loader2, ChevronDown } from "lucide-react";
 import MessageBubble from "../ui/MessageBubble";
+import MessageSkeleton from "../skeletons/MessageSkeleton";
 
 
 interface GroupMessageListProps {
@@ -27,7 +28,17 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
     const localRef = useRef<HTMLDivElement>(null);
     const scrollRef = (ref as React.RefObject<HTMLDivElement>) || localRef;
     const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
-    const [prevScrollHeight, setPrevScrollHeight] = useState(0);
+    const lastScrollTopRef = useRef<number>(0);
+    const shouldScrollToBottomRef = useRef<boolean>(true);
+
+    const updateShouldScrollToBottom = (val: boolean) => {
+        shouldScrollToBottomRef.current = val;
+        setShouldScrollToBottom(val);
+    };
+    
+    const prevScrollHeightRef = useRef<number>(0);
+    const wasLoadingMoreRef = useRef<boolean>(false);
+    const lastMessageIdRef = useRef<string | null>(null);
 
     const [initialUnread] = useState(unreadCount);
     const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false);
@@ -35,6 +46,21 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
     const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
     const [showScrollButton, setShowScrollButton] = useState(false);
     const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Skeletons list for pagination loading (older messages)
+    const displayMessages = React.useMemo(() => {
+        if (isLoadingMore) {
+            // Prepend 50 skeleton items (matching page size limit)
+            const skeletons = Array.from({ length: 50 }, (_, i) => ({
+                id: `skeleton-${i}`,
+                isSkeleton: true,
+                sender: i % 2 === 0 ? 'me' : 'them',
+                type: i % 3 === 0 ? 'media' : 'text',
+            } as unknown as Message));
+            return [...skeletons, ...messages];
+        }
+        return messages;
+    }, [messages, isLoadingMore]);
 
     const handleReplyClick = (messageId: string) => {
         const element = document.getElementById(`message-${messageId}`);
@@ -59,7 +85,15 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
     useEffect(() => {
         if (!scrollRef.current) return;
 
-        if (initialUnread > 0 && !hasScrolledToUnread && messages.length > 0) {
+        const lastMessage = displayMessages[displayMessages.length - 1];
+        const isNewMessageSent = !!(
+            lastMessage &&
+            lastMessage.id !== lastMessageIdRef.current &&
+            !lastMessage.id.startsWith('skeleton-') &&
+            (lastMessage.sender === 'me' || lastMessage.senderId === currentUserId)
+        );
+
+        if (initialUnread > 0 && !hasScrolledToUnread && displayMessages.length > 0) {
             // Because GroupMessageList doesn't use virtualizer, we have to rely on standard DOM scrolling.
             // Wait for render, then scroll to the specific element.
             setTimeout(() => {
@@ -67,41 +101,67 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
                 if (unreadElement && scrollRef.current) {
                     scrollRef.current.scrollTop = unreadElement.offsetTop - 50;
                     setHasScrolledToUnread(true);
-                    setShouldScrollToBottom(false);
+                    updateShouldScrollToBottom(false);
                 }
             }, 100);
-        } else if (shouldScrollToBottom) {
+        } else if ((shouldScrollToBottomRef.current || isNewMessageSent) && displayMessages.length > 0) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, [messages, shouldScrollToBottom, initialUnread, hasScrolledToUnread, scrollRef]);
 
-    // Handle scroll retention when loading more
-    useLayoutEffect(() => {
-        if (isLoadingMore && scrollRef.current) {
-            setPrevScrollHeight(scrollRef.current.scrollHeight);
-            setShouldScrollToBottom(false);
-        } else if (!isLoadingMore && prevScrollHeight > 0 && scrollRef.current) {
-            const newScrollHeight = scrollRef.current.scrollHeight;
-            const diff = newScrollHeight - prevScrollHeight;
-            if (diff > 0) {
-                scrollRef.current.scrollTop = diff;
-            }
-            setPrevScrollHeight(0);
+        if (lastMessage) {
+            lastMessageIdRef.current = lastMessage.id;
         }
-    }, [isLoadingMore, prevScrollHeight, scrollRef]);
+    }, [displayMessages, initialUnread, hasScrolledToUnread, scrollRef, currentUserId]);
+
+    // Record scroll height before skeletons are prepended
+    useLayoutEffect(() => {
+        if (isLoadingMore && !wasLoadingMoreRef.current && scrollRef.current) {
+            prevScrollHeightRef.current = scrollRef.current.scrollHeight;
+            wasLoadingMoreRef.current = true;
+        }
+    }, [isLoadingMore, scrollRef]);
+
+    // Record scroll height before real messages are prepended (skeletons replaced)
+    useLayoutEffect(() => {
+        if (!isLoadingMore && wasLoadingMoreRef.current && scrollRef.current) {
+            prevScrollHeightRef.current = scrollRef.current.scrollHeight;
+            wasLoadingMoreRef.current = false;
+        }
+    }, [isLoadingMore, scrollRef]);
+
+    // Perform scroll adjustment when displayMessages changes to retain scroll position
+    useLayoutEffect(() => {
+        if (prevScrollHeightRef.current > 0 && scrollRef.current) {
+            const newScrollHeight = scrollRef.current.scrollHeight;
+            const diff = newScrollHeight - prevScrollHeightRef.current;
+            if (diff > 0) {
+                scrollRef.current.scrollTop = scrollRef.current.scrollTop + diff;
+                prevScrollHeightRef.current = 0;
+            }
+        }
+    }, [displayMessages, scrollRef]);
 
     // Check if we should auto-scroll for next update
     const handleScroll = () => {
         if (!scrollRef.current) return;
         const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-        const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+        
+        const isScrollingUp = scrollTop < lastScrollTopRef.current;
+        lastScrollTopRef.current = scrollTop;
+
+        const isAtBottom = scrollHeight - scrollTop - clientHeight < 15;
 
         if (scrollTop < 50 && hasMore && !isLoadingMore && onLoadMore) {
-            setShouldScrollToBottom(false);
-            setPrevScrollHeight(scrollHeight);
+            updateShouldScrollToBottom(false);
+            prevScrollHeightRef.current = scrollHeight;
             onLoadMore();
         } else {
-            setShouldScrollToBottom(isAtBottom);
+            if (isScrollingUp) {
+                updateShouldScrollToBottom(false);
+            } else {
+                updateShouldScrollToBottom(isAtBottom);
+            }
+
             if (!isAtBottom) {
                 setShowScrollButton(true);
                 if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
@@ -115,7 +175,7 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
     };
 
     const handleMediaLoad = () => {
-        if (shouldScrollToBottom && scrollRef.current) {
+        if (shouldScrollToBottomRef.current && scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     };
@@ -146,19 +206,29 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
             >
             {hasMore && (
                 <div className="flex justify-center py-2">
-                    {isLoadingMore ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> : <div className="h-4" />}
+                    {isLoadingMore ? null : <div className="h-4" />}
                 </div>
             )}
 
             <div className="space-y-1">
-                {messages.map((msg, index) => {
-                    const previousMsg = messages[index - 1];
+                {displayMessages.map((msg, index) => {
+                    if ((msg as any).isSkeleton) {
+                        return (
+                            <MessageSkeleton
+                                key={msg.id}
+                                sender={(msg as any).sender}
+                                type={(msg as any).type}
+                            />
+                        );
+                    }
+
+                    const previousMsg = displayMessages[index - 1];
 
                     const currentMsgDateStr = msg.created_at ? formatDateDivider(msg.created_at) : null;
-                    const prevMsgDateStr = previousMsg?.created_at ? formatDateDivider(previousMsg.created_at) : null;
+                    const prevMsgDateStr = previousMsg && !(previousMsg as any).isSkeleton && previousMsg.created_at ? formatDateDivider(previousMsg.created_at) : null;
                     const showDateDivider = currentMsgDateStr && currentMsgDateStr !== prevMsgDateStr;
 
-                    const isFirstUnread = initialUnread > 0 && index === messages.length - initialUnread;
+                    const isFirstUnread = initialUnread > 0 && index === displayMessages.length - initialUnread;
 
                     const renderDateDivider = showDateDivider && !isFirstUnread && (
                         <div className="flex items-center justify-center my-6 px-4 md:px-8 w-full">
@@ -194,20 +264,20 @@ const GroupMessageList = forwardRef<HTMLDivElement, GroupMessageListProps>(({ me
                     const isMe = msg.sender === 'me' || (senderId && currentUserId && String(senderId) === String(currentUserId));
 
                     const isPreviousSystem = previousMsg?.type === 'system';
-                    const previousSenderId = previousMsg ? (previousMsg.senderId || ((previousMsg.sender === 'me') ? currentUserId : `unknown-${index - 1}`)) : null;
+                    const previousSenderId = previousMsg && !(previousMsg as any).isSkeleton ? (previousMsg.senderId || ((previousMsg.sender === 'me') ? currentUserId : `unknown-${index - 1}`)) : null;
 
                     const isMoreThanOneMinute = (date1?: string, date2?: string) => {
                         if (!date1 || !date2) return true;
                         return Math.abs(new Date(date1).getTime() - new Date(date2).getTime()) > 60000;
                     };
 
-                    const isTimeBreakWithPrev = previousMsg ? isMoreThanOneMinute(msg.created_at, previousMsg.created_at) : false;
-                    const nextMsg = messages[index + 1];
-                    const isTimeBreakWithNext = nextMsg ? isMoreThanOneMinute(msg.created_at, nextMsg.created_at) : false;
+                    const isTimeBreakWithPrev = previousMsg && !(previousMsg as any).isSkeleton ? isMoreThanOneMinute(msg.created_at, previousMsg.created_at) : false;
+                    const nextMsg = displayMessages[index + 1];
+                    const isTimeBreakWithNext = nextMsg && !(nextMsg as any).isSkeleton ? isMoreThanOneMinute(msg.created_at, nextMsg.created_at) : false;
 
-                    const isFirstInGroup = index === 0 || isPreviousSystem || previousSenderId !== senderId || isTimeBreakWithPrev || !!showDateDivider || !!isFirstUnread;
-                    const nextSenderId = nextMsg ? (nextMsg.senderId || ((nextMsg.sender === 'me') ? currentUserId : `unknown-${index + 1}`)) : null;
-                    const isLastInGroup = !nextMsg || nextMsg.type === 'system' || nextSenderId !== senderId || isTimeBreakWithNext;
+                    const isFirstInGroup = index === 0 || isPreviousSystem || (previousMsg as any)?.isSkeleton || previousSenderId !== senderId || isTimeBreakWithPrev || !!showDateDivider || !!isFirstUnread;
+                    const nextSenderId = nextMsg && !(nextMsg as any).isSkeleton ? (nextMsg.senderId || ((nextMsg.sender === 'me') ? currentUserId : `unknown-${index + 1}`)) : null;
+                    const isLastInGroup = !nextMsg || (nextMsg as any).isSkeleton || nextMsg.type === 'system' || nextSenderId !== senderId || isTimeBreakWithNext;
 
                     const showSenderName = !isMe && isFirstInGroup;
                     const showAvatar = isFirstInGroup;
