@@ -216,6 +216,12 @@ export default function SignUpForm() {
     await handleRegister(result.data);
   };
 
+  const isPasswordValid = password.length >= 8 &&
+    password.length <= 15 &&
+    /[A-Z]/.test(password) &&
+    /[a-z]/.test(password) &&
+    /[@#$%\^&*!?:;_=\-+(){}[\]|\\/.,~`"'<>]/.test(password);
+
   return (
     <div className={styles.pageWrapper} data-theme="light">
       {/* Left side - Branded overlay */}
@@ -405,6 +411,7 @@ export default function SignUpForm() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className={`${styles.input} ${styles.inputWithIcon}`}
+                      maxLength={15}
                       required
                     />
                     <button
@@ -420,11 +427,46 @@ export default function SignUpForm() {
                   </div>
                 </div>
 
-                {/* Continue Button - turns blue when password entered */}
+                {/* Password Requirements Checklist */}
+                <div className={styles.checklistContainer}>
+                  <p className={styles.checklistTitle}>Password must contain:</p>
+                  <ul className={styles.checklist}>
+                    <li className={(password.length >= 8 && password.length <= 15) ? styles.checkMet : styles.checkUnmet}>
+                      <Icon
+                        icon={(password.length >= 8 && password.length <= 15) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
+                        className={styles.checkIcon}
+                      />
+                      <span>8 to 15 characters</span>
+                    </li>
+                    <li className={/[A-Z]/.test(password) ? styles.checkMet : styles.checkUnmet}>
+                      <Icon
+                        icon={/[A-Z]/.test(password) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
+                        className={styles.checkIcon}
+                      />
+                      <span>At least 1 uppercase letter (A–Z)</span>
+                    </li>
+                    <li className={/[a-z]/.test(password) ? styles.checkMet : styles.checkUnmet}>
+                      <Icon
+                        icon={/[a-z]/.test(password) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
+                        className={styles.checkIcon}
+                      />
+                      <span>At least 1 lowercase letter (a–z)</span>
+                    </li>
+                    <li className={/[@#$%\^&*!?:;_=\-+(){}[\]|\\/.,~`"'<>]/.test(password) ? styles.checkMet : styles.checkUnmet}>
+                      <Icon
+                        icon={/[@#$%\^&*!?:;_=\-+(){}[\]|\\/.,~`"'<>]/.test(password) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
+                        className={styles.checkIcon}
+                      />
+                      <span>At least 1 special character (e.g., @, #, $, %, &, *)</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Continue Button - turns blue when password meets requirements */}
                 <button
                   type="submit"
-                  disabled={!password || isVerifying}
-                  className={`${styles.submitButton} ${password ? styles.submitButtonActive : ''}`}
+                  disabled={!isPasswordValid || isVerifying}
+                  className={`${styles.submitButton} ${isPasswordValid ? styles.submitButtonActive : ''}`}
                 >
                   {isVerifying ? "Creating account..." : "Continue"}
                 </button>

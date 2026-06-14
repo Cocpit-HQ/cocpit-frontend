@@ -11,6 +11,7 @@ import Image from "next/image";
 import AuthImagePanel from "@/components/auth/AuthImagePanel";
 import styles from "./ForgotPasswordForm.module.css";
 import { useForceLightTheme } from "@/hooks/use-force-light-theme";
+import { passwordSchema } from "@/lib/validators";
 
 export default function ForgotPasswordForm() {
   useForceLightTheme();
@@ -33,6 +34,12 @@ export default function ForgotPasswordForm() {
   
   const { toast } = useToast();
   const router = useRouter();
+
+  const isPasswordValid = newPassword.length >= 8 &&
+    newPassword.length <= 15 &&
+    /[A-Z]/.test(newPassword) &&
+    /[a-z]/.test(newPassword) &&
+    /[@#$%\^&*!?:;_=\-+(){}[\]|\\/.,~`"'<>]/.test(newPassword);
 
   const handleSendOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -87,6 +94,16 @@ export default function ForgotPasswordForm() {
 
   const handleSubmitNewPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    const parseResult = passwordSchema.safeParse(newPassword);
+    if (!parseResult.success) {
+      toast({
+        title: "Weak Password",
+        description: parseResult.error.issues[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       toast({
         title: "Passwords Don't Match",
@@ -292,6 +309,7 @@ export default function ForgotPasswordForm() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     className={`${styles.input} ${styles.inputWithIcon}`}
+                    maxLength={15}
                   />
                   <button
                     type="button"
@@ -303,6 +321,41 @@ export default function ForgotPasswordForm() {
                 </div>
               </div>
 
+              {/* Password Requirements Checklist */}
+              <div className={styles.checklistContainer}>
+                <p className={styles.checklistTitle}>Password must contain:</p>
+                <ul className={styles.checklist}>
+                  <li className={(newPassword.length >= 8 && newPassword.length <= 15) ? styles.checkMet : styles.checkUnmet}>
+                    <Icon
+                      icon={(newPassword.length >= 8 && newPassword.length <= 15) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
+                      className={styles.checkIcon}
+                    />
+                    <span>8 to 15 characters</span>
+                  </li>
+                  <li className={/[A-Z]/.test(newPassword) ? styles.checkMet : styles.checkUnmet}>
+                    <Icon
+                      icon={/[A-Z]/.test(newPassword) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
+                      className={styles.checkIcon}
+                    />
+                    <span>At least 1 uppercase letter (A–Z)</span>
+                  </li>
+                  <li className={/[a-z]/.test(newPassword) ? styles.checkMet : styles.checkUnmet}>
+                    <Icon
+                      icon={/[a-z]/.test(newPassword) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
+                      className={styles.checkIcon}
+                    />
+                    <span>At least 1 lowercase letter (a–z)</span>
+                  </li>
+                  <li className={/[@#$%\^&*!?:;_=\-+(){}[\]|\\/.,~`"'<>]/.test(newPassword) ? styles.checkMet : styles.checkUnmet}>
+                    <Icon
+                      icon={/[@#$%\^&*!?:;_=\-+(){}[\]|\\/.,~`"'<>]/.test(newPassword) ? "carbon:checkmark-filled" : "carbon:dot-mark"}
+                      className={styles.checkIcon}
+                    />
+                    <span>At least 1 special character (e.g., @, #, $, %, &, *)</span>
+                  </li>
+                </ul>
+              </div>
+
               <div className={styles.fieldGroup}>
                 <label className={styles.label}>Confirm password</label>
                 <div className={styles.inputWrapperFlex}>
@@ -312,6 +365,7 @@ export default function ForgotPasswordForm() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className={`${styles.input} ${styles.inputWithIcon}`}
+                    maxLength={15}
                   />
                   <button
                     type="button"
@@ -325,7 +379,7 @@ export default function ForgotPasswordForm() {
 
               <button
                 type="submit"
-                disabled={isResetting || !newPassword || !confirmPassword}
+                disabled={isResetting || !isPasswordValid || !confirmPassword}
                 className={styles.primaryButton}
               >
                 {isResetting ? "Resetting..." : "Continue"}

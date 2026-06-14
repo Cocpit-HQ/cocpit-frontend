@@ -19,6 +19,7 @@ import { useOnboardingStore } from "@/store/onboarding.store";
 import { getProfile } from "@/services/api/profile";
 import { toast } from "sonner";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useForceLightTheme } from "@/hooks/use-force-light-theme";
 
 const EducationStep = lazy(() => import("@/components/onboarding/EducationStep"));
 const WorkExperienceStep = lazy(() => import("@/components/onboarding/WorkExperienceStep"));
@@ -53,7 +54,69 @@ const STEP_MAP: Record<string, number> = {
   SKILLS:    5,
 };
 
+const stepToKey = (stepNum: number, isSubStep: boolean): string => {
+  if (stepNum === 0) return "begin";
+  if (stepNum === 1) return "profile";
+  if (stepNum === 2) return "location";
+  if (stepNum === 3) return isSubStep ? "details" : "role";
+  if (stepNum === 4) return "interests";
+  if (stepNum === 5) return "skills";
+  return "begin";
+};
+
+const keyToStep = (key: string): { step: number; showSubStep: boolean } => {
+  switch (key) {
+    case "begin": return { step: 0, showSubStep: false };
+    case "profile": return { step: 1, showSubStep: false };
+    case "location": return { step: 2, showSubStep: false };
+    case "role": return { step: 3, showSubStep: false };
+    case "details": return { step: 3, showSubStep: true };
+    case "interests": return { step: 4, showSubStep: false };
+    case "skills": return { step: 5, showSubStep: false };
+    default: return { step: 0, showSubStep: false };
+  }
+};
+
+const getPrevStep = (currentStep: number, isSubStep: boolean, role: string): { step: number; showSubStep: boolean } | null => {
+  const currentState = isSubStep ? "substep" : currentStep;
+  const config = ONBOARDING_FLOW[currentState];
+  if (!config || config.prev === null) return null;
+
+  const target = typeof config.prev === "function"
+    ? config.prev(role)
+    : config.prev;
+
+  if (target === "substep") {
+    return { step: 3, showSubStep: true };
+  } else {
+    return { step: target, showSubStep: false };
+  }
+};
+
+const isStepAhead = (stepA: number, subA: boolean, stepB: number, subB: boolean): boolean => {
+  if (stepA > stepB) return true;
+  if (stepA === stepB) {
+    return subA && !subB;
+  }
+  return false;
+};
+
+const getMaxAllowedStep = (backendStep: string | null): { step: number; showSubStep: boolean } => {
+  if (!backendStep) {
+    return { step: 1, showSubStep: false };
+  }
+  if (backendStep === "DETAILS") {
+    return { step: 3, showSubStep: true };
+  }
+  const mappedStep = STEP_MAP[backendStep];
+  if (mappedStep !== undefined) {
+    return { step: mappedStep, showSubStep: false };
+  }
+  return { step: 5, showSubStep: false };
+};
+
 export default function OnboardingPage() {
+  useForceLightTheme();
   const {
     step, setStep,
     userRole, setUserRole,
@@ -64,6 +127,30 @@ export default function OnboardingPage() {
     setFullName, setAccountName, setInitialAccountName, setProfileImage,
     setLocation, setEducation, setWorkExperience,
   } = useOnboardingStore();
+
+  const maxAllowedStepRef = useRef<{ step: number; showSubStep: boolean }>({ step: 1, showSubStep: false });
+
+  const advanceMaxAllowedStep = (targetStep: number, targetSub: boolean) => {
+    const currentMax = maxAllowedStepRef.current;
+    if (isStepAhead(targetStep, targetSub, currentMax.step, currentMax.showSubStep)) {
+      maxAllowedStepRef.current = { step: targetStep, showSubStep: targetSub };
+    }
+  };
+
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  // Save current validated step to sessionStorage
+  useEffect(() => {
+    if (isInitialized) {
+      sessionStorage.setItem(
+        "cocpit_onboarding_step",
+        JSON.stringify({ step, showSubStep })
+      );
+    }
+  }, [step, showSubStep, isInitialized]);
 
   const [isCompleted, setIsCompleted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -182,11 +269,52 @@ export default function OnboardingPage() {
             setSelectedSkills(u.skill_names);
           }
 
-          // ── Restore step from backend ───────────────────────────────────
-          const backendStep = u.onboarding_step;
-          if (backendStep && STEP_MAP[backendStep] !== undefined) {
-            setStep(STEP_MAP[backendStep]);
-            if (backendStep === "DETAILS") setShowSubStep(false);
+          // ── Restore step from URL or backend ─────────────────────────────
+          const params = new URLSearchParams(window.location.search);
+          const urlStep = params.get("step");
+          let initialStep = 0;
+          let initialSub = false;
+
+          const maxStep = getMaxAllowedStep(u.onboarding_step || null);
+          maxAllowedStepRef.current = maxStep;
+
+          if (urlStep) {
+            const { step: targetStep, showSubStep: targetSub } = keyToStep(urlStep);
+            initialStep = targetStep;
+            initialSub = targetSub;
+          } else {
+            initialStep = maxStep.step;
+            initialSub = maxStep.showSubStep;
+          }
+
+          if (isStepAhead(initialStep, initialSub, maxStep.step, maxStep.showSubStep)) {
+            initialStep = maxStep.step;
+            initialSub = maxStep.showSubStep;
+          }
+
+          setStep(initialStep);
+          setShowSubStep(initialSub);
+
+          // ── Inject previous step history state if loading step > 0 ───────
+          const historyState = window.history.state;
+          if (initialStep > 0 || initialSub) {
+            if (!historyState || historyState.stepKey !== stepToKey(initialStep, initialSub)) {
+              const prev = getPrevStep(initialStep, initialSub, u.user_role || "");
+              if (prev) {
+                const prevKey = stepToKey(prev.step, prev.showSubStep);
+                const currentKey = stepToKey(initialStep, initialSub);
+                window.history.replaceState({ stepKey: prevKey }, "", `?step=${prevKey}`);
+                window.history.pushState({ stepKey: currentKey }, "", `?step=${currentKey}`);
+              } else {
+                const currentKey = stepToKey(initialStep, initialSub);
+                window.history.replaceState({ stepKey: currentKey }, "", `?step=${currentKey}`);
+              }
+            }
+          } else {
+            const currentKey = stepToKey(initialStep, initialSub);
+            if (urlStep && urlStep !== currentKey) {
+              window.history.replaceState({ stepKey: currentKey }, "", `?step=${currentKey}`);
+            }
           }
 
           setInitialized(true);
@@ -205,6 +333,36 @@ export default function OnboardingPage() {
     setEducation, setWorkExperience
   ]);
 
+  // ── Popstate listener for back/forward navigation ─────────────────────────
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const params = new URLSearchParams(window.location.search);
+      const stepParam = event.state?.stepKey || params.get("step");
+      
+      let targetStep = 0;
+      let targetSub = false;
+      if (stepParam) {
+        const parsed = keyToStep(stepParam);
+        targetStep = parsed.step;
+        targetSub = parsed.showSubStep;
+      }
+
+      const maxAllowed = maxAllowedStepRef.current;
+      if (isStepAhead(targetStep, targetSub, maxAllowed.step, maxAllowed.showSubStep)) {
+        setStep(maxAllowed.step);
+        setShowSubStep(maxAllowed.showSubStep);
+        const maxKey = stepToKey(maxAllowed.step, maxAllowed.showSubStep);
+        window.history.replaceState({ stepKey: maxKey }, "", `?step=${maxKey}`);
+      } else {
+        setStep(targetStep);
+        setShowSubStep(targetSub);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [setStep, setShowSubStep]);
+
   const navigate = (direction: "next" | "prev") => {
     const currentState = showSubStep ? "substep" : step;
     const config = ONBOARDING_FLOW[currentState];
@@ -216,13 +374,27 @@ export default function OnboardingPage() {
 
     if (target === null) return;
 
+    let nextStep = step;
+    let nextSubStep = false;
+
     if (target === "substep") {
-      setShowSubStep(true);
-      setStep(3);
+      nextSubStep = true;
+      nextStep = 3;
     } else {
-      setShowSubStep(false);
-      setStep(target);
+      nextSubStep = false;
+      nextStep = target;
     }
+
+    if (direction === "next") {
+      advanceMaxAllowedStep(nextStep, nextSubStep);
+    }
+
+    setShowSubStep(nextSubStep);
+    setStep(nextStep);
+
+    // Push state to browser history
+    const key = stepToKey(nextStep, nextSubStep);
+    window.history.pushState({ stepKey: key }, "", `?step=${key}`);
   };
 
   const handleNext = () => navigate("next");
@@ -239,15 +411,21 @@ export default function OnboardingPage() {
         toast.error("Failed to save role. Please try again.");
         return;
       }
+      advanceMaxAllowedStep(4, false);
       setStep(4);
+      window.history.pushState({ stepKey: "interests" }, "", "?step=interests");
     } else {
+      advanceMaxAllowedStep(3, true);
       setShowSubStep(true);
+      window.history.pushState({ stepKey: "details" }, "", "?step=details");
     }
   };
 
   const handleDetailsSubmit = () => {
+    advanceMaxAllowedStep(4, false);
     setShowSubStep(false);
     setStep(4);
+    window.history.pushState({ stepKey: "interests" }, "", "?step=interests");
   };
 
   const handleInterestsSubmit = async () => {
@@ -263,7 +441,9 @@ export default function OnboardingPage() {
     setIsSubmitting(true);
     try {
       await saveOnboardingInterests(selectedInterests);
+      advanceMaxAllowedStep(5, false);
       setStep(5);
+      window.history.pushState({ stepKey: "skills" }, "", "?step=skills");
     } catch (error: any) {
       console.error("Failed to save interests:", error);
       const message = error.response?.data?.message || "Failed to save interests. Please try again.";
@@ -283,6 +463,7 @@ export default function OnboardingPage() {
     try {
       await saveOnboardingSkills(selectedSkills);
       await completeOnboarding();
+      sessionStorage.removeItem("cocpit_onboarding_step");
       
       setIsCompleted(true);
       toast.success("Onboarding completed!");
@@ -297,6 +478,153 @@ export default function OnboardingPage() {
       setIsSubmitting(false);
     }
   };
+
+  const renderStepContent = (activeStep: number, activeSubStep: boolean) => {
+    return (
+      <div className="min-h-screen bg-white overflow-hidden relative" data-theme="light">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={activeSubStep ? `substep-${userRole}` : `step-${activeStep}`}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="min-h-screen"
+          >
+            {activeStep === 0 && (
+              <LetsBeginStep onNext={handleNext} />
+            )}
+            {activeStep === 1 && (
+              <ProfileStep
+                onNext={handleNext}
+                onBack={handleBack}
+                currentStep={1}
+                totalSteps={totalSteps}
+              />
+            )}
+            {activeStep === 2 && (
+              <TellUsAboutYouStep
+                onNext={handleNext}
+                onBack={handleBack}
+                currentStep={2}
+                totalSteps={totalSteps}
+              />
+            )}
+            {activeStep === 3 && (
+              !activeSubStep ? (
+                <UserRoleStep
+                  onNext={handleRoleSelect}
+                  onBack={handleBack}
+                  currentStep={3}
+                  totalSteps={totalSteps}
+                />
+              ) : (
+                <Suspense fallback={
+                  <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6366F1]"></div>
+                  </div>
+                }>
+                  {["student", "fresher", "intern"].includes(userRole || "") ? (
+                    <EducationStep
+                      onNext={handleDetailsSubmit}
+                      onBack={handleBack}
+                      currentStep={3}
+                      totalSteps={totalSteps}
+                    />
+                  ) : userRole === "employed" || userRole === "self_employed" ? (
+                    <WorkExperienceStep
+                      onNext={handleDetailsSubmit}
+                      onBack={handleBack}
+                      currentStep={3}
+                      totalSteps={totalSteps}
+                    />
+                  ) : (
+                    <OpenToWorkStep
+                      onNext={handleDetailsSubmit}
+                      onBack={handleBack}
+                      currentStep={3}
+                      totalSteps={totalSteps}
+                    />
+                  )}
+                </Suspense>
+              )
+            )}
+            {activeStep === 4 && (
+              <InterestsStep
+                onNext={handleInterestsSubmit}
+                onBack={handleBack}
+                currentStep={4}
+                totalSteps={totalSteps}
+                title="What are you interested in?"
+                subtitle="Select a few to personalize your feed"
+                placeholder="Search interests"
+                initialData={interestItems}
+                selectedItems={selectedInterests}
+                onChange={setSelectedInterests}
+                isLoading={isSubmitting}
+                isFetchingInitial={isLoadingInterests}
+                isLoadingMore={isFetchingMoreInterests}
+                hasMore={hasMoreInterests}
+                loadingText="Loading interests..."
+                onLoadMore={fetchNextInterests}
+                onSearchChange={setInterestSearch}
+                minSelection={3}
+                maxSelection={7}
+              />
+            )}
+            {activeStep === 5 && (
+              <InterestsStep
+                onNext={handleSkillsSubmit}
+                onBack={handleBack}
+                currentStep={5}
+                totalSteps={totalSteps}
+                title="Add your skills to continue"
+                subtitle="Help us match you with better opportunities"
+                placeholder="Search"
+                initialData={skillItems}
+                actionLabel="Continue"
+                selectedItems={selectedSkills}
+                onChange={setSelectedSkills}
+                isLoading={isSubmitting}
+                isFetchingInitial={isLoadingSkills}
+                isLoadingMore={isFetchingMoreSkills}
+                hasMore={hasMoreSkills}
+                loadingText="Loading skills..."
+                onLoadMore={fetchNextSkills}
+                onSearchChange={setSkillSearch}
+                minSelection={3}
+                maxSelection={15}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
+  };
+
+  if (!hasMounted) {
+    return null;
+  }
+
+  if (!isInitialized) {
+    let localSaved: { step: number; showSubStep: boolean } | null = null;
+    if (typeof window !== "undefined") {
+      try {
+        const saved = sessionStorage.getItem("cocpit_onboarding_step");
+        if (saved) {
+          localSaved = JSON.parse(saved);
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    if (localSaved) {
+      return renderStepContent(localSaved.step, localSaved.showSubStep);
+    }
+
+    return null;
+  }
 
   if (isCompleted) {
     return (
@@ -320,124 +648,5 @@ export default function OnboardingPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-white overflow-hidden relative" data-theme="light">
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={showSubStep ? `substep-${userRole}` : `step-${step}`}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="min-h-screen"
-        >
-          {step === 0 && (
-            <LetsBeginStep onNext={handleNext} />
-          )}
-          {step === 1 && (
-            <ProfileStep
-              onNext={handleNext}
-              onBack={handleBack}
-              currentStep={1}
-              totalSteps={totalSteps}
-            />
-          )}
-          {step === 2 && (
-            <TellUsAboutYouStep
-              onNext={handleNext}
-              onBack={handleBack}
-              currentStep={2}
-              totalSteps={totalSteps}
-            />
-          )}
-          {step === 3 && (
-            !showSubStep ? (
-              <UserRoleStep
-                onNext={handleRoleSelect}
-                onBack={handleBack}
-                currentStep={3}
-                totalSteps={totalSteps}
-              />
-            ) : (
-              <Suspense fallback={
-                <div className="flex items-center justify-center min-h-[400px]">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6366F1]"></div>
-                </div>
-              }>
-                {["student", "fresher", "intern"].includes(userRole || "") ? (
-                  <EducationStep
-                    onNext={handleDetailsSubmit}
-                    onBack={handleBack}
-                    currentStep={3}
-                    totalSteps={totalSteps}
-                  />
-                ) : userRole === "employed" || userRole === "self_employed" ? (
-                  <WorkExperienceStep
-                    onNext={handleDetailsSubmit}
-                    onBack={handleBack}
-                    currentStep={3}
-                    totalSteps={totalSteps}
-                  />
-                ) : (
-                  <OpenToWorkStep
-                    onNext={handleDetailsSubmit}
-                    onBack={handleBack}
-                    currentStep={3}
-                    totalSteps={totalSteps}
-                  />
-                )}
-              </Suspense>
-            )
-          )}
-          {step === 4 && (
-            <InterestsStep
-              onNext={handleInterestsSubmit}
-              onBack={handleBack}
-              currentStep={4}
-              totalSteps={totalSteps}
-              title="What are you interested in?"
-              subtitle="Select a few to personalize your feed"
-              placeholder="Search interests"
-              initialData={interestItems}
-              selectedItems={selectedInterests}
-              onChange={setSelectedInterests}
-              isLoading={isSubmitting}
-              isFetchingInitial={isLoadingInterests}
-              isLoadingMore={isFetchingMoreInterests}
-              hasMore={hasMoreInterests}
-              loadingText="Loading interests..."
-              onLoadMore={fetchNextInterests}
-              onSearchChange={setInterestSearch}
-              minSelection={3}
-              maxSelection={7}
-            />
-          )}
-          {step === 5 && (
-            <InterestsStep
-              onNext={handleSkillsSubmit}
-              onBack={handleBack}
-              currentStep={5}
-              totalSteps={totalSteps}
-              title="Add your skills to continue"
-              subtitle="Help us match you with better opportunities"
-              placeholder="Search"
-              initialData={skillItems}
-              actionLabel="Continue"
-              selectedItems={selectedSkills}
-              onChange={setSelectedSkills}
-              isLoading={isSubmitting}
-              isFetchingInitial={isLoadingSkills}
-              isLoadingMore={isFetchingMoreSkills}
-              hasMore={hasMoreSkills}
-              loadingText="Loading skills..."
-              onLoadMore={fetchNextSkills}
-              onSearchChange={setSkillSearch}
-              minSelection={3}
-              maxSelection={15}
-            />
-          )}
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  );
+  return renderStepContent(step, showSubStep);
 }

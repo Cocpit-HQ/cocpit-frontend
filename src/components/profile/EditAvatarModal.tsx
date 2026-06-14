@@ -18,6 +18,7 @@ interface EditAvatarModalProps {
   currentAvatarUrl: string | null;
   onUpload: (file: File) => Promise<void>;
   onDelete: () => Promise<void>;
+  theme?: string;
 }
 
 export function EditAvatarModal({
@@ -26,6 +27,7 @@ export function EditAvatarModal({
   currentAvatarUrl,
   onUpload,
   onDelete,
+  theme,
 }: EditAvatarModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -264,8 +266,14 @@ export function EditAvatarModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="p-0 max-w-none sm:max-w-[600px] h-[100dvh] sm:h-auto w-full sm:rounded-[24px] outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0">
-        <div className="relative bg-card rounded-none sm:rounded-[24px] p-4 sm:p-[32px] w-full h-full sm:h-auto shadow-none flex flex-col outline-none overflow-y-auto overflow-x-hidden">
+      <DialogContent 
+        data-theme={theme}
+        className="p-0 max-w-none sm:max-w-[600px] h-[100dvh] sm:h-auto w-full sm:rounded-[24px] outline-none data-[state=open]:duration-300 data-[state=open]:sm:animate-in data-[state=open]:sm:fade-in-90 data-[state=open]:sm:zoom-in-95 data-[state=open]:animate-in data-[state=open]:slide-in-from-right sm:data-[state=open]:slide-in-from-bottom-0"
+      >
+        <div 
+          data-theme={theme}
+          className="relative bg-card rounded-none sm:rounded-[24px] p-4 sm:p-[32px] w-full h-full sm:h-auto shadow-none flex flex-col outline-none overflow-y-auto overflow-x-hidden"
+        >
           {/* Close button handled by global DialogPrimitive.Close */}
 
           {/* ─── Mobile Header ─── */}

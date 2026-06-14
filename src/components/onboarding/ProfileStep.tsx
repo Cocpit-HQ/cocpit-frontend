@@ -11,6 +11,7 @@ import { getProfile, uploadAvatar } from "@/services/api/profile";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useOnboardingStore } from "@/store/onboarding.store";
 import { useMemo } from "react";
+import { EditAvatarModal } from "@/components/profile/EditAvatarModal";
 import styles from "./ProfileStep.module.css";
 
 interface ProfileStepProps {
@@ -34,9 +35,9 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
   const [checking, setChecking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(!isInitialized);
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
   const debouncedAccountName = useDebounce(accountName, 500);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { toast } = useToast();
   const { update } = useSession();
@@ -86,16 +87,18 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
     }
   }, [debouncedAccountName, loadingInitial, initialAccountName]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setProfileImageFile(file);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setProfileImage(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleAvatarUpload = async (file: File) => {
+    setProfileImageFile(file);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setProfileImage(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAvatarDelete = async () => {
+    setProfileImage(null);
+    setProfileImageFile(null);
   };
 
   const handleAccountNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -178,7 +181,7 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
 
         <div className={styles.photoUploadContainer}>
           <div className={styles.photoWrapper}>
-            <button type="button" onClick={() => fileInputRef.current?.click()} className={styles.photoButton}>
+            <button type="button" onClick={() => setIsAvatarModalOpen(true)} className={styles.photoButton}>
               {displayImage ? (
                 <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                   <img src={displayImage} alt="Profile" className={styles.photoImage} />
@@ -191,16 +194,15 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
             </button>
           </div>
           {displayImage && (
-            <div className={styles.editIconContainer} onClick={() => fileInputRef.current?.click()}>
+            <div className={styles.editIconContainer} onClick={() => setIsAvatarModalOpen(true)}>
               <Pencil className={styles.editIcon} strokeWidth={1.5} />
             </div>
           )}
           {!displayImage && (
-            <span className={styles.photoText} onClick={() => fileInputRef.current?.click()} style={{ cursor: 'pointer' }}>
+            <span className={styles.photoText} onClick={() => setIsAvatarModalOpen(true)} style={{ cursor: 'pointer' }}>
               Add your photo
             </span>
           )}
-          <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
         </div>
 
         <div className={styles.formGroup}>
@@ -259,6 +261,14 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
           </button>
         </div>
       </div>
+      <EditAvatarModal
+        isOpen={isAvatarModalOpen}
+        onClose={() => setIsAvatarModalOpen(false)}
+        currentAvatarUrl={displayImage}
+        onUpload={handleAvatarUpload}
+        onDelete={handleAvatarDelete}
+        theme="light"
+      />
     </div>
   );
 }
