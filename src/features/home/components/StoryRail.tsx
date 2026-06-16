@@ -4,7 +4,9 @@ import React, { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus, Play, Check, ChevronRight, ChevronLeft } from "lucide-react";
 import { StoryDetail, StoryGroup } from "@/types/showcase";
-import { UserMention, getSuggestedUsers } from "@/services/api/users";
+import { getSuggestedUsers } from "@/services/api/users";
+import { getConnectionSuggestions } from "@/services/api/connections";
+import { SuggestedUser } from "@/features/connection/types";
 import { followUser } from "@/services/api/social";
 import { toast } from "sonner";
 import { useStories } from "@/context/StoriesContext";
@@ -54,7 +56,7 @@ export function StoryRail({
   activeAccount,
   variant = "mobile",
 }: StoryRailProps) {
-  const [suggestedUsers, setSuggestedUsers] = useState<UserMention[]>([]);
+  const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([]);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const { isStoryViewerOpen, setIsStoryViewerOpen } = useStories();
   const [frozenGroups, setFrozenGroups] = useState<StoryGroup[] | null>(null);
@@ -164,8 +166,8 @@ export function StoryRail({
     if (!isLoading && otherGroups.length === 0) {
       const fetchSuggestions = async () => {
         try {
-          const data = await getSuggestedUsers();
-          setSuggestedUsers(data);
+          const response = await getConnectionSuggestions(20);
+          setSuggestedUsers(response.data);
         } catch (error) {
           console.error("Failed to fetch suggestions", error);
         }
@@ -227,7 +229,7 @@ export function StoryRail({
         {isDesktopShowcase && showLeftScroll && (
           <button
             onClick={scrollLeft}
-            className="absolute left-0 z-20 flex h-[68px] w-8 items-center justify-center rounded-full text-primary bg-background/80 hover:bg-background transition-colors hover:bg-primary/10 shadow-sm border border-border/50"
+            className="absolute left-0 z-20 flex h-[74px] w-8 items-center justify-center rounded-full text-primary bg-background/80 hover:bg-background transition-colors hover:bg-primary/10 shadow-sm border border-border/50"
             aria-label="Scroll showcase left"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -257,7 +259,7 @@ export function StoryRail({
                 <div
                   className={
                     isDesktopShowcase
-                      ? "relative h-[68px] w-[68px] overflow-hidden rounded-full border border-border bg-muted animate-pulse"
+                      ? "relative h-[74px] w-[74px] overflow-hidden rounded-full border border-border bg-muted animate-pulse"
                       : "relative h-14 w-14 overflow-hidden rounded-full border border-border bg-muted animate-pulse md:h-40 md:w-28 md:rounded-xl"
                   }
                 >
@@ -303,7 +305,7 @@ export function StoryRail({
                           onClick={() => onStoryClick(story)}
                           className={
                             isDesktopShowcase
-                              ? `relative h-[68px] w-[68px] overflow-hidden rounded-full border-2 ${myHasUnseen ? "border-[#6366F1]" : "border-[#DADADA]"} p-[4px]`
+                              ? `relative h-[74px] w-[74px] overflow-hidden rounded-full border-2 ${myHasUnseen ? "border-[#6366F1]" : "border-[#DADADA]"} p-[4px]`
                               : `relative h-14 w-14 overflow-hidden rounded-full border-2 ${myHasUnseen ? "border-[#6366F1]" : "border-[#DADADA]"} p-0.5 md:h-40 md:w-28 md:rounded-xl`
                           }
                         >
@@ -397,7 +399,7 @@ export function StoryRail({
                         )}
                       </div>
                       {isDesktopShowcase ? (
-                        <span className="font-['Poppins'] text-[10px] font-normal leading-[15px] text-[#000000] text-center max-w-[68px] overflow-hidden text-ellipsis whitespace-nowrap mt-[8px]">
+                        <span className="font-['Poppins'] text-[10px] font-normal leading-[15px] text-[#000000] text-center max-w-[74px] overflow-hidden text-ellipsis whitespace-nowrap mt-[8px]">
                           {myGroup.author.name}
                         </span>
                       ) : (
@@ -442,7 +444,7 @@ export function StoryRail({
                       }}
                       className={`${
                         isDesktopShowcase
-                          ? `h-[68px] w-[68px] rounded-full p-[4px] border-2 ${
+                          ? `h-[74px] w-[74px] rounded-full p-[4px] border-2 ${
                               hasUnviewed
                                 ? "border-[#6366F1]"
                                 : "border-[#DADADA]"
@@ -544,7 +546,7 @@ export function StoryRail({
                       </div>
                     </button>
                     {isDesktopShowcase ? (
-                      <span className="font-['Poppins'] text-[10px] font-normal leading-[15px] text-[#000000] text-center max-w-[68px] overflow-hidden text-ellipsis whitespace-nowrap mt-[8px]">
+                      <span className="font-['Poppins'] text-[10px] font-normal leading-[15px] text-[#000000] text-center max-w-[74px] overflow-hidden text-ellipsis whitespace-nowrap mt-[8px]">
                         {group.author.name}
                       </span>
                     ) : (
@@ -565,30 +567,30 @@ export function StoryRail({
                     className="flex-shrink-0 flex flex-col items-center gap-2 group relative md:hidden"
                   >
                     <div className="relative">
-                      {/* <div
+                      <div
                         className="w-14 h-14 rounded-full border border-border overflow-hidden bg-muted flex items-center justify-center cursor-pointer transition-transform active:scale-95"
                         onClick={() =>
-                          (window.location.href = `/profile/${user.account_name || user.id}`)
+                          (window.location.href = `/profile/${user.id}`)
                         }
                       >
-                        {user.avatar_url ? (
+                        {user.avatarUrl ? (
                           <img
-                            src={user.avatar_url}
-                            alt={user.full_name}
+                            src={user.avatarUrl}
+                            alt={user.name}
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-bold text-lg">
-                            {user.full_name[0]}
+                          <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-bold text-lg uppercase">
+                            {user.name?.[0] || "?"}
                           </div>
                         )}
-                      </div> */}
+                      </div>
 
                       {/* Follow Button (+) */}
                       <button
                         onClick={(e) => handleFollow(e, user.id)}
                         disabled={followingIds.has(user.id)}
-                        className={`absolute top-10 left-11 w-5 h-5 rounded-full flex items-center justify-center border-2 border-background z-10 transition-colors ${
+                        className={`absolute top-10 left-10 w-5 h-5 rounded-full flex items-center justify-center border-2 border-background z-10 transition-colors ${
                           followingIds.has(user.id)
                             ? "bg-green-500 text-white"
                             : "bg-primary text-primary-foreground hover:bg-primary/90"
@@ -603,7 +605,7 @@ export function StoryRail({
                     </div>
 
                     <span className="text-foreground text-[10px] font-medium truncate w-16 text-center">
-                      {user.account_name || user.full_name.split(" ")[0]}
+                      {user.name.split(" ")[0]}
                     </span>
                   </div>
                 ))}
@@ -613,7 +615,7 @@ export function StoryRail({
         {isDesktopShowcase && showRightScroll && (
           <button
             onClick={scrollRight}
-            className="absolute right-0 z-20 flex h-[68px] w-8 items-center justify-center rounded-full text-primary bg-background/80 hover:bg-background transition-colors hover:bg-primary/10 shadow-sm border border-border/50"
+            className="absolute right-0 z-20 flex h-[74px] w-8 items-center justify-center rounded-full text-primary bg-background/80 hover:bg-background transition-colors hover:bg-primary/10 shadow-sm border border-border/50"
             aria-label="Scroll showcase right"
           >
             <ChevronRight className="h-4 w-4" />

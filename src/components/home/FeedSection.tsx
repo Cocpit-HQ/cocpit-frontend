@@ -9,6 +9,7 @@ import { useFeed } from '@/hooks/use-feed';
 import { useInView } from '@/hooks/use-in-view';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { StoryRail } from '@/features/home/components/StoryRail';
+import { SuggestedPeopleStrip } from '@/features/home/components/SuggestedPeopleStrip';
 import { FeedSortDropdown } from './FeedSortDropdown';
 import { StoryDetail, StoryGroup } from '@/types/showcase';
 import { ApplicantInsightCard, CompactJobRecommendation, JobMatchesCard } from './FeedInsights';
@@ -65,14 +66,18 @@ export const FeedSection = ({
         <section className="lg:col-span-8 max-w-[560px] w-full">
             {/* Desktop Showcase Rail */}
             <div className="hidden md:block">
-                <StoryRail
-                    groups={groups}
-                    isLoading={storyLoading}
-                    activeAccount={activeAccount}
-                    variant="desktop-showcase"
-                    onCreateClick={() => setShowCreateStory(true)}
-                    onStoryClick={(story) => setSelectedStory(story)}
-                />
+                {groups.every(g => !g.stories || g.stories.length === 0) && !storyLoading ? (
+                    <SuggestedPeopleStrip />
+                ) : (
+                    <StoryRail
+                        groups={groups}
+                        isLoading={storyLoading}
+                        activeAccount={activeAccount}
+                        variant="desktop-showcase"
+                        onCreateClick={() => setShowCreateStory(true)}
+                        onStoryClick={(story) => setSelectedStory(story)}
+                    />
+                )}
             </div>
 
             <PullToRefresh onRefresh={resetSession}>
