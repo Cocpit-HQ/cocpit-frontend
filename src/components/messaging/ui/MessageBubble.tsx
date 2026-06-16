@@ -379,15 +379,18 @@ const MessageEditor = ({
   )
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1 w-full min-w-[220px] sm:min-w-[300px] md:min-w-[400px] p-2.5 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl">
       <textarea
         ref={textareaRef}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="w-full bg-transparent outline-none resize-none p-0 text-inherit leading-snug overflow-hidden"
+        className="w-full bg-transparent outline-none resize-none p-1 text-inherit leading-snug overflow-hidden min-h-[40px]"
         rows={1}
       />
+      <div className="flex justify-between items-center text-[10px] opacity-60 px-1 mt-1">
+        <span>Enter to save, Esc to cancel</span>
+      </div>
     </div>
   )
 }
@@ -437,9 +440,11 @@ function MessageBubble(props: MessageBubbleProps) {
     return isMediaOnly ? mediaOnlyClasses : baseClasses
   }
 
-  const paddingClasses = (message.media && message.media.length > 0)
-    ? "p-0 overflow-hidden"
-    : "px-3 py-2 md:px-4 md:py-2.5"
+  const paddingClasses = isEditing
+    ? "px-3 py-2 md:px-4 md:py-2.5"
+    : (message.media && message.media.length > 0)
+      ? "p-0 overflow-hidden"
+      : "px-3 py-2 md:px-4 md:py-2.5"
 
   // Long press mobile detection
   const [showMobileActions, setShowMobileActions] = useState(false)
@@ -484,7 +489,7 @@ function MessageBubble(props: MessageBubbleProps) {
         onTouchMove={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
       >
-        <div className={cn("max-w-[75%] md:max-w-[60%] flex flex-col", isMe ? "items-end" : "items-start")}>
+        <div className={cn("max-w-[75%] md:max-w-[60%] flex flex-col", isMe ? "items-end" : "items-start", isEditing && "w-full max-w-full md:max-w-[70%]")}>
           {showSenderName && !isMe && (
             <span className="text-xs text-muted-foreground mb-1 ml-1 font-medium">
               {message.senderName || "Unknown"}

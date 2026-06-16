@@ -345,9 +345,24 @@ export default function MessagingPage() {
 
             if (existingPageIndex !== -1) {
               const pages = [...oldData.pages];
-              pages[existingPageIndex] = pages[existingPageIndex].map((existingMessage) =>
-                existingMessage.id === uiMessage.id ? uiMessage : existingMessage,
-              );
+              pages[existingPageIndex] = pages[existingPageIndex].map((existingMessage) => {
+                if (existingMessage.id === uiMessage.id) {
+                  return {
+                    ...existingMessage,
+                    ...uiMessage,
+                    media: uiMessage.media && uiMessage.media.length > 0 ? uiMessage.media : existingMessage.media,
+                    sharedPost: uiMessage.sharedPost || existingMessage.sharedPost,
+                    sharedProfile: uiMessage.sharedProfile || existingMessage.sharedProfile,
+                    sharedProfileId: uiMessage.sharedProfileId || existingMessage.sharedProfileId,
+                    sharedProfileType: uiMessage.sharedProfileType || existingMessage.sharedProfileType,
+                    entityType: uiMessage.entityType || existingMessage.entityType,
+                    entityId: uiMessage.entityId || existingMessage.entityId,
+                    replied_msg_id: uiMessage.replied_msg_id || existingMessage.replied_msg_id,
+                    repliedMessage: uiMessage.repliedMessage || existingMessage.repliedMessage,
+                  };
+                }
+                return existingMessage;
+              });
               return { ...oldData, pages };
             }
 

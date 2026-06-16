@@ -247,7 +247,24 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                 if (existsPage !== -1) {
                     // Update existing message
                     const newPages = [...old.pages];
-                    newPages[existsPage] = newPages[existsPage].map(m => m.id === uiMessage.id ? uiMessage : m);
+                    newPages[existsPage] = newPages[existsPage].map(m => {
+                        if (m.id === uiMessage.id) {
+                            return {
+                                ...m,
+                                ...uiMessage,
+                                media: uiMessage.media && uiMessage.media.length > 0 ? uiMessage.media : m.media,
+                                sharedPost: uiMessage.sharedPost || m.sharedPost,
+                                sharedProfile: uiMessage.sharedProfile || m.sharedProfile,
+                                sharedProfileId: uiMessage.sharedProfileId || m.sharedProfileId,
+                                sharedProfileType: uiMessage.sharedProfileType || m.sharedProfileType,
+                                entityType: uiMessage.entityType || m.entityType,
+                                entityId: uiMessage.entityId || m.entityId,
+                                replied_msg_id: uiMessage.replied_msg_id || m.replied_msg_id,
+                                repliedMessage: uiMessage.repliedMessage || m.repliedMessage,
+                            };
+                        }
+                        return m;
+                    });
                     return { ...old, pages: newPages };
                 }
 
