@@ -187,6 +187,7 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                                     <ConnectionButton
                                         asMenuItem
                                         userId={user.id}
+                                        username={user.account_name}
                                         isFollowing={user.is_following || false}
                                         isFollowedBy={user.is_followed_by || false}
                                         connectionRequestStatus={user.connection_request_status}

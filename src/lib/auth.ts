@@ -280,8 +280,16 @@ export const authOptions: NextAuthOptions = {
       }
 
       // Handle session update
-      if (trigger === "update" && session?.onboarding_complete) {
-        token.onboarding_complete = session.onboarding_complete;
+      if (trigger === "update") {
+        if (session?.image !== undefined) {
+          token.picture = session.image;
+        }
+        if (session?.name !== undefined) {
+          token.name = session.name;
+        }
+        if (session?.onboarding_complete !== undefined) {
+          token.onboarding_complete = session.onboarding_complete;
+        }
       }
 
       // Return previous token if the access token has not expired yet

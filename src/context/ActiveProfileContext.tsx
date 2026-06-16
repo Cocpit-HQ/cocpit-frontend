@@ -163,6 +163,22 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
         setActorRequestHeaders(activeProfile ? { type: activeProfile.type, id: activeProfile.id } : null);
     }, [activeProfile]);
 
+    useEffect(() => {
+        if (activeProfile?.type === "USER" && session?.user) {
+            setActiveProfile(prev => {
+                if (!prev) return null;
+                if (prev.avatar_url !== session.user.image || prev.name !== session.user.name) {
+                    return {
+                        ...prev,
+                        name: session.user.name || "User",
+                        avatar_url: session.user.image || undefined,
+                    };
+                }
+                return prev;
+            });
+        }
+    }, [session?.user?.image, session?.user?.name, activeProfile?.type]);
+
     const switchProfile = (type: ProfileType, id: string) => {
         const performSwitch = async () => {
             try {

@@ -86,8 +86,8 @@ export default function EditProfilePage() {
       newErrors.full_name = "Full name must be at least 3 characters";
       isValid = false;
     }
-    if (formData.headline && formData.headline.length > 120) {
-      newErrors.headline = "Headline cannot exceed 120 characters";
+    if (formData.headline && formData.headline.length > 200) {
+      newErrors.headline = "Headline cannot exceed 200 characters";
       isValid = false;
     }
     if (formData.job_title && formData.job_title.length > 80) {
@@ -239,6 +239,7 @@ export default function EditProfilePage() {
                 id="headline"
                 value={formData.headline}
                 onChange={handleChange}
+                maxLength={200}
                 className={`${inputStyles} ${errors.headline ? "border-destructive" : ""}`}
               />
               {errors.headline && <p className={errorStyles}>{errors.headline}</p>}

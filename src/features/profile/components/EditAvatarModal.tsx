@@ -123,8 +123,8 @@ export function EditAvatarModal({
     if (!validTypes.includes(file.type)) {
       return;
     }
-    // Validate size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    // Validate size (50MB)
+    if (file.size > 50 * 1024 * 1024) {
       return;
     }
 
@@ -477,7 +477,7 @@ export function EditAvatarModal({
                     Click or drag to upload
                   </p>
                   <p className="text-[13px] text-muted-foreground font-[family-name:var(--font-poppins)] leading-relaxed">
-                    JPG, PNG, WEBP – Max 5MB
+                    JPG, PNG, WEBP – Max 50MB
                   </p>
                   <p className="text-[12px] text-muted-foreground/70 font-[family-name:var(--font-poppins)]">
                     Recommended size: 400 × 400 px

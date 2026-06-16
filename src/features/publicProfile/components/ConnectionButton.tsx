@@ -30,6 +30,7 @@ import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 interface ConnectionButtonProps {
     userId: string;
+    username?: string;
     className?: string;
     isFollowing?: boolean;
     isFollowedBy?: boolean;
@@ -43,6 +44,7 @@ type RelationshipState = 'none' | 'pending_sent' | 'pending_received' | 'connect
 
 export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
     userId,
+    username,
     className,
     asMenuItem,
 }) => {
@@ -106,6 +108,12 @@ export const ConnectionButton: React.FC<ConnectionButtonProps> = ({
         queryClient.invalidateQueries({ queryKey: ['followersCount', userId] });
         queryClient.invalidateQueries({ queryKey: ['profile', userId] });
         queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+        if (username) {
+            queryClient.invalidateQueries({ queryKey: ['profileStats', username] });
+            queryClient.invalidateQueries({ queryKey: ['profile', username] });
+            queryClient.invalidateQueries({ queryKey: ['connectionCount', username] });
+            queryClient.invalidateQueries({ queryKey: ['followersCount', username] });
+        }
         if (activeProfile?.id) {
             queryClient.invalidateQueries({ queryKey: ['company-connection-status', activeProfile.id, userId] });
             queryClient.invalidateQueries({ queryKey: ['company-relationship', activeProfile.id] });

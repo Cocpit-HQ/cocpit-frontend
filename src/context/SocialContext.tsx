@@ -6,6 +6,7 @@ import api from '@/lib/axios';
 import { useToast } from '@/hooks/use-toast';
 import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface SocialContextType {
   followingIds: string[];
@@ -42,6 +43,7 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
   const { activeProfile, isCompany } = useActiveProfile();
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [followingLoading, setFollowingLoading] = useState<Set<string>>(new Set());
+  const queryClient = useQueryClient();
 
   const isFollowLoading = (id: string) => {
     return followingLoading.has(id);
@@ -64,6 +66,20 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
         next.delete(id);
         return next;
       });
+
+      const currentUserId = session?.user?.id;
+      queryClient.invalidateQueries({ queryKey: ['profileStats', id] });
+      queryClient.invalidateQueries({ queryKey: ['profile', id] });
+      queryClient.invalidateQueries({ queryKey: ['followers', id] });
+      queryClient.invalidateQueries({ queryKey: ['following', id] });
+      queryClient.invalidateQueries({ queryKey: ['followersCount', id] });
+
+      if (currentUserId) {
+        queryClient.invalidateQueries({ queryKey: ['profileStats', currentUserId] });
+        queryClient.invalidateQueries({ queryKey: ['profile', currentUserId] });
+        queryClient.invalidateQueries({ queryKey: ['followers', currentUserId] });
+        queryClient.invalidateQueries({ queryKey: ['following', currentUserId] });
+      }
     } catch (error) {
       console.error('Failed to follow user:', error);
       setFollowingIds((prev) => prev.filter((userId) => userId !== id));
@@ -100,6 +116,20 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
         next.delete(id);
         return next;
       });
+
+      const currentUserId = session?.user?.id;
+      queryClient.invalidateQueries({ queryKey: ['profileStats', id] });
+      queryClient.invalidateQueries({ queryKey: ['profile', id] });
+      queryClient.invalidateQueries({ queryKey: ['followers', id] });
+      queryClient.invalidateQueries({ queryKey: ['following', id] });
+      queryClient.invalidateQueries({ queryKey: ['followersCount', id] });
+
+      if (currentUserId) {
+        queryClient.invalidateQueries({ queryKey: ['profileStats', currentUserId] });
+        queryClient.invalidateQueries({ queryKey: ['profile', currentUserId] });
+        queryClient.invalidateQueries({ queryKey: ['followers', currentUserId] });
+        queryClient.invalidateQueries({ queryKey: ['following', currentUserId] });
+      }
     } catch (error) {
       console.error('Failed to unfollow user:', error);
 

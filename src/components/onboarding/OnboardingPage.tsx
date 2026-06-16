@@ -316,12 +316,12 @@ export default function OnboardingPage() {
               window.history.replaceState({ stepKey: currentKey }, "", `?step=${currentKey}`);
             }
           }
-
-          setInitialized(true);
         }
       } catch (error) {
         console.error("Failed to initialize onboarding store:", error);
-        toast.error("Failed to load profile data");
+        toast.error("Failed to load profile data. You can still set up your profile manually.");
+      } finally {
+        setInitialized(true);
       }
     };
 
@@ -623,7 +623,57 @@ export default function OnboardingPage() {
       return renderStepContent(localSaved.step, localSaved.showSubStep);
     }
 
-    return null;
+    return (
+      <div className="min-h-screen bg-white overflow-hidden relative flex flex-col items-center justify-center p-4" data-theme="light">
+        <div className="w-full max-w-[480px] bg-white rounded-2xl border border-zinc-100 p-6 md:p-8 space-y-8 animate-pulse">
+          {/* Header Skeleton */}
+          <div className="flex items-center justify-between">
+            <div className="w-12 h-12 bg-zinc-200 rounded-xl"></div>
+            <div className="space-y-2 w-32">
+              <div className="h-3 bg-zinc-200 rounded w-16 ml-auto"></div>
+              <div className="h-1.5 bg-zinc-200 rounded w-32"></div>
+            </div>
+          </div>
+
+          {/* Heading Skeleton */}
+          <div className="space-y-3 pt-4">
+            <div className="h-7 bg-zinc-200 rounded w-48"></div>
+            <div className="h-4 bg-zinc-200 rounded w-72"></div>
+          </div>
+
+          {/* Large Card Options or Avatar Skeleton */}
+          <div className="space-y-4 pt-2">
+            <div className="h-32 bg-zinc-100 rounded-xl border border-dashed border-zinc-200 flex flex-col items-center justify-center p-6 space-y-3">
+              <div className="w-10 h-10 bg-zinc-200 rounded-full"></div>
+              <div className="h-4 bg-zinc-200 rounded w-36"></div>
+              <div className="h-3 bg-zinc-200 rounded w-24"></div>
+            </div>
+            
+            <div className="h-16 bg-zinc-100 rounded-xl border border-zinc-200 flex items-center px-6 space-x-4">
+              <div className="w-8 h-8 bg-zinc-200 rounded-full"></div>
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-zinc-200 rounded w-28"></div>
+                <div className="h-3 bg-zinc-200 rounded w-44"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Form Fields Skeleton */}
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <div className="h-3.5 bg-zinc-200 rounded w-20"></div>
+              <div className="h-11 bg-zinc-100 rounded-lg border border-zinc-200"></div>
+            </div>
+          </div>
+
+          {/* Action Buttons Skeleton */}
+          <div className="flex items-center space-x-3 pt-6">
+            <div className="w-11 h-11 bg-zinc-100 rounded-lg border border-zinc-200"></div>
+            <div className="flex-1 h-11 bg-zinc-200 rounded-lg"></div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (isCompleted) {

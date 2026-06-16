@@ -1,6 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 import {
     getProfile,
     addExperience,
@@ -250,6 +251,7 @@ export function useSkillMutations() {
 
 export function useAvatarMutations() {
     const queryClient = useQueryClient();
+    const { update } = useSession();
 
     const upload = useMutation({
         mutationFn: (formData: FormData) => uploadAvatar(formData),
@@ -261,6 +263,7 @@ export function useAvatarMutations() {
                     user: { ...old.user, avatar: response.avatarUrl }
                 };
             });
+            void update({ image: response.avatarUrl });
         }
     });
 
@@ -274,6 +277,7 @@ export function useAvatarMutations() {
                     user: { ...old.user, avatar: null }
                 };
             });
+            void update({ image: null });
         }
     });
 
@@ -284,6 +288,7 @@ export function useAvatarMutations() {
 
 export function useProfileMutation() {
     const queryClient = useQueryClient();
+    const { update: updateSession } = useSession();
 
     const update = useMutation({
         mutationFn: async (payload: any) => {
@@ -307,9 +312,12 @@ export function useProfileMutation() {
                 account_type: payload.status,
             });
         },
-        onSuccess: () => {
+        onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["my-profile"] });
             queryClient.invalidateQueries({ queryKey: ["profile-identity"] });
+            if (variables?.name) {
+                void updateSession({ name: variables.name });
+            }
             toast.success("Profile updated successfully");
         },
     });

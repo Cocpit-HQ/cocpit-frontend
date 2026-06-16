@@ -1,10 +1,10 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ban } from "lucide-react";
 import { BackButton } from "@/components/shared/BackButton";
 
@@ -71,8 +71,22 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
     }
   }, [userId, session?.user?.id, user]);
 
-  const isOwnProfile = session?.user?.id === userId;
+  const isOwnProfile = !!(session?.user?.id === userId || (user && session?.user?.id === user.id));
   const isUserFollowing = user ? isFollowing(user.id) : false;
+
+  const queryClient = useQueryClient();
+  const isFirstMount = useRef(true);
+
+  React.useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ['profileStats', userId] });
+    queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+    queryClient.invalidateQueries({ queryKey: ['followers', userId] });
+    queryClient.invalidateQueries({ queryKey: ['following', userId] });
+  }, [isUserFollowing, userId, queryClient]);
   // Use account_name (username) for profile URLs, fall back to userId
   const profileSlug = user?.account_name || userId;
 

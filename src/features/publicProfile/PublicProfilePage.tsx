@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ban, MessageCircle, UserPlus, UserCheck, Share2, Link as LinkIcon, Flag } from "lucide-react";
 import { BackButton } from "@/components/shared/BackButton";
 import { toast } from "sonner";
@@ -305,8 +305,22 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
     }
   }, [userId, session?.user?.id, user]);
 
-  const isOwnProfile = session?.user?.id === userId;
+  const isOwnProfile = !!(session?.user?.id === userId || (user && session?.user?.id === user.id));
   const isUserFollowing = user ? isFollowing(user.id) : false;
+
+  const queryClient = useQueryClient();
+  const isFirstMount = useRef(true);
+
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ['profileStats', userId] });
+    queryClient.invalidateQueries({ queryKey: ['profile', userId] });
+    queryClient.invalidateQueries({ queryKey: ['followers', userId] });
+    queryClient.invalidateQueries({ queryKey: ['following', userId] });
+  }, [isUserFollowing, userId, queryClient]);
 
   const handleFollowToggle = useCallback(() => {
     if (!user) return;
@@ -427,6 +441,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
       <ConnectionButton
         asMenuItem
         userId={user.id}
+        username={userId}
         isFollowing={user.is_following || false}
         isFollowedBy={user.is_followed_by || false}
         connectionRequestStatus={user.connection_request_status}

@@ -104,10 +104,16 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
             queryClient.setQueryData(["following", userId, search], context.previousFollowing);
             queryClient.setQueryData(["followers", userId, search], context.previousFollowers);
         },
-        onSettled: () => {
+        onSettled: (data, error, variables) => {
             queryClient.invalidateQueries({ queryKey: ["following", userId] });
             queryClient.invalidateQueries({ queryKey: ["profileStats", userId] });
             queryClient.invalidateQueries({ queryKey: ["followers", userId] });
+            if (variables) {
+                queryClient.invalidateQueries({ queryKey: ["profileStats", variables] });
+                queryClient.invalidateQueries({ queryKey: ["profile", variables] });
+                queryClient.invalidateQueries({ queryKey: ["followers", variables] });
+                queryClient.invalidateQueries({ queryKey: ["following", variables] });
+            }
         },
     });
 
@@ -147,10 +153,16 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
             queryClient.setQueryData(["following", userId, search], context.previousFollowing);
             queryClient.setQueryData(["followers", userId, search], context.previousFollowers);
         },
-        onSettled: () => {
+        onSettled: (data, error, variables) => {
             queryClient.invalidateQueries({ queryKey: ["following", userId] });
             queryClient.invalidateQueries({ queryKey: ["profileStats", userId] });
             queryClient.invalidateQueries({ queryKey: ["followers", userId] });
+            if (variables) {
+                queryClient.invalidateQueries({ queryKey: ["profileStats", variables] });
+                queryClient.invalidateQueries({ queryKey: ["profile", variables] });
+                queryClient.invalidateQueries({ queryKey: ["followers", variables] });
+                queryClient.invalidateQueries({ queryKey: ["following", variables] });
+            }
         },
     });
 
@@ -252,10 +264,16 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
             queryClient.setQueryData(["profileStats", userId], context.previousStats);
             queryClient.setQueryData(["followers", userId, search], context.previousFollowers);
         },
-        onSettled: () => {
+        onSettled: (data, error, variables) => {
             queryClient.invalidateQueries({ queryKey: ["followers", userId] });
             queryClient.invalidateQueries({ queryKey: ["profileStats", userId] });
             queryClient.invalidateQueries({ queryKey: ["connections", userId] });
+            if (variables) {
+                queryClient.invalidateQueries({ queryKey: ["profileStats", variables] });
+                queryClient.invalidateQueries({ queryKey: ["profile", variables] });
+                queryClient.invalidateQueries({ queryKey: ["followers", variables] });
+                queryClient.invalidateQueries({ queryKey: ["following", variables] });
+            }
         }
     });
 
