@@ -195,10 +195,10 @@ export const FeedPost = (props: FeedPostProps) => {
     <div
       ref={feedCardRef}
       onClick={handleCardClick}
-      className={`feed-card-shell flex w-full flex-col gap-[16px] overflow-hidden py-[16px] px-[16px] ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
+      className={`feed-card-shell flex w-full flex-col gap-[8px] overflow-hidden py-[16px] px-[16px] ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
     >
       {/* Header & Content (Frame 2608598) */}
-      <div className="flex flex-col gap-[16px]">
+      <div className="flex flex-col gap-[8px]">
         <PostHeader
           {...props}
           isMe={props.isOwnPost || false}
@@ -250,7 +250,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
       {/* Media (Rectangle 14) */}
       {!isArticlePost && (
-        <div className="mt-[-16px]">
+        <div className="mt-0">
           <PostMedia
             imageSrc={imageSrc}
             images={props.images}
@@ -277,9 +277,9 @@ export const FeedPost = (props: FeedPostProps) => {
       />
 
       {/* Social Proof & Actions */}
-      <div className="flex flex-col mt-[-16px]">
+      <div className="flex flex-col gap-[8px]">
         {likeCount > 0 && !(likeCount === 1 && isLiked) && (
-          <div className="flex items-center mt-2">
+          <div className="flex items-center">
             <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
               Liked by <span className="font-semibold hover:underline cursor-pointer">@{sampleLikerUsername || 'someone'}</span>
               {likeCount > 1 && (
@@ -289,7 +289,7 @@ export const FeedPost = (props: FeedPostProps) => {
           </div>
         )}
 
-        <div className={likeCount > 0 && !(likeCount === 1 && isLiked) ? "mt-0" : "mt-2"}>
+        <div>
           <PostActions
             id={id}
             isLiked={isLiked}

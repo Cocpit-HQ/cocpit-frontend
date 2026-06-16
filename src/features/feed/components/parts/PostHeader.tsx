@@ -139,7 +139,7 @@ export const PostHeader = ({
             const displayLocation = location ? location.split(',')[0].trim() : '';
             const truncatedLocation = displayLocation.length > 15 ? displayLocation.slice(0, 15) + '..' : displayLocation;
             return (
-              <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)] mt-0.5">
+              <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
                 {location && <span title={location}>{truncatedLocation}</span>}
                 {location && timeAgo && <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />}
                 {timeAgo && <span className="shrink-0">{timeAgo}</span>}

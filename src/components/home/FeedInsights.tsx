@@ -7,12 +7,12 @@ const jobMatches = [
   {
     id: "google-swe",
     title: "Software Engineer Intern @ Google",
-    meta: "Remote - Fresher",
+    meta: "Remote • Fresher",
   },
   {
     id: "startup-uiux",
     title: "UI/UX Designer @ Startup",
-    meta: "Hybrid - Pune",
+    meta: "Hybrid • Pune",
   },
 ];
 
@@ -45,31 +45,31 @@ export function ApplicantInsightCard() {
 
 export function JobMatchesCard() {
   return (
-    <section className="feed-card-shell space-y-4 py-[16px] px-[16px]">
-      <div>
-        <h2 className="text-base font-medium text-foreground">Best Matches for You Today</h2>
-        <p className="mt-1 text-xs text-muted-foreground">Based on your profile activity.</p>
+    <section className="feed-card-shell flex flex-col gap-4 py-[16px] px-[16px]">
+      <div className="flex flex-col">
+        <h2 className="text-[16px] font-medium leading-[24px] text-foreground font-['Poppins']">Best Matches for You Today</h2>
+        <p className="mt-1 text-[12px] leading-[18px] text-muted-foreground font-normal font-['Poppins']">Based on your profile & activity</p>
       </div>
 
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         {jobMatches.map((job) => (
           <Link
             key={job.id}
             href="/jobs"
-            className="flex items-center justify-between gap-4 py-1"
+            className="flex items-center justify-between gap-[10px] p-[16px] border border-[#EEF2FF] rounded-[24px] shadow-[0px_2px_4px_0px_rgba(99,102,241,0.05)] bg-[#FFFFFF] transition-colors hover:bg-muted/30"
           >
-            <div className="min-w-0">
-              <h3 className="truncate text-sm font-medium text-foreground">{job.title}</h3>
-              <p className="mt-1 truncate text-xs text-muted-foreground">{job.meta}</p>
+            <div className="min-w-0 flex flex-col gap-[8px]">
+              <h3 className="truncate text-[16px] font-normal leading-[24px] text-[#000000] font-['Poppins']">{job.title}</h3>
+              <p className="truncate text-[12px] leading-[16px] text-[#6B7280] font-normal font-['Poppins']">{job.meta}</p>
             </div>
-            <Bookmark className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <Bookmark className="h-6 w-6 shrink-0 text-[#000000]" strokeWidth={1.5} aria-hidden="true" />
           </Link>
         ))}
       </div>
 
       <Link
         href="/jobs"
-        className="block rounded-full py-2 text-center text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+        className="block mt-1 text-center text-[14px] font-medium text-[#6366F1] hover:underline font-['Poppins']"
       >
         View more
       </Link>

@@ -65,7 +65,7 @@ export const FeedSection = ({
     return (
         <section className="lg:col-span-8 max-w-[560px] w-full">
             {/* Desktop Showcase Rail */}
-            <div className="hidden md:block">
+            {/* <div className="hidden md:block">
                 {groups.every(g => !g.stories || g.stories.length === 0) && !storyLoading ? (
                     <SuggestedPeopleStrip />
                 ) : (
@@ -78,11 +78,11 @@ export const FeedSection = ({
                         onStoryClick={(story) => setSelectedStory(story)}
                     />
                 )}
-            </div>
+            </div> */}
 
             <PullToRefresh onRefresh={resetSession}>
                 {/* Mobile Story/Suggested Rail */}
-                <div className="md:hidden min-h-[120px] transition-all duration-500 overflow-hidden">
+                {/* <div className="md:hidden min-h-[120px] transition-all duration-500 overflow-hidden">
                     <div className="animate-in fade-in duration-500">
                         <StoryRail
                             groups={groups}
@@ -97,7 +97,7 @@ export const FeedSection = ({
                             }}
                         />
                     </div>
-                </div>
+                </div> */}
 
                 {/* Sort Dropdown */}
                 {/* <div className="flex justify-end mb-2 px-1 mt-1 md:mt-0">

@@ -21,7 +21,7 @@ export const PostSharedContent = ({
   if (!shared_post) return null;
 
   return (
-    <div className={`${isProfileView ? 'mx-2 mb-3' : 'mx-4 md:mx-6 mb-5'} relative group/shared`}>
+    <div className="w-full mx-0 px-0 box-border mb-0 relative group/shared">
       {shared_post.isAvailable === false ? (
         <div className="p-6 rounded-xl border border-border bg-muted/40 backdrop-blur-md flex flex-col items-center justify-center text-center gap-2">
           <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-1 text-2xl">
@@ -65,7 +65,7 @@ export const PostSharedContent = ({
         </Link>
       ) : (
         <Link href={`/post/${shared_post.id}`} className="block">
-          <div className="feed-card-shell box-border flex flex-col items-start p-[8px_16px] gap-[16px] w-full">
+          <div className="feed-card-shell box-border flex flex-col items-start p-[12px] gap-[8px] w-full border border-[#EEF2FF] rounded-[12px] mt-[8px] shadow-[0px_2px_4px_0px_#6366F10D] overflow-hidden">
             {/* Header (Frame 2608569) */}
             <div className="flex flex-row items-center p-0 gap-[8px] w-full">
               <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-muted">
@@ -103,11 +103,11 @@ export const PostSharedContent = ({
               )}
 
               {shared_post.videoSrc ? (
-                <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-border">
+                <div className="relative w-[calc(100%+24px)] aspect-video -mx-[12px] -mb-[12px] border-t border-[#EEF2FF]">
                   <video src={shared_post.videoSrc} className="w-full h-full object-cover" preload="metadata" playsInline />
                 </div>
               ) : shared_post.imageSrc ? (
-                <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-border">
+                <div className="relative w-[calc(100%+24px)] aspect-video -mx-[12px] -mb-[12px] border-t border-[#EEF2FF]">
                   <Image src={shared_post.imageSrc} alt="Shared post" fill className="object-cover" />
                 </div>
               ) : null}

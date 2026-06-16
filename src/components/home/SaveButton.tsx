@@ -81,7 +81,7 @@ export function SaveButton({ postId, initialIsSaved = false, className, onSaveCh
                     width="24"
                     height="24"
                     viewBox="0 0 24 24"
-                    className="w-4 h-4 md:w-5 md:h-5"
+                    className="w-6 h-6"
                 >
                     {isSaved ? (
                         <path 
