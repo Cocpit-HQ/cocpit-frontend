@@ -243,6 +243,21 @@ export function EditAvatarModal({
   };
 
   const handleDelete = async () => {
+    if (previewUrl) {
+      if (previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      setPreviewUrl(null);
+      resetTransforms();
+      if (currentAvatarUrl) {
+        setModalState("edit");
+      } else {
+        setModalState("upload");
+      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     try {
       setIsDeleting(true);
       await onDelete();
@@ -342,8 +357,8 @@ export function EditAvatarModal({
                 </button>
                 <button
                   onClick={handleDelete}
-                  disabled={isDeleting || !currentAvatarUrl}
-                  className="p-1.5 text-[#FF6B6B] hover:bg-[#FF6B6B]/10 rounded-md transition-colors disabled:opacity-50"
+                  disabled={isDeleting || (!currentAvatarUrl && !previewUrl)}
+                  className="p-1.5 text-[#FF6B6B] hover:bg-[#FF6B6B]/10 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 >
                   {isDeleting ? <Loader2 className="w-6 h-6 animate-spin" strokeWidth={1.5} /> : <Icon icon="fluent:delete-32-regular" className="w-6 h-6" />}
                 </button>

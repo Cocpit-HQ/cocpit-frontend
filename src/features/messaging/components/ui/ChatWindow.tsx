@@ -568,7 +568,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
         const queryKey = ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'];
         queryClient.setQueryData(queryKey, (oldChats: ChatThread[] | undefined) => {
           if (!oldChats) return [];
-          return oldChats.map(c => 
+          return oldChats.map(c =>
             String(c.id) === String(payload.conversationId)
               ? { ...c, is_muted: payload.preference.is_muted, muted_until: payload.preference.muted_until }
               : c
@@ -1439,7 +1439,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
             const queryKey = ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'];
             queryClient.setQueryData(queryKey, (oldChats: ChatThread[] | undefined) => {
               if (!oldChats) return [];
-              return oldChats.map(c => 
+              return oldChats.map(c =>
                 String(c.id) === String(chat.id)
                   ? { ...c, is_muted: true, muted_until: null }
                   : c
@@ -1471,7 +1471,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
             const queryKey = ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'];
             queryClient.setQueryData(queryKey, (oldChats: ChatThread[] | undefined) => {
               if (!oldChats) return [];
-              return oldChats.map(c => 
+              return oldChats.map(c =>
                 String(c.id) === String(chat.id)
                   ? { ...c, is_muted: false, muted_until: null }
                   : c

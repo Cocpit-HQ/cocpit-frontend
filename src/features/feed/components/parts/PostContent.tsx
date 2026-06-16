@@ -125,27 +125,45 @@ export const PostContent = ({
 
       {/* Main post description/caption */}
       {content && !isArticle && (() => {
-        const truncateLength = 240;
-        const isLong = !isFullContent && (content.length > truncateLength || content.split('\n').length > 3);
-        let displayContent = content;
-        
+        const truncateLength = 185;
+        const trimmedContent = content.trimEnd();
+        const nonEmptyLineCount = trimmedContent.split('\n').filter(line => line.trim() !== '').length;
+        const isLong = !isFullContent && (trimmedContent.length > truncateLength || nonEmptyLineCount > 3);
+        let displayContent = trimmedContent;
+
         if (isLong && !isExpanded) {
-          const lines = content.split('\n');
-          if (lines.length > 3) {
-            displayContent = lines.slice(0, 3).join('\n');
+          const lines = trimmedContent.split('\n');
+          if (nonEmptyLineCount > 3) {
+            let nonEmptyCount = 0;
+            let sliceIndex = lines.length;
+            for (let i = 0; i < lines.length; i++) {
+              if (lines[i].trim() !== '') {
+                nonEmptyCount++;
+                if (nonEmptyCount === 3) {
+                  sliceIndex = i + 1;
+                  break;
+                }
+              }
+            }
+            displayContent = lines.slice(0, sliceIndex).join('\n');
           }
           if (displayContent.length > truncateLength) {
-            displayContent = displayContent.slice(0, truncateLength).trimEnd();
+            let truncated = displayContent.slice(0, truncateLength);
+            const lastSpaceIndex = truncated.lastIndexOf(' ');
+            if (lastSpaceIndex > 0) {
+              truncated = truncated.slice(0, lastSpaceIndex);
+            }
+            displayContent = truncated.trimEnd();
           }
         }
 
         return (
           <div className="w-full">
             <div
-              className={`font-normal font-[family-name:var(--font-poppins)] text-[12px] leading-[16px] text-foreground whitespace-pre-wrap ${!isFullContent && !isExpanded ? 'line-clamp-3' : ''}`}
+              className="font-normal font-[family-name:var(--font-poppins)] text-[12px] leading-[16px] text-foreground whitespace-pre-wrap"
             >
               <span className="inline">
-                <RichTextRenderer content={displayContent} authorName={author} authorSlug={authorSlug} />
+                <RichTextRenderer content={isExpanded ? trimmedContent : displayContent} authorName={author} authorSlug={authorSlug} />
               </span>
               {isLong && !isExpanded && (
                 <span className="inline">

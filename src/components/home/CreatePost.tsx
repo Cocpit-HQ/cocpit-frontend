@@ -26,9 +26,9 @@ function PostButton({ icon, label, onClick }: { icon: React.ReactNode; label: st
 export function CreatePost({ onOpenModal }: CreatePostProps) {
   const { activeProfile, isCompany } = useActiveProfile();
   const { currentUser } = useFeed();
-  
-  const avatar = isCompany && activeProfile?.avatar_url 
-    ? activeProfile.avatar_url 
+
+  const avatar = isCompany && activeProfile?.avatar_url
+    ? activeProfile.avatar_url
     : (currentUser?.image || "/assets/pngegg.png");
 
   return (

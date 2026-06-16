@@ -176,11 +176,11 @@ export default function MessagingPage() {
     };
   }, [isCompanyMode, companyId, chats.length, user?.id]); // Only re-run when company mode changes or chat count changes
 
-    // Handle userId param to start a new chat or select existing
-    useEffect(() => {
-      const userId = searchParams.get("userId");
-      const groupId = searchParams.get("groupId");
-      const conversationId = searchParams.get("conversationId");
+  // Handle userId param to start a new chat or select existing
+  useEffect(() => {
+    const userId = searchParams.get("userId");
+    const groupId = searchParams.get("groupId");
+    const conversationId = searchParams.get("conversationId");
 
 
     // Handle conversationId param (from notification click) — works for all chat types
@@ -247,7 +247,7 @@ export default function MessagingPage() {
         }
         return;
       }
-      
+
       // If we have a userId but no companyId match, don't return early.
       // Let the regular userId logic below handle it.
       if (!userId) return;
@@ -269,8 +269,8 @@ export default function MessagingPage() {
 
     if (userId) {
       const existingChat = chats.find(
-        (c) => 
-          String(c.otherUserId) === String(userId) || 
+        (c) =>
+          String(c.otherUserId) === String(userId) ||
           String(c.otherUserSlug) === String(userId),
       );
 
@@ -409,7 +409,7 @@ export default function MessagingPage() {
                 lastMessageAt: message.created_at || new Date().toISOString(),
                 unread:
                   c.id === selectedChat?.id ||
-                  (selectedChat?.isGroup && selectedChat.id === c.id)
+                    (selectedChat?.isGroup && selectedChat.id === c.id)
                     ? 0
                     : c.unread + 1,
               };
@@ -510,7 +510,7 @@ export default function MessagingPage() {
               lastMessageAt: lastMsgAt || existing.lastMessageAt,
               unread: String(conversationId) === String(selectedChat?.id) ? 0 : unreadCount,
             };
-            
+
             // Also update details if full other_user_name etc are provided
             if (payload.other_user_name || payload.otherUserName) {
               targetThread.name = payload.other_user_name || payload.otherUserName;
@@ -681,10 +681,10 @@ export default function MessagingPage() {
         setSelectedChat((prev) =>
           prev
             ? {
-                ...prev,
-                isBlockedByMe: isMeBlocker ? true : prev.isBlockedByMe,
-                isBlockedByOther: !isMeBlocker ? true : prev.isBlockedByOther,
-              }
+              ...prev,
+              isBlockedByMe: isMeBlocker ? true : prev.isBlockedByMe,
+              isBlockedByOther: !isMeBlocker ? true : prev.isBlockedByOther,
+            }
             : null
         );
       }
@@ -729,10 +729,10 @@ export default function MessagingPage() {
         setSelectedChat((prev) =>
           prev
             ? {
-                ...prev,
-                isBlockedByMe: isMeUnblocker ? false : prev.isBlockedByMe,
-                isBlockedByOther: !isMeUnblocker ? false : prev.isBlockedByOther,
-              }
+              ...prev,
+              isBlockedByMe: isMeUnblocker ? false : prev.isBlockedByMe,
+              isBlockedByOther: !isMeUnblocker ? false : prev.isBlockedByOther,
+            }
             : null
         );
       }
@@ -876,9 +876,8 @@ export default function MessagingPage() {
         <div className="flex w-full h-full gap-4">
           {/* Chat List - on mobile, hidden if we have a selected chat */}
           <div
-            className={`${
-              isMobile && selectedChat ? "hidden" : "flex flex-col"
-            } h-full overflow-hidden w-full md:w-[380px] shrink-0`}
+            className={`${isMobile && selectedChat ? "hidden" : "flex flex-col"
+              } h-full overflow-hidden w-full md:w-[380px] shrink-0`}
           >
             <ChatList
               selectedChatId={selectedChat?.id}
@@ -905,11 +904,10 @@ export default function MessagingPage() {
 
           {/* Chat Window - on mobile, only shown if selectedChat */}
           <div
-            className={`${
-              isMobile && selectedChat
-                ? "fixed inset-0 z-50 bg-[var(--card)] w-full h-[100dvh] flex flex-col"
-                : "hidden md:flex flex-col flex-1 h-full overflow-hidden bg-[var(--card)] rounded-[24px]"
-            }`}
+            className={`${isMobile && selectedChat
+              ? "fixed inset-0 z-50 bg-[var(--card)] w-full h-[100dvh] flex flex-col"
+              : "hidden md:flex flex-col flex-1 h-full overflow-hidden bg-[var(--card)] rounded-[24px]"
+              }`}
           >
             {activeChat ? (
               (activeChat.isGroup && !activeChat.is_requesting) ? (

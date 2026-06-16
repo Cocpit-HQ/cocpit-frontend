@@ -45,7 +45,7 @@ export function ApplicantInsightCard() {
 
 export function JobMatchesCard() {
   return (
-    <section className="space-y-3">
+    <section className="feed-card-shell space-y-4 py-[16px] px-[16px]">
       <div>
         <h2 className="text-base font-medium text-foreground">Best Matches for You Today</h2>
         <p className="mt-1 text-xs text-muted-foreground">Based on your profile activity.</p>
@@ -56,7 +56,7 @@ export function JobMatchesCard() {
           <Link
             key={job.id}
             href="/jobs"
-            className="feed-card-shell flex items-center justify-between gap-4 px-4 py-3"
+            className="flex items-center justify-between gap-4 py-1"
           >
             <div className="min-w-0">
               <h3 className="truncate text-sm font-medium text-foreground">{job.title}</h3>

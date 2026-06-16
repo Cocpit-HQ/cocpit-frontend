@@ -271,6 +271,16 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
   };
 
   const handleDelete = async () => {
+    if (previewUrl) {
+      handleCancelPreview();
+      if (coverImage) {
+        setModalState("edit");
+      } else {
+        setModalState("upload");
+      }
+      return;
+    }
+
     setIsDeleting(true);
     try {
       if (onDelete) {
@@ -359,8 +369,8 @@ const EditCoverPhoto: React.FC<EditCoverPhotoProps> = ({ coverImage, setCoverIma
                 </button>
                 <button
                   onClick={handleDelete}
-                  disabled={isDeleting || !coverImage}
-                  className="p-1.5 text-[#FF6B6B] hover:bg-[#FF6B6B]/10 rounded-md transition-colors disabled:opacity-50"
+                  disabled={isDeleting || (!coverImage && !previewUrl)}
+                  className="p-1.5 text-[#FF6B6B] hover:bg-[#FF6B6B]/10 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 >
                   {isDeleting ? <Loader2 className="w-6 h-6 animate-spin" strokeWidth={1.5} /> : <Icon icon="fluent:delete-32-regular" className="w-6 h-6" />}
                 </button>

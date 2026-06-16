@@ -192,7 +192,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
       {/* Header section (Frame 2608569) */}
       <div className="w-full h-[40px] flex items-center justify-between px-4 z-10 mb-4">
         {/* Author Info */}
-        <div 
+        <div
           className="flex items-center gap-2 overflow-hidden flex-1 cursor-pointer group"
           onClick={(e) => {
             e.stopPropagation();
@@ -570,8 +570,10 @@ export default function ProfilePage() {
     try {
       await updateProfileMutation.mutateAsync(data);
       setIsEditProfileModalOpen(false);
+      toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Failed to update profile:", error);
+      toast.error("Failed to update profile");
     }
   }, [updateProfileMutation]);
 

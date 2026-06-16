@@ -525,8 +525,8 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
 
         if (isInactive && !leaveAction && displayMessages.length > 0) {
             const myId = currentUser.id || currentUser.user_id;
-            const systemMsg = [...displayMessages].reverse().find(m => 
-                m.type === 'system' && 
+            const systemMsg = [...displayMessages].reverse().find(m =>
+                m.type === 'system' &&
                 (m.action_type === 'leave' || m.action_type === 'remove') &&
                 (String(m.target_id) === String(myId) || String(m.senderId) === String(myId))
             );
@@ -767,8 +767,8 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                 {/* Info/Edit Panel - Slides in from the right */}
                 <div className={cn(
                     "fixed inset-0 z-50 bg-white md:absolute md:inset-0 md:z-10 transition-all duration-300",
-                    activeView === 'chat' 
-                        ? "translate-x-full opacity-0 invisible" 
+                    activeView === 'chat'
+                        ? "translate-x-full opacity-0 invisible"
                         : "translate-x-0 opacity-100 visible"
                 )}>
                     <GroupDetails

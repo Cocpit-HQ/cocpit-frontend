@@ -202,23 +202,23 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
     }
   }
 
-    const formatDateDivider = (dateString?: string) => {
-      if (!dateString) return null;
-      const date = new Date(dateString);
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
+  const formatDateDivider = (dateString?: string) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
 
-      if (date.toDateString() === today.toDateString()) return "Today";
-      if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+    if (date.toDateString() === today.toDateString()) return "Today";
+    if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
 
-      return date.toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-        year:
-          date.getFullYear() === today.getFullYear() ? undefined : "numeric",
-      });
-    };
+    return date.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year:
+        date.getFullYear() === today.getFullYear() ? undefined : "numeric",
+    });
+  };
 
   return (
     <div className="flex-1 relative flex flex-col min-h-0 overflow-hidden">
@@ -267,14 +267,14 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
                 );
               }
 
-              const isMoreThanOneMinute = (date1?: string, date2?: string) => {
-                if (!date1 || !date2) return true;
-                return (
-                  Math.abs(
-                    new Date(date1).getTime() - new Date(date2).getTime(),
-                  ) > 60000
-                );
-              };
+            const isMoreThanOneMinute = (date1?: string, date2?: string) => {
+              if (!date1 || !date2) return true;
+              return (
+                Math.abs(
+                  new Date(date1).getTime() - new Date(date2).getTime(),
+                ) > 60000
+              );
+            };
 
               const isTimeBreakWithPrev = prev && !(prev as any).isSkeleton
                 ? isMoreThanOneMinute(msg.created_at, prev.created_at)
@@ -302,7 +302,7 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
                 initialUnread > 0 &&
                 virtualRow.index === displayMessages.length - initialUnread;
 
-              const groupedMsg = { ...msg, isFirstInGroup, isLastInGroup };
+            const groupedMsg = { ...msg, isFirstInGroup, isLastInGroup };
 
           return (
             <div
@@ -364,7 +364,7 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
         })}
       </div>
       </div>
-      
+
       {showScrollButton && !shouldScrollToBottom && (
         <button
           className="absolute bottom-4 right-4 md:right-8 bg-white border border-border shadow-lg text-primary p-2 rounded-full z-50 hover:bg-muted transition-all"

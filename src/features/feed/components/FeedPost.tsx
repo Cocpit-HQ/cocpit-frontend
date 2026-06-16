@@ -195,10 +195,10 @@ export const FeedPost = (props: FeedPostProps) => {
     <div
       ref={feedCardRef}
       onClick={handleCardClick}
-      className={`feed-card-shell flex w-full flex-col gap-[16px] overflow-hidden py-[16px] ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
+      className={`feed-card-shell flex w-full flex-col gap-[16px] overflow-hidden py-[16px] px-[16px] ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
     >
       {/* Header & Content (Frame 2608598) */}
-      <div className="flex flex-col gap-[16px] px-0">
+      <div className="flex flex-col gap-[16px]">
         <PostHeader
           {...props}
           isMe={props.isOwnPost || false}
@@ -279,7 +279,7 @@ export const FeedPost = (props: FeedPostProps) => {
       {/* Social Proof & Actions */}
       <div className="flex flex-col mt-[-16px]">
         {likeCount > 0 && !(likeCount === 1 && isLiked) && (
-          <div className="px-0 flex items-center mt-2">
+          <div className="flex items-center mt-2">
             <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
               Liked by <span className="font-semibold hover:underline cursor-pointer">@{sampleLikerUsername || 'someone'}</span>
               {likeCount > 1 && (

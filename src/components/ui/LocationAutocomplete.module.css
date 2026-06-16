@@ -10,10 +10,10 @@
   justify-content: space-between;
   width: 100%;
   height: 48px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border, #e5e7eb);
   border-radius: 16px;
   padding: 8px 16px;
-  background: #ffffff;
+  background: var(--card, #ffffff);
   backdrop-filter: none;
   transition: all 0.2s ease;
   box-sizing: border-box;
@@ -21,7 +21,7 @@
 
 .inputWrapper:focus-within,
 .inputWrapper.isOpen {
-  border-color: #C7D2FE;
+  border-color: var(--ring, #C7D2FE);
   box-shadow: none;
 }
 
@@ -30,7 +30,7 @@
   height: 100%;
   border: none;
   background: transparent;
-  color: #18181b;
+  color: var(--foreground, #18181b);
   font-family: var(--font-poppins), sans-serif;
   font-weight: 400;
   font-size: 16px;
@@ -43,7 +43,7 @@
 .input::placeholder {
   font-family: var(--font-poppins), sans-serif;
   font-weight: 400;
-  color: #9ca3af;
+  color: var(--muted-foreground, #9ca3af);
 }
 
 .suffix {
@@ -61,13 +61,13 @@
   padding: 2px;
   display: flex;
   align-items: center;
-  color: #9ca3af;
+  color: var(--muted-foreground, #9ca3af);
   transition: color 0.15s ease;
   border-radius: 4px;
 }
 
 .chevronBtn:hover {
-  color: #18181b;
+  color: var(--foreground, #18181b);
 }
 
 .chevronIcon {
@@ -88,12 +88,12 @@
   padding: 0;
   display: flex;
   align-items: center;
-  color: #9ca3af;
+  color: var(--muted-foreground, #9ca3af);
   transition: color 0.15s ease;
 }
 
 .clearBtn:hover {
-  color: #18181b;
+  color: var(--foreground, #18181b);
 }
 
 .clearIcon {
@@ -107,8 +107,8 @@
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--card, #ffffff);
+  border: 1px solid var(--border, #e5e7eb);
   border-radius: 14px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   z-index: 9999;
@@ -138,7 +138,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #9ca3af;
+  color: var(--muted-foreground, #9ca3af);
   padding: 6px 14px 4px;
   list-style: none;
 }
@@ -155,13 +155,13 @@
 }
 
 .item:hover {
-  background: #EEF2FF;
+  background: var(--muted, #EEF2FF);
 }
 
 .itemIcon {
   width: 0.95rem;
   height: 0.95rem;
-  color: #6366F1;
+  color: var(--primary, #6366F1);
   flex-shrink: 0;
 }
 
@@ -175,25 +175,24 @@
   font-family: var(--font-poppins), sans-serif;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #111827;
+  color: var(--foreground, #111827);
   line-height: 1.3;
 }
 
 .itemCountry {
   font-family: var(--font-poppins), sans-serif;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--muted-foreground, #6b7280);
   line-height: 1.2;
 }
 
-/* ── No results ── */
 .noResults {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--card, #ffffff);
+  border: 1px solid var(--border, #e5e7eb);
   border-radius: 14px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   z-index: 9999;
@@ -207,12 +206,12 @@
 .noResults span {
   font-family: var(--font-poppins), sans-serif;
   font-size: 0.875rem;
-  color: #374151;
+  color: var(--foreground, #374151);
 }
 
 .noResultsHint {
   font-size: 0.75rem !important;
-  color: #9ca3af !important;
+  color: var(--muted-foreground, #9ca3af) !important;
 }
 
 /* ── Skeleton loading items ── */
@@ -228,7 +227,7 @@
   width: 0.95rem;
   height: 0.95rem;
   border-radius: 50%;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--muted, #f0f0f0) 25%, var(--border, #e0e0e0) 50%, var(--muted, #f0f0f0) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
   flex-shrink: 0;
@@ -244,7 +243,7 @@
 .skeletonLine {
   height: 10px;
   border-radius: 6px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--muted, #f0f0f0) 25%, var(--border, #e0e0e0) 50%, var(--muted, #f0f0f0) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
 }
