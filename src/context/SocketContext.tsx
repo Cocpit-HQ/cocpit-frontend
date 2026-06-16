@@ -350,6 +350,76 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
+    const handleBlock = (payload: any) => {
+      if (!payload) return;
+      const conversationId = payload.conversation_id || payload.conversationId;
+      if (!conversationId) return;
+
+      const isMeBlocker = String(payload.blocked_by_user_id) === String(session?.user?.id);
+      const currentProfile = activeProfileRef.current;
+
+      const queryKey = [
+        "conversations",
+        currentProfile?.type ?? "USER",
+        currentProfile?.id ?? "me",
+      ];
+
+      queryClient.setQueryData(
+        queryKey,
+        (oldData: any[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map((c) => {
+            if (String(c.id) === String(conversationId)) {
+              return {
+                ...c,
+                isBlockedByMe: isMeBlocker ? true : c.isBlockedByMe,
+                isBlockedByOther: !isMeBlocker ? true : c.isBlockedByOther,
+              };
+            }
+            return c;
+          });
+        }
+      );
+
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+    };
+
+    const handleUnblock = (payload: any) => {
+      if (!payload) return;
+      const conversationId = payload.conversation_id || payload.conversationId;
+      if (!conversationId) return;
+
+      const isMeUnblocker = String(payload.unblocked_by_user_id) === String(session?.user?.id);
+      const currentProfile = activeProfileRef.current;
+
+      const queryKey = [
+        "conversations",
+        currentProfile?.type ?? "USER",
+        currentProfile?.id ?? "me",
+      ];
+
+      queryClient.setQueryData(
+        queryKey,
+        (oldData: any[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map((c) => {
+            if (String(c.id) === String(conversationId)) {
+              return {
+                ...c,
+                isBlockedByMe: isMeUnblocker ? false : c.isBlockedByMe,
+                isBlockedByOther: !isMeUnblocker ? false : c.isBlockedByOther,
+              };
+            }
+            return c;
+          });
+        }
+      );
+
+      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+    };
+
     newSocket.on('notification', handleNotification);
     newSocket.on('new_message', handleNewMessage);
     newSocket.on('conversation_updated', handleConversationUpdated);
@@ -357,6 +427,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     newSocket.on('userStatusChanged', handleUserStatus);
     newSocket.on('isTyping', handleTyping);
     newSocket.on('stoppedTyping', handleStopTyping);
+    newSocket.on('user_blocked', handleBlock);
+    newSocket.on('block_confirmed', handleBlock);
+    newSocket.on('user_unblocked', handleUnblock);
+    newSocket.on('unblock_confirmed', handleUnblock);
 
     socketRef.current = newSocket;
     queueMicrotask(() => {
@@ -380,6 +454,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       newSocket.off('userStatusChanged', handleUserStatus);
       newSocket.off('isTyping', handleTyping);
       newSocket.off('stoppedTyping', handleStopTyping);
+      newSocket.off('user_blocked', handleBlock);
+      newSocket.off('block_confirmed', handleBlock);
+      newSocket.off('user_unblocked', handleUnblock);
+      newSocket.off('unblock_confirmed', handleUnblock);
       newSocket.disconnect();
       setTypingConversations({});
     };

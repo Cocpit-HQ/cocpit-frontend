@@ -14,6 +14,7 @@ import {
   mapBackendChatToChatThread,
   formatTimeAgo,
   mapBackendMessageToMessage,
+  isPostUrl,
 } from "@/lib/mappers/messaging.mapper";
 import { useSocket } from "@/context/SocketContext";
 import { useAuth } from "@/hooks/use-auth";
@@ -397,12 +398,14 @@ export default function MessagingPage() {
               return {
                 ...c,
                 lastMessage:
-                  message.text_content ||
-                  (message.shared_post
+                  isPostUrl(message.text_content)
                     ? "Shared a post"
-                    : message.shared_profile_id
-                      ? "Shared a profile"
-                      : "Attachment"),
+                    : (message.text_content ||
+                      (message.shared_post
+                        ? "Shared a post"
+                        : message.shared_profile_id
+                          ? "Shared a profile"
+                          : "Attachment")),
                 time: formatTimeAgo(
                   message.created_at || new Date().toISOString(),
                 ),
@@ -505,7 +508,7 @@ export default function MessagingPage() {
 
             targetThread = {
               ...existing,
-              lastMessage: lastMsgText !== undefined ? lastMsgText : existing.lastMessage,
+              lastMessage: lastMsgText !== undefined ? (isPostUrl(lastMsgText) ? "Shared a post" : lastMsgText) : existing.lastMessage,
               time: lastMsgAt ? formatTimeAgo(lastMsgAt) : existing.time,
               lastMessageAt: lastMsgAt || existing.lastMessageAt,
               unread: String(conversationId) === String(selectedChat?.id) ? 0 : unreadCount,
@@ -653,7 +656,7 @@ export default function MessagingPage() {
       const conversationId = payload.conversation_id;
       if (!conversationId) return;
 
-      const isMeBlocker = payload.blocked_by_user_id === user?.id;
+      const isMeBlocker = String(payload.blocked_by_user_id) === String(user?.id);
 
       const queryKey = [
         "conversations",
@@ -689,11 +692,11 @@ export default function MessagingPage() {
         );
       }
 
-      if (!isMeBlocker) {
-        toast({
-          description: `${payload.blocked_by_name || "Someone"} has blocked you`,
-        });
-      }
+      // if (!isMeBlocker) {
+      //   toast({
+      //     description: `${payload.blocked_by_name || "Someone"} has blocked you`,
+      //   });
+      // }
     };
 
     const handleUnblock = (payload: any) => {
@@ -701,7 +704,7 @@ export default function MessagingPage() {
       const conversationId = payload.conversation_id;
       if (!conversationId) return;
 
-      const isMeUnblocker = payload.unblocked_by_user_id === user?.id;
+      const isMeUnblocker = String(payload.unblocked_by_user_id) === String(user?.id);
 
       const queryKey = [
         "conversations",
@@ -737,11 +740,11 @@ export default function MessagingPage() {
         );
       }
 
-      if (!isMeUnblocker) {
-        toast({
-          description: `${payload.unblocked_by_name || "Someone"} has unblocked you`,
-        });
-      }
+      // if (!isMeUnblocker) {
+      //   toast({
+      //     description: `${payload.unblocked_by_name || "Someone"} has unblocked you`,
+      //   });
+      // }
     };
 
     const handlePreferenceUpdated = (payload: {

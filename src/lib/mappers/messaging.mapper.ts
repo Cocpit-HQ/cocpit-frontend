@@ -46,6 +46,12 @@ export const formatTimeAgo = (isoString: string): string => {
   return date.toLocaleDateString('en-GB');
 };
 
+export const isPostUrl = (text?: string): boolean => {
+  if (!text) return false;
+  const postUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/post\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})/i;
+  return postUrlRegex.test(text.trim());
+};
+
 export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread => {
   if (!backendChat.other_user_id && !backendChat.is_group) {
     console.warn(`Conversation ${backendChat.conversation_id} is missing 'other_user_id'. This conversation might not support direct messaging.`);
@@ -54,7 +60,7 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     id: backendChat.conversation_id,
     name: backendChat.other_user_name || "Deleted User",
     role: backendChat.other_user_headline || "",
-    lastMessage: backendChat.last_message_text,
+    lastMessage: isPostUrl(backendChat.last_message_text) ? "Shared a post" : backendChat.last_message_text,
     time: (backendChat.last_message_at || backendChat.updated_at) 
       ? formatTimeAgo(backendChat.last_message_at || backendChat.updated_at) 
       : (backendChat.timeAgo || ""),

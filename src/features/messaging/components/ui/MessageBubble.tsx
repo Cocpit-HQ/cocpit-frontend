@@ -139,36 +139,107 @@ const MessageMenu = ({ message, onAction, currentUserId }: { message: Message, o
 
 const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoad?: () => void }) => {
   const router = useRouter()
-  if (!message.sharedPost) return null
+  const [loadedPost, setLoadedPost] = useState<any | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const rawText = message.text || message.text_content || ""
+  const postUrlRegex = /(?:https?:\/\/[^\/\s]+)?\/post\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})/i
+  const match = rawText.match(postUrlRegex)
+  const extractedPostId = match ? match[1] : null
+
+  useEffect(() => {
+    if (message.sharedPost || !extractedPostId) {
+      setLoadedPost(null)
+      return
+    }
+
+    let isMounted = true
+    const fetchPost = async () => {
+      setLoading(true)
+      try {
+        const { getPostById } = await import("@/services/api/posts")
+        const backendPost = await getPostById(extractedPostId)
+        if (isMounted) {
+          const media = backendPost.media?.map(m => ({
+            url: m.url,
+            type: m.media_type as 'image' | 'video'
+          })) || []
+
+          setLoadedPost({
+            id: backendPost.post_id,
+            content: backendPost.content || "",
+            author: backendPost.author_name || "Unknown",
+            authorAvatar: backendPost.author_avatar || "/assets/pngegg.png",
+            media: media
+          })
+        }
+      } catch (err) {
+        console.error("Error fetching shared post in SharedPostCard:", err)
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchPost()
+    return () => {
+      isMounted = false
+    }
+  }, [message.sharedPost, extractedPostId])
+
+  const postToRender = message.sharedPost || loadedPost
+
+  if (!postToRender) {
+    if (loading) {
+      return (
+        <div className="mt-1 mb-2 rounded-xl bg-background/60 backdrop-blur-sm border border-white/10 overflow-hidden max-w-[280px] w-full animate-pulse">
+          <div className="p-3 border-b border-white/10 flex items-center gap-2.5">
+            <div className="w-6 h-6 rounded-full bg-muted shrink-0" />
+            <div className="flex flex-col gap-1 flex-1">
+              <div className="h-2.5 bg-muted rounded w-2/3" />
+              <div className="h-2 bg-muted rounded w-1/3" />
+            </div>
+          </div>
+          <div className="w-full aspect-[4/3] bg-muted relative" />
+          <div className="p-3 space-y-1">
+            <div className="h-2 bg-muted rounded w-full" />
+            <div className="h-2 bg-muted rounded w-5/6" />
+          </div>
+        </div>
+      )
+    }
+    return null
+  }
 
   return (
     <div
       className="mt-1 mb-2 rounded-xl bg-background/60 backdrop-blur-sm border border-white/10 overflow-hidden max-w-[280px] cursor-pointer hover:bg-background/80 transition-all shadow-sm group"
-      onClick={() => router.push(`/post/${message.sharedPost?.id}`)}
+      onClick={() => router.push(`/post/${postToRender.id}`)}
       role="button"
       tabIndex={0}
     >
       <div className="p-3 border-b border-white/10 flex items-center gap-2.5">
         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden ring-1 ring-white/20">
           <img
-            src={message.sharedPost.authorAvatar || '/assets/pngegg.png'}
-            alt={message.sharedPost.author}
+            src={postToRender.authorAvatar || '/assets/pngegg.png'}
+            alt={postToRender.author}
             className="w-full h-full object-cover"
           />
         </div>
         <div className="flex flex-col">
-          <span className="text-xs font-semibold truncate leading-none mb-0.5">{message.sharedPost.author}</span>
+          <span className="text-xs font-semibold truncate leading-none mb-0.5">{postToRender.author}</span>
           <span className="text-xs text-muted-foreground leading-none">Shared a post</span>
         </div>
       </div>
 
       {/* Media Preview */}
-      {message.sharedPost.media && message.sharedPost.media.length > 0 && (
+      {postToRender.media && postToRender.media.length > 0 && (
         <div className="w-full aspect-[4/3] bg-black relative">
-          {message.sharedPost.media[0].type === 'video' ? (
+          {postToRender.media[0].type === 'video' ? (
             <div className="w-full h-full relative flex items-center justify-center">
               <video
-                src={message.sharedPost.media[0].url}
+                src={postToRender.media[0].url}
                 className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                 preload="metadata"
                 muted
@@ -183,7 +254,7 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
             </div>
           ) : (
             <img
-              src={message.sharedPost.media[0].url}
+              src={postToRender.media[0].url}
               alt="Post preview"
               className="w-full h-full object-cover"
               loading="lazy"
@@ -196,7 +267,7 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
       {/* Post Content Preview */}
       <div className="p-3">
         <p className="text-xs line-clamp-3 leading-relaxed text-foreground/90">
-          {message.sharedPost.content}
+          {postToRender.content}
         </p>
       </div>
     </div>
@@ -312,6 +383,14 @@ const MessageText = ({
   const router = useRouter()
   if (isMediaOnly) return null
 
+  // If the message text contains only the post URL, hide it
+  const rawText = message.text || message.text_content || "";
+  const trimmedText = rawText.trim();
+  const postUrlRegex = /^(?:https?:\/\/[^\/\s]+)?\/post\/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})\/?$/i;
+  if (postUrlRegex.test(trimmedText)) {
+    return null;
+  }
+
   const renderTextWithMentions = (text: string) => {
     if (!text) return null
 
@@ -364,7 +443,6 @@ const MessageText = ({
     })
   }
 
-  const rawText = message.text || message.text_content || "";
   const words = rawText.split(/\s+/);
   const isLong = words.length > 50;
   const textToShow = isLong && !isExpanded ? words.slice(0, 50).join(" ") + "..." : rawText;
