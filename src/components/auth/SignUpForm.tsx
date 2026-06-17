@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Icon } from "@iconify/react";
+import { MailWarning, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import AuthImagePanel from "@/components/auth/AuthImagePanel";
 import { register, requestOTP, verifyOTP } from "@/services/api/auth";
@@ -11,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { signIn, getSession } from "next-auth/react";
 import { GoogleLogin } from "@react-oauth/google";
 import { useForceLightTheme } from "@/hooks/use-force-light-theme";
+import { resendRecoveryEmail } from "@/services/api/user";
 
 import styles from "./SignUpForm.module.css";
 
@@ -30,6 +32,29 @@ export default function SignUpForm() {
   const [isCheckingOtp, setIsCheckingOtp] = useState(false);
   const [otpError, setOtpError] = useState(false);
   const { toast } = useToast();
+  const [pendingDeletion, setPendingDeletion] = useState<{ deletionDate: string; email: string } | null>(null);
+  const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    const lastResend = localStorage.getItem("lastResendRecovery");
+    if (lastResend) {
+      const elapsed = Math.floor((Date.now() - parseInt(lastResend)) / 1000);
+      if (elapsed < 300) {
+        setResendCooldown(300 - elapsed);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number | undefined>(undefined);
@@ -61,16 +86,24 @@ export default function SignUpForm() {
 
   const handleGoogleLogin = async (idToken: string) => {
     setIsGoogleLoading(true);
+    setPendingDeletion(null);
     try {
       const result = await signIn("credentials", {
         idToken,
-        // Explicitly pass role for new Google sign-ups.
-        // The backend will use this for account creation; existing users are unaffected.
         accountType: "Student",
         redirect: false,
       });
 
       if (result?.error) {
+        // Check if it's a pending deletion error
+        try {
+          const parsed = JSON.parse(result.error);
+          if (parsed?.code === "ACCOUNT_PENDING_DELETION") {
+            setPendingDeletion({ deletionDate: parsed.deletionDate, email: parsed.email || "" });
+            setIsGoogleLoading(false);
+            return;
+          }
+        } catch { /* not a JSON error */ }
         toast({
           title: "Google sign-up failed",
           description: result.error,
@@ -87,6 +120,21 @@ export default function SignUpForm() {
         variant: "destructive",
       });
       setIsGoogleLoading(false);
+    }
+  };
+
+  const handleResendRecovery = async () => {
+    if (!pendingDeletion?.email || resendCooldown > 0) return;
+    setIsResending(true);
+    try {
+      await resendRecoveryEmail(pendingDeletion.email);
+      toast({ title: "Recovery email sent", description: "Check your inbox for the restoration link." });
+      localStorage.setItem("lastResendRecovery", Date.now().toString());
+      setResendCooldown(300);
+    } catch {
+      toast({ title: "Failed to resend", description: "Please try again.", variant: "destructive" });
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -237,19 +285,80 @@ export default function SignUpForm() {
                 <>Create{" "}<span className={styles.titleGradient}>password</span></>
               ) : otpSent ? (
                 <>Verify your{" "}<span className={styles.titleGradient}>account</span></>
+              ) : pendingDeletion ? (
+                <>Account{" "}<span className={styles.titleGradient}>pending deletion</span></>
               ) : (
                 <>Welcome to{" "}<span className={styles.titleGradient}>Cocpit</span></>
               )}
             </h2>
             <p className={styles.subtitle}>
-              {step === 2 
-                ? "Set a password to continue" 
-                : otpSent 
-                  ? "Enter the code sent to your email" 
-                  : "Find jobs, connect, grow"
+              {step === 2
+                ? "Set a password to continue"
+                : otpSent
+                  ? "Enter the code sent to your email"
+                  : pendingDeletion
+                    ? "Your account is scheduled for deletion"
+                    : "Find jobs, connect, grow"
               }
             </p>
           </div>
+
+          {/* Pending Deletion Banner */}
+          {pendingDeletion && (
+            <div style={{
+              background: "#fff7ed",
+              border: "1px solid #f97316",
+              borderRadius: "12px",
+              padding: "16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+              marginBottom: "8px",
+            }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                <MailWarning size={20} style={{ color: "#f97316", flexShrink: 0, marginTop: "2px" }} />
+                <div>
+                  <p style={{ fontWeight: 600, fontSize: "14px", color: "#92400e", margin: 0 }}>
+                    Account scheduled for deletion
+                  </p>
+                  <p style={{ fontSize: "13px", color: "#b45309", margin: "4px 0 0" }}>
+                    {pendingDeletion.deletionDate
+                      ? <>Permanently deleted on <strong>{new Date(pendingDeletion.deletionDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</strong>. </>
+                      : ""}
+                    Check your email for the restoration link.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleResendRecovery}
+                disabled={isResending || resendCooldown > 0}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  background: "#f97316",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "8px 14px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  cursor: isResending || resendCooldown > 0 ? "not-allowed" : "pointer",
+                  opacity: isResending || resendCooldown > 0 ? 0.7 : 1,
+                  alignSelf: "flex-start",
+                }}
+              >
+                <Send size={14} />
+                {isResending 
+                  ? "Sending..." 
+                  : resendCooldown > 0 
+                    ? `Resend in ${Math.floor(resendCooldown / 60)}:${(resendCooldown % 60).toString().padStart(2, "0")}` 
+                    : "Resend Recovery Email"
+                }
+              </button>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className={styles.form}>
 

@@ -227,6 +227,15 @@ export const authOptions: NextAuthOptions = {
 
           if (!res.ok) {
             console.error(`${endpoint} failed:`, res.status, data);
+            // Encode structured errors as JSON so the login page can parse them
+            if (data?.code === "ACCOUNT_PENDING_DELETION") {
+              throw new Error(JSON.stringify({
+                code: "ACCOUNT_PENDING_DELETION",
+                message: data.message,
+                deletionDate: data.deletionDate,
+                email: data.email,
+              }));
+            }
             throw new Error(data?.message || "Authentication failed");
           }
 

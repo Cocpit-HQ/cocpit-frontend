@@ -3,13 +3,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, MailWarning, Send } from "lucide-react";
 import { Eye, EyeClosed } from "iconoir-react";
 import { useToast } from "@/hooks/use-toast";
 import styles from "./LoginForm.module.css";
 import { signIn, getSession } from "next-auth/react";
 import { GoogleLogin } from "@react-oauth/google";
 import { useForceLightTheme } from "@/hooks/use-force-light-theme";
+import { resendRecoveryEmail } from "@/services/api/user";
 
 const LoginForm = () => {
   useForceLightTheme();
@@ -26,6 +27,30 @@ const LoginForm = () => {
   const reason = searchParams.get("reason");
   const [sessionEnded, setSessionEnded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Pending deletion state — shown when backend returns 403 ACCOUNT_PENDING_DELETION
+  const [pendingDeletion, setPendingDeletion] = useState<{ deletionDate: string; email: string } | null>(null);
+  const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    const lastResend = localStorage.getItem("lastResendRecovery");
+    if (lastResend) {
+      const elapsed = Math.floor((Date.now() - parseInt(lastResend)) / 1000);
+      if (elapsed < 300) {
+        setResendCooldown(300 - elapsed);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState<number | undefined>(undefined);
@@ -62,12 +87,27 @@ const LoginForm = () => {
     }
   };
 
+  // ─── Helper: parse ACCOUNT_PENDING_DELETION from NextAuth error string ────────
+  const tryParseDeletionError = (errorStr: string, emailHint?: string): boolean => {
+    try {
+      const parsed = JSON.parse(errorStr);
+      if (parsed?.code === "ACCOUNT_PENDING_DELETION") {
+        setPendingDeletion({ deletionDate: parsed.deletionDate, email: emailHint || email });
+        return true;
+      }
+    } catch {
+      // Not a JSON error — treat as plain message
+    }
+    return false;
+  };
+
   // ─── Credential Login ────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return;
 
     setIsLoading(true);
+    setPendingDeletion(null);
     try {
       const result = await signIn("credentials", {
         email,
@@ -76,7 +116,9 @@ const LoginForm = () => {
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        if (!tryParseDeletionError(result.error, email)) {
+          setError("Invalid email or password");
+        }
         setIsLoading(false);
       } else {
         setError(null);
@@ -95,20 +137,21 @@ const LoginForm = () => {
   // ─── Google Login ────────────────────────────────────────────────────────────
   const handleGoogleLogin = async (idToken: string) => {
     setIsGoogleLoading(true);
+    setPendingDeletion(null);
     try {
-      // Pass the Google idToken through NextAuth's authorize function
-      // which will call POST /auth/google on the backend
       const result = await signIn("credentials", {
         idToken,
         redirect: false,
       });
 
       if (result?.error) {
-        toast({
-          title: "Google login failed",
-          description: result.error,
-          variant: "destructive",
-        });
+        if (!tryParseDeletionError(result.error, email)) {
+          toast({
+            title: "Google login failed",
+            description: result.error,
+            variant: "destructive",
+          });
+        }
         setIsGoogleLoading(false);
       } else {
         await handlePostLoginRedirect();
@@ -120,6 +163,22 @@ const LoginForm = () => {
         variant: "destructive",
       });
       setIsGoogleLoading(false);
+    }
+  };
+
+  // ─── Resend Recovery Email ───────────────────────────────────────────────────
+  const handleResendRecovery = async () => {
+    if (!pendingDeletion?.email || resendCooldown > 0) return;
+    setIsResending(true);
+    try {
+      await resendRecoveryEmail(pendingDeletion.email);
+      toast({ title: "Recovery email sent", description: "Check your inbox for the restoration link." });
+      localStorage.setItem("lastResendRecovery", Date.now().toString());
+      setResendCooldown(300);
+    } catch {
+      toast({ title: "Failed to resend", description: "Please try again.", variant: "destructive" });
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -143,6 +202,62 @@ const LoginForm = () => {
           <p className={styles.sessionAlertText}>
             You were signed out because your session ended. This happens if you log out from another device or if your session expires.
           </p>
+        </div>
+      )}
+
+      {/* Pending Deletion Banner */}
+      {pendingDeletion && (
+        <div style={{
+          background: "#fff7ed",
+          border: "1px solid #f97316",
+          borderRadius: "12px",
+          padding: "16px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+          marginBottom: "8px",
+        }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+            <MailWarning size={20} style={{ color: "#f97316", flexShrink: 0, marginTop: "2px" }} />
+            <div>
+              <p style={{ fontWeight: 600, fontSize: "14px", color: "#92400e", margin: 0 }}>
+                Account scheduled for deletion
+              </p>
+              <p style={{ fontSize: "13px", color: "#b45309", margin: "4px 0 0" }}>
+                Your account will be permanently deleted on{" "}
+                <strong>{new Date(pendingDeletion.deletionDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</strong>.
+                Check your email for a restoration link.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleResendRecovery}
+            disabled={isResending || resendCooldown > 0}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              background: "#f97316",
+              color: "#fff",
+              border: "none",
+              borderRadius: "8px",
+              padding: "8px 14px",
+              fontSize: "13px",
+              fontWeight: 600,
+              cursor: isResending || resendCooldown > 0 ? "not-allowed" : "pointer",
+              opacity: isResending || resendCooldown > 0 ? 0.7 : 1,
+              alignSelf: "flex-start",
+            }}
+          >
+            <Send size={14} />
+            {isResending 
+              ? "Sending..." 
+              : resendCooldown > 0 
+                ? `Resend in ${Math.floor(resendCooldown / 60)}:${(resendCooldown % 60).toString().padStart(2, "0")}` 
+                : "Resend Recovery Email"
+            }
+          </button>
         </div>
       )}
 

@@ -33,6 +33,7 @@ import { YourActivity } from "@/components/settings/YourActivity"
 
 import { deleteAccount } from "@/services/api/user"
 import { toast } from "sonner"
+import { useSession } from "next-auth/react"
 
 
 import { SavedPosts } from "./SavedPosts"
@@ -275,11 +276,22 @@ export default function SettingsPage() {
   const { theme, resolvedTheme, setTheme } = useTheme()
   const systemTheme = useSystemTheme()
   const { logout } = useAuth()
+  const { data: session } = useSession()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deletePassword, setDeletePassword] = useState("")
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("")
+  // Detect if user signed in with Google (no password set). We use session to check.
+  // If the user logged in via google idToken route, they won't have a password on the backend.
+  // We determine this by checking if the user has no password_hash — proxied by whether
+  // the last login was via idToken credential (stored as a session hint).
+  // Simplest reliable signal: try delete with empty password — if backend returns 400 "Google re-authentication"
+  // we show the Google button. But to avoid a round-trip, we check the session's image domain.
+  // Google avatars come from lh3.googleusercontent.com or similar domains.
+  const isGoogleUser = Boolean(
+    session?.user?.image && /googleusercontent\.com|google\.com/.test(session.user.image)
+  )
   const isMobile = useIsMobile()
 
   const navigateTo = (page: Page) => {
@@ -344,19 +356,17 @@ export default function SettingsPage() {
       return
     }
 
-    if (!deletePassword) {
-      toast.error("Please enter your password to confirm")
-      return
-    }
-
     try {
       setIsDeleting(true)
-      await deleteAccount(deletePassword)
-      toast.success("Account deleted successfully")
+      const credential = isGoogleUser
+        ? { idToken: deletePassword } // For Google users, deletePassword holds the idToken from re-auth
+        : { password: deletePassword }
+      const result = await deleteAccount(credential)
+      toast.success("Account scheduled for deletion. Check your email for a recovery link.")
       await logout()
       router.push("/")
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Failed to delete account"
+      const errorMessage = err.response?.data?.message || "Failed to schedule account deletion"
       toast.error(errorMessage)
       setIsDeleting(false)
     }
@@ -714,16 +724,37 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-medium text-foreground">
-                Enter your password:
-              </label>
-              <input
-                type="password"
-                className="w-full p-2.5 rounded-lg border border-border bg-muted/30 focus:outline-none focus:ring-2 focus:ring-destructive/20 focus:border-destructive transition-all"
-                placeholder="Your password"
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-              />
+              {isGoogleUser ? (
+                <>
+                  <label className="text-sm font-medium text-foreground">
+                    Re-authenticate with Google:
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Since you signed in with Google, paste your current Google ID token below to verify your identity.
+                    This is obtained from the Google sign-in flow.
+                  </p>
+                  <input
+                    type="text"
+                    className="w-full p-2.5 rounded-lg border border-border bg-muted/30 focus:outline-none focus:ring-2 focus:ring-destructive/20 focus:border-destructive transition-all font-mono text-xs"
+                    placeholder="Google ID token"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                  />
+                </>
+              ) : (
+                <>
+                  <label className="text-sm font-medium text-foreground">
+                    Enter your password:
+                  </label>
+                  <input
+                    type="password"
+                    className="w-full p-2.5 rounded-lg border border-border bg-muted/30 focus:outline-none focus:ring-2 focus:ring-destructive/20 focus:border-destructive transition-all"
+                    placeholder="Your password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                  />
+                </>
+              )}
             </div>
           </div>
 
