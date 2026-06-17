@@ -95,7 +95,7 @@ export const PostSharedContent = ({
                   {shared_post.content}
                 </p>
               )}
-              
+
               {sharedPollData && (
                 <div className="w-full" onClick={(e) => e.stopPropagation()}>
                   <PollCard poll={sharedPollData} onVote={handleSharedVote!} isLoading={isSharedVoting!} votedOptionId={sharedPollData.user_vote} />

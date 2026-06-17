@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export function CreatePostCardSkeleton() {
   return (
-    <div className="feed-card-shell mb-4 w-full p-4 animate-pulse">
+    <div className="feed-card-shell mb-6 w-full max-w-[560px] animate-pulse">
       <div className="flex gap-3 mb-3 items-center">
         {/* Avatar circle placeholder */}
         <Skeleton className="w-10 h-10 rounded-full shrink-0" />

@@ -33,7 +33,7 @@ export function CreatePost({ onOpenModal }: CreatePostProps) {
 
   return (
     <div
-      className="feed-card-shell mb-4 w-full p-4 transition-shadow duration-300 hover:shadow-md"
+      className="feed-card-shell mb-6 w-full max-w-[560px] transition-shadow duration-300 hover:shadow-md"
     >
       <div className="flex gap-3 mb-3 items-center">
         <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex-shrink-0 overflow-hidden">

@@ -5,9 +5,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export function FeedPostCardSkeleton() {
   return (
-    <div className="feed-card-shell flex w-full flex-col gap-4 overflow-hidden py-4 animate-pulse">
+    <div className="feed-card-shell flex w-full max-w-[560px] flex-col gap-4 overflow-hidden animate-pulse">
       {/* Header section */}
-      <div className="flex flex-col gap-4 px-4">
+      <div className="flex flex-col gap-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3 overflow-hidden flex-1">
             {/* Avatar placeholder */}
@@ -33,7 +33,7 @@ export function FeedPostCardSkeleton() {
       <Skeleton className="w-full h-[300px]" />
 
       {/* Action buttons row */}
-      <div className="px-4 py-2 flex items-center justify-between border-t border-transparent mt-1">
+      <div className="py-2 flex items-center justify-between border-t border-transparent mt-1">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5 py-1">
             <Skeleton className="w-5 h-5 rounded-full" />

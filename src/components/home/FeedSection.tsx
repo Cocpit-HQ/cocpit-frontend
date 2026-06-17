@@ -105,10 +105,10 @@ export const FeedSection = ({
                 </div> */}
 
                 {/* Posts */}
-                <div className="md:space-y-4">
+                <div className="md:space-y-6">
                     {/* Skeletons appear when initial load is happening */}
                     {feedLoading && posts.length === 0 && (
-                        <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-6">
                             <CreatePostCardSkeleton />
                             {Array.from({ length: 3 }).map((_, i) => (
                                 <FeedPostCardSkeleton key={i} />
@@ -116,7 +116,7 @@ export const FeedSection = ({
                         </div>
                     )}
 
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         {sortedPosts.map((post, index) => {
                             return (
                                 <div key={post.id}>
@@ -136,17 +136,17 @@ export const FeedSection = ({
                                         priority={index < 4}
                                     />
                                     {index === 0 && (
-                                        <div className="mt-4">
+                                        <div className="mt-6">
                                             <ApplicantInsightCard />
                                         </div>
                                     )}
                                     {index === 1 && (
-                                        <div className="mt-4">
+                                        <div className="mt-6">
                                             <JobMatchesCard />
                                         </div>
                                     )}
                                     {index === 2 && (
-                                        <div className="mt-4">
+                                        <div className="mt-6">
                                             <CompactJobRecommendation />
                                         </div>
                                     )}

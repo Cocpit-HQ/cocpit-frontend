@@ -195,7 +195,7 @@ export const FeedPost = (props: FeedPostProps) => {
     <div
       ref={feedCardRef}
       onClick={handleCardClick}
-      className={`feed-card-shell flex w-full flex-col gap-[8px] overflow-hidden py-[16px] px-[16px] ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
+      className={`feed-card-shell flex w-full max-w-[560px] flex-col gap-[8px] overflow-hidden ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
     >
       {/* Header & Content (Frame 2608598) */}
       <div className="flex flex-col gap-[8px]">
@@ -269,12 +269,14 @@ export const FeedPost = (props: FeedPostProps) => {
         </div>
       )}
 
-      <PostPoll
-        pollData={pollData}
-        isVoting={isVoting}
-        handleVote={(optId) => handleVote(optId, isCompany, activeProfile?.id)}
-        title={title}
-      />
+      <div className="w-full">
+        <PostPoll
+          pollData={pollData}
+          isVoting={isVoting}
+          handleVote={(optId) => handleVote(optId, isCompany, activeProfile?.id)}
+          title={title}
+        />
+      </div>
 
       {/* Social Proof & Actions */}
       <div className="flex flex-col gap-[8px]">

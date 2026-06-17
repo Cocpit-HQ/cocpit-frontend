@@ -37,17 +37,19 @@ interface PostHeaderProps {
   authorRole?: string;
   title?: string | null;
   onNotInterested?: () => void;
+  content?: string;
 }
 
 export const PostHeader = ({
   id, author, authorId, authorAvatar, authorSlug, timeAgo, visibility,
-  isMe, isOwnPost, isCompanyPost, poll, shared_post,
+  isMe, isOwnPost, isCompanyPost, poll, shared_post, content,
   optionsBtnRef, showOptions, setShowOptions, optionsPos, setOptionsPos,
   onEdit, onDelete, onToggleVisibility, onShowAnalytics, onReport, onNotInterested,
   location, tags, authorRole, title
 }: PostHeaderProps) => {
   const avatarSrc = authorAvatar || '/assets/pngegg.png';
   const { followUser, unfollowUser, isFollowing, isFollowLoading } = useSocial();
+  const isRepostWithoutThoughts = !!shared_post && (!content || content.trim() === '');
   const authorUserId = authorId?.toString();
   const isAuthorFollowing = authorUserId ? isFollowing(authorUserId) : false;
   const isAuthorFollowLoading = authorUserId ? isFollowLoading(authorUserId) : false;
@@ -135,14 +137,14 @@ export const PostHeader = ({
               {authorRole || title || ''}
             </div>
           )}
-          {(location || timeAgo) && (() => {
+          {(location || (timeAgo && !isRepostWithoutThoughts)) && (() => {
             const displayLocation = location ? location.split(',')[0].trim() : '';
             const truncatedLocation = displayLocation.length > 15 ? displayLocation.slice(0, 15) + '..' : displayLocation;
             return (
               <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
                 {location && <span title={location}>{truncatedLocation}</span>}
-                {location && timeAgo && <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />}
-                {timeAgo && <span className="shrink-0">{timeAgo}</span>}
+                {location && timeAgo && !isRepostWithoutThoughts && <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />}
+                {timeAgo && !isRepostWithoutThoughts && <span className="shrink-0">{timeAgo}</span>}
               </div>
             );
           })()}

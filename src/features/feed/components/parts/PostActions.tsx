@@ -114,7 +114,7 @@ export const PostActions = ({
       </div>
 
       {/* Save (Frame 2608596) - Right Aligned */}
-      <div className="flex flex-row items-center h-[24px]">
+      <div className="flex flex-row items-center h-[24px] mr-1.5">
         <SaveButton
           postId={id.toString()}
           initialIsSaved={isSaved}
