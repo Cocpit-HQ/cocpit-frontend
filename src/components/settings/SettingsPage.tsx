@@ -34,6 +34,8 @@ import { YourActivity } from "@/components/settings/YourActivity"
 import { deleteAccount } from "@/services/api/user"
 import { toast } from "sonner"
 import { useSession } from "next-auth/react"
+import { GoogleLogin } from "@react-oauth/google"
+import { CheckCircle } from "lucide-react"
 
 
 import { SavedPosts } from "./SavedPosts"
@@ -729,17 +731,32 @@ export default function SettingsPage() {
                   <label className="text-sm font-medium text-foreground">
                     Re-authenticate with Google:
                   </label>
-                  <p className="text-xs text-muted-foreground">
-                    Since you signed in with Google, paste your current Google ID token below to verify your identity.
-                    This is obtained from the Google sign-in flow.
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Please verify your identity using the button below before permanently deleting your account.
                   </p>
-                  <input
-                    type="text"
-                    className="w-full p-2.5 rounded-lg border border-border bg-muted/30 focus:outline-none focus:ring-2 focus:ring-destructive/20 focus:border-destructive transition-all font-mono text-xs"
-                    placeholder="Google ID token"
-                    value={deletePassword}
-                    onChange={(e) => setDeletePassword(e.target.value)}
-                  />
+                  <div className="flex items-center justify-center">
+                    {deletePassword ? (
+                      <div className="flex items-center gap-2 text-green-600 bg-green-50/50 p-3 rounded-lg w-full justify-center border border-green-200">
+                        <CheckCircle className="w-5 h-5" />
+                        <span className="font-medium text-sm">Google Account Verified</span>
+                      </div>
+                    ) : (
+                      <GoogleLogin
+                        onSuccess={(credentialResponse) => {
+                          if (credentialResponse.credential) {
+                            setDeletePassword(credentialResponse.credential);
+                          }
+                        }}
+                        onError={() => {
+                          toast.error("Google verification failed");
+                        }}
+                        theme="outline"
+                        size="large"
+                        width="100%"
+                        text="signin"
+                      />
+                    )}
+                  </div>
                 </>
               ) : (
                 <>
