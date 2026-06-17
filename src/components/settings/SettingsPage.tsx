@@ -36,6 +36,7 @@ import { toast } from "sonner"
 import { useSession } from "next-auth/react"
 import { GoogleLogin } from "@react-oauth/google"
 import { CheckCircle } from "lucide-react"
+import { jwtDecode } from "jwt-decode"
 
 
 import { SavedPosts } from "./SavedPosts"
@@ -306,6 +307,8 @@ export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState<SettingsSection>("appearance")
   const [compactMode, setCompactMode] = useState(false)
   const [initialSyncDone, setInitialSyncDone] = useState(false)
+  
+  const [deleteIdToken, setDeleteIdToken] = useState("")
 
   // Sync section from URL on mount
   useEffect(() => {
@@ -360,8 +363,8 @@ export default function SettingsPage() {
 
     try {
       setIsDeleting(true)
-      const credential = isGoogleUser
-        ? { idToken: deletePassword } // For Google users, deletePassword holds the idToken from re-auth
+      const credential = deleteIdToken 
+        ? { idToken: deleteIdToken } 
         : { password: deletePassword }
       const result = await deleteAccount(credential)
       toast.success("Account scheduled for deletion. Check your email for a recovery link.")
@@ -371,6 +374,12 @@ export default function SettingsPage() {
       const errorMessage = err.response?.data?.message || "Failed to schedule account deletion"
       toast.error(errorMessage)
       setIsDeleting(false)
+      
+      if (errorMessage.toLowerCase().includes("google")) {
+        setDeleteIdToken("")
+      } else if (errorMessage.toLowerCase().includes("password")) {
+        setDeletePassword("")
+      }
     }
   }
 
@@ -725,17 +734,15 @@ export default function SettingsPage() {
               />
             </div>
 
-            <div className="space-y-3">
-              {isGoogleUser ? (
-                <>
-                  <label className="text-sm font-medium text-foreground">
-                    Re-authenticate with Google:
-                  </label>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    Please verify your identity using the button below before permanently deleting your account.
-                  </p>
+            <div className="space-y-4">
+              <label className="text-sm font-medium text-foreground">
+                Verify your identity:
+              </label>
+
+              {isGoogleUser && (
+                <div className="space-y-2">
                   <div className="flex items-center justify-center">
-                    {deletePassword ? (
+                    {deleteIdToken ? (
                       <div className="flex items-center gap-2 text-green-600 bg-green-50/50 p-3 rounded-lg w-full justify-center border border-green-200">
                         <CheckCircle className="w-5 h-5" />
                         <span className="font-medium text-sm">Google Account Verified</span>
@@ -744,7 +751,17 @@ export default function SettingsPage() {
                       <GoogleLogin
                         onSuccess={(credentialResponse) => {
                           if (credentialResponse.credential) {
-                            setDeletePassword(credentialResponse.credential);
+                            try {
+                              const decoded = jwtDecode<{ email: string }>(credentialResponse.credential);
+                              if (session?.user?.email && decoded.email !== session.user.email) {
+                                toast.error(`Please use ${session.user.email} to verify your identity.`);
+                                return;
+                              }
+                              setDeleteIdToken(credentialResponse.credential);
+                              setDeletePassword(""); // clear password if they use google
+                            } catch {
+                              toast.error("Failed to verify Google account");
+                            }
                           }
                         }}
                         onError={() => {
@@ -757,21 +774,28 @@ export default function SettingsPage() {
                       />
                     )}
                   </div>
-                </>
-              ) : (
-                <>
-                  <label className="text-sm font-medium text-foreground">
-                    Enter your password:
-                  </label>
-                  <input
-                    type="password"
-                    className="w-full p-2.5 rounded-lg border border-border bg-muted/30 focus:outline-none focus:ring-2 focus:ring-destructive/20 focus:border-destructive transition-all"
-                    placeholder="Your password"
-                    value={deletePassword}
-                    onChange={(e) => setDeletePassword(e.target.value)}
-                  />
-                </>
+                  
+                  <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">Or</span>
+                    </div>
+                  </div>
+                </div>
               )}
+
+              <input
+                type="password"
+                className="w-full p-2.5 rounded-lg border border-border bg-muted/30 focus:outline-none focus:ring-2 focus:ring-destructive/20 focus:border-destructive transition-all"
+                placeholder="Enter your password"
+                value={deletePassword}
+                onChange={(e) => {
+                  setDeletePassword(e.target.value);
+                  setDeleteIdToken(""); // clear google token if they type password
+                }}
+              />
             </div>
           </div>
 
@@ -788,7 +812,7 @@ export default function SettingsPage() {
               variant="destructive"
               className="flex-1"
               onClick={handleDeleteAccount}
-              disabled={isDeleting || deleteConfirmationText !== "DELETE"}
+              disabled={isDeleting || deleteConfirmationText !== "DELETE" || (!deletePassword && !deleteIdToken)}
             >
               {isDeleting ? "Deleting..." : "Permanently Delete"}
             </Button>
