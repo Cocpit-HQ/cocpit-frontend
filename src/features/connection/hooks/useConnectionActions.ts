@@ -2,6 +2,7 @@
 // All mutations for the connection section with optimistic UI + rollback on error.
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
   acceptConnectionRequest,
   declineConnectionRequest,
@@ -10,27 +11,6 @@ import {
 } from '@/services/api/connections';
 import { useConnectionStore } from '@/store/connection.store';
 
-// ── Minimal toast helper — uses whatever toast library is in the project ──────
-// We import dynamically to avoid hard dependency on a specific library.
-// Falls back to console if nothing is available.
-const toast = {
-  success: (msg: string) => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      require('react-hot-toast').default.success(msg);
-    } catch {
-      console.info('[toast success]', msg);
-    }
-  },
-  error: (msg: string) => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      require('react-hot-toast').default.error(msg);
-    } catch {
-      console.error('[toast error]', msg);
-    }
-  },
-};
 
 export const useConnectionActions = () => {
   const queryClient = useQueryClient();
@@ -102,8 +82,10 @@ export const useConnectionActions = () => {
       }, 600);
       toast.success('Connection request sent!');
     },
-    onError: () => {
-      toast.error('Failed to send request. Please try again.');
+    onError: (err: unknown) => {
+      const serverMsg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(serverMsg || 'Failed to send request. Please try again.');
     },
   });
 
