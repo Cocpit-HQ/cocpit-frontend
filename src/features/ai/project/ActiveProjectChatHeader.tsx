@@ -1,8 +1,7 @@
-"use client";
-
 import React from "react";
 import { Icon } from "@iconify/react";
 import ProjectChatActionsMenu from "./ProjectChatActionsMenu";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ActiveProjectChatHeaderProps {
   chatTitle: string;
@@ -13,6 +12,7 @@ interface ActiveProjectChatHeaderProps {
   onRemoveFromProject: () => void;
   onShare: () => void;
   onDelete: () => void;
+  onBack?: () => void;
 }
 
 export default function ActiveProjectChatHeader({
@@ -24,7 +24,10 @@ export default function ActiveProjectChatHeader({
   onRemoveFromProject,
   onShare,
   onDelete,
+  onBack,
 }: ActiveProjectChatHeaderProps) {
+  const isMobile = useIsMobile();
+
   return (
     <div
       style={{
@@ -49,44 +52,85 @@ export default function ActiveProjectChatHeader({
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            gap: "2px",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: "16px",
             minWidth: 0,
+            flex: 1,
           }}
         >
-          {/* Chat Title */}
-          <span
-            style={{
-              fontFamily: "'Poppins', sans-serif",
-              fontWeight: 500,
-              fontSize: "16px",
-              lineHeight: "24px",
-              color: "#000000",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-            title={chatTitle}
-          >
-            {chatTitle}
-          </span>
+          {isMobile && onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                width: "40px",
+                height: "40px",
+                border: "1px solid #DADADA",
+                borderRadius: "100px",
+                background: "transparent",
+                cursor: "pointer",
+                padding: 0,
+                outline: "none",
+                flexShrink: 0,
+              }}
+              className="hover:bg-[#F9FAFB] transition-all"
+              title="Back"
+            >
+              <Icon
+                icon="lucide:chevron-left"
+                width={20}
+                height={20}
+                style={{ color: "#000000" }}
+              />
+            </button>
+          )}
 
-          {/* Subtitle / Project Name */}
-          <span
+          <div
             style={{
-              fontFamily: "'Poppins', sans-serif",
-              fontWeight: 400,
-              fontSize: "12px",
-              lineHeight: "16px",
-              color: "#6B7280",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              gap: "2px",
+              minWidth: 0,
             }}
           >
-            {projectName}
-          </span>
+            {/* Chat Title */}
+            <span
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 500,
+                fontSize: "16px",
+                lineHeight: "24px",
+                color: "#000000",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+              title={chatTitle}
+            >
+              {chatTitle}
+            </span>
+
+            {/* Subtitle / Project Name */}
+            <span
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 400,
+                fontSize: "12px",
+                lineHeight: "16px",
+                color: "#6B7280",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {projectName}
+            </span>
+          </div>
         </div>
 
         {/* Right Content */}

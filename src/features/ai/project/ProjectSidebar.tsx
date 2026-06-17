@@ -8,8 +8,12 @@ import type { ProjectChat, ProjectFile } from "./project.types";
 import ProjectFilesTab from "./ProjectFilesTab";
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox";
 import ProjectInstructions from "./components/ProjectInstructions";
+import ProjectHeader from "./ProjectHeader";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProjectSidebarProps {
+  projectName: string;
+  onClose?: () => void;
   chatCount?: number;
   onSearch?: (query: string) => void;
   activeTab?: string;
@@ -28,6 +32,8 @@ interface ProjectSidebarProps {
 }
 
 export default function ProjectSidebar({
+  projectName,
+  onClose,
   chatCount = 0,
   onSearch,
   activeTab: externalActiveTab,
@@ -43,6 +49,7 @@ export default function ProjectSidebar({
   instructions = "",
   onSaveInstructions,
 }: ProjectSidebarProps) {
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const [internalActiveTab, setInternalActiveTab] = useState("Chats");
   const [files, setFiles] = useState<ProjectFile[]>([]);
@@ -114,18 +121,28 @@ export default function ProjectSidebar({
         display: "flex",
         flexDirection: "column",
         alignItems: "stretch",
-        padding: "16px",
+        padding: isMobile ? "0px" : "16px",
         gap: "16px",
-        width: "380px",
-        minWidth: "380px",
+        width: isMobile ? "100%" : "380px",
+        minWidth: isMobile ? "100%" : "380px",
         background: "#FFFFFF",
-        border: "1px solid #EEF2FF",
-        borderRadius: "24px",
+        border: isMobile ? "none" : "1px solid #EEF2FF",
+        borderRadius: isMobile ? "0px" : "24px",
         height: "100%",
         overflow: "hidden", // Prevent card content from bleeding
       }}
       className="project-sidebar-card"
     >
+      {/* Mobile Top Header */}
+      {isMobile && (
+        <div style={{ flexShrink: 0, paddingBottom: "8px" }}>
+          <ProjectHeader
+            variant="details"
+            title={projectName}
+            onClose={onClose || (() => {})}
+          />
+        </div>
+      )}
       {/* Top Search / Chat Action Bar */}
       <div
         style={{

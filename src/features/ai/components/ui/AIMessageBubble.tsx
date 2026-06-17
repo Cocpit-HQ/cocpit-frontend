@@ -7,6 +7,14 @@ import GraphCard from "../cards/GraphCard";
 import WebsiteMessageCard from "../cards/WebsiteMessageCard";
 import InlineError from "./errors/InlineError";
 import UnsupportedFileCard from "./UnsupportedFileCard";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+// Lunar panel inline views for mobile
+import LunarPanelGraphView from "../lunnar-panel/graph-view/LunarPanelGraphView";
+import LunarPanelChartView from "../lunnar-panel/chart-view/LunarPanelChartView";
+import LunarPanelWebsiteView from "../lunnar-panel/website-view/LunarPanelWebsiteView";
+import LunarPanelJobListView from "../lunnar-panel/job-list-view/LunarPanelJobListView";
+
 
 
 interface AIMessageBubbleProps {
@@ -142,6 +150,7 @@ export default function AIMessageBubble({
   onSend,
   activeLunarMode,
 }: AIMessageBubbleProps) {
+  const isMobile = useIsMobile();
   const isUser = message.role === "user";
   const isError = message.status === "error";
 
@@ -169,6 +178,20 @@ export default function AIMessageBubble({
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.content);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  
+  const bubbleRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isMobile && isJobRelated) {
+      const scrollToBottom = () => {
+        bubbleRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      };
+      
+      scrollToBottom();
+      const timer = setTimeout(scrollToBottom, 80);
+      return () => clearTimeout(timer);
+    }
+  }, [activeJobTab, isMobile, isJobRelated]);
 
   useEffect(() => {
     if (isEditing && textareaRef.current) {
@@ -254,7 +277,7 @@ export default function AIMessageBubble({
   };
 
   return (
-    <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"} mb-0`}>
+    <div ref={bubbleRef} className={`flex w-full ${isUser ? "justify-end" : "justify-start"} mb-0`}>
       <div className={`flex flex-col ${isUser ? "items-end" : "items-start"} w-full`}>
         {/* Bubble */}
         {isUser ? (
@@ -270,7 +293,7 @@ export default function AIMessageBubble({
                     justifyContent: "space-between",
                     alignItems: "flex-end",
                     padding: "16px",
-                    width: "912px",
+                    width: isMobile ? "100%" : "912px",
                     maxWidth: "100%",
                     minHeight: "56px",
                     maxHeight: "192px",
@@ -320,7 +343,7 @@ export default function AIMessageBubble({
                       alignItems: "center",
                       padding: "0px",
                       gap: "16px",
-                      width: "880px",
+                      width: isMobile ? "100%" : "880px",
                       maxWidth: "100%",
                       height: "40px",
                       boxSizing: "border-box",
@@ -390,7 +413,7 @@ export default function AIMessageBubble({
                     style={{
                       alignSelf: "flex-end",
                       width: "100%",
-                      maxWidth: "912px",
+                      maxWidth: isMobile ? "100%" : "912px",
                       textAlign: "right",
                       color: "#FF6B6B",
                       fontFamily: "Poppins",
@@ -412,7 +435,7 @@ export default function AIMessageBubble({
                   alignItems: "flex-end",
                   padding: "0px",
                   gap: "8px",
-                  width: "912px",
+                  width: isMobile ? "100%" : "912px",
                   maxWidth: "100%",
                   height: hasText ? "auto" : "212px",
                   boxSizing: "border-box",
@@ -525,7 +548,7 @@ export default function AIMessageBubble({
                       lineHeight: "24px",
                       color: "#000000",
                       width: "fit-content",
-                      maxWidth: "70%",
+                      maxWidth: isMobile ? "85%" : "70%",
                       boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
                       boxSizing: "border-box",
                     }}
@@ -603,7 +626,7 @@ export default function AIMessageBubble({
                   alignItems: "flex-end",
                   padding: "0px",
                   gap: "8px",
-                  width: "912px",
+                  width: isMobile ? "100%" : "912px",
                   maxWidth: "100%",
                   height: "auto",
                   boxSizing: "border-box",
@@ -727,7 +750,7 @@ export default function AIMessageBubble({
                       lineHeight: "24px",
                       color: "#000000",
                       width: "fit-content",
-                      maxWidth: "70%",
+                      maxWidth: isMobile ? "85%" : "70%",
                       boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
                       boxSizing: "border-box",
                     }}
@@ -805,7 +828,7 @@ export default function AIMessageBubble({
                   alignItems: "flex-end",
                   padding: "0px",
                   gap: "8px",
-                  width: "912px",
+                  width: isMobile ? "100%" : "912px",
                   maxWidth: "100%",
                   height: hasText ? "auto" : "278px",
                   flex: "none",
@@ -844,7 +867,7 @@ export default function AIMessageBubble({
                       lineHeight: "24px",
                       color: "#000000",
                       width: "fit-content",
-                      maxWidth: "70%",
+                      maxWidth: isMobile ? "85%" : "70%",
                       boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
                       boxSizing: "border-box",
                     }}
@@ -981,7 +1004,7 @@ export default function AIMessageBubble({
                       lineHeight: "24px",
                       color: "#000000",
                       width: "fit-content",
-                      maxWidth: "70%",
+                      maxWidth: isMobile ? "85%" : "70%",
                       boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
                       boxSizing: "border-box",
                     }}
@@ -1070,7 +1093,7 @@ export default function AIMessageBubble({
                     padding: "0px",
                     gap: "4px",
                     position: "relative",
-                    width: "296px",
+                    width: isMobile ? "100%" : "296px",
                     height: "96px",
                   }}
                 >
@@ -1397,7 +1420,7 @@ export default function AIMessageBubble({
                     lineHeight: "24px",
                     color: "#000000",
                     width: "fit-content",
-                    maxWidth: "70%",
+                    maxWidth: isMobile ? "85%" : "70%",
                     boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
                     boxSizing: "border-box",
                   }}
@@ -1594,31 +1617,37 @@ export default function AIMessageBubble({
                       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                         <div className="whitespace-pre-wrap">{part1}</div>
                         
-                        {/* Company Cards inline */}
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "10px",
-                            marginTop: "4px",
-                            marginBottom: "4px",
-                          }}
-                        >
-                          {websiteResults.map((result) => (
-                            <WebsiteMessageCard
-                              key={result.id}
-                              company={result.company}
-                              onClick={() => {
-                                onOpenLunarPanel?.(
-                                  result.company,
-                                  "website",
-                                  result.company,
-                                  websiteResults
-                                );
-                              }}
-                            />
-                          ))}
-                        </div>
+                         {/* Company Cards inline */}
+                        {isMobile ? (
+                          <div style={{ width: "100%", marginTop: "4px", marginBottom: "4px" }}>
+                            <LunarPanelWebsiteView companies={websiteResults} />
+                          </div>
+                        ) : (
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "10px",
+                              marginTop: "4px",
+                              marginBottom: "4px",
+                            }}
+                          >
+                            {websiteResults.map((result) => (
+                              <WebsiteMessageCard
+                                key={result.id}
+                                company={result.company}
+                                onClick={() => {
+                                  onOpenLunarPanel?.(
+                                    result.company,
+                                    "website",
+                                    result.company,
+                                    websiteResults
+                                  );
+                                }}
+                              />
+                            ))}
+                          </div>
+                        )}
 
                         <div className="whitespace-pre-wrap">{part2}</div>
                       </div>
@@ -1733,6 +1762,7 @@ export default function AIMessageBubble({
                         ];
 
                     const currentTab = (() => {
+                      if (isMobile) return activeJobTab;
                       if (activeLunarMode === "job-list") return "jobs";
                       if (activeLunarMode === "pie") {
                         if (activeJobTab === "jobs") return "events";
@@ -1902,7 +1932,9 @@ export default function AIMessageBubble({
                           <button
                             type="button"
                             onClick={() => {
-                              onOpenLunarPanel?.("Lunnar panel", "job-list");
+                              if (!isMobile) {
+                                onOpenLunarPanel?.("Lunnar panel", "job-list");
+                              }
                               setActiveJobTab("jobs");
                             }}
                             className={`h-10 rounded-3xl flex justify-center items-center px-4 py-1.5 cursor-pointer transition-all duration-200 ${
@@ -1917,7 +1949,9 @@ export default function AIMessageBubble({
                           <button
                             type="button"
                             onClick={() => {
-                              onOpenLunarPanel?.("Lunnar panel", "pie");
+                              if (!isMobile) {
+                                onOpenLunarPanel?.("Lunnar panel", "pie");
+                              }
                               setActiveJobTab("events");
                             }}
                             className={`h-10 rounded-3xl flex justify-center items-center px-4 py-1.5 cursor-pointer transition-all duration-200 ${
@@ -1932,7 +1966,9 @@ export default function AIMessageBubble({
                           <button
                             type="button"
                             onClick={() => {
-                              onOpenLunarPanel?.("Lunnar panel", "pie");
+                              if (!isMobile) {
+                                onOpenLunarPanel?.("Lunnar panel", "pie");
+                              }
                               setActiveJobTab("skills");
                             }}
                             className={`h-10 rounded-3xl flex justify-center items-center px-4 py-1.5 cursor-pointer transition-all duration-200 ${
@@ -1961,32 +1997,61 @@ export default function AIMessageBubble({
             </div>
 
             {isGraphRelated && (
-              <div className="order-1 w-full">
-                <GraphCard
-                  title={graphTitle || "Revenue Analysis"}
-                  type={graphType}
-                  onClick={() => onOpenLunarPanel?.(graphTitle || "Revenue Analysis", graphType === "chart" ? "pie" : "graph")}
-                  isActive={(graphType === "graph" && activeLunarMode === "graph") || (graphType === "chart" && activeLunarMode === "pie")}
-                />
+              <div className="order-1 w-full mt-2">
+                {isMobile ? (
+                  graphType === "chart" ? (
+                    <LunarPanelChartView />
+                  ) : (
+                    <LunarPanelGraphView />
+                  )
+                ) : (
+                  <GraphCard
+                    title={graphTitle || "Revenue Analysis"}
+                    type={graphType}
+                    onClick={() => onOpenLunarPanel?.(graphTitle || "Revenue Analysis", graphType === "chart" ? "pie" : "graph")}
+                    isActive={(graphType === "graph" && activeLunarMode === "graph") || (graphType === "chart" && activeLunarMode === "pie")}
+                  />
+                )}
               </div>
             )}
 
             {message.role === "assistant" && websiteResults && websiteResults.length > 0 && !localContent.includes("These two are probably the closest modern references") && (
-              <div className="flex flex-col gap-[10px] mt-[10px] order-1">
-                {websiteResults.map((result) => (
-                  <WebsiteMessageCard
-                    key={result.id}
-                    company={result.company}
-                    onClick={() => {
-                      onOpenLunarPanel?.(
-                        result.company,
-                        "website",
-                        result.company,
-                        websiteResults
-                      );
-                    }}
-                  />
-                ))}
+              <div className="flex flex-col gap-[10px] mt-[10px] order-1 w-full">
+                {isMobile ? (
+                  <LunarPanelWebsiteView companies={websiteResults} />
+                ) : (
+                  websiteResults.map((result) => (
+                    <WebsiteMessageCard
+                      key={result.id}
+                      company={result.company}
+                      onClick={() => {
+                        onOpenLunarPanel?.(
+                          result.company,
+                          "website",
+                          result.company,
+                          websiteResults
+                        );
+                      }}
+                    />
+                  ))
+                )}
+              </div>
+            )}
+
+            {isJobRelated && isMobile && (
+              <div className="order-2 w-full mt-2">
+                {activeJobTab === "jobs" ? (
+                  <LunarPanelJobListView />
+                ) : (
+                  <div className="box-border w-full flex flex-col items-center justify-center gap-3 bg-[#F9FAFB] rounded-xl border border-dashed border-[#E5E7EB] font-sans text-center text-[#6B7280] p-6">
+                    <h3 className="text-[16px] font-semibold text-[#4B5563] m-0">
+                      {activeJobTab.charAt(0).toUpperCase() + activeJobTab.slice(1)} View
+                    </h3>
+                    <p className="text-[12px] text-[#9CA3AF] m-0 leading-[1.5]">
+                      This view is currently under development. Fully supported interface structures will be added in a future update.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 

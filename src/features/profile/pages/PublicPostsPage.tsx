@@ -576,6 +576,12 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
 
+  const isOwner = React.useMemo(() => {
+    const currentUser = profileData?.user;
+    if (!currentUser || !targetProfile) return false;
+    return String(targetProfile.id).toLowerCase() === String(currentUser.id).toLowerCase();
+  }, [profileData, targetProfile]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
 
@@ -681,9 +687,6 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
         const currentUser = profileData?.user;
         const targetId = targetProfile.id;
         const targetName = targetProfile.name;
-        const isOwner = currentUser && (
-          String(targetId).toLowerCase() === String(currentUser.id).toLowerCase()
-        );
 
         let mappedPosts: Post[] = [];
         if (isOwner) {
@@ -695,6 +698,12 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
           const data = await getPublicProfilePosts(userId, 'All');
           mappedPosts = data.posts.map(mapPublicPostToPost);
         }
+
+        // Visitors should never see private posts
+        if (!isOwner) {
+          mappedPosts = mappedPosts.filter(p => p.visibility !== 'private');
+        }
+
         // Client-side safeguard: filter by author and tab type
         if (activeTab === 'Post') {
           // In Post tab, only show PUBLIC posts shared by the target user (exclude reposts)
@@ -756,7 +765,9 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
             <FilterChip label="Repost" active={activeTab === 'Repost'} onClick={() => setActiveTab('Repost')} />
             {/* <FilterChip label="Like" active={activeTab === 'Like'} onClick={() => setActiveTab('Like')} /> */}
             <FilterChip label="Comments" active={activeTab === 'Comments'} onClick={() => setActiveTab('Comments')} />
-            <FilterChip label="Private post" active={activeTab === 'Private post'} onClick={() => setActiveTab('Private post')} />
+            {isOwner && (
+              <FilterChip label="Private post" active={activeTab === 'Private post'} onClick={() => setActiveTab('Private post')} />
+            )}
             {/* <FilterChip label="Save" active={activeTab === 'Save'} onClick={() => setActiveTab('Save')} /> */}
           </div>
         </div>

@@ -49,6 +49,12 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
   // TanStack Query Hooks
   const { data: user, isLoading: isUserLoading, error: userError } = useProfile(userId);
   const { data: publicPosts, isLoading: isPostsLoading } = useProfilePosts(userId);
+
+  // Filter out private posts from the main profile page preview
+  const visiblePosts = React.useMemo(() => {
+    if (!publicPosts) return [];
+    return publicPosts.filter(post => post.visibility !== 'private');
+  }, [publicPosts]);
   const { data: profileStats } = useQuery({
     queryKey: ['profileStats', userId],
     queryFn: () => getProfileStats(userId),
@@ -173,7 +179,7 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
             <ProfileSkills
               skills={user.skills}
               experiences={user.experiences}
-              posts={publicPosts || []}
+              posts={visiblePosts}
             />
 
             <ProfileEducation educations={user.educations as unknown as FormattedEducation[]} />
@@ -182,7 +188,7 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
             <div className="mt-8">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl text-foreground font-semibold">Posts</h2>
-                {!isPostsLoading && publicPosts && publicPosts.length > 0 && (
+                {!isPostsLoading && visiblePosts && visiblePosts.length > 0 && (
                   <button
                     onClick={() => {
                       sessionStorage.setItem("cocpit_profile_scroll_y", window.scrollY.toString());
@@ -215,9 +221,9 @@ export default function PublicProfile({ userId }: PublicProfileProps) {
                     <div className="h-40 bg-muted/20 animate-pulse rounded-xl" />
                     <div className="h-40 bg-muted/20 animate-pulse rounded-xl" />
                   </div>
-                ) : publicPosts && publicPosts.length > 0 ? (
+                ) : visiblePosts && visiblePosts.length > 0 ? (
                   <div className="grid grid-cols-2 gap-4">
-                    {publicPosts.slice(0, 4).map((post) => (
+                    {visiblePosts.slice(0, 4).map((post) => (
                       isMobile ? (
                         <PostCard
                           key={post.id}

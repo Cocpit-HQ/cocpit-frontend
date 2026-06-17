@@ -6,6 +6,7 @@ import HistoryList from "./HistoryList";
 import HistoryMoveToProjectDialog from "./HistoryMoveToProjectDialog";
 import RenameChatDialog from "../../../project/RenameChatDialog";
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface HistoryPanelProps {
   onClose: () => void;
@@ -14,6 +15,8 @@ interface HistoryPanelProps {
 }
 
 export default function HistoryPanel({ onClose, onShare, onSelectHistoryItem }: HistoryPanelProps) {
+  const isMobile = useIsMobile();
+
   // Use session/local state so changes are reflected interactively
   const [items, setItems] = useState<HistoryItemType[]>(initialHistoryData);
   const [selectedMoveItem, setSelectedMoveItem] = useState<HistoryItemType | null>(null);
@@ -73,7 +76,7 @@ export default function HistoryPanel({ onClose, onShare, onSelectHistoryItem }: 
         flexDirection: "column",
         alignItems: "flex-start",
         gap: "10px",
-        width: "284px",
+        width: isMobile ? "100%" : "284px",
         flexGrow: 1,
         minHeight: 0,
       }}
@@ -86,7 +89,7 @@ export default function HistoryPanel({ onClose, onShare, onSelectHistoryItem }: 
           alignItems: "center",
           padding: "0px 8px",
           gap: "10px",
-          width: "284px",
+          width: isMobile ? "100%" : "284px",
           height: "20px",
           boxSizing: "border-box",
         }}

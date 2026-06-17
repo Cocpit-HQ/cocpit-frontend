@@ -44,8 +44,9 @@ export default function ProjectEmptyState({
           alignItems: "center",
           padding: "0px",
           gap: "8px",
-          width: "254px",
-          height: "48px",
+          width: "100%",
+          maxWidth: "300px",
+          height: "auto",
           boxSizing: "border-box",
         }}
       >

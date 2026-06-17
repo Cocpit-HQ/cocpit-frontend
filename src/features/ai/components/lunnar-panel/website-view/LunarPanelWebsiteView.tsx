@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect } from "react";
 import CompanyCard from "../../cards/CompanyCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LunarPanelWebsiteViewProps {
   selectedCompany?: string;
@@ -15,7 +16,9 @@ export default function LunarPanelWebsiteView({
     { id: 2, company: "Linear" },
   ],
 }: LunarPanelWebsiteViewProps) {
+  const isMobile = useIsMobile();
   const containerRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     if (!selectedCompany || !containerRef.current) return;
@@ -42,7 +45,7 @@ export default function LunarPanelWebsiteView({
         display: "flex",
         flexDirection: "column",
         gap: "10px",
-        width: "341px",
+        width: isMobile ? "100%" : "341px",
         flexGrow: 1,
         overflowY: "auto",
         boxSizing: "border-box",
@@ -53,7 +56,7 @@ export default function LunarPanelWebsiteView({
         <div
           key={item.id}
           data-company={item.company.toLowerCase()}
-          style={{ width: "341px", flexShrink: 0 }}
+          style={{ width: isMobile ? "100%" : "341px", flexShrink: 0 }}
         >
           <CompanyCard
             id={item.id}

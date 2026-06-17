@@ -8,6 +8,7 @@ import LunarPanelWebsiteView from "./website-view/LunarPanelWebsiteView";
 import LunarPanelJobListView from "./job-list-view/LunarPanelJobListView";
 import HistoryPanel from "./history-panel/HistoryPanel";
 import html2canvas from "html2canvas";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export type LunarPanelMode =
   | "graph"
@@ -37,6 +38,7 @@ export default function LunarPanel({
   companies,
   onSelectHistoryItem,
 }: LunarPanelProps) {
+  const isMobile = useIsMobile();
 
   const handleDownload = async () => {
     const element = document.getElementById("lunar-panel-download-target");
@@ -94,11 +96,13 @@ export default function LunarPanel({
 
   return (
     <div
-      className="box-border flex flex-col items-end h-full border border-[#E0E7FF] bg-white drop-shadow-[0_2px_4px_rgba(99,102,241,0.05)] rounded-[24px]"
+      className={`box-border flex flex-col items-end h-full border border-[#E0E7FF] bg-white drop-shadow-[0_2px_4px_rgba(99,102,241,0.05)] ${
+        isMobile ? "rounded-t-[24px] rounded-b-none border-x-0 border-b-0" : "rounded-[24px]"
+      }`}
       style={{
         padding: mode === "history" ? "16px 8px" : "16px",
         gap: "10px",
-        width: mode === "job-list" ? "459px" : mode === "history" ? "300px" : (mode === "graph" || mode === "pie") ? "308px" : "373px",
+        width: isMobile ? "100%" : mode === "job-list" ? "459px" : mode === "history" ? "300px" : (mode === "graph" || mode === "pie") ? "308px" : "373px",
       }}
     >
       <LunarPanelHeader

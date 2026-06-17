@@ -5,6 +5,7 @@ import type { AIMessage } from "../../types/ai.types";
 import AIMessageBubble from "./AIMessageBubble";
 import AIStreamingMessage from "./AIStreamingMessage";
 import { isJobRelatedQuery } from "../../hooks/use-ai-chat";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface WebsiteResult {
   id: number;
@@ -77,12 +78,29 @@ export default function AIMessageList({
   onSend,
   activeLunarMode,
 }: AIMessageListProps) {
+  const isMobile = useIsMobile();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive or streaming updates
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, streamingMessageId]);
+    const scrollToBottom = () => {
+      if (bottomRef.current) {
+        const behavior = isStreaming ? "auto" : "smooth";
+        bottomRef.current.scrollIntoView({ behavior, block: "end" });
+      }
+    };
+
+    scrollToBottom();
+
+    // Secondary delayed scroll for dynamic components layout settling
+    const timer = setTimeout(scrollToBottom, 60);
+    const timer2 = setTimeout(scrollToBottom, 180);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timer2);
+    };
+  }, [messages, streamingMessageId, isStreaming]);
 
   if (messages.length === 0) return null;
 
@@ -109,7 +127,7 @@ export default function AIMessageList({
   };
 
   return (
-    <div className="flex flex-col w-full px-0 py-4 min-h-full">
+    <div className={`flex flex-col w-full py-4 min-h-full ${isMobile ? "px-4" : "px-0"}`}>
       <div className="flex-grow" />
       <div className="flex flex-col gap-[32px] w-full">
         {messages.map((message) => {

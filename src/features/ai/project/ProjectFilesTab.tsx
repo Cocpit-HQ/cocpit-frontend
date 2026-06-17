@@ -38,7 +38,8 @@ export default function ProjectFilesTab({
           {/* Divider */}
           <div
             style={{
-              width: "348px",
+              width: "100%",
+              maxWidth: "348px",
               height: "0px",
               borderBottom: "1px solid #E0E7FF",
               marginTop: "16px",

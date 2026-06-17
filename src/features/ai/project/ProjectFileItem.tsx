@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Icon } from "@iconify/react";
 import type { ProjectFile } from "./project.types";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProjectFileItemProps {
   file: ProjectFile;
@@ -10,6 +11,7 @@ interface ProjectFileItemProps {
 }
 
 export default function ProjectFileItem({ file, onDelete }: ProjectFileItemProps) {
+  const isMobile = useIsMobile();
   const [isHovered, setIsHovered] = useState(false);
 
   // Helper to get formatted time ago
@@ -193,7 +195,7 @@ export default function ProjectFileItem({ file, onDelete }: ProjectFileItemProps
           flexShrink: 0,
         }}
       >
-        {isHovered && (
+        {(isMobile || isHovered) && (
           <button
             type="button"
             onClick={(e) => {

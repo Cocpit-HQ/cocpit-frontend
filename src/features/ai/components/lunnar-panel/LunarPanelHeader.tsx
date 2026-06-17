@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Icon } from "@iconify/react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LunarPanelHeaderProps {
   onShare: () => void;
@@ -16,11 +17,12 @@ export default function LunarPanelHeader({
   onClose,
   mode,
 }: LunarPanelHeaderProps) {
+  const isMobile = useIsMobile();
   return (
-    <div className={`box-border flex justify-between items-center ${mode === "website" || mode === "job-list" || mode === "history" ? "w-full" : "w-[276px]"} h-[40px] font-sans`}>
+    <div className={`box-border flex justify-between items-center ${isMobile || mode === "website" || mode === "job-list" || mode === "history" ? "w-full" : "w-[276px]"} h-[40px] font-sans`}>
       {/* Title */}
       <h2 className="m-0 font-medium text-[16px] leading-[24px] bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] bg-clip-text text-transparent">
-        {mode === "job-list" || mode === "history" ? "Lunnar panel" : "Lunar Panel"}
+        {mode === "history" || mode === "job-list" ? "Lunnar panel" : "Lunar Panel"}
       </h2>
 
       {/* Actions Row */}

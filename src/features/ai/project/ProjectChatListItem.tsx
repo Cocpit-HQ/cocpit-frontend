@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Icon } from "@iconify/react";
 import type { ProjectChat } from "./project.types";
 import ProjectChatActionsMenu from "./ProjectChatActionsMenu";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProjectChatListItemProps {
   chat: ProjectChat;
@@ -26,6 +27,7 @@ export default function ProjectChatListItem({
   onShare,
   onDelete,
 }: ProjectChatListItemProps) {
+  const isMobile = useIsMobile();
   const [isHovered, setIsHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -123,8 +125,8 @@ export default function ProjectChatListItem({
           </div>
         )}
 
-        {/* Show actions dropdown on hover or when open */}
-        {isRowActive && (
+        {/* Show actions dropdown on hover, open, or always on mobile */}
+        {(isMobile || isRowActive) && (
           <ProjectChatActionsMenu
             isPinned={chat.isPinned}
             onRename={onRename}

@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState } from "react";
 import ProjectHeader from "./ProjectHeader";
 import ProjectSidebar from "./ProjectSidebar";
@@ -12,6 +10,7 @@ import ActiveProjectChatHeader from "./ActiveProjectChatHeader";
 import RenameChatDialog from "./RenameChatDialog";
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox";
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProjectDetailsPageProps {
   projectName: string;
@@ -136,6 +135,7 @@ export default function ProjectDetailsPage({
   projects,
   onUpdateProjects,
 }: ProjectDetailsPageProps) {
+  const isMobile = useIsMobile();
   const project = projects.find((p) => p.name === projectName);
   const chats = project?.chats || [];
 
@@ -371,166 +371,285 @@ export default function ProjectDetailsPage({
   return (
     <div
       style={{
-        position: "absolute",
-        top: "20px",
-        left: "20px",
-        right: "20px",
-        height: "calc(100% - 20px)",
+        position: isMobile ? "static" : "absolute",
+        top: isMobile ? "0px" : "20px",
+        left: isMobile ? "0px" : "20px",
+        right: isMobile ? "0px" : "20px",
+        height: isMobile ? "100%" : "calc(100% - 20px)",
+        width: isMobile ? "100%" : "calc(100% - 40px)",
         boxSizing: "border-box",
       }}
-      className="project-details-outer-container w-[calc(100%-40px)] h-full"
+      className="project-details-outer-container h-full"
     >
       <div
         style={{
           display: "flex",
           flexDirection: "column",
           alignItems: "stretch",
-          padding: "16px",
-          gap: "16px",
+          padding: isMobile ? "16px 16px 0px 16px" : "16px",
+          gap: isMobile ? "0px" : "16px",
           background: "#FFFFFF",
           width: "100%",
           height: "100%",
-          borderRadius: "24px",
+          borderRadius: isMobile ? "24px 24px 0px 0px" : "24px",
           boxSizing: "border-box",
           overflow: "hidden",
         }}
         className="project-details-container"
       >
         {/* Header Section */}
-        <ProjectHeader
-          variant="details"
-          title={projectName}
-          onClose={onClose}
-        />
+        {!isMobile && (
+          <ProjectHeader
+            variant="details"
+            title={projectName}
+            onClose={onClose}
+          />
+        )}
 
         {/* Main Content Section */}
-        <div
-          style={{
-            display: "flex",
-            gap: "16px",
-            width: "100%",
-            flexGrow: 1,
-            minHeight: 0,
-          }}
-          className="flex-col lg:flex-row"
-        >
-          {/* Left Panel / Sidebar */}
-          <ProjectSidebar
-            chats={chats}
-            activeChatId={activeChatId}
-            onSelectChat={setActiveChatId}
-            onRenameChat={(id) => {
-              setRenameChatId(id);
-              setIsRenameOpen(true);
-            }}
-            onTogglePinChat={handleTogglePinChat}
-            onRemoveChat={(id) => {
-              setRemoveChatId(id);
-              setIsRemoveOpen(true);
-            }}
-            onShareChat={(id) => {
-              setIsShareOpen(true);
-            }}
-            onDeleteChat={(id) => {
-              setDeleteChatId(id);
-              setIsDeleteOpen(true);
-            }}
-            onSearch={handleCreateNewChat}
-            instructions={project?.instructions || ""}
-            onSaveInstructions={(newInstructions) => {
-              const updatedProjects = projects.map((p) => {
-                if (p.name === projectName) {
-                  return {
-                    ...p,
-                    instructions: newInstructions,
-                    updatedAt: new Date().toISOString(),
-                  };
-                }
-                return p;
-              });
-              onUpdateProjects(updatedProjects);
-            }}
-          />
+        {isMobile ? (
+          activeChatId === null ? (
+            <ProjectSidebar
+              projectName={projectName}
+              onClose={onClose}
+              chats={chats}
+              activeChatId={activeChatId}
+              onSelectChat={setActiveChatId}
+              onRenameChat={(id) => {
+                setRenameChatId(id);
+                setIsRenameOpen(true);
+              }}
+              onTogglePinChat={handleTogglePinChat}
+              onRemoveChat={(id) => {
+                setRemoveChatId(id);
+                setIsRemoveOpen(true);
+              }}
+              onShareChat={(id) => {
+                setIsShareOpen(true);
+              }}
+              onDeleteChat={(id) => {
+                setDeleteChatId(id);
+                setIsDeleteOpen(true);
+              }}
+              onSearch={handleCreateNewChat}
+              instructions={project?.instructions || ""}
+              onSaveInstructions={(newInstructions) => {
+                const updatedProjects = projects.map((p) => {
+                  if (p.name === projectName) {
+                    return {
+                      ...p,
+                      instructions: newInstructions,
+                      updatedAt: new Date().toISOString(),
+                    };
+                  }
+                  return p;
+                });
+                onUpdateProjects(updatedProjects);
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                flexGrow: 1,
+                background: "#FFFFFF",
+                borderRadius: "24px 24px 0px 0px",
+                boxSizing: "border-box",
+                overflow: "hidden",
+                height: "100%",
+                position: "relative",
+              }}
+              className="flex-1 min-w-0"
+            >
+              {activeChat && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "100%",
+                    width: "100%",
+                    boxSizing: "border-box",
+                    justifyContent: "space-between",
+                    overflow: "hidden",
+                  }}
+                >
+                  {/* Active Chat Header */}
+                  <ActiveProjectChatHeader
+                    chatTitle={activeChat.title}
+                    projectName={projectName}
+                    isPinned={activeChat.isPinned}
+                    onBack={() => setActiveChatId(null)}
+                    onRename={() => {
+                      setRenameChatId(activeChat.id);
+                      setIsRenameOpen(true);
+                    }}
+                    onTogglePin={() => handleTogglePinChat(activeChat.id)}
+                    onRemoveFromProject={() => {
+                      setRemoveChatId(activeChat.id);
+                      setIsRemoveOpen(true);
+                    }}
+                    onShare={() => setIsShareOpen(true)}
+                    onDelete={() => {
+                      setDeleteChatId(activeChat.id);
+                      setIsDeleteOpen(true);
+                    }}
+                  />
 
-          {/* Right Content Panel */}
+                  {/* Message List */}
+                  <div style={{ flexGrow: 1, overflowY: "auto", minHeight: 0, padding: "16px", marginBottom: "0px" }}>
+                    <AIMessageList
+                      messages={activeChat.messages}
+                      streamingMessageId={streamingMessageId}
+                      isStreaming={isStreaming}
+                      onEditMessage={handleEditMessage}
+                      error={null}
+                    />
+                  </div>
+
+                  {/* Input Area */}
+                  <div style={{ padding: "0 16px 16px 16px" }}>
+                    <AIChatInput
+                      onSend={handleSendMessage}
+                      disabled={isLoading || isStreaming}
+                      placeholder={isStreaming ? "AI is typing..." : "Ask me, I'm ready"}
+                      isEmptyState={false}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        ) : (
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
+              gap: "16px",
+              width: "100%",
               flexGrow: 1,
-              background: "#FFFFFF",
-              borderRadius: "24px",
-              boxSizing: "border-box",
-              overflow: "hidden",
-              height: "100%",
-              position: "relative",
+              minHeight: 0,
             }}
-            className="flex-1 min-w-0"
+            className="flex-col lg:flex-row"
           >
-            {!activeChat ? (
-              <AIEmptyState
-                suggestions={[]}
-                onSuggestionClick={handleCreateNewChat}
-                isLoading={isLoading || isStreaming}
-                hideHeaderActions={true}
-              />
-            ) : (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  height: "100%",
-                  width: "100%",
-                  boxSizing: "border-box",
-                  justifyContent: "space-between",
-                  overflow: "hidden",
-                }}
-              >
-                {/* Active Chat Header */}
-                <ActiveProjectChatHeader
-                  chatTitle={activeChat.title}
-                  projectName={projectName}
-                  isPinned={activeChat.isPinned}
-                  onRename={() => {
-                    setRenameChatId(activeChat.id);
-                    setIsRenameOpen(true);
-                  }}
-                  onTogglePin={() => handleTogglePinChat(activeChat.id)}
-                  onRemoveFromProject={() => {
-                    setRemoveChatId(activeChat.id);
-                    setIsRemoveOpen(true);
-                  }}
-                  onShare={() => setIsShareOpen(true)}
-                  onDelete={() => {
-                    setDeleteChatId(activeChat.id);
-                    setIsDeleteOpen(true);
-                  }}
+            {/* Left Panel / Sidebar */}
+            <ProjectSidebar
+              projectName={projectName}
+              chats={chats}
+              activeChatId={activeChatId}
+              onSelectChat={setActiveChatId}
+              onRenameChat={(id) => {
+                setRenameChatId(id);
+                setIsRenameOpen(true);
+              }}
+              onTogglePinChat={handleTogglePinChat}
+              onRemoveChat={(id) => {
+                setRemoveChatId(id);
+                setIsRemoveOpen(true);
+              }}
+              onShareChat={(id) => {
+                setIsShareOpen(true);
+              }}
+              onDeleteChat={(id) => {
+                setDeleteChatId(id);
+                setIsDeleteOpen(true);
+              }}
+              onSearch={handleCreateNewChat}
+              instructions={project?.instructions || ""}
+              onSaveInstructions={(newInstructions) => {
+                const updatedProjects = projects.map((p) => {
+                  if (p.name === projectName) {
+                    return {
+                      ...p,
+                      instructions: newInstructions,
+                      updatedAt: new Date().toISOString(),
+                    };
+                  }
+                  return p;
+                });
+                onUpdateProjects(updatedProjects);
+              }}
+            />
+
+            {/* Right Content Panel */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                flexGrow: 1,
+                background: "#FFFFFF",
+                borderRadius: "24px",
+                boxSizing: "border-box",
+                overflow: "hidden",
+                height: "100%",
+                position: "relative",
+              }}
+              className="flex-1 min-w-0"
+            >
+              {!activeChat ? (
+                <AIEmptyState
+                  suggestions={[]}
+                  onSuggestionClick={handleCreateNewChat}
+                  isLoading={isLoading || isStreaming}
+                  hideHeaderActions={true}
                 />
-
-                {/* Message List */}
-                <div style={{ flexGrow: 1, overflowY: "auto", minHeight: 0, padding: "16px", marginBottom: "0px" }}>
-                  <AIMessageList
-                    messages={activeChat.messages}
-                    streamingMessageId={streamingMessageId}
-                    isStreaming={isStreaming}
-                    onEditMessage={handleEditMessage}
-                    error={null}
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "100%",
+                    width: "100%",
+                    boxSizing: "border-box",
+                    justifyContent: "space-between",
+                    overflow: "hidden",
+                  }}
+                >
+                  {/* Active Chat Header */}
+                  <ActiveProjectChatHeader
+                    chatTitle={activeChat.title}
+                    projectName={projectName}
+                    isPinned={activeChat.isPinned}
+                    onRename={() => {
+                      setRenameChatId(activeChat.id);
+                      setIsRenameOpen(true);
+                    }}
+                    onTogglePin={() => handleTogglePinChat(activeChat.id)}
+                    onRemoveFromProject={() => {
+                      setRemoveChatId(activeChat.id);
+                      setIsRemoveOpen(true);
+                    }}
+                    onShare={() => setIsShareOpen(true)}
+                    onDelete={() => {
+                      setDeleteChatId(activeChat.id);
+                      setIsDeleteOpen(true);
+                    }}
                   />
-                </div>
 
-                {/* Input Area */}
-                <div style={{ padding: "0 16px 16px 16px" }}>
-                  <AIChatInput
-                    onSend={handleSendMessage}
-                    disabled={isLoading || isStreaming}
-                    placeholder={isStreaming ? "AI is typing..." : "Ask me, I'm ready"}
-                    isEmptyState={false}
-                  />
+                  {/* Message List */}
+                  <div style={{ flexGrow: 1, overflowY: "auto", minHeight: 0, padding: "16px", marginBottom: "0px" }}>
+                    <AIMessageList
+                      messages={activeChat.messages}
+                      streamingMessageId={streamingMessageId}
+                      isStreaming={isStreaming}
+                      onEditMessage={handleEditMessage}
+                      error={null}
+                    />
+                  </div>
+
+                  {/* Input Area */}
+                  <div style={{ padding: "0 16px 16px 16px" }}>
+                    <AIChatInput
+                      onSend={handleSendMessage}
+                      disabled={isLoading || isStreaming}
+                      placeholder={isStreaming ? "AI is typing..." : "Ask me, I'm ready"}
+                      isEmptyState={false}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Rename Dialog */}

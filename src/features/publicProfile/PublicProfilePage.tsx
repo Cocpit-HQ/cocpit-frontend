@@ -86,6 +86,12 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const { data: user, isLoading: isUserLoading, error: userError } = useProfile(userId);
   const { data: publicPosts, isLoading: isPostsLoading } = useProfilePosts(userId);
 
+  // Filter out private posts from the main profile page preview
+  const visiblePosts = useMemo(() => {
+    if (!publicPosts) return [];
+    return publicPosts.filter(post => post.visibility !== 'private');
+  }, [publicPosts]);
+
   // Scroll Restoration Logic
   const hasRestoredScroll = useRef(false);
 
@@ -522,7 +528,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           />
 
           <ProfilePosts
-            posts={publicPosts || []}
+            posts={visiblePosts}
             isOwnProfile={isOwnProfile}
             isCompany={activeProfile?.type === 'COMPANY'}
             profileSlug={user?.account_name || user?.id || ""}
@@ -533,7 +539,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
           <ProfileSkills
             skills={user.skills}
             experiences={flatExperiences}
-            posts={publicPosts || []}
+            posts={visiblePosts}
             isOwnProfile={isOwnProfile}
           />
 

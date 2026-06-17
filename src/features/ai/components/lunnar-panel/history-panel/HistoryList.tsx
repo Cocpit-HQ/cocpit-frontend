@@ -3,6 +3,7 @@
 import React from "react";
 import { HistoryItemType } from "./historyDummyData";
 import HistoryItem from "./HistoryItem";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface HistoryListProps {
   items: HistoryItemType[];
@@ -23,6 +24,7 @@ export default function HistoryList({
   onDelete,
   onSelectHistoryItem,
 }: HistoryListProps) {
+  const isMobile = useIsMobile();
   // Sort: Pinned items appear first in the list
   const sortedItems = [...items].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
@@ -37,7 +39,7 @@ export default function HistoryList({
         display: "flex",
         flexDirection: "column",
         gap: "10px",
-        width: "284px",
+        width: isMobile ? "100%" : "284px",
         flexGrow: 1,
         minHeight: 0,
         overflowY: "auto",

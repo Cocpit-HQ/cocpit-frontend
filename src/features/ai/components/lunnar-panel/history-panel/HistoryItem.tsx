@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Icon } from "@iconify/react";
 import { HistoryItemType } from "./historyDummyData";
 import HistoryItemMenu from "./HistoryItemMenu";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface HistoryItemProps {
   item: HistoryItemType;
@@ -24,6 +25,7 @@ export default function HistoryItem({
   onDelete,
   onSelect,
 }: HistoryItemProps) {
+  const isMobile = useIsMobile();
   const [isHovered, setIsHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -38,12 +40,18 @@ export default function HistoryItem({
   // Apply ultra light background (#EEF2FF) on hover or while menu is open
   const rowBackground = isRowActive ? "#EEF2FF" : "transparent";
 
+  // Text color is purple (#6366F1) on active row (hover/menu open) or if pinned on mobile.
+  // On desktop, it is purple only if pinned.
+  const textColor = isMobile
+    ? ((item.isPinned || isRowActive) ? "#6366F1" : "#000000")
+    : (item.isPinned ? "#6366F1" : "#000000");
+
   return (
     <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleItemClick}
-      className="flex flex-row items-center justify-between w-[284px] h-[40px] px-2 rounded-xl transition-all duration-200 relative cursor-pointer"
+      className={`flex flex-row items-center justify-between ${isMobile ? "w-full" : "w-[284px]"} h-[40px] px-2 rounded-xl transition-all duration-200 relative cursor-pointer`}
       style={{
         backgroundColor: rowBackground,
         boxSizing: "border-box",
@@ -55,7 +63,7 @@ export default function HistoryItem({
         style={{
           fontFamily: "'Poppins', sans-serif",
           fontWeight: 400,
-          color: item.isPinned ? "#6366F1" : "#000000",
+          color: textColor,
           flexGrow: 1,
           marginRight: "8px",
         }}
@@ -66,20 +74,20 @@ export default function HistoryItem({
 
       {/* Action Button Area */}
       <div className="flex flex-row items-center gap-1 flex-shrink-0">
-        {/* Show Unpin icon on the right for pinned items */}
-        {item.isPinned && !isRowActive && (
+        {/* Show Unpin icon for pinned items */}
+        {((isMobile && item.isPinned) || (!isMobile && item.isPinned && !isRowActive)) && (
           <div
             className="flex items-center justify-center text-[#6366F1]"
             style={{
-              padding: "8px",
+              padding: "2px",
             }}
           >
             <Icon icon="ph:push-pin-slash-light" width={20} height={20} />
           </div>
         )}
 
-        {/* Show 3-dot dropdown menu on hover / active */}
-        {isRowActive && (
+        {/* Show 3-dot dropdown menu */}
+        {(isMobile || isRowActive) && (
           <HistoryItemMenu
             isPinned={item.isPinned}
             onRename={onRenameClick}
@@ -87,7 +95,8 @@ export default function HistoryItem({
             onShare={onShare}
             onMoveToProject={onMoveToProject}
             onDelete={onDelete}
-            onOpenChange={setIsOpen => setIsMenuOpen(setIsOpen)}
+            onOpenChange={(open) => setIsMenuOpen(open)}
+            iconColor={isMobile && isRowActive ? "#6366F1" : "#000000"}
           />
         )}
       </div>

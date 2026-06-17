@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Icon } from "@iconify/react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Job {
   id: string;
@@ -20,6 +21,7 @@ interface JobCardProps {
 }
 
 export default function JobCard({ job }: JobCardProps) {
+  const isMobile = useIsMobile();
   const [isSaved, setIsSaved] = useState(false);
 
   return (
@@ -30,8 +32,10 @@ export default function JobCard({ job }: JobCardProps) {
         alignItems: "flex-start",
         padding: "16px",
         gap: "12px",
-        width: "427px",
-        height: "266px",
+        width: "100%",
+        maxWidth: "427px",
+        height: isMobile ? "auto" : "266px",
+        minHeight: isMobile ? "266px" : undefined,
         background: "#FFFFFF",
         border: "1px solid #EEF2FF",
         boxShadow: "0px 2px 4px rgba(99, 102, 241, 0.05)",

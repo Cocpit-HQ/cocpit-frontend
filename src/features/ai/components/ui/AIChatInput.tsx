@@ -5,6 +5,7 @@ import { Icon } from "@iconify/react";
 import type { AIAttachment } from "../../types/ai.types";
 import { toast } from "sonner";
 import UnsupportedFileCard from "./UnsupportedFileCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AIChatInputProps {
   onSend: (message: string, attachments?: AIAttachment[]) => void;
@@ -23,6 +24,7 @@ export default function AIChatInput({
   isStreaming = false,
   onStop,
 }: AIChatInputProps) {
+  const isMobile = useIsMobile();
   const [text, setText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<AIAttachment[]>([]);
@@ -203,7 +205,7 @@ export default function AIChatInput({
   };
 
   return (
-    <div className="w-full flex flex-col items-center py-4 bg-transparent shrink-0" style={{ boxSizing: "border-box" }}>
+    <div className={`w-full flex flex-col items-center bg-transparent shrink-0 ${isMobile ? "px-4 py-2" : "py-4"}`} style={{ boxSizing: "border-box" }}>
       {showRechargeBanner ? (
         <div
           style={{
@@ -214,8 +216,9 @@ export default function AIChatInput({
             padding: "8px 16px",
             gap: "16px",
             width: "100%",
-            maxWidth: isEmptyState ? "600px" : "912px",
-            height: "56px",
+            maxWidth: isMobile ? "100%" : (isEmptyState ? "600px" : "912px"),
+            height: isMobile ? "auto" : "56px",
+            minHeight: isMobile ? "56px" : undefined,
             background: "#FFFFFF",
             border: "1px solid #6366F1",
             boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
@@ -235,7 +238,8 @@ export default function AIChatInput({
               padding: "0px",
               gap: "10px",
               width: "100%",
-              height: "40px",
+              height: isMobile ? "auto" : "40px",
+              minHeight: isMobile ? "40px" : undefined,
               flex: "none",
               order: 0,
               alignSelf: "stretch",
@@ -245,21 +249,22 @@ export default function AIChatInput({
             <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "10px", flexGrow: 1, minWidth: 0 }}>
               <span
                 style={{
-                  width: "726px",
+                  width: "100%",
                   maxWidth: "100%",
-                  height: "24px",
+                  height: "auto",
+                  minHeight: "24px",
                   fontFamily: "'Poppins'",
                   fontStyle: "normal",
                   fontWeight: 400,
-                  fontSize: "16px",
-                  lineHeight: "24px",
+                  fontSize: "14px",
+                  lineHeight: "20px",
                   display: "flex",
                   alignItems: "center",
                   color: "#6366F1",
                   flex: "none",
                   order: 0,
                   flexGrow: 1,
-                  whiteSpace: "nowrap",
+                  whiteSpace: isMobile ? "normal" : "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                 }}
@@ -341,8 +346,9 @@ export default function AIChatInput({
             padding: "8px 16px",
             gap: "16px",
             width: "100%",
-            maxWidth: isEmptyState ? "600px" : "912px",
-            height: "40px",
+            maxWidth: isMobile ? "100%" : (isEmptyState ? "600px" : "912px"),
+            height: isMobile ? "auto" : "40px",
+            minHeight: isMobile ? "40px" : undefined,
             background: "#FFFFFF",
             border: "1px solid #FF6B6B",
             boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
@@ -383,20 +389,22 @@ export default function AIChatInput({
               />
               <span
                 style={{
-                  width: "503px",
+                  width: "100%",
                   maxWidth: "100%",
-                  height: "24px",
+                  height: "auto",
+                  minHeight: "24px",
                   fontFamily: "'Poppins'",
                   fontStyle: "normal",
                   fontWeight: 400,
-                  fontSize: "16px",
-                  lineHeight: "24px",
+                  fontSize: "14px",
+                  lineHeight: "20px",
                   display: "flex",
                   alignItems: "center",
                   color: "#FF6B6B",
                   flex: "none",
                   order: 1,
-                  flexGrow: 0,
+                  flexGrow: 1,
+                  whiteSpace: isMobile ? "normal" : "nowrap",
                 }}
               >
                 Attachment Limit: You can only upload up to 3 files per prompt.
@@ -431,7 +439,7 @@ export default function AIChatInput({
             alignItems: "center",
             padding: "8px 16px",
             width: "100%",
-            maxWidth: isEmptyState ? "600px" : "912px",
+            maxWidth: isMobile ? "100%" : (isEmptyState ? "600px" : "912px"),
             background: "#FFFFFF",
             boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
             borderRadius: "24px",
@@ -439,7 +447,7 @@ export default function AIChatInput({
           }}
         >
           <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-            <div className="text-amber-400 text-base font-normal font-['Poppins'] leading-6 flex-1 pr-4">
+            <div className={`text-amber-400 text-base font-normal font-['Poppins'] leading-6 flex-1 pr-4 ${isMobile ? "text-left" : ""}`}>
               Replying or uploading documents here will fork this thread into a private session. Sarah will not see your prompts or files.
             </div>
             <button
@@ -473,7 +481,7 @@ export default function AIChatInput({
           alignItems: "stretch",
           padding: "8px 16px",
           width: "100%",
-          maxWidth: isEmptyState ? "600px" : "912px",
+          maxWidth: isMobile ? "100%" : (isEmptyState ? "600px" : "912px"),
           background: "#FFFFFF",
           border: isLimitReached 
             ? "1px solid #FF6B6B" 
@@ -795,7 +803,7 @@ export default function AIChatInput({
           style={{
             alignSelf: "flex-end",
             width: "100%",
-            maxWidth: isEmptyState ? "600px" : "912px",
+            maxWidth: isMobile ? "100%" : (isEmptyState ? "600px" : "912px"),
             textAlign: "right",
             color: "#FF6B6B",
             fontFamily: "Poppins",

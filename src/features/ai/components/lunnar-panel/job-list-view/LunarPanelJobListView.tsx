@@ -3,15 +3,17 @@
 import React from "react";
 import jobsData from "./jobs.mock.json";
 import JobCard from "../../cards/JobCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function LunarPanelJobListView() {
+  const isMobile = useIsMobile();
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
         gap: "10px",
-        width: "427px",
+        width: isMobile ? "100%" : "427px",
         flexGrow: 1,
         minHeight: 0,
         overflowY: "auto",
@@ -20,7 +22,7 @@ export default function LunarPanelJobListView() {
       className="scrollbar-hide [&::-webkit-scrollbar]:hidden pb-4"
     >
       {jobsData.map((job) => (
-        <div key={job.id} style={{ width: "427px", flexShrink: 0 }}>
+        <div key={job.id} style={{ width: "100%", flexShrink: 0 }}>
           <JobCard job={job} />
         </div>
       ))}

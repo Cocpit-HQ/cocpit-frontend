@@ -1,8 +1,10 @@
 "use client"
 
 import React from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function AILoadingState() {
+  const isMobile = useIsMobile();
   return (
     <div className="flex flex-col w-full px-6 py-4">
       {/* Frame 2608649 */}
@@ -14,7 +16,7 @@ export default function AILoadingState() {
           alignItems: "center",
           padding: "0px",
           gap: "10px",
-          width: "912px",
+          width: isMobile ? "100%" : "912px",
           maxWidth: "100%",
           height: "24px",
           background: "#FFFFFF",
@@ -25,7 +27,7 @@ export default function AILoadingState() {
         {/* Thinking... Text */}
         <div
           style={{
-            width: "912px",
+            width: isMobile ? "100%" : "912px",
             maxWidth: "100%",
             height: "24px",
             fontFamily: "Poppins",

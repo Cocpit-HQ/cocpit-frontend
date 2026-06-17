@@ -5,6 +5,7 @@ import type { AISuggestion, AIAttachment } from "../../types/ai.types";
 import { Icon } from "@iconify/react";
 import { toast } from "sonner";
 import UnsupportedFileCard from "./UnsupportedFileCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AIEmptyStateProps {
   suggestions: AISuggestion[];
@@ -31,6 +32,7 @@ export default function AIEmptyState({
   onOpenProject,
   hideHeaderActions = false,
 }: AIEmptyStateProps) {
+  const isMobile = useIsMobile();
   const [inputValue, setInputValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<AIAttachment[]>([]);
@@ -221,38 +223,40 @@ export default function AIEmptyState({
         <div style={{
           display: "flex",
           flexDirection: "row",
-          justifyContent: "space-between",
+          justifyContent: isMobile ? "flex-end" : "space-between",
           alignItems: "center",
-          padding: "0px",
+          padding: isMobile ? "0px 16px" : "0px",
           gap: "8px",
           width: "100%",
-          maxWidth: "912px",
+          maxWidth: isMobile ? "100%" : "912px",
           height: "40px",
           background: "#FFFFFF",
           borderRadius: "24px",
           alignSelf: "stretch",
           flexGrow: 0,
-          marginTop: "36px",
+          marginTop: isMobile ? "12px" : "36px",
         }}>
           {/* LEFT side — Fullscreen icon button */}
-          <button
-            type="button"
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              padding: "8px",
-              gap: "10px",
-              width: "40px",
-              height: "40px",
-              background: "#FFFFFF",
-              borderRadius: "24px",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            <Icon icon="mingcute:fullscreen-line" width="24" height="24" style={{ color: "#000000" }} />
-          </button>
+          {!isMobile && (
+            <button
+              type="button"
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                padding: "8px",
+                gap: "10px",
+                width: "40px",
+                height: "40px",
+                background: "#FFFFFF",
+                borderRadius: "24px",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              <Icon icon="mingcute:fullscreen-line" width="24" height="24" style={{ color: "#000000" }} />
+            </button>
+          )}
 
           {/* RIGHT side — Frame 2608917 */}
           <div style={{
@@ -261,7 +265,7 @@ export default function AIEmptyState({
             alignItems: "center",
             padding: "0px",
             gap: "8px",
-            width: "201px",
+            width: isMobile ? "auto" : "201px",
             height: "40px",
           }}>
             {/* History button */}
@@ -272,9 +276,10 @@ export default function AIEmptyState({
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "center",
+                justifyContent: isMobile ? "center" : "flex-start",
                 padding: "8px",
-                gap: "8px",
-                width: "96px",
+                gap: isMobile ? "0px" : "8px",
+                width: isMobile ? "40px" : "96px",
                 height: "40px",
                 background: isHistoryOpen ? "#EEF2FF" : "#FFFFFF",
                 borderRadius: "24px",
@@ -286,20 +291,22 @@ export default function AIEmptyState({
                 icon="carbon:recently-viewed" 
                 width="24" 
                 height="24" 
-                style={{ marginRight: "8px", color: isHistoryOpen ? "#6366F1" : "#000000" }} 
+                style={{ marginRight: isMobile ? "0px" : "8px", color: isHistoryOpen ? "#6366F1" : "#000000" }} 
               />
-              <span style={{
-                width: "48px",
-                height: "20px",
-                fontFamily: "Poppins",
-                fontWeight: 400,
-                fontSize: "14px",
-                lineHeight: "20px",
-                textAlign: "center",
-                color: isHistoryOpen ? "#6366F1" : "#000000",
-              }}>
-                History
-              </span>
+              {!isMobile && (
+                <span style={{
+                  width: "48px",
+                  height: "20px",
+                  fontFamily: "Poppins",
+                  fontWeight: 400,
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  textAlign: "center",
+                  color: isHistoryOpen ? "#6366F1" : "#000000",
+                }}>
+                  History
+                </span>
+              )}
             </button>
 
             {/* Project button */}
@@ -310,9 +317,10 @@ export default function AIEmptyState({
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "center",
+                justifyContent: isMobile ? "center" : "flex-start",
                 padding: "8px",
-                gap: "8px",
-                width: "97px",
+                gap: isMobile ? "0px" : "8px",
+                width: isMobile ? "40px" : "97px",
                 height: "40px",
                 background: "#FFFFFF",
                 borderRadius: "24px",
@@ -324,20 +332,22 @@ export default function AIEmptyState({
                 icon="codicon:github-project" 
                 width="24" 
                 height="24" 
-                style={{ marginRight: "8px", color: "#000000" }} 
+                style={{ marginRight: isMobile ? "0px" : "8px", color: "#000000" }} 
               />
-              <span style={{
-                width: "49px",
-                height: "20px",
-                fontFamily: "Poppins",
-                fontWeight: 400,
-                fontSize: "14px",
-                lineHeight: "20px",
-                textAlign: "center",
-                color: "#000000",
-              }}>
-                Project
-              </span>
+              {!isMobile && (
+                <span style={{
+                  width: "49px",
+                  height: "20px",
+                  fontFamily: "Poppins",
+                  fontWeight: 400,
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  textAlign: "center",
+                  color: "#000000",
+                }}>
+                  Project
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -381,7 +391,7 @@ export default function AIEmptyState({
 
         {/* Heading Text */}
         <h2 style={{
-          width: "238px",
+          width: isMobile ? "100%" : "238px",
           height: "26px",
           fontFamily: "Poppins",
           fontWeight: 500,
@@ -402,10 +412,10 @@ export default function AIEmptyState({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          padding: "0px",
+          padding: isMobile ? "0px 16px" : "0px",
           gap: "16px",
           width: "100%",
-          maxWidth: "600px",
+          maxWidth: isMobile ? "100%" : "600px",
           height: "auto",
           flex: "none",
           order: 1,
@@ -429,7 +439,7 @@ export default function AIEmptyState({
                   padding: "8px 16px",
                   gap: "16px",
                   width: "100%",
-                  maxWidth: "600px",
+                  maxWidth: isMobile ? "100%" : "600px",
                   height: "56px",
                   background: "#FFFFFF",
                   border: "1px solid #6366F1",
@@ -448,8 +458,9 @@ export default function AIEmptyState({
                     alignItems: "center",
                     padding: "0px",
                     gap: "10px",
-                    width: "100%",
-                    height: "40px",
+                  width: "100%",
+                  height: "auto",
+                  minHeight: "40px",
                     flex: "none",
                     order: 0,
                     alignSelf: "stretch",
@@ -459,21 +470,22 @@ export default function AIEmptyState({
                   <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "10px", flexGrow: 1, minWidth: 0 }}>
                     <span
                       style={{
-                        width: "726px",
+                        width: "100%",
                         maxWidth: "100%",
-                        height: "24px",
+                        height: "auto",
+                        minHeight: "24px",
                         fontFamily: "'Poppins'",
                         fontStyle: "normal",
                         fontWeight: 400,
-                        fontSize: "16px",
-                        lineHeight: "24px",
+                        fontSize: "14px",
+                        lineHeight: "20px",
                         display: "flex",
                         alignItems: "center",
                         color: "#6366F1",
                         flex: "none",
                         order: 0,
                         flexGrow: 1,
-                        whiteSpace: "nowrap",
+                        whiteSpace: isMobile ? "normal" : "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                       }}
@@ -555,8 +567,9 @@ export default function AIEmptyState({
                   padding: "8px 16px",
                   gap: "16px",
                   width: "100%",
-                  maxWidth: "600px",
-                  height: "40px",
+                  maxWidth: isMobile ? "100%" : "600px",
+                  height: "auto",
+                  minHeight: "40px",
                   background: "#FFFFFF",
                   border: "1px solid #FF6B6B",
                   boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
@@ -596,20 +609,22 @@ export default function AIEmptyState({
                     />
                     <span
                       style={{
-                        width: "503px",
+                        width: "100%",
                         maxWidth: "100%",
-                        height: "24px",
+                        height: "auto",
+                        minHeight: "24px",
                         fontFamily: "'Poppins'",
                         fontStyle: "normal",
                         fontWeight: 400,
-                        fontSize: "16px",
-                        lineHeight: "24px",
+                        fontSize: "14px",
+                        lineHeight: "20px",
                         display: "flex",
                         alignItems: "center",
                         color: "#FF6B6B",
                         flex: "none",
                         order: 1,
-                        flexGrow: 0,
+                        flexGrow: 1,
+                        whiteSpace: isMobile ? "normal" : "nowrap",
                       }}
                     >
                       Attachment Limit: You can only upload up to 3 files per prompt.
@@ -644,7 +659,7 @@ export default function AIEmptyState({
                   alignItems: "center",
                   padding: "8px 16px",
                   width: "100%",
-                  maxWidth: "600px",
+                  maxWidth: isMobile ? "100%" : "600px",
                   background: "#FFFFFF",
                   boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
                   borderRadius: "24px",
@@ -686,7 +701,7 @@ export default function AIEmptyState({
               alignItems: "stretch",
               padding: "8px 16px",
             width: "100%",
-            maxWidth: "600px",
+            maxWidth: isMobile ? "100%" : "600px",
             background: "#FFFFFF",
             border: isLimitReached 
               ? "1px solid #FF6B6B" 
@@ -978,7 +993,7 @@ export default function AIEmptyState({
               style={{
                 alignSelf: "flex-end",
                 width: "100%",
-                maxWidth: "600px",
+                maxWidth: isMobile ? "100%" : "600px",
                 textAlign: "right",
                 color: "#FF6B6B",
                 fontFamily: "Poppins",
@@ -992,20 +1007,25 @@ export default function AIEmptyState({
           )}
 
           {/* Suggestion Chips */}
-          <div style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "flex-start",
-            padding: "0px",
-            gap: "16px",
-            width: "100%",
-            maxWidth: "600px",
-            height: "32px",
-            flex: "none",
-            order: 1,
-            flexGrow: 0,
-            justifyContent: "center",
-          }}>
+          <div 
+            className="scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "flex-start",
+              padding: isMobile ? "0px 16px" : "0px",
+              gap: "16px",
+              width: "100%",
+              maxWidth: isMobile ? "100%" : "600px",
+              height: "32px",
+              flex: "none",
+              order: 1,
+              flexGrow: 0,
+              justifyContent: isMobile ? "flex-start" : "center",
+              overflowX: isMobile ? "auto" : "visible",
+              scrollbarWidth: "none",
+              WebkitOverflowScrolling: "touch",
+            }}>
             {FIXED_LINKS.map((label) => (
               <button
                 key={label}

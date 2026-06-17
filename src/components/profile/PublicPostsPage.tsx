@@ -564,6 +564,14 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
   const { data: profileData, isLoading: isProfileLoading } = useMyProfile()
   const { setEditMode } = useUIStore()
 
+  const isOwner = React.useMemo(() => {
+    const currentUser = profileData?.user;
+    if (!currentUser) return false;
+    const normalizedUserId = String(userId).toLowerCase();
+    return normalizedUserId === String(currentUser.id).toLowerCase() ||
+           normalizedUserId === String(currentUser.account_name).toLowerCase();
+  }, [profileData, userId]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
 
@@ -659,10 +667,6 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
       try {
         const currentUser = profileData?.user;
         const normalizedUserId = String(userId).toLowerCase();
-        const isOwner = currentUser && (
-          normalizedUserId === String(currentUser.id).toLowerCase() ||
-          normalizedUserId === String(currentUser.account_name).toLowerCase()
-        );
 
         let mappedPosts: Post[] = [];
         if (isOwner) {
@@ -674,6 +678,12 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
           const data = await getPublicProfilePosts(userId, activeTab as any);
           mappedPosts = data.posts.map(mapPublicPostToPost);
         }
+
+        // Visitors should never see private posts
+        if (!isOwner) {
+          mappedPosts = mappedPosts.filter(p => p.visibility !== 'private');
+        }
+
         // Client-side safeguard: filter by author and tab type
         if (activeTab === 'Post') {
           const targetId = isOwner ? currentUser?.id : userId;
@@ -690,8 +700,8 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
           // In Comments tab, only show posts where the user has actually commented
           mappedPosts = mappedPosts.filter(p => p.is_commented);
         } else if (activeTab === 'Private post') {
-          // In Private tab, only show private posts
-          mappedPosts = mappedPosts.filter(p => p.visibility === 'private');
+          // In Private tab, only show private posts (visitors shouldn't see private posts)
+          mappedPosts = isOwner ? mappedPosts.filter(p => p.visibility === 'private') : [];
         } else if (activeTab === 'Save') {
           // In Save tab, only show posts that the user has actually saved
           mappedPosts = mappedPosts.filter(p => p.is_saved);
@@ -737,7 +747,9 @@ export default function PublicPostsPage({ userId }: PublicPostsPageProps) {
             <FilterChip label="Repost" active={activeTab === 'Repost'} onClick={() => setActiveTab('Repost')} />
             <FilterChip label="Like" active={activeTab === 'Like'} onClick={() => setActiveTab('Like')} />
             <FilterChip label="Comments" active={activeTab === 'Comments'} onClick={() => setActiveTab('Comments')} />
-            <FilterChip label="Private post" active={activeTab === 'Private post'} onClick={() => setActiveTab('Private post')} />
+            {isOwner && (
+              <FilterChip label="Private post" active={activeTab === 'Private post'} onClick={() => setActiveTab('Private post')} />
+            )}
             <FilterChip label="Save" active={activeTab === 'Save'} onClick={() => setActiveTab('Save')} />
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { Icon } from "@iconify/react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MoreInfoPanelProps {
   onClose: () => void;
@@ -22,6 +23,7 @@ export default function MoreInfoPanel({
   onSend,
   options = DEFAULT_OPTIONS
 }: MoreInfoPanelProps) {
+  const isMobile = useIsMobile();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [customText, setCustomText] = useState("");
@@ -111,7 +113,7 @@ export default function MoreInfoPanel({
         padding: "16px",
         gap: "16px",
         width: "100%",
-        maxWidth: "912px",
+        maxWidth: isMobile ? "100%" : "912px",
         minHeight: "280px",
         height: "auto",
         background: "#FFFFFF",

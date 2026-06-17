@@ -843,7 +843,9 @@ export default function ProfilePage() {
         setPostsLoading(true);
         const response = await getUserPosts({ limit: 4 });
         const mappedPosts = response.posts.map(mapProfilePostToPost);
-        setPreviewPosts(mappedPosts);
+        // Only show public posts on the profile preview
+        const publicOnly = mappedPosts.filter(p => p.visibility !== 'private');
+        setPreviewPosts(publicOnly);
       } catch (error) {
         console.error("Failed to fetch profile posts", error);
       } finally {

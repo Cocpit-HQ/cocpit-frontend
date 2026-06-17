@@ -12,6 +12,7 @@ import { PROJECT_ICONS, PROJECT_STRINGS } from "./project.constants";
 import type { ProjectScreenProps, Project } from "./project.types";
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const getRelativeTimeString = (dateString: string) => {
   const diffMs = Date.now() - new Date(dateString).getTime();
@@ -42,6 +43,7 @@ export default function ProjectScreen({
   projects = [],
   onUpdateProjects,
 }: ProjectScreenProps) {
+  const isMobile = useIsMobile();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedProjectName, setSelectedProjectName] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -174,14 +176,14 @@ export default function ProjectScreen({
         flexDirection: "column",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: "16px 24px",
-        gap: "24px",
-        position: "absolute",
-        width: "960px",
-        height: "calc(100% - 20px)",
-        left: "50%",
-        transform: "translateX(-50%)",
-        top: "20px",
+        padding: isMobile ? "16px" : "16px 24px",
+        gap: isMobile ? "16px" : "24px",
+        position: isMobile ? "static" : "absolute",
+        width: isMobile ? "100%" : "960px",
+        height: isMobile ? "100%" : "calc(100% - 20px)",
+        left: isMobile ? "auto" : "50%",
+        transform: isMobile ? "none" : "translateX(-50%)",
+        top: isMobile ? "auto" : "20px",
         background: "#FFFFFF",
         boxSizing: "border-box",
       }}
@@ -196,134 +198,231 @@ export default function ProjectScreen({
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
-          padding: "24px 0px",
+          padding: isMobile ? "8px 0px" : "24px 0px",
           gap: "0px",
-          width: "912px",
+          width: isMobile ? "100%" : "912px",
           flex: 1,
           boxSizing: "border-box",
           minHeight: 0,
         }}
       >
         {/* Page Title Section & Search Input */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "0px 8px",
-            width: "912px",
-            height: "56px",
-            boxSizing: "border-box",
-          }}
-        >
-          <h1
-            style={{
-              margin: 0,
-              fontFamily: "'Poppins', sans-serif",
-              fontStyle: "normal",
-              fontWeight: 600,
-              fontSize: "48px",
-              lineHeight: "56px",
-              textTransform: "uppercase",
-              color: "#000000",
-            }}
-          >
-            {PROJECT_STRINGS.title}
-          </h1>
+        {isMobile ? (
+          projects.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", width: "100%", boxSizing: "border-box", marginTop: "16px" }}>
+              {/* Search Input Frame */}
+              <div
+                style={{
+                  boxSizing: "border-box",
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "8px 16px",
+                  gap: "10px",
+                  width: "100%",
+                  height: "40px",
+                  border: "1px solid #6B7280",
+                  borderRadius: "24px",
+                }}
+              >
+                <input
+                  type="text"
+                  placeholder="Search project"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    border: "none",
+                    outline: "none",
+                    background: "transparent",
+                    width: "100%",
+                    padding: 0,
+                    fontFamily: "'Poppins', sans-serif",
+                    fontStyle: "normal",
+                    fontWeight: 400,
+                    fontSize: "16px",
+                    lineHeight: "24px",
+                    color: "#000000",
+                  }}
+                  className="placeholder-[#6B7280]"
+                />
+                <Icon
+                  icon="ph:magnifying-glass-light"
+                  width="24"
+                  height="24"
+                  style={{ color: "#6B7280", flexShrink: 0 }}
+                />
+              </div>
 
-          {/* Search Input Frame */}
-          {projects.length > 0 && (
+              {/* New Project Button Frame */}
+              <button
+                type="button"
+                onClick={() => setIsCreateOpen(true)}
+                style={{
+                  boxSizing: "border-box",
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: "8px 16px",
+                  gap: "10px",
+                  width: "100%",
+                  height: "40px",
+                  background: "#6366F1",
+                  border: "1px solid #FFFFFF",
+                  borderRadius: "24px",
+                  cursor: "pointer",
+                  outline: "none",
+                  whiteSpace: "nowrap",
+                  marginTop: "12px",
+                }}
+                className="hover:opacity-90 transition-all"
+              >
+                <Icon
+                  icon={PROJECT_ICONS.plus}
+                  width="24"
+                  height="24"
+                  style={{ color: "#FFFFFF" }}
+                />
+                <span
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: 400,
+                    fontSize: "14px",
+                    lineHeight: "20px",
+                    textAlign: "center",
+                    color: "#FFFFFF",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {PROJECT_STRINGS.newProjectButton}
+                </span>
+              </button>
+            </div>
+          )
+        ) : (
+          <>
             <div
               style={{
-                boxSizing: "border-box",
                 display: "flex",
                 flexDirection: "row",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "8px 16px",
-                gap: "10px",
-                width: "360px",
-                height: "40px",
-                border: "1px solid #6B7280",
-                borderRadius: "24px",
+                padding: "0px 8px",
+                width: "912px",
+                height: "56px",
+                boxSizing: "border-box",
               }}
             >
-              <input
-                type="text"
-                placeholder="Search project"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+              <h1
                 style={{
-                  border: "none",
-                  outline: "none",
-                  background: "transparent",
-                  width: "100%",
-                  padding: 0,
+                  margin: 0,
                   fontFamily: "'Poppins', sans-serif",
                   fontStyle: "normal",
-                  fontWeight: 400,
-                  fontSize: "16px",
-                  lineHeight: "24px",
+                  fontWeight: 600,
+                  fontSize: "48px",
+                  lineHeight: "56px",
+                  textTransform: "uppercase",
                   color: "#000000",
                 }}
-                className="placeholder-[#6B7280]"
-              />
-              <Icon
-                icon="ph:magnifying-glass-light"
-                width="24"
-                height="24"
-                style={{ color: "#6B7280", flexShrink: 0 }}
-              />
-            </div>
-          )}
-        </div>
+              >
+                {PROJECT_STRINGS.title}
+              </h1>
 
-        {/* New Project Button Frame */}
-        {projects.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setIsCreateOpen(true)}
-            style={{
-              boxSizing: "border-box",
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "center",
-              alignItems: "center",
-              padding: "8px 16px",
-              gap: "10px",
-              width: "150px",
-              height: "40px",
-              background: "#6366F1",
-              border: "1px solid #FFFFFF",
-              borderRadius: "24px",
-              cursor: "pointer",
-              outline: "none",
-              whiteSpace: "nowrap",
-              marginTop: "16px",
-            }}
-            className="hover:opacity-90 transition-all"
-          >
-            <Icon
-              icon={PROJECT_ICONS.plus}
-              width="24"
-              height="24"
-              style={{ color: "#FFFFFF" }}
-            />
-            <span
-              style={{
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: 400,
-                fontSize: "14px",
-                lineHeight: "20px",
-                textAlign: "center",
-                color: "#FFFFFF",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {PROJECT_STRINGS.newProjectButton}
-            </span>
-          </button>
+              {/* Search Input Frame */}
+              {projects.length > 0 && (
+                <div
+                  style={{
+                    boxSizing: "border-box",
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "8px 16px",
+                    gap: "10px",
+                    width: "360px",
+                    height: "40px",
+                    border: "1px solid #6B7280",
+                    borderRadius: "24px",
+                  }}
+                >
+                  <input
+                    type="text"
+                    placeholder="Search project"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      width: "100%",
+                      padding: 0,
+                      fontFamily: "'Poppins', sans-serif",
+                      fontStyle: "normal",
+                      fontWeight: 400,
+                      fontSize: "16px",
+                      lineHeight: "24px",
+                      color: "#000000",
+                    }}
+                    className="placeholder-[#6B7280]"
+                  />
+                  <Icon
+                    icon="ph:magnifying-glass-light"
+                    width="24"
+                    height="24"
+                    style={{ color: "#6B7280", flexShrink: 0 }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* New Project Button Frame */}
+            {projects.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsCreateOpen(true)}
+                style={{
+                  boxSizing: "border-box",
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  padding: "8px 16px",
+                  gap: "10px",
+                  width: "150px",
+                  height: "40px",
+                  background: "#6366F1",
+                  border: "1px solid #FFFFFF",
+                  borderRadius: "24px",
+                  cursor: "pointer",
+                  outline: "none",
+                  whiteSpace: "nowrap",
+                  marginTop: "16px",
+                }}
+                className="hover:opacity-90 transition-all"
+              >
+                <Icon
+                  icon={PROJECT_ICONS.plus}
+                  width="24"
+                  height="24"
+                  style={{ color: "#FFFFFF" }}
+                />
+                <span
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: 400,
+                    fontSize: "14px",
+                    lineHeight: "20px",
+                    textAlign: "center",
+                    color: "#FFFFFF",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {PROJECT_STRINGS.newProjectButton}
+                </span>
+              </button>
+            )}
+          </>
         )}
 
         {/* Empty State Section or Project List Grid */}
@@ -338,11 +437,11 @@ export default function ProjectScreen({
               alignItems: "flex-start",
               padding: "0px",
               gap: "16px",
-              width: "912px",
+              width: isMobile ? "100%" : "912px",
               flex: 1,
               overflowY: "auto",
               boxSizing: "border-box",
-              marginTop: "32px",
+              marginTop: isMobile ? "16px" : "32px",
             }}
             className="scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
@@ -455,6 +554,7 @@ function ProjectListItemWrapper({
   onShare,
   onDelete,
 }: ProjectListItemWrapperProps) {
+  const isMobile = useIsMobile();
   const [isHovered, setIsHovered] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -469,7 +569,7 @@ function ProjectListItemWrapper({
         alignItems: "flex-start",
         padding: "0px",
         gap: "8px",
-        width: "912px",
+        width: isMobile ? "100%" : "912px",
         height: "94px",
         borderBottom: "1px solid #E0E7FF",
         boxSizing: "border-box",
@@ -486,7 +586,7 @@ function ProjectListItemWrapper({
           alignItems: "flex-start",
           padding: "16px 8px",
           gap: "8px",
-          width: "912px",
+          width: isMobile ? "100%" : "912px",
           height: "86px",
           boxSizing: "border-box",
         }}
@@ -499,7 +599,7 @@ function ProjectListItemWrapper({
             alignItems: "flex-start",
             padding: "0px",
             gap: "8px",
-            width: "832px",
+            width: isMobile ? "calc(100% - 64px)" : "832px",
             height: "54px",
             flexGrow: 1,
             minWidth: 0,
@@ -533,7 +633,7 @@ function ProjectListItemWrapper({
               alignItems: "center",
               padding: "0px",
               gap: "16px",
-              width: "832px",
+              width: "100%",
               height: "20px",
               boxSizing: "border-box",
             }}

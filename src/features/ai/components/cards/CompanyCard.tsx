@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CompanyCardProps {
   id: number;
@@ -13,6 +14,8 @@ export default function CompanyCard({
   company,
   isSelected = false,
 }: CompanyCardProps) {
+  const isMobile = useIsMobile();
+
   // Exact dummy list content specified in requirements
   const bulletPoints = [
     "Why it’s relevant",
@@ -55,7 +58,7 @@ export default function CompanyCard({
         flexDirection: "column",
         alignItems: "flex-start",
         gap: "10px",
-        width: "341px",
+        width: isMobile ? "100%" : "341px",
         boxSizing: "border-box",
         fontFamily: "'Poppins', sans-serif",
       }}
@@ -96,8 +99,10 @@ export default function CompanyCard({
         src={getPreviewImage(company)}
         alt={`${company} preview`}
         style={{
-          width: "341px",
-          height: "214px",
+          width: "100%",
+          maxWidth: "341px",
+          height: "auto",
+          maxHeight: "214px",
           borderRadius: "12px",
           objectFit: "cover",
           border: "1px solid #E5E7EB",

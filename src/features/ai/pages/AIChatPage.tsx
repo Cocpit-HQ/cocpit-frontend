@@ -3,6 +3,7 @@
 import React from "react";
 import { Poppins } from "next/font/google";
 import { useAIChat, isJobRelatedQuery } from "../hooks/use-ai-chat";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { AIAttachment } from "../types/ai.types";
 import AIChatHeader from "../components/ui/AIChatHeader";
 import AIChatInput from "../components/ui/AIChatInput";
@@ -99,6 +100,7 @@ const shouldShowMoreInfoPanel = (message: string): boolean => {
 };
 
 export default function AIChatPage() {
+  const isMobile = useIsMobile();
   const {
     messages,
     uiState,
@@ -150,7 +152,7 @@ export default function AIChatPage() {
         ? messages.slice(0, index).reverse().find((m) => m.role === "user")
         : null;
 
-      if (userMsg) {
+      if (userMsg && !isMobile) {
         if (isJobRelatedQuery(userMsg.content)) {
           setIsLunarPanelOpen(true);
           setLunarPanelMode("job-list");
@@ -230,7 +232,7 @@ export default function AIChatPage() {
       "landing pages"
     ];
     const lowerContent = content.toLowerCase();
-    if (keywords.some(kw => lowerContent.includes(kw))) {
+    if (!isMobile && keywords.some(kw => lowerContent.includes(kw))) {
       setIsLunarPanelOpen(true);
       setActiveGraphTitle(getDynamicTitle(content));
       setLunarPanelMode(lowerContent.includes("chart") ? "pie" : "graph");
@@ -271,7 +273,7 @@ export default function AIChatPage() {
       "landing pages"
     ];
     const lowerPrompt = prompt.toLowerCase();
-    if (keywords.some(kw => lowerPrompt.includes(kw))) {
+    if (!isMobile && keywords.some(kw => lowerPrompt.includes(kw))) {
       setIsLunarPanelOpen(true);
       setActiveGraphTitle(getDynamicTitle(prompt));
       setLunarPanelMode(lowerPrompt.includes("chart") ? "pie" : "graph");
@@ -387,7 +389,9 @@ export default function AIChatPage() {
     >
       <div
         className={`transition-all duration-300 ${
-          isLunarPanelOpen
+          isMobile
+            ? `flex flex-col w-full h-full ${isLunarPanelOpen ? "p-0" : "p-4"} bg-white box-border`
+            : isLunarPanelOpen
             ? "flex flex-row justify-center items-start p-4 px-6 gap-4 absolute w-[1237px] bottom-6 left-[calc(50%-1237px/2+118px)] top-[80px] bg-white box-border"
             : "flex flex-col flex-grow min-h-0 h-full w-full max-w-[912px] mx-auto bg-white box-border py-6 px-0"
         }`}
@@ -395,7 +399,9 @@ export default function AIChatPage() {
         {/* Message Panel Frame (Frame 2608939) */}
         <div
           className={`transition-all duration-300 ${
-            isLunarPanelOpen
+            isMobile
+              ? isLunarPanelOpen ? "hidden" : "flex flex-col flex-grow w-full h-full min-h-0 box-border"
+              : isLunarPanelOpen
               ? lunarPanelMode === "job-list"
                 ? "flex flex-col items-start p-0 gap-2 w-[714px] h-full flex-none order-0 self-stretch flex-grow box-border min-h-0"
                 : lunarPanelMode === "history"
@@ -413,14 +419,21 @@ export default function AIChatPage() {
           ) : (
             <>
               {!isInEmptyState && (
-                <div className="flex justify-between items-center w-full max-w-[912px] h-10 p-0 box-border grow-0 self-stretch">
-                  {/* LEFT SIDE: Fullscreen button */}
-                  <button
-                    type="button"
-                    className="flex flex-row items-center p-2 gap-[10px] w-10 h-10 bg-white rounded-[24px] border-none cursor-pointer hover:bg-[#F9FAFB] transition-all duration-200"
-                  >
-                    <Icon icon="mingcute:fullscreen-line" width="24" height="24" className="text-black" />
-                  </button>
+                <div className={`flex justify-between items-center w-full max-w-[912px] h-10 box-border grow-0 self-stretch ${isMobile ? "px-4 mt-2" : "p-0"}`}>
+                  {/* LEFT SIDE: logo + name on mobile, fullscreen button on desktop */}
+                  {isMobile ? (
+                    <div className="flex items-center gap-2">
+                      <img src="/assets/AI 2.svg" alt="Cyphex" className="w-6 h-6" />
+                      <span className="font-medium text-base text-black" style={{ fontFamily: "Poppins" }}>Cyphex</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="flex flex-row items-center p-2 gap-[10px] w-10 h-10 bg-white rounded-[24px] border-none cursor-pointer hover:bg-[#F9FAFB] transition-all duration-200"
+                    >
+                      <Icon icon="mingcute:fullscreen-line" width="24" height="24" className="text-black" />
+                    </button>
+                  )}
 
                   {/* RIGHT SIDE ICONS: actions row */}
                   <div className="flex flex-row items-center gap-2">
@@ -497,7 +510,7 @@ export default function AIChatPage() {
               </div>
 
               {!isInEmptyState && showMoreInfo && (
-                <div className="w-full flex justify-center -mb-2">
+                <div className={`w-full flex justify-center -mb-2 ${isMobile ? "px-4" : ""}`}>
                   <MoreInfoPanel
                     onClose={() => setShowMoreInfo(false)}
                     onSend={(content) => handleSendMessage(content, undefined, true)}
