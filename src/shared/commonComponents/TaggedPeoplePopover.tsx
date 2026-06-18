@@ -14,7 +14,7 @@ export function TaggedPeoplePopover({ tags }: TaggedPeoplePopoverProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="p-1 hover:bg-secondary rounded-full transition-colors outline-none text-muted-foreground hover:text-foreground data-[state=open]:text-primary">
+        <button className="p-1 hover:bg-secondary rounded-full transition-colors outline-none text-[#000000] data-[state=open]:text-primary">
           <Icon icon="la:user-tag" className="w-[24px] h-[24px]" />
         </button>
       </PopoverTrigger>

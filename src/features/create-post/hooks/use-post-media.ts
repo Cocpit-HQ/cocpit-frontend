@@ -412,6 +412,17 @@ export const usePostMedia = (
     return false;
   }, []);
 
+  const hasImageEdits = useCallback((item: MediaItem) => {
+    return (
+      !!item.flipH ||
+      !!item.flipV ||
+      (item.rotation || 0) !== 0 ||
+      Math.abs((item.zoom || 1) - 1) > 0.001 ||
+      Math.abs(item.crop?.x || 0) > 0.001 ||
+      Math.abs(item.crop?.y || 0) > 0.001
+    );
+  }, []);
+
   const generatePreviewBlobs = async (postType: string) => {
     previewMediaUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
     const newUrls: string[] = [];
@@ -426,7 +437,9 @@ export const usePostMedia = (
         try {
           const shouldPad = shouldPadImageToAspect(img, aspectRatio);
 
-          if (shouldPad) {
+          if (!hasImageEdits(img)) {
+            newUrls.push(img.url);
+          } else if (shouldPad) {
             const blob = await getPaddedImg(
               img.url,
               aspectRatio,
@@ -483,6 +496,10 @@ export const usePostMedia = (
       const processedFiles = await Promise.all(uploadedImages.map(async (item) => {
         if (item.isExisting) return undefined;
         if (item.file) {
+          if (!hasImageEdits(item)) {
+            return item.file;
+          }
+
           if (shouldPadImageToAspect(item, currentAspectRatio)) {
             try {
               const blob = await getPaddedImg(
