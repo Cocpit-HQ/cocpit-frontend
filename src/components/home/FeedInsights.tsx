@@ -21,7 +21,7 @@ export function ApplicantInsightCard() {
   return (
     <div className="flex flex-col w-full max-w-[560px]">
       <div className="w-full border-t border-[#EEF2FF]" />
-      <section className="feed-card-shell flex items-center justify-between gap-4 w-full py-4">
+      <section className="feed-card-shell flex items-center justify-between gap-4 w-full py-4 px-4 md:px-0">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex shrink-0 items-center justify-center text-[24px]">
             <Icon icon="emojione:fire" />
@@ -52,7 +52,7 @@ export function JobMatchesCard() {
   return (
     <div className="flex flex-col w-full max-w-[560px]">
       <div className="w-full border-t border-[#EEF2FF]" />
-      <section className="feed-card-shell flex flex-col gap-4 w-full py-4">
+      <section className="feed-card-shell flex flex-col gap-4 w-full py-4 px-4 md:px-0">
         <div className="flex flex-col">
           <h2 className="text-[16px] font-medium leading-[24px] text-foreground font-['Poppins']">Best Matches for You Today</h2>
           <p className="mt-1 text-[12px] leading-[18px] text-muted-foreground font-normal font-['Poppins']">Based on your profile & activity</p>
@@ -105,7 +105,7 @@ export function CompactJobRecommendation() {
   return (
     <div className="flex flex-col w-full max-w-[560px]">
       <div className="w-full border-t border-[#EEF2FF]" />
-      <section className="feed-card-shell flex items-center justify-between gap-3 w-full py-4">
+      <section className="feed-card-shell flex items-center justify-between gap-3 w-full py-4 px-4 md:px-0">
       <div className="flex min-w-0 items-center gap-3">
         <div className="flex h-12 w-14 shrink-0 items-center justify-center rounded-3xl bg-primary/10 text-primary">
           <BriefcaseBusiness className="h-5 w-5" aria-hidden="true" />

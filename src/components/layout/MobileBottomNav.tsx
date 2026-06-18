@@ -3,33 +3,29 @@
 import React from "react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { Home, Briefcase, Plus, Calendar } from "lucide-react"
+import { Home, Briefcase, Sparkles, Calendar } from "lucide-react"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useAuth } from "@/hooks/use-auth"
 import { ProfileSwitcher } from "@/components/layout/ProfileSwitcher"
 import { useCompanyPermissions } from "@/components/organizations/hooks/use-company"
 import { useNavigationMemoryLink } from "@/hooks/use-navigation-memory"
 
-interface MobileBottomNavProps {
-  onAdd?: () => void
-}
-
 const NAV_ROUTES: Record<string, string> = {
   home: "/feed",
   jobs: "/jobs",
+  ai: "/ai-assistant",
   events: "/events",
   profile: "/profile",
 }
 
-export function MobileBottomNav({ onAdd }: MobileBottomNavProps) {
+export function MobileBottomNav() {
   const pathname = usePathname()
   const { handleNavClick } = useNavigationMemoryLink()
   const { activeProfile, isCompany } = useActiveProfile()
   const { user } = useAuth()
-  const { canPostJobs, canCreateContent, checkPermission } = useCompanyPermissions(activeProfile)
+  const { canPostJobs, checkPermission } = useCompanyPermissions(activeProfile)
 
   const showJobs = !isCompany || canPostJobs || checkPermission('VIEW_APPLICANTS')
-  const showCreate = !isCompany || canPostJobs || canCreateContent
 
   const isActive = (route: string) => {
     if (!pathname) return false
@@ -93,18 +89,22 @@ export function MobileBottomNav({ onAdd }: MobileBottomNavProps) {
           </Link>
         )}
 
-        {showCreate && (
-          <button
-            type="button"
-            onClick={onAdd}
-            className="flex items-center justify-center -mt-6"
-            aria-label="Create"
+        <Link
+          href="/ai-assistant"
+          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/ai-assistant')}
+          className="flex flex-col items-center gap-1 flex-1"
+        >
+          <Sparkles
+            className={`w-5 h-5 ${isActive("/ai-assistant") ? "text-primary" : "text-muted-foreground"
+              }`}
+          />
+          <span
+            className={`text-xs ${isActive("/ai-assistant") ? "text-primary" : "text-muted-foreground"
+              }`}
           >
-            <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/40">
-              <Plus className="w-6 h-6 text-primary-foreground" />
-            </div>
-          </button>
-        )}
+            AI
+          </span>
+        </Link>
 
         <Link
           href="/events"

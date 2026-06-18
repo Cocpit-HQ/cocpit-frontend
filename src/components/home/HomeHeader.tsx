@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MessageCircle, Clock, Trash2, Bell } from 'lucide-react';
+import { Search, MessageCircle, Clock, Trash2, Bell, MessageSquareText } from 'lucide-react';
+import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { NotificationPopover } from '@/components/notifications/NotificationPopover';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -827,7 +828,7 @@ export const HomeHeader = () => {
                                 href="/messaging"
                                 className={`p-2 rounded-full transition-colors ${pathname === '/messaging' || pathname.startsWith('/messaging') ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-primary dark:text-[#818CF8]' : 'text-muted-foreground hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50'}`}
                             >
-                                <MessageCircle className="w-5 h-5" />
+                                <Icon icon="proicons:chat" className="w-6 h-6 text-black dark:text-white" />
                             </Link>
                         </div>
                     )}

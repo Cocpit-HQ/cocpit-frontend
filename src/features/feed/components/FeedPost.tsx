@@ -198,7 +198,7 @@ export const FeedPost = (props: FeedPostProps) => {
       className={`feed-card-shell flex w-full max-w-[560px] flex-col gap-[8px] overflow-hidden ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
     >
       {/* Header & Content (Frame 2608598) */}
-      <div className="flex flex-col gap-[8px]">
+      <div className="flex flex-col gap-[8px] px-4 md:px-0">
         <PostHeader
           {...props}
           isMe={props.isOwnPost || false}
@@ -269,7 +269,7 @@ export const FeedPost = (props: FeedPostProps) => {
         </div>
       )}
 
-      <div className="w-full">
+      <div className="w-full px-4 md:px-0">
         <PostPoll
           pollData={pollData}
           isVoting={isVoting}
@@ -279,13 +279,21 @@ export const FeedPost = (props: FeedPostProps) => {
       </div>
 
       {/* Social Proof & Actions */}
-      <div className="flex flex-col gap-[8px]">
+      <div className="flex flex-col gap-[8px] px-4 md:px-0">
         {likeCount > 0 && !(likeCount === 1 && isLiked) && (
           <div className="flex items-center">
             <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
-              Liked by <span className="font-semibold hover:underline cursor-pointer">@{sampleLikerUsername || 'someone'}</span>
+              Liked by <span 
+                className="font-semibold cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (sampleLikerUsername) {
+                    router.push(`/profile/${sampleLikerUsername}`);
+                  }
+                }}
+              >@{sampleLikerUsername || 'someone'}</span>
               {likeCount > 1 && (
-                <> and <span className="font-semibold hover:underline cursor-pointer">{likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}</span></>
+                <> and <span className="font-semibold cursor-pointer">{likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}</span></>
               )}
             </p>
           </div>

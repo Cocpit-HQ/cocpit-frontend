@@ -59,7 +59,7 @@ export default function SinglePostPage({ params }: PageProps) {
                 <div className="flex items-center gap-4 mb-8">
                     <button
                         onClick={() => router.back()}
-                        className="p-2 rounded-full hover:bg-accent transition-colors text-foreground"
+                        className="p-2 -ml-2 rounded-full hover:bg-accent transition-colors text-foreground"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
@@ -85,7 +85,7 @@ export default function SinglePostPage({ params }: PageProps) {
                                 </button>
                             </div>
                         ) : post ? (
-                            <div className="w-full bg-card border border-[#EEF2FF] shadow-[0px_0px_4px_rgba(99,102,241,0.05)] rounded-[24px] overflow-hidden">
+                            <div className="w-full bg-card rounded-[24px] overflow-hidden">
                                 <FeedPost
                                     {...post}
                                     isOwnPost={isOwnPost}
