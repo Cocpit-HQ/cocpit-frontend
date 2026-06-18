@@ -17,11 +17,11 @@ export default function AIChatHeader({
   onNewChat,
 }: AIChatHeaderProps) {
   return (
-    <div className="w-full h-[72px] flex items-center justify-between bg-white shrink-0 px-6 py-4 border-b border-[#E0E7FF]">
+    <div className="w-full h-[72px] flex items-center justify-between bg-[var(--background)] shrink-0 px-6 py-4 border-b border-[var(--border)]">
       {/* Left: Expand icon */}
       <button
         type="button"
-        className="flex items-center justify-center w-10 h-10 rounded-lg text-[#000000] hover:bg-[#EEF2FF] hover:text-[#6366F1] transition-all"
+        className="flex items-center justify-center w-10 h-10 rounded-lg text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] transition-all"
         title="Expand"
       >
         <Icon icon="ri:fullscreen-line" width={24} height={24} />
@@ -41,18 +41,18 @@ export default function AIChatHeader({
             <button
               type="button"
               onClick={onClear}
-              className="flex items-center justify-center w-[96px] h-10 px-2 rounded-lg text-[#000000] hover:bg-[#EEF2FF] hover:text-[#6366F1] gap-2 transition-all"
+              className="flex items-center justify-center w-[96px] h-10 px-2 rounded-lg text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] gap-2 transition-all"
               title="History"
             >
-              <Icon icon="ri:history-line" width={24} height={24} className="text-[#6B7280] hover:text-inherit" />
+              <Icon icon="ri:history-line" width={24} height={24} className="text-[var(--muted-foreground)] hover:text-inherit" />
               <span className="text-sm font-normal" style={{ fontFamily: "Poppins" }}>History</span>
             </button>
             <button
               type="button"
-              className="flex items-center justify-center w-[97px] h-10 px-2 rounded-lg text-[#000000] hover:bg-[#EEF2FF] hover:text-[#6366F1] gap-2 transition-all"
+              className="flex items-center justify-center w-[97px] h-10 px-2 rounded-lg text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] gap-2 transition-all"
               title="Project"
             >
-              <Icon icon="ri:layout-grid-line" width={24} height={24} className="text-[#6B7280] hover:text-inherit" />
+              <Icon icon="ri:layout-grid-line" width={24} height={24} className="text-[var(--muted-foreground)] hover:text-inherit" />
               <span className="text-sm font-normal" style={{ fontFamily: "Poppins" }}>Project</span>
             </button>
           </>
@@ -61,30 +61,30 @@ export default function AIChatHeader({
           <>
             <button
               type="button"
-              className="flex items-center justify-center w-10 h-10 rounded-lg text-[#000000] hover:bg-[#EEF2FF] hover:text-[#6366F1] transition-all"
+              className="flex items-center justify-center w-10 h-10 rounded-lg text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] transition-all"
               title="Share"
             >
-              <Icon icon="ri:share-box-line" width={24} height={24} className="text-[#6B7280] hover:text-inherit" />
+              <Icon icon="ri:share-box-line" width={24} height={24} className="text-[var(--muted-foreground)] hover:text-inherit" />
             </button>
             <button
               type="button"
               onClick={onClear}
-              className="flex items-center justify-center w-10 h-10 rounded-lg text-[#000000] hover:bg-[#EEF2FF] hover:text-[#6366F1] transition-all"
+              className="flex items-center justify-center w-10 h-10 rounded-lg text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] transition-all"
               title="History"
             >
-              <Icon icon="ri:history-line" width={24} height={24} className="text-[#6B7280] hover:text-inherit" />
+              <Icon icon="ri:history-line" width={24} height={24} className="text-[var(--muted-foreground)] hover:text-inherit" />
             </button>
             <button
               type="button"
-              className="flex items-center justify-center w-10 h-10 rounded-lg text-[#000000] hover:bg-[#EEF2FF] hover:text-[#6366F1] transition-all"
+              className="flex items-center justify-center w-10 h-10 rounded-lg text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] transition-all"
               title="Project"
             >
-              <Icon icon="ri:layout-grid-line" width={24} height={24} className="text-[#6B7280] hover:text-inherit" />
+              <Icon icon="ri:layout-grid-line" width={24} height={24} className="text-[var(--muted-foreground)] hover:text-inherit" />
             </button>
             <button
               type="button"
               onClick={onNewChat || onClear}
-              className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#EEF2FF] text-[#6366F1] hover:bg-[#E0E7FF] transition-all"
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-[var(--primary-tint)] text-[var(--primary)] hover:bg-[var(--primary-tint)]/80 transition-all"
               title="New Chat"
             >
               <Icon icon="ri:compass-discover-line" width={24} height={24} />

@@ -63,7 +63,7 @@ export default function CompanyCard({
         fontFamily: "'Poppins', sans-serif",
       }}
       className={`transition-all duration-200 rounded-xl ${
-        isSelected ? "bg-indigo-50/30 ring-1 ring-indigo-100 p-2 -m-2" : ""
+        isSelected ? "bg-[var(--primary-tint)]/30 ring-1 ring-[var(--primary-tint)] p-2 -m-2" : ""
       }`}
     >
       {/* 1. Company Title Row */}
@@ -73,7 +73,7 @@ export default function CompanyCard({
           fontWeight: 400,
           fontSize: "16px",
           lineHeight: "24px",
-          color: "#000000",
+          color: "var(--foreground)",
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
@@ -85,10 +85,10 @@ export default function CompanyCard({
           onClick={handleCompanyClick}
           style={{
             textDecoration: "underline",
-            color: "#000000",
+            color: "var(--foreground)",
             cursor: "pointer",
           }}
-          className="hover:text-indigo-600 transition-colors"
+          className="hover:text-[var(--primary)] transition-colors"
         >
           {company}
         </a>
@@ -105,7 +105,7 @@ export default function CompanyCard({
           maxHeight: "214px",
           borderRadius: "12px",
           objectFit: "cover",
-          border: "1px solid #E5E7EB",
+          border: "1px solid var(--border)",
           flexShrink: 0,
         }}
       />
@@ -125,7 +125,7 @@ export default function CompanyCard({
             fontWeight: 400,
             fontSize: "16px",
             lineHeight: "24px",
-            color: "#000000",
+            color: "var(--foreground)",
           }}
         >
           {bulletPoints.map((point, index) => (

@@ -43,7 +43,7 @@ export default function ActiveProjectChatHeader({
           justifyContent: "space-between",
           alignItems: "center",
           width: "100%",
-          background: "#FFFFFF",
+          background: "var(--background)",
           borderRadius: "24px",
           padding: "12px 16px",
         }}
@@ -69,7 +69,7 @@ export default function ActiveProjectChatHeader({
                 alignItems: "center",
                 width: "40px",
                 height: "40px",
-                border: "1px solid #DADADA",
+                border: "1px solid var(--border)",
                 borderRadius: "100px",
                 background: "transparent",
                 cursor: "pointer",
@@ -77,18 +77,18 @@ export default function ActiveProjectChatHeader({
                 outline: "none",
                 flexShrink: 0,
               }}
-              className="hover:bg-[#F9FAFB] transition-all"
+              className="hover:bg-[var(--primary-tint)] transition-all"
               title="Back"
             >
               <Icon
                 icon="lucide:chevron-left"
                 width={20}
                 height={20}
-                style={{ color: "#000000" }}
+                style={{ color: "var(--foreground)" }}
               />
             </button>
           )}
-
+ 
           <div
             style={{
               display: "flex",
@@ -105,7 +105,7 @@ export default function ActiveProjectChatHeader({
                 fontWeight: 500,
                 fontSize: "16px",
                 lineHeight: "24px",
-                color: "#000000",
+                color: "var(--foreground)",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -114,7 +114,7 @@ export default function ActiveProjectChatHeader({
             >
               {chatTitle}
             </span>
-
+ 
             {/* Subtitle / Project Name */}
             <span
               style={{
@@ -122,7 +122,7 @@ export default function ActiveProjectChatHeader({
                 fontWeight: 400,
                 fontSize: "12px",
                 lineHeight: "16px",
-                color: "#6B7280",
+                color: "var(--muted-foreground)",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -132,7 +132,7 @@ export default function ActiveProjectChatHeader({
             </span>
           </div>
         </div>
-
+ 
         {/* Right Content */}
         <div
           style={{
@@ -151,9 +151,9 @@ export default function ActiveProjectChatHeader({
             triggerElement={
               <button
                 type="button"
-                className="flex items-center justify-center w-10 h-10 rounded-[24px] bg-white border-none cursor-pointer hover:bg-[#F9FAFB] transition-all duration-200 outline-none"
+                className="flex items-center justify-center w-10 h-10 rounded-[24px] bg-[var(--background)] border border-[var(--border)] cursor-pointer hover:bg-[var(--primary-tint)] transition-all duration-200 outline-none"
                 style={{
-                  boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                  boxShadow: "var(--card-shadow-inner)",
                 }}
                 title="Chat Actions"
               >
@@ -161,7 +161,7 @@ export default function ActiveProjectChatHeader({
                   icon="ph:dots-three-outline-vertical-light"
                   width={24}
                   height={24}
-                  className="text-black"
+                  className="text-[var(--foreground)] hover:text-[var(--primary)]"
                 />
               </button>
             }

@@ -14,30 +14,30 @@ export default function AIStreamingMessage({ content }: AIStreamingMessageProps)
         <div
           style={{
             width: "100%",
-            background: "#FFFFFF",
+            background: "var(--background)",
             borderRadius: "12px 12px 12px 0px",
             padding: "0px",
             fontFamily: "Poppins",
             fontWeight: 400,
             fontSize: "16px",
             lineHeight: "24px",
-            color: "#000000",
+            color: "var(--foreground)",
             boxSizing: "border-box",
           }}
         >
           {/* Streaming content with cursor animation */}
-          <div className="text-base" style={{ fontFamily: "Poppins", color: content ? "#000000" : "#6B7280" }}>
+          <div className="text-base" style={{ fontFamily: "Poppins", color: content ? "var(--foreground)" : "var(--muted-foreground)" }}>
             {content || "Thinking..."}
             {content && (
-              <span className="inline-block w-0.5 h-4 bg-[#6366F1] animate-pulse ml-0.5 align-text-bottom" />
+              <span className="inline-block w-0.5 h-4 bg-[var(--primary)] animate-pulse ml-0.5 align-text-bottom" />
             )}
           </div>
         </div>
 
         {/* Streaming indicator */}
         <div className="flex items-center gap-1.5 mt-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#6366F1]/50 animate-pulse" />
-          <span className="text-[10px] text-[#6B7280]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)]/50 animate-pulse" />
+          <span className="text-[10px] text-[var(--muted-foreground)]">
             AI is generating response...
           </span>
         </div>

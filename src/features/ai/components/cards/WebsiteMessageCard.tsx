@@ -21,18 +21,18 @@ export default function WebsiteMessageCard({ company, onClick }: WebsiteMessageC
       style={{
         width: "133px",
         height: "56px",
-        border: "1px solid #DADADA",
+        border: "1px solid var(--border)",
         borderRadius: "12px",
         padding: "6px 8px",
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
         gap: "8px",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "var(--background)",
         cursor: "pointer",
         boxSizing: "border-box",
       }}
-      className="hover:bg-gray-50 transition-all duration-200"
+      className="hover:bg-[var(--primary-tint)]/10 transition-all duration-200"
     >
       {/* Left Image Placeholder */}
       <img
@@ -52,7 +52,7 @@ export default function WebsiteMessageCard({ company, onClick }: WebsiteMessageC
           style={{
             fontSize: "14px",
             fontWeight: 600,
-            color: "#000000",
+            color: "var(--foreground)",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -65,7 +65,7 @@ export default function WebsiteMessageCard({ company, onClick }: WebsiteMessageC
           style={{
             fontSize: "16px",
             fontWeight: 400,
-            color: "#6B7280",
+            color: "var(--muted-foreground)",
             lineHeight: "1.2",
           }}
         >

@@ -42,15 +42,15 @@ export default function ProjectInstructions({
   // Border style logic:
   // Show border only when focused, else none/transparent
   const borderStyle = isFocused
-    ? "1px solid #818CF8"
+    ? "1px solid var(--primary)"
     : "1px solid transparent";
-
+ 
   const boxShadowStyle = isFocused
-    ? "0px 0px 8px rgba(129, 140, 248, 0.15)"
+    ? "var(--card-shadow-inner)"
     : "none";
-
+ 
   const hasContent = draftText.trim().length > 0;
-
+ 
   return (
     <div
       style={{
@@ -77,13 +77,13 @@ export default function ProjectInstructions({
           fontWeight: 400,
           fontSize: "14px",
           lineHeight: "20px",
-          color: "#000000",
+          color: "var(--foreground)",
           alignSelf: "flex-start",
         }}
       >
         Set project instructions
       </h3>
-
+ 
       {/* Instruction Input Area Container */}
       <div
         onClick={() => textareaRef.current?.focus()}
@@ -96,7 +96,7 @@ export default function ProjectInstructions({
           width: "100%",
           flex: 1,
           alignSelf: "stretch",
-          background: "#FFFFFF",
+          background: "var(--background)",
           border: borderStyle,
           boxShadow: boxShadowStyle,
           borderRadius: "12px",
@@ -124,14 +124,14 @@ export default function ProjectInstructions({
             fontWeight: 400,
             fontSize: "12px",
             lineHeight: "16px",
-            color: hasContent ? "#000000" : "#6B7280",
+            color: hasContent ? "var(--foreground)" : "var(--muted-foreground)",
             padding: 0,
             margin: 0,
             boxSizing: "border-box",
           }}
         />
       </div>
-
+ 
       {/* Bottom Action Buttons */}
       <div
         style={{
@@ -162,8 +162,8 @@ export default function ProjectInstructions({
             gap: "10px",
             width: "82px",
             height: "40px",
-            background: "#FFFFFF",
-            border: "1px solid #818CF8",
+            background: "var(--background)",
+            border: "1px solid var(--primary)",
             borderRadius: "24px",
             cursor: "pointer",
             outline: "none",
@@ -179,13 +179,13 @@ export default function ProjectInstructions({
               fontSize: "14px",
               lineHeight: "20px",
               textAlign: "center",
-              color: "#818CF8",
+              color: "var(--primary)",
             }}
           >
             Cancel
           </span>
         </button>
-
+ 
         {/* Save Button */}
         <button
           type="button"
@@ -201,8 +201,8 @@ export default function ProjectInstructions({
             gap: "10px",
             width: "67px",
             height: "40px",
-            background: hasChanges ? "#6366F1" : "#C7D2FE",
-            border: "1px solid #FFFFFF",
+            background: hasChanges ? "var(--primary)" : "var(--primary-tint)",
+            border: "1px solid var(--border)",
             borderRadius: "24px",
             cursor: hasChanges ? "pointer" : "default",
             outline: "none",
@@ -218,7 +218,7 @@ export default function ProjectInstructions({
               fontSize: "14px",
               lineHeight: "20px",
               textAlign: "center",
-              color: "#FFFFFF",
+              color: hasChanges ? "var(--primary-foreground)" : "var(--muted-foreground)",
             }}
           >
             Save

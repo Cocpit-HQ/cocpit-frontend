@@ -36,7 +36,7 @@ export default function ProjectHeader({
             alignItems: "center",
             width: "48px",
             height: "48px",
-            border: "1px solid #DADADA",
+            border: "1px solid var(--border)",
             borderRadius: "100px",
             backdropFilter: "blur(12px)",
             WebkitBackdropFilter: "blur(12px)",
@@ -46,17 +46,17 @@ export default function ProjectHeader({
             outline: "none",
             flexShrink: 0,
           }}
-          className="hover:bg-[#F9FAFB] transition-all"
+          className="hover:bg-[var(--primary-tint)] transition-all"
           title="Back"
         >
           <Icon
             icon="lucide:chevron-left"
             width={24}
             height={24}
-            style={{ color: "#000000" }}
+            style={{ color: "var(--foreground)" }}
           />
         </button>
-
+ 
         {/* Project Title Section */}
         <div
           style={{
@@ -72,7 +72,7 @@ export default function ProjectHeader({
               fontWeight: 500,
               fontSize: "18px",
               lineHeight: "26px",
-              color: "#000000",
+              color: "var(--foreground)",
             }}
           >
             Project
@@ -83,7 +83,7 @@ export default function ProjectHeader({
               fontWeight: 400,
               fontSize: "12px",
               lineHeight: "16px",
-              color: "#6B7280",
+              color: "var(--muted-foreground)",
             }}
           >
             All your project details in one place
@@ -92,7 +92,7 @@ export default function ProjectHeader({
       </div>
     );
   }
-
+ 
   if (variant === "details") {
     return (
       <div
@@ -115,7 +115,7 @@ export default function ProjectHeader({
             alignItems: "center",
             width: "48px",
             height: "48px",
-            border: "1px solid #DADADA",
+            border: "1px solid var(--border)",
             borderRadius: "100px",
             backdropFilter: "blur(12px)",
             WebkitBackdropFilter: "blur(12px)",
@@ -124,17 +124,17 @@ export default function ProjectHeader({
             padding: 0,
             outline: "none",
           }}
-          className="hover:bg-[#F9FAFB] transition-all"
+          className="hover:bg-[var(--primary-tint)] transition-all"
           title="Back to projects"
         >
           <Icon
             icon="lucide:chevron-left"
             width="24"
             height="24"
-            style={{ color: "#000000" }}
+            style={{ color: "var(--foreground)" }}
           />
         </button>
-
+ 
         {/* Project Title Section */}
         <div
           style={{
@@ -150,7 +150,7 @@ export default function ProjectHeader({
               fontWeight: 500,
               fontSize: "18px",
               lineHeight: "26px",
-              color: "#000000",
+              color: "var(--foreground)",
             }}
           >
             {title}
@@ -161,7 +161,7 @@ export default function ProjectHeader({
               fontWeight: 400,
               fontSize: "14px",
               lineHeight: "20px",
-              color: "#6B7280",
+              color: "var(--muted-foreground)",
             }}
           >
             Project
@@ -170,7 +170,7 @@ export default function ProjectHeader({
       </div>
     );
   }
-
+ 
   return (
     <div
       style={{
@@ -183,7 +183,7 @@ export default function ProjectHeader({
         width: "100%",
         maxWidth: "912px",
         height: "40px",
-        background: "#FFFFFF",
+        background: "var(--background)",
         borderRadius: "24px",
         boxSizing: "border-box",
       }}
@@ -207,7 +207,7 @@ export default function ProjectHeader({
             gap: "10px",
             width: "40px",
             height: "40px",
-            background: "#FFFFFF",
+            background: "var(--background)",
             borderRadius: "24px",
             boxSizing: "border-box",
           }}
@@ -216,10 +216,10 @@ export default function ProjectHeader({
             icon={icon}
             width="24"
             height="24"
-            style={{ color: "#000000" }}
+            style={{ color: "var(--foreground)" }}
           />
         </div>
-
+ 
         {/* Project Label */}
         <span
           style={{
@@ -227,13 +227,13 @@ export default function ProjectHeader({
             fontWeight: 400,
             fontSize: "14px",
             lineHeight: "20px",
-            color: "#000000",
+            color: "var(--foreground)",
           }}
         >
           {title}
         </span>
       </div>
-
+ 
       {/* Right Header Action: Cross Button Container */}
       <button
         type="button"
@@ -252,13 +252,13 @@ export default function ProjectHeader({
           outline: "none",
         }}
         title="Close Project"
-        className="hover:bg-[#F9FAFB] transition-all"
+        className="hover:bg-[var(--primary-tint)] transition-all"
       >
         <Icon
           icon={PROJECT_ICONS.close}
           width="24"
           height="24"
-          style={{ color: "#000000" }}
+          style={{ color: "var(--foreground)" }}
         />
       </button>
     </div>

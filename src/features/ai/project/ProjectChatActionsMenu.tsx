@@ -55,17 +55,17 @@ export default function ProjectChatActionsMenu({
       <button
         type="button"
         onClick={handleTriggerClick}
-        className="flex items-center justify-center w-[24px] h-[24px] p-0 bg-transparent border-none cursor-pointer outline-none text-[#000000] hover:text-[#6366F1] transition-all duration-200"
+        className="flex items-center justify-center w-[24px] h-[24px] p-0 bg-transparent border-none cursor-pointer outline-none text-[var(--foreground)] hover:text-[var(--primary)] transition-all duration-200"
         title="Actions"
       >
         <Icon icon="ph:dots-three-outline-vertical-light" width={24} height={24} />
       </button>
     );
-
+ 
     return (
       <>
         {trigger}
-
+ 
         {/* Bottom Sheet Modal */}
         {isSheetOpen && (
           <div
@@ -93,7 +93,7 @@ export default function ProjectChatActionsMenu({
               className="animate-in slide-in-from-bottom duration-300 ease-out"
               style={{
                 width: "100%",
-                backgroundColor: "#FFFFFF",
+                backgroundColor: "var(--background)",
                 borderRadius: "24px 24px 0px 0px",
                 padding: "16px 16px 32px 16px",
                 boxSizing: "border-box",
@@ -107,12 +107,12 @@ export default function ProjectChatActionsMenu({
                 style={{
                   width: "36px",
                   height: "4px",
-                  backgroundColor: "#E5E7EB",
+                  backgroundColor: "var(--border)",
                   borderRadius: "2px",
                   margin: "0 auto 12px auto",
                 }}
               />
-
+ 
               {/* Rename */}
               <button
                 type="button"
@@ -122,7 +122,7 @@ export default function ProjectChatActionsMenu({
                   onOpenChange?.(false);
                   onRename();
                 }}
-                className="flex items-center gap-[12px] w-full px-4 py-3 bg-transparent border-none cursor-pointer text-zinc-700 hover:bg-[#EEF2FF] hover:text-[#6366F1] rounded-xl outline-none transition-all duration-200"
+                className="flex items-center gap-[12px] w-full px-4 py-3 bg-transparent border-none cursor-pointer text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] rounded-xl outline-none transition-all duration-200"
                 style={{ textAlign: "left" }}
               >
                 <Icon
@@ -134,7 +134,7 @@ export default function ProjectChatActionsMenu({
                   Rename
                 </span>
               </button>
-
+ 
               {/* Pin / Unpin */}
               <button
                 type="button"
@@ -144,7 +144,7 @@ export default function ProjectChatActionsMenu({
                   onOpenChange?.(false);
                   onTogglePin();
                 }}
-                className="flex items-center gap-[12px] w-full px-4 py-3 bg-transparent border-none cursor-pointer text-zinc-700 hover:bg-[#EEF2FF] hover:text-[#6366F1] rounded-xl outline-none transition-all duration-200"
+                className="flex items-center gap-[12px] w-full px-4 py-3 bg-transparent border-none cursor-pointer text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] rounded-xl outline-none transition-all duration-200"
                 style={{ textAlign: "left" }}
               >
                 <Icon
@@ -155,7 +155,7 @@ export default function ProjectChatActionsMenu({
                   {isPinned ? "Unpin" : "Pin"}
                 </span>
               </button>
-
+ 
               {/* Remove from project */}
               <button
                 type="button"
@@ -165,7 +165,7 @@ export default function ProjectChatActionsMenu({
                   onOpenChange?.(false);
                   onRemoveFromProject();
                 }}
-                className="flex items-center gap-[12px] w-full px-4 py-3 bg-transparent border-none cursor-pointer text-zinc-700 hover:bg-[#EEF2FF] hover:text-[#6366F1] rounded-xl outline-none transition-all duration-200"
+                className="flex items-center gap-[12px] w-full px-4 py-3 bg-transparent border-none cursor-pointer text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] rounded-xl outline-none transition-all duration-200"
                 style={{ textAlign: "left" }}
               >
                 <Icon icon="codicon:github-project" className="w-[20px] h-[20px]" />
@@ -173,7 +173,7 @@ export default function ProjectChatActionsMenu({
                   Remove from project
                 </span>
               </button>
-
+ 
               {/* Share */}
               <button
                 type="button"
@@ -183,7 +183,7 @@ export default function ProjectChatActionsMenu({
                   onOpenChange?.(false);
                   onShare();
                 }}
-                className="flex items-center gap-[12px] w-full px-4 py-3 bg-transparent border-none cursor-pointer text-zinc-700 hover:bg-[#EEF2FF] hover:text-[#6366F1] rounded-xl outline-none transition-all duration-200"
+                className="flex items-center gap-[12px] w-full px-4 py-3 bg-transparent border-none cursor-pointer text-[var(--foreground)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] rounded-xl outline-none transition-all duration-200"
                 style={{ textAlign: "left" }}
               >
                 <Icon icon="fluent:share-28-regular" className="w-[20px] h-[20px]" />
@@ -191,7 +191,7 @@ export default function ProjectChatActionsMenu({
                   Share
                 </span>
               </button>
-
+ 
               {/* Delete */}
               <button
                 type="button"
@@ -201,7 +201,7 @@ export default function ProjectChatActionsMenu({
                   onOpenChange?.(false);
                   onDelete();
                 }}
-                className="flex items-center gap-[12px] w-full px-4 py-3 bg-transparent border-none cursor-pointer text-[#FF6B6B] hover:bg-red-50 rounded-xl outline-none transition-all duration-200"
+                className="flex items-center gap-[12px] w-full px-4 py-3 bg-transparent border-none cursor-pointer text-[var(--destructive)] hover:bg-[var(--destructive)]/10 rounded-xl outline-none transition-all duration-200"
                 style={{ textAlign: "left" }}
               >
                 <Icon icon="hugeicons:delete-02" className="w-[20px] h-[20px]" />
@@ -215,23 +215,23 @@ export default function ProjectChatActionsMenu({
       </>
     );
   }
-
+ 
   return (
     <DropdownMenu onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>
         {triggerElement || (
           <button
             type="button"
-            className="flex items-center justify-center w-[24px] h-[24px] p-0 bg-transparent border-none cursor-pointer outline-none text-[#000000] hover:text-[#6366F1] transition-all duration-200"
+            className="flex items-center justify-center w-[24px] h-[24px] p-0 bg-transparent border-none cursor-pointer outline-none text-[var(--foreground)] hover:text-[var(--primary)] transition-all duration-200"
             title="Actions"
           >
             <Icon icon="ph:dots-three-outline-vertical-light" width={24} height={24} />
           </button>
         )}
       </DropdownMenuTrigger>
-
+ 
       <DropdownMenuContent
-        className="w-56 p-2 bg-white rounded-tl-3xl rounded-tr-none rounded-bl-3xl rounded-br-3xl outline outline-1 outline-offset-[-1px] outline-indigo-200 flex flex-col justify-start items-center overflow-hidden z-[200]"
+        className="w-56 p-2 bg-[var(--background)] rounded-tl-3xl rounded-tr-none rounded-bl-3xl rounded-br-3xl border border-[var(--border)] flex flex-col justify-start items-center overflow-hidden z-[200]"
         align="end"
       >
         <div className="w-full flex flex-col gap-1">
@@ -241,82 +241,82 @@ export default function ProjectChatActionsMenu({
               e.stopPropagation();
               onRename();
             }}
-            className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-between items-center cursor-pointer outline-none focus:bg-[#EEF2FF] focus:text-[#6366F1] transition-colors"
+            className="self-stretch px-4 py-2 rounded-3xl inline-flex justify-between items-center cursor-pointer outline-none focus:bg-[var(--primary-tint)] focus:text-[var(--primary)] transition-colors"
           >
-            <span className="text-center justify-start text-black text-sm font-normal font-['Poppins'] leading-5">
+            <span className="text-center justify-start text-[var(--foreground)] text-sm font-normal font-['Poppins'] leading-5">
               Rename
             </span>
             <Icon
               icon="hugeicons:edit-03"
-              className="w-5 h-5 text-black"
+              className="w-5 h-5 text-[var(--foreground)]"
             />
           </DropdownMenuItem>
-
+ 
           {/* Pin */}
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation();
               onTogglePin();
             }}
-            className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-between items-center cursor-pointer outline-none focus:bg-[#EEF2FF] focus:text-[#6366F1] transition-colors"
+            className="self-stretch px-4 py-2 rounded-3xl inline-flex justify-between items-center cursor-pointer outline-none focus:bg-[var(--primary-tint)] focus:text-[var(--primary)] transition-colors"
           >
-            <span className="text-center justify-start text-black text-sm font-normal font-['Poppins'] leading-5">
+            <span className="text-center justify-start text-[var(--foreground)] text-sm font-normal font-['Poppins'] leading-5">
               {isPinned ? "Unpin" : "Pin"}
             </span>
             <Icon
               icon={isPinned ? "ph:push-pin-slash-light" : "ph:push-pin-light"}
-              className="w-5 h-5 text-black"
+              className="w-5 h-5 text-[var(--foreground)]"
             />
           </DropdownMenuItem>
-
+ 
           {/* Remove from project */}
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation();
               onRemoveFromProject();
             }}
-            className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-between items-center cursor-pointer outline-none focus:bg-[#EEF2FF] focus:text-[#6366F1] transition-colors"
+            className="self-stretch px-4 py-2 rounded-3xl inline-flex justify-between items-center cursor-pointer outline-none focus:bg-[var(--primary-tint)] focus:text-[var(--primary)] transition-colors"
           >
-            <span className="text-center justify-start text-black text-sm font-normal font-['Poppins'] leading-5">
+            <span className="text-center justify-start text-[var(--foreground)] text-sm font-normal font-['Poppins'] leading-5">
               Remove from project
             </span>
             <Icon
               icon="codicon:github-project"
-              className="w-5 h-5 text-black"
+              className="w-5 h-5 text-[var(--foreground)]"
             />
           </DropdownMenuItem>
-
+ 
           {/* Share */}
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation();
               onShare();
             }}
-            className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-between items-center cursor-pointer outline-none focus:bg-[#EEF2FF] focus:text-[#6366F1] transition-colors"
+            className="self-stretch px-4 py-2 rounded-3xl inline-flex justify-between items-center cursor-pointer outline-none focus:bg-[var(--primary-tint)] focus:text-[var(--primary)] transition-colors"
           >
-            <span className="text-center justify-start text-black text-sm font-normal font-['Poppins'] leading-5">
+            <span className="text-center justify-start text-[var(--foreground)] text-sm font-normal font-['Poppins'] leading-5">
               Share
             </span>
             <Icon
               icon="fluent:share-28-regular"
-              className="w-5 h-5 text-black"
+              className="w-5 h-5 text-[var(--foreground)]"
             />
           </DropdownMenuItem>
-
+ 
           {/* Delete */}
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation();
               onDelete();
             }}
-            className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-between items-center cursor-pointer outline-none focus:bg-red-50 focus:text-red-500 transition-colors"
+            className="self-stretch px-4 py-2 rounded-3xl inline-flex justify-between items-center cursor-pointer outline-none focus:bg-[var(--destructive)]/10 focus:text-[var(--destructive)] transition-colors"
           >
-            <span className="text-center justify-start text-red-400 text-sm font-normal font-['Poppins'] leading-5">
+            <span className="text-center justify-start text-[var(--destructive)] text-sm font-normal font-['Poppins'] leading-5">
               Delete
             </span>
             <Icon
               icon="hugeicons:delete-02"
-              className="w-5 h-5 text-red-400"
+              className="w-5 h-5 text-[var(--destructive)]"
             />
           </DropdownMenuItem>
         </div>

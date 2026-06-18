@@ -19,7 +19,7 @@ export default function AILoadingState() {
           width: isMobile ? "100%" : "912px",
           maxWidth: "100%",
           height: "24px",
-          background: "#FFFFFF",
+          background: "var(--background)",
           borderRadius: "12px 12px 12px 0px",
           boxSizing: "border-box",
         }}
@@ -37,7 +37,7 @@ export default function AILoadingState() {
             lineHeight: "24px",
             display: "flex",
             alignItems: "center",
-            color: "#6B7280",
+            color: "var(--muted-foreground)",
             boxSizing: "border-box",
             flexGrow: 1,
           }}

@@ -32,8 +32,8 @@ export default function ProjectChatListItem({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const isRowActive = isHovered || isMenuOpen;
-  const backgroundColor = isActive || isRowActive ? "#EEF2FF" : "transparent";
-
+  const backgroundColor = isActive || isRowActive ? "var(--primary-tint)" : "transparent";
+ 
   return (
     <div
       onMouseEnter={() => setIsHovered(true)}
@@ -72,7 +72,7 @@ export default function ProjectChatListItem({
             fontWeight: 500,
             fontSize: "16px",
             lineHeight: "24px",
-            color: "#000000",
+            color: "var(--foreground)",
             width: "100%",
             whiteSpace: "nowrap",
             overflow: "hidden",
@@ -82,7 +82,7 @@ export default function ProjectChatListItem({
         >
           {chat.title}
         </span>
-
+ 
         {/* Metadata */}
         <span
           style={{
@@ -90,7 +90,7 @@ export default function ProjectChatListItem({
             fontWeight: 400,
             fontSize: "12px",
             lineHeight: "16px",
-            color: "#6B7280",
+            color: "var(--muted-foreground)",
             width: "100%",
             whiteSpace: "nowrap",
             overflow: "hidden",
@@ -100,7 +100,7 @@ export default function ProjectChatListItem({
           {chat.lastMessageTime}
         </span>
       </div>
-
+ 
       {/* Right Actions Area */}
       <div
         style={{
@@ -117,7 +117,7 @@ export default function ProjectChatListItem({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#6366F1",
+              color: "var(--primary)",
               padding: "8px",
             }}
           >

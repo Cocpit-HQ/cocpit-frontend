@@ -41,7 +41,7 @@ export default function ProjectFilesTab({
               width: "100%",
               maxWidth: "348px",
               height: "0px",
-              borderBottom: "1px solid #E0E7FF",
+              borderBottom: "1px solid var(--border)",
               marginTop: "16px",
               marginBottom: "16px",
               alignSelf: "center",

@@ -41,8 +41,8 @@ export default function ProjectFilterTabs({
               alignItems: "center",
               padding: "8px 16px",
               height: "36px",
-              background: isActive ? "#EEF2FF" : "#FFFFFF",
-              border: isActive ? "1px solid #EEF2FF" : "1px solid #818CF8",
+              background: isActive ? "var(--primary-tint)" : "var(--background)",
+              border: isActive ? "1px solid var(--primary-tint)" : "1px solid var(--border)",
               borderRadius: "24px",
               cursor: "pointer",
               outline: "none",
@@ -56,7 +56,7 @@ export default function ProjectFilterTabs({
                 fontWeight: 600,
                 fontSize: "14px",
                 lineHeight: "20px",
-                color: isActive ? "#6366F1" : "#818CF8",
+                color: isActive ? "var(--primary)" : "var(--muted-foreground)",
               }}
             >
               {tab}

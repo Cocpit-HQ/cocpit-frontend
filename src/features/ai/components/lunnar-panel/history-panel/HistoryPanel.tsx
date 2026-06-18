@@ -100,7 +100,7 @@ export default function HistoryPanel({ onClose, onShare, onSelectHistoryItem }: 
             fontWeight: 600,
             fontSize: "14px",
             lineHeight: "20px",
-            color: "#000000",
+            color: "var(--foreground)",
           }}
         >
           History

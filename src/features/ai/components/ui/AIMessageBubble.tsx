@@ -8,6 +8,7 @@ import WebsiteMessageCard from "../cards/WebsiteMessageCard";
 import InlineError from "./errors/InlineError";
 import UnsupportedFileCard from "./UnsupportedFileCard";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTheme } from "next-themes";
 
 // Lunar panel inline views for mobile
 import LunarPanelGraphView from "../lunnar-panel/graph-view/LunarPanelGraphView";
@@ -77,7 +78,7 @@ function UserRequestText({ content }: { content: string }) {
             cursor: "pointer",
             fontFamily: "Poppins",
             fontSize: "14px",
-            color: "#6366F1",
+            color: "var(--primary)",
             display: "flex",
             alignItems: "center",
             gap: "4px",
@@ -118,7 +119,7 @@ function UserErrorState() {
         icon="solar:info-circle-linear"
         width={20}
         height={20}
-        style={{ color: "#FF6B6B" }}
+        style={{ color: "var(--destructive)" }}
       />
       <span
         style={{
@@ -127,7 +128,7 @@ function UserErrorState() {
           fontWeight: 400,
           fontSize: "16px",
           lineHeight: "24px",
-          color: "#FF6B6B",
+          color: "var(--destructive)",
         }}
       >
         Couldn't send, try again
@@ -298,8 +299,8 @@ export default function AIMessageBubble({
                     minHeight: "56px",
                     maxHeight: "192px",
                     height: "auto",
-                    background: "rgba(99, 102, 241, 0.08)",
-                    border: editText.length === 4000 ? "1px solid #FF6B6B" : "none",
+                    background: "var(--primary-tint)",
+                    border: editText.length === 4000 ? "1px solid var(--destructive)" : "none",
                     borderRadius: "24px",
                     boxSizing: "border-box",
                     overflowY: "auto",
@@ -327,7 +328,7 @@ export default function AIMessageBubble({
                       fontWeight: 400,
                       fontSize: "16px",
                       lineHeight: "24px",
-                      color: "#000000",
+                      color: "var(--foreground)",
                       padding: "0px",
                       margin: "0px",
                       flexGrow: 1,
@@ -364,10 +365,10 @@ export default function AIMessageBubble({
                           gap: "10px",
                           width: "82px",
                           height: "40px",
-                          border: "1px solid #818CF8",
+                          border: "1px solid var(--primary)",
                           borderRadius: "24px",
                           background: "transparent",
-                          color: "#818CF8",
+                          color: "var(--primary)",
                           fontFamily: "Poppins",
                           fontStyle: "normal",
                           fontWeight: 400,
@@ -391,10 +392,10 @@ export default function AIMessageBubble({
                           gap: "10px",
                           width: "67px",
                           height: "40px",
-                          background: "#6366F1",
-                          border: "1px solid #FFFFFF",
+                          background: "var(--primary)",
+                          border: "1px solid var(--border)",
                           borderRadius: "24px",
-                          color: "#FFFFFF",
+                          color: "var(--primary-foreground)",
                           fontFamily: "Poppins",
                           fontStyle: "normal",
                           fontWeight: 400,
@@ -415,7 +416,7 @@ export default function AIMessageBubble({
                       width: "100%",
                       maxWidth: isMobile ? "100%" : "912px",
                       textAlign: "right",
-                      color: "#FF6B6B",
+                      color: "var(--destructive)",
                       fontFamily: "Poppins",
                       fontSize: "14px",
                       marginTop: "4px",
@@ -515,18 +516,18 @@ export default function AIMessageBubble({
                           gap: "10px", 
                           width: "196px",
                           height: "48px",
-                          border: "1px solid #E0E7FF",
+                          border: "1px solid var(--border)",
                           borderRadius: "12px",
-                          background: "#FFFFFF",
+                          background: "var(--background)",
                           cursor: "pointer",
                         }}
                       >
-                        <Icon icon="bi:file-earmark-pdf-fill" width={24} height={24} style={{ color: "#EF4444", flexShrink: 0 }} />
+                        <Icon icon="bi:file-earmark-pdf-fill" width={24} height={24} style={{ color: "var(--destructive)", flexShrink: 0 }} />
                         <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
-                          <span style={{ fontSize: "11px", fontWeight: 600, color: "#1F2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--foreground)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {docs[0].name}
                           </span>
-                          <span style={{ fontSize: "9px", color: "#9CA3AF" }}>
+                          <span style={{ fontSize: "9px", color: "var(--muted-foreground)" }}>
                             {docs[0].name.split('.').pop()?.toUpperCase() || "FILE"}
                           </span>
                         </div>
@@ -540,16 +541,16 @@ export default function AIMessageBubble({
                   <div
                     className="p-4 break-words whitespace-pre-wrap"
                     style={{
-                      background: "rgba(99, 102, 241, 0.08)",
+                      background: "var(--primary-tint)",
                       borderRadius: "24px 24px 0px 24px",
                       fontFamily: "Poppins",
                       fontWeight: 400,
                       fontSize: "16px",
                       lineHeight: "24px",
-                      color: "#000000",
+                      color: "var(--foreground)",
                       width: "fit-content",
                       maxWidth: isMobile ? "85%" : "70%",
-                      boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                      boxShadow: "var(--card-shadow-inner)",
                       boxSizing: "border-box",
                     }}
                   >
@@ -580,10 +581,10 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                         transition: "all 0.2s ease",
                       }}
                       title="Copy"
@@ -592,7 +593,7 @@ export default function AIMessageBubble({
                         icon={copied ? "tabler:copy-filled" : "tabler:copy"} 
                         width={20} 
                         height={20} 
-                        style={{ color: copied ? "#6366F1" : "#6B7280" }} 
+                        style={{ color: copied ? "var(--primary)" : "var(--muted-foreground)" }} 
                       />
                     </button>
                     <button
@@ -605,14 +606,14 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                       }}
                       title="Edit"
                     >
-                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "#6B7280" }} />
+                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "var(--muted-foreground)" }} />
                     </button>
                   </div>
                 )}
@@ -679,18 +680,18 @@ export default function AIMessageBubble({
                           gap: "10px", 
                           width: "200px",
                           height: "48px",
-                          border: "1px solid #E0E7FF",
+                          border: "1px solid var(--border)",
                           borderRadius: "12px",
-                          background: "#FFFFFF",
+                          background: "var(--background)",
                           cursor: "pointer",
                         }}
                       >
-                        <Icon icon="bi:file-earmark-pdf-fill" width={24} height={24} style={{ color: "#EF4444", flexShrink: 0 }} />
+                        <Icon icon="bi:file-earmark-pdf-fill" width={24} height={24} style={{ color: "var(--destructive)", flexShrink: 0 }} />
                         <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
-                          <span style={{ fontSize: "11px", fontWeight: 600, color: "#1F2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--foreground)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {docs[0].name}
                           </span>
-                          <span style={{ fontSize: "9px", color: "#9CA3AF" }}>
+                          <span style={{ fontSize: "9px", color: "var(--muted-foreground)" }}>
                             {docs[0].name.split('.').pop()?.toUpperCase() || "FILE"}
                           </span>
                         </div>
@@ -717,18 +718,18 @@ export default function AIMessageBubble({
                           gap: "10px", 
                           width: "200px",
                           height: "48px",
-                          border: "1px solid #E0E7FF",
+                          border: "1px solid var(--border)",
                           borderRadius: "12px",
-                          background: "#FFFFFF",
+                          background: "var(--background)",
                           cursor: "pointer",
                         }}
                       >
-                        <Icon icon="bi:file-earmark-pdf-fill" width={24} height={24} style={{ color: "#EF4444", flexShrink: 0 }} />
+                        <Icon icon="bi:file-earmark-pdf-fill" width={24} height={24} style={{ color: "var(--destructive)", flexShrink: 0 }} />
                         <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
-                          <span style={{ fontSize: "11px", fontWeight: 600, color: "#1F2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--foreground)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {docs[1].name}
                           </span>
-                          <span style={{ fontSize: "9px", color: "#9CA3AF" }}>
+                          <span style={{ fontSize: "9px", color: "var(--muted-foreground)" }}>
                             {docs[1].name.split('.').pop()?.toUpperCase() || "FILE"}
                           </span>
                         </div>
@@ -742,16 +743,16 @@ export default function AIMessageBubble({
                   <div
                     className="p-4 break-words whitespace-pre-wrap"
                     style={{
-                      background: "rgba(99, 102, 241, 0.08)",
+                      background: "var(--primary-tint)",
                       borderRadius: "24px 24px 0px 24px",
                       fontFamily: "Poppins",
                       fontWeight: 400,
                       fontSize: "16px",
                       lineHeight: "24px",
-                      color: "#000000",
+                      color: "var(--foreground)",
                       width: "fit-content",
                       maxWidth: isMobile ? "85%" : "70%",
-                      boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                      boxShadow: "var(--card-shadow-inner)",
                       boxSizing: "border-box",
                     }}
                   >
@@ -782,10 +783,10 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                         transition: "all 0.2s ease",
                       }}
                       title="Copy"
@@ -794,7 +795,7 @@ export default function AIMessageBubble({
                         icon={copied ? "tabler:copy-filled" : "tabler:copy"} 
                         width={20} 
                         height={20} 
-                        style={{ color: copied ? "#6366F1" : "#6B7280" }} 
+                        style={{ color: copied ? "var(--primary)" : "var(--muted-foreground)" }} 
                       />
                     </button>
                     <button
@@ -807,14 +808,14 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                       }}
                       title="Edit"
                     >
-                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "#6B7280" }} />
+                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "var(--muted-foreground)" }} />
                     </button>
                   </div>
                 )}
@@ -859,16 +860,16 @@ export default function AIMessageBubble({
                   <div
                     className="p-4 break-words whitespace-pre-wrap"
                     style={{
-                      background: "rgba(99, 102, 241, 0.08)",
+                      background: "var(--primary-tint)",
                       borderRadius: "24px 24px 0px 24px",
                       fontFamily: "Poppins",
                       fontWeight: 400,
                       fontSize: "16px",
                       lineHeight: "24px",
-                      color: "#000000",
+                      color: "var(--foreground)",
                       width: "fit-content",
                       maxWidth: isMobile ? "85%" : "70%",
-                      boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                      boxShadow: "var(--card-shadow-inner)",
                       boxSizing: "border-box",
                     }}
                   >
@@ -899,10 +900,10 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                         transition: "all 0.2s ease",
                       }}
                       title="Copy"
@@ -911,7 +912,7 @@ export default function AIMessageBubble({
                         icon={copied ? "tabler:copy-filled" : "tabler:copy"} 
                         width={20} 
                         height={20} 
-                        style={{ color: copied ? "#6366F1" : "#6B7280" }} 
+                        style={{ color: copied ? "var(--primary)" : "var(--muted-foreground)" }} 
                       />
                     </button>
                     <button
@@ -924,14 +925,14 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                       }}
                       title="Edit"
                     >
-                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "#6B7280" }} />
+                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "var(--muted-foreground)" }} />
                     </button>
                   </div>
                 )}
@@ -972,18 +973,18 @@ export default function AIMessageBubble({
                         gap: "10px", 
                         width: "200px",
                         height: "48px",
-                        border: "1px solid #E0E7FF",
+                        border: "1px solid var(--border)",
                         borderRadius: "12px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         cursor: "pointer",
                       }}
                     >
-                      <Icon icon="bi:file-earmark-pdf-fill" width={24} height={24} style={{ color: "#EF4444", flexShrink: 0 }} />
+                      <Icon icon="bi:file-earmark-pdf-fill" width={24} height={24} style={{ color: "var(--destructive)", flexShrink: 0 }} />
                       <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
-                        <span style={{ fontSize: "11px", fontWeight: 600, color: "#1F2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--foreground)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {docs[0].name}
                         </span>
-                        <span style={{ fontSize: "9px", color: "#9CA3AF" }}>
+                        <span style={{ fontSize: "9px", color: "var(--muted-foreground)" }}>
                           {docs[0].name.split('.').pop()?.toUpperCase() || "FILE"}
                         </span>
                       </div>
@@ -996,16 +997,16 @@ export default function AIMessageBubble({
                   <div
                     className="p-4 break-words whitespace-pre-wrap"
                     style={{
-                      background: "rgba(99, 102, 241, 0.08)",
+                      background: "var(--primary-tint)",
                       borderRadius: "24px 24px 0px 24px",
                       fontFamily: "Poppins",
                       fontWeight: 400,
                       fontSize: "16px",
                       lineHeight: "24px",
-                      color: "#000000",
+                      color: "var(--foreground)",
                       width: "fit-content",
                       maxWidth: isMobile ? "85%" : "70%",
-                      boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                      boxShadow: "var(--card-shadow-inner)",
                       boxSizing: "border-box",
                     }}
                   >
@@ -1036,10 +1037,10 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                         transition: "all 0.2s ease",
                       }}
                       title="Copy"
@@ -1048,7 +1049,7 @@ export default function AIMessageBubble({
                         icon={copied ? "tabler:copy-filled" : "tabler:copy"} 
                         width={20} 
                         height={20} 
-                        style={{ color: copied ? "#6366F1" : "#6B7280" }} 
+                        style={{ color: copied ? "var(--primary)" : "var(--muted-foreground)" }} 
                       />
                     </button>
                     <button
@@ -1061,14 +1062,14 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                       }}
                       title="Edit"
                     >
-                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "#6B7280" }} />
+                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "var(--muted-foreground)" }} />
                     </button>
                   </div>
                 )}
@@ -1137,10 +1138,10 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                         transition: "all 0.2s ease",
                       }}
                       title="Copy"
@@ -1149,7 +1150,7 @@ export default function AIMessageBubble({
                         icon={copied ? "tabler:copy-filled" : "tabler:copy"} 
                         width={20} 
                         height={20} 
-                        style={{ color: copied ? "#6366F1" : "#6B7280" }} 
+                        style={{ color: copied ? "var(--primary)" : "var(--muted-foreground)" }} 
                       />
                     </button>
                     <button
@@ -1162,14 +1163,14 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                       }}
                       title="Edit"
                     >
-                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "#6B7280" }} />
+                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "var(--muted-foreground)" }} />
                     </button>
                   </div>
                 )}
@@ -1218,17 +1219,17 @@ export default function AIMessageBubble({
                           gap: "8px", 
                           width: "140px",
                           height: "56px",
-                          background: "#FFFFFF", 
+                          background: "var(--background)", 
                           border: "1px solid #DADADA",
                           borderRadius: "12px",
                         }}
                       >
-                        <Icon icon="bi:file-earmark-pdf-fill" width={24} height={24} style={{ color: "#EF4444", flexShrink: 0 }} />
+                        <Icon icon="bi:file-earmark-pdf-fill" width={24} height={24} style={{ color: "var(--destructive)", flexShrink: 0 }} />
                         <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
-                          <span style={{ fontSize: "12px", fontWeight: 600, color: "#1F2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--foreground)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {file.name}
                           </span>
-                          <span style={{ fontSize: "10px", color: "#9CA3AF" }}>
+                          <span style={{ fontSize: "10px", color: "var(--muted-foreground)" }}>
                             {file.name.split('.').pop()?.toUpperCase() || "FILE"}
                           </span>
                         </div>
@@ -1258,10 +1259,10 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                         transition: "all 0.2s ease",
                       }}
                       title="Copy"
@@ -1270,7 +1271,7 @@ export default function AIMessageBubble({
                         icon={copied ? "tabler:copy-filled" : "tabler:copy"} 
                         width={20} 
                         height={20} 
-                        style={{ color: copied ? "#6366F1" : "#6B7280" }} 
+                        style={{ color: copied ? "var(--primary)" : "var(--muted-foreground)" }} 
                       />
                     </button>
                     <button
@@ -1283,14 +1284,14 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                       }}
                       title="Edit"
                     >
-                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "#6B7280" }} />
+                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "var(--muted-foreground)" }} />
                     </button>
                   </div>
                 )}
@@ -1329,17 +1330,17 @@ export default function AIMessageBubble({
                           gap: "8px", 
                           width: "140px",
                           height: "56px",
-                          background: "#FFFFFF", 
+                          background: "var(--background)", 
                           border: "1px solid #DADADA",
                           borderRadius: "12px",
                         }}
                       >
-                        <Icon icon="bi:file-earmark-pdf-fill" width={24} height={24} style={{ color: "#EF4444", flexShrink: 0 }} />
+                        <Icon icon="bi:file-earmark-pdf-fill" width={24} height={24} style={{ color: "var(--destructive)", flexShrink: 0 }} />
                         <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
-                          <span style={{ fontSize: "12px", fontWeight: 600, color: "#1F2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--foreground)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {file.name}
                           </span>
-                          <span style={{ fontSize: "10px", color: "#9CA3AF" }}>
+                          <span style={{ fontSize: "10px", color: "var(--muted-foreground)" }}>
                             {file.name.split('.').pop()?.toUpperCase() || "FILE"}
                           </span>
                         </div>
@@ -1369,10 +1370,10 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                         transition: "all 0.2s ease",
                       }}
                       title="Copy"
@@ -1381,7 +1382,7 @@ export default function AIMessageBubble({
                         icon={copied ? "tabler:copy-filled" : "tabler:copy"} 
                         width={20} 
                         height={20} 
-                        style={{ color: copied ? "#6366F1" : "#6B7280" }} 
+                        style={{ color: copied ? "var(--primary)" : "var(--muted-foreground)" }} 
                       />
                     </button>
                     <button
@@ -1394,14 +1395,14 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                       }}
                       title="Edit"
                     >
-                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "#6B7280" }} />
+                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "var(--muted-foreground)" }} />
                     </button>
                   </div>
                 )}
@@ -1412,16 +1413,16 @@ export default function AIMessageBubble({
                 <div
                   className="p-4 break-words whitespace-pre-wrap"
                   style={{
-                    background: "rgba(99, 102, 241, 0.08)",
+                    background: "var(--primary-tint)",
                     borderRadius: "24px 24px 0px 24px",
                     fontFamily: "Poppins",
                     fontWeight: 400,
                     fontSize: "16px",
                     lineHeight: "24px",
-                    color: "#000000",
+                    color: "var(--foreground)",
                     width: "fit-content",
                     maxWidth: isMobile ? "85%" : "70%",
-                    boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                    boxShadow: "var(--card-shadow-inner)",
                     boxSizing: "border-box",
                   }}
                 >
@@ -1476,17 +1477,17 @@ export default function AIMessageBubble({
                                 gap: "8px", 
                                 width: "140px",
                                 height: "56px",
-                                background: "#FFFFFF", 
+                                background: "var(--background)", 
                                 border: "1px solid #DADADA",
                                 borderRadius: "12px",
                               }}
                             >
-                              <Icon icon="bi:file-earmark-pdf-fill" width={24} height={24} style={{ color: "#EF4444", flexShrink: 0 }} />
+                              <Icon icon="bi:file-earmark-pdf-fill" width={24} height={24} style={{ color: "var(--destructive)", flexShrink: 0 }} />
                               <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
-                                <span style={{ fontSize: "12px", fontWeight: 600, color: "#1F2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--foreground)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                   {file.name}
                                 </span>
-                                <span style={{ fontSize: "10px", color: "#9CA3AF" }}>
+                                <span style={{ fontSize: "10px", color: "var(--muted-foreground)" }}>
                                   {file.name.split('.').pop()?.toUpperCase() || "FILE"}
                                 </span>
                               </div>
@@ -1523,10 +1524,10 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                         transition: "all 0.2s ease",
                       }}
                       title="Copy"
@@ -1535,7 +1536,7 @@ export default function AIMessageBubble({
                         icon={copied ? "tabler:copy-filled" : "tabler:copy"} 
                         width={20} 
                         height={20} 
-                        style={{ color: copied ? "#6366F1" : "#6B7280" }} 
+                        style={{ color: copied ? "var(--primary)" : "var(--muted-foreground)" }} 
                       />
                     </button>
                     <button
@@ -1548,14 +1549,14 @@ export default function AIMessageBubble({
                         width: "36px",
                         height: "36px",
                         borderRadius: "24px",
-                        background: "#FFFFFF",
+                        background: "var(--background)",
                         border: "none",
                         cursor: "pointer",
-                        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                        boxShadow: "var(--card-shadow-inner)",
                       }}
                       title="Edit"
                     >
-                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "#6B7280" }} />
+                      <Icon icon="tdesign:edit" width={20} height={20} style={{ color: "var(--muted-foreground)" }} />
                     </button>
                   </div>
                 )}
@@ -1569,25 +1570,25 @@ export default function AIMessageBubble({
               className="order-0"
               style={{
                 width: "100%",
-                background: "#FFFFFF",
+                background: "var(--background)",
                 borderRadius: "12px 12px 12px 0px",
                 padding: "0px",
                 fontFamily: "Poppins",
                 fontWeight: 400,
                 fontSize: "16px",
                 lineHeight: "24px",
-                color: "#000000",
+                color: "var(--foreground)",
                 boxSizing: "border-box",
               }}
             >
               <div
                 className={
                   (isStreaming || localStreaming)
-                    ? "after:content-['|'] after:animate-pulse after:ml-0.5 after:text-[#6366F1]"
+                    ? "after:content-['|'] after:animate-pulse after:ml-0.5 after:text-[var(--primary)]"
                     : ""
                 }
                 style={{
-                  color: (!localContent && (isStreaming || localStreaming)) ? "#6B7280" : "#000000"
+                  color: (!localContent && (isStreaming || localStreaming)) ? "var(--muted-foreground)" : "var(--foreground)"
                 }}
               >
                 {(() => {
@@ -1657,7 +1658,7 @@ export default function AIMessageBubble({
                   const isSensitiveData = localContent.includes("Sensitive Data Detected!");
                   if (isSensitiveData) {
                     return (
-                      <div className="self-stretch bg-white rounded-tl-xl rounded-tr-xl rounded-br-xl inline-flex flex-col justify-center items-start gap-3 w-full">
+                      <div className="self-stretch bg-[var(--background)] rounded-tl-xl rounded-tr-xl rounded-br-xl inline-flex flex-col justify-center items-start gap-3 w-full">
                         <div className="self-stretch flex flex-col justify-start items-start gap-1">
                           <div className="w-auto inline-flex justify-center items-center gap-2">
                             <div className="size-6 relative overflow-hidden flex-shrink-0">
@@ -1669,9 +1670,9 @@ export default function AIMessageBubble({
                           </div>
                         </div>
                         <div className="self-stretch flex flex-col justify-start items-start gap-2">
-                          <div className="self-stretch justify-center text-black text-base font-normal font-['Poppins'] leading-6">I couldn&apos;t find enough verifiable database records or uploaded project files to provide an accurate answer regarding this specific cross-border tax scenario</div>
-                          <div className="self-stretch justify-center text-black text-base font-normal font-['Poppins'] leading-6">To fix this, you can:</div>
-                          <ul className="self-stretch flex flex-col justify-start items-start gap-2 text-black text-base font-normal font-['Poppins'] leading-6 list-disc pl-5">
+                          <div className="self-stretch justify-center text-[var(--foreground)] text-base font-normal font-['Poppins'] leading-6">I couldn&apos;t find enough verifiable database records or uploaded project files to provide an accurate answer regarding this specific cross-border tax scenario</div>
+                          <div className="self-stretch justify-center text-[var(--foreground)] text-base font-normal font-['Poppins'] leading-6">To fix this, you can:</div>
+                          <ul className="self-stretch flex flex-col justify-start items-start gap-2 text-[var(--foreground)] text-base font-normal font-['Poppins'] leading-6 list-disc pl-5">
                             <li>Upload your tax legal documents directly to this chat thread</li>
                             <li>Rephrase your question focusing on general global freelance rules</li>
                           </ul>
@@ -1683,7 +1684,7 @@ export default function AIMessageBubble({
                   const isInsufficientInfo = localContent.includes("I couldn't find enough verifiable database records");
                   if (isInsufficientInfo) {
                     return (
-                      <div className="self-stretch bg-white rounded-tl-xl rounded-tr-xl rounded-br-xl inline-flex flex-col justify-center items-start gap-3 w-full">
+                      <div className="self-stretch bg-[var(--background)] rounded-tl-xl rounded-tr-xl rounded-br-xl inline-flex flex-col justify-center items-start gap-3 w-full">
                         <div className="self-stretch flex flex-col justify-start items-start gap-1">
                           <div className="w-auto inline-flex justify-center items-center gap-2">
                             <div className="size-6 relative overflow-hidden flex-shrink-0">
@@ -1695,9 +1696,9 @@ export default function AIMessageBubble({
                           </div>
                         </div>
                         <div className="self-stretch flex flex-col justify-start items-start gap-2">
-                          <div className="self-stretch justify-center text-black text-base font-normal font-['Poppins'] leading-6">I couldn&apos;t find enough verifiable database records or uploaded project files to provide an accurate answer regarding this specific cross-border tax scenario</div>
-                          <div className="self-stretch justify-center text-black text-base font-normal font-['Poppins'] leading-6">To fix this, you can:</div>
-                          <ul className="self-stretch flex flex-col justify-start items-start gap-2 text-black text-base font-normal font-['Poppins'] leading-6 list-disc pl-5">
+                          <div className="self-stretch justify-center text-[var(--foreground)] text-base font-normal font-['Poppins'] leading-6">I couldn&apos;t find enough verifiable database records or uploaded project files to provide an accurate answer regarding this specific cross-border tax scenario</div>
+                          <div className="self-stretch justify-center text-[var(--foreground)] text-base font-normal font-['Poppins'] leading-6">To fix this, you can:</div>
+                          <ul className="self-stretch flex flex-col justify-start items-start gap-2 text-[var(--foreground)] text-base font-normal font-['Poppins'] leading-6 list-disc pl-5">
                             <li>Upload your tax legal documents directly to this chat thread</li>
                             <li>Rephrase your question focusing on general global freelance rules</li>
                           </ul>
@@ -1709,7 +1710,7 @@ export default function AIMessageBubble({
                   const isCapabilities = localContent.includes("I cannot generate images, design graphics");
                   if (isCapabilities) {
                     return (
-                      <div className="self-stretch bg-white rounded-tl-xl rounded-tr-xl rounded-br-xl inline-flex flex-col justify-center items-start gap-3 w-full">
+                      <div className="self-stretch bg-[var(--background)] rounded-tl-xl rounded-tr-xl rounded-br-xl inline-flex flex-col justify-center items-start gap-3 w-full">
                         <div className="self-stretch flex flex-col justify-start items-start gap-1">
                           <div className="w-auto inline-flex justify-center items-center gap-2">
                             <div className="size-6 relative overflow-hidden flex-shrink-0">
@@ -1721,25 +1722,25 @@ export default function AIMessageBubble({
                           </div>
                         </div>
                         <div className="self-stretch flex flex-col justify-start items-start gap-2">
-                          <div className="self-stretch justify-center text-black text-base font-normal font-['Poppins'] leading-6">I cannot generate images, design graphics, or automatically submit job applications for you.</div>
-                          <div className="self-stretch justify-center text-black text-base font-normal font-['Poppins'] leading-6">However, I can help you write a highly optimized text blueprint for your profile bio, or craft an exceptional cover letter tailored to that Senior Developer job!</div>
+                          <div className="self-stretch justify-center text-[var(--foreground)] text-base font-normal font-['Poppins'] leading-6">I cannot generate images, design graphics, or automatically submit job applications for you.</div>
+                          <div className="self-stretch justify-center text-[var(--foreground)] text-base font-normal font-['Poppins'] leading-6">However, I can help you write a highly optimized text blueprint for your profile bio, or craft an exceptional cover letter tailored to that Senior Developer job!</div>
                         </div>
                         <div className="self-stretch flex flex-col justify-start items-start gap-2">
-                          <div className="self-stretch justify-center text-black text-base font-normal font-['Poppins'] leading-6">What would you like me to do?</div>
+                          <div className="self-stretch justify-center text-[var(--foreground)] text-base font-normal font-['Poppins'] leading-6">What would you like me to do?</div>
                           <div className="w-auto inline-flex justify-start items-start gap-2.5 flex-wrap">
                             <button
                               type="button"
                               onClick={() => onSend?.("Optimize Profile Bio Text")}
-                              className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 rounded-3xl flex justify-center items-center gap-2.5 border-none cursor-pointer transition-all duration-200"
+                              className="px-4 py-2 bg-[var(--primary-tint)] hover:bg-[var(--primary-tint)]/80 active:bg-[var(--primary-tint)]/90 rounded-3xl flex justify-center items-center gap-2.5 border-none cursor-pointer transition-all duration-200"
                             >
-                              <span className="justify-center text-indigo-500 text-base font-normal font-['Poppins'] leading-6">Optimize Profile Bio Text</span>
+                              <span className="justify-center text-[var(--primary)] text-base font-normal font-['Poppins'] leading-6">Optimize Profile Bio Text</span>
                             </button>
                             <button
                               type="button"
                               onClick={() => onSend?.("Write Custom Cover Letter")}
-                              className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 rounded-3xl flex justify-center items-center gap-2.5 border-none cursor-pointer transition-all duration-200"
+                              className="px-4 py-2 bg-[var(--primary-tint)] hover:bg-[var(--primary-tint)]/80 active:bg-[var(--primary-tint)]/90 rounded-3xl flex justify-center items-center gap-2.5 border-none cursor-pointer transition-all duration-200"
                             >
-                              <span className="justify-center text-indigo-500 text-base font-normal font-['Poppins'] leading-6">Write Custom Cover Letter</span>
+                              <span className="justify-center text-[var(--primary)] text-base font-normal font-['Poppins'] leading-6">Write Custom Cover Letter</span>
                             </button>
                           </div>
                         </div>
@@ -1774,13 +1775,13 @@ export default function AIMessageBubble({
                     return (
                       <div className="flex flex-col justify-start items-start gap-4 w-full">
                         {/* Header text */}
-                        <div className="text-black text-base font-normal font-['Poppins'] leading-6">
+                        <div className="text-[var(--foreground)] text-base font-normal font-['Poppins'] leading-6">
                           {headerText}
                         </div>
 
                         {/* Chart Card */}
                         <div 
-                          className="box-border bg-white rounded-2xl border border-[#EEF2FF] shadow-[0px_2px_4px_rgba(99,102,241,0.05)] flex flex-col justify-start items-center p-4 gap-4"
+                          className="box-border bg-white rounded-2xl border border-[var(--border)] shadow-[var(--card-shadow-inner)] flex flex-col justify-start items-center p-4 gap-4"
                           style={{
                             width: "276px",
                             height: "340px",
@@ -1791,7 +1792,7 @@ export default function AIMessageBubble({
                             <button type="button" className="p-1 bg-transparent border-none cursor-pointer flex items-center justify-center text-zinc-400 hover:text-zinc-600">
                               <Icon icon="fluent:chevron-left-24-regular" width={16} height={16} />
                             </button>
-                            <span className="text-zinc-800 text-xs font-bold leading-none font-['Poppins']">18 March 2023</span>
+                            <span className="text-[var(--foreground)] text-xs font-bold leading-none font-['Poppins']">18 March 2023</span>
                             <button type="button" className="p-1 bg-transparent border-none cursor-pointer flex items-center justify-center text-zinc-400 hover:text-zinc-600">
                               <Icon icon="fluent:chevron-right-24-regular" width={16} height={16} />
                             </button>
@@ -1846,11 +1847,11 @@ export default function AIMessageBubble({
                                 height: '26px',
                                 borderRadius: '50%',
                                 background: '#FFFFFF',
-                                border: '1px solid #EEF2FF',
+                                border: '1px solid var(--border)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                boxShadow: '0px 2px 4px rgba(99, 102, 241, 0.1)',
+                                boxShadow: 'var(--card-shadow-inner)',
                               }}>
                                 <span className="text-black text-[9px] font-bold font-['Poppins']">60%</span>
                               </div>
@@ -1863,11 +1864,11 @@ export default function AIMessageBubble({
                                 height: '26px',
                                 borderRadius: '50%',
                                 background: '#FFFFFF',
-                                border: '1px solid #EEF2FF',
+                                border: '1px solid var(--border)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                boxShadow: '0px 2px 4px rgba(99, 102, 241, 0.1)',
+                                boxShadow: 'var(--card-shadow-inner)',
                               }}>
                                 <span className="text-black text-[9px] font-bold font-['Poppins']">20%</span>
                               </div>
@@ -1880,11 +1881,11 @@ export default function AIMessageBubble({
                                 height: '26px',
                                 borderRadius: '50%',
                                 background: '#FFFFFF',
-                                border: '1px solid #EEF2FF',
+                                border: '1px solid var(--border)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                boxShadow: '0px 2px 4px rgba(99, 102, 241, 0.1)',
+                                boxShadow: 'var(--card-shadow-inner)',
                               }}>
                                 <span className="text-black text-[9px] font-bold font-['Poppins']">20%</span>
                               </div>
@@ -1892,27 +1893,27 @@ export default function AIMessageBubble({
                           </div>
 
                           {/* Legend list */}
-                          <div className="w-full flex flex-col gap-2 border-t border-[#F3F4F6] pt-3 px-1 mt-1">
+                          <div className="w-full flex flex-col gap-2 border-t border-[var(--border)] pt-3 px-1 mt-1">
                             <div className="flex justify-between items-center w-full">
                               <div className="flex items-center gap-2">
                                 <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
-                                <span className="text-neutral-500 text-[12px] font-bold font-['Poppins']">Jobs</span>
+                                <span className="text-[var(--muted-foreground)] text-[12px] font-bold font-['Poppins']">Jobs</span>
                               </div>
-                              <span className="text-neutral-700 text-[12px] font-bold font-['Poppins']">60%</span>
+                              <span className="text-[var(--foreground)] text-[12px] font-bold font-['Poppins']">60%</span>
                             </div>
                             <div className="flex justify-between items-center w-full">
                               <div className="flex items-center gap-2">
                                 <span className="w-2.5 h-2.5 rounded-full bg-red-300" />
-                                <span className="text-neutral-500 text-[12px] font-bold font-['Poppins']">Events</span>
+                                <span className="text-[var(--muted-foreground)] text-[12px] font-bold font-['Poppins']">Events</span>
                               </div>
-                              <span className="text-neutral-700 text-[12px] font-bold font-['Poppins']">20%</span>
+                              <span className="text-[var(--foreground)] text-[12px] font-bold font-['Poppins']">20%</span>
                             </div>
                             <div className="flex justify-between items-center w-full">
                               <div className="flex items-center gap-2">
                                 <span className="w-2.5 h-2.5 rounded-full bg-orange-400" />
-                                <span className="text-neutral-500 text-[12px] font-bold font-['Poppins']">Skill</span>
+                                <span className="text-[var(--muted-foreground)] text-[12px] font-bold font-['Poppins']">Skill</span>
                               </div>
-                              <span className="text-neutral-700 text-[12px] font-bold font-['Poppins']">20%</span>
+                              <span className="text-[var(--foreground)] text-[12px] font-bold font-['Poppins']">20%</span>
                             </div>
                           </div>
                         </div>
@@ -1921,8 +1922,8 @@ export default function AIMessageBubble({
                         <div className="flex flex-col gap-2 mt-1">
                           {displayBullets.map((bullet, idx) => (
                             <div key={idx} className="flex items-start gap-2">
-                              <span className="text-black text-base">•</span>
-                              <span className="text-black text-base font-normal font-['Poppins'] leading-6">{bullet}</span>
+                              <span className="text-[var(--foreground)] text-base">•</span>
+                              <span className="text-[var(--foreground)] text-base font-normal font-['Poppins'] leading-6">{bullet}</span>
                             </div>
                           ))}
                         </div>
@@ -1939,12 +1940,12 @@ export default function AIMessageBubble({
                             }}
                             className={`h-10 rounded-3xl flex justify-center items-center px-4 py-1.5 cursor-pointer transition-all duration-200 ${
                               currentTab === "jobs"
-                                ? "bg-indigo-50 hover:bg-[#EEF2FF]/80 border-none"
-                                : "bg-white hover:bg-zinc-50 border border-indigo-400"
+                                ? "bg-[var(--primary-tint)] hover:bg-[var(--primary-tint)]/85 border-none"
+                                : "bg-[var(--background)] hover:bg-[var(--primary-tint)]/10 border border-[var(--primary)]"
                             }`}
-                            style={currentTab === "jobs" ? { outline: "1px solid #EEF2FF" } : undefined}
+                            style={currentTab === "jobs" ? { outline: "1.5px solid var(--primary)" } : undefined}
                           >
-                            <span className={currentTab === "jobs" ? "text-[#6366F1] text-sm font-semibold font-['Poppins'] leading-5" : "text-indigo-400 text-sm font-semibold font-['Poppins'] leading-5"}>Jobs list</span>
+                            <span className={currentTab === "jobs" ? "text-[var(--primary)] text-sm font-semibold font-['Poppins'] leading-5" : "text-[var(--primary)]/70 text-sm font-semibold font-['Poppins'] leading-5"}>Jobs list</span>
                           </button>
                           <button
                             type="button"
@@ -1956,12 +1957,12 @@ export default function AIMessageBubble({
                             }}
                             className={`h-10 rounded-3xl flex justify-center items-center px-4 py-1.5 cursor-pointer transition-all duration-200 ${
                               currentTab === "events"
-                                ? "bg-indigo-50 hover:bg-[#EEF2FF]/80 border-none"
-                                : "bg-white hover:bg-zinc-50 border border-indigo-400"
+                                ? "bg-[var(--primary-tint)] hover:bg-[var(--primary-tint)]/85 border-none"
+                                : "bg-[var(--background)] hover:bg-[var(--primary-tint)]/10 border border-[var(--primary)]"
                             }`}
-                            style={currentTab === "events" ? { outline: "1px solid #EEF2FF" } : undefined}
+                            style={currentTab === "events" ? { outline: "1.5px solid var(--primary)" } : undefined}
                           >
-                            <span className={currentTab === "events" ? "text-[#6366F1] text-sm font-semibold font-['Poppins'] leading-5" : "text-indigo-400 text-sm font-semibold font-['Poppins'] leading-5"}>Events list</span>
+                            <span className={currentTab === "events" ? "text-[var(--primary)] text-sm font-semibold font-['Poppins'] leading-5" : "text-[var(--primary)]/70 text-sm font-semibold font-['Poppins'] leading-5"}>Events list</span>
                           </button>
                           <button
                             type="button"
@@ -1973,12 +1974,12 @@ export default function AIMessageBubble({
                             }}
                             className={`h-10 rounded-3xl flex justify-center items-center px-4 py-1.5 cursor-pointer transition-all duration-200 ${
                               currentTab === "skills"
-                                ? "bg-indigo-50 hover:bg-[#EEF2FF]/80 border-none"
-                                : "bg-white hover:bg-zinc-50 border border-indigo-400"
+                                ? "bg-[var(--primary-tint)] hover:bg-[var(--primary-tint)]/85 border-none"
+                                : "bg-[var(--background)] hover:bg-[var(--primary-tint)]/10 border border-[var(--primary)]"
                             }`}
-                            style={currentTab === "skills" ? { outline: "1px solid #EEF2FF" } : undefined}
+                            style={currentTab === "skills" ? { outline: "1.5px solid var(--primary)" } : undefined}
                           >
-                            <span className={currentTab === "skills" ? "text-[#6366F1] text-sm font-semibold font-['Poppins'] leading-5" : "text-indigo-400 text-sm font-semibold font-['Poppins'] leading-5"}>Skills list</span>
+                            <span className={currentTab === "skills" ? "text-[var(--primary)] text-sm font-semibold font-['Poppins'] leading-5" : "text-[var(--primary)]/70 text-sm font-semibold font-['Poppins'] leading-5"}>Skills list</span>
                           </button>
                         </div>
                       </div>
@@ -2043,11 +2044,11 @@ export default function AIMessageBubble({
                 {activeJobTab === "jobs" ? (
                   <LunarPanelJobListView />
                 ) : (
-                  <div className="box-border w-full flex flex-col items-center justify-center gap-3 bg-[#F9FAFB] rounded-xl border border-dashed border-[#E5E7EB] font-sans text-center text-[#6B7280] p-6">
-                    <h3 className="text-[16px] font-semibold text-[#4B5563] m-0">
+                  <div className="box-border w-full flex flex-col items-center justify-center gap-3 bg-[var(--background)] rounded-xl border border-dashed border-[var(--border)] font-sans text-center text-[var(--muted-foreground)] p-6">
+                    <h3 className="text-[16px] font-semibold text-[var(--foreground)] m-0">
                       {activeJobTab.charAt(0).toUpperCase() + activeJobTab.slice(1)} View
                     </h3>
-                    <p className="text-[12px] text-[#9CA3AF] m-0 leading-[1.5]">
+                    <p className="text-[12px] text-[var(--muted-foreground)] m-0 leading-[1.5]">
                       This view is currently under development. Fully supported interface structures will be added in a future update.
                     </p>
                   </div>
@@ -2073,7 +2074,7 @@ export default function AIMessageBubble({
                   width: "36px",
                   height: "36px",
                   borderRadius: "24px",
-                  background: liked ? "#EEF2FF" : "transparent",
+                  background: liked ? "var(--primary-tint)" : "transparent",
                   border: "none",
                   cursor: "pointer",
                   transition: "all 0.2s",
@@ -2084,7 +2085,7 @@ export default function AIMessageBubble({
                   icon={liked ? "gravity-ui:thumbs-up-fill" : "gravity-ui:thumbs-up"} 
                   width={20} 
                   height={20} 
-                  style={{ color: liked ? "#6366F1" : "#6B7280" }} 
+                  style={{ color: liked ? "var(--primary)" : "var(--muted-foreground)" }} 
                 />
               </button>
               <button
@@ -2097,7 +2098,7 @@ export default function AIMessageBubble({
                   width: "36px",
                   height: "36px",
                   borderRadius: "24px",
-                  background: disliked ? "#EEF2FF" : "transparent",
+                  background: disliked ? "var(--primary-tint)" : "transparent",
                   border: "none",
                   cursor: "pointer",
                   transition: "all 0.2s",
@@ -2108,7 +2109,7 @@ export default function AIMessageBubble({
                   icon={disliked ? "gravity-ui:thumbs-down-fill" : "gravity-ui:thumbs-down"} 
                   width={20} 
                   height={20} 
-                  style={{ color: disliked ? "#6366F1" : "#6B7280" }} 
+                  style={{ color: disliked ? "var(--primary)" : "var(--muted-foreground)" }} 
                 />
               </button>
               <button
@@ -2132,7 +2133,7 @@ export default function AIMessageBubble({
                   icon={copied ? "tabler:copy-filled" : "tabler:copy"} 
                   width={20} 
                   height={20} 
-                  style={{ color: copied ? "#6366F1" : "#6B7280" }} 
+                  style={{ color: copied ? "var(--primary)" : "var(--muted-foreground)" }} 
                 />
               </button>
               <button
@@ -2152,7 +2153,7 @@ export default function AIMessageBubble({
                 }}
                 title="Retry"
               >
-                <Icon icon="mage:reload" width={20} height={20} style={{ color: "#6B7280" }} />
+                <Icon icon="mage:reload" width={20} height={20} style={{ color: "var(--muted-foreground)" }} />
               </button>
             </div>
           </>

@@ -383,17 +383,17 @@ export default function AIChatPage() {
 
   return (
     <div
-      className={`${poppins.className} w-full h-full min-h-full bg-white box-border ${
+      className={`${poppins.className} w-full h-full min-h-full bg-[var(--background)] box-border ${
         isLunarPanelOpen ? "static" : "relative"
       }`}
     >
       <div
         className={`transition-all duration-300 ${
           isMobile
-            ? `flex flex-col w-full h-full ${isLunarPanelOpen ? "p-0" : "p-4"} bg-white box-border`
+            ? `flex flex-col w-full h-full ${isLunarPanelOpen ? "p-0" : "p-4"} bg-[var(--background)] box-border`
             : isLunarPanelOpen
-            ? "flex flex-row justify-center items-start p-4 px-6 gap-4 absolute w-[1237px] bottom-6 left-[calc(50%-1237px/2+118px)] top-[80px] bg-white box-border"
-            : "flex flex-col flex-grow min-h-0 h-full w-full max-w-[912px] mx-auto bg-white box-border py-6 px-0"
+            ? "flex flex-row justify-center items-start p-4 px-6 gap-4 absolute w-[1237px] bottom-6 left-[calc(50%-1237px/2+118px)] top-[80px] bg-[var(--background)] box-border"
+            : "flex flex-col flex-grow min-h-0 h-full w-full max-w-[912px] mx-auto bg-[var(--background)] box-border py-6 px-0"
         }`}
       >
         {/* Message Panel Frame (Frame 2608939) */}
@@ -424,14 +424,14 @@ export default function AIChatPage() {
                   {isMobile ? (
                     <div className="flex items-center gap-2">
                       <img src="/assets/AI 2.svg" alt="Cyphex" className="w-6 h-6" />
-                      <span className="font-medium text-base text-black" style={{ fontFamily: "Poppins" }}>Cyphex</span>
+                      <span className="font-medium text-base text-[var(--foreground)]" style={{ fontFamily: "Poppins" }}>Cyphex</span>
                     </div>
                   ) : (
                     <button
                       type="button"
-                      className="flex flex-row items-center p-2 gap-[10px] w-10 h-10 bg-white rounded-[24px] border-none cursor-pointer hover:bg-[#F9FAFB] transition-all duration-200"
+                      className="flex flex-row items-center p-2 gap-[10px] w-10 h-10 bg-[var(--background)] rounded-[24px] border border-[var(--border)] cursor-pointer hover:bg-[var(--primary-tint)] transition-all duration-200"
                     >
-                      <Icon icon="mingcute:fullscreen-line" width="24" height="24" className="text-black" />
+                      <Icon icon="mingcute:fullscreen-line" width="24" height="24" className="text-[var(--foreground)]" />
                     </button>
                   )}
 
@@ -441,10 +441,10 @@ export default function AIChatPage() {
                     <button
                       type="button"
                       onClick={() => setIsShareModalOpen(true)}
-                      className="flex items-center justify-center w-10 h-10 p-2 rounded-[24px] bg-white border-none cursor-pointer shadow-[0_0_4px_rgba(99,102,241,0.05)] hover:bg-[#F9FAFB] transition-all duration-200"
+                      className="flex items-center justify-center w-10 h-10 p-2 rounded-[24px] bg-[var(--background)] border border-[var(--border)] cursor-pointer shadow-[var(--card-shadow-inner)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] transition-all duration-200"
                       title="Share"
                     >
-                      <Icon icon="fluent:share-28-regular" width={24} height={24} className="text-black" />
+                      <Icon icon="fluent:share-28-regular" width={24} height={24} className="text-[var(--foreground)] hover:text-inherit" />
                     </button>
 
                     {/* History Icon */}
@@ -458,8 +458,8 @@ export default function AIChatPage() {
                           setLunarPanelMode("history");
                         }
                       }}
-                      className={`flex items-center justify-center w-10 h-10 p-2 rounded-[24px] bg-white border-none cursor-pointer shadow-[0_0_4px_rgba(99,102,241,0.05)] hover:bg-[#F9FAFB] transition-all duration-200 ${
-                        isLunarPanelOpen && lunarPanelMode === "history" ? "bg-[#EEF2FF] text-[#6366F1]" : "text-black"
+                      className={`flex items-center justify-center w-10 h-10 p-2 rounded-[24px] border border-[var(--border)] cursor-pointer shadow-[var(--card-shadow-inner)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] transition-all duration-200 ${
+                        isLunarPanelOpen && lunarPanelMode === "history" ? "bg-[var(--primary-tint)] text-[var(--primary)]" : "bg-[var(--background)] text-[var(--foreground)]"
                       }`}
                       title="History"
                     >
@@ -467,7 +467,7 @@ export default function AIChatPage() {
                         icon="carbon:recently-viewed"
                         width={24}
                         height={24}
-                        className={isLunarPanelOpen && lunarPanelMode === "history" ? "text-[#6366F1]" : "text-black"}
+                        className={isLunarPanelOpen && lunarPanelMode === "history" ? "text-[var(--primary)]" : "text-[var(--foreground)] hover:text-inherit"}
                       />
                     </button>
 
@@ -475,10 +475,10 @@ export default function AIChatPage() {
                     <button
                       type="button"
                       onClick={() => setIsProjectOpen(true)}
-                      className="flex items-center justify-center w-10 h-10 p-2 rounded-[24px] bg-white border-none cursor-pointer shadow-[0_0_4px_rgba(99,102,241,0.05)] hover:bg-[#F9FAFB] transition-all duration-200"
+                      className="flex items-center justify-center w-10 h-10 p-2 rounded-[24px] bg-[var(--background)] border border-[var(--border)] cursor-pointer shadow-[var(--card-shadow-inner)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] transition-all duration-200"
                       title="Project"
                     >
-                      <Icon icon="codicon:github-project" width={24} height={24} className="text-black" />
+                      <Icon icon="codicon:github-project" width={24} height={24} className="text-[var(--foreground)] hover:text-inherit" />
                     </button>
 
                     {/* Special New Chat Button */}
@@ -487,8 +487,8 @@ export default function AIChatPage() {
                       onClick={handleNewChatClick}
                       onMouseEnter={() => setIsNewChatHovered(true)}
                       onMouseLeave={() => setIsNewChatHovered(false)}
-                      className={`flex items-center justify-center w-10 h-10 p-2 rounded-xl border-none cursor-pointer transition-all duration-200 ${
-                        isNewChatHovered || isNewChatClicked ? "bg-[#EEF2FF]" : "bg-transparent"
+                      className={`flex items-center justify-center w-10 h-10 p-2 rounded-xl border border-[var(--border)] cursor-pointer transition-all duration-200 ${
+                        isNewChatHovered || isNewChatClicked ? "bg-[var(--primary-tint)]" : "bg-transparent"
                       }`}
                       title="New Chat"
                     >
@@ -496,7 +496,7 @@ export default function AIChatPage() {
                         icon="iconoir:chat-plus-in"
                         width={24}
                         height={24}
-                        className={(isNewChatHovered || isNewChatClicked) ? "text-[#6366F1]" : "text-black"}
+                        className={(isNewChatHovered || isNewChatClicked) ? "text-[var(--primary)]" : "text-[var(--foreground)]"}
                       />
                     </button>
                   </div>

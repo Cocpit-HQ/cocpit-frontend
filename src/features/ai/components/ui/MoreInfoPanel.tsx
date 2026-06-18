@@ -116,9 +116,9 @@ export default function MoreInfoPanel({
         maxWidth: isMobile ? "100%" : "912px",
         minHeight: "280px",
         height: "auto",
-        background: "#FFFFFF",
-        border: "1px solid #E0E7FF",
-        boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+        background: "var(--background)",
+        border: "1px solid var(--border)",
+        boxShadow: "var(--card-shadow-inner)",
         borderRadius: "24px",
         fontFamily: "Poppins, sans-serif"
       }}
@@ -141,7 +141,7 @@ export default function MoreInfoPanel({
             fontSize: "16px",
             fontWeight: 400,
             lineHeight: "24px",
-            color: "#000000"
+            color: "var(--foreground)"
           }}
         >
           What are you building?
@@ -187,7 +187,7 @@ export default function MoreInfoPanel({
                 icon="lucide:chevron-left"
                 width="20"
                 height="20"
-                style={{ color: currentPage === 1 ? "#9CA3AF" : "#6366F1" }}
+                style={{ color: currentPage === 1 ? "var(--muted-foreground)" : "var(--primary)" }}
               />
             </button>
 
@@ -197,7 +197,7 @@ export default function MoreInfoPanel({
                 fontFamily: "Poppins, sans-serif",
                 fontSize: "14px",
                 fontWeight: 400,
-                color: "#000000",
+                color: "var(--foreground)",
                 userSelect: "none"
               }}
             >
@@ -225,7 +225,7 @@ export default function MoreInfoPanel({
                 icon="lucide:chevron-right"
                 width="20"
                 height="20"
-                style={{ color: currentPage === totalPages ? "#9CA3AF" : "#6366F1" }}
+                style={{ color: currentPage === totalPages ? "var(--muted-foreground)" : "var(--primary)" }}
               />
             </button>
           </div>
@@ -247,7 +247,7 @@ export default function MoreInfoPanel({
             onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           >
-            <Icon icon="ri:close-line" width="24" height="24" style={{ color: "#000000" }} />
+            <Icon icon="ri:close-line" width="24" height="24" style={{ color: "var(--foreground)" }} />
           </button>
         </div>
       </div>
@@ -289,13 +289,13 @@ export default function MoreInfoPanel({
                   flexDirection: "row",
                   alignItems: "center",
                   borderRadius: "12px",
-                  background: isSelected ? "#EEF2FF" : "transparent",
+                  background: isSelected ? "var(--primary-tint)" : "transparent",
                   cursor: "pointer",
                   transition: "background-color 0.2s ease"
                 }}
                 onMouseEnter={(e) => {
                   if (!isSelected) {
-                    e.currentTarget.style.backgroundColor = "#F9FAFB";
+                    e.currentTarget.style.backgroundColor = "var(--profile-hover)";
                   }
                 }}
                 onMouseLeave={(e) => {
@@ -317,7 +317,7 @@ export default function MoreInfoPanel({
                     fontFamily: "Poppins, sans-serif",
                     fontSize: "16px",
                     fontWeight: 400,
-                    color: isCustomActive ? "#9CA3AF" : "#6B7280"
+                    color: "var(--muted-foreground)"
                   }}
                 >
                   {absoluteIdx + 1}
@@ -329,7 +329,7 @@ export default function MoreInfoPanel({
                     fontFamily: "Poppins, sans-serif",
                     fontSize: "16px",
                     lineHeight: "24px",
-                    color: isCustomActive ? "#9CA3AF" : "#000000"
+                    color: isCustomActive ? "var(--muted-foreground)" : "var(--foreground)"
                   }}
                 >
                   {option}
@@ -351,9 +351,9 @@ export default function MoreInfoPanel({
             alignItems: "flex-end",
             justifyContent: "space-between",
             borderRadius: "12px",
-            background: isCustomActive ? "#EEF2FF" : "transparent",
-            borderTop: isCustomActive ? "none" : "1px solid #EEF2FF",
-            border: customText.length === 4000 ? "1px solid #FF6B6B" : undefined,
+            background: isCustomActive ? "var(--primary-tint)" : "transparent",
+            borderTop: isCustomActive ? "none" : "1px solid var(--primary-tint)",
+            border: customText.length === 4000 ? "1px solid var(--destructive)" : undefined,
             transition: "all 0.2s ease",
             marginTop: "auto"
           }}
@@ -375,7 +375,7 @@ export default function MoreInfoPanel({
               height="20"
               style={{
                 marginRight: "16px",
-                color: isCustomActive ? "#6366F1" : "#6B7280",
+                color: isCustomActive ? "var(--primary)" : "var(--muted-foreground)",
                 marginBottom: "6px"
               }}
             />
@@ -400,7 +400,7 @@ export default function MoreInfoPanel({
                 fontFamily: "Poppins, sans-serif",
                 fontSize: "16px",
                 lineHeight: "24px",
-                color: isCustomActive ? "#000000" : "#6B7280",
+                color: isCustomActive ? "var(--foreground)" : "var(--muted-foreground)",
                 resize: "none",
                 height: "24px",
                 overflowY: "auto",
@@ -430,7 +430,7 @@ export default function MoreInfoPanel({
                   icon="lucide:chevron-right"
                   width="24"
                   height="24"
-                  style={{ color: "#6366F1" }}
+                  style={{ color: "var(--primary)" }}
                 />
               </button>
             ) : (
@@ -443,7 +443,7 @@ export default function MoreInfoPanel({
                   cursor: "pointer",
                   fontFamily: "Poppins, sans-serif",
                   fontSize: "14px",
-                  color: "#6366F1"
+                  color: "var(--primary)"
                 }}
               >
                 Skip
@@ -455,7 +455,7 @@ export default function MoreInfoPanel({
           <div
             style={{
               alignSelf: "flex-end",
-              color: "#FF6B6B",
+              color: "var(--destructive)",
               fontFamily: "Poppins",
               fontSize: "14px",
               marginTop: "4px",

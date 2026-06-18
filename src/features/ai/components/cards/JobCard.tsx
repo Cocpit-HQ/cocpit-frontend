@@ -36,9 +36,9 @@ export default function JobCard({ job }: JobCardProps) {
         maxWidth: "427px",
         height: isMobile ? "auto" : "266px",
         minHeight: isMobile ? "266px" : undefined,
-        background: "#FFFFFF",
-        border: "1px solid #EEF2FF",
-        boxShadow: "0px 2px 4px rgba(99, 102, 241, 0.05)",
+        background: "var(--background)",
+        border: "1px solid var(--border)",
+        boxShadow: "var(--card-shadow-inner)",
         borderRadius: "24px",
         boxSizing: "border-box",
         fontFamily: "'Poppins', sans-serif",
@@ -61,7 +61,7 @@ export default function JobCard({ job }: JobCardProps) {
               fontWeight: 500,
               fontSize: "16px",
               lineHeight: "24px",
-              color: "#000000",
+              color: "var(--foreground)",
               margin: 0,
             }}
           >
@@ -72,7 +72,7 @@ export default function JobCard({ job }: JobCardProps) {
               fontWeight: 400,
               fontSize: "14px",
               lineHeight: "20px",
-              color: "#6B7280",
+              color: "var(--muted-foreground)",
               marginTop: "2px",
             }}
           >
@@ -83,7 +83,7 @@ export default function JobCard({ job }: JobCardProps) {
         {/* Right Icon Pill */}
         <div
           style={{
-            background: "#E0E7FF",
+            background: "var(--primary-tint)",
             borderRadius: "24px",
             padding: "8px 16px",
             width: "56px",
@@ -99,7 +99,7 @@ export default function JobCard({ job }: JobCardProps) {
             <Icon
               icon="hugeicons:job-search"
               style={{
-                color: "#6366F1",
+                color: "var(--primary)",
                 position: "absolute",
                 left: "8.33%",
                 right: "8.33%",
@@ -123,11 +123,11 @@ export default function JobCard({ job }: JobCardProps) {
           boxSizing: "border-box",
         }}
       >
-        <Icon icon="solar:case-linear" width={18} height={18} style={{ color: "#000000", flexShrink: 0 }} />
+        <Icon icon="solar:case-linear" width={18} height={18} style={{ color: "var(--foreground)", flexShrink: 0 }} />
         <span
           style={{
             fontSize: "14px",
-            color: "#000000",
+            color: "var(--foreground)",
             fontFamily: "Poppins",
             whiteSpace: "nowrap",
           }}
@@ -138,16 +138,16 @@ export default function JobCard({ job }: JobCardProps) {
           style={{
             width: "6px",
             height: "6px",
-            backgroundColor: "#000000",
+            backgroundColor: "var(--foreground)",
             borderRadius: "50%",
             flexShrink: 0,
           }}
         />
-        <Icon icon="ph:map-pin" width={18} height={18} style={{ color: "#000000", flexShrink: 0 }} />
+        <Icon icon="ph:map-pin" width={18} height={18} style={{ color: "var(--foreground)", flexShrink: 0 }} />
         <span
           style={{
             fontSize: "14px",
-            color: "#000000",
+            color: "var(--foreground)",
             fontFamily: "Poppins",
             whiteSpace: "nowrap",
             overflow: "hidden",
@@ -170,12 +170,12 @@ export default function JobCard({ job }: JobCardProps) {
           boxSizing: "border-box",
         }}
       >
-        <Icon icon="solar:document-text-linear" width={18} height={18} style={{ color: "#000000", flexShrink: 0 }} />
+        <Icon icon="solar:document-text-linear" width={18} height={18} style={{ color: "var(--foreground)", flexShrink: 0 }} />
         <p
           style={{
             fontSize: "14px",
             lineHeight: "20px",
-            color: "#6B7280",
+            color: "var(--muted-foreground)",
             margin: 0,
             whiteSpace: "nowrap",
             overflow: "hidden",
@@ -207,7 +207,7 @@ export default function JobCard({ job }: JobCardProps) {
                 style={{
                   width: "4px",
                   height: "4px",
-                  backgroundColor: "#6B7280",
+                  backgroundColor: "var(--muted-foreground)",
                   borderRadius: "50%",
                   flexShrink: 0,
                 }}
@@ -217,7 +217,7 @@ export default function JobCard({ job }: JobCardProps) {
               style={{
                 fontSize: "12px",
                 lineHeight: "16px",
-                color: "#6B7280",
+                color: "var(--muted-foreground)",
                 fontFamily: "Poppins",
               }}
             >
@@ -234,7 +234,7 @@ export default function JobCard({ job }: JobCardProps) {
           alignItems: "center",
           padding: "4px 8px",
           gap: "8px",
-          background: "#EEF2FF",
+          background: "var(--primary-tint)",
           borderRadius: "12px",
           boxSizing: "border-box",
           maxWidth: "100%",
@@ -253,7 +253,7 @@ export default function JobCard({ job }: JobCardProps) {
           style={{
             fontSize: "12px",
             lineHeight: "16px",
-            color: "#6366F1",
+            color: "var(--primary)",
             fontFamily: "Poppins",
             fontWeight: 500,
             whiteSpace: "nowrap",
@@ -281,7 +281,7 @@ export default function JobCard({ job }: JobCardProps) {
           style={{
             fontSize: "12px",
             lineHeight: "16px",
-            color: "#6B7280",
+            color: "var(--muted-foreground)",
             fontFamily: "Poppins",
             }}
         >
@@ -294,12 +294,12 @@ export default function JobCard({ job }: JobCardProps) {
           <button
             type="button"
             style={{
-              background: "#6366F1",
-              border: "1px solid #FFFFFF",
+              background: "var(--primary)",
+              border: "1px solid var(--background)",
               borderRadius: "24px",
               width: "120px",
               height: "40px",
-              color: "#FFFFFF",
+              color: "var(--primary-foreground)",
               fontSize: "14px",
               lineHeight: "20px",
               fontFamily: "Poppins",
@@ -333,7 +333,7 @@ export default function JobCard({ job }: JobCardProps) {
               icon={isSaved ? "solar:bookmark-bold" : "solar:bookmark-linear"}
               width={24}
               height={24}
-              style={{ color: isSaved ? "#6366F1" : "#6B7280" }}
+              style={{ color: isSaved ? "var(--primary)" : "var(--muted-foreground)" }}
             />
           </button>
         </div>

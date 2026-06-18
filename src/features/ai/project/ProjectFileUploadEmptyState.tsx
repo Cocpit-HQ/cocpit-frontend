@@ -38,7 +38,7 @@ export default function ProjectFileUploadEmptyState({
         width: "100%",
         maxWidth: "348px",
         height: "140px",
-        border: "1px dashed #D1D5DB",
+        border: "1px dashed var(--border)",
         borderRadius: "12px",
         cursor: "pointer",
         alignSelf: "center",
@@ -53,15 +53,15 @@ export default function ProjectFileUploadEmptyState({
         accept="image/*,.pdf,.doc,.docx,.txt"
         style={{ display: "none" }}
       />
-
+ 
       {/* Upload Icon */}
       <Icon
         icon="iconoir:cloud-upload"
         width={40}
         height={40}
-        style={{ color: "#6B7280" }}
+        style={{ color: "var(--muted-foreground)" }}
       />
-
+ 
       {/* Empty State Text Section */}
       <div
         style={{
@@ -79,12 +79,12 @@ export default function ProjectFileUploadEmptyState({
             fontSize: "16px",
             fontWeight: 500,
             lineHeight: "24px",
-            color: "#000000",
+            color: "var(--foreground)",
           }}
         >
           Drop or upload documents
         </span>
-
+ 
         {/* Subtitle */}
         <span
           style={{
@@ -92,7 +92,7 @@ export default function ProjectFileUploadEmptyState({
             fontSize: "12px",
             fontWeight: 400,
             lineHeight: "16px",
-            color: "#6B7280",
+            color: "var(--muted-foreground)",
             maxWidth: "300px",
           }}
         >

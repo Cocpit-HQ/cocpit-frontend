@@ -23,14 +23,14 @@ export default function InlineError({ error }: InlineErrorProps) {
         <div className="absolute left-[11.46%] right-[11.46%] top-[11.46%] bottom-[11.46%] flex items-center justify-center">
           <Icon
             icon="solar:info-circle-linear"
-            className="w-full h-full text-[#FF6B6B]"
+            className="w-full h-full text-[var(--destructive)]"
           />
         </div>
       </div>
 
       {/* Error Text */}
       <span
-        className={`max-w-full h-6 font-['Poppins'] not-italic font-normal text-[16px] leading-[24px] flex items-center text-[#FF6B6B] flex-none order-1 grow-0 ${errorWidthClass}`}
+        className={`max-w-full h-6 font-['Poppins'] not-italic font-normal text-[16px] leading-[24px] flex items-center text-[var(--destructive)] flex-none order-1 grow-0 ${errorWidthClass}`}
       >
         {errorText}
       </span>

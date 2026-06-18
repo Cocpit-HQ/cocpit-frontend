@@ -62,7 +62,7 @@ export default function ProjectFileItem({ file, onDelete }: ProjectFileItemProps
         height: "56px",
         width: "100%",
         borderRadius: "12px",
-        backgroundColor: isHovered ? "#EEF2FF" : "transparent",
+        backgroundColor: isHovered ? "var(--primary-tint)" : "transparent",
         transition: "background-color 0.2s ease-in-out",
       }}
     >
@@ -86,11 +86,11 @@ export default function ProjectFileItem({ file, onDelete }: ProjectFileItemProps
               width: "40px",
               height: "40px",
               borderRadius: "12px",
-              backgroundColor: "#EF5350",
+              backgroundColor: "var(--destructive)",
               flexShrink: 0,
             }}
           >
-            <Icon icon="bi:file-earmark-pdf-fill" width={20} height={20} style={{ color: "#FFFFFF" }} />
+            <Icon icon="bi:file-earmark-pdf-fill" width={20} height={20} style={{ color: "var(--destructive-foreground)" }} />
           </div>
         ) : (
           <div
@@ -119,15 +119,15 @@ export default function ProjectFileItem({ file, onDelete }: ProjectFileItemProps
                   justifyContent: "center",
                   width: "100%",
                   height: "100%",
-                  backgroundColor: "#E0E7FF",
+                  backgroundColor: "var(--primary-tint)",
                 }}
               >
-                <Icon icon="solar:image-linear" width={20} height={20} style={{ color: "#6366F1" }} />
+                <Icon icon="solar:image-linear" width={20} height={20} style={{ color: "var(--primary)" }} />
               </div>
             )}
           </div>
         )}
-
+ 
         {/* File Details */}
         <div
           style={{
@@ -146,7 +146,7 @@ export default function ProjectFileItem({ file, onDelete }: ProjectFileItemProps
               fontSize: "14px",
               fontWeight: 600,
               lineHeight: "20px",
-              color: "#000000",
+              color: "var(--foreground)",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -155,7 +155,7 @@ export default function ProjectFileItem({ file, onDelete }: ProjectFileItemProps
           >
             {file.name}
           </span>
-
+ 
           {/* File Meta Row */}
           <div
             style={{
@@ -165,7 +165,7 @@ export default function ProjectFileItem({ file, onDelete }: ProjectFileItemProps
               fontSize: "12px",
               fontWeight: 400,
               lineHeight: "16px",
-              color: "#6B7280",
+              color: "var(--muted-foreground)",
             }}
           >
             <span>{isDocument ? "Document" : "Image"}</span>
@@ -175,7 +175,7 @@ export default function ProjectFileItem({ file, onDelete }: ProjectFileItemProps
                 width: "6px",
                 height: "6px",
                 borderRadius: "50%",
-                backgroundColor: "#6B7280",
+                backgroundColor: "var(--muted-foreground)",
                 margin: "0 8px",
               }}
             />
@@ -183,7 +183,7 @@ export default function ProjectFileItem({ file, onDelete }: ProjectFileItemProps
           </div>
         </div>
       </div>
-
+ 
       {/* Delete Icon (Show only on hover) */}
       <div
         style={{
@@ -215,7 +215,7 @@ export default function ProjectFileItem({ file, onDelete }: ProjectFileItemProps
             }}
             title="Delete file"
           >
-            <Icon icon="hugeicons:delete-02" width={24} height={24} style={{ color: "#FF6B6B" }} />
+            <Icon icon="hugeicons:delete-02" width={24} height={24} style={{ color: "var(--destructive)" }} />
           </button>
         )}
       </div>

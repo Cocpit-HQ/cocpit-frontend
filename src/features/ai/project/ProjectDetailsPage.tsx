@@ -388,7 +388,7 @@ export default function ProjectDetailsPage({
           alignItems: "stretch",
           padding: isMobile ? "16px 16px 0px 16px" : "16px",
           gap: isMobile ? "0px" : "16px",
-          background: "#FFFFFF",
+          background: "var(--background)",
           width: "100%",
           height: "100%",
           borderRadius: isMobile ? "24px 24px 0px 0px" : "24px",
@@ -405,7 +405,7 @@ export default function ProjectDetailsPage({
             onClose={onClose}
           />
         )}
-
+ 
         {/* Main Content Section */}
         {isMobile ? (
           activeChatId === null ? (
@@ -453,7 +453,7 @@ export default function ProjectDetailsPage({
                 display: "flex",
                 flexDirection: "column",
                 flexGrow: 1,
-                background: "#FFFFFF",
+                background: "var(--background)",
                 borderRadius: "24px 24px 0px 0px",
                 boxSizing: "border-box",
                 overflow: "hidden",
@@ -495,7 +495,7 @@ export default function ProjectDetailsPage({
                       setIsDeleteOpen(true);
                     }}
                   />
-
+ 
                   {/* Message List */}
                   <div style={{ flexGrow: 1, overflowY: "auto", minHeight: 0, padding: "16px", marginBottom: "0px" }}>
                     <AIMessageList
@@ -506,7 +506,7 @@ export default function ProjectDetailsPage({
                       error={null}
                     />
                   </div>
-
+ 
                   {/* Input Area */}
                   <div style={{ padding: "0 16px 16px 16px" }}>
                     <AIChatInput
@@ -569,14 +569,14 @@ export default function ProjectDetailsPage({
                 onUpdateProjects(updatedProjects);
               }}
             />
-
+ 
             {/* Right Content Panel */}
             <div
               style={{
                 display: "flex",
                 flexDirection: "column",
                 flexGrow: 1,
-                background: "#FFFFFF",
+                background: "var(--background)",
                 borderRadius: "24px",
                 boxSizing: "border-box",
                 overflow: "hidden",

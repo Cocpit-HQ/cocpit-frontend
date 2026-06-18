@@ -184,14 +184,14 @@ export default function ProjectScreen({
         left: isMobile ? "auto" : "50%",
         transform: isMobile ? "none" : "translateX(-50%)",
         top: isMobile ? "auto" : "20px",
-        background: "#FFFFFF",
+        background: "var(--background)",
         boxSizing: "border-box",
       }}
       className="project-screen-container h-full"
     >
       {/* Header Section */}
       <ProjectHeader onClose={onClose} />
-
+ 
       {/* Main Content Area */}
       <div
         style={{
@@ -222,7 +222,7 @@ export default function ProjectScreen({
                   gap: "10px",
                   width: "100%",
                   height: "40px",
-                  border: "1px solid #6B7280",
+                  border: "1px solid var(--border)",
                   borderRadius: "24px",
                 }}
               >
@@ -242,18 +242,18 @@ export default function ProjectScreen({
                     fontWeight: 400,
                     fontSize: "16px",
                     lineHeight: "24px",
-                    color: "#000000",
+                    color: "var(--foreground)",
                   }}
-                  className="placeholder-[#6B7280]"
+                  className="placeholder-[var(--muted-foreground)]"
                 />
                 <Icon
                   icon="ph:magnifying-glass-light"
                   width="24"
                   height="24"
-                  style={{ color: "#6B7280", flexShrink: 0 }}
+                  style={{ color: "var(--muted-foreground)", flexShrink: 0 }}
                 />
               </div>
-
+ 
               {/* New Project Button Frame */}
               <button
                 type="button"
@@ -268,8 +268,8 @@ export default function ProjectScreen({
                   gap: "10px",
                   width: "100%",
                   height: "40px",
-                  background: "#6366F1",
-                  border: "1px solid #FFFFFF",
+                  background: "var(--primary)",
+                  border: "1px solid var(--border)",
                   borderRadius: "24px",
                   cursor: "pointer",
                   outline: "none",
@@ -282,7 +282,7 @@ export default function ProjectScreen({
                   icon={PROJECT_ICONS.plus}
                   width="24"
                   height="24"
-                  style={{ color: "#FFFFFF" }}
+                  style={{ color: "var(--primary-foreground)" }}
                 />
                 <span
                   style={{
@@ -291,7 +291,7 @@ export default function ProjectScreen({
                     fontSize: "14px",
                     lineHeight: "20px",
                     textAlign: "center",
-                    color: "#FFFFFF",
+                    color: "var(--primary-foreground)",
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -323,12 +323,12 @@ export default function ProjectScreen({
                   fontSize: "48px",
                   lineHeight: "56px",
                   textTransform: "uppercase",
-                  color: "#000000",
+                  color: "var(--foreground)",
                 }}
               >
                 {PROJECT_STRINGS.title}
               </h1>
-
+ 
               {/* Search Input Frame */}
               {projects.length > 0 && (
                 <div
@@ -342,7 +342,7 @@ export default function ProjectScreen({
                     gap: "10px",
                     width: "360px",
                     height: "40px",
-                    border: "1px solid #6B7280",
+                    border: "1px solid var(--border)",
                     borderRadius: "24px",
                   }}
                 >
@@ -362,20 +362,20 @@ export default function ProjectScreen({
                       fontWeight: 400,
                       fontSize: "16px",
                       lineHeight: "24px",
-                      color: "#000000",
+                      color: "var(--foreground)",
                     }}
-                    className="placeholder-[#6B7280]"
+                    className="placeholder-[var(--muted-foreground)]"
                   />
                   <Icon
                     icon="ph:magnifying-glass-light"
                     width="24"
                     height="24"
-                    style={{ color: "#6B7280", flexShrink: 0 }}
+                    style={{ color: "var(--muted-foreground)", flexShrink: 0 }}
                   />
                 </div>
               )}
             </div>
-
+ 
             {/* New Project Button Frame */}
             {projects.length > 0 && (
               <button
@@ -391,8 +391,8 @@ export default function ProjectScreen({
                   gap: "10px",
                   width: "150px",
                   height: "40px",
-                  background: "#6366F1",
-                  border: "1px solid #FFFFFF",
+                  background: "var(--primary)",
+                  border: "1px solid var(--border)",
                   borderRadius: "24px",
                   cursor: "pointer",
                   outline: "none",
@@ -405,7 +405,7 @@ export default function ProjectScreen({
                   icon={PROJECT_ICONS.plus}
                   width="24"
                   height="24"
-                  style={{ color: "#FFFFFF" }}
+                  style={{ color: "var(--primary-foreground)" }}
                 />
                 <span
                   style={{
@@ -414,7 +414,7 @@ export default function ProjectScreen({
                     fontSize: "14px",
                     lineHeight: "20px",
                     textAlign: "center",
-                    color: "#FFFFFF",
+                    color: "var(--primary-foreground)",
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -571,12 +571,12 @@ function ProjectListItemWrapper({
         gap: "8px",
         width: isMobile ? "100%" : "912px",
         height: "94px",
-        borderBottom: "1px solid #E0E7FF",
+        borderBottom: "1px solid var(--border)",
         boxSizing: "border-box",
         cursor: "pointer",
         position: "relative",
       }}
-      className="hover:bg-[#F9FAFB] transition-all duration-200"
+      className="hover:bg-[var(--primary-tint)] transition-all duration-200"
     >
       {/* Inner Row */}
       <div
@@ -614,7 +614,7 @@ function ProjectListItemWrapper({
               fontWeight: 500,
               fontSize: "18px",
               lineHeight: "26px",
-              color: "#000000",
+              color: "var(--foreground)",
               width: "100%",
               whiteSpace: "nowrap",
               overflow: "hidden",
@@ -624,7 +624,7 @@ function ProjectListItemWrapper({
           >
             {project.name}
           </span>
-
+ 
           {/* Metadata Row */}
           <div
             style={{
@@ -645,12 +645,12 @@ function ProjectListItemWrapper({
                 fontWeight: 400,
                 fontSize: "14px",
                 lineHeight: "20px",
-                color: "#6B7280",
+                color: "var(--muted-foreground)",
               }}
             >
               {chatsCount} {chatsCount === 1 ? "chat" : "chats"}
             </span>
-
+ 
             {/* Updated Time */}
             <span
               style={{
@@ -658,14 +658,14 @@ function ProjectListItemWrapper({
                 fontWeight: 400,
                 fontSize: "14px",
                 lineHeight: "20px",
-                color: "#6B7280",
+                color: "var(--muted-foreground)",
               }}
             >
               {updatedText}
             </span>
           </div>
         </div>
-
+ 
         {/* Right Actions Container */}
         <div
           style={{
@@ -693,13 +693,13 @@ function ProjectListItemWrapper({
               cursor: "pointer",
               padding: 0,
               outline: "none",
-              color: project.pinned ? "#000000" : "#6B7280",
+              color: project.pinned ? "var(--foreground)" : "var(--muted-foreground)",
               opacity: (project.pinned || isHovered || isMenuOpen) ? 1 : 0,
               pointerEvents: (project.pinned || isHovered || isMenuOpen) ? "auto" : "none",
               transition: "opacity 0.2s ease-in-out",
             }}
             title={project.pinned ? "Unpin project" : "Pin project"}
-            className="hover:text-[#6366F1] transition-all"
+            className="hover:text-[var(--primary)] transition-all"
           >
             <Icon
               icon={project.pinned ? "iconoir:pin-slash" : "iconoir:pin"}
@@ -707,7 +707,7 @@ function ProjectListItemWrapper({
               height="24"
             />
           </button>
-
+ 
           {/* Menu Dropdown Button */}
           <ProjectActionsMenu
             isPinned={!!project.pinned}
@@ -730,10 +730,10 @@ function ProjectListItemWrapper({
                   cursor: "pointer",
                   padding: 0,
                   outline: "none",
-                  color: "#000000",
+                  color: "var(--foreground)",
                 }}
                 title="Actions"
-                className="hover:text-[#6366F1] transition-colors"
+                className="hover:text-[var(--primary)] transition-colors"
               >
                 <Icon icon="ph:dots-three-outline-vertical-light" width={24} height={24} />
               </button>

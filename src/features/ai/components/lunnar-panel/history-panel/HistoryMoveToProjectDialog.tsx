@@ -37,14 +37,14 @@ export default function HistoryMoveToProjectDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="max-w-[360px] w-[90%] p-6 bg-white outline outline-1 outline-offset-[-1px] outline-indigo-200 shadow-lg flex flex-col font-sans border-none"
+        className="max-w-[360px] w-[90%] p-6 bg-[var(--card)] outline outline-1 outline-offset-[-1px] outline-[var(--border)] shadow-lg flex flex-col font-sans border-none"
         style={{
           borderRadius: "24px",
         }}
       >
         <div className="self-stretch inline-flex flex-col justify-start items-center gap-4">
           <div className="flex flex-col justify-start items-center gap-2">
-            <DialogTitle className="text-center justify-start text-black text-lg font-medium font-['Poppins'] leading-6">
+            <DialogTitle className="text-center justify-start text-[var(--foreground)] text-lg font-medium font-['Poppins'] leading-6">
               Move chat
             </DialogTitle>
           </div>
@@ -56,15 +56,15 @@ export default function HistoryMoveToProjectDialog({
                 key={project}
                 type="button"
                 onClick={() => handleSelectProject(project)}
-                className="self-stretch h-12 px-4 py-2 inline-flex justify-start items-center gap-2 rounded-3xl bg-transparent border-none cursor-pointer hover:bg-[#EEF2FF] transition-all duration-200 outline-none text-left"
+                className="self-stretch h-12 px-4 py-2 inline-flex justify-start items-center gap-2 rounded-3xl bg-transparent border-none cursor-pointer hover:bg-[var(--primary-tint)] transition-all duration-200 outline-none text-left"
               >
                 <Icon
                   icon="solar:folder-linear"
                   width={24}
                   height={24}
-                  className="text-black flex-shrink-0"
+                  className="text-[var(--foreground)] flex-shrink-0"
                 />
-                <span className="justify-center text-black text-base font-normal font-['Poppins'] leading-6">
+                <span className="justify-center text-[var(--foreground)] text-base font-normal font-['Poppins'] leading-6">
                   {project}
                 </span>
               </button>
@@ -77,15 +77,15 @@ export default function HistoryMoveToProjectDialog({
               alert("Create new project action clicked");
               onClose();
             }}
-            className="self-stretch h-10 px-4 bg-white rounded-3xl border border-[#818CF8] inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-[#EEF2FF] transition-all duration-200 outline-none"
+            className="self-stretch h-10 px-4 bg-[var(--background)] rounded-3xl border border-[var(--primary)] inline-flex justify-center items-center gap-2.5 cursor-pointer hover:bg-[var(--primary-tint)] transition-all duration-200 outline-none"
           >
             <Icon
               icon="lucide:plus"
               width={24}
               height={24}
-              className="text-[#818CF8] flex-shrink-0"
+              className="text-[var(--primary)] flex-shrink-0"
             />
-            <span className="text-center text-[#818CF8] text-sm font-normal font-['Poppins'] leading-5">
+            <span className="text-center text-[var(--primary)] text-sm font-normal font-['Poppins'] leading-5">
               New project
             </span>
           </button>

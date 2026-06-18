@@ -18,12 +18,12 @@ export default function GraphCard({ title, type = "graph", onClick, isActive = f
       onClick={onClick}
       className={`box-border flex flex-row items-center px-2 gap-2 w-[228px] h-[56px] rounded-xl cursor-pointer mt-2 select-none transition-all duration-200 ${
         isActive
-          ? "border border-[#6366F1] bg-[#EEF2FF]/30 shadow-[0_2px_4px_rgba(99,102,241,0.1)]"
-          : "border border-[#DADADA] bg-white hover:border-[#6366F1] hover:shadow-[0_2px_4px_rgba(99,102,241,0.1)]"
+          ? "border border-[var(--primary)] bg-[var(--primary-tint)]/30 shadow-[var(--card-shadow-inner)]"
+          : "border border-[var(--border)] bg-[var(--background)] hover:border-[var(--primary)] hover:shadow-[var(--card-shadow-inner)]"
       }`}
     >
       {/* Icon/Illustration Container (40x40) */}
-      <div className="w-[40px] h-[40px] rounded-lg bg-[#EEF2FF] flex items-center justify-center shrink-0">
+      <div className="w-[40px] h-[40px] rounded-lg bg-[var(--primary-tint)] flex items-center justify-center shrink-0">
         {isChart ? (
           <Icon icon="flat-color-icons:pie-chart" width="24" height="24" />
         ) : (
@@ -33,10 +33,10 @@ export default function GraphCard({ title, type = "graph", onClick, isActive = f
 
       {/* Title & Subtitle */}
       <div className="flex flex-col justify-center min-w-0 flex-1 font-sans">
-        <div className="text-[14px] font-semibold text-[#1F2937] truncate leading-tight">
+        <div className="text-[14px] font-semibold text-[var(--foreground)] truncate leading-tight">
           {title}
         </div>
-        <div className="text-[12px] font-normal text-[#6B7280] leading-tight mt-[2px]">
+        <div className="text-[12px] font-normal text-[var(--muted-foreground)] leading-tight mt-[2px]">
           {isChart ? "Chart" : "Graph"}
         </div>
       </div>

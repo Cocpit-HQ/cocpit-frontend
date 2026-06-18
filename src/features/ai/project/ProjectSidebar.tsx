@@ -125,8 +125,8 @@ export default function ProjectSidebar({
         gap: "16px",
         width: isMobile ? "100%" : "380px",
         minWidth: isMobile ? "100%" : "380px",
-        background: "#FFFFFF",
-        border: isMobile ? "none" : "1px solid #EEF2FF",
+        background: "var(--background)",
+        border: isMobile ? "none" : "1px solid var(--border)",
         borderRadius: isMobile ? "0px" : "24px",
         height: "100%",
         overflow: "hidden", // Prevent card content from bleeding
@@ -154,10 +154,10 @@ export default function ProjectSidebar({
           gap: "12px",
           width: "100%",
           height: "56px",
-          background: "#FFFFFF",
-          border: "1px solid #E0E7FF",
+          background: "var(--background)",
+          border: "1px solid var(--border)",
           borderRadius: "24px",
-          boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+          boxShadow: "var(--card-shadow-inner)",
           flexShrink: 0,
         }}
       >
@@ -167,7 +167,7 @@ export default function ProjectSidebar({
             icon="ri:link" 
             width="24" 
             height="24" 
-            style={{ color: "#6B7280", flexShrink: 0 }} 
+            style={{ color: "var(--muted-foreground)", flexShrink: 0 }} 
           />
           <input
             type="text"
@@ -183,12 +183,12 @@ export default function ProjectSidebar({
               fontWeight: 400,
               fontSize: "14px",
               lineHeight: "20px",
-              color: "#000000",
+              color: "var(--foreground)",
               width: "100%",
             }}
           />
         </div>
-
+ 
         {/* Send Button */}
         <button
           type="button"
@@ -199,7 +199,7 @@ export default function ProjectSidebar({
             justifyContent: "center",
             width: "56px",
             height: "40px",
-            background: "#FFFFFF",
+            background: "var(--background)",
             borderRadius: "24px",
             border: "none",
             cursor: searchQuery.trim() ? "pointer" : "default",
@@ -208,7 +208,7 @@ export default function ProjectSidebar({
             boxSizing: "border-box",
             flexShrink: 0,
           }}
-          className="hover:bg-[#F9FAFB] transition-all"
+          className="hover:bg-[var(--primary-tint)] transition-all"
           title="Send"
         >
           <Icon
@@ -216,12 +216,12 @@ export default function ProjectSidebar({
             width="24"
             height="24"
             style={{
-              color: searchQuery.trim() ? "#6366F1" : "#6B7280",
+              color: searchQuery.trim() ? "var(--primary)" : "var(--muted-foreground)",
             }}
           />
         </button>
       </div>
-
+ 
       {/* Filter Chip Section */}
       <div style={{ flexShrink: 0 }}>
         <ProjectFilterTabs
@@ -229,7 +229,7 @@ export default function ProjectSidebar({
           onChangeTab={handleTabChange}
         />
       </div>
-
+ 
       {/* Chat Count */}
       {activeTab === "Chats" && (
         <div
@@ -238,7 +238,7 @@ export default function ProjectSidebar({
             fontWeight: 400,
             fontSize: "14px",
             lineHeight: "20px",
-            color: "#6B7280",
+            color: "var(--muted-foreground)",
             marginTop: "4px",
             flexShrink: 0,
           }}
@@ -246,7 +246,7 @@ export default function ProjectSidebar({
           {computedChatCount} {computedChatCount === 1 ? "chat" : "chats"}
         </div>
       )}
-
+ 
       {/* Files Section Title */}
       {activeTab === "Files" && (
         <div
@@ -255,7 +255,7 @@ export default function ProjectSidebar({
             fontWeight: 400,
             fontSize: "14px",
             lineHeight: "20px",
-            color: "#000000",
+            color: "var(--foreground)",
             marginTop: "4px",
             flexShrink: 0,
           }}
@@ -263,7 +263,7 @@ export default function ProjectSidebar({
           Add project source
         </div>
       )}
-
+ 
       {/* Empty Chat Message or Chat List */}
       {activeTab === "Chats" && (
         computedChatCount === 0 ? (
@@ -273,7 +273,7 @@ export default function ProjectSidebar({
               fontWeight: 400,
               fontSize: "12px",
               lineHeight: "16px",
-              color: "#6B7280",
+              color: "var(--muted-foreground)",
               width: "100%",
               boxSizing: "border-box",
               flexShrink: 0,

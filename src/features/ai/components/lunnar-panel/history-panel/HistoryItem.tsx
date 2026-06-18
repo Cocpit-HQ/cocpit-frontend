@@ -37,14 +37,14 @@ export default function HistoryItem({
   };
 
   const isRowActive = isHovered || isMenuOpen;
-  // Apply ultra light background (#EEF2FF) on hover or while menu is open
-  const rowBackground = isRowActive ? "#EEF2FF" : "transparent";
+  // Apply ultra light background on hover or while menu is open
+  const rowBackground = isRowActive ? "var(--primary-tint)" : "transparent";
 
-  // Text color is purple (#6366F1) on active row (hover/menu open) or if pinned on mobile.
-  // On desktop, it is purple only if pinned.
+  // Text color is primary on active row (hover/menu open) or if pinned on mobile.
+  // On desktop, it is primary only if pinned.
   const textColor = isMobile
-    ? ((item.isPinned || isRowActive) ? "#6366F1" : "#000000")
-    : (item.isPinned ? "#6366F1" : "#000000");
+    ? ((item.isPinned || isRowActive) ? "var(--primary)" : "var(--foreground)")
+    : (item.isPinned ? "var(--primary)" : "var(--foreground)");
 
   return (
     <div
@@ -77,7 +77,7 @@ export default function HistoryItem({
         {/* Show Unpin icon for pinned items */}
         {((isMobile && item.isPinned) || (!isMobile && item.isPinned && !isRowActive)) && (
           <div
-            className="flex items-center justify-center text-[#6366F1]"
+            className="flex items-center justify-center text-[var(--primary)]"
             style={{
               padding: "2px",
             }}
@@ -96,7 +96,7 @@ export default function HistoryItem({
             onMoveToProject={onMoveToProject}
             onDelete={onDelete}
             onOpenChange={(open) => setIsMenuOpen(open)}
-            iconColor={isMobile && isRowActive ? "#6366F1" : "#000000"}
+            iconColor={isMobile && isRowActive ? "var(--primary)" : "var(--foreground)"}
           />
         )}
       </div>

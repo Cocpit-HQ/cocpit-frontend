@@ -6,6 +6,7 @@ import { Icon } from "@iconify/react";
 import { toast } from "sonner";
 import UnsupportedFileCard from "./UnsupportedFileCard";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTheme } from "next-themes";
 
 interface AIEmptyStateProps {
   suggestions: AISuggestion[];
@@ -33,6 +34,8 @@ export default function AIEmptyState({
   hideHeaderActions = false,
 }: AIEmptyStateProps) {
   const isMobile = useIsMobile();
+  const { theme, resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark" || theme === "dark" || theme === "navy";
   const [inputValue, setInputValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<AIAttachment[]>([]);
@@ -217,7 +220,7 @@ export default function AIEmptyState({
   };
 
   return (
-    <div className="flex flex-col items-center h-full w-full bg-white px-0">
+    <div className="flex flex-col items-center h-full w-full bg-[var(--background)] px-0">
       {/* Top controls row */}
       {!hideHeaderActions && (
         <div style={{
@@ -230,7 +233,7 @@ export default function AIEmptyState({
           width: "100%",
           maxWidth: isMobile ? "100%" : "912px",
           height: "40px",
-          background: "#FFFFFF",
+          background: "var(--background)",
           borderRadius: "24px",
           alignSelf: "stretch",
           flexGrow: 0,
@@ -248,13 +251,13 @@ export default function AIEmptyState({
                 gap: "10px",
                 width: "40px",
                 height: "40px",
-                background: "#FFFFFF",
+                background: "var(--background)",
                 borderRadius: "24px",
                 border: "none",
                 cursor: "pointer",
               }}
             >
-              <Icon icon="mingcute:fullscreen-line" width="24" height="24" style={{ color: "#000000" }} />
+              <Icon icon="mingcute:fullscreen-line" width="24" height="24" style={{ color: "var(--foreground)" }} />
             </button>
           )}
 
@@ -281,7 +284,7 @@ export default function AIEmptyState({
                 gap: isMobile ? "0px" : "8px",
                 width: isMobile ? "40px" : "96px",
                 height: "40px",
-                background: isHistoryOpen ? "#EEF2FF" : "#FFFFFF",
+                background: isHistoryOpen ? "var(--primary-tint)" : "var(--background)",
                 borderRadius: "24px",
                 border: "none",
                 cursor: "pointer",
@@ -291,7 +294,7 @@ export default function AIEmptyState({
                 icon="carbon:recently-viewed" 
                 width="24" 
                 height="24" 
-                style={{ marginRight: isMobile ? "0px" : "8px", color: isHistoryOpen ? "#6366F1" : "#000000" }} 
+                style={{ marginRight: isMobile ? "0px" : "8px", color: isHistoryOpen ? "var(--primary)" : "var(--foreground)" }} 
               />
               {!isMobile && (
                 <span style={{
@@ -302,7 +305,7 @@ export default function AIEmptyState({
                   fontSize: "14px",
                   lineHeight: "20px",
                   textAlign: "center",
-                  color: isHistoryOpen ? "#6366F1" : "#000000",
+                  color: isHistoryOpen ? "var(--primary)" : "var(--foreground)",
                 }}>
                   History
                 </span>
@@ -322,7 +325,7 @@ export default function AIEmptyState({
                 gap: isMobile ? "0px" : "8px",
                 width: isMobile ? "40px" : "97px",
                 height: "40px",
-                background: "#FFFFFF",
+                background: "var(--background)",
                 borderRadius: "24px",
                 border: "none",
                 cursor: "pointer",
@@ -332,7 +335,7 @@ export default function AIEmptyState({
                 icon="codicon:github-project" 
                 width="24" 
                 height="24" 
-                style={{ marginRight: isMobile ? "0px" : "8px", color: "#000000" }} 
+                style={{ marginRight: isMobile ? "0px" : "8px", color: "var(--foreground)" }} 
               />
               {!isMobile && (
                 <span style={{
@@ -343,7 +346,7 @@ export default function AIEmptyState({
                   fontSize: "14px",
                   lineHeight: "20px",
                   textAlign: "center",
-                  color: "#000000",
+                  color: "var(--foreground)",
                 }}>
                   Project
                 </span>
@@ -380,7 +383,7 @@ export default function AIEmptyState({
             fontWeight: 500,
             fontSize: "16px",
             lineHeight: "24px",
-            color: "#000000",
+            color: "var(--foreground)",
             flex: "none",
             order: 1,
             flexGrow: 0,
@@ -398,7 +401,7 @@ export default function AIEmptyState({
           fontSize: "18px",
           lineHeight: "26px",
           textAlign: "center",
-          color: "#000000",
+          color: "var(--foreground)",
           flex: "none",
           order: 1,
           flexGrow: 0,
@@ -441,9 +444,9 @@ export default function AIEmptyState({
                   width: "100%",
                   maxWidth: isMobile ? "100%" : "600px",
                   height: "56px",
-                  background: "#FFFFFF",
-                  border: "1px solid #6366F1",
-                  boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                  background: "var(--background)",
+                  border: "1px solid var(--primary)",
+                  boxShadow: "var(--card-shadow-inner)",
                   borderRadius: "24px",
                   flex: "none",
                   order: 0,
@@ -481,7 +484,7 @@ export default function AIEmptyState({
                         lineHeight: "20px",
                         display: "flex",
                         alignItems: "center",
-                        color: "#6366F1",
+                        color: "var(--primary)",
                         flex: "none",
                         order: 0,
                         flexGrow: 1,
@@ -506,7 +509,7 @@ export default function AIEmptyState({
                         gap: "10px",
                         width: "110px",
                         height: "40px",
-                        background: "#6366F1",
+                        background: "var(--primary)",
                         borderRadius: "24px",
                         border: "none",
                         cursor: "pointer",
@@ -525,7 +528,7 @@ export default function AIEmptyState({
                           fontSize: "16px",
                           lineHeight: "24px",
                           textAlign: "center",
-                          color: "#FFFFFF",
+                          color: "var(--primary-foreground)",
                           flex: "none",
                           order: 0,
                           flexGrow: 0,
@@ -552,7 +555,7 @@ export default function AIEmptyState({
                         flexGrow: 0,
                       }}
                     >
-                      <Icon icon="ri:close-line" width="24" height="24" style={{ color: "#6366F1" }} />
+                      <Icon icon="ri:close-line" width="24" height="24" style={{ color: "var(--primary)" }} />
                     </button>
                   </div>
                 </div>
@@ -570,9 +573,9 @@ export default function AIEmptyState({
                   maxWidth: isMobile ? "100%" : "600px",
                   height: "auto",
                   minHeight: "40px",
-                  background: "#FFFFFF",
-                  border: "1px solid #FF6B6B",
-                  boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                  background: "var(--background)",
+                  border: "1px solid var(--destructive)",
+                  boxShadow: "var(--card-shadow-inner)",
                   borderRadius: "24px",
                   flex: "none",
                   order: 0,
@@ -601,7 +604,7 @@ export default function AIEmptyState({
                       style={{
                         width: "24px",
                         height: "24px",
-                        color: "#FF6B6B",
+                        color: "var(--destructive)",
                         flex: "none",
                         order: 0,
                         flexGrow: 0,
@@ -620,7 +623,7 @@ export default function AIEmptyState({
                         lineHeight: "20px",
                         display: "flex",
                         alignItems: "center",
-                        color: "#FF6B6B",
+                        color: "var(--destructive)",
                         flex: "none",
                         order: 1,
                         flexGrow: 1,
@@ -643,7 +646,7 @@ export default function AIEmptyState({
                       justifyContent: "center",
                     }}
                   >
-                    <Icon icon="ri:close-line" width="24" height="24" style={{ color: "#FF6B6B" }} />
+                    <Icon icon="ri:close-line" width="24" height="24" style={{ color: "var(--destructive)" }} />
                   </button>
                 </div>
               </div>
@@ -660,8 +663,8 @@ export default function AIEmptyState({
                   padding: "8px 16px",
                   width: "100%",
                   maxWidth: isMobile ? "100%" : "600px",
-                  background: "#FFFFFF",
-                  boxShadow: "0px 0px 4px rgba(99, 102, 241, 0.05)",
+                  background: "var(--background)",
+                  boxShadow: "var(--card-shadow-inner)",
                   borderRadius: "24px",
                   marginBottom: "8px",
                 }}
@@ -702,17 +705,17 @@ export default function AIEmptyState({
               padding: "8px 16px",
             width: "100%",
             maxWidth: isMobile ? "100%" : "600px",
-            background: "#FFFFFF",
+            background: "var(--background)",
             border: isLimitReached 
-              ? "1px solid #FF6B6B" 
+              ? "1px solid var(--destructive)" 
               : isFocused 
-              ? "1px solid #6366F1" 
-              : "1px solid #E0E7FF",
+              ? "1px solid var(--primary)" 
+              : "1px solid var(--border)",
             boxShadow: isLimitReached
-              ? "0px 0px 8px rgba(255, 107, 107, 0.15)"
+              ? (isDark ? "0px 0px 8px rgba(248, 113, 113, 0.35)" : "0px 0px 8px rgba(255, 107, 107, 0.15)")
               : isFocused 
-              ? "0px 0px 8px rgba(99, 102, 241, 0.15)" 
-              : "0px 0px 4px rgba(99, 102, 241, 0.05)",
+              ? (isDark ? "0px 0px 8px rgba(129, 140, 248, 0.35)" : "0px 0px 8px rgba(99, 102, 241, 0.15)") 
+              : "var(--card-shadow-inner)",
             borderRadius: "24px",
             alignSelf: "stretch",
             transition: "all 0.3s ease",
@@ -756,7 +759,7 @@ export default function AIEmptyState({
                             height: "24px",
                             top: "3px",
                             right: "3px",
-                            background: "#FFFFFF",
+                            background: "var(--background)",
                             borderRadius: "100px",
                             border: "none",
                             cursor: "pointer",
@@ -807,7 +810,7 @@ export default function AIEmptyState({
                               height: "24px",
                               top: "3px",
                               right: "3px",
-                              background: "#FFFFFF",
+                              background: "var(--background)",
                               borderRadius: "100px",
                               border: "none",
                               cursor: "pointer",
@@ -835,17 +838,17 @@ export default function AIEmptyState({
                             gap: "8px",
                             width: "140px",
                             height: "56px",
-                            background: "#FFFFFF",
-                            border: "1px solid #DADADA",
+                            background: "var(--background)",
+                            border: "1px solid var(--border)",
                             borderRadius: "12px",
                           }}
                         >
                           <Icon icon="bi:file-earmark-pdf-fill" width={24} height={24} style={{ color: "#EF4444", flexShrink: 0 }} />
                           <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1, paddingRight: "16px" }}>
-                            <span style={{ fontSize: "12px", fontWeight: 600, color: "#1F2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--foreground)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                               {file.name}
                             </span>
-                            <span style={{ fontSize: "10px", color: "#9CA3AF" }}>
+                            <span style={{ fontSize: "10px", color: "var(--muted-foreground)" }}>
                               {file.name.split('.').pop()?.toUpperCase() || "FILE"}
                             </span>
                           </div>
@@ -858,7 +861,7 @@ export default function AIEmptyState({
                               height: "24px",
                               top: "3px",
                               right: "3px",
-                              background: "#FFFFFF",
+                              background: "var(--background)",
                               borderRadius: "100px",
                               border: "none",
                               cursor: "pointer",
@@ -905,7 +908,7 @@ export default function AIEmptyState({
                       flex: "none",
                       order: 0,
                       flexGrow: 0,
-                      color: "#6B7280",
+                      color: "var(--muted-foreground)",
                     }} 
                   />
                 </button>
@@ -940,7 +943,7 @@ export default function AIEmptyState({
                     fontWeight: 400,
                     fontSize: "16px",
                     lineHeight: "24px",
-                    color: "#000000",
+                    color: "var(--foreground)",
                     resize: "none",
                     height: "24px",
                     overflowY: "auto",
@@ -963,7 +966,7 @@ export default function AIEmptyState({
                   gap: "10px",
                   width: "56px",
                   height: "40px",
-                  background: isSendActive ? "#EEF2FF" : "#FFFFFF",
+                  background: isSendActive ? "var(--primary-tint)" : "var(--background)",
                   borderRadius: "24px",
                   flex: "none",
                   order: 1,
@@ -980,7 +983,7 @@ export default function AIEmptyState({
                   width="24" 
                   height="24" 
                   style={{
-                    color: isSendActive ? "#6366F1" : "#6B7280",
+                    color: isSendActive ? "var(--primary)" : "var(--muted-foreground)",
                   }}
                 />
               </button>
@@ -995,7 +998,7 @@ export default function AIEmptyState({
                 width: "100%",
                 maxWidth: isMobile ? "100%" : "600px",
                 textAlign: "right",
-                color: "#FF6B6B",
+                color: "var(--destructive)",
                 fontFamily: "Poppins",
                 fontSize: "14px",
                 marginTop: "4px",
@@ -1042,8 +1045,8 @@ export default function AIEmptyState({
                   gap: "10px",
                   height: "32px",
                   width: "fit-content",
-                  background: "#FFFFFF",
-                  border: "1px solid #EEF2FF",
+                  background: "var(--background)",
+                  border: "1px solid var(--primary-tint)",
                   borderRadius: "24px",
                   cursor: "pointer",
                   whiteSpace: "nowrap",
@@ -1053,7 +1056,7 @@ export default function AIEmptyState({
                   fontFamily: "Poppins",
                   fontWeight: 400,
                   fontSize: "12px",
-                  color: "#000000",
+                  color: "var(--foreground)",
                   whiteSpace: "nowrap",
                 }}>
                   {label}

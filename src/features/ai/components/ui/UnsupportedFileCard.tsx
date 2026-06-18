@@ -20,12 +20,12 @@ export default function UnsupportedFileCard({
 }: UnsupportedFileCardProps) {
   const isSizeError = isTooLarge;
   
-  const borderColor = isSizeError ? "#DADADA" : "#FF6B6B";
-  const fileNameColor = isSizeError ? "#000000" : "#FF6B6B";
+  const borderColor = isSizeError ? "var(--border)" : "var(--destructive)";
+  const fileNameColor = isSizeError ? "var(--foreground)" : "var(--destructive)";
   const descText = isSizeError ? "Exceeds 25MB limit" : "Unsupported file format";
   const descFontSize = isSizeError ? "12px" : "14px";
   const descLineHeight = isSizeError ? "16px" : "20px";
-  const closeIconColor = isSizeError ? "#6B7280" : "#FF6B6B";
+  const closeIconColor = isSizeError ? "var(--muted-foreground)" : "var(--destructive)";
 
   return (
     <div
@@ -34,7 +34,7 @@ export default function UnsupportedFileCard({
         position: "relative",
         width: "204px",
         height: "56px",
-        background: "#FFFFFF",
+        background: "var(--background)",
         border: `1px solid ${borderColor}`,
         borderRadius: "12px",
         flex: "none",
@@ -84,7 +84,7 @@ export default function UnsupportedFileCard({
               fontSize: descFontSize,
               lineHeight: descLineHeight,
               textAlign: "left",
-              color: "#FF6B6B",
+              color: "var(--destructive)",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",

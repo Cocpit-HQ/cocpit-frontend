@@ -33,9 +33,9 @@ export default function ProjectEmptyState({
         icon={icon}
         width="80"
         height="80"
-        style={{ color: "#000000" }}
+        style={{ color: "var(--foreground)" }}
       />
-
+ 
       {/* Text Container */}
       <div
         style={{
@@ -58,13 +58,13 @@ export default function ProjectEmptyState({
             fontSize: "16px",
             lineHeight: "24px",
             textAlign: "center",
-            color: "#000000",
+            color: "var(--foreground)",
             display: "block",
           }}
         >
           {title}
         </span>
-
+ 
         {/* Secondary Text */}
         <span
           style={{
@@ -73,14 +73,14 @@ export default function ProjectEmptyState({
             fontSize: "12px",
             lineHeight: "16px",
             textAlign: "center",
-            color: "#6B7280",
+            color: "var(--muted-foreground)",
             display: "block",
           }}
         >
           {description}
         </span>
       </div>
-
+ 
       {/* New Project Button */}
       <button
         type="button"
@@ -95,8 +95,8 @@ export default function ProjectEmptyState({
           gap: "10px",
           width: "150px",
           height: "40px",
-          background: "#6366F1",
-          border: "1px solid #FFFFFF",
+          background: "var(--primary)",
+          border: "1px solid var(--border)",
           borderRadius: "24px",
           cursor: "pointer",
           outline: "none",
@@ -109,7 +109,7 @@ export default function ProjectEmptyState({
           icon={buttonIcon}
           width="24"
           height="24"
-          style={{ color: "#FFFFFF" }}
+          style={{ color: "var(--primary-foreground)" }}
         />
         {/* Button Text */}
         <span
@@ -119,7 +119,7 @@ export default function ProjectEmptyState({
             fontSize: "14px",
             lineHeight: "20px",
             textAlign: "center",
-            color: "#FFFFFF",
+            color: "var(--primary-foreground)",
             whiteSpace: "nowrap",
           }}
         >

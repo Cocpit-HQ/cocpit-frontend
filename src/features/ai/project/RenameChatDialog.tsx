@@ -57,14 +57,14 @@ export default function RenameChatDialog({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleCancel()}>
       <DialogContent
-        className="max-w-[384px] w-[90%] p-4 pt-4 pb-10 bg-white outline outline-1 outline-offset-[-1px] outline-indigo-200 shadow-lg flex flex-col font-sans border-none"
+        className="max-w-[384px] w-[90%] p-4 pt-4 pb-10 bg-[var(--background)] border border-[var(--border)] shadow-lg flex flex-col font-sans"
         style={{
           borderRadius: "24px",
         }}
       >
         <div className="self-stretch flex flex-col justify-start items-center gap-4">
           <div className="flex flex-col justify-start items-center gap-2">
-            <DialogTitle className="text-center justify-start text-black text-lg font-medium font-['Poppins'] leading-6">
+            <DialogTitle className="text-center justify-start text-[var(--foreground)] text-lg font-medium font-['Poppins'] leading-6">
               Rename chat
             </DialogTitle>
           </div>
@@ -77,7 +77,7 @@ export default function RenameChatDialog({
                 value={chatName}
                 onChange={(e) => setChatName(e.target.value)}
                 onFocus={handleFocus}
-                className="self-stretch h-12 px-4 py-2 bg-white rounded-2xl border border-zinc-200 text-black text-base font-normal font-['Poppins'] leading-6 outline-none w-full focus:border-indigo-400 transition-all"
+                className="self-stretch h-12 px-4 py-2 bg-[var(--background)] rounded-2xl border border-[var(--border)] text-[var(--foreground)] text-base font-normal font-['Poppins'] leading-6 outline-none w-full focus:border-[var(--primary)] transition-all"
                 autoFocus
               />
             </div>
@@ -87,9 +87,9 @@ export default function RenameChatDialog({
               <button
                 type="button"
                 onClick={handleCancel}
-                className="flex-1 h-10 px-4 py-2 bg-white rounded-3xl border border-[#818CF8] text-[#818CF8] hover:bg-[#EEF2FF] flex justify-center items-center gap-2.5 cursor-pointer transition-all outline-none"
+                className="flex-1 h-10 px-4 py-2 bg-[var(--background)] rounded-3xl border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary-tint)] flex justify-center items-center gap-2.5 cursor-pointer transition-all outline-none"
               >
-                <span className="text-center justify-start text-[#818CF8] text-sm font-normal font-['Poppins'] leading-5">
+                <span className="text-center justify-start text-[var(--primary)] text-sm font-normal font-['Poppins'] leading-5">
                   Cancel
                 </span>
               </button>
@@ -98,8 +98,8 @@ export default function RenameChatDialog({
                 disabled={isRenameDisabled}
                 className={`flex-1 h-10 px-4 py-2 rounded-3xl flex justify-center items-center gap-2.5 transition-all outline-none border-none text-white text-sm font-normal font-['Poppins'] leading-5 ${
                   isRenameDisabled
-                    ? "bg-indigo-200 cursor-not-allowed"
-                    : "bg-[#6366F1] hover:bg-[#4F46E5] cursor-pointer"
+                    ? "bg-[var(--primary-tint)] text-[var(--muted-foreground)] cursor-not-allowed"
+                    : "bg-[var(--primary)] hover:bg-[var(--primary)]/90 cursor-pointer"
                 }`}
               >
                 Rename
