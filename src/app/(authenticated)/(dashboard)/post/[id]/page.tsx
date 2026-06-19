@@ -33,8 +33,10 @@ export default function SinglePostPage({ params }: PageProps) {
                 const backendPost = await getPostById(id)
                 const mappedPost = mapBackendPostToFrontend(backendPost)
                 setPost(mappedPost)
-            } catch (err) {
-                console.error("Failed to load post:", err)
+            } catch (err: any) {
+                if (err?.response?.status !== 404) {
+                    console.error("Failed to load post:", err)
+                }
                 setError("Failed to load post. It may have been deleted.")
             } finally {
                 setLoading(false)
