@@ -249,13 +249,13 @@ export default function CommentInput({
                 </div>
             )}
 
-            <div className="flex flex-row items-center p-0 gap-[8px] w-[524px] max-w-full h-[56px] flex-none order-4 flex-grow-0">
-                <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0 flex-none order-0 flex-grow-0 bg-[#D9D9D9]">
+            <div className="flex flex-row items-end p-0 gap-[8px] w-[524px] max-w-full min-h-[56px] h-auto flex-none order-4 flex-grow-0">
+                <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0 flex-none order-0 flex-grow-0 bg-[#D9D9D9] mb-[8px]">
                     <img src={currentUserAvatar} alt="User" className="w-full h-full object-cover" />
                 </div>
 
-                <div className={`box-border flex flex-row items-center py-[8px] px-[16px] gap-[8px] w-[476px] h-[56px] bg-white border border-[#E0E7FF] ${replyingTo ? 'rounded-b-[24px] border-t-0' : 'rounded-[24px]'} flex-none order-1 flex-grow focus-within:ring-1 focus-within:ring-primary/50 focus-within:border-primary transition-all relative`}>
-                    <div className="flex-1 relative flex items-center h-full">
+                <div className={`box-border flex flex-row items-end py-[16px] px-[16px] gap-[8px] w-[476px] min-h-[56px] h-auto bg-white border border-[#E0E7FF] ${replyingTo ? 'rounded-b-[24px] border-t-0' : 'rounded-[24px]'} flex-none order-1 flex-grow focus-within:ring-1 focus-within:ring-primary/50 focus-within:border-primary transition-all relative`}>
+                    <div className="flex-1 relative flex items-end h-auto min-h-[24px]">
                         <textarea
                             ref={textareaRef}
                             value={commentText}
@@ -265,7 +265,7 @@ export default function CommentInput({
                             }}
                             onKeyDown={handleKeyDown}
                             placeholder={editingComment ? "Edit your comment..." : replyingTo ? `Reply to ${replyingTo.name}...` : "Write your thoughts"}
-                            className="w-full bg-transparent border-none focus:ring-0 p-0 resize-none text-sm sm:text-base placeholder:text-muted-foreground/60 scrollbar-hide focus:outline-none font-poppins"
+                            className="w-full bg-transparent border-none focus:ring-0 p-0 resize-none text-sm sm:text-base placeholder:text-muted-foreground/60 scrollbar-hide focus:outline-none font-poppins leading-[24px]"
                             rows={1}
                             style={{ height: 'auto' }}
                         />
