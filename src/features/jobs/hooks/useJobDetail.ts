@@ -16,8 +16,8 @@ export const useJobDetail = (jobId: string) => {
         // Sync local storage states
         const savedIds = JSON.parse(localStorage.getItem('saved_job_ids') || '[]');
         const appliedIds = JSON.parse(localStorage.getItem('applied_job_ids') || '[]');
-        res.is_saved = savedIds.includes(res.id) || !!res.is_saved;
-        res.is_applied = appliedIds.includes(res.id) || !!res.is_applied;
+        res.is_saved = savedIds.includes(res.id);
+        res.is_applied = appliedIds.includes(res.id);
       }
       setJob(res);
     } catch (err) {

@@ -1,11 +1,11 @@
-import { Job, JobsFilter } from '../types/jobs.types';
+import { Job, JobsFilter, JobListing } from '../types/jobs.types';
 import { DUMMY_JOBS } from '../utils/jobs.utils';
 
 export const getJobs = async (filters?: JobsFilter, cursor?: string) => {
   // Simulate network latency
   await new Promise(resolve => setTimeout(resolve, 300));
 
-  let filteredJobs = [...DUMMY_JOBS];
+  let filteredJobs = DUMMY_JOBS.map(j => ({ ...j }));
 
   if (filters) {
     if (filters.search) {
@@ -31,7 +31,66 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string) => {
         j => j.experience?.toLowerCase() === filters.experience?.toLowerCase()
       );
     }
-    // Add additional filters if needed
+    
+    // Date posted filter
+    if (filters.date_posted) {
+      const dp = filters.date_posted.toLowerCase();
+      if (dp === 'today') {
+        filteredJobs = filteredJobs.filter(
+          j => j.posted_at.toLowerCase().includes('hour') || 
+               j.posted_at.toLowerCase().includes('minute') || 
+               j.posted_at.toLowerCase().includes('today')
+        );
+      } else if (dp === 'last 7 days') {
+        filteredJobs = filteredJobs.filter(
+          j => j.posted_at.toLowerCase().includes('hour') || 
+               j.posted_at.toLowerCase().includes('minute') || 
+               j.posted_at.toLowerCase().includes('today') ||
+               (j.posted_at.toLowerCase().includes('day') && !j.posted_at.toLowerCase().includes('month') && parseInt(j.posted_at, 10) <= 7)
+        );
+      } else if (dp === 'last 30 days') {
+        filteredJobs = filteredJobs.filter(
+          j => !j.posted_at.toLowerCase().includes('month') && 
+               !j.posted_at.toLowerCase().includes('year')
+        );
+      }
+    }
+
+    // Industry filter
+    if (filters.industry) {
+      const ind = filters.industry.toLowerCase();
+      if (ind === 'tech') {
+        filteredJobs = filteredJobs.filter(
+          j => j.tags?.some(t => ['react', 'node.js', 'typescript', 'next.js', 'aws', 'docker', 'telemetry', 'developer tools', 'saas'].includes(t.toLowerCase()))
+        );
+      } else if (ind === 'design') {
+        filteredJobs = filteredJobs.filter(
+          j => j.title.toLowerCase().includes('design') || 
+               j.tags?.some(t => ['figma', 'ui/ux', 'product design', 'visual design', 'design systems', 'prototyping'].includes(t.toLowerCase()))
+        );
+      } else {
+        // Generic matches for custom inputs or other industries
+        filteredJobs = filteredJobs.filter(
+          j => j.title.toLowerCase().includes(ind) || 
+               j.description.toLowerCase().includes(ind) ||
+               j.tags?.some(t => t.toLowerCase().includes(ind))
+        );
+      }
+    }
+
+    // Location type filter
+    if (filters.location_type) {
+      const loc = filters.location_type.toLowerCase();
+      if (loc === 'city') {
+        filteredJobs = filteredJobs.filter(
+          j => j.location.toLowerCase() !== 'remote'
+        );
+      } else if (loc === 'country') {
+        filteredJobs = filteredJobs.filter(
+          j => j.location.toLowerCase() === 'remote'
+        );
+      }
+    }
   }
 
   // Handle cursor-based pagination simulation
@@ -51,7 +110,8 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string) => {
 
 export const getJobById = async (jobId: string): Promise<Job | null> => {
   await new Promise(resolve => setTimeout(resolve, 200));
-  return DUMMY_JOBS.find(j => j.id === jobId) || null;
+  const job = DUMMY_JOBS.find(j => j.id === jobId);
+  return job ? { ...job } : null;
 };
 
 export const saveJob = async (jobId: string): Promise<boolean> => {
@@ -64,4 +124,109 @@ export const applyJob = async (jobId: string): Promise<boolean> => {
   await new Promise(resolve => setTimeout(resolve, 200));
   // Mock API success
   return true;
+};
+
+export const getMyApplications = async (): Promise<Job[]> => {
+  await new Promise(resolve => setTimeout(resolve, 250));
+
+  if (typeof window !== 'undefined') {
+    if (!localStorage.getItem('applied_job_ids')) {
+      localStorage.setItem('applied_job_ids', JSON.stringify(['app-1', 'app-2', 'app-3', 'app-4', 'app-5', 'app-6', 'app-7', 'app-8']));
+    }
+    const appliedIds = JSON.parse(localStorage.getItem('applied_job_ids') || '[]');
+    return DUMMY_JOBS
+      .filter(j => appliedIds.includes(j.id))
+      .map(j => ({ ...j, is_applied: true }));
+  }
+  return [];
+};
+
+export const withdrawApplication = async (jobId: string): Promise<boolean> => {
+  await new Promise(resolve => setTimeout(resolve, 200));
+
+  if (typeof window !== 'undefined') {
+    const appliedIds = JSON.parse(localStorage.getItem('applied_job_ids') || '[]');
+    const newAppliedIds = appliedIds.filter((id: string) => id !== jobId);
+    localStorage.setItem('applied_job_ids', JSON.stringify(newAppliedIds));
+    return true;
+  }
+  return false;
+};
+
+export const getApplicationStats = async (): Promise<{ totalApplied: number; shortlisted: number }> => {
+  await new Promise(resolve => setTimeout(resolve, 150));
+
+  if (typeof window !== 'undefined') {
+    if (!localStorage.getItem('applied_job_ids')) {
+      localStorage.setItem('applied_job_ids', JSON.stringify(['app-1', 'app-2', 'app-3', 'app-4', 'app-5', 'app-6', 'app-7', 'app-8']));
+    }
+    const appliedIds = JSON.parse(localStorage.getItem('applied_job_ids') || '[]');
+    const appliedJobs = DUMMY_JOBS.filter(j => appliedIds.includes(j.id));
+    const shortlistedCount = appliedJobs.filter(j => j.application_status === 'Shortlisted').length;
+    return {
+      totalApplied: appliedIds.length,
+      shortlisted: shortlistedCount
+    };
+  }
+  return { totalApplied: 0, shortlisted: 0 };
+};
+
+export const getMyOffers = async (): Promise<Job[]> => {
+  await new Promise(resolve => setTimeout(resolve, 200));
+
+  if (typeof window !== 'undefined') {
+    const respondedOffers = JSON.parse(localStorage.getItem('responded_offer_ids') || '{}');
+    return DUMMY_JOBS
+      .filter(j => j.is_offer && !respondedOffers[j.id])
+      .map(j => ({ ...j }));
+  }
+  return [];
+};
+
+export const respondToOffer = async (offerId: string, action: 'accept' | 'decline'): Promise<boolean> => {
+  await new Promise(resolve => setTimeout(resolve, 150));
+
+  if (typeof window !== 'undefined') {
+    const respondedOffers = JSON.parse(localStorage.getItem('responded_offer_ids') || '{}');
+    respondedOffers[offerId] = action;
+    localStorage.setItem('responded_offer_ids', JSON.stringify(respondedOffers));
+    return true;
+  }
+  return false;
+};
+
+// Mock Listings Data
+const DUMMY_JOB_LISTINGS: JobListing[] = [
+  { id: 'list-1', title: 'UI/UX Designer', posted_at: 'Posted 2 hours ago', status: 'ACTIVE' },
+  { id: 'list-2', title: 'Full-Stack Engineer', posted_at: 'Posted 2 days ago', status: 'IN REVIEW' },
+  { id: 'list-3', title: 'Marketing Lead', posted_at: 'Posted 3 weeks ago', status: 'ACTIVE' },
+  { id: 'list-4', title: 'Junior Product Designer', last_edited: 'Last edited 2 days ago', status: 'DRAFT' },
+  { id: 'list-5', title: 'Junior Product Designer', posted_at: 'Posted 1 month ago', status: 'CLOSED' },
+  { id: 'list-6', title: 'Junior Product Designer', posted_at: 'Posted 1 month ago', status: 'CLOSED' },
+  { id: 'list-7', title: 'Junior Product Designer', posted_at: 'Posted 1 month ago', status: 'CLOSED' }
+];
+
+export const getMyListings = async (): Promise<JobListing[]> => {
+  await new Promise(resolve => setTimeout(resolve, 200));
+  if (typeof window !== 'undefined') {
+    const customListings = JSON.parse(localStorage.getItem('my_job_listings') || '[]');
+    return [...customListings, ...DUMMY_JOB_LISTINGS];
+  }
+  return DUMMY_JOB_LISTINGS;
+};
+
+export const createJobListing = async (title: string, status: string = 'ACTIVE'): Promise<boolean> => {
+  await new Promise(resolve => setTimeout(resolve, 150));
+  if (typeof window !== 'undefined') {
+    const customListings = JSON.parse(localStorage.getItem('my_job_listings') || '[]');
+    const newListing: JobListing = {
+      id: `list-custom-${Date.now()}`,
+      title,
+      posted_at: 'Posted just now',
+      status
+    };
+    localStorage.setItem('my_job_listings', JSON.stringify([newListing, ...customListings]));
+    return true;
+  }
+  return false;
 };

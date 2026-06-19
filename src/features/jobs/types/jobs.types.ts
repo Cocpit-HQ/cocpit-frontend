@@ -17,6 +17,7 @@ export interface Job {
   tags?: string[];
   is_saved?: boolean;
   is_applied?: boolean;
+  is_offer?: boolean;
 
   // AI Recommendation details
   is_recommended?: boolean;
@@ -24,6 +25,19 @@ export interface Job {
   response_rate?: string; // e.g., "98%", "95%", "92%"
   avg_reply?: string; // e.g., "1 day", "2 day", "3 day"
   match_reason?: string; // e.g., "Matches your skills in React and Node.js"
+
+  // Application details
+  application_status?: 'Applied' | 'Shortlisted' | 'Declined' | 'In review' | string;
+  applied_date_display?: string;
+  is_available?: boolean;
+
+  // Offer details
+  offer_expiry_text?: string;
+  offer_expiry_color?: 'orange' | 'gray' | string;
+  recruiter_name?: string;
+  recruiter_title?: string;
+  recruiter_avatar?: string;
+  recruiter_message?: string;
 }
 
 export interface JobsFilter {
@@ -32,6 +46,9 @@ export interface JobsFilter {
   experience?: string; // "0-2Yrs" etc.
   work_mode?: string; // "Remote" | "Hybrid" | "Onsite"
   salary_range?: string;
+  date_posted?: string;
+  industry?: string;
+  location_type?: string;
 }
 
 export interface JobsState {
@@ -41,4 +58,12 @@ export interface JobsState {
   filters: JobsFilter;
   hasMore: boolean;
   cursor?: string;
+}
+
+export interface JobListing {
+  id: string;
+  title: string;
+  posted_at?: string;
+  last_edited?: string;
+  status: 'ACTIVE' | 'IN REVIEW' | 'DRAFT' | 'CLOSED' | string;
 }

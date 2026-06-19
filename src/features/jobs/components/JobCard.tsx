@@ -40,86 +40,79 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onSave, onApply, onClick 
   return (
     <div
       onClick={() => onClick?.(job)}
-      className="self-stretch p-4 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50/100 flex flex-col justify-center items-start gap-3 hover:outline-indigo-200 hover:shadow-[0px_4px_20px_rgba(99,102,241,0.05)] transition-all duration-200 cursor-pointer"
+      className="self-stretch p-4 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-center items-start gap-3 hover:outline-indigo-200 hover:shadow-[0px_4px_20px_rgba(99,102,241,0.05)] transition-all duration-200 cursor-pointer"
     >
       {/* Top Row: Job Info and Logo */}
-      <div className="self-stretch flex justify-between items-start">
-        <div className="flex flex-col justify-start items-start gap-1">
-          <h3 className="text-black text-base font-semibold font-['Poppins'] leading-6">
-            {job.title}
-          </h3>
-          <span className="text-gray-500 text-sm font-normal font-['Poppins'] leading-5">
-            {job.company}
-          </span>
-          <span className="text-gray-400 text-xs font-medium font-['Poppins'] leading-4">
-            {job.job_type}
-          </span>
+      <div className="self-stretch inline-flex justify-between items-start">
+        <div className="size- inline-flex flex-col justify-start items-start gap-2">
+          <div className="justify-start text-black text-base font-medium font-['Poppins'] leading-6">{job.title}</div>
+          <div className="justify-start text-gray-500 text-sm font-normal font-['Poppins'] leading-5">{job.company}</div>
+          <div className="justify-start text-gray-500 text-sm font-semibold font-['Poppins'] leading-5">{job.job_type}</div>
         </div>
         {renderLogo()}
       </div>
 
       {/* Middle Row: Meta and Salary */}
-      <div className="self-stretch flex justify-between items-center gap-4 border-t border-slate-100/50 pt-2">
-        <div className="flex items-center gap-2">
-          {/* Experience tag */}
-          <div className="flex justify-start items-center gap-1.5 text-gray-700 text-xs font-normal font-['Poppins']">
-            <Icon icon="lucide:briefcase" className="w-4 h-4 text-gray-500" />
-            <span>{job.experience || '0-2Yrs'}</span>
+      <div className="self-stretch inline-flex justify-between items-center">
+        <div className="size- flex justify-start items-center gap-2">
+          <div className="size- flex justify-start items-center gap-2">
+            <div className="size-5 relative overflow-hidden">
+              <div className="w-4 h-3 left-[1.67px] top-[4.58px] absolute outline outline-[1.50px] outline-offset-[-0.75px] outline-black" />
+              <div className="size-1.5 left-[11.67px] top-[11.62px] absolute outline outline-[1.50px] outline-offset-[-0.75px] outline-black" />
+              <div className="w-2 h-[2.92px] left-[5.83px] top-[1.67px] absolute outline outline-[1.50px] outline-offset-[-0.75px] outline-black" />
+            </div>
+            <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5">{job.experience || '0-2Yrs'}</div>
           </div>
-
-          <span className="w-1.5 h-1.5 bg-gray-300 rounded-full" />
-
-          {/* Location / Work mode tag */}
-          <div className="flex justify-start items-center gap-1.5 text-gray-700 text-xs font-normal font-['Poppins']">
-            <Icon icon="lucide:map-pin" className="w-4 h-4 text-gray-500" />
-            <span>
+          <div className="size-1.5 bg-black rounded-full" />
+          <div className="size- flex justify-start items-center gap-2">
+            <div className="size-5 relative overflow-hidden">
+              <div className="size-1 left-[7.92px] top-[5.42px] absolute outline outline-[1.50px] outline-offset-[-0.75px] outline-black" />
+              <div className="w-3 h-3.5 left-[4.17px] top-[1.67px] absolute outline outline-[1.50px] outline-offset-[-0.75px] outline-black" />
+              <div className="w-2.5 h-[1.67px] left-[5px] top-[16.67px] absolute outline outline-[1.50px] outline-offset-[-0.75px] outline-black" />
+            </div>
+            <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5">
               {job.work_mode && job.location
                 ? `${job.work_mode} - ${job.location}`
                 : job.work_mode || job.location}
-            </span>
+            </div>
           </div>
         </div>
-
-        {/* Salary */}
-        <div className="text-black text-sm font-semibold font-['Poppins'] leading-5">
-          {job.salary_display || '$160k - $210k'}
+        <div className="size- flex justify-start items-center gap-2">
+          <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5">{job.salary_display || '$160k - $210k'}</div>
         </div>
       </div>
 
       {/* Bottom Row: Posted date and actions */}
-      <div className="self-stretch flex justify-between items-center border-t border-slate-100/50 pt-2">
-        <span className={`text-xs font-normal font-['Poppins'] leading-4 ${getPostedDateColor()}`}>
+      <div className="self-stretch inline-flex justify-between items-center">
+        <div className={`justify-start text-gray-500 text-xs font-normal font-['Poppins'] leading-4 ${getPostedDateColor()}`}>
           {job.posted_at}
-        </span>
-
-        <div className="flex justify-start items-center gap-3">
+        </div>
+        <div className="w-[160px] h-10 flex flex-row items-center gap-4 flex-none justify-end">
           {/* Apply Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               onApply?.(job.id, e);
             }}
-            className={`w-28 h-10 rounded-3xl flex justify-center items-center text-sm font-semibold transition-all ${
-              job.is_applied
-                ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                : 'bg-indigo-500 text-white hover:bg-indigo-600 shadow-sm'
-            }`}
+            className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[120px] h-10 border border-white rounded-[24px] bg-[#6366F1] hover:bg-[#6366F1]/90 text-white transition-all duration-200 active:scale-95 flex-none"
           >
-            {job.is_applied ? 'Applied' : 'Apply'}
+            <div className="w-[40px] h-[20px] text-center text-sm font-normal font-['Poppins'] leading-5 text-white whitespace-nowrap flex items-center justify-center">
+              Apply
+            </div>
           </button>
-
-          {/* Save / Bookmark Button */}
+          
+          {/* Bookmark Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               onSave?.(job.id, e);
             }}
-            className="w-10 h-10 rounded-full bg-indigo-50/50 hover:bg-indigo-50 flex items-center justify-center transition-all text-gray-700 active:scale-95"
+            className="w-6 h-6 flex items-center justify-center transition-all active:scale-95 flex-none"
             aria-label="Bookmark job"
           >
             <Icon
               icon={job.is_saved ? 'solar:bookmark-bold' : 'solar:bookmark-linear'}
-              className={`w-5 h-5 ${job.is_saved ? 'text-indigo-500' : 'text-gray-500'}`}
+              className={`w-6 h-6 transition-colors ${job.is_saved ? 'text-[#6366F1]' : 'text-gray-500 hover:text-[#6366F1]'}`}
             />
           </button>
         </div>

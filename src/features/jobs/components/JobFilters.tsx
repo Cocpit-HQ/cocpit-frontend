@@ -13,13 +13,22 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
   onFilterChange,
   onClearFilters
 }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
+  const [localFilters, setLocalFilters] = useState<JobsFilter>({
+    date_posted: filters.date_posted || '',
+    industry: filters.industry || '',
+    location_type: filters.location_type || ''
+  });
+
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
         setActiveDropdown(null);
       }
     };
@@ -27,8 +36,62 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Sync local filters when the pop up opens or prop filters change
+  useEffect(() => {
+    if (isOpen) {
+      setLocalFilters({
+        date_posted: filters.date_posted || '',
+        industry: filters.industry || '',
+        location_type: filters.location_type || ''
+      });
+      // Auto expand active filter section
+      if (filters.date_posted) {
+        setExpandedSection('date_posted');
+      } else if (filters.industry) {
+        setExpandedSection('industry');
+      } else if (filters.location_type) {
+        setExpandedSection('location');
+      } else {
+        setExpandedSection(null);
+      }
+    }
+  }, [isOpen, filters]);
+
   const toggleDropdown = (name: string) => {
     setActiveDropdown(prev => (prev === name ? null : name));
+    setIsOpen(false);
+  };
+
+  const togglePopup = () => {
+    setIsOpen(prev => {
+      const next = !prev;
+      if (next) {
+        setActiveDropdown(null);
+      }
+      return next;
+    });
+  };
+
+  const toggleSection = (section: string) => {
+    setExpandedSection(prev => (prev === section ? null : section));
+  };
+
+  const handleApply = () => {
+    onFilterChange('date_posted', localFilters.date_posted || '');
+    onFilterChange('industry', localFilters.industry || '');
+    onFilterChange('location_type', localFilters.location_type || '');
+    setIsOpen(false);
+  };
+
+  const handleClear = () => {
+    setLocalFilters({
+      date_posted: '',
+      industry: '',
+      location_type: ''
+    });
+    // Clear all filters
+    onClearFilters();
+    setIsOpen(false);
   };
 
   const jobTypeOptions = ['', 'Full time', 'Part-time', 'Contract', 'Internship', 'Freelance'];
@@ -42,14 +105,14 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
     options: string[],
     currentVal: string
   ) => {
-    const isOpen = activeDropdown === label;
+    const isDropdownOpen = activeDropdown === label;
     const isSelected = !!currentVal;
 
     return (
       <div className="relative">
         <button
           onClick={() => toggleDropdown(label)}
-          className={`h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2 transition-all ${
+          className={`h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2 transition-all active:scale-95 ${
             isSelected
               ? 'bg-indigo-50 outline-indigo-500 text-indigo-500 font-semibold'
               : 'bg-white outline-indigo-50 text-black font-normal hover:bg-slate-50'
@@ -59,14 +122,14 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
             {isSelected ? `${label}: ${currentVal}` : label}
           </span>
           <Icon
-            icon={isOpen ? 'lucide:chevron-up' : 'lucide:chevron-down'}
+            icon={isDropdownOpen ? 'lucide:chevron-up' : 'lucide:chevron-down'}
             className={`w-4 h-4 transition-transform ${
               isSelected ? 'text-indigo-500' : 'text-gray-500'
             }`}
           />
         </button>
 
-        {isOpen && (
+        {isDropdownOpen && (
           <div className="absolute left-0 mt-2 w-48 bg-white rounded-2xl border border-indigo-50 shadow-lg py-2 z-30 animate-in fade-in slide-in-from-top-2 duration-200">
             {options.map(option => (
               <button
@@ -90,33 +153,192 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
     );
   };
 
-  // Check if any filter is active
+  const standardIndustries = ['Tech', 'Finance', 'Marketing', 'Design', 'Sales', 'Healthcare', 'Education'];
+  const isCustomIndustry = !!(localFilters.industry && !standardIndustries.map(i => i.toLowerCase()).includes(localFilters.industry.toLowerCase()));
+  const [customIndustryText, setCustomIndustryText] = useState('');
+
+  useEffect(() => {
+    if (isCustomIndustry) {
+      setCustomIndustryText(localFilters.industry || '');
+    } else {
+      setCustomIndustryText('');
+    }
+  }, [localFilters.industry, isCustomIndustry]);
+
   const hasActiveFilters = Object.values(filters).some(val => !!val);
+  const hasActivePopupFilters = !!(filters.date_posted || filters.industry || filters.location_type);
 
   return (
     <div className="self-stretch flex justify-between items-center gap-4" ref={containerRef}>
+      {/* Horizontal pill filters */}
       <div className="flex flex-wrap justify-start items-center gap-3">
         {renderDropdown('Job type', 'job_type', jobTypeOptions, filters.job_type || '')}
         {renderDropdown('Experience level', 'experience', experienceOptions, filters.experience || '')}
         {renderDropdown('Work mode', 'work_mode', workModeOptions, filters.work_mode || '')}
         {renderDropdown('Salary range', 'salary_range', salaryOptions, filters.salary_range || '')}
-
-        {hasActiveFilters && (
-          <button
-            onClick={onClearFilters}
-            className="h-10 px-4 py-2 bg-rose-50 hover:bg-rose-100/80 rounded-3xl text-rose-500 font-medium text-xs font-['Poppins'] transition-all flex items-center gap-1.5 active:scale-95"
-          >
-            <Icon icon="lucide:trash-2" className="w-3.5 h-3.5" />
-            <span>Reset filters</span>
-          </button>
-        )}
       </div>
 
       {/* Sort/Filter icon display (Figma) */}
-      <div className="w-14 h-10 bg-white hover:bg-slate-50 border border-slate-100 rounded-3xl flex justify-center items-center relative flex-shrink-0 cursor-pointer shadow-sm transition-all active:scale-95">
-        <Icon icon="lucide:sliders-horizontal" className="w-5 h-5 text-black" />
-        {hasActiveFilters && (
-          <div className="w-2 h-2 absolute top-2 right-4 bg-indigo-500 rounded-full ring-2 ring-white" />
+      <div className="relative">
+        <div
+          onClick={togglePopup}
+          className="w-14 h-10 bg-white hover:bg-slate-50 rounded-[24px] flex justify-center items-center relative flex-shrink-0 cursor-pointer transition-all active:scale-95"
+        >
+          <Icon icon="iconoir:filter-list" className="absolute left-[16px] top-[8px] w-6 h-6 text-black" />
+          {hasActivePopupFilters && (
+            <div className="w-2.5 h-2.5 absolute top-[6px] right-[6px] bg-indigo-500 rounded-full ring-2 ring-white" />
+          )}
+        </div>
+
+        {/* Pop up dropdown */}
+        {isOpen && (
+          <div className="absolute right-0 top-12 w-[260px] bg-white rounded-[24px] border border-indigo-50 shadow-[0px_8px_30px_rgba(0,0,0,0.06)] p-4 z-50 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+            {/* Top Row: Apply and Clear */}
+            <div className="flex justify-between items-center w-full pb-3 border-b border-indigo-50/50">
+              <button
+                onClick={handleApply}
+                className="font-['Poppins'] font-semibold text-sm text-[#6366F1] hover:text-indigo-600 transition-colors"
+              >
+                Apply
+              </button>
+              <button
+                onClick={handleClear}
+                className="font-['Poppins'] font-medium text-sm text-[#FF5B5B] hover:text-rose-600 transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+
+            {/* Accordion 1: Date posted */}
+            <div className="flex flex-col border-b border-indigo-50/50 pb-2">
+              <button
+                onClick={() => toggleSection('date_posted')}
+                className="w-full flex justify-between items-center py-2 text-sm font-semibold font-['Poppins'] text-black select-none"
+              >
+                <span>Date posted</span>
+                <Icon
+                  icon={expandedSection === 'date_posted' ? 'lucide:chevron-up' : 'lucide:chevron-down'}
+                  className="w-4 h-4 text-gray-500"
+                />
+              </button>
+              {expandedSection === 'date_posted' && (
+                <div className="flex flex-col pl-2 gap-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                  {['Today', 'Last 7 days', 'Last 30 days'].map(opt => {
+                    const isSelected = localFilters.date_posted === opt;
+                    return (
+                      <button
+                        key={opt}
+                        onClick={() => setLocalFilters(prev => ({ ...prev, date_posted: isSelected ? '' : opt }))}
+                        className={`w-full py-1.5 text-left text-[13px] font-['Poppins'] transition-colors ${
+                          isSelected
+                            ? 'text-[#6366F1] font-medium'
+                            : 'text-gray-500 hover:text-black font-normal'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 2: Industry */}
+            <div className="flex flex-col border-b border-indigo-50/50 pb-2">
+              <button
+                onClick={() => toggleSection('industry')}
+                className="w-full flex justify-between items-center py-2 text-sm font-semibold font-['Poppins'] text-black select-none"
+              >
+                <span>Industry</span>
+                <Icon
+                  icon={expandedSection === 'industry' ? 'lucide:chevron-up' : 'lucide:chevron-down'}
+                  className="w-4 h-4 text-gray-500"
+                />
+              </button>
+              {expandedSection === 'industry' && (
+                <div className="flex flex-col pl-2 gap-1 max-h-48 overflow-y-auto pr-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                  {standardIndustries.map(opt => {
+                    const isSelected = localFilters.industry === opt;
+                    return (
+                      <button
+                        key={opt}
+                        onClick={() => setLocalFilters(prev => ({ ...prev, industry: isSelected ? '' : opt }))}
+                        className={`w-full py-1.5 text-left text-[13px] font-['Poppins'] transition-colors ${
+                          isSelected
+                            ? 'text-[#6366F1] font-medium'
+                            : 'text-gray-500 hover:text-black font-normal'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => {
+                      setLocalFilters(prev => ({ ...prev, industry: localFilters.industry === 'Other' || isCustomIndustry ? '' : 'Other' }));
+                    }}
+                    className={`w-full py-1.5 text-left text-[13px] font-['Poppins'] transition-colors ${
+                      localFilters.industry === 'Other' || isCustomIndustry
+                        ? 'text-[#6366F1] font-medium'
+                        : 'text-gray-500 hover:text-black font-normal'
+                    }`}
+                  >
+                    Other
+                  </button>
+                  {(localFilters.industry === 'Other' || isCustomIndustry) && (
+                    <div className="w-full pl-1 pr-2 pb-2">
+                      <input
+                        type="text"
+                        value={customIndustryText}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCustomIndustryText(val);
+                          setLocalFilters(prev => ({ ...prev, industry: val || 'Other' }));
+                        }}
+                        placeholder="Art.."
+                        autoFocus
+                        className="w-full bg-transparent border-b border-black text-[13px] font-['Poppins'] font-normal text-black py-0.5 outline-none placeholder:text-gray-400 mt-1"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 3: Location */}
+            <div className="flex flex-col pb-1">
+              <button
+                onClick={() => toggleSection('location')}
+                className="w-full flex justify-between items-center py-2 text-sm font-semibold font-['Poppins'] text-black select-none"
+              >
+                <span>Location</span>
+                <Icon
+                  icon={expandedSection === 'location' ? 'lucide:chevron-up' : 'lucide:chevron-down'}
+                  className="w-4 h-4 text-gray-500"
+                />
+              </button>
+              {expandedSection === 'location' && (
+                <div className="flex flex-col pl-2 gap-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                  {['City', 'Country'].map(opt => {
+                    const isSelected = localFilters.location_type === opt;
+                    return (
+                      <button
+                        key={opt}
+                        onClick={() => setLocalFilters(prev => ({ ...prev, location_type: isSelected ? '' : opt }))}
+                        className={`w-full py-1.5 text-left text-[13px] font-['Poppins'] transition-colors ${
+                          isSelected
+                            ? 'text-[#6366F1] font-medium'
+                            : 'text-gray-500 hover:text-black font-normal'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </div>

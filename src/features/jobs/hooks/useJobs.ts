@@ -10,6 +10,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
   const [hasMore, setHasMore] = useState(true);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<string>(initialTab);
+  const [applicationStats, setApplicationStats] = useState<{ totalApplied: number; shortlisted: number }>({ totalApplied: 0, shortlisted: 0 });
   
   const [filters, setFilters] = useState<JobsFilter>({
     search: initialSearch,
@@ -30,34 +31,43 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     }
 
     try {
-      const activeCursor = isLoadMore ? cursor : undefined;
-      const res = await jobsService.getJobs(filters, activeCursor);
-      
-      let newJobs = res.data;
+      let newJobs: Job[] = [];
 
-      // Filter locally for tabs if not 'Explore'
-      if (activeTab === 'Saved') {
-        // Load all saved from local storage / local state
-        const savedIds = JSON.parse(localStorage.getItem('saved_job_ids') || '[]');
-        newJobs = newJobs.map(j => ({
-          ...j,
-          is_saved: savedIds.includes(j.id)
-        })).filter(j => j.is_saved);
-      } else if (activeTab === 'My applications') {
-        const appliedIds = JSON.parse(localStorage.getItem('applied_job_ids') || '[]');
-        newJobs = newJobs.map(j => ({
-          ...j,
-          is_applied: appliedIds.includes(j.id)
-        })).filter(j => j.is_applied);
+      if (activeTab === 'My applications') {
+        newJobs = await jobsService.getMyApplications();
+        const stats = await jobsService.getApplicationStats();
+        setApplicationStats(stats);
+        setCursor(undefined);
+        setHasMore(false);
+      } else if (activeTab === 'Offers') {
+        newJobs = await jobsService.getMyOffers();
+        setCursor(undefined);
+        setHasMore(false);
       } else {
-        // Sync local storage states
-        const savedIds = JSON.parse(localStorage.getItem('saved_job_ids') || '[]');
-        const appliedIds = JSON.parse(localStorage.getItem('applied_job_ids') || '[]');
-        newJobs = newJobs.map(j => ({
-          ...j,
-          is_saved: savedIds.includes(j.id) || !!j.is_saved,
-          is_applied: appliedIds.includes(j.id) || !!j.is_applied
-        }));
+        const activeCursor = isLoadMore ? cursor : undefined;
+        const res = await jobsService.getJobs(filters, activeCursor);
+        newJobs = res.data;
+        setCursor(res.nextCursor || undefined);
+        setHasMore(res.hasMore);
+
+        if (activeTab === 'Saved') {
+          if (typeof window !== 'undefined' && !localStorage.getItem('saved_job_ids')) {
+            localStorage.setItem('saved_job_ids', JSON.stringify(['1', '2']));
+          }
+          const savedIds = JSON.parse(localStorage.getItem('saved_job_ids') || '[]');
+          newJobs = newJobs.map(j => ({
+            ...j,
+            is_saved: savedIds.includes(j.id)
+          })).filter(j => j.is_saved);
+        } else {
+          const savedIds = JSON.parse(localStorage.getItem('saved_job_ids') || '[]');
+          const appliedIds = JSON.parse(localStorage.getItem('applied_job_ids') || '[]');
+          newJobs = newJobs.map(j => ({
+            ...j,
+            is_saved: savedIds.includes(j.id),
+            is_applied: appliedIds.includes(j.id)
+          }));
+        }
       }
 
       setJobs(prev => {
@@ -73,9 +83,6 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
         }
         return newJobs;
       });
-
-      setCursor(res.nextCursor || undefined);
-      setHasMore(res.hasMore);
     } catch (err) {
       console.error('Failed to load jobs:', err);
       toast.error('Failed to load jobs list.');
@@ -159,6 +166,30 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     }));
   }, []);
 
+  const withdrawJob = useCallback(async (jobId: string) => {
+    try {
+      await jobsService.withdrawApplication(jobId);
+      setJobs(prev => prev.filter(j => j.id !== jobId));
+      const stats = await jobsService.getApplicationStats();
+      setApplicationStats(stats);
+      toast.success('Application withdrawn successfully');
+    } catch (error) {
+      console.error('Failed to withdraw application:', error);
+      toast.error('Failed to withdraw application.');
+    }
+  }, []);
+
+  const respondToOffer = useCallback(async (offerId: string, action: 'accept' | 'decline') => {
+    try {
+      await jobsService.respondToOffer(offerId, action);
+      setJobs(prev => prev.filter(j => j.id !== offerId));
+      toast.success(action === 'accept' ? 'Offer accepted successfully!' : 'Offer declined successfully');
+    } catch (error) {
+      console.error('Failed to respond to offer:', error);
+      toast.error('Failed to respond to offer.');
+    }
+  }, []);
+
   return {
     jobs,
     isLoading,
@@ -172,6 +203,9 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     filters,
     setFilterValue,
     toggleSave,
-    applyToJob
+    applyToJob,
+    withdrawJob,
+    respondToOffer,
+    applicationStats
   };
 };
