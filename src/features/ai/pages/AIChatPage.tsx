@@ -155,11 +155,13 @@ export default function AIChatPage() {
       if (userMsg && !isMobile) {
         if (isJobRelatedQuery(userMsg.content)) {
           setIsLunarPanelOpen(true);
+          setIsProjectOpen(false);
           setLunarPanelMode("job-list");
         } else {
           const results = getWebsiteResultsFromMessage(userMsg.content);
           if (results.length > 0) {
             setIsLunarPanelOpen(true);
+            setIsProjectOpen(false);
             setLunarPanelMode("website");
             setSelectedCompany(results[0].company);
             setWebsiteCompanies(results);
@@ -234,6 +236,7 @@ export default function AIChatPage() {
     const lowerContent = content.toLowerCase();
     if (!isMobile && keywords.some(kw => lowerContent.includes(kw))) {
       setIsLunarPanelOpen(true);
+      setIsProjectOpen(false);
       setActiveGraphTitle(getDynamicTitle(content));
       setLunarPanelMode(lowerContent.includes("chart") ? "pie" : "graph");
     }
@@ -275,6 +278,7 @@ export default function AIChatPage() {
     const lowerPrompt = prompt.toLowerCase();
     if (!isMobile && keywords.some(kw => lowerPrompt.includes(kw))) {
       setIsLunarPanelOpen(true);
+      setIsProjectOpen(false);
       setActiveGraphTitle(getDynamicTitle(prompt));
       setLunarPanelMode(lowerPrompt.includes("chart") ? "pie" : "graph");
     }
@@ -312,11 +316,15 @@ export default function AIChatPage() {
                 setIsLunarPanelOpen(false);
               } else {
                 setIsLunarPanelOpen(true);
+                setIsProjectOpen(false);
                 setLunarPanelMode("history");
               }
             }}
             isHistoryOpen={isLunarPanelOpen && lunarPanelMode === "history"}
-            onOpenProject={() => setIsProjectOpen(true)}
+            onOpenProject={() => {
+              setIsProjectOpen(true);
+              setIsLunarPanelOpen(false);
+            }}
           />
         );
 
@@ -332,6 +340,7 @@ export default function AIChatPage() {
             onEditMessage={editMessage}
             onOpenLunarPanel={(title, mode, selectedComp, comps) => {
               setIsLunarPanelOpen(true);
+              setIsProjectOpen(false);
               setActiveGraphTitle(title);
               setLunarPanelMode((mode as LunarPanelMode) || "graph");
               if (mode === "website") {
@@ -356,6 +365,7 @@ export default function AIChatPage() {
             onEditMessage={editMessage}
             onOpenLunarPanel={(title, mode, selectedComp, comps) => {
               setIsLunarPanelOpen(true);
+              setIsProjectOpen(false);
               setActiveGraphTitle(title);
               setLunarPanelMode((mode as LunarPanelMode) || "graph");
               if (mode === "website") {
@@ -375,7 +385,10 @@ export default function AIChatPage() {
             suggestions={suggestions}
             onSuggestionClick={handleSuggestionClick}
             isLoading={isInputDisabled}
-            onOpenProject={() => setIsProjectOpen(true)}
+            onOpenProject={() => {
+              setIsProjectOpen(true);
+              setIsLunarPanelOpen(false);
+            }}
           />
         );
     }
@@ -447,7 +460,7 @@ export default function AIChatPage() {
                       <Icon icon="fluent:share-28-regular" width={24} height={24} className="text-[var(--foreground)] hover:text-inherit" />
                     </button>
 
-                    {/* History Icon */}
+                     {/* History Icon */}
                     <button
                       type="button"
                       onClick={() => {
@@ -455,6 +468,7 @@ export default function AIChatPage() {
                           setIsLunarPanelOpen(false);
                         } else {
                           setIsLunarPanelOpen(true);
+                          setIsProjectOpen(false);
                           setLunarPanelMode("history");
                         }
                       }}
@@ -470,11 +484,14 @@ export default function AIChatPage() {
                         className={isLunarPanelOpen && lunarPanelMode === "history" ? "text-[var(--primary)]" : "text-[var(--foreground)] hover:text-inherit"}
                       />
                     </button>
-
+ 
                     {/* Project Icon */}
                     <button
                       type="button"
-                      onClick={() => setIsProjectOpen(true)}
+                      onClick={() => {
+                        setIsProjectOpen(true);
+                        setIsLunarPanelOpen(false);
+                      }}
                       className="flex items-center justify-center w-10 h-10 p-2 rounded-[24px] bg-[var(--background)] border border-[var(--border)] cursor-pointer shadow-[var(--card-shadow-inner)] hover:bg-[var(--primary-tint)] hover:text-[var(--primary)] transition-all duration-200"
                       title="Project"
                     >
