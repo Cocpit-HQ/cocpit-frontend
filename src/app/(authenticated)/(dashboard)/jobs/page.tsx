@@ -2,7 +2,7 @@
 
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { Suspense } from "react";
-import JobsPage from "@/components/jobs/JobsPage";
+import JobsPage from "@/features/jobs/pages/JobsPage";
 import CompanyJobsPage from "@/components/jobs/company/CompanyJobsPage";
 import { MemoryRouter } from "@/components/layout/MemoryRouter";
 
