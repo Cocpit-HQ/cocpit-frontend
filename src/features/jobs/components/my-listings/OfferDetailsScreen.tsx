@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
-import { JobListing } from '../../types/jobs.types';
 import WithdrawOfferModal from './WithdrawOfferModal';
 import { toast } from 'sonner';
 
@@ -79,130 +78,209 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
 
   const activeCandidates = candidates.filter((c) => c.status !== 'withdrawn');
 
+  // Condition to show note: Only display if the note content is present or if it matches the main group
+  const showNote = offerGroup.title === 'UI/UX Designer' || offerGroup.id === 'so-1';
+
   return (
-    <div className="w-[960px] mx-auto bg-white inline-flex flex-col justify-start items-center gap-6 overflow-hidden animate-in fade-in duration-300">
-      {/* Header Row */}
-      <div className="self-stretch inline-flex justify-start items-center gap-4">
+    <div className="w-[960px] mx-auto bg-white flex flex-col justify-start items-center gap-[16px] overflow-hidden animate-in fade-in duration-300">
+      
+      {/* Header Row (Frame 2608623) */}
+      <div className="w-[960px] h-[48px] self-stretch flex flex-row items-center p-0 gap-[16px]">
         <button
           onClick={onBack}
           type="button"
-          className="size-12 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-300 backdrop-blur-md flex justify-center items-center gap-2.5 hover:bg-slate-50 active:scale-95 transition-all text-gray-500 shadow-sm"
+          className="w-12 h-12 box-border p-2 rounded-[100px] border border-[#DADADA] backdrop-blur-[12px] flex flex-row justify-center items-center gap-2.5 hover:bg-slate-50 transition-colors active:scale-95 text-gray-500 shadow-sm"
         >
-          <Icon icon="lucide:chevron-left" className="w-5 h-5 text-gray-500" />
+          <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500" />
         </button>
-        <div className="inline-flex flex-col justify-start items-start">
-          <div className="text-black text-lg font-medium font-['Poppins'] leading-6">Offer details</div>
-          <div className="text-gray-500 text-xs font-normal font-['Poppins'] leading-4">View, and manage this listing</div>
+        <div className="flex flex-col items-start p-0 gap-0">
+          <div className="text-left text-[#000000] text-[18px] font-medium font-['Poppins'] leading-[26px]">Offer details</div>
+          <div className="text-left text-[#6B7280] text-[12px] font-normal font-['Poppins'] leading-[16px]">View, and manage this listing</div>
         </div>
       </div>
 
-      {/* Job Details Card Preview */}
-      <div className="w-[960px] p-4 rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex flex-col justify-start items-end gap-3 border border-[#EEF2FF] shadow-sm relative">
-        <div className="self-stretch inline-flex justify-between items-start">
-          <div className="size- inline-flex flex-col justify-start items-start gap-1">
-            <h3 className="justify-start text-black text-base font-semibold font-['Poppins'] leading-6">{offerGroup.title}</h3>
-            <span className="justify-start text-gray-500 text-sm font-normal font-['Poppins'] leading-5">{offerGroup.company}</span>
-            <span className="justify-start text-gray-400 text-sm font-semibold font-['Poppins'] leading-5">Full-time</span>
-          </div>
-          <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-slate-200 to-slate-400 flex items-center justify-center shadow-inner overflow-hidden border border-slate-300">
-            <Icon icon="solar:globus-bold" className="w-8 h-8 text-white opacity-80" />
-          </div>
-        </div>
+      {/* Job Details Card Preview (Frame 2608861) */}
+      <div className="w-[960px] h-[196px] box-border p-[16px] rounded-[24px] border border-[#EEF2FF] flex flex-col items-end gap-[12px] bg-white">
         
-        <div className="self-stretch inline-flex justify-between items-center border-t border-slate-50 pt-2 text-sm">
-          <div className="size- flex justify-start items-center gap-2 text-gray-600 font-medium font-['Poppins']">
-            <div className="flex justify-start items-center gap-1">
-              <Icon icon="lucide:briefcase" className="w-4 h-4 text-gray-400" />
-              <span>0-2Yrs</span>
+        {/* Frame 2608947: Top row (role, company, full-time, and company logo) */}
+        <div className="w-[928px] h-[80px] self-stretch flex flex-row justify-between items-start p-0 gap-[10px]">
+          
+          {/* Frame 2608946: Role details */}
+          <div className="h-[80px] flex flex-col items-start p-0 gap-[8px]">
+            {/* UI/UX Designer */}
+            <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black">
+              {offerGroup.title}
+            </span>
+            {/* Starlight Technologies */}
+            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280]">
+              {offerGroup.company}
+            </span>
+            {/* Full time */}
+            <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-[#6B7280]">
+              Full time
+            </span>
+          </div>
+
+          {/* Company Avatar Frame 2608516 */}
+          <div
+            className="w-[56px] h-[40px] rounded-[24px] flex items-center justify-center flex-shrink-0"
+            style={{
+              backgroundImage: 'url(/assets/company-placeholder.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+        </div>
+
+        {/* Row 2: Specifications (Experience, location, bullet point, salary) */}
+        <div className="w-[928px] h-[20px] self-stretch flex flex-row justify-between items-center p-0">
+          <div className="flex flex-row items-center p-0">
+            {/* Experience Frame 2608943 */}
+            <div className="flex flex-row items-center p-0 gap-[8px] h-[20px]">
+              <Icon icon="lucide:briefcase" className="w-[20px] h-[20px] text-black" />
+              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black">
+                0-2Yrs
+              </span>
             </div>
-            <span className="text-gray-300">•</span>
-            <div className="flex justify-start items-center gap-1">
-              <Icon icon="lucide:map-pin" className="w-4 h-4 text-gray-400" />
-              <span>Hybrid - Kolhapur</span>
+            
+            {/* Bullet Point / Ellipse 15 */}
+            <div className="w-[6px] h-[6px] bg-black rounded-full mx-[8px]" />
+
+            {/* Location Frame 2608944 */}
+            <div className="flex flex-row items-center p-0 gap-[8px] h-[20px]">
+              <Icon icon="lucide:map-pin" className="w-[20px] h-[20px] text-black" />
+              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black">
+                Hybrid - Kolhapur
+              </span>
             </div>
           </div>
-          
-          <div className="flex justify-start items-center gap-2">
-            <span className="text-black text-sm font-semibold font-['Poppins']">$160k - $210k</span>
+
+          {/* Salary range frame */}
+          <div className="py-[2px] flex items-center h-[16px]">
+            <span className="font-['Poppins'] font-medium text-[12px] leading-[16px] text-black">
+              $160k - $210k
+            </span>
           </div>
         </div>
 
-        {/* View Details Eye Icon Trigger */}
+        {/* Row 3: Eye Icon Frame 2609037 */}
         <button
           onClick={onViewListingDetails}
           type="button"
-          className="absolute right-4 bottom-4 p-2 hover:bg-indigo-50 rounded-full transition-colors active:scale-95 text-indigo-400"
-          title="View full job details"
+          className="w-[56px] h-[40px] flex items-center justify-center rounded-[24px] hover:bg-[#EEF2FF]/40 active:scale-95 transition-all text-black"
+          title="Open in job details page"
         >
-          <Icon icon="lucide:eye" className="w-5 h-5 text-indigo-500" />
+          <Icon icon="lucide:eye" className="w-[24px] h-[24px]" />
         </button>
+
       </div>
 
-      {/* Note Section */}
-      <div className="self-stretch flex flex-col justify-start items-start gap-2.5 w-full">
-        <span className="text-black text-sm font-semibold font-['Poppins'] leading-tight">Note</span>
-        <div className="self-stretch p-4 bg-slate-50/70 border border-[#EEF2FF] rounded-2xl flex items-start gap-3 shadow-sm border-l-4 border-l-indigo-500">
-          <img
-            className="w-10 h-10 rounded-full object-cover border border-slate-200 mt-0.5"
-            src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=120"
-            alt="Sarah Mitchell"
-          />
-          <div className="flex-1 flex flex-col justify-start items-start gap-1">
-            <div className="text-black text-sm font-semibold font-['Poppins']">Sarah Mitchell</div>
-            <div className="text-gray-400 text-[10px] font-semibold font-['Poppins'] uppercase tracking-wider">
-              Head of Design
+      {/* Note Section (Frame 2609091) */}
+      {showNote ? (
+        <div className="w-[960px] flex flex-col items-start p-0 gap-[8px]">
+          {/* Note Title */}
+          <div className="w-[43px] h-[26px] flex items-center justify-center">
+            <span className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-center text-black">
+              Note
+            </span>
+          </div>
+          
+          {/* Note Container (Frame 2609030) */}
+          <div className="w-[960px] box-border flex flex-col items-start p-[12px_16px] gap-[8px] bg-[#F9FAFF] border-l-2 border-l-[#6366F1] rounded-[0px_16px_16px_16px]">
+            {/* Sender Info Row (Frame 2609033) */}
+            <div className="flex flex-row justify-start items-center p-0 gap-[8px] w-[282px] h-[40px]">
+              <img
+                className="w-[40px] h-[40px] rounded-full object-cover"
+                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=120"
+                alt="Sarah Mitchell"
+              />
+              <div className="flex flex-col justify-center items-start">
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] uppercase">
+                  SARAH MITCHELL
+                </span>
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] uppercase">
+                  HEAD OF DESIGN
+                </span>
+              </div>
             </div>
-            <p className="text-gray-700 text-xs font-normal font-['Poppins'] leading-relaxed italic mt-1">
+
+            {/* Note Content */}
+            <div className="w-[928px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280]">
               "Hi cocpit, we were impressed by your portfolio and the way you handled the whiteboarding session. Your approach to scalable design systems is exactly what we need for our next growth phase. We'd love to have you join our team."
-            </p>
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
-      {/* Candidates List Section */}
-      <div className="self-stretch flex flex-col justify-start items-start gap-3 w-full">
-        <div className="self-stretch inline-flex justify-start items-center gap-1.5 border-b border-slate-100 pb-2">
-          <span className="text-black text-sm font-semibold font-['Poppins']">Candidates</span>
-          <span className="px-2 py-0.5 bg-indigo-50 rounded-full text-indigo-500 text-[10px] font-bold font-['Poppins']">
-            {activeCandidates.length}
-          </span>
+      {/* Candidates List Section (Frame 2609090) */}
+      <div className="w-[960px] flex flex-col items-start p-0 gap-[16px]">
+        {/* Header Row (Frame 2608889) */}
+        <div className="w-[166px] h-[32px] flex flex-row items-center p-0 gap-[16px]">
+          {/* Title */}
+          <div className="w-[107px] h-[26px] py-[3px] flex items-center justify-center">
+            <span className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-center text-black">
+              Candidates
+            </span>
+          </div>
+          {/* Count Badge Frame 2608517 */}
+          <div className="box-sizing: border-box w-[43px] h-[32px] bg-white border border-[#EEF2FF] rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px]">
+            <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6366F1]">
+              {activeCandidates.length}
+            </span>
+          </div>
         </div>
 
-        <div className="self-stretch flex flex-col gap-3.5">
+        {/* Candidates list with gap 16px */}
+        <div className="w-[960px] flex flex-col gap-[16px]">
           {activeCandidates.length === 0 ? (
             <div className="py-12 text-center text-gray-400 text-xs font-['Poppins'] bg-slate-50/50 rounded-2xl">
               All offers have been withdrawn.
             </div>
           ) : (
             activeCandidates.map((cand) => (
+              /* Candidate card Frame 2608732 */
               <div
                 key={cand.id}
-                className="self-stretch p-3 bg-white border border-[#EEF2FF] rounded-2xl inline-flex justify-between items-center shadow-sm"
+                className="w-[960px] h-[60px] bg-white border border-[#EEF2FF]/60 rounded-[12px] flex flex-row justify-between items-center p-[8px_16px] box-border"
               >
-                <div className="flex justify-start items-center gap-3">
-                  <img className="w-11 h-11 rounded-full object-cover border border-slate-100" src={cand.avatar} alt={cand.name} />
-                  <div className="inline-flex flex-col justify-start items-start">
-                    <span className="text-black text-sm font-semibold font-['Poppins'] leading-tight">{cand.name}</span>
-                    <span className="text-gray-400 text-[10px] font-normal font-['Poppins'] mt-0.5">
+                {/* User Frame 2608774 */}
+                <div className="flex flex-row items-start p-0 gap-[8px] h-[44px]">
+                  {/* User Avatar */}
+                  <img
+                    className="w-[40px] h-[40px] rounded-full object-cover"
+                    src={cand.avatar}
+                    alt={cand.name}
+                  />
+                  {/* Text Frame 2609008 */}
+                  <div className="flex flex-col justify-center items-start h-[44px]">
+                    <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black text-left">
+                      {cand.name}
+                    </span>
+                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] text-left">
                       {cand.role} at {cand.companyName}
                     </span>
                   </div>
                 </div>
 
+                {/* Button Frame 2608617 */}
                 {cand.status === 'chat' ? (
                   <button
                     type="button"
-                    className="h-9 px-5 bg-indigo-500 hover:bg-indigo-600 rounded-3xl text-white text-xs font-semibold font-['Poppins'] transition-all active:scale-95 shadow-sm"
+                    className="box-sizing: border-box w-[120px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:opacity-90 transition-all active:scale-95"
                   >
-                    Chat
+                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white">
+                      Chat
+                    </span>
                   </button>
                 ) : (
                   <button
                     onClick={() => handleWithdrawClick(cand.id)}
                     type="button"
-                    className="h-9 px-5 border border-slate-350 text-gray-500 hover:text-red-500 hover:border-red-400 rounded-3xl text-xs font-semibold font-['Poppins'] transition-all active:scale-95 bg-white"
+                    className="box-sizing: border-box w-[120px] h-[40px] border border-[#6B7280] rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:bg-slate-50 transition-all active:scale-95 bg-white"
                   >
-                    Withdraw
+                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#6B7280]">
+                      Withdraw
+                    </span>
                   </button>
                 )}
               </div>

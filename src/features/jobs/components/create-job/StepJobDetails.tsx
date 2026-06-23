@@ -27,8 +27,23 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   const [company, setCompany] = useState(initialDetails?.company || userProfile?.name || '');
   const [location, setLocation] = useState(initialDetails?.location || userProfile?.location || '');
   const [description, setDescription] = useState(initialDetails?.description || '');
-  const [experience, setExperience] = useState(initialDetails?.experience || '0 - 2 years');
-  const [workType, setWorkType] = useState(initialDetails?.work_type || 'Full-time');
+  
+  // Normalization for dropdown values
+  const normalizeExperience = (exp: string | undefined): string => {
+    if (!exp) return 'Fresher';
+    if (exp === '0 - 2 years') return 'Junior (1-3 yrs)';
+    if (exp === '2 - 5 years') return 'Mid-level (3-5 yrs)';
+    if (exp === '5+ years') return 'Senior (5+ yrs)';
+    return exp;
+  };
+  const normalizeWorkType = (wt: string | undefined): string => {
+    if (!wt) return 'Full time';
+    if (wt === 'Full-time') return 'Full time';
+    return wt;
+  };
+
+  const [experience, setExperience] = useState(normalizeExperience(initialDetails?.experience));
+  const [workType, setWorkType] = useState(normalizeWorkType(initialDetails?.work_type));
   const [workMode, setWorkMode] = useState(initialDetails?.work_mode || 'Hybrid');
   const [minSalary, setMinSalary] = useState(initialDetails?.salary_min ? String(initialDetails.salary_min) : '');
   const [maxSalary, setMaxSalary] = useState(initialDetails?.salary_max ? String(initialDetails.salary_max) : '');
@@ -49,6 +64,17 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
   // AI loading and options state
   const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Custom Dropdown Open States
+  const [isExperienceOpen, setIsExperienceOpen] = useState(false);
+  const [isWorkTypeOpen, setIsWorkTypeOpen] = useState(false);
+  const [isWorkModeOpen, setIsWorkModeOpen] = useState(false);
+
+  // Dropdown Refs
+  const experienceRef = useRef<HTMLDivElement>(null);
+  const workTypeRef = useRef<HTMLDivElement>(null);
+  const workModeRef = useRef<HTMLDivElement>(null);
 
   // Generate description template based on values
   const getAiGeneratedDescription = (
@@ -113,12 +139,39 @@ Requirements:
   // We no longer auto-prefill the description.
   // The user can type their own, or click "Regenerate with AI" to trigger it.
 
+  // Auto-resize description textarea to prevent internal scrollbar
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [description, isAiGenerating]);
+
+  // Click outside to close custom dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (experienceRef.current && !experienceRef.current.contains(event.target as Node)) {
+        setIsExperienceOpen(false);
+      }
+      if (workTypeRef.current && !workTypeRef.current.contains(event.target as Node)) {
+        setIsWorkTypeOpen(false);
+      }
+      if (workModeRef.current && !workModeRef.current.contains(event.target as Node)) {
+        setIsWorkModeOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const handleRegenerateAi = () => {
     setIsAiGenerating(true);
     setTimeout(() => {
       setDescription(getAiGeneratedDescription(role, company, location, true));
       setIsAiGenerating(false);
-    }, 1200);
+    }, 2000);
   };
 
   const buildDetailsObject = (): Partial<JobListing> => {
@@ -145,56 +198,56 @@ Requirements:
   };
 
   return (
-    <div className="w-[960px] mx-auto bg-white inline-flex flex-col justify-start items-center gap-4 overflow-hidden animate-in fade-in duration-300">
+    <div className="w-[960px] mx-auto bg-white inline-flex flex-col justify-start items-center gap-4 overflow-hidden animate-in fade-in duration-300 pb-16">
       {/* Header Row */}
       <div className="self-stretch inline-flex justify-start items-center gap-4">
         <button
           onClick={onBack}
           type="button"
-          className="size-12 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-300 backdrop-blur-md flex justify-center items-center gap-2.5 hover:bg-slate-50 active:scale-95 transition-all text-gray-500 shadow-sm"
+          className="w-12 h-12 box-border p-2 rounded-[100px] border border-[#DADADA] backdrop-blur-[12px] flex flex-row justify-center items-center gap-2.5 hover:bg-slate-50 transition-colors active:scale-95 text-gray-500 shadow-sm"
         >
-          <Icon icon="lucide:chevron-left" className="w-5 h-5 text-gray-500" />
+          <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500" />
         </button>
         <div className="inline-flex flex-col justify-start items-start">
-          <div className="text-black text-lg font-medium font-['Poppins'] leading-6">Create job</div>
-          <div className="text-gray-500 text-xs font-normal font-['Poppins'] leading-4">Modify Job Details</div>
+          <div className="text-black text-lg font-medium font-['Poppins'] leading-6 text-left">Create job</div>
+          <div className="text-gray-500 text-xs font-normal font-['Poppins'] leading-4 text-left">Modify Job Details</div>
         </div>
       </div>
 
       {/* Form Fields Panel */}
-      <div className="self-stretch p-4 bg-white rounded-xl flex flex-col justify-start items-start gap-4 border border-[#EEF2FF]">
+      <div className="self-stretch p-4 bg-white rounded-xl flex flex-col justify-start items-start gap-4">
         {/* Row 1: Role, Company, Location */}
         <div className="self-stretch inline-flex justify-center items-start gap-6">
           {/* Job Role */}
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <label className="text-black text-sm font-normal font-['Poppins'] leading-5">Job Role</label>
+            <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Job Role</label>
             <input
               type="text"
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-indigo-300 focus:ring-0 transition-colors shadow-sm"
+              className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 border-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-indigo-300 focus:ring-0 transition-colors shadow-sm"
             />
           </div>
 
           {/* Company Name */}
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <label className="text-black text-sm font-normal font-['Poppins'] leading-5">Company Name</label>
+            <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Company Name</label>
             <input
               type="text"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
-              className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-indigo-300 focus:ring-0 transition-colors shadow-sm"
+              className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 border-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-indigo-300 focus:ring-0 transition-colors shadow-sm"
             />
           </div>
 
           {/* Location */}
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <label className="text-black text-sm font-normal font-['Poppins'] leading-5">Location</label>
+            <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Location</label>
             <input
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-indigo-300 focus:ring-0 transition-colors shadow-sm"
+              className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 border-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-indigo-300 focus:ring-0 transition-colors shadow-sm"
             />
           </div>
         </div>
@@ -202,36 +255,82 @@ Requirements:
         {/* Row 2: Job Description */}
         <div className="self-stretch flex flex-col justify-start items-start gap-2 w-full">
           <div className="self-stretch inline-flex justify-between items-start">
-            <label className="text-black text-sm font-normal font-['Poppins'] leading-5">Job Description</label>
+            <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left">Job Description</label>
             <button
               onClick={handleRegenerateAi}
               disabled={isAiGenerating}
               type="button"
               className="pb-px flex justify-start items-center gap-1.5 hover:opacity-85 text-indigo-500 transition-opacity active:scale-95"
             >
-              <Icon
-                icon={isAiGenerating ? "line-md:loading-twotone-loop" : "solar:magic-stick-linear"}
-                className={`w-5 h-5 text-indigo-500 ${isAiGenerating ? '' : 'animate-pulse'}`}
+              <style>{`
+                @keyframes magic-spin {
+                  0% { transform: rotate(0deg); opacity: 1; }
+                  15% { transform: rotate(45deg); opacity: 0.3; }
+                  40% { transform: rotate(540deg); opacity: 1; }
+                  65% { transform: rotate(1080deg); opacity: 0.3; }
+                  85% { transform: rotate(1080deg); opacity: 1; }
+                  100% { transform: rotate(1080deg); opacity: 1; }
+                }
+                .animate-magic-spin {
+                  animation: magic-spin 2.5s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+                }
+              `}</style>
+              <img
+                src="/assets/AI 2.svg"
+                alt="AI Icon"
+                className={`w-5 h-5 ${isAiGenerating ? 'animate-magic-spin' : 'animate-pulse'}`}
               />
               <span className="text-indigo-500 text-base font-normal font-['Poppins'] leading-6">
-                {isAiGenerating ? 'Drafting...' : 'Regenerate with AI'}
+                {isAiGenerating ? 'Generating...' : 'Regenerate with AI'}
               </span>
             </button>
           </div>
 
           <div className="self-stretch relative p-1 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-start overflow-hidden focus-within:outline-indigo-300 transition-colors shadow-sm">
             {isAiGenerating ? (
-              <div className="w-full min-h-[250px] flex flex-col items-center justify-center gap-3 bg-slate-50/50">
-                <Icon icon="solar:magic-stick-bold animate-bounce" className="w-8 h-8 text-indigo-500" />
-                <span className="text-xs font-semibold text-indigo-500 animate-pulse font-['Poppins']">
-                  AI is updating the job description details...
-                </span>
+              <div className="w-full min-h-[250px] p-4 flex flex-col gap-5 bg-white select-none relative">
+                {/* AI Loading Indicator Badge */}
+                <div className="absolute right-4 top-4 flex items-center gap-1.5 bg-indigo-50/70 px-3 py-1.5 rounded-full border border-indigo-100">
+                  <img
+                    src="/assets/AI 2.svg"
+                    alt="AI Icon"
+                    className="w-4 h-4 animate-magic-spin"
+                  />
+                  <span className="text-[10px] font-bold text-indigo-600 font-['Poppins'] tracking-wider uppercase animate-pulse">
+                    AI Generating
+                  </span>
+                </div>
+
+                {/* Paragraph 1 Skeleton */}
+                <div className="flex flex-col gap-2">
+                  <div className="h-4 bg-slate-200/80 rounded-md w-1/4 animate-pulse" />
+                  <div className="h-3.5 bg-slate-100 rounded-md w-full animate-pulse" />
+                  <div className="h-3.5 bg-slate-100 rounded-md w-11/12 animate-pulse" />
+                  <div className="h-3.5 bg-slate-100 rounded-md w-5/6 animate-pulse" />
+                </div>
+
+                {/* Paragraph 2 Skeleton */}
+                <div className="flex flex-col gap-2 mt-1">
+                  <div className="h-4 bg-slate-200/80 rounded-md w-1/3 animate-pulse" />
+                  <div className="h-3.5 bg-slate-100 rounded-md w-full animate-pulse" />
+                  <div className="h-3.5 bg-slate-100 rounded-md w-4/5 animate-pulse" />
+                  <div className="h-3.5 bg-slate-100 rounded-md w-11/12 animate-pulse" />
+                </div>
+
+                {/* Paragraph 3 Skeleton */}
+                <div className="flex flex-col gap-2 mt-1">
+                  <div className="h-4 bg-slate-200/80 rounded-md w-1/5 animate-pulse" />
+                  <div className="h-3.5 bg-slate-100 rounded-md w-3/4 animate-pulse ml-4" />
+                  <div className="h-3.5 bg-slate-100 rounded-md w-5/6 animate-pulse ml-4" />
+                  <div className="h-3.5 bg-slate-100 rounded-md w-11/12 animate-pulse ml-4" />
+                </div>
               </div>
             ) : (
               <textarea
+                ref={textareaRef}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full min-h-[250px] p-3 border-0 focus:outline-none focus:ring-0 resize-none font-['Poppins'] text-base text-black leading-relaxed"
+                className="w-full min-h-[250px] p-3 border-0 focus:outline-none focus:ring-0 resize-none font-['Poppins'] text-base text-black leading-relaxed overflow-hidden"
                 placeholder="Job description details..."
               />
             )}
@@ -241,60 +340,116 @@ Requirements:
         {/* Row 3: Experience Level, Work Type, Work Mode */}
         <div className="self-stretch inline-flex justify-center items-start gap-6">
           {/* Experience Level */}
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <label className="text-black text-sm font-normal font-['Poppins'] leading-5">Experience Level</label>
+          <div ref={experienceRef} className="flex-1 inline-flex flex-col justify-start items-start gap-2 relative">
+            <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Experience Level</label>
             <div className="relative w-full">
-              <select
-                value={experience}
-                onChange={(e) => setExperience(e.target.value)}
-                className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 appearance-none text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-indigo-300 focus:ring-0 cursor-pointer pr-10 shadow-sm"
+              <button
+                type="button"
+                onClick={() => setIsExperienceOpen(!isExperienceOpen)}
+                className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 border-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-indigo-300 transition-colors shadow-sm text-left flex justify-between items-center"
               >
-                <option value="0 - 2 years">0 - 2 years</option>
-                <option value="2 - 5 years">2 - 5 years</option>
-                <option value="5+ years">5+ years</option>
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-black flex items-center">
-                <Icon icon="lucide:chevron-down" className="w-5 h-5 text-gray-500" />
-              </div>
+                <span>{experience}</span>
+                <Icon icon="lucide:chevron-down" className={`w-5 h-5 text-gray-500 transition-transform ${isExperienceOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isExperienceOpen && (
+                <div className="absolute z-50 left-0 mt-2 w-full p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex flex-col justify-start items-center overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+                  {['Fresher', 'Junior (1-3 yrs)', 'Mid-level (3-5 yrs)', 'Senior (5+ yrs)', 'Other'].map((option) => {
+                    const isSelected = experience === option;
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => {
+                          setExperience(option);
+                          setIsExperienceOpen(false);
+                        }}
+                        className="self-stretch px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl inline-flex justify-start items-center gap-2.5 transition-colors cursor-pointer text-left w-full"
+                      >
+                        <div className={`text-sm font-normal font-['Poppins'] leading-5 ${isSelected ? 'text-indigo-500 font-semibold' : 'text-black'}`}>
+                          {option}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Work Type */}
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <label className="text-black text-sm font-normal font-['Poppins'] leading-5">Work Type</label>
+          <div ref={workTypeRef} className="flex-1 inline-flex flex-col justify-start items-start gap-2 relative">
+            <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Work Type</label>
             <div className="relative w-full">
-              <select
-                value={workType}
-                onChange={(e) => setWorkType(e.target.value)}
-                className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 appearance-none text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-indigo-300 focus:ring-0 cursor-pointer pr-10 shadow-sm"
+              <button
+                type="button"
+                onClick={() => setIsWorkTypeOpen(!isWorkTypeOpen)}
+                className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 border-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-indigo-300 transition-colors shadow-sm text-left flex justify-between items-center"
               >
-                <option value="Full-time">Full-time</option>
-                <option value="Part-time">Part-time</option>
-                <option value="Contract">Contract</option>
-                <option value="Internship">Internship</option>
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-black flex items-center">
-                <Icon icon="lucide:chevron-down" className="w-5 h-5 text-gray-500" />
-              </div>
+                <span>{workType}</span>
+                <Icon icon="lucide:chevron-down" className={`w-5 h-5 text-gray-500 transition-transform ${isWorkTypeOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isWorkTypeOpen && (
+                <div className="absolute z-50 left-0 mt-2 w-72 p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex flex-col justify-start items-center overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+                  {['Full time', 'Part-time', 'Contract', 'Internship', 'Freelance'].map((option) => {
+                    const isSelected = workType === option;
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => {
+                          setWorkType(option);
+                          setIsWorkTypeOpen(false);
+                        }}
+                        className="self-stretch px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl inline-flex justify-start items-center gap-2.5 transition-colors cursor-pointer text-left w-full"
+                      >
+                        <div className={`text-sm font-normal font-['Poppins'] leading-5 ${isSelected ? 'text-indigo-500 font-semibold' : 'text-black'}`}>
+                          {option}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Work Mode */}
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <label className="text-black text-sm font-normal font-['Poppins'] leading-5">Work Mode</label>
+          <div ref={workModeRef} className="flex-1 inline-flex flex-col justify-start items-start gap-2 relative">
+            <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Work Mode</label>
             <div className="relative w-full">
-              <select
-                value={workMode}
-                onChange={(e) => setWorkMode(e.target.value)}
-                className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 appearance-none text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-indigo-300 focus:ring-0 cursor-pointer pr-10 shadow-sm"
+              <button
+                type="button"
+                onClick={() => setIsWorkModeOpen(!isWorkModeOpen)}
+                className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 border-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-indigo-300 transition-colors shadow-sm text-left flex justify-between items-center"
               >
-                <option value="Hybrid">Hybrid</option>
-                <option value="Remote">Remote</option>
-                <option value="Onsite">Onsite</option>
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-black flex items-center">
-                <Icon icon="lucide:chevron-down" className="w-5 h-5 text-gray-500" />
-              </div>
+                <span>{workMode}</span>
+                <Icon icon="lucide:chevron-down" className={`w-5 h-5 text-gray-500 transition-transform ${isWorkModeOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isWorkModeOpen && (
+                <div className="absolute z-50 left-0 mt-2 w-72 p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex flex-col justify-start items-center overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+                  {['Remote', 'Hybrid', 'Onsite'].map((option) => {
+                    const isSelected = workMode === option;
+                    return (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => {
+                          setWorkMode(option);
+                          setIsWorkModeOpen(false);
+                        }}
+                        className="self-stretch px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl inline-flex justify-start items-center gap-2.5 transition-colors cursor-pointer text-left w-full"
+                      >
+                        <div className={`text-sm font-normal font-['Poppins'] leading-5 ${isSelected ? 'text-indigo-500 font-semibold' : 'text-black'}`}>
+                          {option}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -303,8 +458,8 @@ Requirements:
         <div className="self-stretch inline-flex justify-center items-start gap-6">
           {/* Min Salary */}
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <label className="text-black text-sm font-normal font-['Poppins'] leading-5">Min Salary (Annual)</label>
-            <div className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex justify-between items-center gap-2 shadow-sm focus-within:outline-indigo-300 transition-colors">
+            <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Min Salary (Annual)</label>
+            <div className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 border-0 inline-flex justify-between items-center gap-2 shadow-sm focus-within:outline-indigo-300 transition-colors">
               <input
                 type="text"
                 placeholder="e.g. 1,200,000"
@@ -312,7 +467,7 @@ Requirements:
                 onChange={(e) => setMinSalary(e.target.value)}
                 className="flex-1 bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none focus:ring-0 placeholder-gray-400"
               />
-              <div className="flex items-center gap-1 border-l border-indigo-50/100 pl-2">
+              <div className="flex items-center gap-2">
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
@@ -330,8 +485,8 @@ Requirements:
 
           {/* Max Salary */}
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <label className="text-black text-sm font-normal font-['Poppins'] leading-5">Max Salary (Annual)</label>
-            <div className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex justify-between items-center gap-2 shadow-sm focus-within:outline-indigo-300 transition-colors">
+            <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Max Salary (Annual)</label>
+            <div className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 border-0 inline-flex justify-between items-center gap-2 shadow-sm focus-within:outline-indigo-300 transition-colors">
               <input
                 type="text"
                 placeholder="e.g. 1,200,000"
@@ -339,7 +494,7 @@ Requirements:
                 onChange={(e) => setMaxSalary(e.target.value)}
                 className="flex-1 bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none focus:ring-0 placeholder-gray-400"
               />
-              <div className="flex items-center gap-1 border-l border-indigo-50/100 pl-2">
+              <div className="flex items-center gap-2">
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
@@ -358,7 +513,7 @@ Requirements:
       </div>
 
       {/* Footer Controls */}
-      <div className="self-stretch inline-flex justify-between items-center mt-2">
+      <div className="self-stretch inline-flex justify-between items-center mt-2 w-full">
         <button
           onClick={handleSaveDraftClick}
           type="button"
@@ -377,7 +532,7 @@ Requirements:
           <button
             onClick={handleContinueClick}
             type="button"
-            className="w-36 h-10 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 text-white text-sm font-semibold font-['Poppins'] leading-5 transition-all active:scale-95 shadow-sm"
+            className="w-36 h-10 px-4 py-2 bg-indigo-500 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 text-white text-sm font-semibold font-['Poppins'] leading-5 transition-all active:scale-95 shadow-sm"
           >
             Continue
           </button>

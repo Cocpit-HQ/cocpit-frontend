@@ -230,7 +230,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
     `}
     >
       {/* Hero Banner */}
-      {activeTab === "Explore" && (
+      {activeTab === "Explore" && jobs.length > 0 && (
         <div className="w-full h-[136px] px-[32px] py-[24px] bg-[#EEF2FF] border border-[#E0E7FF] rounded-[24px] flex flex-col justify-center items-start box-border flex-none self-stretch overflow-hidden">
           <div className="w-full h-[88px] pb-[8px] flex flex-col items-start flex-none self-stretch">
             <div className="w-full h-[80px] font-['Poppins'] font-semibold text-[32px] leading-[40px] flex items-center text-[#6366F1] flex-none self-stretch">
@@ -301,7 +301,20 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
 
       {/* Tab content conditional rendering */}
       {activeTab === "My applications" ? (
-        <div className="w-full flex flex-col gap-[24px]">
+        jobs.length === 0 ? (
+          <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
+            <Icon icon="hugeicons:job-search" className="size-20 text-black flex-shrink-0" />
+            <div className="flex flex-col justify-start items-center gap-2">
+              <div className="text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6">
+                No jobs applications yet
+              </div>
+              <div className="w-80 text-center justify-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4">
+                New job applications will appear here when you apply
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="w-full flex flex-col gap-[24px]">
           {/* Stats Cards Row */}
           <div className="w-full h-[94px] flex flex-row gap-[24px]">
             {/* Card 1: Total Applied */}
@@ -428,27 +441,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
 
           {/* Applications list */}
           <div className="w-full flex flex-col">
-            {jobs.length === 0 ? (
-              <div className="w-full py-16 flex flex-col items-center justify-center gap-4 bg-slate-50 rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50">
-                <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center text-[#6366F1]">
-                  <Icon icon="lucide:briefcase" className="w-8 h-8" />
-                </div>
-                <h4 className="text-black text-lg font-semibold font-['Poppins']">
-                  No applications yet
-                </h4>
-                <p className="text-gray-500 text-sm font-['Poppins'] max-w-xs text-center">
-                  You haven't applied to any jobs yet. Check the Explore tab to
-                  find and apply to matching roles!
-                </p>
-                <button
-                  onClick={() => setActiveTab("Explore")}
-                  className="px-6 py-2.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white rounded-[24px] text-sm font-semibold font-['Poppins'] transition-all"
-                >
-                  Explore Jobs
-                </button>
-              </div>
-            ) : (
-              <div className="w-full flex flex-col gap-[12px]">
+            <div className="w-full flex flex-col gap-[12px]">
                 {filteredJobs.length === 0 ? (
                   <div className="text-center py-12 text-[#6B7280] font-['Poppins']">
                     No applications in this category.
@@ -591,9 +584,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                   })
                 )}
               </div>
-            )}
+            </div>
           </div>
-        </div>
+        )
       ) : activeTab === "Offers" ? (
         <div className="w-full flex flex-col gap-[20px]">
           {/* Header */}
@@ -610,23 +603,16 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                 Loading offers...
               </div>
             ) : offers.length === 0 ? (
-              <div className="w-full py-16 flex flex-col items-center justify-center gap-4 bg-slate-50 rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50">
-                <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center text-[#6366F1]">
-                  <Icon icon="solar:letter-linear" className="w-8 h-8" />
+              <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
+                <Icon icon="hugeicons:gift" className="size-20 text-black flex-shrink-0" />
+                <div className="flex flex-col justify-start items-center gap-2">
+                  <div className="text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6">
+                    No job offers yet
+                  </div>
+                  <div className="w-80 text-center justify-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4">
+                    Job offers from recruiters and hiring teams will appear here when they match your profile.
+                  </div>
                 </div>
-                <h4 className="text-black text-lg font-semibold font-['Poppins']">
-                  No active offers
-                </h4>
-                <p className="text-gray-500 text-sm font-['Poppins'] max-w-xs text-center">
-                  You don't have any job offers right now. Keep applying to
-                  matching roles to get scouted by recruiters!
-                </p>
-                <button
-                  onClick={() => setActiveTab("Explore")}
-                  className="px-6 py-2.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white rounded-[24px] text-sm font-semibold font-['Poppins'] transition-all"
-                >
-                  Browse Jobs
-                </button>
               </div>
             ) : (
               <div className="w-full">
@@ -649,23 +635,16 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
           {/* Saved Jobs List container */}
           <div className="w-full">
             {jobs.length === 0 ? (
-              <div className="w-full py-16 flex flex-col items-center justify-center gap-4 bg-slate-50 rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50">
-                <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center text-[#6366F1]">
-                  <Icon icon="solar:bookmark-linear" className="w-8 h-8" />
+              <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
+                <Icon icon="hugeicons:job-search" className="size-20 text-black flex-shrink-0" />
+                <div className="flex flex-col justify-start items-center gap-2">
+                  <div className="text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6">
+                    No saved jobs yet
+                  </div>
+                  <div className="w-80 text-center justify-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4">
+                    New saved jobs will appear here when you save them
+                  </div>
                 </div>
-                <h4 className="text-black text-lg font-semibold font-['Poppins']">
-                  No saved jobs
-                </h4>
-                <p className="text-gray-500 text-sm font-['Poppins'] max-w-xs text-center">
-                  You haven\'t saved any jobs yet. Browse jobs and bookmark them
-                  to view them here!
-                </p>
-                <button
-                  onClick={() => setActiveTab("Explore")}
-                  className="px-6 py-2.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white rounded-[24px] text-sm font-semibold font-['Poppins'] transition-all"
-                >
-                  Browse Jobs
-                </button>
               </div>
             ) : (
               <JobList
@@ -685,84 +664,50 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
       ) : (
         /* Original All Jobs View for Explore tab */
         <div className="w-full flex flex-col gap-[20px]">
-          <h3 className="text-black text-lg font-semibold font-['Poppins'] leading-6">
-            {activeTab === "Explore" ? "All jobs" : `${activeTab} jobs`}
-          </h3>
-
-          <JobFilters
-            filters={filters}
-            onFilterChange={setFilterValue}
-            onClearFilters={() => {
-              setFilterValue("job_type", "");
-              setFilterValue("work_mode", "");
-              setFilterValue("experience", "");
-              setFilterValue("salary_range", "");
-              setFilterValue("date_posted", "");
-              setFilterValue("industry", "");
-              setFilterValue("location_type", "");
-            }}
-          />
-
-          {/* Job List container */}
-          <div className="w-full">
-            {jobs.length === 0 ? (
-              <div className="w-full py-16 flex flex-col items-center justify-center gap-4 bg-slate-50 rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50">
-                <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center text-[#6366F1]">
-                  <Icon
-                    icon={
-                      activeTab === "Saved"
-                        ? "solar:bookmark-linear"
-                        : "lucide:briefcase"
-                    }
-                    className="w-8 h-8"
-                  />
-                </div>
-                <h4 className="text-black text-lg font-semibold font-['Poppins']">
-                  {activeTab === "Saved" ? "No saved jobs" : "No jobs found"}
-                </h4>
-                <p className="text-gray-500 text-sm font-['Poppins'] max-w-xs text-center">
-                  {activeTab === "Saved"
-                    ? "You haven\'t saved any jobs yet. Browse jobs and bookmark them to view them here!"
-                    : "No jobs match your current filters. Try adjusting them or clearing filters to see more listings."}
-                </p>
-                {activeTab === "Saved" ? (
-                  <button
-                    onClick={() => setActiveTab("Explore")}
-                    className="px-6 py-2.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white rounded-[24px] text-sm font-semibold font-['Poppins'] transition-all"
-                  >
-                    Browse Jobs
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setFilterValue("job_type", "");
-                      setFilterValue("work_mode", "");
-                      setFilterValue("experience", "");
-                      setFilterValue("salary_range", "");
-                      setFilterValue("date_posted", "");
-                      setFilterValue("industry", "");
-                      setFilterValue("location_type", "");
-                    }}
-                    className="px-6 py-2.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white rounded-[24px] text-sm font-semibold font-['Poppins'] transition-all"
-                  >
-                    Clear Filters
-                  </button>
-                )}
+          {jobs.length === 0 ? (
+            <div className="h-[500px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
+              <Icon icon="hugeicons:job-search" className="size-28 text-black flex-shrink-0" />
+              <div className="flex flex-col justify-start items-center gap-2">
+                <div className="text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6">No jobs available yet</div>
+                <div className="w-80 text-center justify-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4">New jobs will appear here when they become available.</div>
               </div>
-            ) : (
-              <JobList
-                jobs={jobs}
-                isLoading={isLoading}
-                isFetchingMore={isFetchingMore}
-                hasMore={hasMore}
-                loadMore={loadMore}
-                onSave={toggleSave}
-                onApply={handleApplyClick}
-                onWithdraw={handleWithdrawClick}
-                onSelect={(j) => router.push(`/jobs/${j.id}`)}
+            </div>
+          ) : (
+            <>
+              <h3 className="text-black text-lg font-semibold font-['Poppins'] leading-6">
+                {activeTab === "Explore" ? "All jobs" : `${activeTab} jobs`}
+              </h3>
+
+              <JobFilters
+                filters={filters}
+                onFilterChange={setFilterValue}
+                onClearFilters={() => {
+                  setFilterValue("job_type", "");
+                  setFilterValue("work_mode", "");
+                  setFilterValue("experience", "");
+                  setFilterValue("salary_range", "");
+                  setFilterValue("date_posted", "");
+                  setFilterValue("industry", "");
+                  setFilterValue("location_type", "");
+                }}
               />
-            )}
-          </div>
+
+              {/* Job List container */}
+              <div className="w-full">
+                <JobList
+                  jobs={jobs}
+                  isLoading={isLoading}
+                  isFetchingMore={isFetchingMore}
+                  hasMore={hasMore}
+                  loadMore={loadMore}
+                  onSave={toggleSave}
+                  onApply={handleApplyClick}
+                  onWithdraw={handleWithdrawClick}
+                  onSelect={(j) => router.push(`/jobs/${j.id}`)}
+                />
+              </div>
+            </>
+          )}
         </div>
       )}
 

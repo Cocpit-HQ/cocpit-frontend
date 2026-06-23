@@ -47,49 +47,7 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
         
         {/* Verification Shield Ribbon SVG Graphic */}
         <div className="w-32 h-32 flex items-center justify-center relative">
-          <svg
-            className="w-24 h-24 text-indigo-500"
-            viewBox="0 0 100 100"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {/* Outline Shield */}
-            <path
-              d="M50 85C50 85 80 70 80 40V18L50 10L20 18V40C20 70 50 85 50 85Z"
-              stroke="black"
-              strokeWidth="3.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="white"
-            />
-            {/* Blue Ribbon Wrap */}
-            <path
-              d="M14 48C28 42 42 55 58 45C72 38 86 48 86 48L80 58C68 52 56 62 44 54C28 48 18 58 18 58L14 48Z"
-              fill="#6366F1"
-              stroke="#4F46E5"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            {/* Ribbon Tail Left */}
-            <path
-              d="M18 58L22 66L30 62L25 55"
-              stroke="#4F46E5"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="#6366F1"
-            />
-            {/* Ribbon Tail Right */}
-            <path
-              d="M80 58L76 66L68 62L73 55"
-              stroke="#4F46E5"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="#6366F1"
-            />
-          </svg>
+          <Icon icon="streamline-freehand-color:security-computer-shield" className="w-24 h-24" />
         </div>
 
         {/* Headings */}

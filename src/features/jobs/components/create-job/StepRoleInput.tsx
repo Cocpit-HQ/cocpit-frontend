@@ -7,6 +7,7 @@ interface StepRoleInputProps {
   title: string;
   setTitle: (val: string) => void;
   onContinue: () => void;
+  isDrafting?: boolean;
 }
 
 export const StepRoleInput: React.FC<StepRoleInputProps> = ({
@@ -14,6 +15,7 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
   title,
   setTitle,
   onContinue,
+  isDrafting = false,
 }) => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -61,7 +63,8 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
         <button
           onClick={onBack}
           type="button"
-          className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center bg-white hover:bg-slate-50 active:scale-95 transition-all text-gray-700 shadow-sm"
+          disabled={isDrafting}
+          className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center bg-white hover:bg-slate-50 active:scale-95 transition-all text-gray-700 shadow-sm disabled:opacity-50 disabled:pointer-events-none"
         >
           <Icon icon="lucide:arrow-left" className="w-5 h-5" />
         </button>
@@ -110,7 +113,8 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
                   setTimeout(() => setShowSuggestions(false), 200);
                 }}
                 placeholder="e.g. UI/UX Designer"
-                className="w-full pl-4 pr-11 py-3 bg-white border border-slate-200 rounded-2xl text-black text-sm font-semibold font-['Poppins'] focus:outline-none focus:border-indigo-400 transition-colors shadow-sm"
+                disabled={isDrafting}
+                className="w-full pl-4 pr-11 py-3 bg-white border border-slate-200 rounded-2xl text-black text-sm font-semibold font-['Poppins'] focus:outline-none focus:border-indigo-400 transition-colors shadow-sm disabled:bg-slate-50 disabled:text-gray-400"
               />
               <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
                 {isFetching ? (
@@ -152,10 +156,35 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
           <div className="w-full flex justify-center mt-2">
             <button
               type="submit"
-              disabled={!title.trim()}
+              disabled={!title.trim() || isDrafting}
               className="px-12 py-3 bg-[#6366F1] hover:bg-[#6366F1]/90 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-[24px] text-sm font-bold font-['Poppins'] transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
             >
-              <span>Continue</span>
+              {isDrafting ? (
+                <>
+                  <style>{`
+                    @keyframes magic-spin {
+                      0% { transform: rotate(0deg); opacity: 1; }
+                      15% { transform: rotate(45deg); opacity: 0.3; }
+                      40% { transform: rotate(540deg); opacity: 1; }
+                      65% { transform: rotate(1080deg); opacity: 0.3; }
+                      85% { transform: rotate(1080deg); opacity: 1; }
+                      100% { transform: rotate(1080deg); opacity: 1; }
+                    }
+                    .animate-magic-spin {
+                      animation: magic-spin 2.5s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+                    }
+                  `}</style>
+                  <img
+                    src="/assets/AI 2.svg"
+                    alt="AI Generating"
+                    className="w-5 h-5 animate-magic-spin"
+                    style={{ filter: 'brightness(0) invert(1)' }}
+                  />
+                  <span>Generating...</span>
+                </>
+              ) : (
+                <span>Continue</span>
+              )}
             </button>
           </div>
         </form>

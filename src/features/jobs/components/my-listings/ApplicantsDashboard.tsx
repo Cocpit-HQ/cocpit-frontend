@@ -288,9 +288,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         <button
           onClick={onBack}
           type="button"
-          className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center bg-white hover:bg-slate-50 active:scale-95 transition-all text-gray-700 shadow-sm flex-shrink-0"
+          className="w-12 h-12 box-border p-2 rounded-[100px] border border-[#DADADA] backdrop-blur-[12px] flex flex-row justify-center items-center gap-2.5 hover:bg-slate-50 transition-colors active:scale-95 text-gray-500 shadow-sm flex-shrink-0"
         >
-          <Icon icon="lucide:arrow-left" className="w-5 h-5" />
+          <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500" />
         </button>
 
         {/* Message frame (Frame 2608578) */}

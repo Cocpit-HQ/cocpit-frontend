@@ -127,9 +127,9 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({ listings, onSelectList
             </p>
           </div>
         ) : (
-          filteredListings.map((item) => (
+          filteredListings.map((item, index) => (
             <div
-              key={item.id}
+              key={item.id || `listing-${index}`}
               onClick={() => onSelectListing && onSelectListing(item)}
               className={`w-full flex flex-row items-center justify-between py-[16px] px-0 gap-[16px] bg-white h-[80px] flex-none border-b border-[#EEF2FF]/60 last:border-b-0 ${
                 onSelectListing ? 'cursor-pointer' : ''

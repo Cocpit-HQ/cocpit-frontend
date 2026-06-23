@@ -15,12 +15,32 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
   onCloseListing,
   onDeleteListing,
 }) => {
+  const dummyDescription = `Role: UI/UX Designer
+Location: Mumbai, India
+
+About the Role:
+As a UI/UX Designer at Starlight Technologies, you will be responsible for creating exceptional user experiences for our next-generation career networking platform. You will bridge the gap between user needs and business goals through data-driven design and intuitive interfaces.
+
+Key Responsibilities:
+- Design end-to-end user journeys for both mobile and web platforms.
+- Create high-fidelity mockups and interactive prototypes using Figma.
+- Collaborate with engineering teams to ensure pixel-perfect implementation.
+- Conduct user research and usability testing to validate design decisions.
+- Contribute to and maintain our evolving design system.
+
+Requirements:
+- 3+ years of experience in digital product design.
+- Strong portfolio showcasing problem-solving and visual design skills.
+- Mastery of design tools (Figma, Adobe Creative Suite).
+- Understanding of HTML/CSS/JS constraints and opportunities.
+- Excellent communication and presentation abilities.`;
+
   const {
     id,
     title = 'UI/UX Designer',
     company = 'Starlight Technologies',
     location = 'Mumbai, India',
-    description = '',
+    description = dummyDescription,
     experience = '0 - 2 years',
     work_type = 'Full-time',
     work_mode = 'Hybrid',
@@ -39,6 +59,35 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
 
   const symbol = currencySymbols[salary_currency] || salary_currency;
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+  const [isClosing, setIsClosing] = React.useState(false);
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await onDeleteListing(id);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleClose = async () => {
+    try {
+      setIsClosing(true);
+      await onCloseListing(id);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsClosing(false);
+      setShowCloseConfirm(false);
+    }
+  };
+
   const formatSalary = (val: number | undefined) => {
     if (val === undefined || isNaN(val)) return 'Not specified';
     return `${symbol}${val.toLocaleString()}`;
@@ -53,51 +102,65 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
         <button
           onClick={onBack}
           type="button"
-          className="size-12 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-300 backdrop-blur-md flex justify-center items-center gap-2.5 hover:bg-slate-50 active:scale-95 transition-all text-gray-500 shadow-sm"
+          className="size-12 p-2 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-300 backdrop-blur-md flex justify-center items-center gap-2.5 hover:bg-slate-50 transition-colors active:scale-95 text-gray-500"
         >
-          <Icon icon="lucide:chevron-left" className="w-5 h-5 text-gray-500" />
+          <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500" />
         </button>
         <div className="inline-flex flex-col justify-start items-start">
-          <div className="text-black text-lg font-medium font-['Poppins'] leading-6">Listing Details</div>
-          <div className="text-gray-500 text-xs font-normal font-['Poppins'] leading-4">View and manage this listing</div>
+          <div className="text-center justify-start text-black text-lg font-medium font-['Poppins'] leading-6">Listing Details</div>
+          <div className="text-center justify-start text-gray-500 text-xs font-normal font-['Poppins'] leading-4">View, and manage this listing</div>
         </div>
       </div>
 
       {/* Details Box */}
-      <div className="self-stretch p-4 bg-white rounded-xl flex flex-col justify-start items-start gap-4 border border-[#EEF2FF]">
+      <div className="self-stretch p-4 bg-white rounded-xl flex flex-col justify-start items-start gap-4">
         {/* Row 1: Role, Company, Location */}
         <div className="self-stretch inline-flex justify-center items-start gap-6">
           {/* Job Role */}
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <span className="text-black text-sm font-normal font-['Poppins'] leading-5 font-medium">Job Role</span>
+            <div className="self-stretch flex flex-col justify-start items-start">
+              <div className="self-stretch justify-center text-black text-sm font-normal font-['Poppins'] leading-5">Job Role</div>
+            </div>
             <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-start overflow-hidden">
-              <div className="text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{title}</div>
+              <div className="self-stretch flex flex-col justify-start items-start overflow-hidden w-full">
+                <div className="self-stretch justify-center text-black text-base font-normal font-['Poppins'] leading-6 truncate">{title}</div>
+              </div>
             </div>
           </div>
 
           {/* Company Name */}
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <span className="text-black text-sm font-normal font-['Poppins'] leading-5 font-medium">Company Name</span>
-            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-start overflow-hidden">
-              <div className="text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{company}</div>
+            <div className="self-stretch flex flex-col justify-start items-start">
+              <div className="self-stretch justify-center text-black text-sm font-normal font-['Poppins'] leading-5">Company Name</div>
+            </div>
+            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-start w-full">
+              <div className="justify-center text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{company}</div>
             </div>
           </div>
 
           {/* Location */}
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <span className="text-black text-sm font-normal font-['Poppins'] leading-5 font-medium">Location</span>
+            <div className="self-stretch flex flex-col justify-start items-start">
+              <div className="self-stretch justify-center text-black text-sm font-normal font-['Poppins'] leading-5">Location</div>
+            </div>
             <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-start overflow-hidden">
-              <div className="text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{location}</div>
+              <div className="self-stretch flex flex-col justify-start items-start overflow-hidden w-full">
+                <div className="self-stretch justify-center text-black text-base font-normal font-['Poppins'] leading-6 truncate">{location}</div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Row 2: Description */}
         <div className="self-stretch flex flex-col justify-start items-start gap-2">
-          <span className="text-black text-sm font-normal font-['Poppins'] leading-5 font-medium">Job Description</span>
+          <div className="self-stretch inline-flex justify-between items-start">
+            <div className="self-stretch inline-flex flex-col justify-start items-start">
+              <div className="justify-center text-black text-sm font-normal font-['Poppins'] leading-5">Job Description</div>
+            </div>
+          </div>
           <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-start gap-4 overflow-hidden">
-            <div className="text-black text-base font-normal font-['Poppins'] leading-6 whitespace-pre-wrap w-full">
-              {description || 'No description provided.'}
+            <div className="justify-center text-black text-base font-normal font-['Poppins'] leading-6 whitespace-pre-wrap w-full">
+              {description || dummyDescription}
             </div>
           </div>
         </div>
@@ -106,25 +169,31 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
         <div className="self-stretch inline-flex justify-center items-start gap-6">
           {/* Experience */}
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <span className="text-black text-sm font-normal font-['Poppins'] leading-5 font-medium">Experience Level</span>
-            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-start overflow-hidden">
-              <div className="text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{experience}</div>
+            <div className="self-stretch flex flex-col justify-start items-start">
+              <div className="self-stretch justify-center text-black text-sm font-normal font-['Poppins'] leading-5">Experience Level</div>
+            </div>
+            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex justify-start items-center w-full">
+              <div className="justify-center text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{experience}</div>
             </div>
           </div>
 
           {/* Work Type */}
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <span className="text-black text-sm font-normal font-['Poppins'] leading-5 font-medium">Work Type</span>
-            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-start overflow-hidden">
-              <div className="text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{work_type}</div>
+            <div className="self-stretch flex flex-col justify-start items-start">
+              <div className="self-stretch justify-center text-black text-sm font-normal font-['Poppins'] leading-5">Work Type</div>
+            </div>
+            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex justify-start items-center w-full">
+              <div className="justify-center text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{work_type}</div>
             </div>
           </div>
 
           {/* Work Mode */}
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <span className="text-black text-sm font-normal font-['Poppins'] leading-5 font-medium">Work Mode</span>
-            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-start overflow-hidden">
-              <div className="text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{work_mode}</div>
+            <div className="self-stretch flex flex-col justify-start items-start">
+              <div className="self-stretch justify-center text-black text-sm font-normal font-['Poppins'] leading-5">Work Mode</div>
+            </div>
+            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex justify-start items-center w-full">
+              <div className="justify-center text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{work_mode}</div>
             </div>
           </div>
         </div>
@@ -133,45 +202,121 @@ export const ListingDetailsScreen: React.FC<ListingDetailsScreenProps> = ({
         <div className="self-stretch inline-flex justify-center items-start gap-6">
           {/* Min Salary */}
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <span className="text-black text-sm font-normal font-['Poppins'] leading-5 font-medium">Min Salary (Annual)</span>
-            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-start overflow-hidden">
-              <div className="text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{formatSalary(salary_min)}</div>
+            <div className="self-stretch flex flex-col justify-start items-start">
+              <div className="self-stretch justify-center text-black text-sm font-normal font-['Poppins'] leading-5">Min Salary (Annual)</div>
+            </div>
+            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex justify-start items-center gap-1 w-full">
+              <div className="justify-start text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{formatSalary(salary_min)}</div>
             </div>
           </div>
 
           {/* Max Salary */}
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
-            <span className="text-black text-sm font-normal font-['Poppins'] leading-5 font-medium">Max Salary (Annual)</span>
-            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-start overflow-hidden">
-              <div className="text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{formatSalary(salary_max)}</div>
+            <div className="self-stretch flex flex-col justify-start items-start">
+              <div className="self-stretch justify-center text-black text-sm font-normal font-['Poppins'] leading-5">Max Salary (Annual)</div>
+            </div>
+            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex justify-start items-center gap-1 w-full">
+              <div className="justify-start text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{formatSalary(salary_max)}</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Footer Controls */}
-      <div className="self-stretch inline-flex justify-between items-center mt-2">
+      <div className="self-stretch pt-6 border-t border-indigo-50 inline-flex justify-between items-center">
         <button
-          onClick={() => onDeleteListing(id)}
+          onClick={() => setShowDeleteConfirm(true)}
           type="button"
-          className="flex justify-start items-center gap-1.5 px-4 py-2 hover:bg-red-50 rounded-lg text-red-500 hover:text-red-700 text-base font-medium font-['Poppins'] leading-6 transition-all active:scale-95"
+          className="px-4 py-2 flex justify-start items-center gap-2 hover:bg-red-50 rounded-lg transition-all active:scale-95"
         >
-          <Icon icon="lucide:trash-2" className="w-5 h-5 text-red-500" />
-          <span>Delete Job</span>
+          <span className="text-center justify-start text-red-400 text-sm font-normal font-['Poppins'] leading-5">
+            Delete Job
+          </span>
+          <Icon icon="lucide:trash-2" className="w-5 h-5 text-red-400" />
         </button>
-        <button
-          onClick={() => !isClosed && onCloseListing(id)}
-          disabled={isClosed}
-          type="button"
-          className={`w-36 h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 text-white text-sm font-semibold font-['Poppins'] leading-5 transition-all shadow-sm ${
-            isClosed
-              ? 'bg-gray-300 cursor-not-allowed opacity-80'
-              : 'bg-indigo-500 hover:bg-indigo-600 active:scale-95'
-          }`}
-        >
-          <span>{isClosed ? 'Job Closed' : 'Close Job'}</span>
-        </button>
+
+        {isClosed ? (
+          <div className="w-36 h-10 px-4 py-2 bg-slate-100 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white inline-flex justify-center items-center gap-2.5">
+            <div className="text-center justify-start text-gray-500 text-sm font-normal font-['Poppins'] leading-5">Closed</div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowCloseConfirm(true)}
+            type="button"
+            className="w-36 h-10 px-4 py-2 bg-indigo-500 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 transition-all hover:bg-indigo-600 active:scale-95 shadow-sm"
+          >
+            <span className="text-center justify-start text-white text-sm font-normal font-['Poppins'] leading-5">
+              Close Job
+            </span>
+          </button>
+        )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-[360px] p-6 bg-white rounded-3xl shadow-xl flex flex-col items-center gap-4 text-center animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col gap-1.5 mt-2">
+              <div className="text-black text-base font-normal font-['Poppins'] leading-5">
+                Are you sure you want to delete job?
+              </div>
+              <div className="text-gray-400 text-xs font-normal font-['Poppins'] leading-4">
+                This cannot be undone
+              </div>
+            </div>
+            <div className="flex justify-center items-center gap-3 w-full mt-2">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                type="button"
+                className="flex-1 h-10 px-4 rounded-3xl border border-indigo-100 bg-white text-indigo-500 text-sm font-normal font-['Poppins'] hover:bg-slate-50 transition-all active:scale-95 flex justify-center items-center"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                type="button"
+                className="flex-1 h-10 px-4 rounded-3xl bg-red-400 text-white text-sm font-normal font-['Poppins'] hover:bg-red-500 transition-all active:scale-95 flex justify-center items-center disabled:opacity-50"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Close Confirmation Modal */}
+      {showCloseConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-[360px] p-6 bg-white rounded-3xl shadow-xl flex flex-col items-center gap-4 text-center animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col gap-1.5 mt-2">
+              <div className="text-black text-base font-normal font-['Poppins'] leading-5">
+                Are you sure you want to close this job?
+              </div>
+              <div className="text-gray-400 text-xs font-normal font-['Poppins'] leading-4">
+                This listing will no longer accept applications
+              </div>
+            </div>
+            <div className="flex justify-center items-center gap-3 w-full mt-2">
+              <button
+                onClick={() => setShowCloseConfirm(false)}
+                type="button"
+                className="flex-1 h-10 px-4 rounded-3xl border border-indigo-100 bg-white text-indigo-500 text-sm font-normal font-['Poppins'] hover:bg-slate-50 transition-all active:scale-95 flex justify-center items-center"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClose}
+                disabled={isClosing}
+                type="button"
+                className="flex-1 h-10 px-4 rounded-3xl bg-indigo-500 text-white text-sm font-normal font-['Poppins'] hover:bg-indigo-600 transition-all active:scale-95 flex justify-center items-center disabled:opacity-50"
+              >
+                {isClosing ? 'Closing...' : 'Close Job'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

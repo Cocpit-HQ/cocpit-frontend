@@ -227,15 +227,7 @@ export const respondToOffer = async (offerId: string, action: 'accept' | 'declin
 };
 
 // Mock Listings Data
-const DUMMY_JOB_LISTINGS: JobListing[] = [
-  { id: 'list-1', title: 'UI/UX Designer', posted_at: 'Posted 2 hours ago', status: 'ACTIVE' },
-  { id: 'list-2', title: 'Full-Stack Engineer', posted_at: 'Posted 2 days ago', status: 'IN REVIEW' },
-  { id: 'list-3', title: 'Marketing Lead', posted_at: 'Posted 3 weeks ago', status: 'ACTIVE' },
-  { id: 'list-4', title: 'Junior Product Designer', last_edited: 'Last edited 2 days ago', status: 'DRAFT' },
-  { id: 'list-5', title: 'Junior Product Designer', posted_at: 'Posted 1 month ago', status: 'CLOSED' },
-  { id: 'list-6', title: 'Junior Product Designer', posted_at: 'Posted 1 month ago', status: 'CLOSED' },
-  { id: 'list-7', title: 'Junior Product Designer', posted_at: 'Posted 1 month ago', status: 'CLOSED' }
-];
+const DUMMY_JOB_LISTINGS: JobListing[] = [];
 
 export const getMyListings = async (): Promise<JobListing[]> => {
   try {
