@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Job, JobsFilter } from '../types/jobs.types';
 import * as jobsService from '../services/jobs.service';
 import { toast } from 'sonner';
@@ -9,7 +9,13 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const [activeTab, setActiveTab] = useState<string>(initialTab);
+  const [activeTab, setActiveTabState] = useState<string>(() => jobsService.getActiveTab());
+
+  const setActiveTab = useCallback((tab: string) => {
+    jobsService.setActiveTab(tab);
+    setActiveTabState(tab);
+  }, []);
+
   const [applicationStats, setApplicationStats] = useState<{ totalApplied: number; shortlisted: number }>({ totalApplied: 0, shortlisted: 0 });
   
   const [filters, setFilters] = useState<JobsFilter>({
@@ -45,23 +51,21 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
         setHasMore(false);
       } else {
         const activeCursor = isLoadMore ? cursor : undefined;
-        const res = await jobsService.getJobs(filters, activeCursor);
+        const res = await jobsService.getJobs(filters, activeCursor, activeTab === 'Explore');
         newJobs = res.data;
         setCursor(res.nextCursor || undefined);
         setHasMore(res.hasMore);
 
+        const savedIds = jobsService.getSavedJobIds();
+        const appliedIds = jobsService.getAppliedJobIds();
+
         if (activeTab === 'Saved') {
-          if (typeof window !== 'undefined' && !localStorage.getItem('saved_job_ids')) {
-            localStorage.setItem('saved_job_ids', JSON.stringify(['1', '2']));
-          }
-          const savedIds = JSON.parse(localStorage.getItem('saved_job_ids') || '[]');
           newJobs = newJobs.map(j => ({
             ...j,
-            is_saved: savedIds.includes(j.id)
+            is_saved: true,
+            is_applied: appliedIds.includes(j.id)
           })).filter(j => j.is_saved);
         } else {
-          const savedIds = JSON.parse(localStorage.getItem('saved_job_ids') || '[]');
-          const appliedIds = JSON.parse(localStorage.getItem('applied_job_ids') || '[]');
           newJobs = newJobs.map(j => ({
             ...j,
             is_saved: savedIds.includes(j.id),
@@ -108,20 +112,9 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
 
   const toggleSave = useCallback(async (jobId: string) => {
     try {
-      const savedIds = JSON.parse(localStorage.getItem('saved_job_ids') || '[]');
-      let isSaved = false;
-      let newSavedIds: string[] = [];
-
-      if (savedIds.includes(jobId)) {
-        newSavedIds = savedIds.filter((id: string) => id !== jobId);
-        isSaved = false;
-      } else {
-        newSavedIds = [...savedIds, jobId];
-        isSaved = true;
-      }
-
-      localStorage.setItem('saved_job_ids', JSON.stringify(newSavedIds));
       await jobsService.saveJob(jobId);
+      const savedIds = jobsService.getSavedJobIds();
+      const isSaved = savedIds.includes(jobId);
 
       setJobs(prev => prev.map(j => j.id === jobId ? { ...j, is_saved: isSaved } : j));
       if (selectedJob && selectedJob.id === jobId) {
@@ -137,14 +130,12 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
 
   const applyToJob = useCallback(async (jobId: string) => {
     try {
-      const appliedIds = JSON.parse(localStorage.getItem('applied_job_ids') || '[]');
+      const appliedIds = jobsService.getAppliedJobIds();
       if (appliedIds.includes(jobId)) {
         toast.info('You have already applied to this job.');
         return;
       }
 
-      const newAppliedIds = [...appliedIds, jobId];
-      localStorage.setItem('applied_job_ids', JSON.stringify(newAppliedIds));
       await jobsService.applyJob(jobId);
 
       setJobs(prev => prev.map(j => j.id === jobId ? { ...j, is_applied: true } : j));
@@ -169,7 +160,13 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
   const withdrawJob = useCallback(async (jobId: string) => {
     try {
       await jobsService.withdrawApplication(jobId);
-      setJobs(prev => prev.filter(j => j.id !== jobId));
+      setJobs(prev => {
+        if (activeTab === 'My applications') {
+          return prev.filter(j => j.id !== jobId);
+        } else {
+          return prev.map(j => j.id === jobId ? { ...j, is_applied: false } : j);
+        }
+      });
       const stats = await jobsService.getApplicationStats();
       setApplicationStats(stats);
       toast.success('Application withdrawn successfully');
@@ -177,7 +174,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       console.error('Failed to withdraw application:', error);
       toast.error('Failed to withdraw application.');
     }
-  }, []);
+  }, [activeTab]);
 
   const respondToOffer = useCallback(async (offerId: string, action: 'accept' | 'decline') => {
     try {

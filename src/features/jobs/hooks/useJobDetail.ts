@@ -13,11 +13,25 @@ export const useJobDetail = (jobId: string) => {
     try {
       const res = await jobsService.getJobById(jobId);
       if (res) {
-        // Sync local storage states
-        const savedIds = JSON.parse(localStorage.getItem('saved_job_ids') || '[]');
-        const appliedIds = JSON.parse(localStorage.getItem('applied_job_ids') || '[]');
+        // Sync states from service
+        const savedIds = jobsService.getSavedJobIds();
+        const appliedIds = jobsService.getAppliedJobIds();
+        const respondedOffers = jobsService.getRespondedOffers();
+        const followedCompanies = jobsService.getFollowedCompanies();
+
         res.is_saved = savedIds.includes(res.id);
         res.is_applied = appliedIds.includes(res.id);
+        
+        // Handle offer statuses
+        if (res.is_offer) {
+          const offerResponse = respondedOffers[res.id];
+          if (offerResponse) {
+            res.application_status = offerResponse === 'accept' ? 'Accepted' : 'Declined';
+          }
+        }
+        
+        // Handle followed status for company
+        res.is_followed = followedCompanies.includes(res.company);
       }
       setJob(res);
     } catch (err) {
@@ -35,20 +49,9 @@ export const useJobDetail = (jobId: string) => {
   const toggleSave = useCallback(async () => {
     if (!job) return;
     try {
-      const savedIds = JSON.parse(localStorage.getItem('saved_job_ids') || '[]');
-      let isSaved = false;
-      let newSavedIds: string[] = [];
-
-      if (savedIds.includes(job.id)) {
-        newSavedIds = savedIds.filter((id: string) => id !== job.id);
-        isSaved = false;
-      } else {
-        newSavedIds = [...savedIds, job.id];
-        isSaved = true;
-      }
-
-      localStorage.setItem('saved_job_ids', JSON.stringify(newSavedIds));
       await jobsService.saveJob(job.id);
+      const savedIds = jobsService.getSavedJobIds();
+      const isSaved = savedIds.includes(job.id);
 
       setJob(prev => prev ? { ...prev, is_saved: isSaved } : null);
       toast.success(isSaved ? 'Job saved successfully' : 'Job removed from saved list');
@@ -61,14 +64,12 @@ export const useJobDetail = (jobId: string) => {
   const applyToJob = useCallback(async () => {
     if (!job) return;
     try {
-      const appliedIds = JSON.parse(localStorage.getItem('applied_job_ids') || '[]');
+      const appliedIds = jobsService.getAppliedJobIds();
       if (appliedIds.includes(job.id)) {
         toast.info('You have already applied to this job.');
         return;
       }
 
-      const newAppliedIds = [...appliedIds, job.id];
-      localStorage.setItem('applied_job_ids', JSON.stringify(newAppliedIds));
       await jobsService.applyJob(job.id);
 
       setJob(prev => prev ? { ...prev, is_applied: true } : null);
@@ -79,11 +80,69 @@ export const useJobDetail = (jobId: string) => {
     }
   }, [job]);
 
+  const withdrawJob = useCallback(async () => {
+    if (!job) return;
+    try {
+      await jobsService.withdrawApplication(job.id);
+
+      setJob(prev => prev ? { ...prev, is_applied: false } : null);
+      toast.success('Application withdrawn successfully.');
+    } catch (error) {
+      console.error('Failed to withdraw application:', error);
+      toast.error('Failed to withdraw application.');
+    }
+  }, [job]);
+
+  const respondToOffer = useCallback(async (action: 'accept' | 'decline') => {
+    if (!job) return;
+    try {
+      await jobsService.respondToOffer(job.id, action);
+
+      setJob(prev => prev ? { 
+        ...prev, 
+        application_status: action === 'accept' ? 'Accepted' : 'Declined' 
+      } : null);
+      
+      toast.success(action === 'accept' ? 'Offer accepted!' : 'Offer declined.');
+    } catch (error) {
+      console.error('Failed to respond to offer:', error);
+      toast.error('Failed to respond to offer.');
+    }
+  }, [job]);
+
+  const toggleFollow = useCallback(async () => {
+    if (!job) return;
+    try {
+      const followedCompanies = jobsService.getFollowedCompanies();
+      let isFollowed = false;
+      let newFollowed: string[] = [];
+
+      if (followedCompanies.includes(job.company)) {
+        newFollowed = followedCompanies.filter((name: string) => name !== job.company);
+        isFollowed = false;
+      } else {
+        newFollowed = [...followedCompanies, job.company];
+        isFollowed = true;
+      }
+
+      jobsService.setFollowedCompanies(newFollowed);
+
+      setJob(prev => prev ? { ...prev, is_followed: isFollowed } : null);
+      toast.success(isFollowed ? `Following ${job.company}` : `Unfollowed ${job.company}`);
+    } catch (error) {
+      console.error('Failed to toggle follow:', error);
+      toast.error('Failed to update follow status.');
+    }
+  }, [job]);
+
   return {
     job,
     isLoading,
     toggleSave,
     applyToJob,
+    withdrawJob,
+    respondToOffer,
+    toggleFollow,
     refetch: fetchJob
   };
 };

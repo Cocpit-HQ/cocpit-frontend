@@ -2,32 +2,21 @@ import React from 'react';
 import { Job } from '../types/jobs.types';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface JobCardProps {
   job: Job;
   onSave?: (jobId: string, e: React.MouseEvent) => void;
   onApply?: (jobId: string, e: React.MouseEvent) => void;
+  onWithdraw?: (jobId: string, e: React.MouseEvent) => void;
   onClick?: (job: Job) => void;
 }
 
-export const JobCard: React.FC<JobCardProps> = ({ job, onSave, onApply, onClick }) => {
-  // Determine if we show a custom logo or default placeholders
-  const renderLogo = () => {
-    if (job.company_logo === 'sphere') {
-      return (
-        <div className="w-14 h-10 bg-slate-100 rounded-3xl flex justify-center items-center overflow-hidden">
-          {/* Sphere shape inside */}
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm" />
-        </div>
-      );
-    }
-    // Default briefcase icon
-    return (
-      <div className="w-14 h-10 bg-indigo-50 rounded-3xl flex justify-center items-center flex-shrink-0">
-        <Icon icon="lucide:briefcase" className="w-5 h-5 text-indigo-500" />
-      </div>
-    );
-  };
+export const JobCard: React.FC<JobCardProps> = ({ job, onSave, onApply, onWithdraw, onClick }) => {
+  const badgeText = job.recommended_badge || 'Top 15%';
+  const percentMatch = badgeText.match(/\d+/);
+  const percentNum = percentMatch ? parseInt(percentMatch[0], 10) : 15;
+  const strongerThanPercent = 100 - percentNum;
 
   // Determine color for posted date
   const getPostedDateColor = () => {
@@ -42,14 +31,34 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onSave, onApply, onClick 
       onClick={() => onClick?.(job)}
       className="self-stretch p-4 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-center items-start gap-3 hover:outline-indigo-200 hover:shadow-[0px_4px_20px_rgba(99,102,241,0.05)] transition-all duration-200 cursor-pointer"
     >
-      {/* Top Row: Job Info and Logo */}
+      {/* Top Row: Job Info and Badge */}
       <div className="self-stretch inline-flex justify-between items-start">
         <div className="size- inline-flex flex-col justify-start items-start gap-2">
           <div className="justify-start text-black text-base font-medium font-['Poppins'] leading-6">{job.title}</div>
           <div className="justify-start text-gray-500 text-sm font-normal font-['Poppins'] leading-5">{job.company}</div>
           <div className="justify-start text-gray-500 text-sm font-semibold font-['Poppins'] leading-5">{job.job_type}</div>
         </div>
-        {renderLogo()}
+        <div onClick={(e) => e.stopPropagation()}>
+          <Tooltip delayDuration={100}>
+            <TooltipTrigger asChild>
+              <div className="px-2 py-1 bg-indigo-500/10 rounded-full inline-flex flex-col justify-start items-start">
+                <div className="justify-center text-indigo-500 text-[10px] font-medium font-['Poppins']">
+                  {badgeText}
+                </div>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              align="end"
+              sideOffset={8}
+              className="w-[289px] py-3 px-4 bg-[#EEF2FF] rounded-[24px] border-none shadow-[0px_4px_16px_rgba(99,102,241,0.08)] text-black z-[9999]"
+            >
+              <span className="w-[257px] flex items-center text-black text-[12px] font-normal font-['Poppins'] leading-[16px] flex-grow">
+                You&apos;re stronger than {strongerThanPercent}% of applicants for this job based on your profile and skills
+              </span>
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
       {/* Middle Row: Meta and Salary */}
@@ -88,18 +97,28 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onSave, onApply, onClick 
           {job.posted_at}
         </div>
         <div className="w-[160px] h-10 flex flex-row items-center gap-4 flex-none justify-end">
-          {/* Apply Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onApply?.(job.id, e);
-            }}
-            className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[120px] h-10 border border-white rounded-[24px] bg-[#6366F1] hover:bg-[#6366F1]/90 text-white transition-all duration-200 active:scale-95 flex-none"
-          >
-            <div className="w-[40px] h-[20px] text-center text-sm font-normal font-['Poppins'] leading-5 text-white whitespace-nowrap flex items-center justify-center">
+          {/* Apply / Withdraw Button */}
+          {job.is_applied ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onWithdraw?.(job.id, e);
+              }}
+              className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] border border-[#6B7280] text-[#6B7280] bg-white hover:bg-slate-50 transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
+            >
+              Withdraw
+            </button>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onApply?.(job.id, e);
+              }}
+              className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] hover:bg-[#6366F1]/90 text-white transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
+            >
               Apply
-            </div>
-          </button>
+            </button>
+          )}
           
           {/* Bookmark Button */}
           <button

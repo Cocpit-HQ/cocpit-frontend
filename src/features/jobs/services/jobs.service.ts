@@ -1,11 +1,46 @@
-import { Job, JobsFilter, JobListing } from '../types/jobs.types';
-import { DUMMY_JOBS } from '../utils/jobs.utils';
+import { Job, JobsFilter, JobListing, JobOffer } from '../types/jobs.types';
+import { DUMMY_JOBS, DUMMY_OFFERS } from '../utils/jobs.utils';
 
-export const getJobs = async (filters?: JobsFilter, cursor?: string) => {
+// Initial default state for the application
+const INITIAL_APPLIED_IDS = ['app-1', 'app-2', 'app-3', 'app-4', 'app-5', 'app-6', 'app-7', 'app-8', 'app-9'];
+const INITIAL_SAVED_IDS = ['rec-1', 'rec-2', 'app-1', 'app-2', 'offer-1', 'offer-2', 'offer-3'];
+
+// Module-level state variables that reset back to their original state upon browser refresh
+let inMemoryAppliedIds: string[] = [...INITIAL_APPLIED_IDS];
+let inMemorySavedIds: string[] = [...INITIAL_SAVED_IDS];
+let inMemoryRespondedOffers: Record<string, 'accept' | 'decline'> = {};
+let inMemoryFollowedCompanies: string[] = [];
+let inMemoryJobListings: JobListing[] = [];
+let inMemoryActiveTab: string = 'Explore';
+
+// Getters & Mutators for hooks
+export const getAppliedJobIds = (): string[] => inMemoryAppliedIds;
+export const getSavedJobIds = (): string[] => inMemorySavedIds;
+export const getRespondedOffers = (): Record<string, 'accept' | 'decline'> => inMemoryRespondedOffers;
+export const getFollowedCompanies = (): string[] => inMemoryFollowedCompanies;
+export const getActiveTab = (): string => inMemoryActiveTab;
+
+export const setAppliedJobIds = (ids: string[]) => { inMemoryAppliedIds = ids; };
+export const setSavedJobIds = (ids: string[]) => { inMemorySavedIds = ids; };
+export const setRespondedOffers = (offers: Record<string, 'accept' | 'decline'>) => { inMemoryRespondedOffers = offers; };
+export const setFollowedCompanies = (companies: string[]) => { inMemoryFollowedCompanies = companies; };
+export const setActiveTab = (tab: string) => { 
+  inMemoryActiveTab = tab; 
+};
+
+export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppliedAndOffers?: boolean) => {
   // Simulate network latency
   await new Promise(resolve => setTimeout(resolve, 300));
 
-  let filteredJobs = DUMMY_JOBS.map(j => ({ ...j }));
+  let filteredJobs = DUMMY_JOBS.map(j => ({
+    ...j,
+    is_applied: inMemoryAppliedIds.includes(j.id),
+    is_saved: inMemorySavedIds.includes(j.id)
+  }));
+
+  if (excludeAppliedAndOffers) {
+    filteredJobs = filteredJobs.filter(j => !j.is_applied && !j.is_offer);
+  }
 
   if (filters) {
     if (filters.search) {
@@ -111,88 +146,83 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string) => {
 export const getJobById = async (jobId: string): Promise<Job | null> => {
   await new Promise(resolve => setTimeout(resolve, 200));
   const job = DUMMY_JOBS.find(j => j.id === jobId);
-  return job ? { ...job } : null;
+  if (!job) return null;
+
+  const offerResponse = inMemoryRespondedOffers[job.id];
+  let status = job.application_status;
+  if (job.is_offer && offerResponse) {
+    status = offerResponse === 'accept' ? 'Accepted' : 'Declined';
+  }
+
+  return {
+    ...job,
+    is_applied: inMemoryAppliedIds.includes(job.id),
+    is_saved: inMemorySavedIds.includes(job.id),
+    is_followed: inMemoryFollowedCompanies.includes(job.company),
+    application_status: status
+  };
 };
 
 export const saveJob = async (jobId: string): Promise<boolean> => {
   await new Promise(resolve => setTimeout(resolve, 100));
-  // Mock API success
+  if (inMemorySavedIds.includes(jobId)) {
+    inMemorySavedIds = inMemorySavedIds.filter(id => id !== jobId);
+  } else {
+    inMemorySavedIds.push(jobId);
+  }
   return true;
 };
 
 export const applyJob = async (jobId: string): Promise<boolean> => {
   await new Promise(resolve => setTimeout(resolve, 200));
-  // Mock API success
+  if (!inMemoryAppliedIds.includes(jobId)) {
+    inMemoryAppliedIds.push(jobId);
+  }
   return true;
 };
 
 export const getMyApplications = async (): Promise<Job[]> => {
   await new Promise(resolve => setTimeout(resolve, 250));
-
-  if (typeof window !== 'undefined') {
-    if (!localStorage.getItem('applied_job_ids')) {
-      localStorage.setItem('applied_job_ids', JSON.stringify(['app-1', 'app-2', 'app-3', 'app-4', 'app-5', 'app-6', 'app-7', 'app-8']));
-    }
-    const appliedIds = JSON.parse(localStorage.getItem('applied_job_ids') || '[]');
-    return DUMMY_JOBS
-      .filter(j => appliedIds.includes(j.id))
-      .map(j => ({ ...j, is_applied: true }));
-  }
-  return [];
+  return DUMMY_JOBS
+    .filter(j => inMemoryAppliedIds.includes(j.id))
+    .map(j => ({
+      ...j,
+      is_applied: true,
+      is_saved: inMemorySavedIds.includes(j.id)
+    }));
 };
 
 export const withdrawApplication = async (jobId: string): Promise<boolean> => {
   await new Promise(resolve => setTimeout(resolve, 200));
-
-  if (typeof window !== 'undefined') {
-    const appliedIds = JSON.parse(localStorage.getItem('applied_job_ids') || '[]');
-    const newAppliedIds = appliedIds.filter((id: string) => id !== jobId);
-    localStorage.setItem('applied_job_ids', JSON.stringify(newAppliedIds));
-    return true;
-  }
-  return false;
+  inMemoryAppliedIds = inMemoryAppliedIds.filter(id => id !== jobId);
+  return true;
 };
 
 export const getApplicationStats = async (): Promise<{ totalApplied: number; shortlisted: number }> => {
   await new Promise(resolve => setTimeout(resolve, 150));
-
-  if (typeof window !== 'undefined') {
-    if (!localStorage.getItem('applied_job_ids')) {
-      localStorage.setItem('applied_job_ids', JSON.stringify(['app-1', 'app-2', 'app-3', 'app-4', 'app-5', 'app-6', 'app-7', 'app-8']));
-    }
-    const appliedIds = JSON.parse(localStorage.getItem('applied_job_ids') || '[]');
-    const appliedJobs = DUMMY_JOBS.filter(j => appliedIds.includes(j.id));
-    const shortlistedCount = appliedJobs.filter(j => j.application_status === 'Shortlisted').length;
-    return {
-      totalApplied: appliedIds.length,
-      shortlisted: shortlistedCount
-    };
-  }
-  return { totalApplied: 0, shortlisted: 0 };
+  const appliedJobs = DUMMY_JOBS.filter(j => inMemoryAppliedIds.includes(j.id));
+  const shortlistedCount = appliedJobs.filter(j => j.application_status === 'Shortlisted').length;
+  return {
+    totalApplied: inMemoryAppliedIds.length,
+    shortlisted: shortlistedCount
+  };
 };
 
 export const getMyOffers = async (): Promise<Job[]> => {
   await new Promise(resolve => setTimeout(resolve, 200));
-
-  if (typeof window !== 'undefined') {
-    const respondedOffers = JSON.parse(localStorage.getItem('responded_offer_ids') || '{}');
-    return DUMMY_JOBS
-      .filter(j => j.is_offer && !respondedOffers[j.id])
-      .map(j => ({ ...j }));
-  }
-  return [];
+  return DUMMY_JOBS
+    .filter(j => j.is_offer && !inMemoryRespondedOffers[j.id])
+    .map(j => ({
+      ...j,
+      is_saved: inMemorySavedIds.includes(j.id),
+      is_applied: inMemoryAppliedIds.includes(j.id)
+    }));
 };
 
 export const respondToOffer = async (offerId: string, action: 'accept' | 'decline'): Promise<boolean> => {
   await new Promise(resolve => setTimeout(resolve, 150));
-
-  if (typeof window !== 'undefined') {
-    const respondedOffers = JSON.parse(localStorage.getItem('responded_offer_ids') || '{}');
-    respondedOffers[offerId] = action;
-    localStorage.setItem('responded_offer_ids', JSON.stringify(respondedOffers));
-    return true;
-  }
-  return false;
+  inMemoryRespondedOffers[offerId] = action;
+  return true;
 };
 
 // Mock Listings Data
@@ -208,25 +238,96 @@ const DUMMY_JOB_LISTINGS: JobListing[] = [
 
 export const getMyListings = async (): Promise<JobListing[]> => {
   await new Promise(resolve => setTimeout(resolve, 200));
-  if (typeof window !== 'undefined') {
-    const customListings = JSON.parse(localStorage.getItem('my_job_listings') || '[]');
-    return [...customListings, ...DUMMY_JOB_LISTINGS];
-  }
-  return DUMMY_JOB_LISTINGS;
+  return [...inMemoryJobListings, ...DUMMY_JOB_LISTINGS];
 };
 
-export const createJobListing = async (title: string, status: string = 'ACTIVE'): Promise<boolean> => {
+export const createJobListing = async (
+  title: string,
+  status: string = 'ACTIVE',
+  details?: Partial<JobListing>
+): Promise<JobListing | null> => {
   await new Promise(resolve => setTimeout(resolve, 150));
-  if (typeof window !== 'undefined') {
-    const customListings = JSON.parse(localStorage.getItem('my_job_listings') || '[]');
-    const newListing: JobListing = {
-      id: `list-custom-${Date.now()}`,
-      title,
-      posted_at: 'Posted just now',
-      status
-    };
-    localStorage.setItem('my_job_listings', JSON.stringify([newListing, ...customListings]));
-    return true;
+
+  if (details?.id) {
+    const inMemoryIndex = inMemoryJobListings.findIndex(l => l.id === details.id);
+    if (inMemoryIndex !== -1) {
+      const updated = {
+        ...inMemoryJobListings[inMemoryIndex],
+        title,
+        status,
+        posted_at: status === 'DRAFT' ? undefined : 'Posted just now',
+        last_edited: status === 'DRAFT' ? 'Last edited just now' : undefined,
+        ...details
+      };
+      inMemoryJobListings[inMemoryIndex] = updated;
+      return updated;
+    }
+
+    const dummyIndex = DUMMY_JOB_LISTINGS.findIndex(l => l.id === details.id);
+    if (dummyIndex !== -1) {
+      const updated = {
+        ...DUMMY_JOB_LISTINGS[dummyIndex],
+        title,
+        status,
+        posted_at: status === 'DRAFT' ? undefined : 'Posted just now',
+        last_edited: status === 'DRAFT' ? 'Last edited just now' : undefined,
+        ...details
+      };
+      DUMMY_JOB_LISTINGS[dummyIndex] = updated;
+      return updated;
+    }
   }
-  return false;
+
+  const newListing: JobListing = {
+    id: `list-custom-${Date.now()}`,
+    title,
+    posted_at: status === 'DRAFT' ? undefined : 'Posted just now',
+    last_edited: status === 'DRAFT' ? 'Last edited just now' : undefined,
+    status,
+    ...details
+  };
+  inMemoryJobListings = [newListing, ...inMemoryJobListings];
+  return newListing;
 };
+
+export const closeJobListing = async (id: string): Promise<boolean> => {
+  await new Promise(resolve => setTimeout(resolve, 150));
+  inMemoryJobListings = inMemoryJobListings.map(l =>
+    l.id === id ? { ...l, status: 'CLOSED' } : l
+  );
+  const dummyIndex = DUMMY_JOB_LISTINGS.findIndex(l => l.id === id);
+  if (dummyIndex !== -1) {
+    DUMMY_JOB_LISTINGS[dummyIndex].status = 'CLOSED';
+  }
+  return true;
+};
+
+export const deleteJobListing = async (id: string): Promise<boolean> => {
+  await new Promise(resolve => setTimeout(resolve, 150));
+  inMemoryJobListings = inMemoryJobListings.filter(l => l.id !== id);
+  const dummyIndex = DUMMY_JOB_LISTINGS.findIndex(l => l.id === id);
+  if (dummyIndex !== -1) {
+    DUMMY_JOB_LISTINGS.splice(dummyIndex, 1);
+  }
+  return true;
+};
+
+let inMemoryJobOffers = [...DUMMY_OFFERS];
+
+export const getJobOffers = async () => {
+  await new Promise(resolve => setTimeout(resolve, 150));
+  return { data: inMemoryJobOffers, success: true };
+};
+
+export const acceptJobOffer = async (offerId: string) => {
+  await new Promise(resolve => setTimeout(resolve, 100));
+  inMemoryJobOffers = inMemoryJobOffers.map(o => o.id === offerId ? { ...o, status: 'accepted' } : o);
+  return { success: true };
+};
+
+export const declineJobOffer = async (offerId: string) => {
+  await new Promise(resolve => setTimeout(resolve, 100));
+  inMemoryJobOffers = inMemoryJobOffers.map(o => o.id === offerId ? { ...o, status: 'declined' } : o);
+  return { success: true };
+};
+

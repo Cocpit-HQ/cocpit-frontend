@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import * as jobsService from '../features/jobs/services/jobs.service';
 
 const TRACKED_SECTIONS = ['events', 'jobs', 'feed'];
 
@@ -17,14 +18,32 @@ export function useNavigationTracker() {
     // Only track if it matches a known section boundary
     const sectionMatch = TRACKED_SECTIONS.find(s => pathname.startsWith(`/${s}`));
     if (sectionMatch) {
+      const segments = pathname.split('/').filter(Boolean);
+      const isSubpage = segments.length > 1;
+
       const queryString = searchParams.toString();
       const currentPath = queryString ? `${pathname}?${queryString}` : pathname;
-      sessionStorage.setItem(`nav_memory_${sectionMatch}`, currentPath);
+
+      // Only save base section paths in memory, not detail subpages
+      if (!isSubpage) {
+        sessionStorage.setItem(`nav_memory_${sectionMatch}`, currentPath);
+      }
 
       // Store a flawless _base memory for robust back-navigation tab restoration
       if (pathname === `/${sectionMatch}`) {
         sessionStorage.setItem(`nav_memory_${sectionMatch}_base`, currentPath);
       }
+    }
+
+    // Clear jobs scroll memory if we leave the jobs section
+    if (pathname && !pathname.startsWith('/jobs')) {
+      const tabsList = ['Explore', 'My applications', 'Offers', 'Saved', 'My listings'];
+      tabsList.forEach(tab => {
+        sessionStorage.removeItem(`jobs_scroll_page_${tab}`);
+        sessionStorage.removeItem(`jobs_scroll_container_${tab}`);
+      });
+      sessionStorage.removeItem('coming_from_job_detail');
+      jobsService.setActiveTab('Explore');
     }
   }, [pathname, searchParams]);
 }

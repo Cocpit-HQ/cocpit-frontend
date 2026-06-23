@@ -12,6 +12,7 @@ interface JobListProps {
   loadMore: () => void;
   onSave?: (jobId: string, e: React.MouseEvent) => void;
   onApply?: (jobId: string, e: React.MouseEvent) => void;
+  onWithdraw?: (jobId: string, e: React.MouseEvent) => void;
   onSelect?: (job: Job) => void;
 }
 
@@ -23,6 +24,7 @@ export const JobList: React.FC<JobListProps> = ({
   loadMore,
   onSave,
   onApply,
+  onWithdraw,
   onSelect
 }) => {
   const { ref: loadMoreRef, inView } = useInView({
@@ -71,6 +73,7 @@ export const JobList: React.FC<JobListProps> = ({
           job={job}
           onSave={onSave}
           onApply={onApply}
+          onWithdraw={onWithdraw}
           onClick={onSelect}
         />
       ))}

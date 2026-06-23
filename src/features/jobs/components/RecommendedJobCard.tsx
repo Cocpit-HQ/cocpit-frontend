@@ -2,6 +2,7 @@ import React from 'react';
 import { Job } from '../types/jobs.types';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface RecommendedJobCardProps {
   job: Job;
@@ -9,11 +10,15 @@ interface RecommendedJobCardProps {
 }
 
 export const RecommendedJobCard: React.FC<RecommendedJobCardProps> = ({ job, onClick }) => {
+  const percentMatch = job.recommended_badge ? job.recommended_badge.match(/\d+/) : null;
+  const percentNum = percentMatch ? parseInt(percentMatch[0], 10) : 10;
+  const strongerThanPercent = 100 - percentNum;
+
   return (
     <Link
       href={`/jobs/${job.id}`}
       onClick={() => onClick?.(job)}
-      className="w-[309.33px] h-56 p-4 bg-white rounded-3xl shadow-[0px_0px_0px_0px_rgba(99,102,241,0.08)] outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex flex-col justify-start items-start gap-2 cursor-pointer hover:shadow-[0px_8px_30px_rgba(99,102,241,0.08)] transition-all duration-300 transform hover:-translate-y-1 flex-shrink-0"
+      className="w-[309.33px] h-56 p-4 bg-white rounded-3xl shadow-[0px_0px_0px_0px_rgba(99,102,241,0.08)] outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex flex-col justify-start items-start gap-2 cursor-pointer flex-shrink-0"
     >
       {/* Title, Company, Location & Badge row */}
       <div className="self-stretch inline-flex justify-between items-start">
@@ -37,11 +42,25 @@ export const RecommendedJobCard: React.FC<RecommendedJobCardProps> = ({ job, onC
           </div>
         </div>
         {job.recommended_badge && (
-          <div className="size- px-2 py-1 bg-indigo-500/10 rounded-full inline-flex flex-col justify-start items-start">
-            <div className="justify-center text-indigo-500 text-[10px] font-medium font-['Poppins']">
-              {job.recommended_badge}
-            </div>
-          </div>
+          <Tooltip delayDuration={100}>
+            <TooltipTrigger asChild>
+              <div className="px-2 py-1 bg-indigo-500/10 rounded-full inline-flex flex-col justify-start items-start">
+                <div className="justify-center text-indigo-500 text-[10px] font-medium font-['Poppins']">
+                  {job.recommended_badge}
+                </div>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              align="end"
+              sideOffset={8}
+              className="w-[289px] py-3 px-4 bg-[#EEF2FF] rounded-[24px] border-none shadow-[0px_4px_16px_rgba(99,102,241,0.08)] text-black z-[9999]"
+            >
+              <span className="w-[257px] flex items-center text-black text-[12px] font-normal font-['Poppins'] leading-[16px] flex-grow">
+                You&apos;re stronger than {strongerThanPercent}% of applicants for this job based on your profile and skills
+              </span>
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
 

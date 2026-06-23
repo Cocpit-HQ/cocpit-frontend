@@ -18,6 +18,8 @@ export interface Job {
   is_saved?: boolean;
   is_applied?: boolean;
   is_offer?: boolean;
+  is_closed?: boolean;
+  is_followed?: boolean;
 
   // AI Recommendation details
   is_recommended?: boolean;
@@ -34,6 +36,7 @@ export interface Job {
   // Offer details
   offer_expiry_text?: string;
   offer_expiry_color?: 'orange' | 'gray' | string;
+  offer_days_left?: number;
   recruiter_name?: string;
   recruiter_title?: string;
   recruiter_avatar?: string;
@@ -66,4 +69,29 @@ export interface JobListing {
   posted_at?: string;
   last_edited?: string;
   status: 'ACTIVE' | 'IN REVIEW' | 'DRAFT' | 'CLOSED' | string;
+  company?: string;
+  location?: string;
+  description?: string;
+  experience?: string;
+  work_type?: string;
+  work_mode?: string;
+  salary_min?: number;
+  salary_max?: number;
+  salary_currency?: string;
 }
+
+export interface JobOffer {
+  id: string;
+  job_role: string;
+  days_remaining: number;
+  company_name: string;
+  location: string;
+  status: 'pending' | 'accepted' | 'declined';
+  note?: string;
+  recruiter: {
+    name: string;
+    headline: string;
+    avatar?: string;
+  };
+}
+

@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { JobListing } from '../../types/jobs.types';
-import { Icon } from '@iconify/react';
 
 interface ListingsTabProps {
   listings: JobListing[];
@@ -8,75 +7,146 @@ interface ListingsTabProps {
 }
 
 export const ListingsTab: React.FC<ListingsTabProps> = ({ listings, onSelectListing }) => {
-  const getStatusStyle = (status: string) => {
+  const [activeFilter, setActiveFilter] = useState<string>('All');
+
+  const filterChips = ['All', 'Active', 'Closed', 'In review', 'Drafts'];
+
+  const filteredListings = useMemo(() => {
+    if (activeFilter === 'All') return listings;
+    if (activeFilter === 'Active') {
+      return listings.filter((item) => item.status?.toUpperCase() === 'ACTIVE');
+    }
+    if (activeFilter === 'Closed') {
+      return listings.filter((item) => item.status?.toUpperCase() === 'CLOSED');
+    }
+    if (activeFilter === 'In review') {
+      return listings.filter((item) => item.status?.toUpperCase() === 'IN REVIEW');
+    }
+    if (activeFilter === 'Drafts') {
+      return listings.filter((item) => item.status?.toUpperCase() === 'DRAFT');
+    }
+    return listings;
+  }, [listings, activeFilter]);
+
+  const getStatusChip = (status: string) => {
+    let bg = '#F0FDF4';
+    let text = '#22C55E';
+    let label = 'ACTIVE';
+
     switch (status.toUpperCase()) {
       case 'ACTIVE':
-        return 'bg-emerald-50 text-emerald-600 border border-emerald-100';
+        bg = '#F0FDF4';
+        text = '#22C55E';
+        label = 'ACTIVE';
+        break;
       case 'IN REVIEW':
-        return 'bg-indigo-50 text-indigo-600 border border-indigo-100';
+        bg = '#F1F0FF';
+        text = '#4338CA';
+        label = 'IN REVIEW';
+        break;
       case 'DRAFT':
-        return 'bg-slate-50 text-slate-600 border border-slate-200';
+        bg = '#F1F3F9';
+        text = '#6B7280';
+        label = 'DRAFT';
+        break;
       case 'CLOSED':
-        return 'bg-gray-100 text-gray-500 border border-gray-200';
+        bg = '#F1F3F9';
+        text = '#6B7280';
+        label = 'CLOSED';
+        break;
       default:
-        return 'bg-gray-50 text-gray-600 border border-gray-200';
+        bg = '#F1F3F9';
+        text = '#6B7280';
+        label = status.toUpperCase();
+        break;
     }
+
+    return (
+      <div
+        className="flex flex-col justify-center items-center rounded-full flex-shrink-0"
+        style={{
+          padding: '8px',
+          width: '70px',
+          height: '31px',
+          backgroundColor: bg,
+        }}
+      >
+        <span
+          className="font-['Poppins'] font-medium text-[10px] leading-[15px] flex items-center text-center uppercase"
+          style={{ color: text }}
+        >
+          {label}
+        </span>
+      </div>
+    );
   };
 
   return (
-    <div className="w-full flex flex-col gap-4">
-      {/* Tab Sub-Header */}
-      <div className="flex justify-between items-center pb-2 border-b border-indigo-50/50">
-        <div className="flex flex-col">
-          <h3 className="text-black text-lg font-bold font-['Poppins']">Posted Jobs</h3>
-          <span className="text-gray-400 text-xs font-normal font-['Poppins']">
-            Total jobs - {listings.length}
-          </span>
-        </div>
-        <button className="p-2 hover:bg-slate-50 rounded-full transition-colors flex items-center justify-center border border-gray-100">
-          <Icon icon="solar:sort-linear" className="w-5 h-5 text-gray-500" />
-        </button>
+    <div
+      className="w-full max-w-[960px] h-[708px] bg-white rounded-[24px] p-[16px] flex flex-col items-start gap-[16px] box-border"
+    >
+      {/* Heading Frame */}
+      <div className="w-full flex flex-col gap-[4px] px-0">
+        <h3 className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-black">
+          All Jobs
+        </h3>
+        <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280]">
+          Total jobs - {listings.length}
+        </span>
       </div>
 
-      {/* Listings List */}
-      <div className="flex flex-col divide-y divide-slate-100">
-        {listings.length === 0 ? (
-          <div className="py-12 flex flex-col items-center justify-center gap-3 text-center">
-            <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100">
-              <Icon icon="lucide:briefcase" className="w-5 h-5 text-gray-400" />
-            </div>
-            <h4 className="text-gray-700 text-sm font-semibold font-['Poppins']">No listings found</h4>
+      {/* Filter Row Frame (Frame 2608535) */}
+      <div className="w-full flex flex-col items-start p-0 gap-[16px] flex-none self-stretch">
+        <div className="w-full flex flex-row items-center gap-[8px] border-b border-transparent">
+          {filterChips.map((chip) => {
+            const isSelected = activeFilter.toLowerCase() === chip.toLowerCase();
+            return (
+              <div
+                key={chip}
+                onClick={() => setActiveFilter(chip)}
+                className={`font-['Poppins'] text-[14px] leading-[20px] px-[16px] py-[8px] cursor-pointer transition-all border-b-2 ${
+                  isSelected
+                    ? 'text-[#6366F1] font-semibold border-[#6366F1]'
+                    : 'text-[#000000] font-normal border-transparent hover:text-[#6366F1]/80'
+                }`}
+              >
+                {chip}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Job Card List with Scroll */}
+      <div className="w-full flex-1 overflow-y-auto pr-1 flex flex-col gap-[16px] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full">
+        {filteredListings.length === 0 ? (
+          <div className="py-12 flex flex-col items-center justify-center gap-3 text-center w-full">
+            <h4 className="text-gray-400 text-sm font-semibold font-['Poppins']">No listings found</h4>
             <p className="text-gray-400 text-xs font-['Poppins'] max-w-xs">
-              Create a job listing by clicking the "Create job" button above to get started.
+              There are no jobs matching the selected filter status.
             </p>
           </div>
         ) : (
-          listings.map((item) => (
+          filteredListings.map((item) => (
             <div
               key={item.id}
               onClick={() => onSelectListing && onSelectListing(item)}
-              className={`py-4 flex items-center justify-between gap-4 transition-colors ${
-                onSelectListing ? 'cursor-pointer hover:bg-slate-55/50 rounded-xl px-2' : ''
+              className={`w-full flex flex-row items-center justify-between py-[16px] px-0 gap-[16px] bg-white h-[80px] flex-none border-b border-[#EEF2FF]/60 last:border-b-0 ${
+                onSelectListing ? 'cursor-pointer' : ''
               }`}
             >
-              {/* Job Info */}
-              <div className="flex flex-col gap-0.5">
-                <span className="text-black text-sm font-bold font-['Poppins']">
+              {/* Text Frame (Frame 2609064) */}
+              <div className="flex flex-col items-start gap-[8px] h-[48px] flex-1 min-w-0">
+                <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black capitalize truncate w-full">
                   {item.title}
                 </span>
-                <span className="text-gray-400 text-xs font-normal font-['Poppins']">
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] truncate w-full">
                   {item.posted_at || item.last_edited || 'Posted recently'}
                 </span>
               </div>
 
               {/* Status Badge */}
-              <span
-                className={`px-3 py-1 rounded-full text-[10px] font-bold font-['Poppins'] tracking-wider uppercase ${getStatusStyle(
-                  item.status
-                )}`}
-              >
-                {item.status}
-              </span>
+              {getStatusChip(item.status)}
             </div>
           ))
         )}

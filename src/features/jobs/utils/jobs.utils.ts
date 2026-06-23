@@ -1,4 +1,4 @@
-import { Job } from '../types/jobs.types';
+import { Job, JobOffer } from '../types/jobs.types';
 
 export const DUMMY_JOBS: Job[] = [
   {
@@ -136,6 +136,7 @@ export const DUMMY_JOBS: Job[] = [
     tags: ['Figma', 'Telemetry', 'Developer Tools', 'Retro-Aesthetics'],
     is_saved: false,
     is_applied: false,
+    is_closed: true,
     company_logo: 'briefcase'
   },
   {
@@ -161,6 +162,7 @@ export const DUMMY_JOBS: Job[] = [
     tags: ['Figma', 'Interaction Design', 'Usability Testing', 'Prototyping'],
     is_saved: false,
     is_applied: false,
+    is_closed: true,
     company_logo: 'briefcase'
   },
   {
@@ -212,6 +214,46 @@ export const DUMMY_JOBS: Job[] = [
     is_saved: false,
     is_applied: false,
     company_logo: 'briefcase'
+  },
+  {
+    id: '6',
+    title: 'Senior Frontend Developer',
+    company: 'TechFlow',
+    location: 'San Francisco, CA',
+    job_type: 'Full time',
+    experience: '3-5Yrs',
+    work_mode: 'Hybrid',
+    salary_display: '$160k - $210k',
+    salary_min: 160000,
+    salary_max: 210000,
+    salary_currency: 'USD',
+    posted_at: '2 days ago',
+    description: 'Senior Frontend Developer to join our core UI team at TechFlow.',
+    requirements: ['3+ years React', 'TypeScript expertise'],
+    tags: ['React', 'TypeScript'],
+    is_saved: false,
+    is_applied: false,
+    company_logo: 'sphere'
+  },
+  {
+    id: '7',
+    title: 'Visual Designer',
+    company: 'Creative Labs',
+    location: 'Remote',
+    job_type: 'Full time',
+    experience: '2-4Yrs',
+    work_mode: 'Remote',
+    salary_display: '$120k - $160k',
+    salary_min: 120000,
+    salary_max: 160000,
+    salary_currency: 'USD',
+    posted_at: '3 days ago',
+    description: 'Visual Designer to create marketing and brand design assets.',
+    requirements: ['Adobe Suite', 'Figma'],
+    tags: ['Figma', 'Visual Design'],
+    is_saved: false,
+    is_applied: false,
+    company_logo: 'sphere'
   },
   {
     id: 'app-1',
@@ -334,6 +376,21 @@ export const DUMMY_JOBS: Job[] = [
     is_applied: true
   },
   {
+    id: 'app-9',
+    title: 'Interaction Designer',
+    company: 'Zenith Wave Systems',
+    location: 'Remote',
+    job_type: 'Contract',
+    posted_at: '25 days ago',
+    description: 'Create interactive animations and design user flows.',
+    application_status: 'Declined',
+    applied_date_display: 'Applied 25 days ago',
+    is_available: true,
+    company_logo: 'briefcase',
+    is_saved: false,
+    is_applied: true
+  },
+  {
     id: 'offer-1',
     title: 'Senior UI UX Engineer',
     company: 'TechFlow',
@@ -344,6 +401,7 @@ export const DUMMY_JOBS: Job[] = [
     is_offer: true,
     offer_expiry_text: 'Offer ends in 15 days',
     offer_expiry_color: 'orange',
+    offer_days_left: 15,
     recruiter_name: 'SARAH MITCHELL',
     recruiter_title: 'HEAD OF DESIGN',
     recruiter_message: 'Hi cocpit, we were impressed by your portfolio and the way you handled the whiteboarding session. Your approach to scalable design systems is exactly what we need for our next growth phase. We\'d love to have you join our team.',
@@ -361,6 +419,7 @@ export const DUMMY_JOBS: Job[] = [
     is_offer: true,
     offer_expiry_text: 'Offer ends in 1 day',
     offer_expiry_color: 'orange',
+    offer_days_left: 1,
     is_saved: false,
     is_applied: false
   },
@@ -375,10 +434,128 @@ export const DUMMY_JOBS: Job[] = [
     is_offer: true,
     offer_expiry_text: 'Offer ends in 30 days',
     offer_expiry_color: 'gray',
+    offer_days_left: 30,
     recruiter_name: 'SARAH MITCHELL',
     recruiter_title: 'HEAD OF DESIGN',
     recruiter_message: 'Hi cocpit, we were impressed by your portfolio and the way you handled the whiteboarding session. Your approach to scalable design systems is exactly what we need for our next growth phase. We\'d love to have you join our team.\n\nHi cocpit, we were impressed by your portfolio and the way you handled the whiteboarding session. Your approach to scalable design systems is exactly what we need for our next growth phase. We\'d love to have you join our team.\n\nHi cocpit, we were impressed by your portfolio and the way you handled the whiteboarding session. Your approach to scalable design systems is exactly what we need for our next growth phase. We\'d love to have you join our team.',
     is_saved: false,
     is_applied: false
+  },
+  {
+    id: 'offer-4',
+    title: 'Product Designer',
+    company: 'Creative Labs',
+    location: 'Remote',
+    job_type: 'Full time',
+    posted_at: '3 days ago',
+    description: 'Join Creative Labs as a Product Designer. You will be responsible for defining the user journeys, visual styles, and interactions.',
+    is_offer: true,
+    offer_expiry_text: 'Offer ends in 5 days',
+    offer_expiry_color: 'orange',
+    offer_days_left: 5,
+    recruiter_name: 'MARCUS AURELIUS',
+    recruiter_title: 'DESIGN DIRECTOR',
+    recruiter_message: 'Hey there! The team loved your product design designs. We think you will be a great fit for Creative Labs.',
+    is_saved: false,
+    is_applied: false
+  },
+  {
+    id: 'offer-5',
+    title: 'Visual Designer',
+    company: 'ScaleUp',
+    location: 'Austin, TX',
+    job_type: 'Full time',
+    posted_at: '4 days ago',
+    description: 'ScaleUp is hiring a Visual Designer to shape the visual brand identity of our cloud infrastructure services.',
+    is_offer: true,
+    offer_expiry_text: 'Offer ends in 10 days',
+    offer_expiry_color: 'gray',
+    offer_days_left: 10,
+    recruiter_name: 'EMILY WATSON',
+    recruiter_title: 'TALENT ACQUISITION',
+    recruiter_message: 'Hi, we are excited to offer you the Visual Designer position at ScaleUp. Welcome aboard!',
+    is_saved: false,
+    is_applied: false
+  },
+  {
+    id: 'offer-6',
+    title: 'Lead UI/UX Designer',
+    company: 'Synthwave Systems',
+    location: 'Remote',
+    job_type: 'Full time',
+    posted_at: '5 days ago',
+    description: 'Synthwave Systems is looking for a Lead UI/UX Designer.',
+    is_offer: true,
+    offer_expiry_text: 'Offer ends in 8 days',
+    offer_expiry_color: 'orange',
+    offer_days_left: 8,
+    recruiter_name: 'LISA SIMPSON',
+    recruiter_title: 'HR LEAD',
+    recruiter_message: 'Dear candidate, we would love to extend this official job offer to join our remote-first design team.',
+    is_saved: false,
+    is_applied: false
+  },
+  {
+    id: 'offer-7',
+    title: 'Contract Frontend Developer',
+    company: 'ByteCraft Solutions',
+    location: 'Remote',
+    job_type: 'Contract',
+    posted_at: '6 days ago',
+    description: 'ByteCraft Solutions is seeking a contract Frontend Developer.',
+    is_offer: true,
+    offer_expiry_text: 'Offer ends in 12 days',
+    offer_expiry_color: 'gray',
+    offer_days_left: 12,
+    recruiter_name: 'ALAN TURING',
+    recruiter_title: 'CTO',
+    recruiter_message: 'Hi, we loved your technical evaluation and are offering you a contract position at ByteCraft.',
+    is_saved: false,
+    is_applied: false
   }
 ];
+
+export const DUMMY_OFFERS: JobOffer[] = [
+  {
+    id: 'offer-1',
+    job_role: 'Senior UI UX Engineer',
+    days_remaining: 15,
+    company_name: 'TechFlow',
+    location: 'San Francisco, CA',
+    status: 'pending',
+    note: "Hi cocpit, we were impressed by your portfolio and the way you handled the whiteboarding session. Your approach to scalable design systems is exactly what we need for our next growth phase. We'd love to have you join our team.",
+    recruiter: {
+      name: 'SARAH MITCHELL',
+      headline: 'HEAD OF DESIGN',
+      avatar: ''
+    }
+  },
+  {
+    id: 'offer-2',
+    job_role: 'Senior UI UX Engineer',
+    days_remaining: 1,
+    company_name: 'TechFlow',
+    location: 'San Francisco, CA',
+    status: 'pending',
+    recruiter: {
+      name: 'SARAH MITCHELL',
+      headline: 'HEAD OF DESIGN',
+      avatar: ''
+    }
+  },
+  {
+    id: 'offer-3',
+    job_role: 'Senior UI UX Engineer',
+    days_remaining: 30,
+    company_name: 'TechFlow',
+    location: 'San Francisco, CA',
+    status: 'pending',
+    note: "Hi cocpit, we were impressed by your portfolio and the way you handled the whiteboarding session. Your approach to scalable design systems is exactly what we need for our next growth phase. We'd love to have you join our team.\n\nHi cocpit, we were impressed by your portfolio and the way you handled the whiteboarding session. Your approach to scalable design systems is exactly what we need for our next growth phase. We'd love to have you join our team.\n\nHi cocpit, we were impressed by your portfolio and the way you handled the whiteboarding session. Your approach to scalable design systems is exactly what we need for our next growth phase. We'd love to have you join our team.",
+    recruiter: {
+      name: 'SARAH MITCHELL',
+      headline: 'HEAD OF DESIGN',
+      avatar: ''
+    }
+  }
+];
+
