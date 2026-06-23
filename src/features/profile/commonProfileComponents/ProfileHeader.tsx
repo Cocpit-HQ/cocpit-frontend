@@ -82,9 +82,9 @@ export const ProfileHeader = React.memo(function ProfileHeader({
     };
 
     const profileIdentity = {
-        openTo: (user?.open_to as any) || "Full-time",
-        availability: (user?.availability as any) || "Immediately",
-        workPreference: (user?.work_preference as any) || "Hybrid",
+        openTo: user?.open_to || "",
+        availability: user?.availability || "",
+        workPreference: user?.work_preference || "",
     };
 
     const visibleRoles = user?.company_roles?.filter((r: any) => r.is_role_visible) || [];
@@ -263,7 +263,7 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                 </div>
             </div>
 
-            <div className="flex justify-between items-start w-full min-h-[217px] pt-[16px] px-4 md:pr-[16px] pb-[16px] md:pl-[40px] md:gap-[100px]">
+            <div className="flex justify-between items-start w-full pt-[16px] px-4 md:pr-[16px] pb-[16px] md:pl-[40px] md:gap-[100px]">
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-3 mb-1 w-full">
                         <div className="flex items-center gap-3 flex-wrap md:flex-nowrap min-w-0">
@@ -336,27 +336,31 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                         </div>
                     </div>
 
-                    <p className="text-[16px] font-normal text-foreground leading-[24px] font-[family-name:var(--font-poppins)] mb-4">
-                        {user?.headline}
-                    </p>
+                    {user?.headline && (
+                        <p className="text-[16px] font-normal text-foreground leading-[24px] font-[family-name:var(--font-poppins)] mb-4">
+                            {user?.headline}
+                        </p>
+                    )}
 
-                    <div className="flex flex-col gap-2 mb-4">
-                        {user?.location && (
-                            <div className="flex items-center gap-2 text-[12px] font-normal text-muted-foreground leading-[16px] font-[family-name:var(--font-poppins)]">
-                                <span>{user?.location}</span>
-                            </div>
-                        )}
-                        {user?.website && (
-                            <div className="flex items-center gap-2 text-[12px] font-normal text-primary leading-[16px] font-[family-name:var(--font-poppins)] hover:underline">
-                                <a href={user.website} target="_blank" rel="noopener noreferrer">{user.website}</a>
-                            </div>
-                        )}
-                    </div>
+                    {(user?.location || user?.website) && (
+                        <div className="flex flex-col gap-2 mb-4">
+                            {user?.location && (
+                                <div className="flex items-center gap-2 text-[12px] font-normal text-muted-foreground leading-[16px] font-[family-name:var(--font-poppins)]">
+                                    <span>{user?.location}</span>
+                                </div>
+                            )}
+                            {user?.website && (
+                                <div className="flex items-center gap-2 text-[12px] font-normal text-primary leading-[16px] font-[family-name:var(--font-poppins)] hover:underline">
+                                    <a href={user.website} target="_blank" rel="noopener noreferrer">{user.website}</a>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <ProfileIdentityChips initialIdentity={profileIdentity} readOnly />
                 </div>
 
-                <div className="hidden md:flex items-start gap-[24px] pt-0 shrink-0 w-[308px] h-[185px]">
+                <div className="hidden md:flex items-start gap-[24px] pt-0 shrink-0 w-[308px]">
                     <div className="flex flex-col gap-4">
                         {latestExperience && (
                             <div onClick={scrollToExperience} className="flex items-center group cursor-pointer relative w-[260px] h-[40px] hover:bg-secondary/50 rounded-xl transition-colors">
