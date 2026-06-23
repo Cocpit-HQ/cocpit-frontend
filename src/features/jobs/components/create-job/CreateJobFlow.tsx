@@ -5,6 +5,7 @@ import StepRoleInput from './StepRoleInput';
 import StepJobDetails from './StepJobDetails';
 import StepJobPreview from './StepJobPreview';
 import { JobListing } from '../../types/jobs.types';
+import * as jobsService from '../../services/jobs.service';
 
 interface CreateJobFlowProps {
   onBack: () => void;
@@ -17,6 +18,7 @@ type Step = 'verification' | 'role-input' | 'ai-drafting' | 'details' | 'preview
 export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, initialListing }) => {
   const [step, setStep] = useState<Step>(initialListing ? 'details' : 'verification');
   const [title, setTitle] = useState(initialListing?.title || '');
+  const [jobId, setJobId] = useState<string | null>(initialListing?.id || null);
   const [draftingStep, setDraftingStep] = useState(0);
   const [accumulatedDetails, setAccumulatedDetails] = useState<Partial<JobListing>>(initialListing || {});
 
@@ -44,9 +46,19 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
     return () => clearInterval(interval);
   }, [step]);
 
-  const handleRoleContinue = () => {
+  const handleRoleContinue = async () => {
     setDraftingStep(0);
     setStep('ai-drafting');
+    
+    // Fire the API immediately so the draft exists in the DB while they are drafting!
+    try {
+      const newJobId = await jobsService.initializeJobDraft(title);
+      if (newJobId) {
+        setJobId(newJobId);
+      }
+    } catch (error) {
+      console.error('Failed to create initial draft', error);
+    }
   };
 
   const handleDetailsContinue = async (details: Partial<JobListing>) => {
@@ -58,7 +70,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
   };
 
   const handleSaveDraft = async (details: Partial<JobListing>) => {
-    await onSubmit(details.title || title, 'DRAFT', details);
+    await onSubmit(details.title || title, 'DRAFT', { ...details, id: jobId || undefined });
   };
 
   if (step === 'verification') {
@@ -115,10 +127,10 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
         details={{ ...accumulatedDetails, title }}
         onBack={() => setStep('details')}
         onSaveDraft={async () => {
-          await onSubmit(title, 'DRAFT', accumulatedDetails);
+          await onSubmit(title, 'DRAFT', { ...accumulatedDetails, id: jobId || undefined });
         }}
         onPublish={async () => {
-          await onSubmit(title, 'ACTIVE', accumulatedDetails);
+          await onSubmit(title, 'ACTIVE', { ...accumulatedDetails, id: jobId || undefined });
         }}
       />
     );

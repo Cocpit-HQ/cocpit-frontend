@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { JobListing } from '../../types/jobs.types';
+import { useMyProfile } from '@/hooks/use-my-profile';
 
 interface StepJobDetailsProps {
   initialRole: string;
@@ -17,10 +18,14 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   onSaveDraft,
   onContinue,
 }) => {
+  const { data: profileData } = useMyProfile();
+  const userProfile = profileData?.user;
+  const hasPopulated = useRef(false);
+
   // Form fields
   const [role, setRole] = useState(initialRole);
-  const [company, setCompany] = useState(initialDetails?.company || 'Starlight Technologies');
-  const [location, setLocation] = useState(initialDetails?.location || 'Mumbai, India');
+  const [company, setCompany] = useState(initialDetails?.company || userProfile?.name || '');
+  const [location, setLocation] = useState(initialDetails?.location || userProfile?.location || '');
   const [description, setDescription] = useState(initialDetails?.description || '');
   const [experience, setExperience] = useState(initialDetails?.experience || '0 - 2 years');
   const [workType, setWorkType] = useState(initialDetails?.work_type || 'Full-time');
@@ -28,6 +33,19 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   const [minSalary, setMinSalary] = useState(initialDetails?.salary_min ? String(initialDetails.salary_min) : '');
   const [maxSalary, setMaxSalary] = useState(initialDetails?.salary_max ? String(initialDetails.salary_max) : '');
   const [currency, setCurrency] = useState(initialDetails?.salary_currency || 'USD');
+
+  // Safely populate defaults when the profile data resolves, if it wasn't cached instantly
+  useEffect(() => {
+    if (userProfile && !hasPopulated.current) {
+      if (!company && !initialDetails?.company && userProfile.name) {
+        setCompany(userProfile.name);
+      }
+      if (!location && !initialDetails?.location && userProfile.location) {
+        setLocation(userProfile.location);
+      }
+      hasPopulated.current = true;
+    }
+  }, [userProfile, company, location, initialDetails]);
 
   // AI loading and options state
   const [isAiGenerating, setIsAiGenerating] = useState(false);
@@ -39,6 +57,9 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
     jobLocation: string,
     isRegen: boolean = false
   ) => {
+    const displayCompany = companyName || '[Company Name]';
+    const displayLocation = jobLocation || '[Location]';
+
     const isDesign =
       jobRole.toLowerCase().includes('design') ||
       jobRole.toLowerCase().includes('ui') ||
@@ -46,10 +67,10 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
     if (isDesign) {
       return `Role: ${jobRole}
-Location: ${jobLocation}
+Location: ${displayLocation}
 
 About the Role:
-As a ${jobRole} at ${companyName}, you will be responsible for creating exceptional user experiences for our ${
+As a ${jobRole} at ${displayCompany}, you will be responsible for creating exceptional user experiences for our ${
         isRegen ? 'flagship enterprise solutions' : 'next-generation career networking platform'
       }. You will bridge the gap between user needs and business goals through data-driven design and intuitive interfaces.
 
@@ -69,10 +90,10 @@ Requirements:
     }
 
     return `Role: ${jobRole}
-Location: ${jobLocation}
+Location: ${displayLocation}
 
 About the Role:
-As a ${jobRole} at ${companyName}, you will play a key role in driving technical innovation and quality across our digital products. You will work closely with cross-functional teams to build next-generation features and scale our services.
+As a ${jobRole} at ${displayCompany}, you will play a key role in driving technical innovation and quality across our digital products. You will work closely with cross-functional teams to build next-generation features and scale our services.
 
 Key Responsibilities:
 - Architect, build, and maintain high-performance applications.
@@ -89,13 +110,8 @@ Requirements:
 - Bachelor's degree in Computer Science, Engineering, or equivalent experience.`;
   };
 
-  // Prefill description on load or if fields change (before edit)
-  useEffect(() => {
-    // Only prefill if the user has not custom edited the description yet
-    if (!description) {
-      setDescription(getAiGeneratedDescription(role, company, location));
-    }
-  }, [role, company, location]);
+  // We no longer auto-prefill the description.
+  // The user can type their own, or click "Regenerate with AI" to trigger it.
 
   const handleRegenerateAi = () => {
     setIsAiGenerating(true);

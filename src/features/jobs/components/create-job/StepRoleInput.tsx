@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
+import api from '@/lib/axios';
 
 interface StepRoleInputProps {
   onBack: () => void;
@@ -14,11 +15,43 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
   setTitle,
   onContinue,
 }) => {
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      if (!title.trim() || title.length < 2) {
+        setSuggestions([]);
+        return;
+      }
+      setIsFetching(true);
+      try {
+        const response = await api.get(`/jobs/roles?q=${encodeURIComponent(title)}`);
+        // response.data is [{ role_name: "..." }, ...]
+        setSuggestions(response.data.map((r: any) => r.role_name));
+      } catch (error) {
+        console.error("Error fetching job roles:", error);
+      } finally {
+        setIsFetching(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(fetchRoles, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [title]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim()) {
+      setShowSuggestions(false);
       onContinue();
     }
+  };
+
+  const handleSelectRole = (role: string) => {
+    setTitle(role);
+    setShowSuggestions(false);
   };
 
   return (
@@ -65,13 +98,46 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
                 type="text"
                 required
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => {
+                  if (title.trim().length >= 2) setShowSuggestions(true);
+                }}
+                onBlur={() => {
+                  // Delay hiding so clicks on dropdown can register
+                  setTimeout(() => setShowSuggestions(false), 200);
+                }}
                 placeholder="e.g. UI/UX Designer"
                 className="w-full pl-4 pr-11 py-3 bg-white border border-slate-200 rounded-2xl text-black text-sm font-semibold font-['Poppins'] focus:outline-none focus:border-indigo-400 transition-colors shadow-sm"
               />
               <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
-                <Icon icon="lucide:search" className="w-4 h-4 text-gray-400" />
+                {isFetching ? (
+                   <div className="w-4 h-4 border-2 border-indigo-200 border-t-[#6366F1] rounded-full animate-spin" />
+                ) : (
+                   <Icon icon="lucide:search" className="w-4 h-4 text-gray-400" />
+                )}
               </div>
+              
+              {/* Autocomplete Dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute z-10 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                  {suggestions.map((role, idx) => (
+                    <div
+                      key={idx}
+                      onMouseDown={(e) => {
+                         // use onMouseDown instead of onClick to prevent onBlur from firing first
+                         e.preventDefault();
+                         handleSelectRole(role);
+                      }}
+                      className="px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm font-['Poppins'] text-gray-700 font-medium transition-colors"
+                    >
+                      {role}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

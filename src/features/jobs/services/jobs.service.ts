@@ -1,5 +1,6 @@
 import { Job, JobsFilter, JobListing, JobOffer } from '../types/jobs.types';
 import { DUMMY_JOBS, DUMMY_OFFERS } from '../utils/jobs.utils';
+import api from '@/lib/axios';
 
 // Initial default state for the application
 const INITIAL_APPLIED_IDS = ['app-1', 'app-2', 'app-3', 'app-4', 'app-5', 'app-6', 'app-7', 'app-8', 'app-9'];
@@ -237,8 +238,38 @@ const DUMMY_JOB_LISTINGS: JobListing[] = [
 ];
 
 export const getMyListings = async (): Promise<JobListing[]> => {
-  await new Promise(resolve => setTimeout(resolve, 200));
-  return [...inMemoryJobListings, ...DUMMY_JOB_LISTINGS];
+  try {
+    const response = await api.get(`/jobs/my`);
+    return response.data.map((job: any) => ({
+      id: job.job_id,
+      title: job.title,
+      status: job.status,
+      posted_at: job.created_at,
+      last_edited: job.updated_at,
+      company: job.company_name,
+      location: job.location,
+      description: job.description,
+      work_type: job.job_type,
+      work_mode: job.work_mode,
+      salary_min: job.salary_min,
+      salary_max: job.salary_max,
+      salary_currency: job.salary_currency
+    })) as JobListing[];
+  } catch (error) {
+    console.error("Failed to fetch listings:", error);
+    return [];
+  }
+};
+
+export const initializeJobDraft = async (title: string): Promise<string | null> => {
+  try {
+    const response = await api.post('/jobs', { title });
+    const newJob = response.data.job || response.data;
+    return newJob.job_id || newJob.id;
+  } catch (error) {
+    console.error("Failed to initialize job draft:", error);
+    return null;
+  }
 };
 
 export const createJobListing = async (
@@ -246,48 +277,94 @@ export const createJobListing = async (
   status: string = 'ACTIVE',
   details?: Partial<JobListing>
 ): Promise<JobListing | null> => {
-  await new Promise(resolve => setTimeout(resolve, 150));
+  try {
+    let jobId = details?.id;
 
-  if (details?.id) {
-    const inMemoryIndex = inMemoryJobListings.findIndex(l => l.id === details.id);
-    if (inMemoryIndex !== -1) {
-      const updated = {
-        ...inMemoryJobListings[inMemoryIndex],
-        title,
-        status,
-        posted_at: status === 'DRAFT' ? undefined : 'Posted just now',
-        last_edited: status === 'DRAFT' ? 'Last edited just now' : undefined,
-        ...details
-      };
-      inMemoryJobListings[inMemoryIndex] = updated;
-      return updated;
+    // 1. If we don't have an ID, we MUST create the draft first
+    if (!jobId) {
+      const createResponse = await api.post('/jobs', { title });
+      const newBackendJob = createResponse.data.job || createResponse.data;
+      jobId = newBackendJob.job_id;
     }
 
-    const dummyIndex = DUMMY_JOB_LISTINGS.findIndex(l => l.id === details.id);
-    if (dummyIndex !== -1) {
-      const updated = {
-        ...DUMMY_JOB_LISTINGS[dummyIndex],
+    // 2. Now we have a jobId (either newly created or passed in). 
+    //    We need to update it with the rest of the details.
+    if (jobId) {
+      // Parse experience string like "0 - 2 years" into min/max numbers
+      let expMin = undefined;
+      let expMax = undefined;
+      if (details?.experience) {
+        const match = details.experience.match(/(\d+)\s*-\s*(\d+)/);
+        if (match) {
+           expMin = parseInt(match[1]);
+           expMax = parseInt(match[2]);
+        } else if (details.experience.includes('5+')) {
+           expMin = 5;
+           expMax = 10;
+        }
+      }
+
+      let sMin = details?.salary_min;
+      let sMax = details?.salary_max;
+      
+      // Auto-correct if max is accidentally smaller than min (e.g. if max was left as 0)
+      if (sMin !== undefined && sMax !== undefined && sMin > sMax) {
+          sMax = sMin;
+      }
+
+      const updatePayload = {
         title,
-        status,
-        posted_at: status === 'DRAFT' ? undefined : 'Posted just now',
-        last_edited: status === 'DRAFT' ? 'Last edited just now' : undefined,
-        ...details
+        description: details?.description,
+        location: details?.location,
+        job_type: details?.work_type,
+        work_mode: details?.work_mode,
+        salary_min: sMin,
+        salary_max: sMax,
+        salary_currency: details?.salary_currency,
+        experience_min: expMin,
+        experience_max: expMax,
+        experience_label: details?.experience
       };
-      DUMMY_JOB_LISTINGS[dummyIndex] = updated;
-      return updated;
+      
+      const updateResponse = await api.patch(`/jobs/${jobId}`, updatePayload);
+      const backendJob = updateResponse.data.job || updateResponse.data;
+      
+      // 3. If the user hit "Publish" (ACTIVE), submit it
+      if (status === 'ACTIVE') {
+
+         await api.post(`/jobs/${jobId}/submit`, {
+           title,
+           description: details?.description || 'No description provided',
+           location: details?.location || 'Remote',
+           salary_min: sMin || 0,
+           salary_max: sMax || sMin || 0,
+           salary_currency: details?.salary_currency || 'USD',
+           experience_min: expMin !== undefined ? expMin : 0,
+           experience_max: expMax !== undefined ? expMax : 2,
+           experience_label: details?.experience || '0 - 2 years',
+           work_mode: details?.work_mode || 'Hybrid',
+           job_type: details?.work_type || 'Full-time',
+           industry: 'Technology',
+           about_company: details?.company ? `About ${details.company}` : 'Tech company',
+         }).catch(err => {
+            console.error("Error submitting job:", err?.response?.data || err);
+            throw err; // Re-throw to catch block
+         });
+      }
+
+      return {
+        id: backendJob.job_id,
+        title: backendJob.title,
+        status: status,
+        last_edited: 'Last edited just now'
+      } as JobListing;
     }
+
+    return null;
+  } catch (error) {
+    console.error("Failed to create/update job listing via API", error);
+    return null;
   }
-
-  const newListing: JobListing = {
-    id: `list-custom-${Date.now()}`,
-    title,
-    posted_at: status === 'DRAFT' ? undefined : 'Posted just now',
-    last_edited: status === 'DRAFT' ? 'Last edited just now' : undefined,
-    status,
-    ...details
-  };
-  inMemoryJobListings = [newListing, ...inMemoryJobListings];
-  return newListing;
 };
 
 export const closeJobListing = async (id: string): Promise<boolean> => {
