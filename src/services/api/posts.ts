@@ -53,6 +53,27 @@ export const toggleLike = async (postId: string, companyId?: string): Promise<To
   return response.data;
 };
 
+export interface PostLikerInfo {
+  likedAt: string;
+  isOrganization: boolean;
+  individualUserId: string | null;
+  organizationId: string | null;
+  userId: string;
+  username: string;
+  fullName: string;
+  avatar: string | null;
+}
+
+export interface GetPostLikesResponse {
+  postId: string;
+  likes: PostLikerInfo[];
+}
+
+export const getPostLikes = async (postId: string): Promise<GetPostLikesResponse> => {
+  const response = await api.get<GetPostLikesResponse>(`/post/${postId}/likes`);
+  return response.data;
+};
+
 export const voteInPoll = async (postId: string, optionId: string, companyId?: string): Promise<{ message: string }> => {
   void companyId;
   const response = await api.post<{ message: string }>(`/post/${postId}/poll/vote`, { option_id: optionId });

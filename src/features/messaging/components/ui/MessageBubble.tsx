@@ -274,17 +274,136 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
   )
 }
 
-const MessageMedia = ({ message, isMediaOnly, onMediaClick, onMediaLoad }: { message: Message, isMediaOnly: boolean, onMediaClick?: (url: string, type: 'image' | 'video' | 'document', name?: string) => void, onMediaLoad?: () => void }) => {
-  if (!message.media || message.media.length === 0) return null
+const ImageMediaItem = ({
+  item,
+  index,
+  isLastOdd,
+  mediaLength,
+  onMediaLoad,
+  onMediaClick
+}: {
+  item: { url: string; type: string };
+  index: number;
+  isLastOdd: boolean;
+  mediaLength: number;
+  onMediaLoad?: () => void;
+  onMediaClick?: (url: string, type: 'image' | 'video' | 'document', name?: string) => void;
+}) => {
+  const [aspectClass, setAspectClass] = useState<string>(
+    mediaLength === 1 ? "aspect-[4/3]" : "aspect-square"
+  );
 
-  // Decide if we should show timestamp inside media based on if there's text
-  const text = message.text || message.text_content
-  const isDefaultMediaText = ["Sent a photo", "Sent a video", "Sent a document", "Attachment", "Sent an attachment"].includes(text?.trim() || "")
-  const showOverlayTimestamp = !text || isDefaultMediaText
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    if (mediaLength === 1) {
+      const { naturalWidth, naturalHeight } = e.currentTarget;
+      const ratio = naturalWidth / naturalHeight;
+      if (ratio > 1.5) {
+        setAspectClass("aspect-[16/9]");
+      } else if (ratio < 0.8) {
+        setAspectClass("aspect-[3/4]");
+      } else if (ratio >= 0.8 && ratio <= 1.2) {
+        setAspectClass("aspect-square");
+      } else {
+        setAspectClass("aspect-[4/3]");
+      }
+    }
+    onMediaLoad?.();
+  };
+
+  return (
+    <div
+      className={cn(
+        "relative bg-black/5 flex items-center justify-center overflow-hidden w-full",
+        isLastOdd && mediaLength > 1 ? "col-span-2 aspect-[2/1]" : aspectClass
+      )}
+    >
+      <img
+        src={item.url}
+        alt="Attached image"
+        className="w-full h-full object-cover cursor-pointer"
+        loading="lazy"
+        onLoad={handleImageLoad}
+        onClick={(e) => {
+          e.stopPropagation();
+          onMediaClick?.(item.url, 'image', `Image-${index + 1}`);
+        }}
+      />
+    </div>
+  );
+};
+
+const VideoMediaItem = ({
+  item,
+  index,
+  isLastOdd,
+  mediaLength,
+  onMediaLoad,
+  onMediaClick
+}: {
+  item: { url: string; type: string };
+  index: number;
+  isLastOdd: boolean;
+  mediaLength: number;
+  onMediaLoad?: () => void;
+  onMediaClick?: (url: string, type: 'image' | 'video' | 'document', name?: string) => void;
+}) => {
+  const [aspectClass, setAspectClass] = useState<string>(
+    mediaLength === 1 ? "aspect-[4/3]" : "aspect-square"
+  );
+
+  const handleVideoMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    if (mediaLength === 1) {
+      const video = e.currentTarget;
+      const ratio = video.videoWidth / video.videoHeight;
+      if (ratio > 1.5) {
+        setAspectClass("aspect-[16/9]");
+      } else if (ratio < 0.8) {
+        setAspectClass("aspect-[3/4]");
+      } else if (ratio >= 0.8 && ratio <= 1.2) {
+        setAspectClass("aspect-square");
+      } else {
+        setAspectClass("aspect-[4/3]");
+      }
+    }
+    onMediaLoad?.();
+  };
+
+  return (
+    <div
+      className={cn(
+        "relative bg-black/5 flex items-center justify-center overflow-hidden w-full",
+        isLastOdd && mediaLength > 1 ? "col-span-2 aspect-[2/1]" : aspectClass
+      )}
+    >
+      <div
+        className="w-full h-full relative cursor-pointer group/media"
+        onClick={(e) => {
+          e.stopPropagation();
+          onMediaClick?.(item.url, 'video', `Video-${index + 1}`);
+        }}
+      >
+        <video
+          src={item.url}
+          className="w-full h-full object-cover pointer-events-none"
+          preload="metadata"
+          onLoadedMetadata={handleVideoMetadata}
+        />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px] group-hover/media:bg-black/10 transition-colors">
+          <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-lg group-hover/media:scale-110 transition-transform">
+            <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent ml-1"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MessageMedia = ({ message, isMediaOnly, onMediaClick, onMediaLoad }: { message: Message, isMediaOnly: boolean, onMediaClick?: (url: string, type: 'image' | 'video' | 'document', name?: string) => void, onMediaLoad?: () => void }) => {
+  if (!message.media || message.media.length === 0 || message.is_deleted_for_everyone || message.is_deleted_for_me) return null
 
   return (
     <div className={cn(
-      "grid gap-1 overflow-hidden",
+      "grid gap-1 overflow-hidden w-full",
       isMediaOnly ? "rounded-2xl" : "rounded-t-2xl",
       message.media.length === 1 ? "grid-cols-1" :
         message.media.length === 2 ? "grid-cols-2" :
@@ -292,36 +411,28 @@ const MessageMedia = ({ message, isMediaOnly, onMediaClick, onMediaLoad }: { mes
     )}>
       {message.media.map((item, index) => {
         const isLastOdd = message.media!.length % 2 !== 0 && index === message.media!.length - 1
-        return (
-          <div
-            key={index}
-            className={cn(
-              "relative bg-black/5 flex items-center justify-center overflow-hidden",
-              isLastOdd && message.media!.length > 1 ? "col-span-2 aspect-[2/1]" : "aspect-square"
-            )}
-          >
-            {item.type === 'video' ? (
-              <div
-                className="w-full h-full relative cursor-pointer group/media"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onMediaClick?.(item.url, 'video', `Video-${index + 1}`)
-                }}
-              >
-                <video
-                  src={item.url}
-                  className="w-full h-full object-cover pointer-events-none"
-                  preload="metadata"
-                  onLoadedMetadata={onMediaLoad}
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px] group-hover/media:bg-black/10 transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-lg group-hover/media:scale-110 transition-transform">
-                    <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent ml-1"></div>
-                  </div>
-                </div>
-              </div>
-            ) : item.type === 'document' ? (
-              <div className={cn("relative", isMediaOnly ? "bg-muted/40" : "")}>
+
+        if (item.type === 'video') {
+          return (
+            <VideoMediaItem
+              key={index}
+              item={item}
+              index={index}
+              isLastOdd={isLastOdd}
+              mediaLength={message.media!.length}
+              onMediaLoad={onMediaLoad}
+              onMediaClick={onMediaClick}
+            />
+          )
+        }
+
+        if (item.type === 'document') {
+          return (
+            <div
+              key={index}
+              className="relative bg-black/5 flex items-center justify-center overflow-hidden w-full max-w-[300px]"
+            >
+              <div className={cn("relative w-full", isMediaOnly ? "bg-muted/40" : "")}>
                 <div
                   onClick={(e) => {
                     e.stopPropagation()
@@ -343,25 +454,20 @@ const MessageMedia = ({ message, isMediaOnly, onMediaClick, onMediaLoad }: { mes
                   </div>
                 </div>
               </div>
-            ) : (
-              // Image message — Figma spec: 300x242, bg #EEF2FF, border-radius 12px 12px 12px 0
-              <div
-                className="flex flex-col items-start p-0 gap-[10px] w-[300px] bg-[var(--primary-tint)] rounded-[12px_12px_12px_0px] overflow-hidden flex-none order-0 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onMediaClick?.(item.url, 'image', `Image-${index + 1}`)
-                }}
-              >
-                <img
-                  src={item.url}
-                  alt="Attached image"
-                  className="w-full h-[242px] object-fill rounded-[12px_12px_12px_0px]"
-                  loading="lazy"
-                  onLoad={onMediaLoad}
-                />
-              </div>
-            )}
-          </div>
+            </div>
+          )
+        }
+
+        return (
+          <ImageMediaItem
+            key={index}
+            item={item}
+            index={index}
+            isLastOdd={isLastOdd}
+            mediaLength={message.media!.length}
+            onMediaLoad={onMediaLoad}
+            onMediaClick={onMediaClick}
+          />
         )
       })}
     </div>
@@ -548,7 +654,7 @@ function MessageBubble(props: MessageBubbleProps) {
   const resolvedShowAvatar = showAvatar !== undefined ? showAvatar : !isMe;
 
   // Helper to determine if message is media-only
-  const isMediaOnly = message.media && message.media.length > 0 && (() => {
+  const isMediaOnly = message.media && message.media.length > 0 && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (() => {
     const text = message.text || message.text_content
     const isDefaultMediaText = ["Sent a photo", "Sent a video", "Sent a document", "Attachment", "Sent an attachment"].includes(text?.trim() || "")
     return !text || isDefaultMediaText
@@ -557,7 +663,7 @@ function MessageBubble(props: MessageBubbleProps) {
   // Helper for dynamic classes
   const getBubbleClasses = () => {
     if (message.is_deleted_for_everyone || message.is_deleted_for_me) {
-      return "italic text-sm py-2 px-4 shadow-none rounded-[12px] bg-muted/60 text-muted-foreground border border-dashed border-border"
+      return "italic text-sm shadow-none rounded-[12px] bg-muted/60 text-muted-foreground border border-dashed border-border"
     }
     if (message.isBlocked) {
       return "bg-muted/30 text-muted-foreground italic border border-dashed border-border rounded-[12px] rounded-bl-none"
@@ -581,11 +687,13 @@ function MessageBubble(props: MessageBubbleProps) {
 
   const paddingClasses = isEditing
     ? "px-[16px] py-[16px]"
-    : (message.media && message.media.length > 0)
-      ? "p-0 overflow-hidden"
-      : (message.repliedMessage && message.repliedMessage.senderName)
-        ? "px-[8px] pt-[8px] pb-[16px]"
-        : "px-[16px] py-[16px]"
+    : (message.is_deleted_for_everyone || message.is_deleted_for_me)
+      ? "px-[16px] py-[10px]"
+      : (message.media && message.media.length > 0)
+        ? "p-0 overflow-hidden"
+        : (message.repliedMessage && message.repliedMessage.senderName)
+          ? "px-[8px] pt-[8px] pb-[16px]"
+          : "px-[16px] py-[16px]"
 
   // Long press mobile detection
   const [showMobileActions, setShowMobileActions] = useState(false)
@@ -724,8 +832,17 @@ function MessageBubble(props: MessageBubbleProps) {
       >
         <div className={cn("flex flex-col relative w-full gap-[4px]", isMe ? "items-end" : "items-start")}>
 
+          {/* Sender name for group messages — shown above the bubble row */}
+          {showSenderName && !isMe && message.senderName && (
+            <div className="pl-[32px] w-full">
+              <span className="font-['Poppins'] font-semibold text-[11px] leading-[14px] text-[var(--primary)] truncate block max-w-[70%] md:max-w-[85%]">
+                {message.senderName}
+              </span>
+            </div>
+          )}
+
           {/* ROW 1: Bubble — indented 32px to align after avatar space */}
-          <div className={cn("flex w-full group/message items-center", isMe ? "justify-end" : "justify-start pl-[32px]")}>
+          <div className={cn("flex w-full group/message items-center overflow-hidden", isMe ? "justify-end" : "justify-start pl-[32px]")}>
 
             {/* Action Icons for isMe */}
             {isMe && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
@@ -749,10 +866,14 @@ function MessageBubble(props: MessageBubbleProps) {
               </div>
             )}
 
-            <div className={cn("relative max-w-[70%] md:max-w-[85%] flex", isEditing && "w-full max-w-full md:max-w-[70%]")}>
+            <div className={cn(
+              "relative flex min-w-0",
+              message.media && message.media.length > 0 && !message.is_deleted_for_everyone && !message.is_deleted_for_me ? "max-w-[300px] w-full" : "max-w-[70%] md:max-w-[85%]",
+              isEditing && "w-full max-w-full md:max-w-[70%]"
+            )}>
               <div
                 className={cn(
-                  "relative break-words w-full transition-all",
+                  "relative break-words w-full transition-all overflow-hidden",
                   message.repliedMessage && message.repliedMessage.senderName
                     ? "font-['Poppins'] font-normal text-[12px] leading-[16px]"
                     : "text-[14px] leading-[20px]",
@@ -770,7 +891,7 @@ function MessageBubble(props: MessageBubbleProps) {
                   />
                 ) : (
                   <>
-                    {message.repliedMessage && message.repliedMessage.senderName && (
+                    {message.repliedMessage && message.repliedMessage.senderName && !message.is_deleted_for_everyone && !message.is_deleted_for_me && (
                       <RepliedMessageBox
                         senderName={message.repliedMessage.senderName}
                         content={message.repliedMessage.content}

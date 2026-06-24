@@ -31,6 +31,7 @@ const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal'
 const CreatePostModal = dynamic(() => import('@/shared/commonComponents/CreatePostModal').then(m => m.CreatePostModal), { ssr: false });
 const EditPostModal = dynamic(() => import('@/shared/commonComponents/EditPostModal').then(m => m.EditPostModal), { ssr: false });
 const DeleteConfirmationModal = dynamic(() => import('@/components/shared/DeleteConfirmationModal').then(m => m.DeleteConfirmationModal), { ssr: false });
+const LikesModal = dynamic(() => import('./LikesModal').then(m => m.LikesModal), { ssr: false });
 
 export const FeedPost = (props: FeedPostProps) => {
   const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, sampleLikerUsername, category, title, articleBody } = props;
@@ -68,6 +69,7 @@ export const FeedPost = (props: FeedPostProps) => {
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isRepostModalOpen, setIsRepostModalOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
+  const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const optionsBtnRef = useRef<HTMLButtonElement>(null);
@@ -283,17 +285,31 @@ export const FeedPost = (props: FeedPostProps) => {
         {likeCount > 0 && !(likeCount === 1 && isLiked) && (
           <div className="flex items-center">
             <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
-              Liked by <span 
-                className="font-semibold cursor-pointer"
+              Liked by{" "}
+              <span 
+                className="font-semibold cursor-pointer hover:underline"
                 onClick={(e) => {
                   e.stopPropagation();
                   if (sampleLikerUsername) {
                     router.push(`/profile/${sampleLikerUsername}`);
                   }
                 }}
-              >@{sampleLikerUsername || 'someone'}</span>
+              >
+                @{sampleLikerUsername || 'someone'}
+              </span>
               {likeCount > 1 && (
-                <> and <span className="font-semibold cursor-pointer">{likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}</span></>
+                <>
+                  {" "}and{" "}
+                  <span 
+                    className="font-semibold cursor-pointer hover:underline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsLikesModalOpen(true);
+                    }}
+                  >
+                    {likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}
+                  </span>
+                </>
               )}
             </p>
           </div>
@@ -317,6 +333,7 @@ export const FeedPost = (props: FeedPostProps) => {
             isSaved={isSaved || false}
             setIsSaved={setIsSaved}
             handleSaveToggle={() => setIsSaveModalOpen(true)}
+            onShowLikes={() => setIsLikesModalOpen(true)}
           />
         </div>
       </div>
@@ -407,6 +424,14 @@ export const FeedPost = (props: FeedPostProps) => {
           isOpen={isDeleteDialogOpen}
           onClose={() => setIsDeleteDialogOpen(false)}
           onConfirm={confirmDelete}
+        />
+      )}
+
+      {isLikesModalOpen && (
+        <LikesModal
+          isOpen={isLikesModalOpen}
+          onClose={() => setIsLikesModalOpen(false)}
+          postId={id.toString()}
         />
       )}
     </div>
