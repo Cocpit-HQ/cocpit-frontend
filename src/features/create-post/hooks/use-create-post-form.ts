@@ -45,6 +45,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
   const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | StructuredLocation | null>(null);
   const [articleData, setArticleData] = useState<any>(null);
   const [achievementImageId, setAchievementImageId] = useState<number | undefined>(undefined);
+  const [achievementTitle, setAchievementTitle] = useState<string | undefined>(undefined);
 
   // --- Sub-hooks ---
   const media = usePostMedia([], [], (type) => setPostType(prev => prev === 'article' ? 'article' : type));
@@ -304,7 +305,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       const safeCategory = allowedCategories.includes(postCategory) ? postCategory : getDefaultCategory();
 
       const payload: any = {
-        title: postType === 'poll' ? poll.pollQuestion : (postType === 'article' ? articleTitle.trim() : (articleData ? articleData.title : '')),
+        title: postType === 'poll' ? poll.pollQuestion : (postType === 'article' ? articleTitle.trim() : (articleData ? articleData.title : (safeCategory === 'Achievement' && achievementTitle ? achievementTitle : ''))),
         content: finalContent,
         category: safeCategory,
         visibility: visibility,
@@ -487,7 +488,8 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       showContextWarning, setShowContextWarning,
       isCompanyPost, currentPoster, currentUser,
       userCompanies,
-      achievementImageId, setAchievementImageId
+      achievementImageId, setAchievementImageId,
+      achievementTitle, setAchievementTitle
     },
     media,
     poll,

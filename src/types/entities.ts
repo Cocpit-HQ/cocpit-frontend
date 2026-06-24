@@ -159,4 +159,6 @@ export interface Post {
   post_type?: string;
   achievementImageId?: number;
   achievementImageUrl?: string;
+  achievementImageTitle?: string;
+  achievementImageKey?: string;
 }

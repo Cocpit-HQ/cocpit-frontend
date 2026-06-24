@@ -165,5 +165,7 @@ export const mapProfilePostToPost = (backendPost: ProfilePost): Post => {
     post_type: backendPost.post_type,
     achievementImageId: backendPost.achievement_image_id || undefined,
     achievementImageUrl: backendPost.achievement_image_url || undefined,
+    achievementImageTitle: backendPost.achievement_image_title || (backendPost.achievement_image_id ? 'Achievement' : undefined),
+    achievementImageKey: backendPost.achievement_image_key || undefined,
   };
 };

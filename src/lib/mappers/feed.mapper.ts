@@ -271,6 +271,8 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     post_type: backendPost.post_type,
     achievementImageId: backendPost.achievement_image_id || undefined,
     achievementImageUrl: backendPost.achievement_image_url || undefined,
+    achievementImageKey: backendPost.achievement_image_key || undefined,
+    achievementImageTitle: backendPost.achievement_image_title || (backendPost.category_name === 'Achievement' ? 'Achievement' : undefined),
   };
 };
 

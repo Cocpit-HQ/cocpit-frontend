@@ -263,6 +263,7 @@ export const FeedPost = (props: FeedPostProps) => {
             priority={props.priority}
             isVerticalVideo={isVerticalVideo}
             hasNoCaption={!content && !shared_post}
+            achievementTitle={props.achievementImageTitle}
             onClick={(e) => {
               e.stopPropagation();
               router.push(`/post/${id}`);

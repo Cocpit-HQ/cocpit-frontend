@@ -345,18 +345,22 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
     });
   };
 
-  const handleAchievementDialogSelect = (option: AchievementOption) => {
-    // Map to AchievementOptionId used by existing handleAchievementOptionSelect
-    // Read AchievementOptionPicker.tsx to find the exact id strings it uses
-    // then call handleAchievementOptionSelect with the matching id
-    // so all existing category/postType logic is reused without duplication
-    const idMap: Record<AchievementOption, string> = {
-      new_project: 'new-project',
-      new_role: 'new-role',
-      academic_milestone: 'academic-milestone',
-      certificate: 'certificate',
-    };
-    handleAchievementOptionSelect(idMap[option] as any);
+  const handleAchievementDialogSelect = (option: any) => {
+    state.handleSetPostCategory('Achievement');
+    
+    // Convert new_project to new-project if needed
+    const mappedId = typeof option === 'string' ? option.replace('_', '-') : (option.id ? option.id.replace('_', '-') : 'new-project');
+    setSelectedAchievementOptionId(mappedId as AchievementOptionId);
+    
+    const label = ({
+      'new-project': 'Launched a project',
+      'new-role': 'New role',
+      'academic-milestone': 'Academic milestone',
+      'certificate': 'Certificate',
+    } as Record<string, string>)[mappedId] || 'Achievement';
+    
+    state.setAchievementTitle(label);
+    handleAchievementOptionSelect(mappedId as AchievementOptionId);
   };
 
   const handlePostClick = async () => {
@@ -798,8 +802,8 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                       'certificate': 'Certificate',
                                     }[selectedAchievementOption.id] || 'Achievement'}
                                   </span>
-                                  <span className="text-[12px] text-gray-500 uppercase font-poppins">
-                                    PRESET
+                                  <span className="text-[12px] text-gray-500 font-poppins truncate max-w-[200px]">
+                                    {selectedAchievementOption.description}
                                   </span>
                                 </div>
                               </div>
@@ -834,14 +838,11 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                           ) : (
                             <>
                               {/* Full size preview */}
-                              <div className="box-border flex flex-row justify-between items-start p-0 gap-4 w-full h-[200px] border border-[#EEF2FF] rounded-[24px] overflow-hidden">
-                                <div
-                                  className="flex flex-col items-center p-0 gap-2 mx-auto h-[200px]"
-                                  style={{ aspectRatio: media.aspectRatio }}
-                                >
+                              <div className="w-full bg-white relative">
+                                <div className="relative w-full aspect-[16/10] overflow-hidden rounded-[8px]">
                                   <img
                                     src={media.previewMediaUrls[0] || media.uploadedImages[0]?.url}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-contain"
                                     alt="Achievement media"
                                   />
                                 </div>

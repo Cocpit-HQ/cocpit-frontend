@@ -14,10 +14,11 @@ interface PostMediaProps {
   isVerticalVideo?: boolean;
   hasNoCaption?: boolean;
   onClick?: (e: React.MouseEvent) => void;
+  achievementTitle?: string;
 }
 
 export const PostMedia = ({
-  imageSrc, images = [], videoSrc, videoRef, aspectRatio, onLoad, priority, isProfileView, isVerticalVideo, hasNoCaption, onClick
+  imageSrc, images = [], videoSrc, videoRef, aspectRatio, onLoad, priority, isProfileView, isVerticalVideo, hasNoCaption, onClick, achievementTitle
 }: PostMediaProps) => {
   const validImages = images.length > 0 ? images : (imageSrc ? [imageSrc] : []);
   const hasMultipleImages = validImages.length > 1;
@@ -26,6 +27,33 @@ export const PostMedia = ({
   if (validImages.length === 0 && !videoSrc) return null;
 
   const hasMedia = validImages.length > 0 || !!videoSrc;
+
+  // Render achievement special styling if title is present
+  if (achievementTitle && !videoSrc && !hasMultipleImages && contentImgSrc) {
+    return (
+      <div 
+        onClick={onClick}
+        className={`post-image w-full relative flex flex-col justify-center gap-[8px] bg-white ${onClick ? 'cursor-pointer' : ''}`}
+      >
+        <div className="w-full">
+          <div className="relative w-full aspect-[16/10] overflow-hidden rounded-[8px]">
+            <Image
+              src={contentImgSrc}
+              alt="Achievement media"
+              fill
+              className="object-contain"
+              priority={priority}
+              sizes="(max-width: 768px) 100vw, 600px"
+              onLoad={onLoad}
+            />
+          </div>
+        </div>
+        <div className="text-center text-[#6B7280] text-[12px] font-normal font-poppins leading-[16px] pb-[16px]">
+          {achievementTitle}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

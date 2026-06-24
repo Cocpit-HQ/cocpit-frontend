@@ -56,6 +56,8 @@ export interface ProfilePost {
   post_type?: string;
   achievement_image_id?: number | null;
   achievement_image_url?: string | null;
+  achievement_image_title?: string | null;
+  achievement_image_key?: string | null;
   shared_post?: {
     is_accessible: boolean;
     reason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
