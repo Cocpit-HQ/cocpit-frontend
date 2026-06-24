@@ -52,6 +52,12 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       } else {
         const activeCursor = isLoadMore ? cursor : undefined;
         const res = await jobsService.getJobs(filters, activeCursor, activeTab === 'Explore');
+        
+        if (activeTab === 'Explore') {
+          console.log("Selected Filters:", filters);
+          console.log("Jobs Response:", res.data);
+        }
+
         newJobs = res.data;
         setCursor(res.nextCursor || undefined);
         setHasMore(res.hasMore);

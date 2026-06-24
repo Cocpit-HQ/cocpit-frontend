@@ -30,118 +30,119 @@ export const setActiveTab = (tab: string) => {
 };
 
 export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppliedAndOffers?: boolean) => {
-  // Simulate network latency
-  await new Promise(resolve => setTimeout(resolve, 300));
-
-  let filteredJobs = DUMMY_JOBS.map(j => ({
-    ...j,
-    is_applied: inMemoryAppliedIds.includes(j.id),
-    is_saved: inMemorySavedIds.includes(j.id)
-  }));
-
-  if (excludeAppliedAndOffers) {
-    filteredJobs = filteredJobs.filter(j => !j.is_applied && !j.is_offer);
-  }
-
-  if (filters) {
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      filteredJobs = filteredJobs.filter(
-        j => j.title.toLowerCase().includes(q) || 
-             j.company.toLowerCase().includes(q) || 
-             j.description.toLowerCase().includes(q)
-      );
-    }
-    if (filters.job_type) {
-      filteredJobs = filteredJobs.filter(
-        j => j.job_type.toLowerCase() === filters.job_type?.toLowerCase()
-      );
-    }
-    if (filters.work_mode) {
-      filteredJobs = filteredJobs.filter(
-        j => j.work_mode?.toLowerCase() === filters.work_mode?.toLowerCase()
-      );
-    }
-    if (filters.experience) {
-      filteredJobs = filteredJobs.filter(
-        j => j.experience?.toLowerCase() === filters.experience?.toLowerCase()
-      );
-    }
+  try {
+    const params: Record<string, any> = { limit: 10 };
     
-    // Date posted filter
-    if (filters.date_posted) {
-      const dp = filters.date_posted.toLowerCase();
-      if (dp === 'today') {
-        filteredJobs = filteredJobs.filter(
-          j => j.posted_at.toLowerCase().includes('hour') || 
-               j.posted_at.toLowerCase().includes('minute') || 
-               j.posted_at.toLowerCase().includes('today')
-        );
-      } else if (dp === 'last 7 days') {
-        filteredJobs = filteredJobs.filter(
-          j => j.posted_at.toLowerCase().includes('hour') || 
-               j.posted_at.toLowerCase().includes('minute') || 
-               j.posted_at.toLowerCase().includes('today') ||
-               (j.posted_at.toLowerCase().includes('day') && !j.posted_at.toLowerCase().includes('month') && parseInt(j.posted_at, 10) <= 7)
-        );
-      } else if (dp === 'last 30 days') {
-        filteredJobs = filteredJobs.filter(
-          j => !j.posted_at.toLowerCase().includes('month') && 
-               !j.posted_at.toLowerCase().includes('year')
-        );
+    if (cursor) {
+      params.cursor = cursor;
+    }
+
+    if (filters) {
+      if (filters.search) params.search = filters.search;
+      
+      if (filters.job_type) {
+        // Map "Full time" -> "Full-time"
+        let type = filters.job_type;
+        if (type === 'Full time') type = 'Full-time';
+        params.employment_type = type;
+      }
+      
+      if (filters.work_mode) params.work_model = filters.work_mode;
+
+      if (filters.experience) {
+        switch (filters.experience) {
+          case 'Fresher':
+            params.experience_min = 0;
+            params.experience_max = 1;
+            break;
+          case 'Junior (1-3 yrs)':
+            params.experience_min = 1;
+            params.experience_max = 3;
+            break;
+          case 'Mid-level (3-5 yrs)':
+            params.experience_min = 3;
+            params.experience_max = 5;
+            break;
+          case 'Senior (5+ yrs)':
+            params.experience_min = 5;
+            break;
+        }
+      }
+
+      if (filters.salary_range) {
+        switch (filters.salary_range) {
+          case 'Under 3L':
+            params.salary_max = 300000;
+            break;
+          case '3L-5L':
+            params.salary_min = 300000;
+            params.salary_max = 500000;
+            break;
+          case '6L-10L':
+            params.salary_min = 600000;
+            params.salary_max = 1000000;
+            break;
+          case '10L+':
+            params.salary_min = 1000000;
+            break;
+        }
+      }
+
+      if (filters.date_posted) params.datePosted = filters.date_posted;
+      if (filters.industry) params.industry = filters.industry;
+
+      if (filters.location_type) {
+        if (filters.location_type.toLowerCase() === 'country') {
+          params.work_model = params.work_model ? `${params.work_model},Remote` : 'Remote';
+        }
       }
     }
 
-    // Industry filter
-    if (filters.industry) {
-      const ind = filters.industry.toLowerCase();
-      if (ind === 'tech') {
-        filteredJobs = filteredJobs.filter(
-          j => j.tags?.some(t => ['react', 'node.js', 'typescript', 'next.js', 'aws', 'docker', 'telemetry', 'developer tools', 'saas'].includes(t.toLowerCase()))
-        );
-      } else if (ind === 'design') {
-        filteredJobs = filteredJobs.filter(
-          j => j.title.toLowerCase().includes('design') || 
-               j.tags?.some(t => ['figma', 'ui/ux', 'product design', 'visual design', 'design systems', 'prototyping'].includes(t.toLowerCase()))
-        );
-      } else {
-        // Generic matches for custom inputs or other industries
-        filteredJobs = filteredJobs.filter(
-          j => j.title.toLowerCase().includes(ind) || 
-               j.description.toLowerCase().includes(ind) ||
-               j.tags?.some(t => t.toLowerCase().includes(ind))
-        );
-      }
+    console.log("API Params:", params);
+
+    const response = await api.get('/jobs', { params });
+    const fetchedJobs = response.data;
+    
+    // Map backend response array to frontend paginated structure
+    const paginatedJobs = fetchedJobs.map((job: any) => ({
+      id: job.job_id,
+      title: job.title,
+      company: job.company_name,
+      location: job.location,
+      work_type: job.job_type,
+      work_mode: job.work_mode,
+      salary_min: job.salary_min,
+      salary_max: job.salary_max,
+      salary_currency: job.salary_currency,
+      posted_at: job.created_at,
+      description: job.description,
+      experience: (job.experience_min != null && job.experience_max != null) 
+        ? `${job.experience_min}-${job.experience_max}Yrs` 
+        : (job.experience_level || '0-2Yrs'),
+      is_saved: job.isSaved || false,
+      is_applied: job.hasApplied || false,
+      is_offer: false,
+      tags: job.tags || []
+    }));
+
+    // Filter out applied and offers if requested
+    let finalJobs = paginatedJobs;
+    if (excludeAppliedAndOffers) {
+      finalJobs = finalJobs.filter((j: Job) => !j.is_applied && !j.is_offer);
     }
 
-    // Location type filter
-    if (filters.location_type) {
-      const loc = filters.location_type.toLowerCase();
-      if (loc === 'city') {
-        filteredJobs = filteredJobs.filter(
-          j => j.location.toLowerCase() !== 'remote'
-        );
-      } else if (loc === 'country') {
-        filteredJobs = filteredJobs.filter(
-          j => j.location.toLowerCase() === 'remote'
-        );
-      }
-    }
+    const hasMore = fetchedJobs.length === 10;
+    const nextCursor = hasMore ? fetchedJobs[fetchedJobs.length - 1].created_at : null;
+
+    return {
+      data: finalJobs,
+      nextCursor,
+      hasMore
+    };
+  } catch (error) {
+    console.error("Failed to fetch all jobs:", error);
+    return { data: [], nextCursor: null, hasMore: false };
   }
-
-  // Handle cursor-based pagination simulation
-  const limit = 5;
-  const startIndex = cursor ? parseInt(cursor, 10) : 0;
-  const paginatedJobs = filteredJobs.slice(startIndex, startIndex + limit);
-  const nextIndex = startIndex + limit;
-  const hasMore = nextIndex < filteredJobs.length;
-  const nextCursor = hasMore ? nextIndex.toString() : null;
-
-  return {
-    data: paginatedJobs,
-    nextCursor,
-    hasMore
-  };
 };
 
 export const getJobById = async (jobId: string): Promise<Job | null> => {
@@ -231,7 +232,14 @@ const DUMMY_JOB_LISTINGS: JobListing[] = [];
 
 export const getMyListings = async (): Promise<JobListing[]> => {
   try {
-    const response = await api.get(`/jobs/my`);
+    const actorType = api.defaults.headers.common["x-actor-type"];
+    const actorId = api.defaults.headers.common["x-actor-id"];
+    
+    const endpoint = actorType === "ORGANIZATION" && actorId
+      ? `/organizations/${actorId}/jobs?scope=internal`
+      : `/jobs/my`;
+
+    const response = await api.get(endpoint);
     return response.data.map((job: any) => ({
       id: job.job_id,
       title: job.title,
