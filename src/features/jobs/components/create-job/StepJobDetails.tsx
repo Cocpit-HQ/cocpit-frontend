@@ -2,8 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { JobListing } from '../../types/jobs.types';
 import { useMyProfile } from '@/hooks/use-my-profile';
+import api from '@/lib/axios';
+import { generateJobDescription } from '../../services/jobs.service';
 
 interface StepJobDetailsProps {
+  jobId?: string | null;
   initialRole: string;
   initialDetails?: Partial<JobListing>;
   onBack: () => void;
@@ -12,6 +15,7 @@ interface StepJobDetailsProps {
 }
 
 export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
+  jobId,
   initialRole,
   initialDetails,
   onBack,
@@ -21,13 +25,14 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   const { data: profileData } = useMyProfile();
   const userProfile = profileData?.user;
   const hasPopulated = useRef(false);
+  const hasManuallyRegenerated = useRef(false); // Stops bg polling once user explicitly regenerates
 
   // Form fields
   const [role, setRole] = useState(initialRole);
   const [company, setCompany] = useState(initialDetails?.company || userProfile?.name || '');
   const [location, setLocation] = useState(initialDetails?.location || userProfile?.location || '');
   const [description, setDescription] = useState(initialDetails?.description || '');
-  
+
   // Normalization for dropdown values
   const normalizeExperience = (exp: string | undefined): string => {
     if (!exp) return 'Fresher';
@@ -62,6 +67,58 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
     }
   }, [userProfile, company, location, initialDetails]);
 
+  // Fetch background AI generation if description is empty
+  useEffect(() => {
+    if (!jobId || description.trim() !== '') return;
+
+    let isMounted = true;
+    let retryCount = 0;
+    const maxRetries = 6;
+
+    const fetchJob = async () => {
+      // Stop if user has already explicitly clicked "Regenerate with AI"
+      if (hasManuallyRegenerated.current) return;
+
+      try {
+        setIsAiGenerating(true);
+        const response = await api.get(`/jobs/${jobId}`);
+        const jobData = response.data;
+
+        if (isMounted && !hasManuallyRegenerated.current && jobData.description && jobData.description.trim() !== '') {
+          setDescription(jobData.description);
+          setIsAiGenerating(false);
+
+          // Auto-fill other fields if provided by AI
+          if (jobData.experience_min !== null && jobData.experience_max !== null) {
+            const min = parseInt(jobData.experience_min, 10);
+            if (isNaN(min) || min === 0) {
+              setExperience('Fresher');
+            } else if (min <= 2) {
+              setExperience('Junior (1-3 yrs)');
+            } else if (min <= 4) {
+              setExperience('Mid-level (3-5 yrs)');
+            } else {
+              setExperience('Senior (5+ yrs)');
+            }
+          }
+        } else if (isMounted && !hasManuallyRegenerated.current && retryCount < maxRetries) {
+          // If description is still empty, retry after 1.5 seconds
+          retryCount++;
+          setTimeout(fetchJob, 1500);
+        } else if (isMounted) {
+          setIsAiGenerating(false);
+        }
+      } catch (error) {
+        console.error("Failed to fetch generated job details", error);
+        if (isMounted) setIsAiGenerating(false);
+      }
+    };
+
+    fetchJob();
+
+    return () => { isMounted = false; };
+  }, [jobId]); // intentionally omitting description so it doesn't re-trigger on user type
+
   // AI loading and options state
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -75,66 +132,6 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   const experienceRef = useRef<HTMLDivElement>(null);
   const workTypeRef = useRef<HTMLDivElement>(null);
   const workModeRef = useRef<HTMLDivElement>(null);
-
-  // Generate description template based on values
-  const getAiGeneratedDescription = (
-    jobRole: string,
-    companyName: string,
-    jobLocation: string,
-    isRegen: boolean = false
-  ) => {
-    const displayCompany = companyName || '[Company Name]';
-    const displayLocation = jobLocation || '[Location]';
-
-    const isDesign =
-      jobRole.toLowerCase().includes('design') ||
-      jobRole.toLowerCase().includes('ui') ||
-      jobRole.toLowerCase().includes('ux');
-
-    if (isDesign) {
-      return `Role: ${jobRole}
-Location: ${displayLocation}
-
-About the Role:
-As a ${jobRole} at ${displayCompany}, you will be responsible for creating exceptional user experiences for our ${
-        isRegen ? 'flagship enterprise solutions' : 'next-generation career networking platform'
-      }. You will bridge the gap between user needs and business goals through data-driven design and intuitive interfaces.
-
-Key Responsibilities:
-- Design end-to-end user journeys for both mobile and web platforms.
-- Create high-fidelity mockups and interactive prototypes using Figma.
-- Collaborate with engineering teams to ensure pixel-perfect implementation.
-- Conduct user research and usability testing to validate design decisions.
-- Contribute to and maintain our evolving design system.
-
-Requirements:
-- 3+ years of experience in digital product design.
-- Strong portfolio showcasing problem-solving and visual design skills.
-- Mastery of design tools (Figma, Adobe Creative Suite).
-- Understanding of HTML/CSS/JS constraints and opportunities.
-- Excellent communication and presentation abilities.`;
-    }
-
-    return `Role: ${jobRole}
-Location: ${displayLocation}
-
-About the Role:
-As a ${jobRole} at ${displayCompany}, you will play a key role in driving technical innovation and quality across our digital products. You will work closely with cross-functional teams to build next-generation features and scale our services.
-
-Key Responsibilities:
-- Architect, build, and maintain high-performance applications.
-- Collaborate with design and product teams to translate requirements into robust solutions.
-- Optimize systems for performance, responsiveness, and scalability.
-- Implement security best practices and ensure data integrity.
-- Participate in code reviews and advocate for engineering excellence.
-
-Requirements:
-- Proven experience in a similar ${jobRole} or related engineering position.
-- Strong problem-solving abilities and deep technical knowledge.
-- Hands-on experience with modern tech stacks, frameworks, and deployment workflows.
-- Excellent communication and collaborative skills.
-- Bachelor's degree in Computer Science, Engineering, or equivalent experience.`;
-  };
 
   // We no longer auto-prefill the description.
   // The user can type their own, or click "Regenerate with AI" to trigger it.
@@ -166,12 +163,79 @@ Requirements:
     };
   }, []);
 
-  const handleRegenerateAi = () => {
+  const handleRegenerateAi = async () => {
+    if (!jobId) {
+      console.warn("No jobId available to regenerate AI description.");
+      return;
+    }
+
+    // Stop the background polling loop permanently — user is now in manual control
+    hasManuallyRegenerated.current = true;
+
     setIsAiGenerating(true);
-    setTimeout(() => {
-      setDescription(getAiGeneratedDescription(role, company, location, true));
+    try {
+      // Pass the current `role` from the input to ensure the AI uses the new role text.
+      console.log('[Regenerate] Sending role to API:', role); // Debug: verify correct role is sent
+      const response = await generateJobDescription(jobId, role);
+      console.log('[Regenerate] API response:', response); // Debug: verify response structure
+
+      const jobData = response.job || response;
+      const aiData = jobData.ai_content || jobData; // ai_content is present on fresh generate
+
+      let newDescription = "";
+
+      if (aiData.summary) {
+        newDescription += `${aiData.summary}\n\n`;
+      }
+
+      // Description paragraph (could be in aiData or jobData)
+      const descParagraph = aiData.description || jobData.description;
+      if (descParagraph) {
+        newDescription += `### Description\n${descParagraph}\n\n`;
+      }
+
+      if (aiData.responsibilities && Array.isArray(aiData.responsibilities)) {
+        newDescription += `### Responsibilities\n${aiData.responsibilities.map((r: string) => `- ${r}`).join('\n')}\n\n`;
+      }
+
+      if (aiData.requirements && Array.isArray(aiData.requirements)) {
+        newDescription += `### Requirements\n${aiData.requirements.map((r: string) => `- ${r}`).join('\n')}\n\n`;
+      }
+
+      if (aiData.preferred_skills && Array.isArray(aiData.preferred_skills)) {
+        newDescription += `### Preferred Skills\n${aiData.preferred_skills.map((s: string) => `- ${s}`).join('\n')}\n\n`;
+      }
+
+      if (aiData.benefits && Array.isArray(aiData.benefits)) {
+        newDescription += `### Benefits\n${aiData.benefits.map((b: string) => `- ${b}`).join('\n')}\n\n`;
+      }
+
+      newDescription = newDescription.trim();
+
+      if (newDescription) {
+        setDescription(newDescription);
+      }
+      
+      // Update experience dropdown if AI provides a new range based on the new role
+      if (jobData.experience_min != null && jobData.experience_max != null) {
+        const min = parseInt(jobData.experience_min, 10);
+        if (isNaN(min)) {
+          setExperience('Junior (1-3 yrs)');
+        } else if (min === 0) {
+          setExperience('Fresher');
+        } else if (min <= 2) {
+          setExperience('Junior (1-3 yrs)');
+        } else if (min <= 4) {
+          setExperience('Mid-level (3-5 yrs)');
+        } else {
+          setExperience('Senior (5+ yrs)');
+        }
+      }
+    } catch (error) {
+      console.error("Failed to regenerate with AI:", error);
+    } finally {
       setIsAiGenerating(false);
-    }, 2000);
+    }
   };
 
   const buildDetailsObject = (): Partial<JobListing> => {

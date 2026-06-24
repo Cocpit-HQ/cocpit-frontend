@@ -30,6 +30,9 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
       const newJobId = await jobsService.initializeJobDraft(title);
       if (newJobId) {
         setJobId(newJobId);
+        // NOTE: No separate generate call needed here.
+        // createJob on the backend already runs AI generation and saves the description.
+        // The background polling in StepJobDetails will pick it up automatically.
       }
     } catch (error) {
       console.error('Failed to create initial draft', error);
@@ -65,6 +68,7 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
   if (step === 'details') {
     return (
       <StepJobDetails
+        jobId={jobId}
         initialRole={title}
         initialDetails={accumulatedDetails}
         onBack={initialListing ? onBack : () => setStep('role-input')}

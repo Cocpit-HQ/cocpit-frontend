@@ -264,6 +264,21 @@ export const initializeJobDraft = async (title: string): Promise<string | null> 
   }
 };
 
+export const generateJobDescription = async (
+  jobId: string,
+  rolePrompt: string
+): Promise<any> => {
+  try {
+    const response = await api.post(`/jobs/${jobId}/generate`, {
+      role: rolePrompt
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to trigger background AI generation:', error);
+    throw error;
+  }
+};
+
 export const createJobListing = async (
   title: string,
   status: string = 'ACTIVE',
