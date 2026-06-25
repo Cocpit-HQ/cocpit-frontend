@@ -88,8 +88,8 @@ Requirements:
     }
   };
 
-  const formatSalary = (val: number | undefined) => {
-    if (val === undefined || isNaN(val)) return 'Not specified';
+  const formatSalary = (val: number | undefined | null) => {
+    if (val === undefined || val === null || isNaN(val)) return 'Not specified';
     return `${symbol}${val.toLocaleString()}`;
   };
 

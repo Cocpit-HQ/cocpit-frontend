@@ -529,8 +529,8 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
         <ApplyJobModal
           isOpen={showApplyModal}
           onClose={() => setShowApplyModal(false)}
-          onApply={(resumeUrl) => {
-            applyToJob();
+          onApply={(resumeUrl, uploadedFile, resumeId, coverLetter) => {
+            applyToJob(resumeUrl, uploadedFile, resumeId, coverLetter);
             setShowApplyModal(false);
           }}
           jobTitle={job.title}

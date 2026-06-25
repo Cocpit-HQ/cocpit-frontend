@@ -56,8 +56,8 @@ export const StepJobPreview: React.FC<StepJobPreviewProps> = ({
 
   const symbol = currencySymbols[salary_currency] || salary_currency;
 
-  const formatSalaryVal = (val: number | undefined) => {
-    if (val === undefined || isNaN(val)) return null;
+  const formatSalaryVal = (val: number | undefined | null) => {
+    if (val === undefined || val === null || isNaN(val)) return null;
     if (val >= 1000000) return `${(val / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
     if (val >= 1000) return `${(val / 1000).toFixed(0)}k`;
     return val.toString();

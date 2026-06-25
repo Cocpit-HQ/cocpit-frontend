@@ -84,31 +84,36 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
   const filteredJobs = React.useMemo(() => {
     let result = jobs;
 
+    const parseJobDate = (postedAt: string): number => {
+      const t = new Date(postedAt).getTime();
+      if (!isNaN(t)) return t;
+      // Fallback for dummy data
+      const str = postedAt.toLowerCase();
+      if (str.includes("hour") || str.includes("minute") || str.includes("today")) {
+        return Date.now();
+      } else if (str.includes("day")) {
+        const days = parseInt(str) || 1;
+        return Date.now() - days * 24 * 60 * 60 * 1000;
+      } else if (str.includes("week")) {
+        const weeks = parseInt(str) || 1;
+        return Date.now() - weeks * 7 * 24 * 60 * 60 * 1000;
+      } else if (str.includes("month")) {
+        const months = parseInt(str) || 1;
+        return Date.now() - months * 30 * 24 * 60 * 60 * 1000;
+      }
+      return Date.now();
+    };
+
     const dp = selectedDateFilter.toLowerCase();
+    const now = Date.now();
+    const DAY = 24 * 60 * 60 * 1000;
+
     if (dp === "today") {
-      result = result.filter(
-        (j) =>
-          j.posted_at.toLowerCase().includes("hour") ||
-          j.posted_at.toLowerCase().includes("minute") ||
-          j.posted_at.toLowerCase().includes("today"),
-      );
+      result = result.filter(j => (now - parseJobDate(j.posted_at)) <= DAY);
     } else if (dp === "last 7 days") {
-      result = result.filter(
-        (j) =>
-          j.posted_at.toLowerCase().includes("hour") ||
-          j.posted_at.toLowerCase().includes("minute") ||
-          j.posted_at.toLowerCase().includes("today") ||
-          j.posted_at.toLowerCase().includes("week") ||
-          (j.posted_at.toLowerCase().includes("day") &&
-            !j.posted_at.toLowerCase().includes("month") &&
-            parseInt(j.posted_at, 10) <= 7),
-      );
+      result = result.filter(j => (now - parseJobDate(j.posted_at)) <= 7 * DAY);
     } else if (dp === "last 30 days") {
-      result = result.filter(
-        (j) =>
-          !j.posted_at.toLowerCase().includes("month") &&
-          !j.posted_at.toLowerCase().includes("year"),
-      );
+      result = result.filter(j => (now - parseJobDate(j.posted_at)) <= 30 * DAY);
     }
 
     if (selectedStatusFilter !== "All") {
@@ -715,9 +720,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
       <ApplyJobModal
         isOpen={applyingJob !== null}
         onClose={() => setApplyingJob(null)}
-        onApply={(resumeUrl) => {
+        onApply={(resumeUrl, uploadedFile, resumeId, coverLetter) => {
           if (applyingJob) {
-            applyToJob(applyingJob.id);
+            applyToJob(applyingJob.id, resumeUrl, uploadedFile, resumeId, coverLetter);
             setApplyingJob(null);
           }
         }}

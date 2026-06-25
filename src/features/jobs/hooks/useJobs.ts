@@ -134,7 +134,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     }
   }, [selectedJob]);
 
-  const applyToJob = useCallback(async (jobId: string) => {
+  const applyToJob = useCallback(async (jobId: string, resumeUrlOrName?: string, uploadedFile?: File | null, resumeId?: string | null, coverLetter?: string) => {
     try {
       const appliedIds = jobsService.getAppliedJobIds();
       if (appliedIds.includes(jobId)) {
@@ -142,7 +142,14 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
         return;
       }
 
-      await jobsService.applyJob(jobId);
+      let formData: FormData | undefined = undefined;
+      if (uploadedFile || coverLetter) {
+        formData = new FormData();
+        if (uploadedFile) formData.append('resume', uploadedFile);
+        if (coverLetter) formData.append('cover_note', coverLetter);
+      }
+
+      await jobsService.applyJob(jobId, formData);
 
       setJobs(prev => prev.map(j => j.id === jobId ? { ...j, is_applied: true } : j));
       if (selectedJob && selectedJob.id === jobId) {

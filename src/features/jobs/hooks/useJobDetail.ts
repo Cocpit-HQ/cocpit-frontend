@@ -61,7 +61,7 @@ export const useJobDetail = (jobId: string) => {
     }
   }, [job]);
 
-  const applyToJob = useCallback(async () => {
+  const applyToJob = useCallback(async (resumeUrlOrName?: string, uploadedFile?: File | null, resumeId?: string | null, coverLetter?: string) => {
     if (!job) return;
     try {
       const appliedIds = jobsService.getAppliedJobIds();
@@ -70,7 +70,14 @@ export const useJobDetail = (jobId: string) => {
         return;
       }
 
-      await jobsService.applyJob(job.id);
+      let formData: FormData | undefined = undefined;
+      if (uploadedFile || coverLetter) {
+        formData = new FormData();
+        if (uploadedFile) formData.append('resume', uploadedFile);
+        if (coverLetter) formData.append('cover_note', coverLetter);
+      }
+
+      await jobsService.applyJob(job.id, formData);
 
       setJob(prev => prev ? { ...prev, is_applied: true } : null);
       toast.success('Successfully applied to the job!');

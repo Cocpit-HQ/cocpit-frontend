@@ -175,23 +175,56 @@ export const saveJob = async (jobId: string): Promise<boolean> => {
   return true;
 };
 
-export const applyJob = async (jobId: string): Promise<boolean> => {
-  await new Promise(resolve => setTimeout(resolve, 200));
-  if (!inMemoryAppliedIds.includes(jobId)) {
-    inMemoryAppliedIds.push(jobId);
+export const applyJob = async (jobId: string, formData?: FormData): Promise<boolean> => {
+  try {
+    if (formData) {
+      await api.post(`/jobs/${jobId}/apply`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    } else {
+      await api.post(`/jobs/${jobId}/apply`);
+    }
+    
+    if (!inMemoryAppliedIds.includes(jobId)) {
+      inMemoryAppliedIds.push(jobId);
+    }
+    return true;
+  } catch (error) {
+    console.error("Failed to apply for job:", error);
+    throw error;
   }
-  return true;
 };
 
 export const getMyApplications = async (): Promise<Job[]> => {
-  await new Promise(resolve => setTimeout(resolve, 250));
-  return DUMMY_JOBS
-    .filter(j => inMemoryAppliedIds.includes(j.id))
-    .map(j => ({
-      ...j,
+  try {
+    const response = await api.get('/jobs/applications/me');
+    const jobs = response.data;
+    
+    return jobs.map((job: any) => ({
+      id: job.job_id,
+      title: job.title,
+      company: job.company_name,
+      location: job.location,
+      work_type: job.job_type,
+      work_mode: job.work_mode,
+      salary_min: job.salary_min,
+      salary_max: job.salary_max,
+      salary_currency: job.salary_currency,
+      posted_at: job.created_at,
+      description: job.description,
+      experience: (job.experience_min != null && job.experience_max != null) 
+        ? `${job.experience_min}-${job.experience_max}Yrs` 
+        : (job.experience_level || '0-2Yrs'),
+      is_saved: job.isSaved || false,
       is_applied: true,
-      is_saved: inMemorySavedIds.includes(j.id)
+      is_offer: false,
+      tags: job.tags || [],
+      application_status: job.applicationStatus || 'Applied'
     }));
+  } catch (error) {
+    console.error("Failed to fetch applications:", error);
+    return [];
+  }
 };
 
 export const withdrawApplication = async (jobId: string): Promise<boolean> => {
@@ -404,25 +437,23 @@ export const createJobListing = async (
 };
 
 export const closeJobListing = async (id: string): Promise<boolean> => {
-  await new Promise(resolve => setTimeout(resolve, 150));
-  inMemoryJobListings = inMemoryJobListings.map(l =>
-    l.id === id ? { ...l, status: 'CLOSED' } : l
-  );
-  const dummyIndex = DUMMY_JOB_LISTINGS.findIndex(l => l.id === id);
-  if (dummyIndex !== -1) {
-    DUMMY_JOB_LISTINGS[dummyIndex].status = 'CLOSED';
+  try {
+    await api.post(`/jobs/${id}/close`);
+    return true;
+  } catch (error) {
+    console.error("Failed to close job listing:", error);
+    return false;
   }
-  return true;
 };
 
 export const deleteJobListing = async (id: string): Promise<boolean> => {
-  await new Promise(resolve => setTimeout(resolve, 150));
-  inMemoryJobListings = inMemoryJobListings.filter(l => l.id !== id);
-  const dummyIndex = DUMMY_JOB_LISTINGS.findIndex(l => l.id === id);
-  if (dummyIndex !== -1) {
-    DUMMY_JOB_LISTINGS.splice(dummyIndex, 1);
+  try {
+    await api.delete(`/jobs/${id}`);
+    return true;
+  } catch (error) {
+    console.error("Failed to delete job listing:", error);
+    return false;
   }
-  return true;
 };
 
 let inMemoryJobOffers = [...DUMMY_OFFERS];

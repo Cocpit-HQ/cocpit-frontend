@@ -15,7 +15,7 @@ export interface Resume {
 interface ApplyJobModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onApply: (resumeUrl: string) => void;
+  onApply: (resumeUrl: string, uploadedFile: File | null, resumeId: string | null, coverLetter: string) => void;
   jobTitle?: string;
   recentResumes?: Resume[];
 }
@@ -83,7 +83,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
 
   const handleSubmit = () => {
     const resumeUrlOrName = uploadedFile ? uploadedFile.name : (recentResumes.find(r => r.id === selectedResumeId)?.name || 'resume.pdf');
-    onApply(resumeUrlOrName);
+    onApply(resumeUrlOrName, uploadedFile, selectedResumeId, coverLetter);
     onClose();
   };
 
