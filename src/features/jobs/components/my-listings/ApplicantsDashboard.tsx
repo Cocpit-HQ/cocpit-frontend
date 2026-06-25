@@ -274,7 +274,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
   return (
     <div 
-      className="w-[960px] bg-white flex flex-col items-center pt-0 px-0 pb-[80px] gap-[24px] overflow-y-auto scrollbar-none animate-in fade-in duration-300 mx-auto relative font-['Poppins'] box-border"
+      className="w-[998px] bg-white flex flex-col items-center pt-0 px-0 pb-[80px] gap-[24px] overflow-y-auto scrollbar-none animate-in fade-in duration-300 mx-auto relative font-['Poppins'] box-border"
       style={{
         height: '1189px',
         scrollbarWidth: 'none',
@@ -282,7 +282,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
     >
       {/* Back button and message frame (Frame 2608623) */}
       <div 
-        className="flex flex-row items-center p-0 gap-[16px] w-[960px] h-[48px] flex-none order-0 self-stretch grow-0"
+        className="flex flex-row items-center p-0 gap-[16px] w-[998px] h-[48px] flex-none order-0 self-stretch grow-0"
       >
         {/* Same back button that we build everywhere in jobs */}
         <button
@@ -310,7 +310,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
       {/* Job Details Frame / Job Item Active */}
       <div 
-        className="box-border flex flex-row items-center p-[16px] gap-[16px] w-[960px] h-[80px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-1 self-stretch grow-0"
+        className="box-border flex flex-row items-center p-[16px] gap-[16px] w-[998px] h-[80px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-1 self-stretch grow-0"
       >
         {/* Job text frame (Frame 2609064) */}
         <div className="flex flex-col items-start p-0 gap-[8px] w-[710px] h-[48px] flex-none order-0 grow-[1] min-w-0">
@@ -351,11 +351,11 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
       {/* Counts Frame (Frame 2609065) */}
       <div 
-        className="flex flex-row justify-center items-center p-0 gap-[16px] w-[960px] h-[88px] flex-none order-2 self-stretch grow-0"
+        className="flex flex-row justify-center items-center p-0 gap-[16px] w-[998px] h-[88px] flex-none order-2 self-stretch grow-0"
       >
         {/* Applications Card */}
         <div 
-          className="box-border flex flex-col items-start p-[16px] gap-[8px] w-[472px] h-[88px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-0 grow-[1]"
+          className="box-border flex flex-col items-start p-[16px] gap-[8px] w-[491px] h-[88px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-0 grow-[1]"
         >
           <span 
             className="w-[82px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] flex-none order-0 grow-0 uppercase tracking-wider"
@@ -363,7 +363,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
             APPLICATIONS
           </span>
           <span 
-            className="w-[439px] h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-[#000000] flex-none order-1 self-stretch grow-0"
+            className="w-[458px] h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-[#000000] flex-none order-1 self-stretch grow-0"
           >
             {appCount}
           </span>
@@ -371,7 +371,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
         {/* Shortlisted Card */}
         <div 
-          className="box-border flex flex-col items-start p-[16px] gap-[8px] w-[472px] h-[88px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-1 grow-[1]"
+          className="box-border flex flex-col items-start p-[16px] gap-[8px] w-[491px] h-[88px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-1 grow-[1]"
         >
           <span 
             className="w-[75px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] flex-none order-0 grow-0 uppercase tracking-wider"
@@ -379,7 +379,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
             SHORTLISTED
           </span>
           <span 
-            className="w-[439px] h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-[#000000] flex-none order-1 self-stretch grow-0"
+            className="w-[458px] h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-[#000000] flex-none order-1 self-stretch grow-0"
           >
             {shortlistCount}
           </span>
@@ -388,7 +388,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
       {/* Main Frame: Applicants list and Candidate details (Frame 2608633) */}
       <div 
-        className="flex flex-row items-start p-0 gap-[16px] w-[960px] h-[901px] flex-none order-3 self-stretch grow-0"
+        className="flex flex-row items-start p-0 gap-[16px] w-[998px] h-[901px] flex-none order-3 self-stretch grow-0"
       >
         {/* Left Column: Candidates list (Frame 2609067) */}
         <div 
@@ -546,11 +546,11 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
         {/* Right Column: Candidate detail panel (Frame 2609089) */}
         <div 
-          className="flex flex-col items-start p-0 gap-[16px] w-[650px] rounded-[24px] flex-none order-1 grow-[1] min-w-0"
+          className="flex flex-col items-start p-0 gap-[16px] w-[688px] rounded-[24px] flex-none order-1 grow-[1] min-w-0"
         >
           {/* Header metadata row / Frame 2608732 */}
           <div 
-            className="flex flex-row justify-between items-center p-0 w-[650px] h-[52px] rounded-[12px] flex-none order-0 self-stretch grow-0"
+            className="flex flex-row justify-between items-center p-0 w-[688px] h-[52px] rounded-[12px] flex-none order-0 self-stretch grow-0"
           >
             {/* User details / Frame 2608774 */}
             <div className="flex flex-row items-center p-0 gap-[8px] w-auto h-[44px] flex-none order-0 grow-0">
@@ -619,7 +619,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
           {/* Action frame (Frame 2609102) */}
           <div 
-            className="flex flex-row justify-between items-center p-0 gap-[8px] w-[650px] h-[40px] flex-none order-1 self-stretch grow-0"
+            className="flex flex-row justify-between items-center p-0 gap-[8px] w-[688px] h-[40px] flex-none order-1 self-stretch grow-0"
           >
             {/* Add a note button / Frame 2608618 */}
             <button
@@ -669,7 +669,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           {/* Self Note Frame / Frame 2609091 */}
           {selectedCandidate.note && (
             <div 
-              className="flex flex-col items-start p-0 gap-[8px] w-[650px] flex-none order-2 self-stretch grow-0"
+              className="flex flex-col items-start p-0 gap-[8px] w-[688px] flex-none order-2 self-stretch grow-0"
             >
               {/* Title */}
               <span 
@@ -680,10 +680,10 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
               
               {/* Note body frame / Frame 2609030 */}
               <div 
-                className="box-border flex flex-col items-start py-[12px] px-[16px] gap-[8px] w-[650px] bg-[#F9FAFF] border-l-2 border-[#6366F1] rounded-tr-[16px] rounded-bl-[16px] rounded-br-[16px] flex-none order-1 self-stretch grow-0"
+                className="box-border flex flex-col items-start py-[12px] px-[16px] gap-[8px] w-[688px] bg-[#F9FAFF] border-l-2 border-[#6366F1] rounded-tr-[16px] rounded-bl-[16px] rounded-br-[16px] flex-none order-1 self-stretch grow-0"
               >
                 <span 
-                  className="w-[618px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex-none order-0 self-stretch grow-0"
+                  className="w-[656px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex-none order-0 self-stretch grow-0"
                 >
                   {selectedCandidate.note}
                 </span>
@@ -693,7 +693,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
           {/* Resume PDF Frame / Frame 2608977 */}
           <div 
-            className="flex flex-row justify-between items-center py-0 pr-[8px] pl-0 gap-[16px] w-[650px] h-[40px] rounded-[12px] flex-none order-3 self-stretch grow-0"
+            className="flex flex-row justify-between items-center py-0 pr-[8px] pl-0 gap-[16px] w-[688px] h-[40px] rounded-[12px] flex-none order-3 self-stretch grow-0"
           >
             {/* Doc Frame / Frame 2608990 */}
             <div className="flex flex-row items-center p-0 gap-[8px] w-[178px] h-[40px] flex-none order-0 grow-0">
@@ -734,10 +734,10 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           {/* AI Executive Summary Block / Section - AI Executive Summary */}
           {selectedCandidate.summary && (
             <div 
-              className="flex flex-col items-start p-[16px] gap-[16px] w-[650px] bg-[#F9FAFF] rounded-[24px] flex-none order-4 self-stretch grow-0 box-border"
+              className="flex flex-col items-start p-[16px] gap-[16px] w-[688px] bg-[#F9FAFF] rounded-[24px] flex-none order-4 self-stretch grow-0 box-border"
             >
               {/* Title frame */}
-              <div className="flex flex-row items-center p-0 gap-[8px] w-[618px] h-[20px] flex-none order-0 self-stretch grow-0">
+              <div className="flex flex-row items-center p-0 gap-[8px] w-[656px] h-[20px] flex-none order-0 self-stretch grow-0">
                 {/* AI Icon */}
                 <img src="/assets/AI 2.svg" alt="AI Icon" className="w-[20px] h-[20px] flex-none" />
                 
@@ -752,21 +752,21 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
               </div>
 
               {/* Details container */}
-              <div className="flex flex-row items-start p-0 pb-[8px] gap-[16px] w-[618px] h-[104px] flex-none order-1 self-stretch grow-0">
+              <div className="flex flex-row items-start p-0 pb-[8px] gap-[16px] w-[656px] h-[104px] flex-none order-1 self-stretch grow-0">
                 {/* Left frame (strengths) */}
-                <div className="flex flex-col items-start p-0 gap-[12px] w-[301px] h-[96px] flex-none order-0 self-stretch grow-[1]">
+                <div className="flex flex-col items-start p-0 gap-[12px] w-[320px] h-[96px] flex-none order-0 self-stretch grow-[1]">
                   <span 
-                    className="w-[301px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#22C55E] uppercase tracking-wider"
+                    className="w-[320px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#22C55E] uppercase tracking-wider"
                   >
                     Strengths
                   </span>
                   
                   {/* Frame 2609109 */}
-                  <div className="flex flex-col items-start p-0 gap-[8px] w-[273px] h-[68px] flex-none order-1 grow-[1] overflow-y-auto scrollbar-none">
+                  <div className="flex flex-col items-start p-0 gap-[8px] w-[292px] h-[68px] flex-none order-1 grow-[1] overflow-y-auto scrollbar-none">
                     {selectedCandidate.summary.strengths.map((str, idx) => (
                       <span 
                         key={idx}
-                        className="w-[273px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black"
+                        className="w-[292px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black"
                       >
                         • {str}
                       </span>
@@ -775,18 +775,18 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 </div>
 
                 {/* Right frame (concerns) */}
-                <div className="flex flex-col items-start p-0 pb-[36px] gap-[12px] w-[301px] h-[96px] flex-none order-1 self-stretch grow-[1]">
+                <div className="flex flex-col items-start p-0 pb-[36px] gap-[12px] w-[320px] h-[96px] flex-none order-1 self-stretch grow-[1]">
                   <span 
-                    className="w-[301px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#FF6B6B] uppercase tracking-wider"
+                    className="w-[320px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#FF6B6B] uppercase tracking-wider"
                   >
                     Concerns
                   </span>
                   
-                  <div className="flex flex-col items-start p-0 gap-[8px] w-[273px] h-[68px] flex-none order-1 grow-[1] overflow-y-auto scrollbar-none">
+                  <div className="flex flex-col items-start p-0 gap-[8px] w-[292px] h-[68px] flex-none order-1 grow-[1] overflow-y-auto scrollbar-none">
                     {selectedCandidate.summary.concerns.map((con, idx) => (
                       <span 
                         key={idx}
-                        className="w-[273px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black"
+                        className="w-[292px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black"
                       >
                         • {con}
                       </span>
@@ -797,9 +797,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
               {/* Recommendation frame / HorizontalBorder */}
               <div 
-                className="box-border flex flex-col items-start pt-[16px] px-0 pb-0 w-[618px] min-h-[49px] h-auto border-t border-[#E0E7FF] flex-none order-2 self-stretch grow-0"
+                className="box-border flex flex-col items-start pt-[16px] px-0 pb-0 w-[656px] min-h-[49px] h-auto border-t border-[#E0E7FF] flex-none order-2 self-stretch grow-0"
               >
-                <div className="w-[618px] min-h-[32px] h-auto font-['Poppins'] font-normal text-[12px] leading-[16px] text-black text-left">
+                <div className="w-[656px] min-h-[32px] h-auto font-['Poppins'] font-normal text-[12px] leading-[16px] text-black text-left">
                   <span className="font-semibold text-[#6366F1] mr-1">Recommendation:</span>
                   <span>{selectedCandidate.summary.recommendation}</span>
                 </div>
@@ -810,10 +810,10 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           {/* Skills match / Skills Match */}
           {selectedCandidate.skills && (
             <div 
-              className="box-border flex flex-col items-start p-[12px] gap-[16px] w-[650px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-4 self-stretch grow-0"
+              className="box-border flex flex-col items-start p-[12px] gap-[16px] w-[688px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-4 self-stretch grow-0"
             >
               {/* Title frame / Frame 2609098 */}
-              <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-[624px] h-[31px] flex-none self-stretch grow-0">
+              <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-[662px] h-[31px] flex-none self-stretch grow-0">
                 <span 
                   className="w-[40px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black"
                 >
@@ -833,7 +833,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
               </div>
 
               {/* Skills chip frame / Container */}
-              <div className="flex flex-row items-center p-0 gap-[8px] w-[624px] min-h-[32px] h-auto flex-none self-stretch grow-0 flex-wrap">
+              <div className="flex flex-row items-center p-0 gap-[8px] w-[662px] min-h-[32px] h-auto flex-none self-stretch grow-0 flex-wrap">
                 {selectedCandidate.skills.tags.map((t, idx) => {
                   const bg = t.matched ? '#EEF2FF' : '#FEE2E2';
                   const text = t.matched ? '#6366F1' : '#FF6B6B';
@@ -858,7 +858,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
               {/* Summary text */}
               <span 
-                className="w-[472px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black"
+                className="w-auto font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black"
               >
                 {selectedCandidate.skills.summary}
               </span>
@@ -867,13 +867,13 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
           {/* Meta section (Experience & Qualification side-by-side) / Frame 2609110 */}
           {selectedCandidate.experience && selectedCandidate.qualification && (
-            <div className="flex flex-row items-start p-0 gap-[16px] w-[650px] h-[197px] flex-none order-5 self-stretch grow-0">
+            <div className="flex flex-row items-start p-0 gap-[16px] w-[688px] h-[197px] flex-none order-5 self-stretch grow-0">
               {/* Left Experience frame / Experience Match */}
               <div 
-                className="box-border flex flex-col items-start p-[12px] gap-[16px] w-[317px] h-[197px] bg-white border border-[#EEF2FF] rounded-[16px] flex-none order-0 self-stretch grow-[1]"
+                className="box-border flex flex-col items-start p-[12px] gap-[16px] w-[336px] h-[197px] bg-white border border-[#EEF2FF] rounded-[16px] flex-none order-0 self-stretch grow-[1]"
               >
                 {/* Title frame */}
-                <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-[291px] h-[31px] flex-none self-stretch grow-0">
+                <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-[310px] h-[31px] flex-none self-stretch grow-0">
                   <span 
                     className="w-[88px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black"
                   >
@@ -889,7 +889,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 </div>
 
                 {/* Exp match frame */}
-                <div className="flex flex-row justify-between items-center py-[8px] px-0 gap-[5.3px] w-[291px] h-[68px] flex-none self-stretch grow-0">
+                <div className="flex flex-row justify-between items-center py-[8px] px-0 gap-[5.3px] w-[310px] h-[68px] flex-none self-stretch grow-0">
                   {/* Required box */}
                   <div className="flex flex-col items-start p-0 gap-[4px] w-auto h-[52px] flex-none order-0 grow-0">
                     <span 
@@ -924,7 +924,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
                 {/* Exceeds text */}
                 <span 
-                  className="w-[291px] h-[40px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black"
+                  className="w-[310px] h-[40px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black"
                 >
                   {selectedCandidate.experience.summary}
                 </span>
@@ -932,10 +932,10 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
               {/* Right Qualification frame / Education Match */}
               <div 
-                className="box-border flex flex-col items-start p-[12px] gap-[16px] w-[317px] h-[197px] bg-white border border-[#EEF2FF] rounded-[16px] flex-none order-1 self-stretch grow-[1]"
+                className="box-border flex flex-col items-start p-[12px] gap-[16px] w-[336px] h-[197px] bg-white border border-[#EEF2FF] rounded-[16px] flex-none order-1 self-stretch grow-[1]"
               >
                 {/* Title frame */}
-                <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-[291px] h-[31px] flex-none self-stretch grow-0">
+                <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-[310px] h-[31px] flex-none self-stretch grow-0">
                   <span 
                     className="w-[103px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black"
                   >
@@ -951,14 +951,14 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 </div>
 
                 {/* Top education frame / Margin */}
-                <div className="flex flex-col items-start p-0 w-[291px] h-[60px] flex-none self-stretch grow-0">
+                <div className="flex flex-col items-start p-0 w-[310px] h-[60px] flex-none self-stretch grow-0">
                   <span 
-                    className="w-[275px] h-[24px] font-['Poppins'] font-normal text-[16px] leading-[24px] flex items-center text-black truncate"
+                    className="w-[294px] h-[24px] font-['Poppins'] font-normal text-[16px] leading-[24px] flex items-center text-black truncate"
                   >
                     {selectedCandidate.qualification.degree}
                   </span>
                   <span 
-                    className="w-[275px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] uppercase mt-[4px]"
+                    className="w-[294px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] uppercase mt-[4px]"
                   >
                     {selectedCandidate.qualification.class}
                   </span>
@@ -966,7 +966,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
                 {/* Aligns text */}
                 <span 
-                  className="w-[291px] h-[40px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black"
+                  className="w-[310px] h-[40px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black"
                 >
                   {selectedCandidate.qualification.summary}
                 </span>

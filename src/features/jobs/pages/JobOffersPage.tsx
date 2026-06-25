@@ -45,7 +45,7 @@ export const JobOffersPage: React.FC = () => {
   };
 
   return (
-    <div className="w-[960px] h-[814px] mx-auto bg-white pt-[20px] px-[20px] pb-0 flex flex-col items-center gap-6 border border-slate-100/50 rounded-3xl overflow-hidden">
+    <div className="w-[998px] h-[814px] mx-auto bg-white pt-[20px] px-[20px] pb-0 flex flex-col items-center gap-6 border border-slate-100/50 rounded-3xl overflow-hidden">
       
       {/* Section 1 — Tabs row */}
       <div className="w-full flex flex-row justify-between items-center pb-2">

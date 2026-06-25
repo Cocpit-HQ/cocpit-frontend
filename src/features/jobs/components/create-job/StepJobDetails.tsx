@@ -262,7 +262,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   };
 
   return (
-    <div className="w-[960px] mx-auto bg-white inline-flex flex-col justify-start items-center gap-4 overflow-hidden animate-in fade-in duration-300 pb-16">
+    <div className="w-[998px] mx-auto bg-white inline-flex flex-col justify-start items-center gap-4 overflow-hidden animate-in fade-in duration-300 pb-16">
       {/* Header Row */}
       <div className="self-stretch inline-flex justify-start items-center gap-4">
         <button

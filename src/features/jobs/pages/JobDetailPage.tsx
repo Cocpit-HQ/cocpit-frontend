@@ -135,10 +135,10 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
   return (
     <div className="relative w-full bg-white flex justify-center">
-      <div className="flex flex-col items-center py-0 gap-6 relative w-[960px] bg-white pb-8">
+      <div className="flex flex-col items-center py-0 gap-6 relative w-[998px] bg-white pb-8">
         
         {/* Header chevron and Title block */}
-        <div className="w-[960px] h-[48px] self-stretch flex flex-row items-start p-0 gap-[16px]">
+        <div className="w-[998px] h-[48px] self-stretch flex flex-row items-start p-0 gap-[16px]">
           <button
             onClick={() => goBack('/jobs')}
             className="w-12 h-12 box-border p-2 rounded-[100px] border border-[#DADADA] backdrop-blur-[12px] flex flex-row justify-center items-center gap-2.5 hover:bg-slate-50 transition-colors active:scale-95"
@@ -152,10 +152,10 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
         </div>
 
         {/* Content body wrapper */}
-        <div className="self-stretch p-4 flex flex-col justify-start items-start gap-6 w-[960px]">
+        <div className="self-stretch p-4 flex flex-col justify-start items-start gap-6 w-[998px]">
           
           {/* Active indicator and Job title card */}
-          <div className="w-[928px] h-[152px] self-stretch flex flex-col justify-center items-start p-0 gap-4">
+          <div className="w-[966px] h-[152px] self-stretch flex flex-col justify-center items-start p-0 gap-4">
             <div className="w-full flex flex-row justify-between items-center">
               {job.is_closed ? (
                 <div className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-[74px] h-8 bg-[#FEF3C7] border border-[#FBBF24] rounded-[24px] flex-none order-0 flex-grow-0">
@@ -185,8 +185,8 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 </div>
               )}
             </div>
-            <div className="w-[928px] h-[56px] self-stretch text-[#000000] text-[32px] font-semibold font-['Poppins'] leading-[56px]">{job.title}</div>
-            <div className="w-[928px] h-8 self-stretch flex flex-row items-center p-0 gap-2">
+            <div className="w-[966px] h-[56px] self-stretch text-[#000000] text-[32px] font-semibold font-['Poppins'] leading-[56px]">{job.title}</div>
+            <div className="w-[966px] h-8 self-stretch flex flex-row items-center p-0 gap-2">
               {job.company_logo === 'sphere' ? (
                 <div className="w-8 h-8 bg-slate-100 rounded-full flex justify-center items-center overflow-hidden flex-shrink-0">
                   <div className="w-4 h-4 rounded-full bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm" />
@@ -209,7 +209,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           </div>
 
           {/* Job Specifications specifications card */}
-          <div className="w-[928px] self-stretch p-4 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-row gap-4">
+          <div className="w-[966px] self-stretch p-4 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-row gap-4">
             {/* Experience Column */}
             <div className="flex-grow flex flex-col justify-center items-start p-0 gap-2 w-[212px] h-[52px]">
               <div className="flex flex-row items-center p-0 gap-2 h-5">
@@ -248,7 +248,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           </div>
 
           {/* AI Matching strength bar */}
-          <div className="w-[928px] h-[44px] py-[12px] px-[16px] bg-[#F9FAFF] rounded-[12px] self-stretch flex flex-row items-center gap-[10px]">
+          <div className="w-[966px] h-[44px] py-[12px] px-[16px] bg-[#F9FAFF] rounded-[12px] self-stretch flex flex-row items-center gap-[10px]">
             <img src="/assets/AI 2.svg" className="w-5 h-5 flex-shrink-0" alt="AI Icon" />
             <div className="w-[866px] h-5 flex-1 flex items-center text-[#6366F1] text-[14px] font-normal font-['Poppins'] leading-5">
               You&apos;re stronger than 90% of applicants for this job based on your profile and skills
@@ -258,7 +258,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           {/* Recruiter Note for Offers, Application Status, or Company Analytics Box */}
           {job.is_offer ? (
             job.recruiter_message ? (
-              <div className="box-border w-[928px] max-w-full min-h-[104px] bg-[#F9FAFF] border-l-2 border-l-[#6366F1] rounded-tr-[16px] rounded-br-[16px] rounded-bl-[16px] rounded-tl-none py-3 px-4 flex flex-col justify-start items-start gap-2 self-stretch">
+              <div className="box-border w-[966px] max-w-full min-h-[104px] bg-[#F9FAFF] border-l-2 border-l-[#6366F1] rounded-tr-[16px] rounded-br-[16px] rounded-bl-[16px] rounded-tl-none py-3 px-4 flex flex-col justify-start items-start gap-2 self-stretch">
                 {/* Recruiter Info Row */}
                 <div className="flex flex-row justify-start items-center p-0 gap-2 h-10 w-full">
                   {job.recruiter_avatar ? (
@@ -293,7 +293,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
               </div>
             ) : null
           ) : job.is_applied ? (
-            <div className="box-border w-[928px] h-[108px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[28px] self-stretch p-4 flex flex-col items-start gap-4">
+            <div className="box-border w-[966px] h-[108px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[28px] self-stretch p-4 flex flex-col items-start gap-4">
               <div className="text-left text-[#000000] text-[16px] font-medium font-['Poppins'] leading-6 w-[147px] h-6 flex-none order-0 flex-grow-0">
                 Application status
               </div>
@@ -343,7 +343,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
               </div>
             </div>
           ) : (
-            <div className="box-border w-[928px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[28px] self-stretch p-4 flex flex-col items-start gap-4">
+            <div className="box-border w-[966px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[28px] self-stretch p-4 flex flex-col items-start gap-4">
               <div className="text-left text-[#000000] text-[16px] font-medium font-['Poppins'] leading-6 w-[159px] h-6">Company analytics</div>
               
               {!job.response_rate || !job.avg_reply ? (
@@ -386,7 +386,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           )}
 
           {/* Description Section */}
-          <div className="w-[928px] self-stretch flex flex-col items-start p-0 gap-4">
+          <div className="w-[966px] self-stretch flex flex-col items-start p-0 gap-4">
             <div className="text-left text-[#000000] text-[18px] font-medium font-['Poppins'] leading-[26px]">Description</div>
             <div className="self-stretch flex-1 justify-start">
               <span className="text-[#000000] text-[16px] font-normal font-['Poppins'] leading-[24px]">

@@ -222,7 +222,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
 
   if (activeTab === "My listings") {
     return (
-      <div className="w-full md:w-[1024px] mx-auto min-h-screen bg-white pt-[20px] pb-6 px-4 md:px-8 flex flex-col gap-[20px]">
+      <div className="w-[998px] mx-auto min-h-screen bg-white pt-[20px] pb-6 flex flex-col gap-[20px]">
         <MyListingsDashboard onBack={() => setActiveTab("Explore")} />
       </div>
     );
@@ -230,9 +230,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
 
   return (
     <div
-      className={`w-[960px] mx-auto bg-white pb-[40px] flex flex-col items-center gap-[24px] border-slate-100/50 rounded-3xl overflow-x-hidden
-      ${activeTab === "Explore" ? "" : "px-[20px]"}
-    `}
+      className={`w-[998px] mx-auto bg-white pb-[40px] flex flex-col items-center gap-[24px] border-slate-100/50 rounded-3xl ${
+        activeTab === "Explore" ? "" : "pt-6"
+      }`}
     >
       {/* Hero Banner */}
       {activeTab === "Explore" && jobs.length > 0 && (
@@ -248,7 +248,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
       )}
 
       {/* Tabs navigation row */}
-      <div className="w-full flex flex-row justify-between items-center pb-2">
+      <div className="w-full flex flex-row justify-between items-center pb-2 pt-2 sticky top-[72px] z-30 bg-white">
         <div className="flex flex-wrap justify-start items-center gap-4">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;

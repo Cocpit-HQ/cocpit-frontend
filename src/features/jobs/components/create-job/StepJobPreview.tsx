@@ -83,7 +83,7 @@ export const StepJobPreview: React.FC<StepJobPreviewProps> = ({
   };
 
   return (
-    <div className="w-[960px] mx-auto bg-white inline-flex flex-col justify-start items-center gap-4 overflow-hidden animate-in fade-in duration-300 pb-16">
+    <div className="w-[998px] mx-auto bg-white inline-flex flex-col justify-start items-center gap-4 overflow-hidden animate-in fade-in duration-300 pb-16">
       {/* Header Row */}
       <div className="self-stretch inline-flex justify-start items-center gap-4">
         <button
@@ -100,7 +100,7 @@ export const StepJobPreview: React.FC<StepJobPreviewProps> = ({
       </div>
 
       {/* Preview Card */}
-      <div className="w-[960px] p-4 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-end gap-4 shadow-sm">
+      <div className="w-[998px] p-4 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-end gap-4 shadow-sm">
         {/* Card Header Info */}
         <div className="self-stretch inline-flex justify-between items-start">
           <div className="inline-flex flex-col justify-start items-start gap-2 w-full text-left">

@@ -95,7 +95,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
 
   return (
     <div
-      className="w-full max-w-[960px] h-[708px] bg-white rounded-[24px] p-[16px] flex flex-col items-start gap-[16px] box-border"
+      className="w-full max-w-[998px] h-[708px] bg-white rounded-[24px] p-[16px] flex flex-col items-start gap-[16px] box-border"
     >
       {/* Heading Frame */}
       <div className="w-full flex flex-col gap-[4px] px-0">

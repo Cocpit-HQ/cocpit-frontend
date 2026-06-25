@@ -84,7 +84,7 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({ listings, onSelectLi
       </div>
 
       {/* Main Stats Frame */}
-      <div className="w-full max-w-[960px] bg-white rounded-[24px] p-0 flex flex-col items-center gap-[24px]">
+      <div className="w-full max-w-[998px] bg-white rounded-[24px] p-0 flex flex-col items-center gap-[24px]">
         <div className="w-full flex flex-col sm:flex-row justify-start items-start gap-6 self-stretch">
           <div className="flex-1 p-6 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex flex-col justify-center items-start gap-2">
             <div className="self-stretch flex flex-col justify-start items-start">

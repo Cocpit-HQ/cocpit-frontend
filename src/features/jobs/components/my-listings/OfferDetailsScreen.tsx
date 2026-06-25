@@ -82,10 +82,10 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
   const showNote = offerGroup.title === 'UI/UX Designer' || offerGroup.id === 'so-1';
 
   return (
-    <div className="w-[960px] mx-auto bg-white flex flex-col justify-start items-center gap-[16px] overflow-hidden animate-in fade-in duration-300">
+    <div className="w-[998px] mx-auto bg-white flex flex-col justify-start items-center gap-[16px] overflow-hidden animate-in fade-in duration-300">
       
       {/* Header Row (Frame 2608623) */}
-      <div className="w-[960px] h-[48px] self-stretch flex flex-row items-center p-0 gap-[16px]">
+      <div className="w-[998px] h-[48px] self-stretch flex flex-row items-center p-0 gap-[16px]">
         <button
           onClick={onBack}
           type="button"
@@ -100,10 +100,10 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
       </div>
 
       {/* Job Details Card Preview (Frame 2608861) */}
-      <div className="w-[960px] h-[196px] box-border p-[16px] rounded-[24px] border border-[#EEF2FF] flex flex-col items-end gap-[12px] bg-white">
+      <div className="w-[998px] h-[196px] box-border p-[16px] rounded-[24px] border border-[#EEF2FF] flex flex-col items-end gap-[12px] bg-white">
         
         {/* Frame 2608947: Top row (role, company, full-time, and company logo) */}
-        <div className="w-[928px] h-[80px] self-stretch flex flex-row justify-between items-start p-0 gap-[10px]">
+        <div className="w-[966px] h-[80px] self-stretch flex flex-row justify-between items-start p-0 gap-[10px]">
           
           {/* Frame 2608946: Role details */}
           <div className="h-[80px] flex flex-col items-start p-0 gap-[8px]">
@@ -133,7 +133,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
         </div>
 
         {/* Row 2: Specifications (Experience, location, bullet point, salary) */}
-        <div className="w-[928px] h-[20px] self-stretch flex flex-row justify-between items-center p-0">
+        <div className="w-[966px] h-[20px] self-stretch flex flex-row justify-between items-center p-0">
           <div className="flex flex-row items-center p-0">
             {/* Experience Frame 2608943 */}
             <div className="flex flex-row items-center p-0 gap-[8px] h-[20px]">
@@ -177,7 +177,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
 
       {/* Note Section (Frame 2609091) */}
       {showNote ? (
-        <div className="w-[960px] flex flex-col items-start p-0 gap-[8px]">
+        <div className="w-[998px] flex flex-col items-start p-0 gap-[8px]">
           {/* Note Title */}
           <div className="w-[43px] h-[26px] flex items-center justify-center">
             <span className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-center text-black">
@@ -186,7 +186,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
           </div>
           
           {/* Note Container (Frame 2609030) */}
-          <div className="w-[960px] box-border flex flex-col items-start p-[12px_16px] gap-[8px] bg-[#F9FAFF] border-l-2 border-l-[#6366F1] rounded-[0px_16px_16px_16px]">
+          <div className="w-[998px] box-border flex flex-col items-start p-[12px_16px] gap-[8px] bg-[#F9FAFF] border-l-2 border-l-[#6366F1] rounded-[0px_16px_16px_16px]">
             {/* Sender Info Row (Frame 2609033) */}
             <div className="flex flex-row justify-start items-center p-0 gap-[8px] w-[282px] h-[40px]">
               <img
@@ -205,7 +205,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
             </div>
 
             {/* Note Content */}
-            <div className="w-[928px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280]">
+            <div className="w-[966px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280]">
               "Hi cocpit, we were impressed by your portfolio and the way you handled the whiteboarding session. Your approach to scalable design systems is exactly what we need for our next growth phase. We'd love to have you join our team."
             </div>
           </div>
@@ -213,7 +213,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
       ) : null}
 
       {/* Candidates List Section (Frame 2609090) */}
-      <div className="w-[960px] flex flex-col items-start p-0 gap-[16px]">
+      <div className="w-[998px] flex flex-col items-start p-0 gap-[16px]">
         {/* Header Row (Frame 2608889) */}
         <div className="w-[166px] h-[32px] flex flex-row items-center p-0 gap-[16px]">
           {/* Title */}
@@ -231,7 +231,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
         </div>
 
         {/* Candidates list with gap 16px */}
-        <div className="w-[960px] flex flex-col gap-[16px]">
+        <div className="w-[998px] flex flex-col gap-[16px]">
           {activeCandidates.length === 0 ? (
             <div className="py-12 text-center text-gray-400 text-xs font-['Poppins'] bg-slate-50/50 rounded-2xl">
               All offers have been withdrawn.
@@ -241,7 +241,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
               /* Candidate card Frame 2608732 */
               <div
                 key={cand.id}
-                className="w-[960px] h-[60px] bg-white border border-[#EEF2FF]/60 rounded-[12px] flex flex-row justify-between items-center p-[8px_16px] box-border"
+                className="w-[998px] h-[60px] bg-white border border-[#EEF2FF]/60 rounded-[12px] flex flex-row justify-between items-center p-[8px_16px] box-border"
               >
                 {/* User Frame 2608774 */}
                 <div className="flex flex-row items-start p-0 gap-[8px] h-[44px]">
