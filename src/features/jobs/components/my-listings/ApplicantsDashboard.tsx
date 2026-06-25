@@ -553,7 +553,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
             className="flex flex-row justify-between items-center p-0 w-[650px] h-[52px] rounded-[12px] flex-none order-0 self-stretch grow-0"
           >
             {/* User details / Frame 2608774 */}
-            <div className="flex flex-row items-center p-0 gap-[8px] w-[238px] h-[44px] flex-none order-0 grow-0">
+            <div className="flex flex-row items-center p-0 gap-[8px] w-auto h-[44px] flex-none order-0 grow-0">
               {/* Ellipse 3 (Avatar) */}
               {selectedCandidate.avatar ? (
                 <img 
@@ -568,16 +568,16 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
               )}
 
               {/* Frame 2609009 */}
-              <div className="flex flex-col items-start p-0 gap-[4px] w-[186px] h-[44px] flex-none order-1 grow-0">
+              <div className="flex flex-col items-start p-0 gap-[4px] w-auto h-[44px] flex-none order-1 grow-0">
                 {/* Name */}
                 <span 
-                  className="w-[100px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] text-black flex items-center text-left"
+                  className="w-auto h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] text-black flex items-center text-left whitespace-nowrap"
                 >
                   {selectedCandidate.name}
                 </span>
 
                 {/* Frame 2609097 */}
-                <div className="flex flex-row justify-start items-center p-0 gap-[8px] w-[186px] h-[16px] flex-none order-1 grow-0">
+                <div className="flex flex-row justify-start items-center p-0 gap-[8px] w-auto h-[16px] flex-none order-1 grow-0">
                   {/* Role */}
                   <span 
                     className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex items-center truncate"
@@ -891,32 +891,32 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 {/* Exp match frame */}
                 <div className="flex flex-row justify-between items-center py-[8px] px-0 gap-[5.3px] w-[291px] h-[68px] flex-none self-stretch grow-0">
                   {/* Required box */}
-                  <div className="flex flex-col items-start p-0 gap-[4px] w-[76px] h-[52px] flex-none order-0 grow-0">
+                  <div className="flex flex-col items-start p-0 gap-[4px] w-auto h-[52px] flex-none order-0 grow-0">
                     <span 
-                      className="w-[56px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280]"
+                      className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280]"
                     >
                       REQUIRED
                     </span>
-                    <div className="flex flex-col items-center p-0 w-[76px] h-[32px] opacity-50 flex-none order-1 self-stretch grow-0">
-                      <span className="w-[76px] h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center justify-center text-black">
+                    <div className="flex flex-col items-start p-0 opacity-50 flex-none order-1 grow-0">
+                      <span className="h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-black whitespace-nowrap">
                         {selectedCandidate.experience.required}
                       </span>
                     </div>
                   </div>
 
                   {/* Arrow */}
-                  <div className="flex flex-col items-start p-0 w-[19px] h-[9px] flex-none order-1 grow-0 text-slate-350 flex justify-center items-center">
-                    <Icon icon="lucide:arrow-right" className="w-[19px] h-[9px]" />
+                  <div className="flex flex-col justify-end items-center p-0 pb-[6px] h-[52px] flex-none order-1 grow-0 text-[#C7D2FE]">
+                    <Icon icon="lucide:arrow-right" className="w-5 h-5" />
                   </div>
 
                   {/* Actual box */}
-                  <div className="flex flex-col items-start p-0 gap-[4px] w-[80px] h-[52px] flex-none order-2 grow-0">
+                  <div className="flex flex-col items-start p-0 gap-[4px] w-auto h-[52px] flex-none order-2 grow-0">
                     <span 
-                      className="w-[46px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#000000]"
+                      className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#000000]"
                     >
                       ACTUAL
                     </span>
-                    <span className="w-[80px] h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center justify-center text-black">
+                    <span className="h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-black whitespace-nowrap">
                       {selectedCandidate.experience.actual}
                     </span>
                   </div>

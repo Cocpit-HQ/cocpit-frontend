@@ -80,6 +80,14 @@ export interface JobListing {
   salary_currency?: string;
 }
 
+export interface ListingsCounts {
+  all: number;
+  active: number;
+  closed: number;
+  draft: number;
+  inReview: number;
+}
+
 export interface JobOffer {
   id: string;
   job_role: string;

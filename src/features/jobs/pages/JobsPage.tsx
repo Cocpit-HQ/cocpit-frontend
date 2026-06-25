@@ -665,8 +665,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
         /* Original All Jobs View for Explore tab */
         <div className="w-full flex flex-col gap-[20px]">
           {jobs.length === 0 ? (
-            <div className="h-[500px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
-              <Icon icon="hugeicons:job-search" className="size-28 text-black flex-shrink-0" />
+            <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
+              <Icon icon="hugeicons:job-search" className="size-20 text-black flex-shrink-0" />
               <div className="flex flex-col justify-start items-center gap-2">
                 <div className="text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6">No jobs available yet</div>
                 <div className="w-80 text-center justify-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4">New jobs will appear here when they become available.</div>

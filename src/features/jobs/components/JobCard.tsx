@@ -29,7 +29,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onSave, onApply, onWithdr
   return (
     <div
       onClick={() => onClick?.(job)}
-      className="self-stretch p-4 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-center items-start gap-3 hover:outline-indigo-200 hover:shadow-[0px_4px_20px_rgba(99,102,241,0.05)] transition-all duration-200 cursor-pointer"
+      className="self-stretch p-4 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-center items-start gap-3 transition-all duration-200 cursor-pointer"
     >
       {/* Top Row: Job Info and Badge */}
       <div className="self-stretch inline-flex justify-between items-start">
@@ -65,20 +65,12 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onSave, onApply, onWithdr
       <div className="self-stretch inline-flex justify-between items-center">
         <div className="size- flex justify-start items-center gap-2">
           <div className="size- flex justify-start items-center gap-2">
-            <div className="size-5 relative overflow-hidden">
-              <div className="w-4 h-3 left-[1.67px] top-[4.58px] absolute outline outline-[1.50px] outline-offset-[-0.75px] outline-black" />
-              <div className="size-1.5 left-[11.67px] top-[11.62px] absolute outline outline-[1.50px] outline-offset-[-0.75px] outline-black" />
-              <div className="w-2 h-[2.92px] left-[5.83px] top-[1.67px] absolute outline outline-[1.50px] outline-offset-[-0.75px] outline-black" />
-            </div>
+            <Icon icon="hugeicons:job-search" className="w-5 h-5 text-black" />
             <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5">{job.experience || '0-2Yrs'}</div>
           </div>
           <div className="size-1.5 bg-black rounded-full" />
           <div className="size- flex justify-start items-center gap-2">
-            <div className="size-5 relative overflow-hidden">
-              <div className="size-1 left-[7.92px] top-[5.42px] absolute outline outline-[1.50px] outline-offset-[-0.75px] outline-black" />
-              <div className="w-3 h-3.5 left-[4.17px] top-[1.67px] absolute outline outline-[1.50px] outline-offset-[-0.75px] outline-black" />
-              <div className="w-2.5 h-[1.67px] left-[5px] top-[16.67px] absolute outline outline-[1.50px] outline-offset-[-0.75px] outline-black" />
-            </div>
+            <Icon icon="hugeicons:location-05" className="w-5 h-5 text-black" />
             <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5">
               {job.work_mode && job.location
                 ? `${job.work_mode} - ${job.location}`

@@ -112,10 +112,10 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
       <div className="relative">
         <button
           onClick={() => toggleDropdown(label)}
-          className={`h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2 transition-all active:scale-95 ${
+          className={`h-10 px-4 py-2 rounded-3xl flex justify-center items-center gap-2 transition-all active:scale-95 ${
             isSelected
-              ? 'bg-indigo-50 outline-indigo-500 text-indigo-500 font-semibold'
-              : 'bg-white outline-indigo-50 text-black font-normal hover:bg-slate-50'
+              ? 'bg-indigo-50 outline outline-1 outline-offset-[-1px] outline-indigo-500 text-indigo-500 font-semibold'
+              : 'bg-white text-black font-normal hover:bg-slate-50'
           }`}
         >
           <span className="text-sm font-['Poppins'] leading-5">
