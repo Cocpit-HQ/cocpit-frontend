@@ -1,4 +1,4 @@
-import { Job, JobsFilter, JobListing, JobOffer } from '../types/jobs.types';
+import { Job, JobsFilter, JobListing, JobOffer, ListingsCounts } from '../types/jobs.types';
 import { DUMMY_JOBS, DUMMY_OFFERS } from '../utils/jobs.utils';
 import api from '@/lib/axios';
 
@@ -230,8 +230,19 @@ export const respondToOffer = async (offerId: string, action: 'accept' | 'declin
 // Mock Listings Data
 const DUMMY_JOB_LISTINGS: JobListing[] = [];
 
-export const getMyListings = async (): Promise<JobListing[]> => {
+export const getMyListings = async (status?: string, cursor?: string, limit: number = 10) => {
   try {
+    const params: Record<string, any> = { limit };
+    if (cursor) params.cursor = cursor;
+    if (status && status !== 'All') {
+      // Map frontend labels to backend param: "In review" -> "IN_REVIEW", "Drafts" -> "DRAFT"
+      let statusParam = status;
+      if (status === 'Drafts') statusParam = 'DRAFT';
+      else if (status === 'In review') statusParam = 'IN_REVIEW';
+      else statusParam = status.replace(/ /g, '_').toUpperCase();
+      params.status = statusParam;
+    }
+
     const actorType = api.defaults.headers.common["x-actor-type"];
     const actorId = api.defaults.headers.common["x-actor-id"];
     
@@ -239,8 +250,12 @@ export const getMyListings = async (): Promise<JobListing[]> => {
       ? `/organizations/${actorId}/jobs?scope=internal`
       : `/jobs/my`;
 
-    const response = await api.get(endpoint);
-    return response.data.map((job: any) => ({
+    const response = await api.get(endpoint, { params });
+    const responseData = response.data;
+
+    // Parse structured response { jobs, nextCursor, hasMore, counts }
+    const fetchedJobs = responseData.jobs || responseData;
+    const mapped = fetchedJobs.map((job: any) => ({
       id: job.job_id,
       title: job.title,
       status: job.status,
@@ -255,9 +270,15 @@ export const getMyListings = async (): Promise<JobListing[]> => {
       salary_max: job.salary_max,
       salary_currency: job.salary_currency
     })) as JobListing[];
+
+    const nextCursor = responseData.nextCursor || null;
+    const hasMore = responseData.hasMore ?? false;
+    const counts: ListingsCounts = responseData.counts || { all: 0, active: 0, closed: 0, draft: 0, inReview: 0 };
+
+    return { data: mapped, nextCursor, hasMore, counts };
   } catch (error) {
     console.error("Failed to fetch listings:", error);
-    return [];
+    return { data: [], nextCursor: null, hasMore: false, counts: { all: 0, active: 0, closed: 0, draft: 0, inReview: 0 } as ListingsCounts };
   }
 };
 

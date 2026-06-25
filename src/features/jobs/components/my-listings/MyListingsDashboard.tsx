@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import * as jobsService from '../../services/jobs.service';
 import { JobListing } from '../../types/jobs.types';
+import { useMyListings } from '../../hooks/useMyListings';
 import { CreateJobFlow } from '../create-job/CreateJobFlow';
 import ListingsTab from './ListingsTab';
 import ListingDetailsScreen from './ListingDetailsScreen';
@@ -20,34 +21,20 @@ type ViewState = 'dashboard' | 'create-job' | 'view-listing' | 'applicants' | 'o
 export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack }) => {
   const [view, setView] = useState<ViewState>('dashboard');
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('Listings');
-  const [listings, setListings] = useState<JobListing[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { 
+    listings, isLoading, isFetchingMore, hasMore, counts,
+    statusFilter, setStatusFilter, loadMore, refresh
+  } = useMyListings();
+
   const [selectedListing, setSelectedListing] = useState<JobListing | null>(null);
   const [selectedOfferGroup, setSelectedOfferGroup] = useState<any | null>(null);
-
-  const fetchListings = async () => {
-    setIsLoading(true);
-    try {
-      const data = await jobsService.getMyListings();
-      setListings(data);
-    } catch (error) {
-      console.error('Failed to load job listings:', error);
-      toast.error('Failed to load job listings.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchListings();
-  }, []);
 
   const handleCreateJob = async (title: string, status: string, details?: Partial<JobListing>) => {
     try {
       const listingData = selectedListing ? { ...details, id: selectedListing.id } : details;
       const newListing = await jobsService.createJobListing(title, status, listingData);
       if (newListing) {
-        await fetchListings();
+        refresh();
         setView('dashboard');
         setActiveSubTab('Listings');
         setSelectedListing(null);
@@ -69,7 +56,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
     try {
       const success = await jobsService.closeJobListing(id);
       if (success) {
-        await fetchListings();
+        refresh();
         setSelectedListing(prev => prev ? { ...prev, status: 'CLOSED' } : null);
         toast.success('Job listing closed.');
       } else {
@@ -85,7 +72,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
     try {
       const success = await jobsService.deleteJobListing(id);
       if (success) {
-        await fetchListings();
+        refresh();
         setView('dashboard');
         toast.success('Job listing deleted.');
       } else {
@@ -246,7 +233,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       ) : (
         <div className="w-full">
           {activeSubTab === 'Listings' && (
-            listings.length === 0 ? (
+            counts.all === 0 && !isLoading ? (
               <div className="h-[693px] flex flex-col justify-center items-center gap-4 w-full">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-28 flex-shrink-0">
                   <g fillRule="evenodd" clipRule="evenodd">
@@ -285,6 +272,12 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
             ) : (
               <ListingsTab
                 listings={listings}
+                hasMore={hasMore}
+                isFetchingMore={isFetchingMore}
+                loadMore={loadMore}
+                counts={counts}
+                statusFilter={statusFilter}
+                onStatusFilterChange={setStatusFilter}
                 onSelectListing={(listing) => {
                   setSelectedListing(listing);
                   const status = listing.status?.toUpperCase();
