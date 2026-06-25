@@ -489,7 +489,8 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
       isCompanyPost, currentPoster, currentUser,
       userCompanies,
       achievementImageId, setAchievementImageId,
-      achievementTitle, setAchievementTitle
+      achievementTitle, setAchievementTitle,
+      getDefaultCategory
     },
     media,
     poll,

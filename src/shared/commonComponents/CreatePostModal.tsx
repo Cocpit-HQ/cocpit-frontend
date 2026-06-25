@@ -432,6 +432,11 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 setShowAccountSelector(false);
                 setShowAchievementDialog(true);
               } else {
+                if (state.postCategory === 'Achievement') {
+                  state.handleSetPostCategory(state.getDefaultCategory());
+                  state.setAchievementTitle(undefined);
+                  state.setAchievementImageId(undefined);
+                }
                 state.setPostType(action.type as any);
                 if (action.type === 'photo' && !hasImages) {
                   setTimeout(() => galleryInputRef.current?.click(), 0);

@@ -41,7 +41,7 @@ export const PostMedia = ({
               src={contentImgSrc}
               alt="Achievement media"
               fill
-              className="object-contain"
+              className="object-cover"
               priority={priority}
               sizes="(max-width: 768px) 100vw, 600px"
               onLoad={onLoad}
