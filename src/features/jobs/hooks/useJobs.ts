@@ -143,9 +143,10 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       }
 
       let formData: FormData | undefined = undefined;
-      if (uploadedFile || coverLetter) {
+      if (uploadedFile || coverLetter || resumeId) {
         formData = new FormData();
         if (uploadedFile) formData.append('resume', uploadedFile);
+        else if (resumeId) formData.append('resume_url', resumeId);
         if (coverLetter) formData.append('cover_note', coverLetter);
       }
 
@@ -157,9 +158,10 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       }
 
       toast.success('Successfully applied to the job!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to apply to job:', error);
-      toast.error('Failed to submit application.');
+      const message = error.response?.data?.message || 'Failed to submit application.';
+      toast.error(message);
     }
   }, [selectedJob]);
 

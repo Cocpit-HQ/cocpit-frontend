@@ -17,7 +17,6 @@ interface ApplyJobModalProps {
   onClose: () => void;
   onApply: (resumeUrl: string, uploadedFile: File | null, resumeId: string | null, coverLetter: string) => void;
   jobTitle?: string;
-  recentResumes?: Resume[];
 }
 
 export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
@@ -25,12 +24,12 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
   onClose,
   onApply,
   jobTitle,
-  recentResumes = []
 }) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [coverLetter, setCoverLetter] = useState<string>('');
+  const [fetchedResumes, setFetchedResumes] = useState<Resume[]>([]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,6 +40,20 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
       setSelectedResumeId(null);
       setUploadedFile(null);
       setCoverLetter('');
+      
+      // Fetch recent resumes
+      import('../services/jobs.service').then(service => {
+        service.getRecentResumes().then(resumes => {
+          // Format them properly
+          const formatted = resumes.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            url: r.url,
+            type: r.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'Document'
+          }));
+          setFetchedResumes(formatted);
+        }).catch(err => console.error("Failed to fetch resumes", err));
+      });
     }
   }, [isOpen]);
 
@@ -82,7 +95,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
   };
 
   const handleSubmit = () => {
-    const resumeUrlOrName = uploadedFile ? uploadedFile.name : (recentResumes.find(r => r.id === selectedResumeId)?.name || 'resume.pdf');
+    const resumeUrlOrName = uploadedFile ? uploadedFile.name : (fetchedResumes.find(r => r.id === selectedResumeId)?.id || 'resume.pdf');
     onApply(resumeUrlOrName, uploadedFile, selectedResumeId, coverLetter);
     onClose();
   };
@@ -94,11 +107,11 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
   // Get active selection details for Screen 2
   const selectedResumeName = uploadedFile 
     ? uploadedFile.name 
-    : recentResumes.find(r => r.id === selectedResumeId)?.name || '';
+    : fetchedResumes.find(r => r.id === selectedResumeId)?.name || '';
 
   const selectedResumeType = uploadedFile
     ? (uploadedFile.name.split('.').pop()?.toUpperCase() === 'PDF' ? 'PDF' : 'Document')
-    : recentResumes.find(r => r.id === selectedResumeId)?.type || 'Document';
+    : fetchedResumes.find(r => r.id === selectedResumeId)?.type || 'Document';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -194,7 +207,10 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                 )}
 
                 {/* Recent Resumes List */}
-                {recentResumes.map((resume) => {
+                {fetchedResumes.length === 0 && !uploadedFile && (
+                  <span className="font-['Poppins'] text-sm text-[#6B7280]">No recent resumes found</span>
+                )}
+                {fetchedResumes.map((resume) => {
                   const isSelected = selectedResumeId === resume.id;
                   return (
                     <div 

@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Icon } from '@iconify/react';
 import { JobListing } from '../../types/jobs.types';
+import {
+  getJobApplicants,
+  getApplicationDetail,
+  getApplicationAnalysis,
+  updateApplicationStatus,
+  upsertApplicationNote,
+  getJobDetail
+} from '../../services/jobs.service';
 
 interface ApplicantsDashboardProps {
   listing: JobListing;
@@ -193,13 +201,35 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   onBack,
   onViewDetails,
 }) => {
-  const [candidates, setCandidates] = useState<Candidate[]>(INITIAL_CANDIDATES);
-  const [selectedCandId, setSelectedCandId] = useState<string>('cand-2'); // James keno as default selected
+  const [candidates, setCandidates] = useState<any[]>([]);
+  const [selectedCandId, setSelectedCandId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterOption>('Top match');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
+  const [isNoteExpanded, setIsNoteExpanded] = useState(false);
+
+  // Real data state
+  const [candidateDetail, setCandidateDetail] = useState<any>(null);
+  const [candidateAnalysis, setCandidateAnalysis] = useState<any>(null);
+  const [jobDetail, setJobDetail] = useState<any>(null);
+  const [isLoadingList, setIsLoadingList] = useState(true);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch job details on mount
+  useEffect(() => {
+    let active = true;
+    const fetchJob = async () => {
+      const job = await getJobDetail(listing.id);
+      if (active && job) {
+        setJobDetail(job);
+      }
+    };
+    fetchJob();
+    return () => { active = false; };
+  }, [listing.id]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -215,62 +245,97 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
     };
   }, [isDropdownOpen]);
 
+  // Fetch list
+  useEffect(() => {
+    let active = true;
+    const fetchList = async () => {
+      setIsLoadingList(true);
+      let apiStatus;
+      if (filter === 'Shortlisted') apiStatus = 'Shortlisted';
+      else if (filter === 'Pending') apiStatus = 'Applied';
+
+      const list = await getJobApplicants(listing.id, apiStatus);
+      if (active) {
+        setCandidates(list || []);
+        if (list?.length > 0 && !selectedCandId) {
+          setSelectedCandId(list[0].applicationId);
+        }
+        setIsLoadingList(false);
+      }
+    };
+    fetchList();
+    return () => { active = false; };
+  }, [listing.id, filter]);
+
+  // Fetch detail
+  useEffect(() => {
+    if (!selectedCandId) return;
+    let active = true;
+    const fetchDetail = async () => {
+      setIsLoadingDetail(true);
+      const [detail, analysis] = await Promise.all([
+        getApplicationDetail(selectedCandId),
+        getApplicationAnalysis(selectedCandId)
+      ]);
+      if (active) {
+        setCandidateDetail(detail);
+        setCandidateAnalysis(analysis);
+        setIsLoadingDetail(false);
+      }
+    };
+    fetchDetail();
+    return () => { active = false; };
+  }, [selectedCandId]);
+
   // Stats Counters
-  const [appCount] = useState(48);
-  const [shortlistCount, setShortlistCount] = useState(12);
+  const appCount = candidates.length;
+  const shortlistCount = candidates.filter(c => c.status === 'Shortlisted').length;
 
-  const selectedCandidate = candidates.find((c) => c.id === selectedCandId) || candidates[0];
+  const selectedCandidate = candidates.find((c) => c.applicationId === selectedCandId) || candidates[0];
 
-  const handleShortlist = (candId: string) => {
-    setCandidates((prev) =>
-      prev.map((c) => {
-        if (c.id === candId && c.status !== 'shortlisted') {
-          setShortlistCount((count) => count + 1);
-          return { ...c, status: 'shortlisted' };
-        }
-        return c;
-      })
-    );
+  const handleShortlist = async (candId: string) => {
+    try {
+      await updateApplicationStatus(candId, 'Shortlisted');
+      setCandidates(prev => prev.map(c => c.applicationId === candId ? { ...c, status: 'Shortlisted' } : c));
+      if (selectedCandId === candId && candidateDetail) {
+        setCandidateDetail({ ...candidateDetail, status: 'Shortlisted' });
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleDecline = (candId: string) => {
-    setCandidates((prev) =>
-      prev.map((c) => {
-        if (c.id === candId) {
-          if (c.status === 'shortlisted') {
-            setShortlistCount((count) => Math.max(0, count - 1));
-          }
-          return { ...c, status: 'declined' };
-        }
-        return c;
-      })
-    );
+  const handleDecline = async (candId: string) => {
+    try {
+      await updateApplicationStatus(candId, 'Rejected');
+      setCandidates(prev => prev.map(c => c.applicationId === candId ? { ...c, status: 'Rejected' } : c));
+      if (selectedCandId === candId && candidateDetail) {
+        setCandidateDetail({ ...candidateDetail, status: 'Rejected' });
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleSaveNote = () => {
-    setCandidates((prev) =>
-      prev.map((c) => {
-        if (c.id === selectedCandidate.id) {
-          return { ...c, note: noteText ? `"${noteText}"` : '' };
-        }
-        return c;
-      })
-    );
+  const handleSaveNote = async () => {
+    if (!selectedCandId) return;
+    try {
+      await upsertApplicationNote(selectedCandId, noteText);
+      if (candidateDetail) {
+        setCandidateDetail({ ...candidateDetail, selfNote: noteText });
+      }
+    } catch (error) {
+      console.error(error);
+    }
     setIsNoteModalOpen(false);
   };
 
   const openNoteModal = () => {
-    setNoteText(selectedCandidate.note ? selectedCandidate.note.replace(/^"|"$/g, '') : '');
+    setNoteText(candidateDetail?.selfNote || '');
     setIsNoteModalOpen(true);
   };
 
-  // Filter candidates list
-  const filteredCandidates = candidates.filter((c) => {
-    if (filter === 'Shortlisted') return c.status === 'shortlisted';
-    if (filter === 'Pending') return c.status === 'pending';
-    if (filter === 'Noted') return !!c.note;
-    return true;
-  });
+  const filteredCandidates = candidates;
 
   return (
     <div 
@@ -295,12 +360,12 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
         {/* Message frame (Frame 2608578) */}
         <div className="flex flex-col items-start p-0 w-[343px] h-[42px] flex-none order-1 grow-0">
-          <span 
+          <span
             className="w-[100px] h-[26px] font-['Poppins'] font-medium text-[18px] leading-[26px] text-black flex items-center justify-start text-left flex-none order-0 grow-0"
           >
             Applicants
           </span>
-          <span 
+          <span
             className="w-[343px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex items-center justify-start text-left flex-none order-1 grow-0"
           >
             Review and shortlist candidates with AI-powered insights
@@ -314,12 +379,12 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
       >
         {/* Job text frame (Frame 2609064) */}
         <div className="flex flex-col items-start p-0 gap-[8px] w-[710px] h-[48px] flex-none order-0 grow-[1] min-w-0">
-          <span 
+          <span
             className="w-[121px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black capitalize flex-none order-0 grow-0 truncate"
           >
             {listing.title}
           </span>
-          <span 
+          <span
             className="w-[710px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] flex-none order-1 self-stretch grow-0 truncate"
           >
             Posted {listing.posted_at || '2 hours ago'}
@@ -327,7 +392,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         </div>
 
         {/* Status Chip (Background+Border) */}
-        <div 
+        <div
           className="flex flex-col justify-center items-center p-[8px] w-[70px] h-[31px] bg-[#F0FDF4] rounded-[9999px] flex-none order-1 grow-0"
         >
           <span className="text-[#22C55E] text-[10px] font-medium font-['Poppins'] uppercase leading-[15px] flex items-center text-center">
@@ -341,7 +406,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           type="button"
           className="box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-[116px] h-[40px] bg-white border border-[#818CF8] rounded-[24px] flex-none order-2 grow-0 hover:bg-indigo-50/10 active:scale-95 transition-all"
         >
-          <span 
+          <span
             className="w-[84px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#818CF8] flex-none order-0 grow-0"
           >
             View details
@@ -357,7 +422,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         <div 
           className="box-border flex flex-col items-start p-[16px] gap-[8px] w-[491px] h-[88px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-0 grow-[1]"
         >
-          <span 
+          <span
             className="w-[82px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] flex-none order-0 grow-0 uppercase tracking-wider"
           >
             APPLICATIONS
@@ -373,7 +438,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         <div 
           className="box-border flex flex-col items-start p-[16px] gap-[8px] w-[491px] h-[88px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-1 grow-[1]"
         >
-          <span 
+          <span
             className="w-[75px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] flex-none order-0 grow-0 uppercase tracking-wider"
           >
             SHORTLISTED
@@ -391,43 +456,43 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         className="flex flex-row items-start p-0 gap-[16px] w-[998px] h-[901px] flex-none order-3 self-stretch grow-0"
       >
         {/* Left Column: Candidates list (Frame 2609067) */}
-        <div 
+        <div
           className="box-border flex flex-col items-start p-[12px] gap-[16px] w-[294px] h-[574px] border border-[#EEF2FF] rounded-[24px] flex-none order-0 grow-0"
         >
           {/* Header Container */}
-          <div 
+          <div
             className="flex flex-row justify-between items-center p-0 w-[270px] h-[40px] flex-none order-0 self-stretch grow-0"
           >
             {/* Title and pagination frame (Frame 2609111) */}
-            <div 
+            <div
               className="flex flex-row justify-between items-center p-0 gap-[8px] w-[214px] h-[20px] flex-none order-0 grow-[1]"
             >
-              <span 
+              <span
                 className="w-[86px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-[#000000] flex-none order-0 grow-0"
               >
                 CANDIDATES
               </span>
-              
+
               {/* Pagination Next */}
-              <div 
+              <div
                 className="flex flex-row justify-end items-center p-0 gap-[8px] w-[66px] h-[16px] rounded-[8px] flex-none order-1 grow-0"
               >
                 {/* Arrow Left */}
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="w-[16px] h-[16px] flex items-center justify-center p-0 hover:bg-slate-50 rounded flex-none order-0 grow-0 text-slate-300"
                 >
                   <Icon icon="lucide:chevron-left" className="w-[16px] h-[16px]" />
                 </button>
                 {/* Page Count */}
-                <span 
+                <span
                   className="w-[18px] h-[16px] font-['Inter'] font-normal text-[16px] leading-[16px] text-[#1E1E1E] flex items-center justify-center flex-none order-1 grow-0"
                 >
                   01
                 </span>
                 {/* Arrow Right */}
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="w-[16px] h-[16px] flex items-center justify-center p-0 hover:bg-slate-50 rounded flex-none order-2 grow-0 text-[#6366F1]"
                 >
                   <Icon icon="lucide:chevron-right" className="w-[16px] h-[16px]" />
@@ -461,9 +526,8 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                           className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-indigo-50/25 transition-colors"
                         >
                           <span
-                            className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${
-                              isOptActive ? 'text-indigo-500' : 'text-black'
-                            }`}
+                            className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${isOptActive ? 'text-indigo-500' : 'text-black'
+                              }`}
                           >
                             {opt}
                           </span>
@@ -477,7 +541,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           </div>
 
           {/* Candidate Card List (Frame 2609108) */}
-          <div 
+          <div
             className="flex flex-col items-start p-0 gap-[16px] w-[270px] h-[356px] flex-none order-1 grow-0 overflow-y-auto scrollbar-none"
             style={{ scrollbarWidth: 'none' }}
           >
@@ -488,22 +552,22 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
               </div>
             ) : (
               filteredCandidates.map((cand) => {
-                const isSelected = cand.id === selectedCandId;
+                const isSelected = cand.applicationId === selectedCandId;
                 return (
                   <div
-                    key={cand.id}
-                    onClick={() => setSelectedCandId(cand.id)}
+                    key={cand.applicationId}
+                    onClick={() => setSelectedCandId(cand.applicationId)}
                     className="box-border flex flex-row items-center p-[12px] gap-[8px] w-[270px] h-[78px] rounded-[12px] flex-none order-0 self-stretch grow-0 cursor-pointer transition-all duration-200"
                     style={{
                       backgroundColor: isSelected ? '#EEF2FF' : '#FFFFFF',
                     }}
                   >
                     {/* Ellipse 2 (User avatar) */}
-                    {cand.avatar ? (
-                      <img 
-                        className="w-[50px] h-[50px] rounded-full object-cover flex-none order-0 grow-0" 
-                        src={cand.avatar} 
-                        alt={cand.name} 
+                    {cand.avatarUrl ? (
+                      <img
+                        className="w-[50px] h-[50px] rounded-full object-cover flex-none order-0 grow-0"
+                        src={cand.avatarUrl}
+                        alt={cand.name}
                       />
                     ) : (
                       <div className="w-[50px] h-[50px] bg-slate-200 rounded-full flex items-center justify-center text-gray-500 font-semibold font-['Poppins'] text-sm flex-none order-0 grow-0">
@@ -513,18 +577,17 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
                     {/* Text block */}
                     <div className="flex flex-col justify-center items-start p-0 gap-[4px] flex-1 min-w-0 h-[50px]">
-                      <span 
+                      <span
                         className="w-full text-black text-[16px] font-medium font-['Poppins'] leading-[24px] truncate flex items-center capitalize"
                       >
                         {cand.name}
                       </span>
-                      
-                      {/* Frame 2609066 */}
+
                       <div className="flex flex-row items-center p-0 gap-[4px] w-[97px] h-[26px] flex-none">
-                        {cand.score !== null ? (
+                        {cand.matchScore != null ? (
                           <>
                             <span className="w-[38px] h-[26px] font-['Poppins'] font-medium text-[18px] leading-[26px] flex items-center text-[#6366F1]">
-                              {cand.score}%
+                              {cand.matchScore}%
                             </span>
                             <span className="w-[55px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280]">
                               AI match
@@ -555,60 +618,60 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
             {/* User details / Frame 2608774 */}
             <div className="flex flex-row items-center p-0 gap-[8px] w-auto h-[44px] flex-none order-0 grow-0">
               {/* Ellipse 3 (Avatar) */}
-              {selectedCandidate.avatar ? (
-                <img 
-                  className="w-[44px] h-[44px] rounded-full object-cover flex-none order-0 self-stretch grow-0" 
-                  src={selectedCandidate.avatar} 
-                  alt={selectedCandidate.name} 
+              {candidateDetail?.avatarUrl ? (
+                <img
+                  className="w-[44px] h-[44px] rounded-full object-cover flex-none order-0 self-stretch grow-0"
+                  src={candidateDetail?.avatarUrl}
+                  alt={candidateDetail?.name}
                 />
               ) : (
                 <div className="w-[44px] h-[44px] bg-slate-200 rounded-full flex items-center justify-center text-gray-500 font-semibold font-['Poppins'] text-sm flex-none order-0 self-stretch grow-0">
-                  {selectedCandidate.name.substring(0, 2).toUpperCase()}
+                  {candidateDetail?.name.substring(0, 2).toUpperCase()}
                 </div>
               )}
 
               {/* Frame 2609009 */}
               <div className="flex flex-col items-start p-0 gap-[4px] w-auto h-[44px] flex-none order-1 grow-0">
                 {/* Name */}
-                <span 
+                <span
                   className="w-auto h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] text-black flex items-center text-left whitespace-nowrap"
                 >
-                  {selectedCandidate.name}
+                  {candidateDetail?.name}
                 </span>
 
                 {/* Frame 2609097 */}
                 <div className="flex flex-row justify-start items-center p-0 gap-[8px] w-auto h-[16px] flex-none order-1 grow-0">
                   {/* Role */}
-                  <span 
+                  <span
                     className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex items-center truncate"
                     style={{ maxWidth: '88px' }}
                   >
-                    {selectedCandidate.title}
+                    {candidateDetail?.headline}
                   </span>
                   {/* Badge (Ellipse 15) */}
                   <div className="w-[6px] h-[6px] bg-[#6B7280] rounded-full flex-none grow-0" />
                   {/* Location */}
-                  <span 
+                  <span
                     className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex items-center truncate"
                     style={{ maxWidth: '76px' }}
                   >
-                    {selectedCandidate.location}
+                    {candidateDetail?.location}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Match count frame (Frame 2609066) */}
-            {selectedCandidate.score !== null && (
+            {candidateAnalysis?.matchScore != null && (
               <div className="flex flex-col justify-center items-start p-0 gap-[4px] w-[55px] h-[52px] flex-none order-1 grow-0">
                 {/* Score text */}
-                <span 
+                <span
                   className="w-[51px] h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-[#6366F1] flex-none order-0 grow-0"
                 >
-                  {selectedCandidate.score}%
+                  {candidateAnalysis?.matchScore}%
                 </span>
                 {/* AI match text */}
-                <span 
+                <span
                   className="w-[55px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] flex-none order-1 grow-0"
                 >
                   AI match
@@ -627,7 +690,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
               type="button"
               className="flex flex-row justify-center items-center p-0 gap-[10px] w-[77px] h-[20px] rounded-[24px] flex-none order-0 grow-0 cursor-pointer"
             >
-              <span 
+              <span
                 className="w-[77px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#000000] flex-none order-0 grow-0"
               >
                 Add a note
@@ -638,55 +701,63 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
             <div className="flex flex-row items-center p-0 gap-[16px] w-[216px] h-[40px] flex-none order-1 grow-0">
               {/* Decline Button / Frame 2608618 */}
               <button
-                onClick={() => handleDecline(selectedCandidate.id)}
-                disabled={selectedCandidate.status === 'declined'}
+                onClick={() => handleDecline(selectedCandidate?.applicationId)}
+                disabled={candidateDetail?.status === 'Rejected'}
                 type="button"
                 className="box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-[100px] h-[40px] border border-[#818CF8] rounded-[24px] flex-none order-0 grow-0 hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span 
+                <span
                   className="w-[52px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#818CF8] flex-none order-0 grow-0"
                 >
-                  {selectedCandidate.status === 'declined' ? 'Declined' : 'Decline'}
+                  {candidateDetail?.status === 'Rejected' ? 'Declined' : 'Decline'}
                 </span>
               </button>
 
               {/* Shortlist Button / Frame 2608617 */}
               <button
-                onClick={() => handleShortlist(selectedCandidate.id)}
-                disabled={selectedCandidate.status === 'shortlisted'}
+                onClick={() => handleShortlist(selectedCandidate?.applicationId)}
+                disabled={candidateDetail?.status === 'Shortlisted'}
                 type="button"
                 className="box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-[100px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] flex-none order-1 grow-0 hover:bg-[#5558e6] transition-all disabled:opacity-75 disabled:cursor-not-allowed"
               >
-                <span 
+                <span
                   className="w-[56px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white flex-none order-0 grow-0"
                 >
-                  {selectedCandidate.status === 'shortlisted' ? 'Shortlisted' : 'Shortlist'}
+                  {candidateDetail?.status === 'Shortlisted' ? 'Shortlisted' : 'Shortlist'}
                 </span>
               </button>
             </div>
           </div>
 
           {/* Self Note Frame / Frame 2609091 */}
-          {selectedCandidate.note && (
+          {candidateDetail?.selfNote && (
             <div 
               className="flex flex-col items-start p-0 gap-[8px] w-[688px] flex-none order-2 self-stretch grow-0"
             >
               {/* Title */}
-              <span 
+              <span
                 className="w-[80px] h-[26px] font-['Poppins'] font-medium text-[18px] leading-[26px] text-left text-black flex items-center"
               >
                 Self Note
               </span>
-              
+
               {/* Note body frame / Frame 2609030 */}
               <div 
                 className="box-border flex flex-col items-start py-[12px] px-[16px] gap-[8px] w-[688px] bg-[#F9FAFF] border-l-2 border-[#6366F1] rounded-tr-[16px] rounded-bl-[16px] rounded-br-[16px] flex-none order-1 self-stretch grow-0"
               >
                 <span 
-                  className="w-[656px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex-none order-0 self-stretch grow-0"
+                  className={`w-[656px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex-none order-0 self-stretch grow-0 whitespace-pre-wrap break-words ${isNoteExpanded ? '' : 'line-clamp-2'}`}
                 >
-                  {selectedCandidate.note}
+                  {candidateDetail?.selfNote}
                 </span>
+                {candidateDetail?.selfNote && candidateDetail.selfNote.length > 150 && (
+                  <button 
+                    onClick={() => setIsNoteExpanded(!isNoteExpanded)}
+                    className="text-[#6366F1] text-[12px] font-medium font-['Poppins'] hover:underline"
+                  >
+                    {isNoteExpanded ? 'Read less' : 'Read more'}
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -698,7 +769,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
             {/* Doc Frame / Frame 2608990 */}
             <div className="flex flex-row items-center p-0 gap-[8px] w-[178px] h-[40px] flex-none order-0 grow-0">
               {/* Icon Frame / Frame 2608983 */}
-              <div 
+              <div
                 className="flex flex-row justify-center items-center p-0 gap-[10px] w-[40px] h-[40px] rounded-[12px] bg-[#FFF5F5] flex-none order-0 grow-0 text-[#FF6B6B]"
               >
                 <Icon icon="lucide:file-text" className="w-[20px] h-[26px]" />
@@ -706,12 +777,12 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
               {/* Name frame / Frame 2608938 */}
               <div className="flex flex-col justify-center items-start p-0 gap-[4px] w-[130px] h-[40px] flex-none order-1 grow-0">
-                <span 
+                <span
                   className="w-[130px] h-[20px] font-['Poppins'] font-semibold text-[14px] text-left leading-[20px] text-black flex items-center truncate"
                 >
-                  {selectedCandidate.resume}
+                  {candidateDetail?.resumeName}
                 </span>
-                
+
                 {/* Frame 2608988 */}
                 <div className="flex flex-row justify-start items-center p-0 gap-[8px] w-[63px] h-[16px] flex-none order-1 grow-0">
                   <span className="text-[#6B7280] text-[10px] font-medium font-['Poppins'] uppercase">
@@ -722,8 +793,14 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
             </div>
 
             {/* Eye Icon Button / Open eye */}
-            <button 
-              onClick={() => window.open(`/resumes/${selectedCandidate.resume}`, '_blank')}
+            <button
+              onClick={() => {
+                if (candidateDetail?.resumeUrl) {
+                  window.open(candidateDetail.resumeUrl, '_blank');
+                } else if (candidateDetail?.resumeName) {
+                  window.open(`/resumes/${candidateDetail.resumeName}`, '_blank');
+                }
+              }}
               type="button"
               className="w-[24px] h-[24px] flex items-center justify-center p-0 hover:bg-slate-50 rounded flex-none order-1 grow-0"
             >
@@ -732,7 +809,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           </div>
 
           {/* AI Executive Summary Block / Section - AI Executive Summary */}
-          {selectedCandidate.summary && (
+          {candidateAnalysis?.summary && (
             <div 
               className="flex flex-col items-start p-[16px] gap-[16px] w-[688px] bg-[#F9FAFF] rounded-[24px] flex-none order-4 self-stretch grow-0 box-border"
             >
@@ -740,10 +817,10 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
               <div className="flex flex-row items-center p-0 gap-[8px] w-[656px] h-[20px] flex-none order-0 self-stretch grow-0">
                 {/* AI Icon */}
                 <img src="/assets/AI 2.svg" alt="AI Icon" className="w-[20px] h-[20px] flex-none" />
-                
+
                 {/* Heading */}
                 <div className="flex flex-col items-start p-0 h-[16px] flex-none order-1 grow-0">
-                  <span 
+                  <span
                     className="h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6366F1] uppercase tracking-wider whitespace-nowrap"
                   >
                     AI Executive Summary
@@ -760,11 +837,12 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   >
                     Strengths
                   </span>
-                  
+
                   {/* Frame 2609109 */}
                   <div className="flex flex-col items-start p-0 gap-[8px] w-[292px] h-[68px] flex-none order-1 grow-[1] overflow-y-auto scrollbar-none">
-                    {selectedCandidate.summary.strengths.map((str, idx) => (
-                      <span 
+
+                    {candidateAnalysis?.summary.strengths.map((str: string, idx: number) => (
+                      <span
                         key={idx}
                         className="w-[292px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black"
                       >
@@ -781,10 +859,10 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   >
                     Concerns
                   </span>
-                  
+
                   <div className="flex flex-col items-start p-0 gap-[8px] w-[292px] h-[68px] flex-none order-1 grow-[1] overflow-y-auto scrollbar-none">
-                    {selectedCandidate.summary.concerns.map((con, idx) => (
-                      <span 
+                    {candidateAnalysis?.summary.concerns.map((con: string, idx: number) => (
+                      <span
                         key={idx}
                         className="w-[292px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black"
                       >
@@ -801,14 +879,14 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
               >
                 <div className="w-[656px] min-h-[32px] h-auto font-['Poppins'] font-normal text-[12px] leading-[16px] text-black text-left">
                   <span className="font-semibold text-[#6366F1] mr-1">Recommendation:</span>
-                  <span>{selectedCandidate.summary.recommendation}</span>
+                  <span>{candidateAnalysis?.summary.recommendation}</span>
                 </div>
               </div>
             </div>
           )}
 
           {/* Skills match / Skills Match */}
-          {selectedCandidate.skills && (
+          {candidateDetail?.skills && candidateDetail.skills.length > 0 && (
             <div 
               className="box-border flex flex-col items-start p-[12px] gap-[16px] w-[688px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-4 self-stretch grow-0"
             >
@@ -819,37 +897,23 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 >
                   Skills
                 </span>
-
-                {/* Match percent frame (Background+Border) */}
-                <div 
-                  className="flex flex-row justify-center items-center py-[8px] px-[12px] h-[31px] bg-[#EEF2FF] rounded-[9999px] flex-none grow-0"
-                >
-                  <span 
-                    className="font-['Inter'] font-bold text-[10px] leading-[15px] flex items-center justify-center text-[#6366F1] uppercase whitespace-nowrap"
-                  >
-                    {selectedCandidate.skills.match}% MATCH
-                  </span>
-                </div>
               </div>
 
               {/* Skills chip frame / Container */}
               <div className="flex flex-row items-center p-0 gap-[8px] w-[662px] min-h-[32px] h-auto flex-none self-stretch grow-0 flex-wrap">
-                {selectedCandidate.skills.tags.map((t, idx) => {
-                  const bg = t.matched ? '#EEF2FF' : '#FEE2E2';
-                  const text = t.matched ? '#6366F1' : '#FF6B6B';
+                {candidateDetail.skills.map((t: string | any, idx: number) => {
+                  const skillName = typeof t === 'string' ? t : t.name;
                   return (
                     <div 
                       key={idx}
                       className="flex flex-col justify-center items-center py-[8px] px-[16px] h-[32px] rounded-[9999px] flex-none"
-                      style={{
-                        backgroundColor: bg,
-                      }}
+                      style={{ backgroundColor: '#EEF2FF' }}
                     >
                       <span 
                         className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-center"
-                        style={{ color: text }}
+                        style={{ color: '#6366F1' }}
                       >
-                        {t.name}
+                        {skillName}
                       </span>
                     </div>
                   );
@@ -860,13 +924,13 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
               <span 
                 className="w-auto font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black"
               >
-                {selectedCandidate.skills.summary}
+                Candidate's listed skills.
               </span>
             </div>
           )}
 
           {/* Meta section (Experience & Qualification side-by-side) / Frame 2609110 */}
-          {selectedCandidate.experience && selectedCandidate.qualification && (
+          {candidateAnalysis?.experience && candidateAnalysis?.qualification && (
             <div className="flex flex-row items-start p-0 gap-[16px] w-[688px] h-[197px] flex-none order-5 self-stretch grow-0">
               {/* Left Experience frame / Experience Match */}
               <div 
@@ -884,7 +948,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   <span 
                     className="w-[47px] h-[15px] font-['Inter'] font-bold text-[10px] leading-[15px] flex items-center text-[#6366F1] uppercase"
                   >
-                    {selectedCandidate.experience.status}
+                    {candidateAnalysis.experience.status}
                   </span>
                 </div>
 
@@ -899,7 +963,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     </span>
                     <div className="flex flex-col items-start p-0 opacity-50 flex-none order-1 grow-0">
                       <span className="h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-black whitespace-nowrap">
-                        {selectedCandidate.experience.required}
+                        {candidateAnalysis.experience.required}
                       </span>
                     </div>
                   </div>
@@ -917,7 +981,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                       ACTUAL
                     </span>
                     <span className="h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-black whitespace-nowrap">
-                      {selectedCandidate.experience.actual}
+                      {candidateAnalysis.experience.actual}
                     </span>
                   </div>
                 </div>
@@ -926,7 +990,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 <span 
                   className="w-[310px] h-[40px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black"
                 >
-                  {selectedCandidate.experience.summary}
+                  {candidateAnalysis.experience.summary}
                 </span>
               </div>
 
@@ -946,7 +1010,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   <span 
                     className="w-[45px] h-[15px] font-['Inter'] font-bold text-[10px] leading-[15px] flex items-center text-[#6366F1] uppercase"
                   >
-                    {selectedCandidate.qualification.status}
+                    PROVIDED
                   </span>
                 </div>
 
@@ -955,12 +1019,12 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   <span 
                     className="w-[294px] h-[24px] font-['Poppins'] font-normal text-[16px] leading-[24px] flex items-center text-black truncate"
                   >
-                    {selectedCandidate.qualification.degree}
+                    {candidateAnalysis.qualification.degree}
                   </span>
                   <span 
                     className="w-[294px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] uppercase mt-[4px]"
                   >
-                    {selectedCandidate.qualification.class}
+                    {candidateAnalysis.qualification.class}
                   </span>
                 </div>
 
@@ -968,7 +1032,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 <span 
                   className="w-[310px] h-[40px] font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black"
                 >
-                  {selectedCandidate.qualification.summary}
+                  {candidateAnalysis.qualification.summary}
                 </span>
               </div>
             </div>
@@ -981,7 +1045,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-96 p-4 bg-white rounded-3xl inline-flex flex-col justify-start items-center overflow-hidden border border-zinc-100 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="self-stretch flex flex-col justify-start items-end gap-2.5">
-              <button 
+              <button
                 onClick={() => setIsNoteModalOpen(false)}
                 type="button"
                 className="w-6 h-6 flex items-center justify-center hover:bg-slate-50 rounded-full transition-colors"

@@ -488,10 +488,6 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
             setShowApplyModal(false);
           }}
           jobTitle={job.title}
-          recentResumes={[
-            { id: '1', name: 'xyz.pdf', url: '#', type: 'PDF' },
-            { id: '2', name: 'UIV.CV', url: '#', type: 'Document' }
-          ]}
         />
 
         {/* Withdraw Confirmation Modal */}

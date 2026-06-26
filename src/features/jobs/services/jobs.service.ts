@@ -304,9 +304,21 @@ export const applyJob = async (jobId: string, formData?: FormData): Promise<bool
   }
 };
 
+export const getRecentResumes = async (): Promise<any[]> => {
+  try {
+    const response = await api.get('/jobs/applications/me/resumes');
+    return response.data;
+  } catch (error) {
+    console.error('Error getting recent resumes:', error);
+    return [];
+  }
+};
+
 export const getMyApplications = async (): Promise<Job[]> => {
   try {
-    const response = await api.get('/jobs/applications/me');
+    const response = await api.get('/jobs/applications/me', {
+      params: { limit: 100 }
+    });
     const jobs = response.data;
     
     return jobs.map((job: any) => ({
@@ -336,6 +348,37 @@ export const getMyApplications = async (): Promise<Job[]> => {
   }
 };
 
+export const getJobApplicants = async (jobId: string, status?: string) => {
+  const params = status && status !== 'all' ? { status } : {};
+  const response = await api.get(`/jobs/${jobId}/applicants`, { params });
+  return response.data;
+};
+
+export const getApplicationDetail = async (appId: string) => {
+  const response = await api.get(`/jobs/applications/${appId}`);
+  return response.data;
+};
+
+export const getApplicationAnalysis = async (appId: string) => {
+  const response = await api.get(`/jobs/applications/${appId}/analysis`);
+  return response.data;
+};
+
+export const updateApplicationStatus = async (appId: string, status: string) => {
+  const response = await api.put(`/jobs/applications/${appId}/status`, { status });
+  return response.data;
+};
+
+export const upsertApplicationNote = async (appId: string, note: string) => {
+  const response = await api.put(`/jobs/applications/${appId}/note`, { note });
+  return response.data;
+};
+
+export const getJobDetail = async (jobId: string) => {
+  const response = await api.get(`/jobs/${jobId}`);
+  return response.data;
+};
+
 export const withdrawApplication = async (jobId: string): Promise<boolean> => {
   await new Promise(resolve => setTimeout(resolve, 200));
   inMemoryAppliedIds = inMemoryAppliedIds.filter(id => id !== jobId);
@@ -343,13 +386,13 @@ export const withdrawApplication = async (jobId: string): Promise<boolean> => {
 };
 
 export const getApplicationStats = async (): Promise<{ totalApplied: number; shortlisted: number }> => {
-  await new Promise(resolve => setTimeout(resolve, 150));
-  const appliedJobs = DUMMY_JOBS.filter(j => inMemoryAppliedIds.includes(j.id));
-  const shortlistedCount = appliedJobs.filter(j => j.application_status === 'Shortlisted').length;
-  return {
-    totalApplied: inMemoryAppliedIds.length,
-    shortlisted: shortlistedCount
-  };
+  try {
+    const response = await api.get('/jobs/applications/me/stats');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to get application stats:', error);
+    return { totalApplied: 0, shortlisted: 0 };
+  }
 };
 
 export const getMyOffers = async (): Promise<Job[]> => {

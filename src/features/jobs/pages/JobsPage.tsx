@@ -76,7 +76,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
   const [selectedStatusFilter, setSelectedStatusFilter] =
     React.useState<string>("All");
   const [selectedDateFilter, setSelectedDateFilter] =
-    React.useState<string>("today");
+    React.useState<string>("All time");
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] =
     React.useState<boolean>(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
@@ -117,11 +117,14 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
     }
 
     if (selectedStatusFilter !== "All") {
-      result = result.filter(
-        (job) =>
-          job.application_status?.toLowerCase() ===
-          selectedStatusFilter.toLowerCase(),
-      );
+      result = result.filter((job) => {
+        let status = job.application_status?.toLowerCase() || "";
+        // Map backend 'Rejected' status to UI 'Declined' filter
+        if (status === "rejected") {
+          status = "declined";
+        }
+        return status === selectedStatusFilter.toLowerCase();
+      });
     }
 
     return result;
@@ -325,7 +328,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
             {/* Card 1: Total Applied */}
             <div className="flex-1 h-[94px] p-[16px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
               <div className="text-[#6366F1] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
-                {appliedCount}
+                {applicationStats.totalApplied || 0}
               </div>
               <div className="text-[#000000] text-[14px] font-normal font-['Poppins'] leading-[20px]">
                 Total Applied
@@ -334,7 +337,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
             {/* Card 2: Shortlisted */}
             <div className="flex-1 h-[94px] p-[16px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
               <div className="text-[#6366F1] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
-                {shortlistedCount}
+                {applicationStats.shortlisted || 0}
               </div>
               <div className="text-[#000000] text-[14px] font-normal font-['Poppins'] leading-[20px]">
                 Shortlisted
@@ -347,8 +350,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
             {/* Top Filter Row */}
             <div className="w-full h-[40px] flex flex-row justify-between items-center relative">
               <span className="font-['Poppins'] text-[14px] font-normal text-[#000000] leading-[20px]">
-                Tracking {jobs.length} active job applications across your
-                network.
+                Tracking {applicationStats.totalApplied || jobs.length} active job applications across your network.
               </span>
               <div ref={dropdownRef} className="relative">
                 <button
@@ -364,6 +366,23 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                 {/* Filter Options Dropdown */}
                 {isFilterDropdownOpen && (
                   <div className="absolute right-0 top-[44px] z-50 w-48 p-2 bg-white rounded-tl-3xl rounded-bl-3xl rounded-br-3xl outline outline-1 outline-offset-[-1px] outline-indigo-200 inline-flex flex-col justify-start items-center overflow-hidden shadow-lg">
+                    <div
+                      onClick={() => {
+                        setSelectedDateFilter("All time");
+                        setIsFilterDropdownOpen(false);
+                      }}
+                      className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50"
+                    >
+                      <div
+                        className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${
+                          selectedDateFilter === "All time"
+                            ? "text-indigo-500"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        All time
+                      </div>
+                    </div>
                     <div
                       onClick={() => {
                         setSelectedDateFilter("today");
@@ -530,11 +549,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                         {/* Middle-right: Status */}
                         <div className="flex-1 min-w-[120px] flex items-center justify-center">
                           <span className="text-[#000000] text-[14px] font-normal font-['Poppins'] leading-[20px] text-center">
-                            {job.application_status?.toLowerCase() ===
-                            "in review"
+                            {job.application_status?.toLowerCase() === "in review"
                               ? "In review"
-                              : job.application_status?.toLowerCase() ===
-                                  "declined"
+                              : (job.application_status?.toLowerCase() === "declined" || job.application_status?.toLowerCase() === "rejected")
                                 ? "Declined"
                                 : job.application_status || "Applied"}
                           </span>
@@ -545,8 +562,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                           className="w-[120px] flex items-center justify-end"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {job.application_status?.toLowerCase() ===
-                          "declined" ? (
+                          {(job.application_status?.toLowerCase() === "declined" || job.application_status?.toLowerCase() === "rejected") ? (
                             <div className="w-[120px]" />
                           ) : job.application_status?.toLowerCase() ===
                             "in review" ? (
@@ -727,10 +743,6 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
           }
         }}
         jobTitle={applyingJob?.title}
-        recentResumes={[
-          { id: "1", name: "xyz.pdf", url: "#", type: "PDF" },
-          { id: "2", name: "UIV.CV", url: "#", type: "Document" },
-        ]}
       />
 
       {/* Withdraw Confirmation Modal */}
