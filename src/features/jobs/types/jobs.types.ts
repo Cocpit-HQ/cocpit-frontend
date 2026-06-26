@@ -41,6 +41,7 @@ export interface Job {
   recruiter_title?: string;
   recruiter_avatar?: string;
   recruiter_message?: string;
+  offer_id?: string;
 }
 
 export interface JobsFilter {

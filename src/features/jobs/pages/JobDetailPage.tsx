@@ -11,67 +11,21 @@ interface JobDetailPageProps {
   jobId: string;
 }
 
-const JobDetailMap = () => {
+const JobDetailMap = ({ location }: { location: string }) => {
   return (
     <div className="w-full h-full bg-[#E5E9F0] relative overflow-hidden flex items-center justify-center">
-      {/* Custom high-fidelity vector map representation matching screenshot */}
-      <svg className="w-full h-full absolute inset-0 opacity-80" viewBox="0 0 928 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Land Background */}
-        <rect width="928" height="240" fill="#F4F3F0" />
-        
-        {/* Green Parks */}
-        <path d="M 0 0 L 180 0 L 150 90 L 0 60 Z" fill="#D9F1D6" />
-        <path d="M 780 0 L 928 0 L 928 140 L 810 120 Z" fill="#D9F1D6" />
-        <path d="M 380 150 L 490 140 L 510 240 L 350 240 Z" fill="#D9F1D6" />
-        
-        {/* Water body */}
-        <path d="M 850 240 L 928 210 L 928 240 Z" fill="#C4E0E5" />
-
-        {/* Roads/Streets grid */}
-        {/* Baner-Aundh Rd */}
-        <path d="M -20 200 L 950 -20" stroke="#FFFFFF" strokeWidth="24" strokeLinecap="round" />
-        <path d="M -20 200 L 950 -20" stroke="#FCE8B2" strokeWidth="12" strokeLinecap="round" />
-
-        {/* Seasons Rd */}
-        <path d="M 350 -20 L 520 260" stroke="#FFFFFF" strokeWidth="18" strokeLinecap="round" />
-        <path d="M 350 -20 L 520 260" stroke="#EAEAE6" strokeWidth="8" strokeLinecap="round" />
-
-        {/* Diagonal side street */}
-        <path d="M 120 0 L 460 220" stroke="#FFFFFF" strokeWidth="14" strokeLinecap="round" />
-        <path d="M 120 0 L 460 220" stroke="#EAEAE6" strokeWidth="6" strokeLinecap="round" />
-
-        {/* Other side street */}
-        <path d="M 460 60 L 950 130" stroke="#FFFFFF" strokeWidth="14" strokeLinecap="round" />
-        <path d="M 460 60 L 950 130" stroke="#EAEAE6" strokeWidth="6" strokeLinecap="round" />
-
-        {/* Address texts and points */}
-        {/* The Tenth Floor */}
-        <circle cx="390" cy="60" r="4" fill="#F09A37" />
-        <text x="400" y="63" fill="#F09A37" fontSize="10" fontWeight="bold" fontFamily="Poppins">The Tenth Floor</text>
-        <text x="400" y="73" fill="#F09A37" fontSize="8" fontFamily="Poppins">द टेंथ फ्लोर</text>
-
-        {/* Seasons Rd label */}
-        <text x="580" y="100" fill="#888888" fontSize="9" fontFamily="Poppins" transform="rotate(7, 580, 100)">Seasons Rd</text>
-
-        {/* Baner-Aundh Rd label */}
-        <text x="420" y="180" fill="#888888" fontSize="9" fontFamily="Poppins" transform="rotate(-12, 420, 180)">Baner-Aundh Rd</text>
-
-        {/* Artizen Cafe */}
-        <circle cx="250" cy="140" r="4" fill="#F09A37" />
-        <text x="260" y="143" fill="#F09A37" fontSize="9" fontWeight="bold" fontFamily="Poppins">Artizen-Cafe</text>
-        <text x="260" y="153" fill="#F09A37" fontSize="8" fontFamily="Poppins">Art | Studio</text>
-      </svg>
-
-      {/* Red Marker Pin */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-        <Icon icon="solar:map-point-wave-bold" className="w-8 h-8 text-rose-500 animate-bounce" />
-        <div className="w-2.5 h-1 bg-black/25 rounded-full blur-[1px] -mt-1" />
-      </div>
-
-      {/* Watermark logo */}
-      <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-white/70 backdrop-blur-[1px] rounded text-[8px] font-bold text-gray-400 font-['Poppins']">
-        Google
-      </div>
+      {location ? (
+        <iframe
+          width="100%"
+          height="100%"
+          className="border-0"
+          loading="lazy"
+          allowFullScreen
+          src={`https://maps.google.com/maps?q=${encodeURIComponent(location)}&z=14&output=embed`}
+        />
+      ) : (
+        <div className="text-gray-400 text-sm font-['Poppins']">No location specified</div>
+      )}
     </div>
   );
 };
@@ -389,24 +343,24 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           <div className="w-[966px] self-stretch flex flex-col items-start p-0 gap-4">
             <div className="text-left text-[#000000] text-[18px] font-medium font-['Poppins'] leading-[26px]">Description</div>
             <div className="self-stretch flex-1 justify-start">
-              <span className="text-[#000000] text-[16px] font-normal font-['Poppins'] leading-[24px]">
+              <div className={`text-[#000000] text-[16px] font-normal font-['Poppins'] leading-[24px] whitespace-pre-line ${!showFullDesc ? 'line-clamp-5' : ''}`}>
                 {job.description}
-                <br />
-                {job.requirements && job.requirements.length > 0 && (
-                  <>
-                    <br />
+              </div>
+              
+              {showFullDesc && job.requirements && job.requirements.length > 0 && (
+                <div className="mt-4 animate-in fade-in duration-200">
+                  <span className="text-[#000000] text-[16px] font-semibold font-['Poppins'] leading-[24px] block">
                     Key Responsibilities
-                    <br />
-                  </>
-                )}
-              </span>
-              <span className="text-[#000000] text-[16px] font-normal font-['Poppins'] leading-[24px]">
-                {job.requirements && job.requirements.map((req, i) => (
-                  <span key={i} className="block">
-                    • {req}
                   </span>
-                ))}
-              </span>
+                  <div className="text-[#000000] text-[16px] font-normal font-['Poppins'] leading-[24px] mt-2 flex flex-col gap-1">
+                    {job.requirements.map((req, i) => (
+                      <span key={i} className="block">
+                        • {req}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             
             <button
@@ -420,13 +374,13 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           {/* Map Location Section */}
           <div className="self-stretch flex flex-col justify-start items-start gap-4 mt-4 w-full">
             <div className="self-stretch h-60 rounded-3xl border-4 border-indigo-50 overflow-hidden relative w-full">
-              <JobDetailMap />
+              <JobDetailMap location={job.location || ''} />
             </div>
             
             <div className="self-stretch inline-flex justify-start items-center gap-2">
               <Icon icon="solar:map-point-linear" className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1 justify-start text-gray-500 text-sm font-normal font-['Poppins'] leading-5">
-                Office No 301, Tawades Govind Excellency, 6th Ln, behind Bus Stop, above Canon Image Square, Poorvarang, Mahalaxminagar, Rajarampuri, Kolhapur, Maharashtra 416008
+                {job.location || 'Location not specified'}
               </div>
             </div>
           </div>

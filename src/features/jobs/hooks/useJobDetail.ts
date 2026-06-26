@@ -103,7 +103,7 @@ export const useJobDetail = (jobId: string) => {
   const respondToOffer = useCallback(async (action: 'accept' | 'decline') => {
     if (!job) return;
     try {
-      await jobsService.respondToOffer(job.id, action);
+      await jobsService.respondToOffer(job.offer_id || job.id, action);
 
       setJob(prev => prev ? { 
         ...prev, 
