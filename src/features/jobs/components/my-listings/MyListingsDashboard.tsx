@@ -10,6 +10,7 @@ import ApplicantsDashboard from './ApplicantsDashboard';
 import SendOfferTab from './SendOfferTab';
 import OfferDetailsScreen from './OfferDetailsScreen';
 import { toast } from 'sonner';
+import ListingsSkeleton from '../skeletons/ListingsSkeleton';
 
 interface MyListingsDashboardProps {
   onBack: () => void;
@@ -226,10 +227,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
 
       {/* Loading state / Content state */}
       {isLoading ? (
-        <div className="w-full py-20 flex flex-col items-center justify-center gap-4">
-          <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-500 rounded-full animate-spin" />
-          <p className="text-gray-500 text-sm font-['Poppins']">Loading listings...</p>
-        </div>
+        <ListingsSkeleton />
       ) : (
         <div className="w-full">
           {activeSubTab === 'Listings' && (

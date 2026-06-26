@@ -214,14 +214,26 @@ export const SocialProvider = ({ children }: SocialProviderProps) => {
 
   React.useEffect(() => {
     if (status === 'authenticated' && !session?.user?.error) {
+      // Fetch blocked users
       api.get('/users/me/blocks').then(res => {
-        const ids = res.data.map((u: any) => u.user_id);
+        const ids = res.data.map((u: any) => (u.user_id || u.id)?.toString()).filter(Boolean);
         setBlockedIds(ids);
       }).catch(err => {
         console.warn("Failed to fetch blocked users", err);
       });
+
+      // Fetch following users to sync follow states in UI on initial load / refresh
+      const userId = session?.user?.id;
+      if (userId) {
+        api.get(`/users/${userId}/following`).then(res => {
+          const ids = res.data.map((u: any) => (u.following_id || u.user_id || u.id)?.toString()).filter(Boolean);
+          setFollowingIds(ids);
+        }).catch(err => {
+          console.warn("Failed to fetch following users", err);
+        });
+      }
     }
-  }, [status]);
+  }, [status, session?.user?.id]);
 
   return (
     <SocialContext.Provider value={{

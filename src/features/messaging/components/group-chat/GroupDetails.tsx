@@ -33,7 +33,7 @@ interface GroupDetailsProps {
 export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMember, activeView, setActiveView }: GroupDetailsProps) {
     const { activeGroup, leaveGroup, deleteGroup, removeMember, promoteToAdmin, updateMemberRole, isInactive, refreshGroup, cancelInvitation, sentInvitations } = useGroupChat();
     const { isUserOnline } = useSocket();
-    const { blockUser } = useSocial();
+    const { blockUser, unblockUser, isBlocked } = useSocial();
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -387,10 +387,21 @@ export default function GroupDetails({ isOpen, onClose, currentUserId, onAddMemb
                                                         <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Report profile</span>
                                                         <Info className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => setUserToBlock(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                                                        <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Block profile</span>
-                                                        <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1} />
-                                                    </DropdownMenuItem>
+                                                    {isBlocked(member.user_id) ? (
+                                                         <DropdownMenuItem onClick={async () => {
+                                                             try {
+                                                                 await unblockUser(member.user_id);
+                                                             } catch (err) {}
+                                                         }} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                             <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Unblock profile</span>
+                                                             <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1} />
+                                                         </DropdownMenuItem>
+                                                     ) : (
+                                                         <DropdownMenuItem onClick={() => setUserToBlock(member.user_id)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                                                             <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Block profile</span>
+                                                             <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1} />
+                                                         </DropdownMenuItem>
+                                                     )}
                                                     <DropdownMenuItem
                                                         onClick={() => setUserToRemove(member.user_id)}
                                                         className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors"

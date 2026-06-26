@@ -2,6 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useJobOffers } from '../hooks/useJobOffers';
 import { OfferCard } from '../components/OfferCard';
+import OfferCardSkeleton from '../components/skeletons/OfferCardSkeleton';
 import * as jobsService from '../services/jobs.service';
 import { Icon } from '@iconify/react';
 
@@ -45,11 +46,11 @@ export const JobOffersPage: React.FC = () => {
   };
 
   return (
-    <div className="w-[998px] h-[814px] mx-auto bg-white pt-[20px] px-[20px] pb-0 flex flex-col items-center gap-6 border border-slate-100/50 rounded-3xl overflow-hidden">
+    <div className="w-full max-w-[998px] h-auto min-h-[814px] mx-auto bg-white pt-[20px] px-4 md:px-[20px] pb-[20px] flex flex-col items-center gap-6 border border-slate-100/50 rounded-3xl">
       
       {/* Section 1 — Tabs row */}
-      <div className="w-full flex flex-row justify-between items-center pb-2">
-        <div className="flex flex-wrap justify-start items-center gap-3">
+      <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center pb-2 gap-4">
+        <div className="flex flex-wrap justify-start items-center gap-2 md:gap-3 w-full md:w-auto">
           {tabs.map(tab => {
             const isActive = tab.id === 'Offers';
             return (
@@ -60,7 +61,7 @@ export const JobOffersPage: React.FC = () => {
                     handleTabClick(tab.id);
                   }
                 }}
-                className={`h-10 px-5 py-1.5 rounded-3xl flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${
+                className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${
                   isActive
                     ? 'bg-[#EEF2FF] border-transparent text-[#6366F1]'
                     : 'bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-[#6366F1]/70 hover:text-[#6366F1]'
@@ -78,7 +79,7 @@ export const JobOffersPage: React.FC = () => {
             jobsService.setActiveTab('My listings');
             router.push('/jobs');
           }}
-          className="h-10 px-5 py-1.5 rounded-3xl flex justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-[#6366F1]/70 hover:text-[#6366F1]"
+          className="h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-[#6366F1]/70 hover:text-[#6366F1] w-full md:w-auto"
         >
           <span>My listings</span>
           <Icon icon="lucide:chevron-right" className="w-4 h-4" />
@@ -86,8 +87,8 @@ export const JobOffersPage: React.FC = () => {
       </div>
 
       {/* Section 2 — Title row (margin-top 24px) */}
-      <div className="w-full flex flex-row items-center  flex-none">
-        <h1 className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-black w-[161px] h-[26px] py-[7px]">
+      <div className="w-full flex flex-row items-center flex-none">
+        <h1 className="font-['Poppins'] font-semibold text-lg leading-6 text-black">
           Official Job Offers
         </h1>
       </div>
@@ -97,15 +98,17 @@ export const JobOffersPage: React.FC = () => {
         onScroll={triggerScrollbar}
         onMouseEnter={triggerScrollbar}
         onMouseMove={triggerScrollbar}
-        className={`job-scroll-container w-full h-[560px] overflow-y-auto pr-2 pb-12 flex flex-col gap-6 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-track]:bg-transparent transition-all duration-300 ${
+        className={`job-scroll-container w-full h-auto min-h-[500px] flex-grow overflow-y-auto pr-2 pb-12 flex flex-col gap-6 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-track]:bg-transparent transition-all duration-300 ${
           showScrollbar
             ? "[scrollbar-color:rgba(209,213,219,0.8)_transparent] dark:[scrollbar-color:rgba(55,65,81,0.8)_transparent] [&::-webkit-scrollbar-thumb]:bg-gray-300/80 [&::-webkit-scrollbar-thumb]:rounded-full dark:[&::-webkit-scrollbar-thumb]:bg-[#374151]/80"
             : "[scrollbar-color:transparent_transparent] [&::-webkit-scrollbar-thumb]:bg-transparent"
         }`}
       >
         {isLoading ? (
-          <div className="text-center py-12 text-[#6B7280] font-['Poppins'] w-full">
-            Loading offers...
+          <div className="w-full flex flex-col gap-6">
+            {[1, 2, 3].map(n => (
+              <OfferCardSkeleton key={n} />
+            ))}
           </div>
         ) : offers.length === 0 ? (
           <div className="w-full py-16 flex flex-col items-center justify-center gap-4 bg-slate-50 rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50">

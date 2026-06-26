@@ -69,7 +69,7 @@ function groupExperiences(experiences: Experience[]) {
 export default function PublicProfilePage({ userId }: PublicProfileProps) {
   const router = useRouter();
   const { data: session } = useSession();
-  const { isFollowing, followUser, unfollowUser, startChat, isFollowLoading, blockUser } = useSocial();
+  const { isFollowing, followUser, unfollowUser, startChat, isFollowLoading, blockUser, unblockUser, isBlocked } = useSocial();
   const { activeProfile } = useActiveProfile();
   
   const [isViewAvatarOpen, setIsViewAvatarOpen] = useState(false);
@@ -313,6 +313,7 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
 
   const isOwnProfile = !!(session?.user?.id === userId || (user && session?.user?.id === user.id));
   const isUserFollowing = user ? isFollowing(user.id) : false;
+  const isUserBlocked = user ? isBlocked(user.id) : false;
 
   const queryClient = useQueryClient();
   const isFirstMount = useRef(true);
@@ -478,13 +479,28 @@ export default function PublicProfilePage({ userId }: PublicProfileProps) {
         <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Report Profile</span>
         <Flag className="w-4 h-4 text-black group-focus:text-[#6366F1] transition-colors" />
       </DropdownMenuItem>
-      <DropdownMenuItem
-        onClick={() => setShowBlockDialog(true)}
-        className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-red-50 focus:text-destructive text-destructive rounded-xl outline-none group transition-colors"
-      >
-        <span className="text-sm font-medium group-focus:text-destructive">Block User</span>
-        <Ban className="w-4 h-4 group-focus:text-destructive transition-colors" />
-      </DropdownMenuItem>
+      {isUserBlocked ? (
+        <DropdownMenuItem
+          onClick={async () => {
+            if (user) {
+              await unblockUser(user.id);
+              window.location.reload();
+            }
+          }}
+          className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors"
+        >
+          <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Unblock User</span>
+          <Ban className="w-4 h-4 group-focus:text-[#6366F1] transition-colors" />
+        </DropdownMenuItem>
+      ) : (
+        <DropdownMenuItem
+          onClick={() => setShowBlockDialog(true)}
+          className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-red-50 focus:text-destructive text-destructive rounded-xl outline-none group transition-colors"
+        >
+          <span className="text-sm font-medium group-focus:text-destructive">Block User</span>
+          <Ban className="w-4 h-4 group-focus:text-destructive transition-colors" />
+        </DropdownMenuItem>
+      )}
     </>
   );
 

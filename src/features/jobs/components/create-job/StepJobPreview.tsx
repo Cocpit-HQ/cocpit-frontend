@@ -83,44 +83,44 @@ export const StepJobPreview: React.FC<StepJobPreviewProps> = ({
   };
 
   return (
-    <div className="w-[998px] mx-auto bg-white inline-flex flex-col justify-start items-center gap-4 overflow-hidden animate-in fade-in duration-300 pb-16">
+    <div className="w-full max-w-[998px] mx-auto bg-white flex flex-col justify-start items-center gap-4 px-4 md:px-0 animate-in fade-in duration-300 pb-16">
       {/* Header Row */}
-      <div className="self-stretch inline-flex justify-start items-center gap-4">
+      <div className="self-stretch flex flex-row justify-start items-center gap-4">
         <button
           onClick={onBack}
           type="button"
-          className="size-12 p-2 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-300 backdrop-blur-md flex justify-center items-center gap-2.5 hover:bg-slate-50 transition-colors active:scale-95 text-gray-500 shadow-sm"
+          className="size-12 p-2 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-300 backdrop-blur-md flex justify-center items-center gap-2.5 hover:bg-slate-50 transition-colors active:scale-95 text-gray-500 shadow-sm flex-shrink-0"
         >
           <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500" />
         </button>
-        <div className="inline-flex flex-col justify-start items-start">
+        <div className="flex flex-col justify-start items-start">
           <div className="text-black text-lg font-medium font-['Poppins'] leading-6 text-left">Preview Listing</div>
           <div className="text-gray-500 text-xs font-normal font-['Poppins'] leading-4 text-left">This is how candidates will see your job</div>
         </div>
       </div>
 
       {/* Preview Card */}
-      <div className="w-[998px] p-4 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-end gap-4 shadow-sm">
+      <div className="w-full p-4 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-end gap-4 shadow-sm">
         {/* Card Header Info */}
-        <div className="self-stretch inline-flex justify-between items-start">
-          <div className="inline-flex flex-col justify-start items-start gap-2 w-full text-left">
+        <div className="self-stretch flex flex-row justify-between items-start gap-4">
+          <div className="flex flex-col justify-start items-start gap-2 w-full text-left min-w-0">
             <div className="text-black text-base font-medium font-['Poppins'] leading-6">{title}</div>
             <div className="text-gray-500 text-sm font-normal font-['Poppins'] leading-5">{company}</div>
             <div className="text-gray-500 text-sm font-semibold font-['Poppins'] leading-5">{work_type}</div>
           </div>
-          <img className="w-14 h-10 px-4 py-2 rounded-3xl object-contain border border-[#EEF2FF] bg-[#F8FAFC]" src="/assets/company-placeholder.png" alt="Company Logo" />
+          <img className="w-14 h-10 px-4 py-2 rounded-3xl object-contain border border-[#EEF2FF] bg-[#F8FAFC] flex-shrink-0" src="/assets/company-placeholder.png" alt="Company Logo" />
         </div>
 
         {/* Card Meta Row (Experience, Work Mode, Salary) */}
-        <div className="self-stretch inline-flex justify-between items-center">
-          <div className="flex justify-start items-center gap-2">
+        <div className="self-stretch flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 mt-2">
+          <div className="flex flex-wrap justify-start items-center gap-2">
             <div className="flex justify-start items-center gap-2">
-              <Icon icon="lucide:briefcase" className="w-5 h-5 text-black" />
+              <Icon icon="lucide:briefcase" className="w-5 h-5 text-black flex-shrink-0" />
               <div className="text-black text-sm font-normal font-['Poppins'] leading-5">{formatExperienceBadge(experience)}</div>
             </div>
-            <div className="size-1.5 bg-black rounded-full" />
+            <div className="size-1.5 bg-black rounded-full flex-shrink-0" />
             <div className="flex justify-start items-center gap-2">
-              <Icon icon="lucide:map-pin" className="w-5 h-5 text-black" />
+              <Icon icon="lucide:map-pin" className="w-5 h-5 text-black flex-shrink-0" />
               <div className="text-black text-sm font-normal font-['Poppins'] leading-5">{work_mode} - {location}</div>
             </div>
           </div>
@@ -143,26 +143,26 @@ export const StepJobPreview: React.FC<StepJobPreviewProps> = ({
       </div>
 
       {/* Footer Controls */}
-      <div className="self-stretch inline-flex justify-between items-center mt-2 w-full">
+      <div className="self-stretch flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-2 w-full gap-4">
         <button
           onClick={onSaveDraft}
           type="button"
-          className="px-4 py-2 hover:bg-slate-50 rounded-lg inline-flex flex-col justify-center items-center text-gray-500 hover:text-gray-700 text-base font-medium font-['Poppins'] leading-6 transition-colors active:scale-95"
+          className="px-4 py-2 hover:bg-slate-50 rounded-lg flex flex-col justify-center items-center text-gray-500 hover:text-gray-700 text-base font-medium font-['Poppins'] leading-6 transition-colors active:scale-95 w-full sm:w-auto"
         >
           Save Draft
         </button>
-        <div className="flex justify-start items-center gap-2">
+        <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <button
             onClick={onBack}
             type="button"
-            className="w-36 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-400 flex justify-center items-center gap-2.5 text-indigo-400 text-sm font-normal font-['Poppins'] leading-5 hover:bg-indigo-50/10 active:scale-95 transition-all"
+            className="w-full sm:w-36 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-400 flex justify-center items-center gap-2.5 text-indigo-400 text-sm font-normal font-['Poppins'] leading-5 hover:bg-indigo-50/10 active:scale-95 transition-all"
           >
             Back
           </button>
           <button
             onClick={handlePublishClick}
             type="button"
-            className="w-36 h-10 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 text-white text-sm font-normal font-['Poppins'] leading-5 transition-all active:scale-95 shadow-sm"
+            className="w-full sm:w-36 h-10 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 text-white text-sm font-normal font-['Poppins'] leading-5 transition-all active:scale-95 shadow-sm"
           >
             Publish
           </button>
@@ -171,10 +171,10 @@ export const StepJobPreview: React.FC<StepJobPreviewProps> = ({
 
       {/* Review Popup Modal */}
       {showReviewPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs animate-in fade-in duration-200 px-4">
           <div 
             onClick={handlePopupClose}
-            className="w-[440px] p-10 bg-white rounded-[32px] shadow-2xl flex flex-col items-center justify-center gap-3 cursor-pointer transform transition-all hover:scale-102 active:scale-98"
+            className="w-full max-w-[440px] p-6 sm:p-10 bg-white rounded-[32px] shadow-2xl flex flex-col items-center justify-center gap-3 cursor-pointer transform transition-all hover:scale-102 active:scale-98"
           >
             <h3 className="text-black text-xl md:text-[22px] font-bold font-['Poppins'] text-center leading-tight">
               Job Post Under Review

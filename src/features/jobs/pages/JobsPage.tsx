@@ -1,6 +1,7 @@
 import React, { use } from "react";
 import { useJobs } from "../hooks/useJobs";
 import RecommendedJobCard from "../components/RecommendedJobCard";
+import RecommendedJobCardSkeleton from "../components/skeletons/RecommendedJobCardSkeleton";
 import JobList from "../components/JobList";
 import JobFilters from "../components/JobFilters";
 import { Icon } from "@iconify/react";
@@ -10,6 +11,7 @@ import { ApplyJobModal } from "../components/ApplyJobModal";
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox";
 import { Job } from "../types/jobs.types";
 import { OfferCard } from "../components/OfferCard";
+import OfferCardSkeleton from "../components/skeletons/OfferCardSkeleton";
 import { useJobOffers } from "../hooks/useJobOffers";
 const getStatusBgClass = (status: string = "") => {
   switch (status.toLowerCase()) {
@@ -225,7 +227,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
 
   if (activeTab === "My listings") {
     return (
-      <div className="w-[998px] mx-auto min-h-screen bg-white pt-[20px] pb-6 flex flex-col gap-[20px]">
+      <div className="w-full max-w-[998px] mx-auto min-h-screen bg-white pt-[20px] pb-6 px-4 md:px-0 flex flex-col gap-[20px]">
         <MyListingsDashboard onBack={() => setActiveTab("Explore")} />
       </div>
     );
@@ -233,15 +235,15 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
 
   return (
     <div
-      className={`w-[998px] mx-auto bg-white pb-[40px] flex flex-col items-center gap-[24px] border-slate-100/50 rounded-3xl ${
+      className={`w-full max-w-[998px] mx-auto bg-white pb-[40px] px-4 md:px-0 flex flex-col items-center gap-[24px] border-slate-100/50 rounded-3xl ${
         activeTab === "Explore" ? "" : "pt-6"
       }`}
     >
       {/* Hero Banner */}
       {activeTab === "Explore" && jobs.length > 0 && (
-        <div className="w-full h-[136px] px-[32px] py-[24px] bg-[#EEF2FF] border border-[#E0E7FF] rounded-[24px] flex flex-col justify-center items-start box-border flex-none self-stretch overflow-hidden">
-          <div className="w-full h-[88px] pb-[8px] flex flex-col items-start flex-none self-stretch">
-            <div className="w-full h-[80px] font-['Poppins'] font-semibold text-[32px] leading-[40px] flex items-center text-[#6366F1] flex-none self-stretch">
+        <div className="w-full h-auto min-h-[136px] px-6 md:px-8 py-6 bg-[#EEF2FF] border border-[#E0E7FF] rounded-[24px] flex flex-col justify-center items-start box-border flex-none self-stretch overflow-hidden">
+          <div className="w-full flex flex-col items-start flex-none self-stretch">
+            <div className="w-full font-['Poppins'] font-semibold text-2xl md:text-3xl lg:text-[32px] leading-tight md:leading-[40px] flex items-center text-[#6366F1] flex-none self-stretch">
               Your next career move,
               <br />
               made simple.
@@ -251,15 +253,15 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
       )}
 
       {/* Tabs navigation row */}
-      <div className="w-full flex flex-row justify-between items-center pb-2 pt-2 sticky top-[72px] z-30 bg-white">
-        <div className="flex flex-wrap justify-start items-center gap-4">
+      <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center pb-2 pt-2 gap-4 sticky top-[72px] z-30 bg-white">
+        <div className="flex flex-wrap justify-start items-center gap-2 md:gap-4 w-full md:w-auto">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`h-10 px-5 py-1.5 rounded-3xl flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${
+                className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${
                   isActive
                     ? "bg-[#EEF2FF] border-transparent text-[#6366F1]"
                     : "bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-[#6366F1]/70 hover:text-[#6366F1]"
@@ -274,7 +276,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
         {/* My listings tab link */}
         <button
           onClick={() => setActiveTab("My listings")}
-          className={`h-10 px-5 py-1.5 rounded-3xl flex justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${
+          className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border w-full md:w-auto ${
             activeTab === "My listings"
               ? "bg-[#EEF2FF] border-transparent text-[#6366F1]"
               : "bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-[#6366F1]/70 hover:text-[#6366F1]"
@@ -285,8 +287,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
         </button>
       </div>
 
-      {/* AI Recommended Jobs - Only show under Explore tab and if recommendations exist */}
-      {activeTab === "Explore" && recommendedJobs.length > 0 && (
+      {/* AI Recommended Jobs - Only show under Explore tab */}
+      {activeTab === "Explore" && (isLoading || recommendedJobs.length > 0) && (
         <div className="w-full flex flex-col gap-[20px]">
           <div className="flex justify-start items-center">
             <h3 className="text-black text-lg font-semibold font-['Poppins'] leading-6">
@@ -296,13 +298,19 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
 
           {/* Recommended jobs container */}
           <div className="w-full flex flex-row justify-start items-start gap-4 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ">
-            {recommendedJobs.map((job) => (
-              <RecommendedJobCard
-                key={job.id}
-                job={job}
-                onClick={(j) => router.push(`/jobs/${j.id}`)}
-              />
-            ))}
+            {isLoading ? (
+              [1, 2, 3].map((n) => (
+                <RecommendedJobCardSkeleton key={n} />
+              ))
+            ) : (
+              recommendedJobs.map((job) => (
+                <RecommendedJobCard
+                  key={job.id}
+                  job={job}
+                  onClick={(j) => router.push(`/jobs/${j.id}`)}
+                />
+              ))
+            )}
           </div>
         </div>
       )}
@@ -324,9 +332,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
         ) : (
           <div className="w-full flex flex-col gap-[24px]">
           {/* Stats Cards Row */}
-          <div className="w-full h-[94px] flex flex-row gap-[24px]">
+          <div className="w-full flex flex-col md:flex-row gap-4 md:gap-[24px]">
             {/* Card 1: Total Applied */}
-            <div className="flex-1 h-[94px] p-[16px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
+            <div className="flex-1 min-h-[94px] p-[16px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
               <div className="text-[#6366F1] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
                 {applicationStats.totalApplied || 0}
               </div>
@@ -335,7 +343,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
               </div>
             </div>
             {/* Card 2: Shortlisted */}
-            <div className="flex-1 h-[94px] p-[16px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
+            <div className="flex-1 min-h-[94px] p-[16px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
               <div className="text-[#6366F1] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
                 {applicationStats.shortlisted || 0}
               </div>
@@ -348,7 +356,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
           {/* Filter Section Container */}
           <div className="w-full flex flex-col gap-[16px]">
             {/* Top Filter Row */}
-            <div className="w-full h-[40px] flex flex-row justify-between items-center relative">
+            <div className="w-full min-h-[40px] flex flex-col sm:flex-row justify-between items-start sm:items-center relative gap-2">
               <span className="font-['Poppins'] text-[14px] font-normal text-[#000000] leading-[20px]">
                 Tracking {applicationStats.totalApplied || jobs.length} active job applications across your network.
               </span>
@@ -440,7 +448,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
             </div>
 
             {/* Filter Chips Row */}
-            <div className="w-full flex flex-row items-center gap-[8px] border-b border-transparent">
+            <div className="w-full flex flex-row flex-wrap items-center gap-[8px] border-b border-transparent">
               {["All", "Applied", "Shortlisted", "In review", "Declined"].map(
                 (chip) => {
                   const isSelected =
@@ -525,12 +533,12 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                       <div
                         key={job.id}
                         onClick={() => router.push(`/jobs/${job.id}`)}
-                        className="w-full h-[84px] p-[16px] gap-[12px] rounded-[24px] flex flex-row items-center justify-between transition-colors bg-white hover:bg-slate-50/50 cursor-pointer"
+                        className="w-full h-auto p-4 md:p-[16px] gap-4 md:gap-[12px] rounded-[24px] flex flex-col md:flex-row items-start md:items-center justify-between transition-colors bg-white hover:bg-slate-50/50 cursor-pointer border border-[#EEF2FF] md:border-transparent"
                       >
                         {/* Left: Logo + Info */}
-                        <div className="flex flex-row items-center gap-[8px] flex-1 min-w-[200px]">
+                        <div className="flex flex-row items-center gap-[8px] w-full md:flex-1 min-w-0">
                           {renderCompanyLogo()}
-                          <div className="flex flex-col gap-[8px] min-w-0">
+                          <div className="flex flex-col gap-1 md:gap-[8px] min-w-0">
                             <span className="text-[#000000] text-[16px] font-medium font-['Poppins'] leading-[24px] truncate">
                               {job.title}
                             </span>
@@ -541,14 +549,16 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                         </div>
 
                         {/* Middle-left: Applied date */}
-                        <div className="flex-1 min-w-[120px] flex items-center justify-center text-[#6B7280] text-[14px] font-normal font-['Poppins'] leading-[20px]">
+                        <div className="w-full md:flex-1 md:min-w-[120px] flex items-center justify-start md:justify-center text-[#6B7280] text-[14px] font-normal font-['Poppins'] leading-[20px]">
+                          <span className="md:hidden font-semibold mr-2 text-black">Applied:</span>
                           {job.applied_date_display ||
                             `Applied ${job.posted_at}`}
                         </div>
 
                         {/* Middle-right: Status */}
-                        <div className="flex-1 min-w-[120px] flex items-center justify-center">
-                          <span className="text-[#000000] text-[14px] font-normal font-['Poppins'] leading-[20px] text-center">
+                        <div className="w-full md:flex-1 md:min-w-[120px] flex items-center justify-start md:justify-center">
+                          <span className="md:hidden font-semibold mr-2 text-black">Status:</span>
+                          <span className="text-[#000000] text-[14px] font-normal font-['Poppins'] leading-[20px] text-left md:text-center">
                             {job.application_status?.toLowerCase() === "in review"
                               ? "In review"
                               : (job.application_status?.toLowerCase() === "declined" || job.application_status?.toLowerCase() === "rejected")
@@ -559,23 +569,21 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
 
                         {/* Right: Actions */}
                         <div
-                          className="w-[120px] flex items-center justify-end"
+                          className="w-full md:w-[120px] flex items-center justify-start md:justify-end"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {(job.application_status?.toLowerCase() === "declined" || job.application_status?.toLowerCase() === "rejected") ? (
-                            <div className="w-[120px]" />
+                            <div className="hidden md:block w-[120px]" />
                           ) : job.application_status?.toLowerCase() ===
                             "in review" ? (
-                            <span className="w-[120px] text-[#EF4444] text-[14px] font-normal font-['Poppins'] text-center leading-[20px]">
+                            <span className="text-[#EF4444] text-[14px] font-normal font-['Poppins'] text-left md:text-center leading-[20px] w-full md:w-[120px]">
                               This job is no
-                              <br />
-                              longer available
+                              <br className="hidden md:inline" /> longer available
                             </span>
                           ) : job.is_available === false ? (
-                            <span className="w-[120px] text-[#EF4444] text-[14px] font-normal font-['Poppins'] text-center leading-[20px]">
+                            <span className="text-[#EF4444] text-[14px] font-normal font-['Poppins'] text-left md:text-center leading-[20px] w-full md:w-[120px]">
                               This job is no
-                              <br />
-                              longer available
+                              <br className="hidden md:inline" /> longer available
                             </span>
                           ) : job.application_status?.toLowerCase() ===
                             "shortlisted" ? (
@@ -584,7 +592,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                                 e.stopPropagation();
                                 router.push("/messaging");
                               }}
-                              className="w-[120px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] text-white font-['Poppins'] text-[14px] font-normal leading-[20px] flex items-center justify-center hover:bg-[#6366F1]/90 transition-all active:scale-95 shadow-sm"
+                              className="w-full md:w-[120px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] text-white font-['Poppins'] text-[14px] font-normal leading-[20px] flex items-center justify-center hover:bg-[#6366F1]/90 transition-all active:scale-95 shadow-sm"
                             >
                               Chat
                             </button>
@@ -594,7 +602,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                                 e.stopPropagation();
                                 handleWithdrawClick(job.id);
                               }}
-                              className="w-[120px] h-[40px] border border-[#6B7280] rounded-[24px] bg-transparent text-[#6B7280] font-['Poppins'] text-[14px] font-normal leading-[20px] flex items-center justify-center hover:bg-slate-50 transition-all active:scale-95"
+                              className="w-full md:w-[120px] h-[40px] border border-[#6B7280] rounded-[24px] bg-transparent text-[#6B7280] font-['Poppins'] text-[14px] font-normal leading-[20px] flex items-center justify-center hover:bg-slate-50 transition-all active:scale-95"
                             >
                               Withdraw
                             </button>
@@ -620,8 +628,10 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
           {/* Offers list */}
           <div className="w-full flex flex-col gap-6">
             {isOffersLoading ? (
-              <div className="text-center py-12 text-[#6B7280] font-['Poppins'] w-full">
-                Loading offers...
+              <div className="w-full flex flex-col gap-6">
+                {[1, 2, 3].map(n => (
+                  <OfferCardSkeleton key={n} />
+                ))}
               </div>
             ) : offers.length === 0 ? (
               <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">

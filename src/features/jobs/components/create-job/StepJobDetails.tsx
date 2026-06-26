@@ -262,28 +262,28 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   };
 
   return (
-    <div className="w-[998px] mx-auto bg-white inline-flex flex-col justify-start items-center gap-4 overflow-hidden animate-in fade-in duration-300 pb-16">
+    <div className="w-full max-w-[998px] mx-auto bg-white flex flex-col justify-start items-center gap-4 px-4 md:px-0 animate-in fade-in duration-300 pb-16">
       {/* Header Row */}
-      <div className="self-stretch inline-flex justify-start items-center gap-4">
+      <div className="self-stretch flex flex-row justify-start items-center gap-4">
         <button
           onClick={onBack}
           type="button"
-          className="w-12 h-12 box-border p-2 rounded-[100px] border border-[#DADADA] backdrop-blur-[12px] flex flex-row justify-center items-center gap-2.5 hover:bg-slate-50 transition-colors active:scale-95 text-gray-500 shadow-sm"
+          className="w-12 h-12 box-border p-2 rounded-[100px] border border-[#DADADA] backdrop-blur-[12px] flex flex-row justify-center items-center gap-2.5 hover:bg-slate-50 transition-colors active:scale-95 text-gray-500 shadow-sm flex-shrink-0"
         >
           <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500" />
         </button>
-        <div className="inline-flex flex-col justify-start items-start">
+        <div className="flex flex-col justify-start items-start">
           <div className="text-black text-lg font-medium font-['Poppins'] leading-6 text-left">Create job</div>
           <div className="text-gray-500 text-xs font-normal font-['Poppins'] leading-4 text-left">Modify Job Details</div>
         </div>
       </div>
 
       {/* Form Fields Panel */}
-      <div className="self-stretch p-4 bg-white rounded-xl flex flex-col justify-start items-start gap-4">
+      <div className="self-stretch p-0 md:p-4 bg-white rounded-xl flex flex-col justify-start items-start gap-4">
         {/* Row 1: Role, Company, Location */}
-        <div className="self-stretch inline-flex justify-center items-start gap-6">
+        <div className="self-stretch flex flex-col md:flex-row justify-center items-stretch md:items-start gap-4 md:gap-6">
           {/* Job Role */}
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
+          <div className="flex-1 flex flex-col justify-start items-start gap-2">
             <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Job Role</label>
             <input
               type="text"
@@ -294,7 +294,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
           </div>
 
           {/* Company Name */}
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
+          <div className="flex-1 flex flex-col justify-start items-start gap-2">
             <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Company Name</label>
             <input
               type="text"
@@ -305,7 +305,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
           </div>
 
           {/* Location */}
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
+          <div className="flex-1 flex flex-col justify-start items-start gap-2">
             <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Location</label>
             <input
               type="text"
@@ -318,7 +318,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
         {/* Row 2: Job Description */}
         <div className="self-stretch flex flex-col justify-start items-start gap-2 w-full">
-          <div className="self-stretch inline-flex justify-between items-start">
+          <div className="self-stretch flex flex-row justify-between items-center gap-2">
             <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left">Job Description</label>
             <button
               onClick={handleRegenerateAi}
@@ -402,9 +402,10 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
         </div>
 
         {/* Row 3: Experience Level, Work Type, Work Mode */}
-        <div className="self-stretch inline-flex justify-center items-start gap-6">
+        {/* Row 3: Experience Level, Work Type, Work Mode */}
+        <div className="self-stretch flex flex-col md:flex-row justify-center items-stretch md:items-start gap-4 md:gap-6">
           {/* Experience Level */}
-          <div ref={experienceRef} className="flex-1 inline-flex flex-col justify-start items-start gap-2 relative">
+          <div ref={experienceRef} className="flex-1 flex flex-col justify-start items-start gap-2 relative">
             <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Experience Level</label>
             <div className="relative w-full">
               <button
@@ -417,7 +418,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               </button>
 
               {isExperienceOpen && (
-                <div className="absolute z-50 left-0 mt-2 w-full p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex flex-col justify-start items-center overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute z-50 left-0 mt-2 w-full p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-center overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
                   {['Fresher', 'Junior (1-3 yrs)', 'Mid-level (3-5 yrs)', 'Senior (5+ yrs)', 'Other'].map((option) => {
                     const isSelected = experience === option;
                     return (
@@ -442,7 +443,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
           </div>
 
           {/* Work Type */}
-          <div ref={workTypeRef} className="flex-1 inline-flex flex-col justify-start items-start gap-2 relative">
+          <div ref={workTypeRef} className="flex-1 flex flex-col justify-start items-start gap-2 relative">
             <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Work Type</label>
             <div className="relative w-full">
               <button
@@ -455,7 +456,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               </button>
 
               {isWorkTypeOpen && (
-                <div className="absolute z-50 left-0 mt-2 w-72 p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex flex-col justify-start items-center overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute z-50 left-0 mt-2 w-full p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-center overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
                   {['Full time', 'Part-time', 'Contract', 'Internship', 'Freelance'].map((option) => {
                     const isSelected = workType === option;
                     return (
@@ -480,7 +481,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
           </div>
 
           {/* Work Mode */}
-          <div ref={workModeRef} className="flex-1 inline-flex flex-col justify-start items-start gap-2 relative">
+          <div ref={workModeRef} className="flex-1 flex flex-col justify-start items-start gap-2 relative">
             <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Work Mode</label>
             <div className="relative w-full">
               <button
@@ -493,7 +494,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
               </button>
 
               {isWorkModeOpen && (
-                <div className="absolute z-50 left-0 mt-2 w-72 p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex flex-col justify-start items-center overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute z-50 left-0 mt-2 w-full p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-center overflow-hidden shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
                   {['Remote', 'Hybrid', 'Onsite'].map((option) => {
                     const isSelected = workMode === option;
                     return (
@@ -519,9 +520,10 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
         </div>
 
         {/* Row 4: Min Salary, Max Salary */}
-        <div className="self-stretch inline-flex justify-center items-start gap-6">
+        {/* Row 4: Min Salary, Max Salary */}
+        <div className="self-stretch flex flex-col sm:flex-row justify-center items-stretch sm:items-start gap-4 sm:gap-6">
           {/* Min Salary */}
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
+          <div className="flex-1 flex flex-col justify-start items-start gap-2">
             <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Min Salary (Annual)</label>
             <div className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 border-0 inline-flex justify-between items-center gap-2 shadow-sm focus-within:outline-indigo-300 transition-colors">
               <input
@@ -548,7 +550,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
           </div>
 
           {/* Max Salary */}
-          <div className="flex-1 inline-flex flex-col justify-start items-start gap-2">
+          <div className="flex-1 flex flex-col justify-start items-start gap-2">
             <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Max Salary (Annual)</label>
             <div className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 border-0 inline-flex justify-between items-center gap-2 shadow-sm focus-within:outline-indigo-300 transition-colors">
               <input
@@ -577,26 +579,27 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
       </div>
 
       {/* Footer Controls */}
-      <div className="self-stretch inline-flex justify-between items-center mt-2 w-full">
+      {/* Footer Controls */}
+      <div className="self-stretch flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-2 w-full gap-4">
         <button
           onClick={handleSaveDraftClick}
           type="button"
-          className="px-4 py-2 hover:bg-slate-50 rounded-lg inline-flex flex-col justify-center items-center text-gray-500 hover:text-gray-700 text-base font-medium font-['Poppins'] leading-6 transition-colors active:scale-95"
+          className="px-4 py-2 hover:bg-slate-50 rounded-lg flex flex-col justify-center items-center text-gray-500 hover:text-gray-700 text-base font-medium font-['Poppins'] leading-6 transition-colors active:scale-95 w-full sm:w-auto"
         >
           Save Draft
         </button>
-        <div className="flex justify-start items-center gap-2">
+        <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <button
             onClick={onBack}
             type="button"
-            className="w-36 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-400 flex justify-center items-center gap-2.5 hover:bg-indigo-50/10 text-indigo-400 text-sm font-semibold font-['Poppins'] leading-5 transition-all active:scale-95"
+            className="w-full sm:w-36 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-400 flex justify-center items-center gap-2.5 hover:bg-indigo-50/10 text-indigo-400 text-sm font-semibold font-['Poppins'] leading-5 transition-all active:scale-95"
           >
             Back
           </button>
           <button
             onClick={handleContinueClick}
             type="button"
-            className="w-36 h-10 px-4 py-2 bg-indigo-500 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 text-white text-sm font-semibold font-['Poppins'] leading-5 transition-all active:scale-95 shadow-sm"
+            className="w-full sm:w-36 h-10 px-4 py-2 bg-indigo-500 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 text-white text-sm font-semibold font-['Poppins'] leading-5 transition-all active:scale-95 shadow-sm"
           >
             Continue
           </button>

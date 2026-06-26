@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Job } from '../types/jobs.types';
 import JobCard from './JobCard';
+import JobCardSkeleton from './skeletons/JobCardSkeleton';
 import { useInView } from '@/hooks/use-in-view';
 import { Icon } from '@iconify/react';
 
@@ -43,7 +44,7 @@ export const JobList: React.FC<JobListProps> = ({
     return (
       <div className="w-full flex flex-col gap-4 py-4">
         {[1, 2, 3].map(n => (
-          <div key={n} className="w-full h-36 bg-slate-50 animate-pulse rounded-3xl outline outline-1 outline-indigo-50" />
+          <JobCardSkeleton key={n} />
         ))}
       </div>
     );

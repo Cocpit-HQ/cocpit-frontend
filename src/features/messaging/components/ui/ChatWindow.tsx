@@ -1181,10 +1181,17 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                           <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Report profile</span>
                           <InfoIcon className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setShowBlockConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
-                          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Block profile</span>
-                          <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
-                        </DropdownMenuItem>
+                        {isBlockedByMe ? (
+                          <DropdownMenuItem onClick={handleUnblock} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Unblock profile</span>
+                            <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => setShowBlockConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--primary-tint)] rounded-md transition-colors">
+                            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--foreground)]">Block profile</span>
+                            <Ban className="w-[24px] h-[24px] text-[var(--foreground)]" strokeWidth={1.5} />
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)} className="flex items-center justify-between px-[16px] py-[10px] cursor-pointer hover:bg-[var(--destructive)]/10 rounded-md transition-colors">
                           <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[var(--destructive)]">Delete Chat</span>
                           <Trash2 className="w-[24px] h-[24px] text-[var(--destructive)]" strokeWidth={1} />

@@ -23,18 +23,18 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
   };
 
   return (
-    <div className="w-[998px] mx-auto bg-white inline-flex flex-col justify-start items-center gap-8 overflow-hidden animate-in fade-in duration-300">
+    <div className="w-full max-w-[998px] mx-auto bg-white flex flex-col justify-start items-center gap-8 px-4 md:px-0 animate-in fade-in duration-300">
       
       {/* Header Row */}
-      <div className="self-stretch inline-flex justify-start items-center gap-4">
+      <div className="self-stretch flex flex-row justify-start items-center gap-4">
         <button
           onClick={onBack}
           type="button"
-          className="size-12 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-300 backdrop-blur-md flex justify-center items-center gap-2.5 hover:bg-slate-50 active:scale-95 transition-all text-gray-500 shadow-sm"
+          className="size-12 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-300 backdrop-blur-md flex justify-center items-center gap-2.5 hover:bg-slate-50 active:scale-95 transition-all text-gray-500 shadow-sm flex-shrink-0"
         >
           <Icon icon="lucide:chevron-left" className="w-5 h-5 text-gray-500" />
         </button>
-        <div className="inline-flex flex-col justify-start items-start">
+        <div className="flex flex-col justify-start items-start">
           <div className="text-black text-lg font-medium font-['Poppins'] leading-6">Create job</div>
           <div className="text-gray-500 text-xs font-normal font-['Poppins'] leading-4">
             Tell us the role, AI will draft the rest
@@ -87,9 +87,9 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
         </div>
 
         {/* Benefits Row */}
-        <div className="self-stretch pt-4 inline-flex justify-center items-stretch gap-4 px-4 w-full">
+        <div className="self-stretch pt-4 flex flex-col sm:flex-row justify-center items-stretch gap-4 px-4 w-full">
           {/* Card 1: Visibility */}
-          <div className="w-72 p-4 bg-slate-50 rounded-xl inline-flex flex-col justify-start items-start gap-1.5 border border-slate-100/50 shadow-sm">
+          <div className="w-full sm:w-72 p-4 bg-slate-50 rounded-xl flex flex-col justify-start items-start gap-1.5 border border-slate-100/50 shadow-sm">
             <div className="size-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500">
               <Icon icon="solar:eye-linear" className="w-5 h-5 text-indigo-500" />
             </div>
@@ -106,7 +106,7 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
           </div>
 
           {/* Card 2: Trust */}
-          <div className="w-72 p-4 bg-slate-50 rounded-xl inline-flex flex-col justify-start items-start gap-1.5 border border-slate-100/50 shadow-sm">
+          <div className="w-full sm:w-72 p-4 bg-slate-50 rounded-xl flex flex-col justify-start items-start gap-1.5 border border-slate-100/50 shadow-sm">
             <div className="size-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500">
               <Icon icon="solar:shield-keyhole-linear" className="w-5 h-5 text-indigo-500" />
             </div>
@@ -124,7 +124,7 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
         </div>
 
         {/* Footer Support Text */}
-        <div className="self-stretch pt-4 inline-flex justify-center items-center gap-1.5 text-center px-4">
+        <div className="self-stretch pt-4 flex justify-center items-center gap-1.5 text-center px-4">
           <p className="text-gray-500 text-xs font-normal font-['Poppins'] leading-relaxed">
             Verification typically takes less than 2 minutes. Need help?{' '}
             <button type="button" className="text-indigo-500 hover:underline font-medium">
