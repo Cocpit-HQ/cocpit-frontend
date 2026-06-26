@@ -114,7 +114,7 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       salary_min: job.salary_min,
       salary_max: job.salary_max,
       salary_currency: job.salary_currency,
-      posted_at: job.created_at,
+      posted_at: getRelativeTime(job.created_at),
       description: job.description,
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
@@ -145,7 +145,7 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
   }
 };
 
-const getRelativeTime = (dateString?: string) => {
+export const getRelativeTime = (dateString?: string) => {
   if (!dateString) return '';
   const date = new Date(dateString);
   const now = new Date();
@@ -158,7 +158,7 @@ const getRelativeTime = (dateString?: string) => {
   if (diffSec < 60) return 'Just now';
   if (diffMin < 60) return `${diffMin}m ago`;
   if (diffHr < 24) return `${diffHr}h ago`;
-  if (diffDays === 1) return 'Yesterday';
+  if (diffDays === 1) return '1 day ago';
   if (diffDays < 30) return `${diffDays} days ago`;
   const diffMonths = Math.floor(diffDays / 30);
   return `${diffMonths} ${diffMonths === 1 ? 'month' : 'months'} ago`;
@@ -331,7 +331,8 @@ export const getMyApplications = async (): Promise<Job[]> => {
       salary_min: job.salary_min,
       salary_max: job.salary_max,
       salary_currency: job.salary_currency,
-      posted_at: job.created_at,
+      posted_at: getRelativeTime(job.created_at),
+      applied_date_display: `Applied ${getRelativeTime(job.applied_at)}`,
       description: job.description,
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
@@ -451,7 +452,7 @@ export const getMyListings = async (status?: string, cursor?: string, limit: num
       id: job.job_id,
       title: job.title,
       status: job.status,
-      posted_at: job.created_at,
+      posted_at: getRelativeTime(job.created_at),
       last_edited: job.updated_at,
       company: job.company_name,
       location: job.location,
