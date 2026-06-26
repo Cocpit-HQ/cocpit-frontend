@@ -19,7 +19,7 @@ const getStatusBgClass = (status: string = "") => {
       return "bg-[#EEF2FF]";
     case "shortlisted":
       return "bg-[#EEF2FF]";
-    case "in review":
+    case "in-review":
       return "bg-[#FEF3C7]";
     case "declined":
       return "bg-[#FEE2E2]";
@@ -121,10 +121,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
     if (selectedStatusFilter !== "All") {
       result = result.filter((job) => {
         let status = job.application_status?.toLowerCase() || "";
-        // Map backend 'Rejected' status to UI 'Declined' filter
-        if (status === "rejected") {
-          status = "declined";
-        }
+        if (selectedStatusFilter.toLowerCase() === "in review" && status === "in-review") return true;
         return status === selectedStatusFilter.toLowerCase();
       });
     }
@@ -559,9 +556,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                         <div className="w-full md:flex-1 md:min-w-[120px] flex items-center justify-start md:justify-center">
                           <span className="md:hidden font-semibold mr-2 text-black">Status:</span>
                           <span className="text-[#000000] text-[14px] font-normal font-['Poppins'] leading-[20px] text-left md:text-center">
-                            {job.application_status?.toLowerCase() === "in review"
+                            {job.application_status?.toLowerCase() === "in-review"
                               ? "In review"
-                              : (job.application_status?.toLowerCase() === "declined" || job.application_status?.toLowerCase() === "rejected")
+                              : job.application_status?.toLowerCase() === "declined"
                                 ? "Declined"
                                 : job.application_status || "Applied"}
                           </span>
@@ -572,10 +569,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                           className="w-full md:w-[120px] flex items-center justify-start md:justify-end"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {(job.application_status?.toLowerCase() === "declined" || job.application_status?.toLowerCase() === "rejected") ? (
+                          {job.application_status?.toLowerCase() === "declined" ? (
                             <div className="hidden md:block w-[120px]" />
-                          ) : job.application_status?.toLowerCase() ===
-                            "in review" ? (
+                          ) : job.application_status?.toLowerCase() === "in-review" ? (
                             <span className="text-[#EF4444] text-[14px] font-normal font-['Poppins'] text-left md:text-center leading-[20px] w-full md:w-[120px]">
                               This job is no
                               <br className="hidden md:inline" /> longer available

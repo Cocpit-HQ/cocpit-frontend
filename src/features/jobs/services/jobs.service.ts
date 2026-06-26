@@ -3,8 +3,8 @@ import { DUMMY_JOBS, DUMMY_OFFERS } from '../utils/jobs.utils';
 import api from '@/lib/axios';
 
 // Initial default state for the application
-const INITIAL_APPLIED_IDS = ['app-1', 'app-2', 'app-3', 'app-4', 'app-5', 'app-6', 'app-7', 'app-8', 'app-9'];
-const INITIAL_SAVED_IDS = ['rec-1', 'rec-2', 'app-1', 'app-2', 'offer-1', 'offer-2', 'offer-3'];
+const INITIAL_APPLIED_IDS: string[] = [];
+const INITIAL_SAVED_IDS: string[] = [];
 
 // Module-level state variables that reset back to their original state upon browser refresh
 let inMemoryAppliedIds: string[] = [...INITIAL_APPLIED_IDS];
@@ -28,6 +28,16 @@ export const setFollowedCompanies = (companies: string[]) => { inMemoryFollowedC
 export const setActiveTab = (tab: string) => { 
   inMemoryActiveTab = tab; 
 };
+
+// Seed helpers — called when the API tells us a job is already applied/saved
+// so in-memory state stays consistent with the DB for the current session
+export const seedAppliedId = (jobId: string) => {
+  if (!inMemoryAppliedIds.includes(jobId)) inMemoryAppliedIds.push(jobId);
+};
+export const seedSavedId = (jobId: string) => {
+  if (!inMemorySavedIds.includes(jobId)) inMemorySavedIds.push(jobId);
+};
+
 
 export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppliedAndOffers?: boolean) => {
   try {
@@ -256,6 +266,10 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       avg_reply: job.avg_reply,
     };
 
+    // Keep in-memory state in sync with the DB so the rest of the session is consistent
+    if (formattedJob.is_applied) seedAppliedId(formattedJob.id);
+    if (formattedJob.is_saved)   seedSavedId(formattedJob.id);
+
     return formattedJob;
   } catch (error) {
     console.error("Failed to fetch job details:", error);
@@ -284,12 +298,14 @@ export const saveJob = async (jobId: string): Promise<boolean> => {
   }
 };
 
-export const applyJob = async (jobId: string, formData?: FormData): Promise<boolean> => {
+export const applyJob = async (jobId: string, formData?: FormData, jsonBody?: any): Promise<boolean> => {
   try {
     if (formData) {
       await api.post(`/jobs/${jobId}/apply`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+    } else if (jsonBody) {
+      await api.post(`/jobs/${jobId}/apply`, jsonBody);
     } else {
       await api.post(`/jobs/${jobId}/apply`);
     }

@@ -29,7 +29,7 @@ export interface Job {
   match_reason?: string; // e.g., "Matches your skills in React and Node.js"
 
   // Application details
-  application_status?: 'Applied' | 'Shortlisted' | 'Declined' | 'In review' | string;
+  application_status?: 'Applied' | 'in-review' | 'Shortlisted' | 'Declined' | string;
   applied_date_display?: string;
   is_available?: boolean;
 

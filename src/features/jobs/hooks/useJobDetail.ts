@@ -13,15 +13,23 @@ export const useJobDetail = (jobId: string) => {
     try {
       const res = await jobsService.getJobById(jobId);
       if (res) {
-        // Sync states from service
+        // Sync in-memory state — OR with API values so we never downgrade
+        // (in-memory lists are only populated for the current session;
+        //  API-returned hasApplied / isSaved are the source of truth on load)
         const savedIds = jobsService.getSavedJobIds();
         const appliedIds = jobsService.getAppliedJobIds();
         const respondedOffers = jobsService.getRespondedOffers();
         const followedCompanies = jobsService.getFollowedCompanies();
 
+        // Keep API value as baseline; in-memory can only upgrade, never downgrade
         res.is_saved = res.is_saved || savedIds.includes(res.id);
         res.is_applied = res.is_applied || appliedIds.includes(res.id);
-        
+
+        // Seed in-memory applied list so session stays consistent
+        if (res.is_applied && !appliedIds.includes(res.id)) {
+          jobsService.seedAppliedId(res.id);
+        }
+
         // Handle offer statuses
         if (res.is_offer) {
           const offerResponse = respondedOffers[res.id];
@@ -29,9 +37,9 @@ export const useJobDetail = (jobId: string) => {
             res.application_status = offerResponse === 'accept' ? 'Accepted' : 'Declined';
           }
         }
-        
+
         // Handle followed status for company
-        res.is_followed = followedCompanies.includes(res.company);
+        res.is_followed = res.is_followed || followedCompanies.includes(res.company);
       }
       setJob(res);
     } catch (err) {
@@ -71,13 +79,20 @@ export const useJobDetail = (jobId: string) => {
       }
 
       let formData: FormData | undefined = undefined;
-      if (uploadedFile || coverLetter) {
+      let jsonBody: any = undefined;
+
+      if (uploadedFile) {
         formData = new FormData();
-        if (uploadedFile) formData.append('resume', uploadedFile);
+        formData.append('resume', uploadedFile);
         if (coverLetter) formData.append('cover_note', coverLetter);
+      } else if (resumeUrlOrName || resumeId) {
+        jsonBody = {
+          resume_url: resumeUrlOrName || resumeId,
+          cover_note: coverLetter
+        };
       }
 
-      await jobsService.applyJob(job.id, formData);
+      await jobsService.applyJob(job.id, formData, jsonBody);
 
       setJob(prev => prev ? { ...prev, is_applied: true } : null);
       toast.success('Successfully applied to the job!');

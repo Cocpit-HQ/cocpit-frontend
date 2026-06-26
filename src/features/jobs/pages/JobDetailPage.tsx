@@ -79,8 +79,14 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
     );
   }
 
-  const steps = ['Applied', 'In review', 'Shortlisted', 'Declined'];
-  const currentStatus = job.application_status || 'Applied';
+  const steps = ['Applied', 'in-review', 'Shortlisted', 'Declined'];
+  const stepLabels: Record<string, string> = {
+    'Applied': 'Applied',
+    'in-review': 'In review',
+    'Shortlisted': 'Shortlisted',
+    'Declined': 'Declined',
+  };
+  let currentStatus = job.application_status || 'Applied';
   const currentStepIndex = steps.indexOf(currentStatus) !== -1 ? steps.indexOf(currentStatus) : 0;
 
   return (
@@ -275,7 +281,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                       <div className="box-border flex flex-row items-center py-2 px-3 md:px-4 gap-[8px] md:gap-[10px] w-auto h-9 rounded-[24px] flex-none">
                         <div className={`box-border w-4 h-4 rounded-full flex-none ${circleClass}`} />
                         <span className={`w-fit h-5 font-['Poppins'] font-normal text-sm leading-5 text-center ${textClass}`}>
-                          {step}
+                          {stepLabels[step] || step}
                         </span>
                       </div>
 
@@ -313,9 +319,16 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                   {/* Stats/analytics row */}
                   <div className="w-full flex flex-row flex-wrap items-start py-2 gap-8 md:gap-[340px] h-auto">
                     {/* Response Rate Column */}
-                    <div className="box-border flex flex-col items-start pb-3 gap-2 w-[120px] border-b-2 border-[#22C55E] h-auto">
+                    <div className="box-border flex flex-col items-start pb-3 gap-2 w-[120px] h-auto">
                       <div className="text-[#6B7280] text-[10px] font-semibold uppercase tracking-wider font-['Poppins'] leading-[14px]">RESPONSE RATE</div>
                       <div className="text-[#000000] text-[24px] font-bold font-['Poppins'] leading-8">{job.response_rate}</div>
+                      {/* Progress Bar */}
+                      <div className="w-full h-[2px] bg-gray-200 mt-1 relative rounded-full overflow-hidden">
+                        <div 
+                          className="absolute top-0 left-0 h-full bg-[#22C55E] rounded-full" 
+                          style={{ width: job.response_rate || '0%' }}
+                        />
+                      </div>
                     </div>
 
                     {/* Avg Reply Column */}
