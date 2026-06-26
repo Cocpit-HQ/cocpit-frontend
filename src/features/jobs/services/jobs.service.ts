@@ -381,9 +381,14 @@ export const getJobDetail = async (jobId: string) => {
 };
 
 export const withdrawApplication = async (jobId: string): Promise<boolean> => {
-  await new Promise(resolve => setTimeout(resolve, 200));
-  inMemoryAppliedIds = inMemoryAppliedIds.filter(id => id !== jobId);
-  return true;
+  try {
+    await api.delete(`/jobs/${jobId}/apply`);
+    inMemoryAppliedIds = inMemoryAppliedIds.filter(id => id !== jobId);
+    return true;
+  } catch (error) {
+    console.error("Failed to withdraw application:", error);
+    throw error;
+  }
 };
 
 export const getApplicationStats = async (): Promise<{ totalApplied: number; shortlisted: number }> => {

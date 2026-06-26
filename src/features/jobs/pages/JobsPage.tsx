@@ -596,6 +596,16 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                             >
                               Chat
                             </button>
+                          ) : job.application_status?.toLowerCase() === "withdrawn" ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleApplyClick(job.id);
+                              }}
+                              className="w-full md:w-[120px] h-[40px] border border-[#6B7280] rounded-[24px] bg-transparent text-[#6B7280] font-['Poppins'] text-[14px] font-normal leading-[20px] flex items-center justify-center hover:bg-slate-50 transition-all active:scale-95"
+                            >
+                              Apply
+                            </button>
                           ) : (
                             <button
                               onClick={(e) => {

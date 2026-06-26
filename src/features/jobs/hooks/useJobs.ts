@@ -179,7 +179,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
         if (activeTab === 'My applications') {
           return prev.filter(j => j.id !== jobId);
         } else {
-          return prev.map(j => j.id === jobId ? { ...j, is_applied: false } : j);
+          return prev.map(j => j.id === jobId ? { ...j, application_status: 'Withdrawn', is_applied: false } : j);
         }
       });
       const stats = await jobsService.getApplicationStats();

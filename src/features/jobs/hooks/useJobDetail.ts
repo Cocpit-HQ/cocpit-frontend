@@ -19,8 +19,8 @@ export const useJobDetail = (jobId: string) => {
         const respondedOffers = jobsService.getRespondedOffers();
         const followedCompanies = jobsService.getFollowedCompanies();
 
-        res.is_saved = savedIds.includes(res.id);
-        res.is_applied = appliedIds.includes(res.id);
+        res.is_saved = res.is_saved || savedIds.includes(res.id);
+        res.is_applied = res.is_applied || appliedIds.includes(res.id);
         
         // Handle offer statuses
         if (res.is_offer) {
