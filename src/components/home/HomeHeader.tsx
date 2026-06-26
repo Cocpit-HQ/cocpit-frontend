@@ -11,7 +11,7 @@ import { searchHashtags, HashtagSuggestion } from '@/services/api/hashtags';
 import { SearchedUser } from '@/types/user';
 import { ProfileSwitcher } from '@/components/layout/ProfileSwitcher';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Hash, Plus } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 
@@ -42,6 +42,22 @@ export const HomeHeader = () => {
     const [isHeaderVisible, setIsHeaderVisible] = useState(true);
     const lastScrollY = useRef(0);
     const isFeedPage = pathname === '/feed' || pathname === '/';
+    const isJobsPage = pathname === '/jobs' || pathname.startsWith('/jobs');
+
+    // Job search state
+    const [jobTitleQuery, setJobTitleQuery] = useState('');
+    const [jobLocationQuery, setJobLocationQuery] = useState('');
+
+    // Read URL params on the jobs page to pre-fill the inputs
+    const urlSearchParams = useSearchParams();
+    useEffect(() => {
+        if (isJobsPage) {
+            const urlSearch = urlSearchParams?.get('search') || '';
+            const urlLocation = urlSearchParams?.get('location') || '';
+            setJobTitleQuery(urlSearch);
+            setJobLocationQuery(urlLocation);
+        }
+    }, [isJobsPage, urlSearchParams]);
 
     useEffect(() => {
         if (!isFeedPage) {
@@ -212,8 +228,61 @@ export const HomeHeader = () => {
             <div className="mx-auto flex min-h-12 min-w-0 max-w-[1128px] items-center px-0 md:min-h-[72px] md:px-4 xl:px-0">
                 {/* --- Desktop Header (Visible from md screens up) --- */}
                 <div className="hidden flex-1 min-w-0 md:flex items-center justify-between md:mx-auto max-w-[998px] h-full gap-4">
-                    {/* Header Left Section (Search Bar) */}
-                    <div className="relative flex flex-row justify-between items-center flex-1 min-w-0 max-w-[360px] h-10 px-4 py-2 gap-[10px] rounded-[24px] border border-[#6B7280] bg-transparent transition-all duration-300">
+                    {/* Header Left Section — route-aware search */}
+                    {isJobsPage ? (
+                        /* === JOB SEARCH UI === */
+                        <div className="flex items-center gap-2">
+                            {/* Job title / keywords pill */}
+                            <div className="w-44 px-4 py-2 rounded-[24px] border border-[#6B7280] flex items-center gap-2 h-10 bg-transparent">
+                                <Search className="w-[18px] h-[18px] text-[#6B7280] flex-shrink-0" />
+                                <input
+                                    type="text"
+                                    placeholder="Job title, keywords"
+                                    value={jobTitleQuery}
+                                    onChange={(e) => setJobTitleQuery(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            router.push(`/jobs?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
+                                        }
+                                    }}
+                                    className="flex-1 min-w-0 bg-transparent text-foreground placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none truncate"
+                                />
+                            </div>
+
+                            {/* City / remote pill */}
+                            <div className="w-44 px-4 py-2 rounded-[24px] border border-[#6B7280] flex items-center gap-2 h-10 bg-transparent">
+                                {/* Location pin icon — SVG matching Figma design */}
+                                <svg className="w-[18px] h-[18px] flex-shrink-0 text-[#6B7280]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                                    <circle cx="12" cy="9" r="2.5" />
+                                </svg>
+                                <input
+                                    type="text"
+                                    placeholder="City or remote"
+                                    value={jobLocationQuery}
+                                    onChange={(e) => setJobLocationQuery(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            router.push(`/jobs?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
+                                        }
+                                    }}
+                                    className="flex-1 min-w-0 bg-transparent text-foreground placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none truncate"
+                                />
+                            </div>
+
+                            {/* Find jobs button */}
+                            <button
+                                onClick={() => {
+                                    router.push(`/jobs?search=${encodeURIComponent(jobTitleQuery)}${jobLocationQuery ? `&location=${encodeURIComponent(jobLocationQuery)}` : ''}`);
+                                }}
+                                className="px-4 py-2 h-10 rounded-[24px] border border-[#6366F1] text-[#6366F1] bg-transparent hover:bg-[#6366F1] hover:text-white text-[16px] font-medium leading-[24px] font-poppins transition-all duration-200 flex-shrink-0"
+                            >
+                                Find jobs
+                            </button>
+                        </div>
+                    ) : (
+                        /* === DEFAULT FEED / OTHER SEARCH === */
+                        <div className="relative flex flex-row justify-between items-center flex-1 min-w-0 max-w-[360px] h-10 px-4 py-2 gap-[10px] rounded-[24px] border border-[#6B7280] bg-transparent transition-all duration-300">
                         <input
                             type="text"
                             placeholder="Search"
@@ -591,14 +660,15 @@ export const HomeHeader = () => {
                             </div>
                         )}
                     </div>
+                    )}
 
                     {/* Header Right Section (Action Buttons) */}
                     <div className="flex items-center gap-4 shrink-0 xl:w-[406px] xl:justify-end">
                         <button
                             onClick={() => setActiveModal('create-post')}
-                            className="flex items-center justify-center gap-[10px] w-[122px] h-10 rounded-[24px] bg-[#6366F1] hover:bg-[#5558e3] text-white font-[family-name:var(--font-poppins)] text-[16px] font-normal leading-[24px] text-center transition-all shadow-sm"
+                            className="flex items-center justify-center gap-[10px] h-10 px-4 rounded-[24px] bg-[#6366F1] hover:bg-[#5558e3] text-white font-[family-name:var(--font-poppins)] text-[16px] font-normal leading-[24px] text-center transition-all shadow-sm whitespace-nowrap"
                         >
-                            <span>Create</span>
+                            <span>Create post</span>
                             <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
                                 <Plus size={12} strokeWidth={3} />
                             </div>

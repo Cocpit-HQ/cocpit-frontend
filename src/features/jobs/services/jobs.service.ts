@@ -49,6 +49,7 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
 
     if (filters) {
       if (filters.search) params.search = filters.search;
+      if (filters.location) params.location = filters.location;
       
       if (filters.job_type) {
         // Map "Full time" -> "Full-time"
@@ -129,7 +130,7 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
         : (job.experience_level || '0-2Yrs'),
-      is_saved: job.isSaved || false,
+      is_saved: job.isSaved || inMemorySavedIds.includes(job.job_id),
       is_applied: job.hasApplied || false,
       is_offer: false,
       tags: job.tags || []
@@ -151,6 +152,51 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
     };
   } catch (error) {
     console.error("Failed to fetch all jobs:", error);
+    return { data: [], nextCursor: null, hasMore: false };
+  }
+};
+
+export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
+  try {
+    const params: Record<string, any> = { limit: 10 };
+    if (cursor) {
+      params.cursor = cursor;
+    }
+
+    const response = await api.get('/jobs/saved/me', { params });
+    const fetchedJobs = response.data;
+    
+    const paginatedJobs = fetchedJobs.map((job: any) => ({
+      id: job.job_id,
+      title: job.title,
+      company: job.company_name,
+      location: job.location,
+      work_type: job.job_type,
+      work_mode: job.work_mode,
+      salary_min: job.salary_min,
+      salary_max: job.salary_max,
+      salary_currency: job.salary_currency,
+      posted_at: getRelativeTime(job.created_at),
+      description: job.description,
+      experience: (job.experience_min != null && job.experience_max != null) 
+        ? `${job.experience_min}-${job.experience_max}Yrs` 
+        : (job.experience_level || '0-2Yrs'),
+      is_saved: true,
+      is_applied: job.hasApplied || false,
+      is_offer: false,
+      tags: job.tags || []
+    }));
+
+    const hasMore = fetchedJobs.length === 10;
+    const nextCursor = hasMore ? fetchedJobs[fetchedJobs.length - 1].saved_at : null;
+
+    return {
+      data: paginatedJobs,
+      nextCursor,
+      hasMore
+    };
+  } catch (error) {
+    console.error("Failed to fetch saved jobs:", error);
     return { data: [], nextCursor: null, hasMore: false };
   }
 };
@@ -249,8 +295,8 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       posted_at: getRelativeTime(job.created_at),
       description: job.description || '',
       requirements: extractRequirements(job.description),
-      is_saved: job.isSaved || inMemorySavedIds.includes(job.job_id),
-      is_applied: job.hasApplied || inMemoryAppliedIds.includes(job.job_id),
+      is_saved: job.isSaved || job.is_saved || inMemorySavedIds.includes(job.job_id),
+      is_applied: job.hasApplied || job.is_applied || inMemoryAppliedIds.includes(job.job_id),
       is_offer: job.is_offer || false,
       is_closed: job.status === 'CLOSED' || job.is_active === false,
       is_followed: inMemoryFollowedCompanies.includes(job.company_name),
@@ -353,7 +399,7 @@ export const getMyApplications = async (): Promise<Job[]> => {
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
         : (job.experience_level || '0-2Yrs'),
-      is_saved: job.isSaved || false,
+      is_saved: job.isSaved || job.is_saved || inMemorySavedIds.includes(job.job_id),
       is_applied: true,
       is_offer: false,
       tags: job.tags || [],

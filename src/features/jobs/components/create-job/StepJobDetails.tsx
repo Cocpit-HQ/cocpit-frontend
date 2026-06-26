@@ -241,6 +241,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   const buildDetailsObject = (): Partial<JobListing> => {
     return {
       id: initialDetails?.id,
+      title: role,
       company,
       location,
       description,

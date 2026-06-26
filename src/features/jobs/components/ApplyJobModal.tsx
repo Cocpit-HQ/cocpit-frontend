@@ -95,8 +95,11 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
   };
 
   const handleSubmit = () => {
-    const resumeUrlOrName = uploadedFile ? uploadedFile.name : (fetchedResumes.find(r => r.id === selectedResumeId)?.id || 'resume.pdf');
-    onApply(resumeUrlOrName, uploadedFile, selectedResumeId, coverLetter);
+    const selectedResume = fetchedResumes.find(r => r.id === selectedResumeId);
+    const resumeUrlOrName = uploadedFile ? uploadedFile.name : (selectedResume?.name || 'resume.pdf');
+    // Pass the actual resume URL (not the ID) so the backend receives it as resume_url
+    const resumeUrlToSend = uploadedFile ? null : (selectedResume?.url || null);
+    onApply(resumeUrlOrName, uploadedFile, resumeUrlToSend, coverLetter);
     onClose();
   };
 

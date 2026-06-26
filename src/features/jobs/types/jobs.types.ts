@@ -46,6 +46,7 @@ export interface Job {
 
 export interface JobsFilter {
   search?: string;
+  location?: string;  // city / "remote" free-text, maps to backend ?location=
   job_type?: string; // "Full time" | "Part time" etc.
   experience?: string; // "0-2Yrs" etc.
   work_mode?: string; // "Remote" | "Hybrid" | "Onsite"

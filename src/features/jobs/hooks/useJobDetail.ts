@@ -80,10 +80,10 @@ export const useJobDetail = (jobId: string) => {
 
       let formData: FormData | undefined = undefined;
       let jsonBody: any = undefined;
-
-      if (uploadedFile) {
+      if (uploadedFile || resumeId || coverLetter) {
         formData = new FormData();
-        formData.append('resume', uploadedFile);
+        if (uploadedFile) formData.append('resume', uploadedFile);
+        else if (resumeId) formData.append('resume_url', resumeId);
         if (coverLetter) formData.append('cover_note', coverLetter);
       } else if (resumeUrlOrName || resumeId) {
         jsonBody = {

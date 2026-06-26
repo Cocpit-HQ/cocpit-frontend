@@ -1,11 +1,11 @@
-import React, { use } from "react";
+import React, { use, useEffect, useRef } from "react";
 import { useJobs } from "../hooks/useJobs";
 import RecommendedJobCard from "../components/RecommendedJobCard";
 import RecommendedJobCardSkeleton from "../components/skeletons/RecommendedJobCardSkeleton";
 import JobList from "../components/JobList";
 import JobFilters from "../components/JobFilters";
 import { Icon } from "@iconify/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import MyListingsDashboard from "../components/my-listings/MyListingsDashboard";
 import { ApplyJobModal } from "../components/ApplyJobModal";
 import { CocpitConfirmBox } from "@/shared/commonComponents/CocpitConfirmBox";
@@ -35,7 +35,12 @@ interface JobsPageProps {
 export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
   const router = useRouter();
 
-  // Safely unwrap searchParams if it is a Promise (Next.js 15+)
+  // Use reactive useSearchParams so the list updates on every client-side navigation
+  const urlParams = useSearchParams();
+  const urlSearch = urlParams?.get('search') || '';
+  const urlLocation = urlParams?.get('location') || '';
+
+  // Also read from the SSR searchParams prop as the initial seed (for first load)
   let resolvedParams: any = null;
   if (searchParams) {
     if (typeof searchParams.then === "function") {
@@ -45,8 +50,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
     }
   }
 
+  // Prefer reactive urlParams, fall back to SSR prop on initial server render
   const initialSearch =
-    typeof resolvedParams?.search === "string" ? resolvedParams.search : "";
+    urlSearch || (typeof resolvedParams?.search === "string" ? resolvedParams.search : "");
+  const initialLocation =
+    urlLocation || (typeof resolvedParams?.location === "string" ? resolvedParams.location : "");
 
   const {
     jobs,
@@ -58,12 +66,26 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
     setActiveTab,
     filters,
     setFilterValue,
+    setMultipleFilters,
     toggleSave,
     applyToJob,
     withdrawJob,
     respondToOffer,
     applicationStats,
-  } = useJobs("Explore", initialSearch);
+  } = useJobs("Explore", initialSearch, initialLocation);
+
+  // Reactively update filters when URL search params change (e.g. "Find jobs" click from header)
+  // Skip the initial render — useJobs is already seeded with initialSearch/initialLocation
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    // Single atomic update → single fetchJobs call
+    setMultipleFilters({ search: urlSearch, location: urlLocation });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlSearch, urlLocation]);
 
   const {
     offers,

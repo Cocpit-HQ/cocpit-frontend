@@ -3,7 +3,7 @@ import { Job, JobsFilter } from '../types/jobs.types';
 import * as jobsService from '../services/jobs.service';
 import { toast } from 'sonner';
 
-export const useJobs = (initialTab: string = 'Explore', initialSearch: string = '') => {
+export const useJobs = (initialTab: string = 'Explore', initialSearch: string = '', initialLocation: string = '') => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
@@ -20,6 +20,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
   
   const [filters, setFilters] = useState<JobsFilter>({
     search: initialSearch,
+    location: initialLocation,
     job_type: '',
     work_mode: '',
     experience: '',
@@ -49,6 +50,23 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
         newJobs = await jobsService.getMyOffers();
         setCursor(undefined);
         setHasMore(false);
+      } else if (activeTab === 'Saved') {
+        const activeCursor = isLoadMore ? cursor : undefined;
+        const res = await jobsService.getSavedJobs(filters, activeCursor);
+        newJobs = res.data;
+        setCursor(res.nextCursor || undefined);
+        setHasMore(res.hasMore);
+
+        const savedIds = jobsService.getSavedJobIds();
+        const appliedIds = jobsService.getAppliedJobIds();
+
+        // Sync saved job IDs into inMemorySavedIds so that getJobById and other lists know they are saved
+        const idsToAdd = newJobs
+          .filter(j => !savedIds.includes(j.id))
+          .map(j => j.id);
+        if (idsToAdd.length > 0) {
+          jobsService.setSavedJobIds([...savedIds, ...idsToAdd]);
+        }
       } else {
         const activeCursor = isLoadMore ? cursor : undefined;
         const res = await jobsService.getJobs(filters, activeCursor, activeTab === 'Explore');
@@ -65,19 +83,11 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
         const savedIds = jobsService.getSavedJobIds();
         const appliedIds = jobsService.getAppliedJobIds();
 
-        if (activeTab === 'Saved') {
-          newJobs = newJobs.map(j => ({
-            ...j,
-            is_saved: true,
-            is_applied: appliedIds.includes(j.id)
-          })).filter(j => j.is_saved);
-        } else {
-          newJobs = newJobs.map(j => ({
-            ...j,
-            is_saved: savedIds.includes(j.id),
-            is_applied: appliedIds.includes(j.id)
-          }));
-        }
+        newJobs = newJobs.map(j => ({
+          ...j,
+          is_saved: savedIds.includes(j.id),
+          is_applied: appliedIds.includes(j.id)
+        }));
       }
 
       setJobs(prev => {
@@ -172,6 +182,13 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     }));
   }, []);
 
+  const setMultipleFilters = useCallback((updates: Partial<JobsFilter>) => {
+    setFilters(prev => ({
+      ...prev,
+      ...updates
+    }));
+  }, []);
+
   const withdrawJob = useCallback(async (jobId: string) => {
     try {
       await jobsService.withdrawApplication(jobId);
@@ -214,6 +231,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     setActiveTab,
     filters,
     setFilterValue,
+    setMultipleFilters,
     toggleSave,
     applyToJob,
     withdrawJob,
