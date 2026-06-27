@@ -417,6 +417,11 @@ export const getApplicationAnalysis = async (appId: string) => {
   return response.data;
 };
 
+export const triggerApplicationAnalysis = async (appId: string) => {
+  const response = await api.post(`/jobs/applications/${appId}/analyze`);
+  return response.data;
+};
+
 export const updateApplicationStatus = async (appId: string, status: string) => {
   const response = await api.put(`/jobs/applications/${appId}/status`, { status });
   return response.data;

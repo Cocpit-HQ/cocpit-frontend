@@ -7,7 +7,8 @@ import {
   getApplicationAnalysis,
   updateApplicationStatus,
   upsertApplicationNote,
-  getJobDetail
+  getJobDetail,
+  triggerApplicationAnalysis
 } from '../../services/jobs.service';
 
 interface ApplicantsDashboardProps {
@@ -215,6 +216,26 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   const [jobDetail, setJobDetail] = useState<any>(null);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleTriggerAI = async () => {
+    if (!selectedCandId) return;
+    setIsAnalyzing(true);
+    try {
+      const updatedAnalysis = await triggerApplicationAnalysis(selectedCandId);
+      setCandidateAnalysis(updatedAnalysis);
+      // Update candidate's score in left sidebar list
+      setCandidates(prev => prev.map(c => 
+        c.applicationId === selectedCandId 
+          ? { ...c, matchScore: updatedAnalysis.matchScore } 
+          : c
+      ));
+    } catch (error) {
+      console.error('Failed to trigger AI analysis:', error);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -279,7 +300,8 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
       ]);
       if (active) {
         setCandidateDetail(detail);
-        setCandidateAnalysis(analysis);
+        // Safeguard: Prefer the pre-loaded detail.aiAnalysis object to avoid race conditions
+        setCandidateAnalysis(detail.aiAnalysis || analysis);
         setIsLoadingDetail(false);
       }
     };
@@ -809,7 +831,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           </div>
 
           {/* AI Executive Summary Block / Section - AI Executive Summary */}
-          {candidateAnalysis?.summary && (
+          {candidateAnalysis && (
             <div 
               className="flex flex-col items-start p-[16px] gap-[16px] w-[688px] bg-[#F9FAFF] rounded-[24px] flex-none order-4 self-stretch grow-0 box-border"
             >
@@ -828,65 +850,93 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Details container */}
-              <div className="flex flex-row items-start p-0 pb-[8px] gap-[16px] w-[656px] h-[104px] flex-none order-1 self-stretch grow-0">
-                {/* Left frame (strengths) */}
-                <div className="flex flex-col items-start p-0 gap-[12px] w-[320px] h-[96px] flex-none order-0 self-stretch grow-[1]">
-                  <span 
-                    className="w-[320px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#22C55E] uppercase tracking-wider"
-                  >
-                    Strengths
-                  </span>
-
-                  {/* Frame 2609109 */}
-                  <div className="flex flex-col items-start p-0 gap-[8px] w-[292px] h-[68px] flex-none order-1 grow-[1] overflow-y-auto scrollbar-none">
-
-                    {candidateAnalysis?.summary.strengths.map((str: string, idx: number) => (
-                      <span
-                        key={idx}
-                        className="w-[292px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black"
+              {candidateAnalysis.analysisType === 'GEMINI' && candidateAnalysis.summary ? (
+                <>
+                  {/* Details container */}
+                  <div className="flex flex-row items-start p-0 pb-[8px] gap-[16px] w-[656px] h-auto flex-none order-1 self-stretch grow-0 flex-wrap md:flex-nowrap">
+                    {/* Left frame (strengths) */}
+                    <div className="flex flex-col items-start p-0 gap-[12px] w-[320px] h-auto flex-none order-0 self-stretch grow-[1]">
+                      <span 
+                        className="w-[320px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#22C55E] uppercase tracking-wider"
                       >
-                        • {str}
+                        Strengths
                       </span>
-                    ))}
-                  </div>
-                </div>
 
-                {/* Right frame (concerns) */}
-                <div className="flex flex-col items-start p-0 pb-[36px] gap-[12px] w-[320px] h-[96px] flex-none order-1 self-stretch grow-[1]">
-                  <span 
-                    className="w-[320px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#FF6B6B] uppercase tracking-wider"
-                  >
-                    Concerns
-                  </span>
+                      {/* Frame 2609109 */}
+                      <div className="flex flex-col items-start p-0 gap-[8px] w-auto h-auto flex-none order-1 grow-[1]">
+                        {candidateAnalysis.summary.strengths.map((str: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="w-auto font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black"
+                          >
+                            • {str}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
 
-                  <div className="flex flex-col items-start p-0 gap-[8px] w-[292px] h-[68px] flex-none order-1 grow-[1] overflow-y-auto scrollbar-none">
-                    {candidateAnalysis?.summary.concerns.map((con: string, idx: number) => (
-                      <span
-                        key={idx}
-                        className="w-[292px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black"
+                    {/* Right frame (concerns) */}
+                    <div className="flex flex-col items-start p-0 pb-[12px] gap-[12px] w-[320px] h-auto flex-none order-1 self-stretch grow-[1]">
+                      <span 
+                        className="w-[320px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#FF6B6B] uppercase tracking-wider"
                       >
-                        • {con}
+                        Concerns
                       </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
 
-              {/* Recommendation frame / HorizontalBorder */}
-              <div 
-                className="box-border flex flex-col items-start pt-[16px] px-0 pb-0 w-[656px] min-h-[49px] h-auto border-t border-[#E0E7FF] flex-none order-2 self-stretch grow-0"
-              >
-                <div className="w-[656px] min-h-[32px] h-auto font-['Poppins'] font-normal text-[12px] leading-[16px] text-black text-left">
-                  <span className="font-semibold text-[#6366F1] mr-1">Recommendation:</span>
-                  <span>{candidateAnalysis?.summary.recommendation}</span>
+                      <div className="flex flex-col items-start p-0 gap-[8px] w-auto h-auto flex-none order-1 grow-[1]">
+                        {candidateAnalysis.summary.concerns.map((con: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="w-auto font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-black"
+                          >
+                            • {con}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recommendation frame / HorizontalBorder */}
+                  <div 
+                    className="box-border flex flex-col items-start pt-[16px] px-0 pb-0 w-[656px] min-h-[49px] h-auto border-t border-[#E0E7FF] flex-none order-2 self-stretch grow-0"
+                  >
+                    <div className="w-[656px] min-h-[32px] h-auto font-['Poppins'] font-normal text-[12px] leading-[16px] text-black text-left">
+                      <span className="font-semibold text-[#6366F1] mr-1">Recommendation:</span>
+                      <span>{candidateAnalysis.summary.recommendation}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-[24px] gap-[16px] w-[656px] border border-dashed border-[#C7D2FE] rounded-[16px] bg-white">
+                  <div className="flex flex-row items-center gap-[8px] text-[#6366F1]">
+                    <Icon icon="lucide:sparkles" className="w-[20px] h-[20px] animate-pulse" />
+                    <span className="font-semibold text-xs uppercase tracking-wider font-['Poppins']">AI Insight Pending</span>
+                  </div>
+                  <p className="text-[12px] text-gray-500 text-center max-w-[420px] font-['Poppins'] leading-[18px] px-[16px]">
+                    AI analysis was deferred for this application due to the minimum application pool gate. Generate it manually to see strengths, concerns, and matching recommendations.
+                  </p>
+                  <button
+                    onClick={handleTriggerAI}
+                    disabled={isAnalyzing}
+                    type="button"
+                    className="flex flex-row justify-center items-center py-[8px] px-[20px] bg-[#6366F1] text-white text-[12px] font-semibold rounded-[24px] hover:bg-[#5558e6] transition-all disabled:opacity-50 font-['Poppins'] cursor-pointer border-0 outline-0"
+                  >
+                    {isAnalyzing ? (
+                      <div className="flex flex-row items-center gap-[8px]">
+                        <Icon icon="lucide:loader-2" className="w-[14px] h-[14px] animate-spin" />
+                        <span>Analyzing...</span>
+                      </div>
+                    ) : (
+                      <span>Generate AI Summary ✨</span>
+                    )}
+                  </button>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
           {/* Skills match / Skills Match */}
-          {candidateDetail?.skills && candidateDetail.skills.length > 0 && (
+          {(candidateAnalysis?.skills || (candidateDetail?.skills && candidateDetail.skills.length > 0)) && (
             <div 
               className="box-border flex flex-col items-start p-[12px] gap-[16px] w-[688px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-4 self-stretch grow-0"
             >
@@ -897,37 +947,59 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 >
                   Skills
                 </span>
+                {candidateAnalysis?.skills?.match != null && (
+                  <span className="font-['Poppins'] font-bold text-[11px] leading-[15px] flex items-center text-[#6366F1] uppercase tracking-wider">
+                    {candidateAnalysis.skills.match}% Match
+                  </span>
+                )}
               </div>
 
               {/* Skills chip frame / Container */}
               <div className="flex flex-row items-center p-0 gap-[8px] w-[662px] min-h-[32px] h-auto flex-none self-stretch grow-0 flex-wrap">
-                {candidateDetail.skills.map((t: string | any, idx: number) => {
-                  const skillName = typeof t === 'string' ? t : t.name;
-                  return (
-                    <div 
-                      key={idx}
-                      className="flex flex-col justify-center items-center py-[8px] px-[16px] h-[32px] rounded-[9999px] flex-none"
-                      style={{ backgroundColor: '#EEF2FF' }}
-                    >
-                      <span 
-                        className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-center"
-                        style={{ color: '#6366F1' }}
+                {candidateAnalysis?.skills?.tags
+                  ? candidateAnalysis.skills.tags.map((tag: { name: string; matched: boolean }, idx: number) => (
+                      <div 
+                        key={idx}
+                        className="flex flex-col justify-center items-center py-[8px] px-[16px] h-[32px] rounded-[9999px] flex-none"
+                        style={{ backgroundColor: tag.matched ? '#EEF2FF' : '#FFF1F1' }}
                       >
-                        {skillName}
-                      </span>
-                    </div>
-                  );
-                })}
+                        <span 
+                          className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-center"
+                          style={{ color: tag.matched ? '#6366F1' : '#FF6B6B' }}
+                        >
+                          {tag.name}
+                        </span>
+                      </div>
+                    ))
+                  : candidateDetail?.skills?.map((t: string | any, idx: number) => {
+                      const skillName = typeof t === 'string' ? t : t.name;
+                      return (
+                        <div 
+                          key={idx}
+                          className="flex flex-col justify-center items-center py-[8px] px-[16px] h-[32px] rounded-[9999px] flex-none"
+                          style={{ backgroundColor: '#EEF2FF' }}
+                        >
+                          <span 
+                            className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-center"
+                            style={{ color: '#6366F1' }}
+                          >
+                            {skillName}
+                          </span>
+                        </div>
+                      );
+                    })
+                }
               </div>
 
               {/* Summary text */}
               <span 
                 className="w-auto font-['Poppins'] font-normal text-[14px] leading-[20px] flex items-center text-black"
               >
-                Candidate's listed skills.
+                {candidateAnalysis?.skills?.summary ?? "Candidate's listed skills."}
               </span>
             </div>
           )}
+
 
           {/* Meta section (Experience & Qualification side-by-side) / Frame 2609110 */}
           {candidateAnalysis?.experience && candidateAnalysis?.qualification && (
