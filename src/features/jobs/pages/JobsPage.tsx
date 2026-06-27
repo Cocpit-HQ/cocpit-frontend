@@ -60,7 +60,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
 
   const {
     jobs,
+    recommendedJobs,
     isLoading,
+    isRecommendationsLoading,
     isFetchingMore,
     hasMore,
     loadMore,
@@ -198,8 +200,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
     setDeclineJobId(jobId);
   };
 
-  // Filter recommended jobs for the horizontal carousel
-  const recommendedJobs = jobs.filter((j) => j.is_recommended);
+  // Recommended jobs are retrieved directly from useJobs hook
 
   React.useEffect(() => {
     const handleCaptureClick = () => {
@@ -333,7 +334,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
       </div>
 
       {/* AI Recommended Jobs - Only show under Explore tab */}
-      {activeTab === "Explore" && (isLoading || recommendedJobs.length > 0) && (
+      {activeTab === "Explore" && (isRecommendationsLoading || recommendedJobs.length > 0) && (
         <div className="w-full flex flex-col gap-[20px]">
           <div className="flex justify-start items-center">
             <h3 className="text-black text-lg font-semibold font-['Poppins'] leading-6">
@@ -343,7 +344,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
 
           {/* Recommended jobs container */}
           <div className="w-full flex flex-row justify-start items-start gap-4 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ">
-            {isLoading ? (
+            {isRecommendationsLoading ? (
               [1, 2, 3].map((n) => (
                 <RecommendedJobCardSkeleton key={n} />
               ))

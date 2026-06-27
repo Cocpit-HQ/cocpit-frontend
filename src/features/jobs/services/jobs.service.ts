@@ -124,6 +124,43 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
   }
 };
 
+export const getRecommendations = async (): Promise<Job[]> => {
+  try {
+    const response = await api.get('/jobs/recommendations');
+    const fetchedJobs = response.data;
+    
+    return fetchedJobs.map((job: any) => ({
+      id: job.job_id,
+      title: job.title,
+      company: job.company_name,
+      location: job.location,
+      work_type: job.job_type,
+      work_mode: job.work_mode,
+      salary_min: job.salary_min,
+      salary_max: job.salary_max,
+      salary_currency: job.salary_currency,
+      posted_at: getRelativeTime(job.created_at),
+      description: job.description,
+      experience: (job.experience_min != null && job.experience_max != null) 
+        ? `${job.experience_min}-${job.experience_max}Yrs` 
+        : (job.experience_level || '0-2Yrs'),
+      is_saved: job.isSaved || false,
+      is_applied: job.hasApplied || false,
+      is_offer: false,
+      tags: job.tags || [],
+      is_recommended: job.is_recommended || false,
+      recommended_badge: job.recommended_badge || '',
+      response_rate: job.response_rate || '',
+      avg_reply: job.avg_reply || '',
+      match_reason: job.match_reason || '',
+      match_score: job.match_score || null,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch recommended jobs:", error);
+    return [];
+  }
+};
+
 export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
   try {
     const params: Record<string, any> = { limit: 10 };

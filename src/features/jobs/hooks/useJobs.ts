@@ -6,7 +6,9 @@ import { useJobStore } from '@/store/job.store';
 
 export const useJobs = (initialTab: string = 'Explore', initialSearch: string = '', initialLocation: string = '') => {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [recommendedJobs, setRecommendedJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRecommendationsLoading, setIsRecommendationsLoading] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
@@ -81,6 +83,20 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
         if (activeTab === 'Explore') {
           console.log("Selected Filters:", filters);
           console.log("Jobs Response:", res.data);
+          
+          if (!isLoadMore) {
+            setIsRecommendationsLoading(true);
+            jobsService.getRecommendations()
+              .then(recJobs => {
+                setRecommendedJobs(recJobs.map(rj => ({
+                  ...rj,
+                  is_saved: savedJobIds.has(rj.id),
+                  is_applied: appliedJobIds.has(rj.id)
+                })));
+              })
+              .catch(err => console.error("Failed to load recommended jobs", err))
+              .finally(() => setIsRecommendationsLoading(false));
+          }
         }
 
         newJobs = res.data;
@@ -114,7 +130,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       setIsLoading(false);
       setIsFetchingMore(false);
     }
-  }, [filters, activeTab, cursor]);
+  }, [filters, activeTab, cursor, savedJobIds, appliedJobIds, addSavedId, addAppliedId, setApplicationStats]);
 
   // Trigger fetch when filters or tab change
   useEffect(() => {
@@ -143,6 +159,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       const updatedSaved = !isCurrentlySaved;
 
       setJobs(prev => prev.map(j => j.id === jobId ? { ...j, is_saved: updatedSaved } : j));
+      setRecommendedJobs(prev => prev.map(j => j.id === jobId ? { ...j, is_saved: updatedSaved } : j));
       if (selectedJob && selectedJob.id === jobId) {
         setSelectedJob(prev => prev ? { ...prev, is_saved: updatedSaved } : null);
       }
@@ -173,6 +190,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       addAppliedId(jobId);
 
       setJobs(prev => prev.map(j => j.id === jobId ? { ...j, is_applied: true } : j));
+      setRecommendedJobs(prev => prev.map(j => j.id === jobId ? { ...j, is_applied: true } : j));
       if (selectedJob && selectedJob.id === jobId) {
         setSelectedJob(prev => prev ? { ...prev, is_applied: true } : null);
       }
@@ -197,6 +215,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
           return prev.map(j => j.id === jobId ? { ...j, application_status: 'Withdrawn', is_applied: false } : j);
         }
       });
+      setRecommendedJobs(prev => prev.map(j => j.id === jobId ? { ...j, application_status: 'Withdrawn', is_applied: false } : j));
       const stats = await jobsService.getApplicationStats();
       setApplicationStats(stats);
       toast.success('Application withdrawn successfully');
@@ -219,7 +238,9 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
 
   return {
     jobs,
+    recommendedJobs,
     isLoading,
+    isRecommendationsLoading,
     isFetchingMore,
     hasMore,
     loadMore,
