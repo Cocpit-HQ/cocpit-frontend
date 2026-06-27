@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { JobListing } from '../../types/jobs.types';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
-import SendOfferModal from './SendOfferModal';
+import SendOfferModal, { SelectableCandidate } from './SendOfferModal';
+import api from '@/lib/axios';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 export interface SentOfferGroup {
   id: string;
@@ -21,9 +23,11 @@ interface SendOfferTabProps {
 
 export const SendOfferTab: React.FC<SendOfferTabProps> = ({ listings, onSelectListing, onSelectOfferGroup }) => {
   const [isSendOpen, setIsSendOpen] = useState(false);
+  const { activeProfile, userCompanies } = useActiveProfile();
 
   // Sent Offers state
   const [sentOffers, setSentOffers] = useState<SentOfferGroup[]>([]);
+  const [isLoadingOffers, setIsLoadingOffers] = useState(false);
 
   const activeListings = listings.filter(item => item.status?.toUpperCase() === 'ACTIVE');
 
@@ -31,40 +35,91 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({ listings, onSelectLi
   const totalOffersSent = sentOffers.reduce((sum, item) => sum + item.sentCount, 0);
   const totalAccepted = sentOffers.reduce((sum, item) => sum + item.acceptedCount, 0);
 
+  const fetchSentOffers = useCallback(async () => {
+    let companyId = '';
+    if (activeProfile && activeProfile.type === 'COMPANY') {
+      companyId = activeProfile.id;
+    } else if (userCompanies && userCompanies.length > 0) {
+      companyId = userCompanies[0].org_id || userCompanies[0].company_id || '';
+    }
+
+    if (!companyId) return;
+
+    setIsLoadingOffers(true);
+    try {
+      const response = await api.get(`/jobs/companies/${companyId}/offers/sent`);
+      const mapped: SentOfferGroup[] = (response.data || []).map((item: any) => ({
+        id: item.job_id,
+        title: item.title,
+        company: item.company_display_name || item.company_name || 'Starlight Technologies',
+        sentCount: Number(item.total_offers || 0),
+        acceptedCount: Number(item.accepted_count || 0),
+        pendingCount: Number(item.pending_count || 0),
+        // Pass original job details for details page
+        job_type: item.job_type || 'Full time',
+        work_mode: item.work_mode || 'Remote',
+        location: item.location || 'Remote',
+        experience_level: item.experience_level || '0-2Yrs',
+        salary_min: item.salary_min,
+        salary_max: item.salary_max,
+        salary_currency: item.salary_currency || 'USD',
+        salary_period: item.salary_period || 'YEARLY'
+      }));
+      setSentOffers(mapped);
+    } catch (error) {
+      console.error('Failed to fetch sent offers:', error);
+    } finally {
+      setIsLoadingOffers(false);
+    }
+  }, [activeProfile, userCompanies]);
+
+  useEffect(() => {
+    fetchSentOffers();
+  }, [fetchSentOffers]);
+
   const handleSelectGroup = (group: SentOfferGroup) => {
     if (onSelectOfferGroup) {
       onSelectOfferGroup(group);
     }
   };
 
-  const handleSendOfferSubmit = (jobTitle: string, candidateNames: string[], note: string) => {
-    toast.success(`Offers sent successfully to: ${candidateNames.join(', ')}`);
-
-    setSentOffers((prev) => {
-      const existingIdx = prev.findIndex((item) => item.title.toLowerCase() === jobTitle.toLowerCase());
-      if (existingIdx > -1) {
-        const updated = [...prev];
-        updated[existingIdx] = {
-          ...updated[existingIdx],
-          sentCount: updated[existingIdx].sentCount + candidateNames.length,
-          pendingCount: updated[existingIdx].pendingCount + candidateNames.length,
-        };
-        return updated;
-      } else {
-        return [
-          ...prev,
-          {
-            id: `so-${Date.now()}`,
-            title: jobTitle,
-            company: 'Starlight Technologies',
-            sentCount: candidateNames.length,
-            acceptedCount: 0,
-            pendingCount: candidateNames.length,
-          },
-        ];
+  const handleSendOfferSubmit = async (jobId: string, candidates: SelectableCandidate[], note: string) => {
+    let companyId = '';
+    if (activeProfile && activeProfile.type === 'COMPANY') {
+      companyId = activeProfile.id;
+    } else {
+      const selectedJob = listings.find(j => j.id === jobId);
+      if (selectedJob && selectedJob.org_id) {
+        companyId = selectedJob.org_id;
+      } else if (userCompanies && userCompanies.length > 0) {
+        companyId = userCompanies[0].org_id || userCompanies[0].company_id || '';
       }
-    });
+    }
+
+    if (!companyId) {
+      toast.error('No associated organization found to send offers from.');
+      return;
+    }
+
+    try {
+      const promises = candidates.map((c) =>
+        api.post(`/jobs/companies/${companyId}/offers`, {
+          jobId,
+          userId: c.id,
+          message: note.trim() || undefined
+        })
+      );
+
+      await Promise.all(promises);
+      toast.success(`Offers sent successfully to: ${candidates.map(c => c.name).join(', ')}`);
+      fetchSentOffers();
+    } catch (error: any) {
+      console.error('Failed to send offers:', error);
+      const errMsg = error.response?.data?.message || 'Failed to send offers.';
+      toast.error(errMsg);
+    }
   };
+
 
   return (
     <div className="w-full flex flex-col animate-in fade-in duration-300">

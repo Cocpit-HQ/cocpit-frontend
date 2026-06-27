@@ -1,6 +1,7 @@
 import { Job, JobsFilter, JobListing, JobOffer, ListingsCounts } from '../types/jobs.types';
-import { DUMMY_JOBS, DUMMY_OFFERS } from '../utils/jobs.utils';
+import { DUMMY_JOBS } from '../utils/jobs.utils';
 import api from '@/lib/axios';
+import { useJobStore } from '@/store/job.store';
 
 // Service layer holds zero client-side UI states.
 // All states are managed reactively inside useJobStore.
@@ -238,7 +239,15 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
     const job = response.data;
     if (!job) return null;
 
-    const status = job.applicationStatus || (job.is_offer ? job.offerStatus : undefined);
+    const respondedOffers = useJobStore.getState().respondedOffers;
+    const offerResponse = respondedOffers[job.job_id] || respondedOffers[job.offer_id];
+    let status = (job.is_offer ? job.offerStatus : undefined) || job.applicationStatus;
+    if (job.is_offer && offerResponse) {
+      status = offerResponse === 'accept' ? 'Accepted' : 'Declined';
+    }
+    if (status) {
+      status = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    }
 
     const formattedJob: Job = {
       id: job.job_id,
@@ -272,7 +281,7 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       recruiter_name: job.recruiter_name,
       recruiter_title: job.recruiter_title || 'HR Manager',
       recruiter_avatar: job.recruiter_avatar,
-      recruiter_message: job.recruiter_message || 'We loved your profile and would like to offer you this role!',
+      recruiter_message: job.recruiter_message || undefined,
       response_rate: job.response_rate,
       avg_reply: job.avg_reply,
     };
@@ -424,14 +433,60 @@ export const getApplicationStats = async (): Promise<{ totalApplied: number; sho
 };
 
 export const getMyOffers = async (): Promise<Job[]> => {
-  await new Promise(resolve => setTimeout(resolve, 200));
-  return DUMMY_JOBS
-    .filter(j => j.is_offer)
-    .map(j => ({
-      ...j,
-      is_saved: false,
-      is_applied: false
-    }));
+  try {
+    const response = await api.get('/jobs/offers/me');
+    const offers = response.data || [];
+    
+    return offers.map((job: any) => {
+      const respondedOffers = useJobStore.getState().respondedOffers;
+      const offerResponse = respondedOffers[job.offer_id] || respondedOffers[job.job_id];
+      let status = job.status || (job.is_offer ? job.status : undefined);
+      if (offerResponse) {
+        status = offerResponse === 'accept' ? 'Accepted' : 'Declined';
+      }
+      if (status) {
+        status = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+      }
+
+      const formattedJob: Job = {
+        id: job.job_id,
+        title: job.title,
+        company: job.company_display_name || job.company_name,
+        company_logo: job.company_logo,
+        location: job.location,
+        job_type: job.job_type || 'Full time',
+        experience: job.experience_level || '0-2 Yrs',
+        work_mode: job.work_mode || 'Hybrid',
+        salary_min: job.salary_min,
+        salary_max: job.salary_max,
+        salary_currency: job.salary_currency || 'USD',
+        salary_display: formatSalary(job.salary_min, job.salary_max, job.salary_currency),
+        posted_at: getRelativeTime(job.created_at),
+        description: job.description || '',
+        requirements: extractRequirements(job.description),
+        is_saved: useJobStore.getState().savedJobIds.has(job.job_id),
+        is_applied: useJobStore.getState().appliedJobIds.has(job.job_id),
+        is_offer: true,
+        is_closed: false,
+        is_followed: useJobStore.getState().followedCompanies.has(job.company_name),
+        org_id: job.org_id,
+        recruiter_id: job.recruiter_id,
+        application_status: status,
+        offer_id: job.offer_id,
+        offer_days_left: 7,
+        offer_expiry_text: 'Ends in 7 days',
+        recruiter_name: job.sent_by_name,
+        recruiter_title: 'HR Manager',
+        recruiter_avatar: undefined,
+        recruiter_message: job.message || undefined,
+      };
+
+      return formattedJob;
+    });
+  } catch (error) {
+    console.error("Failed to fetch my offers:", error);
+    return [];
+  }
 };
 
 export const respondToOffer = async (offerId: string, action: 'accept' | 'decline'): Promise<boolean> => {
@@ -486,7 +541,8 @@ export const getMyListings = async (status?: string, cursor?: string, limit: num
       work_mode: job.work_mode,
       salary_min: job.salary_min,
       salary_max: job.salary_max,
-      salary_currency: job.salary_currency
+      salary_currency: job.salary_currency,
+      org_id: job.org_id
     })) as JobListing[];
 
     const nextCursor = responseData.nextCursor || null;
@@ -641,22 +697,58 @@ export const deleteJobListing = async (id: string): Promise<boolean> => {
   }
 };
 
-let inMemoryJobOffers = [...DUMMY_OFFERS];
+const mapBackendToJobOffer = (raw: any): JobOffer => {
+  const computeDaysRemaining = (expiresAt?: string): number => {
+    if (!expiresAt) return 30;
+    const diff = new Date(expiresAt).getTime() - Date.now();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  };
+
+  return {
+    id: raw.offer_id,
+    job_role: raw.title,
+    days_remaining: computeDaysRemaining(raw.expires_at),
+    company_name: raw.company_display_name || raw.company_name,
+    location: raw.location || 'Remote',
+    status: raw.status as 'pending' | 'accepted' | 'declined',
+    note: raw.message || undefined,
+    recruiter: {
+      name: raw.sent_by_name || 'Recruiter',
+      headline: raw.company_display_name || '',
+      avatar: raw.company_logo || undefined,
+    },
+  };
+};
 
 export const getJobOffers = async () => {
-  await new Promise(resolve => setTimeout(resolve, 150));
-  return { data: inMemoryJobOffers, success: true };
+  try {
+    const response = await api.get('/jobs/offers/me');
+    const mappedOffers = (response.data || []).map(mapBackendToJobOffer);
+    return { data: mappedOffers, success: true };
+  } catch (error) {
+    console.error("Failed to fetch job offers:", error);
+    return { data: [], success: false };
+  }
 };
 
 export const acceptJobOffer = async (offerId: string) => {
-  await new Promise(resolve => setTimeout(resolve, 100));
-  inMemoryJobOffers = inMemoryJobOffers.map(o => o.id === offerId ? { ...o, status: 'accepted' } : o);
-  return { success: true };
+  try {
+    await api.patch(`/jobs/offers/${offerId}/respond`, { action: 'accepted' });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to accept job offer:", error);
+    return { success: false };
+  }
 };
 
 export const declineJobOffer = async (offerId: string) => {
-  await new Promise(resolve => setTimeout(resolve, 100));
-  inMemoryJobOffers = inMemoryJobOffers.map(o => o.id === offerId ? { ...o, status: 'declined' } : o);
-  return { success: true };
+  try {
+    await api.patch(`/jobs/offers/${offerId}/respond`, { action: 'declined' });
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to decline job offer:", error);
+    return { success: false };
+  }
 };
+
 

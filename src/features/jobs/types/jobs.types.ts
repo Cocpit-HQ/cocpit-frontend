@@ -44,6 +44,7 @@ export interface Job {
   recruiter_avatar?: string;
   recruiter_message?: string;
   offer_id?: string;
+  offerStatus?: string;
 }
 
 export interface JobsFilter {
@@ -82,6 +83,7 @@ export interface JobListing {
   salary_min?: number;
   salary_max?: number;
   salary_currency?: string;
+  org_id?: string | null;
 }
 
 export interface ListingsCounts {

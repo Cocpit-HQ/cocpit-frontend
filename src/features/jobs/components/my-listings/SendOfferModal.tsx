@@ -1,26 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import { JobListing } from '../../types/jobs.types';
+import api from '@/lib/axios';
 
-interface SendOfferModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  activeListings: JobListing[];
-  onSubmit: (jobTitle: string, candidateNames: string[], note: string) => void;
-}
-
-interface SelectableCandidate {
+export interface SelectableCandidate {
   id: string;
   name: string;
   avatar: string;
 }
 
-const MOCK_SELECTABLE_CANDIDATES: SelectableCandidate[] = [
-  { id: 'sel-1', name: 'Sarah Chen', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120' },
-  { id: 'sel-2', name: 'Marcus Avery', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120' },
-  { id: 'sel-3', name: 'Amara Okora', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120' },
-  { id: 'sel-4', name: 'Alex Rivera', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=120' }
-];
+interface SendOfferModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  activeListings: JobListing[];
+  onSubmit: (jobId: string, candidates: SelectableCandidate[], note: string) => void;
+}
 
 export const SendOfferModal: React.FC<SendOfferModalProps> = ({
   isOpen,
@@ -33,6 +27,44 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
   const [selectedJobId, setSelectedJobId] = useState('');
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]); // Array of candidate IDs
   const [personalNote, setPersonalNote] = useState('');
+  const [candidatesList, setCandidatesList] = useState<SelectableCandidate[]>([]);
+  const [allFetchedCandidates, setAllFetchedCandidates] = useState<Record<string, SelectableCandidate>>({});
+  const [isLoadingCandidates, setIsLoadingCandidates] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchCandidates = async () => {
+      setIsLoadingCandidates(true);
+      try {
+        let endpoint = '/users/suggested';
+        if (searchQuery.trim().length > 0) {
+          endpoint = `/users/search?q=${encodeURIComponent(searchQuery.trim())}`;
+        }
+        const response = await api.get(endpoint);
+        const mapped = (response.data || []).map((item: any) => ({
+          id: item.id || item.user_id,
+          name: item.full_name || 'Anonymous User',
+          avatar: item.avatar_url || ''
+        }));
+        setCandidatesList(mapped);
+        setAllFetchedCandidates(prev => {
+          const updated = { ...prev };
+          mapped.forEach((c: SelectableCandidate) => {
+            updated[c.id] = c;
+          });
+          return updated;
+        });
+      } catch (error) {
+        console.error('Failed to fetch candidates:', error);
+      } finally {
+        setIsLoadingCandidates(false);
+      }
+    };
+
+    const timer = setTimeout(fetchCandidates, searchQuery ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [isOpen, searchQuery]);
 
   if (!isOpen) return null;
 
@@ -59,11 +91,9 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
 
   const handleSendClick = () => {
     if (!selectedJob) return;
-    const names = MOCK_SELECTABLE_CANDIDATES.filter((c) =>
-      selectedCandidates.includes(c.id)
-    ).map((c) => c.name);
+    const selectedList = selectedCandidates.map(id => allFetchedCandidates[id]).filter(Boolean);
 
-    onSubmit(selectedJob.title, names, personalNote);
+    onSubmit(selectedJob.id, selectedList, personalNote);
     
     // Reset state
     setStage(1);
@@ -72,6 +102,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
     setPersonalNote('');
     onClose();
   };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
@@ -214,9 +245,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                 <div className="text-left justify-start text-black text-xs font-normal font-['Poppins'] leading-4">Choose candidates</div>
                 
                 <div className="self-stretch flex flex-col justify-start items-start gap-2 max-h-[220px] overflow-y-auto pr-1 w-full [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full">
-                  {MOCK_SELECTABLE_CANDIDATES.filter((c) =>
-                    c.name.toLowerCase().includes(searchQuery.toLowerCase())
-                  ).map((cand) => {
+                  {candidatesList.map((cand) => {
                     const isChecked = selectedCandidates.includes(cand.id);
                     return (
                       <div
@@ -311,19 +340,27 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
 
               {/* Candidate avatars list */}
               <div className="w-96 py-2 inline-flex justify-start items-start gap-y-4 gap-x-2 flex-wrap max-h-[140px] overflow-y-auto pr-1 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full">
-                {MOCK_SELECTABLE_CANDIDATES.filter((c) =>
-                  selectedCandidates.includes(c.id)
-                ).map((c) => (
-                  <div key={c.id} className="w-24 h-16 relative">
-                    <img className="w-10 h-10 left-[28px] top-0 absolute rounded-full object-cover border border-slate-100" src={c.avatar} alt={c.name} />
-                    <div className="left-0 right-0 text-center top-[48px] absolute text-gray-500 text-xs font-normal font-['Poppins'] leading-4 truncate px-1 capitalize">
-                      {c.name.split(' ')[0]} {c.name.split(' ')[1] ? c.name.split(' ')[1].toLowerCase() : ''}
+                {selectedCandidates.map((id) => {
+                  const c = allFetchedCandidates[id];
+                  if (!c) return null;
+                  return (
+                    <div key={c.id} className="w-24 h-16 relative">
+                      {c.avatar ? (
+                        <img className="w-10 h-10 left-[28px] top-0 absolute rounded-full object-cover border border-slate-100" src={c.avatar} alt={c.name} />
+                      ) : (
+                        <div className="w-10 h-10 left-[28px] top-0 absolute rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 font-semibold font-['Poppins'] text-xs border border-slate-100">
+                          {c.name.substring(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="left-0 right-0 text-center top-[48px] absolute text-gray-500 text-xs font-normal font-['Poppins'] leading-4 truncate px-1 capitalize">
+                        {c.name.split(' ')[0]} {c.name.split(' ')[1] ? c.name.split(' ')[1].toLowerCase() : ''}
+                      </div>
+                      <div className="w-4 h-4 left-[50px] top-[24px] absolute rounded bg-indigo-500 inline-flex justify-center items-center shadow-sm border border-indigo-500">
+                        <Icon icon="lucide:check" className="w-2.5 h-2.5 text-white stroke-[3]" />
+                      </div>
                     </div>
-                    <div className="w-[18px] h-[18px] p-[2px] left-[50px] top-[24px] absolute rounded-full bg-indigo-500 border-2 border-white inline-flex justify-center items-center shadow-sm">
-                      <Icon icon="lucide:check" className="w-2.5 h-2.5 text-white stroke-[3]" />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Personal message textarea */}

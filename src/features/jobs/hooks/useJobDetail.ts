@@ -43,6 +43,9 @@ export const useJobDetail = (jobId: string) => {
 
         // Handle offer statuses
         if (res.is_offer) {
+          if (res.offerStatus) {
+            res.application_status = res.offerStatus.charAt(0).toUpperCase() + res.offerStatus.slice(1);
+          }
           const offerResponse = respondedOffers[res.id];
           if (offerResponse) {
             res.application_status = offerResponse === 'accept' ? 'Accepted' : 'Declined';

@@ -88,44 +88,64 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onSave, onApply, onWithdr
         <div className={`justify-start text-gray-500 text-xs font-normal font-['Poppins'] leading-4 ${getPostedDateColor()}`}>
           {job.posted_at}
         </div>
-        <div className="w-[160px] h-10 flex flex-row items-center gap-4 flex-none justify-end">
-          {/* Apply / Withdraw Button */}
-          {job.is_applied ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onWithdraw?.(job.id, e);
-              }}
-              className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] border border-[#6B7280] text-[#6B7280] bg-white hover:bg-slate-50 transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
-            >
-              Withdraw
-            </button>
+        <div className="flex-1 flex flex-row items-center gap-4 justify-end">
+          {job.is_offer ? (
+            (job.offerStatus === 'accepted' || job.application_status === 'Accepted') ? (
+              <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Offer accepted</span>
+            ) : (job.offerStatus === 'declined' || job.application_status === 'Declined') ? (
+              <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Offer declined</span>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onApply?.(job.id, e);
+                }}
+                className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] hover:bg-[#6366F1]/90 text-white transition-all duration-200 active:scale-95 text-sm font-normal font-['Poppins'] leading-5"
+              >
+                Respond
+              </button>
+            )
           ) : (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onApply?.(job.id, e);
-              }}
-              className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] hover:bg-[#6366F1]/90 text-white transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
-            >
-              Apply
-            </button>
+            <>
+              {/* Apply / Withdraw Button */}
+              {job.is_applied ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onWithdraw?.(job.id, e);
+                  }}
+                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] border border-[#6B7280] text-[#6B7280] bg-white hover:bg-slate-50 transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
+                >
+                  Withdraw
+                </button>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onApply?.(job.id, e);
+                  }}
+                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] hover:bg-[#6366F1]/90 text-white transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
+                >
+                  Apply
+                </button>
+              )}
+              
+              {/* Bookmark Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSave?.(job.id, e);
+                }}
+                className="w-6 h-6 flex items-center justify-center transition-all active:scale-95 flex-none"
+                aria-label="Bookmark job"
+              >
+                <Icon
+                  icon={job.is_saved ? 'solar:bookmark-bold' : 'solar:bookmark-linear'}
+                  className={`w-6 h-6 transition-colors ${job.is_saved ? 'text-[#6366F1]' : 'text-gray-500 hover:text-[#6366F1]'}`}
+                />
+              </button>
+            </>
           )}
-          
-          {/* Bookmark Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onSave?.(job.id, e);
-            }}
-            className="w-6 h-6 flex items-center justify-center transition-all active:scale-95 flex-none"
-            aria-label="Bookmark job"
-          >
-            <Icon
-              icon={job.is_saved ? 'solar:bookmark-bold' : 'solar:bookmark-linear'}
-              className={`w-6 h-6 transition-colors ${job.is_saved ? 'text-[#6366F1]' : 'text-gray-500 hover:text-[#6366F1]'}`}
-            />
-          </button>
         </div>
       </div>
     </div>

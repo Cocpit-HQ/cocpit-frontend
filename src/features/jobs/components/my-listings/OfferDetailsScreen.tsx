@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
 import WithdrawOfferModal from './WithdrawOfferModal';
 import { toast } from 'sonner';
+import api from '@/lib/axios';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 interface OfferDetailsScreenProps {
   offerGroup: {
@@ -11,6 +13,14 @@ interface OfferDetailsScreenProps {
     sentCount: number;
     acceptedCount: number;
     pendingCount: number;
+    job_type?: string;
+    work_mode?: string;
+    location?: string;
+    experience_level?: string;
+    salary_min?: number;
+    salary_max?: number;
+    salary_currency?: string;
+    salary_period?: string;
   };
   onBack: () => void;
   onViewListingDetails: () => void;
@@ -18,68 +28,98 @@ interface OfferDetailsScreenProps {
 
 interface OfferCandidate {
   id: string;
+  userId: string;
   name: string;
   role: string;
   companyName: string;
   avatar: string;
-  status: 'chat' | 'withdraw' | 'withdrawn';
+  status: 'chat' | 'withdraw' | 'declined' | 'withdrawn';
+  note?: string;
+  sentByName?: string;
 }
-
-const INITIAL_CANDIDATES: OfferCandidate[] = [
-  {
-    id: 'off-cand-1',
-    name: 'Alex Rivera',
-    role: 'Principal Architect',
-    companyName: 'Quantum Systems',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=120',
-    status: 'chat',
-  },
-  {
-    id: 'off-cand-2',
-    name: 'Jordan Smyth',
-    role: 'VP Engineering',
-    companyName: 'FlowState',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120',
-    status: 'chat',
-  },
-  {
-    id: 'off-cand-3',
-    name: 'David Miller',
-    role: 'Senior Researcher',
-    companyName: 'DeepScale',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120',
-    status: 'withdraw',
-  },
-];
 
 export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
   offerGroup,
   onBack,
   onViewListingDetails,
 }) => {
-  const [candidates, setCandidates] = useState<OfferCandidate[]>(INITIAL_CANDIDATES);
+  const [candidates, setCandidates] = useState<OfferCandidate[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedCandId, setSelectedCandId] = useState<string | null>(null);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
+  const { activeProfile, userCompanies } = useActiveProfile();
+
+  const getCompanyId = useCallback(() => {
+    if (activeProfile && activeProfile.type === 'COMPANY') {
+      return activeProfile.id;
+    }
+    if (userCompanies && userCompanies.length > 0) {
+      return userCompanies[0].org_id || userCompanies[0].company_id || '';
+    }
+    return '';
+  }, [activeProfile, userCompanies]);
+
+  const fetchRecipients = useCallback(async () => {
+    const companyId = getCompanyId();
+    if (!companyId || !offerGroup.id) return;
+    setIsLoading(true);
+    try {
+      const response = await api.get(`/jobs/companies/${companyId}/offers/job/${offerGroup.id}/recipients`);
+      const mapped: OfferCandidate[] = (response.data || []).map((item: any) => ({
+        id: item.offer_id,
+        userId: item.user_id,
+        name: item.full_name || 'Anonymous User',
+        role: item.headline || 'Candidate',
+        companyName: item.sent_by_name || 'Recruiter',
+        avatar: item.avatar_url || '',
+        status: item.status === 'accepted' ? 'chat' : (item.status === 'pending' ? 'withdraw' : (item.status === 'declined' ? 'declined' : 'withdrawn')),
+        note: item.message || undefined,
+        sentByName: item.sent_by_name
+      }));
+      setCandidates(mapped);
+    } catch (error) {
+      console.error('Failed to fetch offer recipients:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [offerGroup.id, getCompanyId]);
+
+  useEffect(() => {
+    fetchRecipients();
+  }, [fetchRecipients]);
 
   const handleWithdrawClick = (candId: string) => {
     setSelectedCandId(candId);
     setIsWithdrawOpen(true);
   };
 
-  const handleConfirmWithdraw = () => {
+  const handleConfirmWithdraw = async () => {
     if (!selectedCandId) return;
-    setCandidates((prev) =>
-      prev.map((c) => (c.id === selectedCandId ? { ...c, status: 'withdrawn' } : c))
-    );
-    setIsWithdrawOpen(false);
-    setSelectedCandId(null);
-    toast.success('Offer withdrawn successfully.');
+    const companyId = getCompanyId();
+    if (!companyId) return;
+
+    try {
+      await api.delete(`/jobs/companies/${companyId}/offers/${selectedCandId}`);
+      setCandidates((prev) =>
+        prev.map((c) => (c.id === selectedCandId ? { ...c, status: 'withdrawn' } : c))
+      );
+      toast.success('Offer withdrawn successfully.');
+    } catch (error: any) {
+      console.error('Failed to withdraw offer:', error);
+      const errMsg = error.response?.data?.message || 'Failed to withdraw offer.';
+      toast.error(errMsg);
+    } finally {
+      setIsWithdrawOpen(false);
+      setSelectedCandId(null);
+    }
   };
 
-  const activeCandidates = candidates.filter((c) => c.status !== 'withdrawn');
+  const activeCandidates = candidates;
 
-  // Condition to show note: Only display if the note content is present or if it matches the main group
-  const showNote = offerGroup.title === 'UI/UX Designer' || offerGroup.id === 'so-1';
+  // Load recruiter note if present from the first candidate who has a note
+  const noteCandidate = candidates.find(c => c.note);
+  const showNote = !!noteCandidate;
+
 
   return (
     <div className="w-[998px] mx-auto bg-white flex flex-col justify-start items-center gap-[16px] overflow-hidden animate-in fade-in duration-300">
@@ -117,7 +157,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
             </span>
             {/* Full time */}
             <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-[#6B7280]">
-              Full time
+              {offerGroup.job_type || 'Full time'}
             </span>
           </div>
 
@@ -139,7 +179,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
             <div className="flex flex-row items-center p-0 gap-[8px] h-[20px]">
               <Icon icon="lucide:briefcase" className="w-[20px] h-[20px] text-black" />
               <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black">
-                0-2Yrs
+                {offerGroup.experience_level || '0-2Yrs'}
               </span>
             </div>
             
@@ -150,7 +190,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
             <div className="flex flex-row items-center p-0 gap-[8px] h-[20px]">
               <Icon icon="lucide:map-pin" className="w-[20px] h-[20px] text-black" />
               <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black">
-                Hybrid - Kolhapur
+                {offerGroup.work_mode || 'Hybrid'} - {offerGroup.location || 'Kolhapur'}
               </span>
             </div>
           </div>
@@ -158,7 +198,9 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
           {/* Salary range frame */}
           <div className="py-[2px] flex items-center h-[16px]">
             <span className="font-['Poppins'] font-medium text-[12px] leading-[16px] text-black">
-              $160k - $210k
+              {offerGroup.salary_min && offerGroup.salary_max
+                ? `$${Math.round(offerGroup.salary_min / 1000)}k - $${Math.round(offerGroup.salary_max / 1000)}k`
+                : '$160k - $210k'}
             </span>
           </div>
         </div>
@@ -189,24 +231,22 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
           <div className="w-[998px] box-border flex flex-col items-start p-[12px_16px] gap-[8px] bg-[#F9FAFF] border-l-2 border-l-[#6366F1] rounded-[0px_16px_16px_16px]">
             {/* Sender Info Row (Frame 2609033) */}
             <div className="flex flex-row justify-start items-center p-0 gap-[8px] w-[282px] h-[40px]">
-              <img
-                className="w-[40px] h-[40px] rounded-full object-cover"
-                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=120"
-                alt="Sarah Mitchell"
-              />
+              <div className="w-[40px] h-[40px] rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 font-semibold font-['Poppins'] text-xs border border-slate-100">
+                {noteCandidate?.sentByName ? noteCandidate.sentByName.substring(0, 2).toUpperCase() : 'RC'}
+              </div>
               <div className="flex flex-col justify-center items-start">
                 <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] uppercase">
-                  SARAH MITCHELL
+                  {noteCandidate?.sentByName || 'RECRUITER'}
                 </span>
                 <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] uppercase">
-                  HEAD OF DESIGN
+                  RECRUITER
                 </span>
               </div>
             </div>
 
             {/* Note Content */}
             <div className="w-[966px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280]">
-              "Hi cocpit, we were impressed by your portfolio and the way you handled the whiteboarding session. Your approach to scalable design systems is exactly what we need for our next growth phase. We'd love to have you join our team."
+              "{noteCandidate?.note}"
             </div>
           </div>
         </div>
@@ -246,11 +286,17 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                 {/* User Frame 2608774 */}
                 <div className="flex flex-row items-start p-0 gap-[8px] h-[44px]">
                   {/* User Avatar */}
-                  <img
-                    className="w-[40px] h-[40px] rounded-full object-cover"
-                    src={cand.avatar}
-                    alt={cand.name}
-                  />
+                  {cand.avatar ? (
+                    <img
+                      className="w-[40px] h-[40px] rounded-full object-cover"
+                      src={cand.avatar}
+                      alt={cand.name}
+                    />
+                  ) : (
+                    <div className="w-[40px] h-[40px] rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 font-semibold font-['Poppins'] text-sm border border-slate-100">
+                      {cand.name.substring(0, 2).toUpperCase()}
+                    </div>
+                  )}
                   {/* Text Frame 2609008 */}
                   <div className="flex flex-col justify-center items-start h-[44px]">
                     <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black text-left">
@@ -263,7 +309,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                 </div>
 
                 {/* Button Frame 2608617 */}
-                {cand.status === 'chat' ? (
+                {cand.status === 'chat' && (
                   <button
                     type="button"
                     className="box-sizing: border-box w-[120px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:opacity-90 transition-all active:scale-95"
@@ -272,7 +318,8 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                       Chat
                     </span>
                   </button>
-                ) : (
+                )}
+                {cand.status === 'withdraw' && (
                   <button
                     onClick={() => handleWithdrawClick(cand.id)}
                     type="button"
@@ -282,6 +329,20 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                       Withdraw
                     </span>
                   </button>
+                )}
+                {cand.status === 'declined' && (
+                  <div className="box-sizing: border-box w-[120px] h-[40px] border border-red-200 bg-red-50/50 rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px]">
+                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-red-500 font-semibold">
+                      Declined
+                    </span>
+                  </div>
+                )}
+                {cand.status === 'withdrawn' && (
+                  <div className="box-sizing: border-box w-[120px] h-[40px] border border-gray-200 bg-gray-50 rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px]">
+                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-gray-400">
+                      Withdrawn
+                    </span>
+                  </div>
                 )}
               </div>
             ))
