@@ -62,10 +62,13 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
 
   const fetchRecipients = useCallback(async () => {
     const companyId = getCompanyId();
-    if (!companyId || !offerGroup.id) return;
+    if (!offerGroup.id) return;
     setIsLoading(true);
     try {
-      const response = await api.get(`/jobs/companies/${companyId}/offers/job/${offerGroup.id}/recipients`);
+      const endpoint = companyId
+        ? `/jobs/companies/${companyId}/offers/job/${offerGroup.id}/recipients`
+        : `/jobs/offers/job/${offerGroup.id}/recipients`;
+      const response = await api.get(endpoint);
       const mapped: OfferCandidate[] = (response.data || []).map((item: any) => ({
         id: item.offer_id,
         userId: item.user_id,
@@ -97,10 +100,12 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
   const handleConfirmWithdraw = async () => {
     if (!selectedCandId) return;
     const companyId = getCompanyId();
-    if (!companyId) return;
 
     try {
-      await api.delete(`/jobs/companies/${companyId}/offers/${selectedCandId}`);
+      const endpoint = companyId
+        ? `/jobs/companies/${companyId}/offers/${selectedCandId}`
+        : `/jobs/offers/${selectedCandId}`;
+      await api.delete(endpoint);
       setCandidates((prev) =>
         prev.map((c) => (c.id === selectedCandId ? { ...c, status: 'withdrawn' } : c))
       );

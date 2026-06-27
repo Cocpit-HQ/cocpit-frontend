@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { sendJobOffer } from "@/services/api/offers";
-import { getCompanyJobs } from "@/services/api/jobs";
+import { getCompanyJobs, getMyCreatedJobs } from "@/services/api/jobs";
 import api from "@/lib/axios";
 import { toast } from "sonner";
 
@@ -52,9 +52,11 @@ export function SendOfferDialog({ targetUserId, targetUserName }: SendOfferDialo
         let fetchedOfferedIds: string[] = [];
 
         try {
-            const fetchedList = await getCompanyJobs(activeProfile!.id);
+            const fetchedList = isCompany
+                ? await getCompanyJobs(activeProfile!.id)
+                : await getMyCreatedJobs();
             fetchedJobs = fetchedList
-                .filter((j: any) => j.status === 'active')
+                .filter((j: any) => j.status === 'active' || (j as any).status === 'ACTIVE')
                 .map((j: any) => ({
                     job_id: j.id || j.job_id,
                     title: j.title,
@@ -66,7 +68,10 @@ export function SendOfferDialog({ targetUserId, targetUserName }: SendOfferDialo
         }
 
         try {
-            const offersRes = await api.get(`/jobs/companies/${activeProfile!.id}/offers/check/${targetUserId}`);
+            const endpoint = isCompany
+                ? `/jobs/companies/${activeProfile!.id}/offers/check/${targetUserId}`
+                : `/jobs/offers/check/${targetUserId}`;
+            const offersRes = await api.get(endpoint);
             fetchedOfferedIds = offersRes.data.jobIds || [];
         } catch (err) {
             console.error("[SendOfferDialog] Error checking offers:", err);
@@ -102,7 +107,7 @@ export function SendOfferDialog({ targetUserId, targetUserName }: SendOfferDialo
 
         try {
             setLoading(true);
-            await sendJobOffer(activeProfile!.id, selectedJobId, targetUserId, message || undefined);
+            await sendJobOffer(isCompany ? activeProfile!.id : null, selectedJobId, targetUserId, message || undefined);
             toast.success(`Offer sent to ${targetUserName}!`);
             setOfferedJobIds(prev => [...prev, selectedJobId]);
             setOpen(false);

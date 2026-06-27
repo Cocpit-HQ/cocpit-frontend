@@ -43,11 +43,12 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({ listings, onSelectLi
       companyId = userCompanies[0].org_id || userCompanies[0].company_id || '';
     }
 
-    if (!companyId) return;
-
     setIsLoadingOffers(true);
     try {
-      const response = await api.get(`/jobs/companies/${companyId}/offers/sent`);
+      const endpoint = companyId 
+        ? `/jobs/companies/${companyId}/offers/sent` 
+        : `/jobs/offers/sent`;
+      const response = await api.get(endpoint);
       const mapped: SentOfferGroup[] = (response.data || []).map((item: any) => ({
         id: item.job_id,
         title: item.title,
@@ -96,19 +97,22 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({ listings, onSelectLi
       }
     }
 
-    if (!companyId) {
-      toast.error('No associated organization found to send offers from.');
-      return;
-    }
-
     try {
-      const promises = candidates.map((c) =>
-        api.post(`/jobs/companies/${companyId}/offers`, {
-          jobId,
-          userId: c.id,
-          message: note.trim() || undefined
-        })
-      );
+      const promises = candidates.map((c) => {
+        if (companyId) {
+          return api.post(`/jobs/companies/${companyId}/offers`, {
+            jobId,
+            userId: c.id,
+            message: note.trim() || undefined
+          });
+        } else {
+          return api.post(`/jobs/offers`, {
+            jobId,
+            userId: c.id,
+            message: note.trim() || undefined
+          });
+        }
+      });
 
       await Promise.all(promises);
       toast.success(`Offers sent successfully to: ${candidates.map(c => c.name).join(', ')}`);

@@ -59,14 +59,17 @@ export const respondToOffer = async (
     return response.data;
 };
 
-/** Company: Send a job offer to a user */
+/** Send a job offer to a user (supports both company and independent recruiters) */
 export const sendJobOffer = async (
-    companyId: string,
+    companyId: string | null | undefined,
     jobId: string,
     userId: string,
     message?: string
 ): Promise<{ offer: JobOffer; message: string }> => {
-    const response = await api.post(`/jobs/companies/${companyId}/offers`, {
+    const endpoint = companyId
+        ? `/jobs/companies/${companyId}/offers`
+        : `/jobs/offers`;
+    const response = await api.post(endpoint, {
         jobId,
         userId,
         message,
