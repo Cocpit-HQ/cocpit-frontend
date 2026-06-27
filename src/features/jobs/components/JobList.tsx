@@ -17,7 +17,7 @@ interface JobListProps {
   onSelect?: (job: Job) => void;
 }
 
-export const JobList: React.FC<JobListProps> = ({
+export const JobList: React.FC<JobListProps> = React.memo(({
   jobs,
   isLoading,
   isFetchingMore,
@@ -94,6 +94,8 @@ export const JobList: React.FC<JobListProps> = ({
       )}
     </div>
   );
-};
+});
+
+JobList.displayName = 'JobList';
 
 export default JobList;

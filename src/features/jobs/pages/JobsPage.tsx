@@ -85,6 +85,20 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
     }
   }, [urlTab, activeTab, setActiveTab]);
 
+  // Clear search and location filters from the URL on F5 page refresh (reload)
+  useEffect(() => {
+    const navigationEntry = window.performance?.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    if (navigationEntry?.type === 'reload') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('search') || params.has('location')) {
+        params.delete('search');
+        params.delete('location');
+        const newQuery = params.toString();
+        router.replace(newQuery ? `/jobs?${newQuery}` : '/jobs');
+      }
+    }
+  }, [router]);
+
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
     const params = new URLSearchParams(window.location.search);
@@ -361,9 +375,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
         </div>
       )}
 
-      {/* Tab content conditional rendering */}
-      {activeTab === "My applications" ? (
-        jobs.length === 0 ? (
+      {/* My applications Tab */}
+      <div className={`w-full ${activeTab === "My applications" ? "" : "hidden"}`}>
+        {jobs.length === 0 ? (
           <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
             <Icon icon="hugeicons:job-search" className="size-20 text-black flex-shrink-0" />
             <div className="flex flex-col justify-start items-center gap-2">
@@ -665,8 +679,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
               </div>
             </div>
           </div>
-        )
-      ) : activeTab === "Offers" ? (
+        )}
+      </div>
+
+      {/* Offers Tab */}
+      <div className={`w-full ${activeTab === "Offers" ? "" : "hidden"}`}>
         <div className="w-full flex flex-col gap-[20px]">
           {/* Header */}
           <div className="flex justify-start items-center">
@@ -711,7 +728,10 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
             )}
           </div>
         </div>
-      ) : activeTab === "Saved" ? (
+      </div>
+
+      {/* Saved Tab */}
+      <div className={`w-full ${activeTab === "Saved" ? "" : "hidden"}`}>
         <div className="w-full flex flex-col gap-[20px]">
           {/* Saved Jobs List container */}
           <div className="w-full">
@@ -742,8 +762,10 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
             )}
           </div>
         </div>
-      ) : (
-        /* Original All Jobs View for Explore tab */
+      </div>
+
+      {/* Explore Tab */}
+      <div className={`w-full ${activeTab === "Explore" ? "" : "hidden"}`}>
         <div className="w-full flex flex-col gap-[20px]">
           {jobs.length === 0 ? (
             <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
@@ -756,7 +778,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
           ) : (
             <>
               <h3 className="text-black text-lg font-semibold font-['Poppins'] leading-6">
-                {activeTab === "Explore" ? "All jobs" : `${activeTab} jobs`}
+                All jobs
               </h3>
 
               <JobFilters
@@ -790,7 +812,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
             </>
           )}
         </div>
-      )}
+      </div>
 
       {/* Apply Job Modal */}
       <ApplyJobModal

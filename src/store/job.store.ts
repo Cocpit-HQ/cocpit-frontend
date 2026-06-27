@@ -10,8 +10,10 @@ interface JobsUIState {
   savedJobIds: Set<string>;
   appliedJobIds: Set<string>;
   addSavedId: (id: string) => void;
+  addSavedIds: (ids: string[]) => void;
   removeSavedId: (id: string) => void;
   addAppliedId: (id: string) => void;
+  addAppliedIds: (ids: string[]) => void;
   removeAppliedId: (id: string) => void;
 
   // ─── Responded Offers ──────────────────────────────────────
@@ -49,6 +51,19 @@ export const useJobStore = create<JobsUIState>((set) => ({
       return { savedJobIds: next };
     }),
 
+  addSavedIds: (ids) =>
+    set((state) => {
+      const next = new Set(state.savedJobIds);
+      let changed = false;
+      ids.forEach((id) => {
+        if (!next.has(id)) {
+          next.add(id);
+          changed = true;
+        }
+      });
+      return changed ? { savedJobIds: next } : {};
+    }),
+
   removeSavedId: (id) =>
     set((state) => {
       const next = new Set(state.savedJobIds);
@@ -61,6 +76,19 @@ export const useJobStore = create<JobsUIState>((set) => ({
       const next = new Set(state.appliedJobIds);
       next.add(id);
       return { appliedJobIds: next };
+    }),
+
+  addAppliedIds: (ids) =>
+    set((state) => {
+      const next = new Set(state.appliedJobIds);
+      let changed = false;
+      ids.forEach((id) => {
+        if (!next.has(id)) {
+          next.add(id);
+          changed = true;
+        }
+      });
+      return changed ? { appliedJobIds: next } : {};
     }),
 
   removeAppliedId: (id) =>

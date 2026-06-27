@@ -5,6 +5,7 @@ export interface Job {
   company_logo?: string;
   location: string;
   job_type: 'Full time' | 'Part time' | 'Remote' | 'Contract' | 'Internship' | string;
+  work_type?: 'Full time' | 'Part time' | 'Remote' | 'Contract' | 'Internship' | string;
   experience?: string; // e.g. "0-2Yrs"
   work_mode?: 'Remote' | 'Hybrid' | 'Onsite' | string;
   salary_min?: number;

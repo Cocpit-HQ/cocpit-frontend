@@ -12,7 +12,7 @@ interface JobCardProps {
   onClick?: (job: Job) => void;
 }
 
-export const JobCard: React.FC<JobCardProps> = ({ job, onSave, onApply, onWithdraw, onClick }) => {
+export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onApply, onWithdraw, onClick }) => {
   const badgeText = job.recommended_badge || 'Top 15%';
   const percentMatch = badgeText.match(/\d+/);
   const percentNum = percentMatch ? parseInt(percentMatch[0], 10) : 15;
@@ -36,7 +36,11 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onSave, onApply, onWithdr
         <div className="size- inline-flex flex-col justify-start items-start gap-2">
           <div className="justify-start text-black text-base font-medium font-['Poppins'] leading-6">{job.title}</div>
           <div className="justify-start text-gray-500 text-sm font-normal font-['Poppins'] leading-5">{job.company}</div>
-          <div className="justify-start text-gray-500 text-sm font-semibold font-['Poppins'] leading-5">{job.job_type}</div>
+          {(job.work_type || job.job_type) && (
+            <div className="justify-start text-gray-500 text-sm font-normal font-['Poppins'] leading-5">
+              {job.work_type || job.job_type}
+            </div>
+          )}
         </div>
         <div onClick={(e) => e.stopPropagation()}>
           <Tooltip delayDuration={100}>
@@ -63,22 +67,29 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onSave, onApply, onWithdr
 
       {/* Middle Row: Meta and Salary */}
       <div className="self-stretch inline-flex justify-between items-center">
-        <div className="size- flex justify-start items-center gap-2">
-          <div className="size- flex justify-start items-center gap-2">
+        <div className="flex flex-wrap justify-start items-center gap-2">
+          {/* Experience */}
+          <div className="flex justify-start items-center gap-2">
             <Icon icon="hugeicons:job-search" className="w-5 h-5 text-black" />
             <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5">{job.experience || '0-2Yrs'}</div>
           </div>
-          <div className="size-1.5 bg-black rounded-full" />
-          <div className="size- flex justify-start items-center gap-2">
-            <Icon icon="hugeicons:location-05" className="w-5 h-5 text-black" />
-            <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5">
-              {job.work_mode && job.location
-                ? `${job.work_mode} - ${job.location}`
-                : job.work_mode || job.location}
-            </div>
-          </div>
+
+          {/* Work Mode & Location */}
+          {(job.work_mode || job.location) && (
+            <>
+              <div className="size-1.5 bg-black rounded-full" />
+              <div className="flex justify-start items-center gap-2">
+                <Icon icon="hugeicons:location-05" className="w-5 h-5 text-black" />
+                <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5">
+                  {job.work_mode && job.location
+                    ? `${job.work_mode} - ${job.location}`
+                    : job.work_mode || job.location}
+                </div>
+              </div>
+            </>
+          )}
         </div>
-        <div className="size- flex justify-start items-center gap-2">
+        <div className="flex justify-start items-center gap-2">
           <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5">{job.salary_display || '$160k - $210k'}</div>
         </div>
       </div>
@@ -150,6 +161,8 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onSave, onApply, onWithdr
       </div>
     </div>
   );
-};
+});
+
+JobCard.displayName = 'JobCard';
 
 export default JobCard;

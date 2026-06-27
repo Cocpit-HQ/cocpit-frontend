@@ -88,7 +88,7 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       title: job.title,
       company: job.company_name,
       location: job.location,
-      work_type: job.job_type,
+      work_type: job.job_type || 'Full time',
       work_mode: job.work_mode,
       salary_min: job.salary_min,
       salary_max: job.salary_max,
@@ -101,7 +101,9 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       is_saved: job.isSaved || false,
       is_applied: job.hasApplied || false,
       is_offer: false,
-      tags: job.tags || []
+      tags: job.tags || [],
+      is_available: job.status !== 'CLOSED' && job.is_active !== false,
+      is_closed: job.status === 'CLOSED' || job.is_active === false
     }));
 
     // Filter out applied and offers if requested
@@ -176,7 +178,7 @@ export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
       title: job.title,
       company: job.company_name,
       location: job.location,
-      work_type: job.job_type,
+      work_type: job.job_type || 'Full time',
       work_mode: job.work_mode,
       salary_min: job.salary_min,
       salary_max: job.salary_max,
@@ -189,7 +191,9 @@ export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
       is_saved: true,
       is_applied: job.hasApplied || false,
       is_offer: false,
-      tags: job.tags || []
+      tags: job.tags || [],
+      is_available: job.status !== 'CLOSED' && job.is_active !== false,
+      is_closed: job.status === 'CLOSED' || job.is_active === false
     }));
 
     const hasMore = fetchedJobs.length === 10;
@@ -308,6 +312,7 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       is_applied: job.hasApplied || job.is_applied || false,
       is_offer: job.is_offer || false,
       is_closed: job.status === 'CLOSED' || job.is_active === false,
+      is_available: job.status !== 'CLOSED' && job.is_active !== false,
       is_followed: job.is_followed || false,
       org_id: job.org_id,
       recruiter_id: job.recruiter_id,
@@ -384,7 +389,7 @@ export const getMyApplications = async (): Promise<Job[]> => {
       title: job.title,
       company: job.company_name,
       location: job.location,
-      work_type: job.job_type,
+      work_type: job.job_type || 'Full time',
       work_mode: job.work_mode,
       salary_min: job.salary_min,
       salary_max: job.salary_max,
@@ -399,7 +404,9 @@ export const getMyApplications = async (): Promise<Job[]> => {
       is_applied: true,
       is_offer: false,
       tags: job.tags || [],
-      application_status: job.applicationStatus || 'Applied'
+      application_status: job.applicationStatus || 'Applied',
+      is_available: job.status !== 'CLOSED' && job.is_active !== false,
+      is_closed: job.status === 'CLOSED' || job.is_active === false
     }));
   } catch (error) {
     console.error("Failed to fetch applications:", error);
