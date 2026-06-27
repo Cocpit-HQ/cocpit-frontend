@@ -2,6 +2,7 @@ import { Job, JobsFilter, JobListing, JobOffer, ListingsCounts } from '../types/
 import { DUMMY_JOBS } from '../utils/jobs.utils';
 import api from '@/lib/axios';
 import { useJobStore } from '@/store/job.store';
+import { formatSalaryRange } from '../utils/currency.utils';
 
 // Service layer holds zero client-side UI states.
 // All states are managed reactively inside useJobStore.
@@ -93,6 +94,7 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       salary_min: job.salary_min,
       salary_max: job.salary_max,
       salary_currency: job.salary_currency,
+      salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
       posted_at: getRelativeTime(job.created_at),
       description: job.description,
       experience: (job.experience_min != null && job.experience_max != null) 
@@ -183,6 +185,7 @@ export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
       salary_min: job.salary_min,
       salary_max: job.salary_max,
       salary_currency: job.salary_currency,
+      salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
       posted_at: getRelativeTime(job.created_at),
       description: job.description,
       experience: (job.experience_min != null && job.experience_max != null) 
@@ -229,23 +232,7 @@ export const getRelativeTime = (dateString?: string) => {
   return `${diffMonths} ${diffMonths === 1 ? 'month' : 'months'} ago`;
 };
 
-const formatSalary = (min?: number, max?: number, currency = 'USD') => {
-  if (!min && !max) return undefined;
-  const formatNum = (num: number) => {
-    if (num >= 100000) {
-      return `${(num / 100000).toFixed(0)}L`;
-    }
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(0)}k`;
-    }
-    return num.toString();
-  };
-  const symbol = currency === 'INR' ? '₹' : currency === 'USD' ? '$' : '';
-  if (min && max) return `${symbol}${formatNum(min)} - ${symbol}${formatNum(max)}`;
-  if (min) return `${symbol}${formatNum(min)}+`;
-  if (max) return `Up to ${symbol}${formatNum(max)}`;
-  return undefined;
-};
+// formatSalary is now handled by the cross-platform formatSalaryRange utility in currency.utils.ts
 
 const extractRequirements = (description?: string): string[] => {
   if (!description) return [];
@@ -304,7 +291,7 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       salary_min: job.salary_min,
       salary_max: job.salary_max,
       salary_currency: job.salary_currency || 'USD',
-      salary_display: formatSalary(job.salary_min, job.salary_max, job.salary_currency),
+      salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
       posted_at: getRelativeTime(job.created_at),
       description: job.description || '',
       requirements: extractRequirements(job.description),
@@ -504,7 +491,7 @@ export const getMyOffers = async (): Promise<Job[]> => {
         salary_min: job.salary_min,
         salary_max: job.salary_max,
         salary_currency: job.salary_currency || 'USD',
-        salary_display: formatSalary(job.salary_min, job.salary_max, job.salary_currency),
+        salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
         posted_at: getRelativeTime(job.created_at),
         description: job.description || '',
         requirements: extractRequirements(job.description),
@@ -701,7 +688,7 @@ export const createJobListing = async (
            industry: 'Technology',
            about_company: details?.company ? `About ${details.company}` : 'Tech company',
          }).catch(err => {
-            console.error("Error submitting job:", err?.response?.data || err);
+            console.error("Error submitting job:", err?.response?.data ? JSON.stringify(err.response.data, null, 2) : err.message || err);
             throw err; // Re-throw to catch block
          });
       }

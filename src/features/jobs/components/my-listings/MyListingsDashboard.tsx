@@ -47,9 +47,16 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       } else {
         toast.error('Failed to create/update job listing.');
       }
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       console.error('Error creating/updating job listing:', error);
-      toast.error('Failed to create/update job listing.');
+      let errMsg = 'Failed to create/update job listing.';
+      if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
+        errMsg = error.response.data.errors.map((e: { message: string }) => e.message).join(', ');
+      } else if (error.response?.data?.message) {
+        errMsg = error.response.data.message;
+      }
+      toast.error(errMsg);
     }
   };
 

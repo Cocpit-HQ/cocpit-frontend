@@ -4,6 +4,7 @@ import WithdrawOfferModal from './WithdrawOfferModal';
 import { toast } from 'sonner';
 import api from '@/lib/axios';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { formatSalaryRange, getCurrencyIcon } from '../../utils/currency.utils';
 
 interface OfferDetailsScreenProps {
   offerGroup: {
@@ -195,13 +196,19 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
             </div>
           </div>
 
-          {/* Salary range frame */}
-          <div className="py-[2px] flex items-center h-[16px]">
-            <span className="font-['Poppins'] font-medium text-[12px] leading-[16px] text-black">
-              {offerGroup.salary_min && offerGroup.salary_max
-                ? `$${Math.round(offerGroup.salary_min / 1000)}k - $${Math.round(offerGroup.salary_max / 1000)}k`
-                : '$160k - $210k'}
-            </span>
+          <div className="py-[2px] flex items-center h-[16px] gap-1">
+            {offerGroup.salary_min || offerGroup.salary_max ? (
+              <>
+                <Icon icon={getCurrencyIcon(offerGroup.salary_currency)} className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+                <span className="font-['Poppins'] font-medium text-[12px] leading-[16px] text-black">
+                  {formatSalaryRange(offerGroup.salary_min, offerGroup.salary_max, offerGroup.salary_currency)}
+                </span>
+              </>
+            ) : (
+              <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-400">
+                Salary not disclosed
+              </span>
+            )}
           </div>
         </div>
 

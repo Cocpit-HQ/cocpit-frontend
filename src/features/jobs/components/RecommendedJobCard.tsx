@@ -3,6 +3,7 @@ import { Job } from '../types/jobs.types';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { getCurrencyIcon } from '../utils/currency.utils';
 
 interface RecommendedJobCardProps {
   job: Job;
@@ -67,9 +68,20 @@ export const RecommendedJobCard: React.FC<RecommendedJobCardProps> = ({ job, onC
       {/* Salary display */}
       <div className="self-stretch flex flex-col justify-start items-start">
         <div className="self-stretch flex flex-col justify-start items-start">
-          <div className="self-stretch justify-center text-black text-xs font-medium font-['Poppins'] leading-4">
-            {job.salary_display || '$160k - $210k'}
-          </div>
+          <div className="self-stretch justify-center text-black text-xs font-medium font-['Poppins'] leading-4 flex items-center gap-1">
+              {job.salary_display || job.salary_min || job.salary_max ? (
+                <>
+                  <span>
+                    {job.salary_display
+                      ? job.salary_display
+                      : `${job.salary_min || ''} – ${job.salary_max || ''}`.trim()
+                    }
+                  </span>
+                </>
+              ) : (
+                <span className="text-gray-400">Salary not disclosed</span>
+              )}
+            </div>
         </div>
       </div>
 

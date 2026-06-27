@@ -3,6 +3,7 @@ import { Job } from '../types/jobs.types';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { getCurrencyIcon } from '../utils/currency.utils';
 
 interface JobCardProps {
   job: Job;
@@ -89,8 +90,21 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
             </>
           )}
         </div>
-        <div className="flex justify-start items-center gap-2">
-          <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5">{job.salary_display || '$160k - $210k'}</div>
+        <div className="size- flex justify-start items-center gap-2">
+          <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5 flex items-center gap-1.5">
+            {job.salary_display || job.salary_min || job.salary_max ? (
+              <>
+                <span>
+                  {job.salary_display
+                    ? job.salary_display
+                    : `${job.salary_min || ''} – ${job.salary_max || ''}`.trim()
+                  }
+                </span>
+              </>
+            ) : (
+              <span className="text-gray-400 text-xs">Salary not disclosed</span>
+            )}
+          </div>
         </div>
       </div>
 

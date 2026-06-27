@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from '@iconify/react';
 import { JobListing } from '../../types/jobs.types';
+import { getCurrencySymbol, formatCompact, getCurrencyIcon } from '../../utils/currency.utils';
 
 interface ListingDetailsScreenProps {
   listing: JobListing;
@@ -50,14 +51,10 @@ Requirements:
     status,
   } = listing;
 
-  const currencySymbols: Record<string, string> = {
-    USD: '$',
-    INR: '₹',
-    EUR: '€',
-    GBP: '£',
+  const formatSalary = (val: number | undefined | null) => {
+    if (val === undefined || val === null || isNaN(val)) return 'Not specified';
+    return formatCompact(val, salary_currency);
   };
-
-  const symbol = currencySymbols[salary_currency] || salary_currency;
 
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = React.useState(false);
@@ -86,11 +83,6 @@ Requirements:
       setIsClosing(false);
       setShowCloseConfirm(false);
     }
-  };
-
-  const formatSalary = (val: number | undefined | null) => {
-    if (val === undefined || val === null || isNaN(val)) return 'Not specified';
-    return `${symbol}${val.toLocaleString()}`;
   };
 
   const isClosed = status?.toUpperCase() === 'CLOSED';
@@ -205,7 +197,10 @@ Requirements:
             <div className="self-stretch flex flex-col justify-start items-start">
               <div className="self-stretch justify-center text-black text-sm font-normal font-['Poppins'] leading-5">Min Salary (Annual)</div>
             </div>
-            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex justify-start items-center gap-1 w-full">
+            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex justify-start items-center gap-2 w-full">
+              {salary_min !== undefined && salary_min !== null && !isNaN(salary_min) ? (
+                <Icon icon={getCurrencyIcon(salary_currency)} className="w-5 h-5 text-gray-500 flex-shrink-0" />
+              ) : null}
               <div className="justify-start text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{formatSalary(salary_min)}</div>
             </div>
           </div>
@@ -215,7 +210,10 @@ Requirements:
             <div className="self-stretch flex flex-col justify-start items-start">
               <div className="self-stretch justify-center text-black text-sm font-normal font-['Poppins'] leading-5">Max Salary (Annual)</div>
             </div>
-            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex justify-start items-center gap-1 w-full">
+            <div className="self-stretch p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex justify-start items-center gap-2 w-full">
+              {salary_max !== undefined && salary_max !== null && !isNaN(salary_max) ? (
+                <Icon icon={getCurrencyIcon(salary_currency)} className="w-5 h-5 text-gray-500 flex-shrink-0" />
+              ) : null}
               <div className="justify-start text-black text-base font-normal font-['Poppins'] leading-6 truncate w-full">{formatSalary(salary_max)}</div>
             </div>
           </div>

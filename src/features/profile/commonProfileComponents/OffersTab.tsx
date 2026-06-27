@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMyOffers, respondToOffer, JobOffer } from "@/services/api/offers";
 import Avatar from "@/components/shared/Avatar";
+import { Icon } from "@iconify/react";
+import { getCurrencyIcon, formatSalaryRange } from "@/features/jobs/utils/currency.utils";
 
 interface OffersTabProps {
     isOwnProfile: boolean;
@@ -88,14 +90,7 @@ export function OffersTab({ isOwnProfile }: OffersTabProps) {
         }
     };
 
-    const formatSalary = (offer: JobOffer) => {
-        if (!offer.salary_min && !offer.salary_max) return null;
-        const curr = offer.salary_currency || "USD";
-        const period = offer.salary_period || "YEARLY";
-        const min = offer.salary_min?.toLocaleString();
-        const max = offer.salary_max?.toLocaleString();
-        return `${curr} ${min} – ${max} / ${period.toLowerCase()}`;
-    };
+    // formatSalary is replaced by formatSalaryRange in currency.utils.ts
 
     if (loading) {
         return (
@@ -132,7 +127,6 @@ export function OffersTab({ isOwnProfile }: OffersTabProps) {
             <div className="space-y-3">
                 {offers.map(offer => {
                     const isExpanded = expandedId === offer.offer_id;
-                    const salary = formatSalary(offer);
 
                     return (
                         <div
@@ -195,9 +189,13 @@ export function OffersTab({ isOwnProfile }: OffersTabProps) {
                                                 {offer.experience_level}
                                             </Badge>
                                         )}
-                                        {salary && (
-                                            <Badge variant="outline" className="text-xs font-mono">
-                                                {salary}
+                                        {(offer.salary_min || offer.salary_max) && (
+                                            <Badge variant="outline" className="text-xs font-mono flex items-center gap-1">
+                                                <Icon icon={getCurrencyIcon(offer.salary_currency)} className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                                                <span>
+                                                    {formatSalaryRange(offer.salary_min, offer.salary_max, offer.salary_currency)}
+                                                    {offer.salary_period && ` / ${offer.salary_period.toLowerCase()}`}
+                                                </span>
                                             </Badge>
                                         )}
                                     </div>

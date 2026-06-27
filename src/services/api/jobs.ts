@@ -1,5 +1,6 @@
 import api from "@/lib/axios";
 import { Job, JobFilters, JobFormData } from "@/types/jobs";
+import { formatSalaryRange } from "@/features/jobs/utils/currency.utils";
 
 // --- Adapter Layer ---
 
@@ -20,22 +21,7 @@ function formatTimeAgo(dateString: string): string {
     return `${Math.floor(diffInDays / 30)}mo ago`;
 }
 
-function formatSalary(min?: number | string, max?: number | string): string {
-    if (!min && !max) return "";
-    const format = (n: number) => (n >= 1000 ? `$${Math.round(n / 1000)}k` : `$${n}`);
-
-    const minNum = Number(min);
-    const maxNum = Number(max);
-
-    if (!isNaN(minNum) && !isNaN(maxNum)) {
-        if (minNum === maxNum) return format(minNum);
-        return `${format(minNum)} - ${format(maxNum)}`;
-    }
-    if (!isNaN(minNum)) return `${format(minNum)}+`;
-    if (!isNaN(maxNum)) return `Up to ${format(maxNum)}`;
-    return "";
-}
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function transformJob(backendJob: any): Job {
     return {
         id: (backendJob.is_offer && backendJob.offer_id) ? backendJob.offer_id : backendJob.job_id, // Use offer_id for individual offers, job_id for grouped
@@ -47,7 +33,7 @@ function transformJob(backendJob: any): Job {
         type: backendJob.job_type,
         postedTime: (backendJob.latest_offer_at || backendJob.created_at) ? formatTimeAgo(backendJob.latest_offer_at || backendJob.created_at) : "Recently",
         applicants: backendJob.applicants || backendJob.applicants_count || 0,
-        salary: formatSalary(backendJob.salary_min, backendJob.salary_max),
+        salary: formatSalaryRange(backendJob.salary_min, backendJob.salary_max, backendJob.salary_currency) || "Competitive",
         logo: `gradient-${(parseInt(backendJob.job_id.slice(0, 8), 16) % 6) + 1}`,
         companyLogo: backendJob.company_logo,
         companySlug: backendJob.company_slug,
@@ -229,7 +215,7 @@ export const getJobOffers = async (filters?: JobSearchParams): Promise<Job[]> =>
     return response.data.map(transformJob);
 };
 
-export const getCompanySentOffers = async (companyId: string, filters?: any): Promise<Job[]> => {
+export const getCompanySentOffers = async (companyId: string, filters?: JobSearchParams): Promise<Job[]> => {
     const params = new URLSearchParams();
     if (filters) {
         if (filters.limit) params.append("limit", filters.limit.toString());

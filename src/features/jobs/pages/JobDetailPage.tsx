@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useJobDetail } from '../hooks/useJobDetail';
 import { Icon } from '@iconify/react';
 import { useSmartBack } from '@/hooks/use-smart-back';
+import { getCurrencyIcon } from '../utils/currency.utils';
 import { toast } from 'sonner';
 import { ApplyJobModal } from '../components/ApplyJobModal';
 import { CocpitConfirmBox } from '@/shared/commonComponents/CocpitConfirmBox';
@@ -207,10 +208,17 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
             {/* Salary Column */}
             <div className="flex-grow flex-shrink-0 flex flex-col justify-center items-start p-0 gap-2 min-w-[120px] h-auto">
               <div className="flex flex-row items-center p-0 gap-2 h-5">
-                <Icon icon="hugeicons:money-bag-02" className="w-5 h-5 text-gray-500" />
+                <Icon icon={getCurrencyIcon(job.salary_currency)} className="w-5 h-5 text-gray-500 flex-shrink-0" />
                 <div className="text-left justify-start text-[#6B7280] text-[12px] font-normal font-['Poppins'] uppercase leading-[16px]">salary</div>
               </div>
-              <div className="text-left justify-start text-[#000000] text-[16px] font-normal font-['Poppins'] leading-[24px]">{job.salary_display || '$160k - $210k'}</div>
+              <div className="text-left justify-start text-[#000000] text-[16px] font-normal font-['Poppins'] leading-[24px]">
+                {job.salary_display
+                  ? job.salary_display
+                  : (job.salary_min || job.salary_max)
+                    ? `${job.salary_min || ''} – ${job.salary_max || ''}`.trim()
+                    : 'Salary not disclosed'
+                }
+              </div>
             </div>
           </div>
 

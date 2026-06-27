@@ -4,6 +4,8 @@ import { JobListing } from '../../types/jobs.types';
 import { useMyProfile } from '@/hooks/use-my-profile';
 import api from '@/lib/axios';
 import { generateJobDescription } from '../../services/jobs.service';
+import { CURRENCIES } from '../../utils/currency.utils';
+import { toast } from 'sonner';
 
 interface StepJobDetailsProps {
   jobId?: string | null;
@@ -53,6 +55,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   const [minSalary, setMinSalary] = useState(initialDetails?.salary_min ? String(initialDetails.salary_min) : '');
   const [maxSalary, setMaxSalary] = useState(initialDetails?.salary_max ? String(initialDetails.salary_max) : '');
   const [currency, setCurrency] = useState(initialDetails?.salary_currency || 'USD');
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Safely populate defaults when the profile data resolves, if it wasn't cached instantly
   useEffect(() => {
@@ -127,11 +130,16 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   const [isExperienceOpen, setIsExperienceOpen] = useState(false);
   const [isWorkTypeOpen, setIsWorkTypeOpen] = useState(false);
   const [isWorkModeOpen, setIsWorkModeOpen] = useState(false);
+  const [isMinCurrencyOpen, setIsMinCurrencyOpen] = useState(false);
+  const [isMaxCurrencyOpen, setIsMaxCurrencyOpen] = useState(false);
+  const [currencySearch, setCurrencySearch] = useState('');
 
   // Dropdown Refs
   const experienceRef = useRef<HTMLDivElement>(null);
   const workTypeRef = useRef<HTMLDivElement>(null);
   const workModeRef = useRef<HTMLDivElement>(null);
+  const minCurrencyRef = useRef<HTMLDivElement>(null);
+  const maxCurrencyRef = useRef<HTMLDivElement>(null);
 
   // We no longer auto-prefill the description.
   // The user can type their own, or click "Regenerate with AI" to trigger it.
@@ -155,6 +163,12 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
       }
       if (workModeRef.current && !workModeRef.current.contains(event.target as Node)) {
         setIsWorkModeOpen(false);
+      }
+      if (minCurrencyRef.current && !minCurrencyRef.current.contains(event.target as Node)) {
+        setIsMinCurrencyOpen(false);
+      }
+      if (maxCurrencyRef.current && !maxCurrencyRef.current.contains(event.target as Node)) {
+        setIsMaxCurrencyOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -231,8 +245,14 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
           setExperience('Senior (5+ yrs)');
         }
       }
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       console.error("Failed to regenerate with AI:", error);
+      let errMsg = "AI generation is temporarily unavailable. Please make sure the backend has a valid GEMINI_API_KEY configured in .env, or type the description manually.";
+      if (error.response?.data?.message) {
+        errMsg = error.response.data.message;
+      }
+      toast.error(errMsg);
     } finally {
       setIsAiGenerating(false);
     }
@@ -259,6 +279,15 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   };
 
   const handleContinueClick = () => {
+    setValidationError(null);
+    if (role.trim().length < 5) {
+      setValidationError("Job role/title must be at least 5 characters long");
+      return;
+    }
+    if (description.trim().length < 100) {
+      setValidationError("Job description must be at least 100 characters long");
+      return;
+    }
     onContinue(buildDetailsObject());
   };
 
@@ -519,14 +548,12 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
             </div>
           </div>
         </div>
-
-        {/* Row 4: Min Salary, Max Salary */}
         {/* Row 4: Min Salary, Max Salary */}
         <div className="self-stretch flex flex-col sm:flex-row justify-center items-stretch sm:items-start gap-4 sm:gap-6">
           {/* Min Salary */}
           <div className="flex-1 flex flex-col justify-start items-start gap-2">
             <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Min Salary (Annual)</label>
-            <div className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 border-0 inline-flex justify-between items-center gap-2 shadow-sm focus-within:outline-indigo-300 transition-colors">
+            <div ref={minCurrencyRef} className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 border-0 inline-flex justify-between items-center gap-2 shadow-sm focus-within:outline-indigo-300 transition-colors relative">
               <input
                 type="text"
                 placeholder="e.g. 1,200,000"
@@ -534,26 +561,68 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                 onChange={(e) => setMinSalary(e.target.value)}
                 className="flex-1 bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none focus:ring-0 placeholder-gray-400"
               />
-              <div className="flex items-center gap-2">
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="bg-transparent border-0 p-0 pr-6 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none focus:ring-0 appearance-none cursor-pointer"
-                >
-                  <option value="USD">USD</option>
-                  <option value="INR">INR</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>
-                </select>
-                <Icon icon="lucide:chevron-down" className="w-4 h-4 text-gray-500 pointer-events-none -ml-5" />
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMinCurrencyOpen(!isMinCurrencyOpen);
+                  setIsMaxCurrencyOpen(false);
+                  setCurrencySearch('');
+                }}
+                className="flex items-center gap-1.5 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none cursor-pointer flex-shrink-0"
+              >
+                <span>{currency}</span>
+                <Icon icon="lucide:chevron-down" className={`w-4 h-4 text-gray-500 transition-transform ${isMinCurrencyOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isMinCurrencyOpen && (
+                <div className="absolute right-0 top-full z-50 mt-2 p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-center shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 max-h-[300px] overflow-hidden w-[280px]">
+                  <div className="w-full px-1 pb-2">
+                    <input
+                      type="text"
+                      placeholder="Search currency..."
+                      autoFocus
+                      value={currencySearch}
+                      onChange={(e) => setCurrencySearch(e.target.value)}
+                      className="w-full p-2 bg-slate-50 rounded-xl outline-none text-xs font-['Poppins'] text-black border border-slate-200 focus:border-indigo-300 transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                  <div className="w-full overflow-y-auto flex flex-col gap-1 max-h-[200px]">
+                  {CURRENCIES.filter(c => {
+                    const search = currencySearch.toLowerCase()
+                      .replace(/yuro/g, 'euro')
+                      .replace(/ruppies?/g, 'rupee')
+                      .replace(/doller/g, 'dollar');
+                    return c.code.toLowerCase().includes(search) || c.label.toLowerCase().includes(search);
+                  }).map((c) => {
+                    const isSelected = currency === c.code;
+                    return (
+                      <button
+                        key={c.code}
+                        type="button"
+                        onClick={() => {
+                          setCurrency(c.code);
+                          setIsMinCurrencyOpen(false);
+                        }}
+                        className="self-stretch px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl inline-flex justify-start items-center gap-2.5 transition-colors cursor-pointer text-left w-full"
+                      >
+                        <div className={`text-sm font-normal font-['Poppins'] leading-5 flex items-center gap-2 ${isSelected ? 'text-indigo-500 font-semibold' : 'text-black'}`}>
+                          <span>{c.code} - {c.label}</span>
+                          <span className="font-medium text-gray-500 bg-slate-100 px-1.5 py-0.5 rounded text-[10px]">{c.symbol}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Max Salary */}
           <div className="flex-1 flex flex-col justify-start items-start gap-2">
             <label className="text-black text-sm font-normal font-['Poppins'] leading-5 text-left w-full">Max Salary (Annual)</label>
-            <div className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 border-0 inline-flex justify-between items-center gap-2 shadow-sm focus-within:outline-indigo-300 transition-colors">
+            <div ref={maxCurrencyRef} className="w-full p-4 bg-white rounded-xl outline outline-1 outline-offset-[-1px] outline-indigo-50 border-0 inline-flex justify-between items-center gap-2 shadow-sm focus-within:outline-indigo-300 transition-colors relative">
               <input
                 type="text"
                 placeholder="e.g. 1,200,000"
@@ -561,23 +630,71 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                 onChange={(e) => setMaxSalary(e.target.value)}
                 className="flex-1 bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none focus:ring-0 placeholder-gray-400"
               />
-              <div className="flex items-center gap-2">
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="bg-transparent border-0 p-0 pr-6 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none focus:ring-0 appearance-none cursor-pointer"
-                >
-                  <option value="USD">USD</option>
-                  <option value="INR">INR</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>
-                </select>
-                <Icon icon="lucide:chevron-down" className="w-4 h-4 text-gray-500 pointer-events-none -ml-5" />
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMaxCurrencyOpen(!isMaxCurrencyOpen);
+                  setIsMinCurrencyOpen(false);
+                  setCurrencySearch('');
+                }}
+                className="flex items-center gap-1.5 text-black text-base font-normal font-['Poppins'] leading-6 focus:outline-none cursor-pointer flex-shrink-0"
+              >
+                <span>{currency}</span>
+                <Icon icon="lucide:chevron-down" className={`w-4 h-4 text-gray-500 transition-transform ${isMaxCurrencyOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isMaxCurrencyOpen && (
+                <div className="absolute right-0 top-full z-50 mt-2 p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-center shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 max-h-[300px] overflow-hidden w-[280px]">
+                  <div className="w-full px-1 pb-2">
+                    <input
+                      type="text"
+                      placeholder="Search currency..."
+                      autoFocus
+                      value={currencySearch}
+                      onChange={(e) => setCurrencySearch(e.target.value)}
+                      className="w-full p-2 bg-slate-50 rounded-xl outline-none text-xs font-['Poppins'] text-black border border-slate-200 focus:border-indigo-300 transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                  <div className="w-full overflow-y-auto flex flex-col gap-1 max-h-[200px]">
+                  {CURRENCIES.filter(c => {
+                    const search = currencySearch.toLowerCase()
+                      .replace(/yuro/g, 'euro')
+                      .replace(/ruppies?/g, 'rupee')
+                      .replace(/doller/g, 'dollar');
+                    return c.code.toLowerCase().includes(search) || c.label.toLowerCase().includes(search);
+                  }).map((c) => {
+                    const isSelected = currency === c.code;
+                    return (
+                      <button
+                        key={c.code}
+                        type="button"
+                        onClick={() => {
+                          setCurrency(c.code);
+                          setIsMaxCurrencyOpen(false);
+                        }}
+                        className="self-stretch px-4 py-2 bg-white hover:bg-slate-50 rounded-3xl inline-flex justify-start items-center gap-2.5 transition-colors cursor-pointer text-left w-full"
+                      >
+                        <div className={`text-sm font-normal font-['Poppins'] leading-5 flex items-center gap-2 ${isSelected ? 'text-indigo-500 font-semibold' : 'text-black'}`}>
+                          <span>{c.code} - {c.label}</span>
+                          <span className="font-medium text-gray-500 bg-slate-100 px-1.5 py-0.5 rounded text-[10px]">{c.symbol}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {validationError && (
+        <div className="self-stretch p-3 bg-red-50 border border-red-200 rounded-lg text-red-500 text-sm font-['Poppins'] text-center">
+          {validationError}
+        </div>
+      )}
 
       {/* Footer Controls */}
       {/* Footer Controls */}

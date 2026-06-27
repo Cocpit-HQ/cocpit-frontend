@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import { JobListing } from '../../types/jobs.types';
+import { formatSalaryRange, getCurrencyIcon } from '../../utils/currency.utils';
 
 interface StepJobPreviewProps {
   details: Partial<JobListing>;
@@ -46,34 +47,7 @@ export const StepJobPreview: React.FC<StepJobPreviewProps> = ({
     salary_currency = 'USD',
   } = details;
 
-  // Currency symbols map
-  const currencySymbols: Record<string, string> = {
-    USD: '$',
-    INR: '₹',
-    EUR: '€',
-    GBP: '£',
-  };
-
-  const symbol = currencySymbols[salary_currency] || salary_currency;
-
-  const formatSalaryVal = (val: number | undefined | null) => {
-    if (val === undefined || val === null || isNaN(val)) return null;
-    if (val >= 1000000) return `${(val / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
-    if (val >= 1000) return `${(val / 1000).toFixed(0)}k`;
-    return val.toString();
-  };
-
-  const formattedMin = formatSalaryVal(salary_min);
-  const formattedMax = formatSalaryVal(salary_max);
-
-  const salaryDisplay =
-    formattedMin && formattedMax
-      ? `${symbol}${formattedMin} - ${symbol}${formattedMax}`
-      : formattedMin
-      ? `${symbol}${formattedMin}+`
-      : formattedMax
-      ? `Up to ${symbol}${formattedMax}`
-      : 'Competitive';
+  const salaryDisplay = formatSalaryRange(salary_min, salary_max, salary_currency) || 'Competitive';
 
   // Format experience value for smaller badge display (e.g. "0 - 2 years" -> "0-2Yrs")
   const formatExperienceBadge = (expStr: string) => {
@@ -124,7 +98,10 @@ export const StepJobPreview: React.FC<StepJobPreviewProps> = ({
               <div className="text-black text-sm font-normal font-['Poppins'] leading-5">{work_mode} - {location}</div>
             </div>
           </div>
-          <div className="flex justify-start items-center gap-2">
+          <div className="flex justify-start items-center gap-1.5">
+            {salary_min || salary_max ? (
+              <Icon icon={getCurrencyIcon(salary_currency)} className="w-4 h-4 text-gray-500 flex-shrink-0" />
+            ) : null}
             <div className="text-black text-xs font-medium font-['Poppins'] leading-4">{salaryDisplay}</div>
           </div>
         </div>

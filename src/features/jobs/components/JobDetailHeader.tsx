@@ -1,6 +1,7 @@
 import React from 'react';
 import { Job } from '../types/jobs.types';
 import { Icon } from '@iconify/react';
+import { getCurrencyIcon } from '../utils/currency.utils';
 
 interface JobDetailHeaderProps {
   job: Job;
@@ -50,8 +51,20 @@ export const JobDetailHeader: React.FC<JobDetailHeaderProps> = ({ job }) => {
         <span className="text-gray-400 text-[10px] font-semibold tracking-wider uppercase font-['Poppins']">
           Offered Salary
         </span>
-        <span className="text-indigo-600 text-lg font-bold font-['Poppins']">
-          {job.salary_display || '$160k - $210k'}
+        <span className="text-indigo-600 text-lg font-bold font-['Poppins'] flex items-center gap-1.5 md:justify-end">
+          {job.salary_display || job.salary_min || job.salary_max ? (
+            <>
+              <Icon icon={getCurrencyIcon(job.salary_currency)} className="w-5 h-5 text-indigo-500 flex-shrink-0" />
+              <span>
+                {job.salary_display
+                  ? job.salary_display
+                  : `${job.salary_min || ''} – ${job.salary_max || ''}`.trim()
+                }
+              </span>
+            </>
+          ) : (
+            <span>Salary not disclosed</span>
+          )}
         </span>
       </div>
     </div>
