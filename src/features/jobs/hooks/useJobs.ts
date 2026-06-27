@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Job, JobsFilter } from '../types/jobs.types';
 import * as jobsService from '../services/jobs.service';
 import { toast } from 'sonner';
+import { useJobStore } from '@/store/job.store';
 
 export const useJobs = (initialTab: string = 'Explore', initialSearch: string = '', initialLocation: string = '') => {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -9,25 +10,29 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const [activeTab, setActiveTabState] = useState<string>(() => jobsService.getActiveTab());
+  const { activeTab, setActiveTab } = useJobStore();
 
-  const setActiveTab = useCallback((tab: string) => {
-    jobsService.setActiveTab(tab);
-    setActiveTabState(tab);
-  }, []);
-
-  const [applicationStats, setApplicationStats] = useState<{ totalApplied: number; shortlisted: number }>({ totalApplied: 0, shortlisted: 0 });
-  
-  const [filters, setFilters] = useState<JobsFilter>({
-    search: initialSearch,
-    location: initialLocation,
-    job_type: '',
-    work_mode: '',
-    experience: '',
-    salary_range: ''
-  });
+  const {
+    filters,
+    setFilterValue,
+    setMultipleFilters,
+    applicationStats,
+    setApplicationStats,
+    savedJobIds,
+    appliedJobIds,
+    addSavedId,
+    removeSavedId,
+    addAppliedId,
+    removeAppliedId,
+  } = useJobStore();
 
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+
+  useEffect(() => {
+    if (initialSearch || initialLocation) {
+      setMultipleFilters({ search: initialSearch, location: initialLocation });
+    }
+  }, [initialSearch, initialLocation, setMultipleFilters]);
 
   // Fetch initial list of jobs based on filters and activeTab
   const fetchJobs = useCallback(async (isLoadMore: boolean = false) => {
@@ -57,20 +62,22 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
         setCursor(res.nextCursor || undefined);
         setHasMore(res.hasMore);
 
-        const savedIds = jobsService.getSavedJobIds();
-        const appliedIds = jobsService.getAppliedJobIds();
+        // Sync saved job IDs into store
+        newJobs.forEach(j => {
+          if (!savedJobIds.has(j.id)) {
+            addSavedId(j.id);
+          }
+        });
 
-        // Sync saved job IDs into inMemorySavedIds so that getJobById and other lists know they are saved
-        const idsToAdd = newJobs
-          .filter(j => !savedIds.includes(j.id))
-          .map(j => j.id);
-        if (idsToAdd.length > 0) {
-          jobsService.setSavedJobIds([...savedIds, ...idsToAdd]);
-        }
+        newJobs = newJobs.map(j => ({
+          ...j,
+          is_saved: true,
+          is_applied: appliedJobIds.has(j.id)
+        }));
       } else {
         const activeCursor = isLoadMore ? cursor : undefined;
         const res = await jobsService.getJobs(filters, activeCursor, activeTab === 'Explore');
-        
+
         if (activeTab === 'Explore') {
           console.log("Selected Filters:", filters);
           console.log("Jobs Response:", res.data);
@@ -80,13 +87,10 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
         setCursor(res.nextCursor || undefined);
         setHasMore(res.hasMore);
 
-        const savedIds = jobsService.getSavedJobIds();
-        const appliedIds = jobsService.getAppliedJobIds();
-
         newJobs = newJobs.map(j => ({
           ...j,
-          is_saved: savedIds.includes(j.id),
-          is_applied: appliedIds.includes(j.id)
+          is_saved: savedJobIds.has(j.id),
+          is_applied: appliedJobIds.has(j.id)
         }));
       }
 
@@ -128,26 +132,31 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
 
   const toggleSave = useCallback(async (jobId: string) => {
     try {
-      await jobsService.saveJob(jobId);
-      const savedIds = jobsService.getSavedJobIds();
-      const isSaved = savedIds.includes(jobId);
+      const isCurrentlySaved = savedJobIds.has(jobId);
+      await jobsService.saveJob(jobId, !isCurrentlySaved);
 
-      setJobs(prev => prev.map(j => j.id === jobId ? { ...j, is_saved: isSaved } : j));
+      if (isCurrentlySaved) {
+        removeSavedId(jobId);
+      } else {
+        addSavedId(jobId);
+      }
+      const updatedSaved = !isCurrentlySaved;
+
+      setJobs(prev => prev.map(j => j.id === jobId ? { ...j, is_saved: updatedSaved } : j));
       if (selectedJob && selectedJob.id === jobId) {
-        setSelectedJob(prev => prev ? { ...prev, is_saved: isSaved } : null);
+        setSelectedJob(prev => prev ? { ...prev, is_saved: updatedSaved } : null);
       }
 
-      toast.success(isSaved ? 'Job saved successfully' : 'Job removed from saved list');
+      toast.success(updatedSaved ? 'Job saved successfully' : 'Job removed from saved list');
     } catch (error) {
       console.error('Failed to save job:', error);
       toast.error('Failed to toggle save status.');
     }
-  }, [selectedJob]);
+  }, [selectedJob, savedJobIds, addSavedId, removeSavedId]);
 
   const applyToJob = useCallback(async (jobId: string, resumeUrlOrName?: string, uploadedFile?: File | null, resumeId?: string | null, coverLetter?: string) => {
     try {
-      const appliedIds = jobsService.getAppliedJobIds();
-      if (appliedIds.includes(jobId)) {
+      if (appliedJobIds.has(jobId)) {
         toast.info('You have already applied to this job.');
         return;
       }
@@ -161,6 +170,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       }
 
       await jobsService.applyJob(jobId, formData);
+      addAppliedId(jobId);
 
       setJobs(prev => prev.map(j => j.id === jobId ? { ...j, is_applied: true } : j));
       if (selectedJob && selectedJob.id === jobId) {
@@ -173,25 +183,13 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       const message = error.response?.data?.message || 'Failed to submit application.';
       toast.error(message);
     }
-  }, [selectedJob]);
-
-  const setFilterValue = useCallback((key: keyof JobsFilter, value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  }, []);
-
-  const setMultipleFilters = useCallback((updates: Partial<JobsFilter>) => {
-    setFilters(prev => ({
-      ...prev,
-      ...updates
-    }));
-  }, []);
+  }, [selectedJob, appliedJobIds, addAppliedId]);
 
   const withdrawJob = useCallback(async (jobId: string) => {
     try {
       await jobsService.withdrawApplication(jobId);
+      removeAppliedId(jobId);
+
       setJobs(prev => {
         if (activeTab === 'My applications') {
           return prev.filter(j => j.id !== jobId);
@@ -206,7 +204,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       console.error('Failed to withdraw application:', error);
       toast.error('Failed to withdraw application.');
     }
-  }, [activeTab]);
+  }, [activeTab, removeAppliedId, setApplicationStats]);
 
   const respondToOffer = useCallback(async (offerId: string, action: 'accept' | 'decline') => {
     try {

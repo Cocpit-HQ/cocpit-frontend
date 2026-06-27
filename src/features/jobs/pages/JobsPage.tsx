@@ -1,5 +1,6 @@
 import React, { use, useEffect, useRef } from "react";
 import { useJobs } from "../hooks/useJobs";
+import { useJobStore } from "@/store/job.store";
 import RecommendedJobCard from "../components/RecommendedJobCard";
 import RecommendedJobCardSkeleton from "../components/skeletons/RecommendedJobCardSkeleton";
 import JobList from "../components/JobList";
@@ -39,6 +40,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
   const urlParams = useSearchParams();
   const urlSearch = urlParams?.get('search') || '';
   const urlLocation = urlParams?.get('location') || '';
+  const urlTab = urlParams?.get('tab') || 'Explore';
 
   // Also read from the SSR searchParams prop as the initial seed (for first load)
   let resolvedParams: any = null;
@@ -74,6 +76,20 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
     applicationStats,
   } = useJobs("Explore", initialSearch, initialLocation);
 
+  // Sync tab from URL query param to Zustand store
+  useEffect(() => {
+    if (urlTab && urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab, activeTab, setActiveTab]);
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", tabId);
+    router.replace(`/jobs?${params.toString()}`);
+  };
+
   // Reactively update filters when URL search params change (e.g. "Find jobs" click from header)
   // Skip the initial render — useJobs is already seeded with initialSearch/initialLocation
   const isFirstRender = useRef(true);
@@ -84,7 +100,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
     }
     // Single atomic update → single fetchJobs call
     setMultipleFilters({ search: urlSearch, location: urlLocation });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlSearch, urlLocation]);
 
   const {
@@ -142,9 +158,13 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
 
     if (selectedStatusFilter !== "All") {
       result = result.filter((job) => {
-        let status = job.application_status?.toLowerCase() || "";
-        if (selectedStatusFilter.toLowerCase() === "in review" && status === "in-review") return true;
-        return status === selectedStatusFilter.toLowerCase();
+        const status = job.application_status?.toLowerCase() || "";
+        const filterVal = selectedStatusFilter.toLowerCase();
+        if (filterVal === "in review" && status === "in-review") return true;
+        if (filterVal === "declined") {
+          return status === "declined" || status === "rejected";
+        }
+        return status === filterVal;
       });
     }
 
@@ -203,16 +223,25 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
         `jobs_scroll_page_${activeTab}`,
       );
 
-      const timer = setTimeout(() => {
-        if (savedPageScroll) {
-          window.scrollTo(0, parseInt(savedPageScroll, 10));
-        }
+      if (savedPageScroll) {
+        let retries = 0;
+        const scrollTarget = parseInt(savedPageScroll, 10);
 
-        // Clean up from sessionStorage after applying the restored scroll values
-        sessionStorage.removeItem("coming_from_job_detail");
-        sessionStorage.removeItem(`jobs_scroll_page_${activeTab}`);
-      }, 50);
-      return () => clearTimeout(timer);
+        const scrollInterval = setInterval(() => {
+          window.scrollTo(0, scrollTarget);
+          retries++;
+
+          // Check if we successfully reached the target scroll coordinate,
+          // or if we timed out (20 retries = 1000ms)
+          if (Math.abs(window.scrollY - scrollTarget) < 5 || retries > 20) {
+            clearInterval(scrollInterval);
+            sessionStorage.removeItem("coming_from_job_detail");
+            sessionStorage.removeItem(`jobs_scroll_page_${activeTab}`);
+          }
+        }, 50);
+
+        return () => clearInterval(scrollInterval);
+      }
     } else {
       // Clear any stored scroll positions to avoid persistent clutter
       sessionStorage.removeItem(`jobs_scroll_page_${activeTab}`);
@@ -247,16 +276,15 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
   if (activeTab === "My listings") {
     return (
       <div className="w-full max-w-[998px] mx-auto min-h-screen bg-white pt-[20px] pb-6 px-4 md:px-0 flex flex-col gap-[20px]">
-        <MyListingsDashboard onBack={() => setActiveTab("Explore")} />
+        <MyListingsDashboard onBack={() => handleTabChange("Explore")} />
       </div>
     );
   }
 
   return (
     <div
-      className={`w-full max-w-[998px] mx-auto bg-white pb-[40px] px-4 md:px-0 flex flex-col items-center gap-[24px] border-slate-100/50 rounded-3xl ${
-        activeTab === "Explore" ? "" : "pt-6"
-      }`}
+      className={`w-full max-w-[998px] mx-auto bg-white pb-[40px] px-4 md:px-0 flex flex-col items-center gap-[24px] border-slate-100/50 rounded-3xl ${activeTab === "Explore" ? "" : "pt-6"
+        }`}
     >
       {/* Hero Banner */}
       {activeTab === "Explore" && jobs.length > 0 && (
@@ -279,12 +307,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${
-                  isActive
+                onClick={() => handleTabChange(tab.id)}
+                className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${isActive
                     ? "bg-[#EEF2FF] border-transparent text-[#6366F1]"
                     : "bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-[#6366F1]/70 hover:text-[#6366F1]"
-                }`}
+                  }`}
               >
                 {tab.label}
               </button>
@@ -294,12 +321,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
 
         {/* My listings tab link */}
         <button
-          onClick={() => setActiveTab("My listings")}
-          className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border w-full md:w-auto ${
-            activeTab === "My listings"
+          onClick={() => handleTabChange("My listings")}
+          className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border w-full md:w-auto ${activeTab === "My listings"
               ? "bg-[#EEF2FF] border-transparent text-[#6366F1]"
               : "bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-[#6366F1]/70 hover:text-[#6366F1]"
-          }`}
+            }`}
         >
           <span>My listings</span>
           <Icon icon="lucide:chevron-right" className="w-4 h-4" />
@@ -350,149 +376,144 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
           </div>
         ) : (
           <div className="w-full flex flex-col gap-[24px]">
-          {/* Stats Cards Row */}
-          <div className="w-full flex flex-col md:flex-row gap-4 md:gap-[24px]">
-            {/* Card 1: Total Applied */}
-            <div className="flex-1 min-h-[94px] p-[16px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
-              <div className="text-[#6366F1] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
-                {applicationStats.totalApplied || 0}
+            {/* Stats Cards Row */}
+            <div className="w-full flex flex-col md:flex-row gap-4 md:gap-[24px]">
+              {/* Card 1: Total Applied */}
+              <div className="flex-1 min-h-[94px] p-[16px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
+                <div className="text-[#6366F1] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
+                  {applicationStats.totalApplied || 0}
+                </div>
+                <div className="text-[#000000] text-[14px] font-normal font-['Poppins'] leading-[20px]">
+                  Total Applied
+                </div>
               </div>
-              <div className="text-[#000000] text-[14px] font-normal font-['Poppins'] leading-[20px]">
-                Total Applied
+              {/* Card 2: Shortlisted */}
+              <div className="flex-1 min-h-[94px] p-[16px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
+                <div className="text-[#6366F1] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
+                  {applicationStats.shortlisted || 0}
+                </div>
+                <div className="text-[#000000] text-[14px] font-normal font-['Poppins'] leading-[20px]">
+                  Shortlisted
+                </div>
               </div>
             </div>
-            {/* Card 2: Shortlisted */}
-            <div className="flex-1 min-h-[94px] p-[16px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
-              <div className="text-[#6366F1] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
-                {applicationStats.shortlisted || 0}
-              </div>
-              <div className="text-[#000000] text-[14px] font-normal font-['Poppins'] leading-[20px]">
-                Shortlisted
-              </div>
-            </div>
-          </div>
 
-          {/* Filter Section Container */}
-          <div className="w-full flex flex-col gap-[16px]">
-            {/* Top Filter Row */}
-            <div className="w-full min-h-[40px] flex flex-col sm:flex-row justify-between items-start sm:items-center relative gap-2">
-              <span className="font-['Poppins'] text-[14px] font-normal text-[#000000] leading-[20px]">
-                Tracking {applicationStats.totalApplied || jobs.length} active job applications across your network.
-              </span>
-              <div ref={dropdownRef} className="relative">
-                <button
-                  onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                  className="w-[56px] h-[40px] flex items-center justify-center hover:bg-slate-50 rounded-full transition-colors"
-                >
-                  <Icon
-                    icon="iconoir:filter-list"
-                    className="w-[24px] h-[24px] text-black"
-                  />
-                </button>
+            {/* Filter Section Container */}
+            <div className="w-full flex flex-col gap-[16px]">
+              {/* Top Filter Row */}
+              <div className="w-full min-h-[40px] flex flex-col sm:flex-row justify-between items-start sm:items-center relative gap-2">
+                <span className="font-['Poppins'] text-[14px] font-normal text-[#000000] leading-[20px]">
+                  Tracking {applicationStats.totalApplied || jobs.length} active job applications across your network.
+                </span>
+                <div ref={dropdownRef} className="relative">
+                  <button
+                    onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                    className="w-[56px] h-[40px] flex items-center justify-center hover:bg-slate-50 rounded-full transition-colors"
+                  >
+                    <Icon
+                      icon="iconoir:filter-list"
+                      className="w-[24px] h-[24px] text-black"
+                    />
+                  </button>
 
-                {/* Filter Options Dropdown */}
-                {isFilterDropdownOpen && (
-                  <div className="absolute right-0 top-[44px] z-50 w-48 p-2 bg-white rounded-tl-3xl rounded-bl-3xl rounded-br-3xl outline outline-1 outline-offset-[-1px] outline-indigo-200 inline-flex flex-col justify-start items-center overflow-hidden shadow-lg">
-                    <div
-                      onClick={() => {
-                        setSelectedDateFilter("All time");
-                        setIsFilterDropdownOpen(false);
-                      }}
-                      className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50"
-                    >
+                  {/* Filter Options Dropdown */}
+                  {isFilterDropdownOpen && (
+                    <div className="absolute right-0 top-[44px] z-50 w-48 p-2 bg-white rounded-tl-3xl rounded-bl-3xl rounded-br-3xl outline outline-1 outline-offset-[-1px] outline-indigo-200 inline-flex flex-col justify-start items-center overflow-hidden shadow-lg">
                       <div
-                        className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${
-                          selectedDateFilter === "All time"
-                            ? "text-indigo-500"
-                            : "text-gray-500"
-                        }`}
+                        onClick={() => {
+                          setSelectedDateFilter("All time");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50"
                       >
-                        All time
+                        <div
+                          className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${selectedDateFilter === "All time"
+                              ? "text-indigo-500"
+                              : "text-gray-500"
+                            }`}
+                        >
+                          All time
+                        </div>
+                      </div>
+                      <div
+                        onClick={() => {
+                          setSelectedDateFilter("today");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50"
+                      >
+                        <div
+                          className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${selectedDateFilter === "today"
+                              ? "text-indigo-500"
+                              : "text-gray-500"
+                            }`}
+                        >
+                          Today
+                        </div>
+                      </div>
+                      <div
+                        onClick={() => {
+                          setSelectedDateFilter("last 7 days");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50"
+                      >
+                        <div
+                          className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${selectedDateFilter === "last 7 days"
+                              ? "text-indigo-500"
+                              : "text-gray-500"
+                            }`}
+                        >
+                          Last 7 days
+                        </div>
+                      </div>
+                      <div
+                        onClick={() => {
+                          setSelectedDateFilter("last 30 days");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50"
+                      >
+                        <div
+                          className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${selectedDateFilter === "last 30 days"
+                              ? "text-indigo-500"
+                              : "text-gray-500"
+                            }`}
+                        >
+                          Last 30 days
+                        </div>
                       </div>
                     </div>
-                    <div
-                      onClick={() => {
-                        setSelectedDateFilter("today");
-                        setIsFilterDropdownOpen(false);
-                      }}
-                      className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50"
-                    >
+                  )}
+                </div>
+              </div>
+
+              {/* Filter Chips Row */}
+              <div className="w-full flex flex-row flex-wrap items-center gap-[8px] border-b border-transparent">
+                {["All", "Applied", "Shortlisted", "In review", "Declined"].map(
+                  (chip) => {
+                    const isSelected =
+                      selectedStatusFilter.toLowerCase() === chip.toLowerCase();
+                    return (
                       <div
-                        className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${
-                          selectedDateFilter === "today"
-                            ? "text-indigo-500"
-                            : "text-gray-500"
-                        }`}
+                        key={chip}
+                        onClick={() => setSelectedStatusFilter(chip)}
+                        className={`font-['Poppins'] text-[14px] leading-[20px] px-[16px] py-[8px] cursor-pointer transition-all border-b-2 ${isSelected
+                            ? "text-[#6366F1] font-semibold border-[#6366F1]"
+                            : "text-[#000000] font-normal border-transparent hover:text-[#6366F1]/80"
+                          }`}
                       >
-                        Today
+                        {chip}
                       </div>
-                    </div>
-                    <div
-                      onClick={() => {
-                        setSelectedDateFilter("last 7 days");
-                        setIsFilterDropdownOpen(false);
-                      }}
-                      className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50"
-                    >
-                      <div
-                        className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${
-                          selectedDateFilter === "last 7 days"
-                            ? "text-indigo-500"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        Last 7 days
-                      </div>
-                    </div>
-                    <div
-                      onClick={() => {
-                        setSelectedDateFilter("last 30 days");
-                        setIsFilterDropdownOpen(false);
-                      }}
-                      className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50"
-                    >
-                      <div
-                        className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${
-                          selectedDateFilter === "last 30 days"
-                            ? "text-indigo-500"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        Last 30 days
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  },
                 )}
               </div>
             </div>
 
-            {/* Filter Chips Row */}
-            <div className="w-full flex flex-row flex-wrap items-center gap-[8px] border-b border-transparent">
-              {["All", "Applied", "Shortlisted", "In review", "Declined"].map(
-                (chip) => {
-                  const isSelected =
-                    selectedStatusFilter.toLowerCase() === chip.toLowerCase();
-                  return (
-                    <div
-                      key={chip}
-                      onClick={() => setSelectedStatusFilter(chip)}
-                      className={`font-['Poppins'] text-[14px] leading-[20px] px-[16px] py-[8px] cursor-pointer transition-all border-b-2 ${
-                        isSelected
-                          ? "text-[#6366F1] font-semibold border-[#6366F1]"
-                          : "text-[#000000] font-normal border-transparent hover:text-[#6366F1]/80"
-                      }`}
-                    >
-                      {chip}
-                    </div>
-                  );
-                },
-              )}
-            </div>
-          </div>
-
-          {/* Applications list */}
-          <div className="w-full flex flex-col">
-            <div className="w-full flex flex-col gap-[12px]">
+            {/* Applications list */}
+            <div className="w-full flex flex-col">
+              <div className="w-full flex flex-col gap-[12px]">
                 {filteredJobs.length === 0 ? (
                   <div className="text-center py-12 text-[#6B7280] font-['Poppins']">
                     No applications in this category.

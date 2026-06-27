@@ -2,41 +2,8 @@ import { Job, JobsFilter, JobListing, JobOffer, ListingsCounts } from '../types/
 import { DUMMY_JOBS, DUMMY_OFFERS } from '../utils/jobs.utils';
 import api from '@/lib/axios';
 
-// Initial default state for the application
-const INITIAL_APPLIED_IDS: string[] = [];
-const INITIAL_SAVED_IDS: string[] = [];
-
-// Module-level state variables that reset back to their original state upon browser refresh
-let inMemoryAppliedIds: string[] = [...INITIAL_APPLIED_IDS];
-let inMemorySavedIds: string[] = [...INITIAL_SAVED_IDS];
-let inMemoryRespondedOffers: Record<string, 'accept' | 'decline'> = {};
-let inMemoryFollowedCompanies: string[] = [];
-let inMemoryJobListings: JobListing[] = [];
-let inMemoryActiveTab: string = 'Explore';
-
-// Getters & Mutators for hooks
-export const getAppliedJobIds = (): string[] => inMemoryAppliedIds;
-export const getSavedJobIds = (): string[] => inMemorySavedIds;
-export const getRespondedOffers = (): Record<string, 'accept' | 'decline'> => inMemoryRespondedOffers;
-export const getFollowedCompanies = (): string[] => inMemoryFollowedCompanies;
-export const getActiveTab = (): string => inMemoryActiveTab;
-
-export const setAppliedJobIds = (ids: string[]) => { inMemoryAppliedIds = ids; };
-export const setSavedJobIds = (ids: string[]) => { inMemorySavedIds = ids; };
-export const setRespondedOffers = (offers: Record<string, 'accept' | 'decline'>) => { inMemoryRespondedOffers = offers; };
-export const setFollowedCompanies = (companies: string[]) => { inMemoryFollowedCompanies = companies; };
-export const setActiveTab = (tab: string) => { 
-  inMemoryActiveTab = tab; 
-};
-
-// Seed helpers — called when the API tells us a job is already applied/saved
-// so in-memory state stays consistent with the DB for the current session
-export const seedAppliedId = (jobId: string) => {
-  if (!inMemoryAppliedIds.includes(jobId)) inMemoryAppliedIds.push(jobId);
-};
-export const seedSavedId = (jobId: string) => {
-  if (!inMemorySavedIds.includes(jobId)) inMemorySavedIds.push(jobId);
-};
+// Service layer holds zero client-side UI states.
+// All states are managed reactively inside useJobStore.
 
 
 export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppliedAndOffers?: boolean) => {
@@ -130,7 +97,7 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
         : (job.experience_level || '0-2Yrs'),
-      is_saved: job.isSaved || inMemorySavedIds.includes(job.job_id),
+      is_saved: job.isSaved || false,
       is_applied: job.hasApplied || false,
       is_offer: false,
       tags: job.tags || []
@@ -271,11 +238,7 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
     const job = response.data;
     if (!job) return null;
 
-    const offerResponse = inMemoryRespondedOffers[job.job_id];
-    let status = job.applicationStatus || (job.is_offer ? job.offerStatus : undefined);
-    if (job.is_offer && offerResponse) {
-      status = offerResponse === 'accept' ? 'Accepted' : 'Declined';
-    }
+    const status = job.applicationStatus || (job.is_offer ? job.offerStatus : undefined);
 
     const formattedJob: Job = {
       id: job.job_id,
@@ -295,11 +258,11 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       posted_at: getRelativeTime(job.created_at),
       description: job.description || '',
       requirements: extractRequirements(job.description),
-      is_saved: job.isSaved || job.is_saved || inMemorySavedIds.includes(job.job_id),
-      is_applied: job.hasApplied || job.is_applied || inMemoryAppliedIds.includes(job.job_id),
+      is_saved: job.isSaved || job.is_saved || false,
+      is_applied: job.hasApplied || job.is_applied || false,
       is_offer: job.is_offer || false,
       is_closed: job.status === 'CLOSED' || job.is_active === false,
-      is_followed: job.is_followed || inMemoryFollowedCompanies.includes(job.company_name),
+      is_followed: job.is_followed || false,
       org_id: job.org_id,
       recruiter_id: job.recruiter_id,
       application_status: status,
@@ -314,10 +277,6 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       avg_reply: job.avg_reply,
     };
 
-    // Keep in-memory state in sync with the DB so the rest of the session is consistent
-    if (formattedJob.is_applied) seedAppliedId(formattedJob.id);
-    if (formattedJob.is_saved)   seedSavedId(formattedJob.id);
-
     return formattedJob;
   } catch (error) {
     console.error("Failed to fetch job details:", error);
@@ -325,24 +284,17 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
   }
 };
 
-export const saveJob = async (jobId: string): Promise<boolean> => {
+export const saveJob = async (jobId: string, shouldSave: boolean): Promise<boolean> => {
   try {
-    if (inMemorySavedIds.includes(jobId)) {
-      await api.delete(`/jobs/${jobId}/save`);
-      inMemorySavedIds = inMemorySavedIds.filter(id => id !== jobId);
-    } else {
+    if (shouldSave) {
       await api.post(`/jobs/${jobId}/save`);
-      inMemorySavedIds.push(jobId);
+    } else {
+      await api.delete(`/jobs/${jobId}/save`);
     }
     return true;
   } catch (error) {
     console.error("Failed to save/unsave job:", error);
-    if (inMemorySavedIds.includes(jobId)) {
-      inMemorySavedIds = inMemorySavedIds.filter(id => id !== jobId);
-    } else {
-      inMemorySavedIds.push(jobId);
-    }
-    return true;
+    throw error;
   }
 };
 
@@ -356,10 +308,6 @@ export const applyJob = async (jobId: string, formData?: FormData, jsonBody?: an
       await api.post(`/jobs/${jobId}/apply`, jsonBody);
     } else {
       await api.post(`/jobs/${jobId}/apply`);
-    }
-    
-    if (!inMemoryAppliedIds.includes(jobId)) {
-      inMemoryAppliedIds.push(jobId);
     }
     return true;
   } catch (error) {
@@ -401,7 +349,7 @@ export const getMyApplications = async (): Promise<Job[]> => {
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 
         : (job.experience_level || '0-2Yrs'),
-      is_saved: job.isSaved || job.is_saved || inMemorySavedIds.includes(job.job_id),
+      is_saved: job.isSaved || job.is_saved || false,
       is_applied: true,
       is_offer: false,
       tags: job.tags || [],
@@ -458,7 +406,6 @@ export const getJobDetail = async (jobId: string) => {
 export const withdrawApplication = async (jobId: string): Promise<boolean> => {
   try {
     await api.delete(`/jobs/${jobId}/apply`);
-    inMemoryAppliedIds = inMemoryAppliedIds.filter(id => id !== jobId);
     return true;
   } catch (error) {
     console.error("Failed to withdraw application:", error);
@@ -479,11 +426,11 @@ export const getApplicationStats = async (): Promise<{ totalApplied: number; sho
 export const getMyOffers = async (): Promise<Job[]> => {
   await new Promise(resolve => setTimeout(resolve, 200));
   return DUMMY_JOBS
-    .filter(j => j.is_offer && !inMemoryRespondedOffers[j.id])
+    .filter(j => j.is_offer)
     .map(j => ({
       ...j,
-      is_saved: inMemorySavedIds.includes(j.id),
-      is_applied: inMemoryAppliedIds.includes(j.id)
+      is_saved: false,
+      is_applied: false
     }));
 };
 
@@ -491,12 +438,10 @@ export const respondToOffer = async (offerId: string, action: 'accept' | 'declin
   try {
     const backendAction = action === 'accept' ? 'accepted' : 'declined';
     await api.patch(`/jobs/offers/${offerId}/respond`, { action: backendAction });
-    inMemoryRespondedOffers[offerId] = action;
     return true;
   } catch (error) {
     console.error("Failed to respond to offer:", error);
-    inMemoryRespondedOffers[offerId] = action;
-    return true;
+    throw error;
   }
 };
 

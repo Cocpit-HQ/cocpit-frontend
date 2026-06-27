@@ -7,6 +7,7 @@ import { ApplyJobModal } from '../components/ApplyJobModal';
 import { CocpitConfirmBox } from '@/shared/commonComponents/CocpitConfirmBox';
 import CocpitShareModel from '@/shared/commonComponents/cocpitsharemodel';
 import JobDetailSkeleton from '../components/skeletons/JobDetailSkeleton';
+import { useJobStore } from '@/store/job.store';
 
 interface JobDetailPageProps {
   jobId: string;

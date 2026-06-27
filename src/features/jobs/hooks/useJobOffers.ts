@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { JobOffer } from '../types/jobs.types';
 import * as jobsService from '../services/jobs.service';
 import { toast } from 'sonner';
+import { useJobStore } from '@/store/job.store';
 
 export const useJobOffers = () => {
   const [offers, setOffers] = useState<JobOffer[]>([]);
@@ -32,6 +33,7 @@ export const useJobOffers = () => {
     try {
       const res = await jobsService.acceptJobOffer(id);
       if (res && res.success) {
+        useJobStore.getState().setOfferResponse(id, 'accept');
         setOffers(prev =>
           prev.map(o => (o.id === id ? { ...o, status: 'accepted' as const } : o))
         );
@@ -49,6 +51,7 @@ export const useJobOffers = () => {
     try {
       const res = await jobsService.declineJobOffer(id);
       if (res && res.success) {
+        useJobStore.getState().setOfferResponse(id, 'decline');
         setOffers(prev =>
           prev.map(o => (o.id === id ? { ...o, status: 'declined' as const } : o))
         );

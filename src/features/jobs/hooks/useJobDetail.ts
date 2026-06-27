@@ -2,10 +2,24 @@ import { useState, useEffect, useCallback } from 'react';
 import { Job } from '../types/jobs.types';
 import * as jobsService from '../services/jobs.service';
 import { toast } from 'sonner';
+import { useJobStore } from '@/store/job.store';
 
 export const useJobDetail = (jobId: string) => {
   const [job, setJob] = useState<Job | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const {
+    savedJobIds,
+    appliedJobIds,
+    respondedOffers,
+    followedCompanies,
+    addSavedId,
+    removeSavedId,
+    addAppliedId,
+    removeAppliedId,
+    setOfferResponse,
+    toggleFollowCompany
+  } = useJobStore();
 
   const fetchJob = useCallback(async () => {
     if (!jobId) return;
@@ -13,21 +27,18 @@ export const useJobDetail = (jobId: string) => {
     try {
       const res = await jobsService.getJobById(jobId);
       if (res) {
-        // Sync in-memory state — OR with API values so we never downgrade
-        // (in-memory lists are only populated for the current session;
-        //  API-returned hasApplied / isSaved are the source of truth on load)
-        const savedIds = jobsService.getSavedJobIds();
-        const appliedIds = jobsService.getAppliedJobIds();
-        const respondedOffers = jobsService.getRespondedOffers();
-        const followedCompanies = jobsService.getFollowedCompanies();
+        // Keep API value as baseline; in-memory/Zustand store can only upgrade
+        res.is_saved = res.is_saved || savedJobIds.has(res.id);
+        res.is_applied = res.is_applied || appliedJobIds.has(res.id);
 
-        // Keep API value as baseline; in-memory can only upgrade, never downgrade
-        res.is_saved = res.is_saved || savedIds.includes(res.id);
-        res.is_applied = res.is_applied || appliedIds.includes(res.id);
-
-        // Seed in-memory applied list so session stays consistent
-        if (res.is_applied && !appliedIds.includes(res.id)) {
-          jobsService.seedAppliedId(res.id);
+        // Seed store if API says applied but store doesn't have it
+        if (res.is_applied && !appliedJobIds.has(res.id)) {
+          addAppliedId(res.id);
+        }
+        
+        // Seed store if API says saved but store doesn't have it
+        if (res.is_saved && !savedJobIds.has(res.id)) {
+          addSavedId(res.id);
         }
 
         // Handle offer statuses
@@ -39,7 +50,10 @@ export const useJobDetail = (jobId: string) => {
         }
 
         // Handle followed status for company
-        res.is_followed = res.is_followed || followedCompanies.includes(res.company);
+        res.is_followed = res.is_followed || followedCompanies.has(res.company);
+        if (res.is_followed && !followedCompanies.has(res.company)) {
+          toggleFollowCompany(res.company);
+        }
       }
       setJob(res);
     } catch (err) {
@@ -48,7 +62,7 @@ export const useJobDetail = (jobId: string) => {
     } finally {
       setIsLoading(false);
     }
-  }, [jobId]);
+  }, [jobId, savedJobIds, appliedJobIds, respondedOffers, followedCompanies, addAppliedId, addSavedId, toggleFollowCompany]);
 
   useEffect(() => {
     fetchJob();
@@ -57,23 +71,28 @@ export const useJobDetail = (jobId: string) => {
   const toggleSave = useCallback(async () => {
     if (!job) return;
     try {
-      await jobsService.saveJob(job.id);
-      const savedIds = jobsService.getSavedJobIds();
-      const isSaved = savedIds.includes(job.id);
+      const isCurrentlySaved = savedJobIds.has(job.id);
+      await jobsService.saveJob(job.id, !isCurrentlySaved);
+      
+      if (isCurrentlySaved) {
+        removeSavedId(job.id);
+      } else {
+        addSavedId(job.id);
+      }
+      const updatedSaved = !isCurrentlySaved;
 
-      setJob(prev => prev ? { ...prev, is_saved: isSaved } : null);
-      toast.success(isSaved ? 'Job saved successfully' : 'Job removed from saved list');
+      setJob(prev => prev ? { ...prev, is_saved: updatedSaved } : null);
+      toast.success(updatedSaved ? 'Job saved successfully' : 'Job removed from saved list');
     } catch (error) {
       console.error('Failed to save job:', error);
       toast.error('Failed to update save status.');
     }
-  }, [job]);
+  }, [job, savedJobIds, addSavedId, removeSavedId]);
 
   const applyToJob = useCallback(async (resumeUrlOrName?: string, uploadedFile?: File | null, resumeId?: string | null, coverLetter?: string) => {
     if (!job) return;
     try {
-      const appliedIds = jobsService.getAppliedJobIds();
-      if (appliedIds.includes(job.id)) {
+      if (appliedJobIds.has(job.id)) {
         toast.info('You have already applied to this job.');
         return;
       }
@@ -93,6 +112,7 @@ export const useJobDetail = (jobId: string) => {
       }
 
       await jobsService.applyJob(job.id, formData, jsonBody);
+      addAppliedId(job.id);
 
       setJob(prev => prev ? { ...prev, is_applied: true } : null);
       toast.success('Successfully applied to the job!');
@@ -100,12 +120,13 @@ export const useJobDetail = (jobId: string) => {
       console.error('Failed to apply to job:', error);
       toast.error('Failed to submit application.');
     }
-  }, [job]);
+  }, [job, appliedJobIds, addAppliedId]);
 
   const withdrawJob = useCallback(async () => {
     if (!job) return;
     try {
       await jobsService.withdrawApplication(job.id);
+      removeAppliedId(job.id);
 
       setJob(prev => prev ? { ...prev, is_applied: false } : null);
       toast.success('Application withdrawn successfully.');
@@ -113,12 +134,13 @@ export const useJobDetail = (jobId: string) => {
       console.error('Failed to withdraw application:', error);
       toast.error('Failed to withdraw application.');
     }
-  }, [job]);
+  }, [job, removeAppliedId]);
 
   const respondToOffer = useCallback(async (action: 'accept' | 'decline') => {
     if (!job) return;
     try {
       await jobsService.respondToOffer(job.offer_id || job.id, action);
+      setOfferResponse(job.offer_id || job.id, action);
 
       setJob(prev => prev ? { 
         ...prev, 
@@ -130,38 +152,31 @@ export const useJobDetail = (jobId: string) => {
       console.error('Failed to respond to offer:', error);
       toast.error('Failed to respond to offer.');
     }
-  }, [job]);
+  }, [job, setOfferResponse]);
 
   const toggleFollow = useCallback(async () => {
     if (!job) return;
     try {
+      const isCurrentlyFollowed = followedCompanies.has(job.company);
+      const nextFollowStatus = !isCurrentlyFollowed;
+
       if (job.org_id) {
-        await jobsService.toggleFollowEntity(job.org_id, 'org', !!job.is_followed);
+        await jobsService.toggleFollowEntity(job.org_id, 'org', isCurrentlyFollowed);
       } else if (job.recruiter_id) {
-        await jobsService.toggleFollowEntity(job.recruiter_id, 'user', !!job.is_followed);
+        await jobsService.toggleFollowEntity(job.recruiter_id, 'user', isCurrentlyFollowed);
       } else {
         throw new Error("No organization or recruiter ID to follow.");
       }
-      
-      const newFollowStatus = !job.is_followed;
-      
-      // Update in-memory fallback for immediate UI update and cache
-      const followedCompanies = jobsService.getFollowedCompanies();
-      let newFollowed: string[] = [];
-      if (newFollowStatus) {
-        newFollowed = [...followedCompanies, job.company];
-      } else {
-        newFollowed = followedCompanies.filter((name: string) => name !== job.company);
-      }
-      jobsService.setFollowedCompanies(newFollowed);
 
-      setJob(prev => prev ? { ...prev, is_followed: newFollowStatus } : null);
-      toast.success(newFollowStatus ? `Following ${job.company}` : `Unfollowed ${job.company}`);
+      toggleFollowCompany(job.company);
+
+      setJob(prev => prev ? { ...prev, is_followed: nextFollowStatus } : null);
+      toast.success(nextFollowStatus ? `Following ${job.company}` : `Unfollowed ${job.company}`);
     } catch (error) {
       console.error('Failed to toggle follow:', error);
       toast.error('Failed to update follow status.');
     }
-  }, [job]);
+  }, [job, followedCompanies, toggleFollowCompany]);
 
   return {
     job,

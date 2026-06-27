@@ -50,7 +50,7 @@ export function useSmartBack() {
         sessionStorage.setItem(`nav_memory_${section}`, finalTarget);
       }
       
-      router.push(finalTarget);
+      router.push(finalTarget, { scroll: false });
       return;
     }
 

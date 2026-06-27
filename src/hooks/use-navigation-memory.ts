@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import * as jobsService from '../features/jobs/services/jobs.service';
+import { useJobStore } from '@/store/job.store';
 
 const TRACKED_SECTIONS = ['events', 'jobs', 'feed'];
 
@@ -43,7 +43,7 @@ export function useNavigationTracker() {
         sessionStorage.removeItem(`jobs_scroll_container_${tab}`);
       });
       sessionStorage.removeItem('coming_from_job_detail');
-      jobsService.setActiveTab('Explore');
+      useJobStore.getState().setActiveTab('Explore');
     }
   }, [pathname, searchParams]);
 }

@@ -41,8 +41,7 @@ export const JobOffersPage: React.FC = () => {
   ];
 
   const handleTabClick = (tabId: string) => {
-    jobsService.setActiveTab(tabId);
-    router.push('/jobs');
+    router.push(`/jobs?tab=${tabId}`);
   };
 
   return (
@@ -76,8 +75,7 @@ export const JobOffersPage: React.FC = () => {
         {/* My listings tab link */}
         <button
           onClick={() => {
-            jobsService.setActiveTab('My listings');
-            router.push('/jobs');
+            router.push('/jobs?tab=My listings');
           }}
           className="h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-[#6366F1]/70 hover:text-[#6366F1] w-full md:w-auto"
         >
