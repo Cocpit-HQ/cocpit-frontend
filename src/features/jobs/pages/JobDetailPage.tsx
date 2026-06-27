@@ -79,15 +79,25 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
     );
   }
 
-  const steps = ['Applied', 'in-review', 'Shortlisted', 'Declined'];
+  let currentStatus = job.application_status || 'Applied';
+  const isDeclined = currentStatus === 'Declined' || currentStatus === 'Rejected';
+
+  const steps = isDeclined 
+    ? ['Applied', 'in-review', 'Declined'] 
+    : ['Applied', 'in-review', 'Shortlisted'];
+
   const stepLabels: Record<string, string> = {
     'Applied': 'Applied',
     'in-review': 'In review',
     'Shortlisted': 'Shortlisted',
     'Declined': 'Declined',
   };
-  let currentStatus = job.application_status || 'Applied';
-  const currentStepIndex = steps.indexOf(currentStatus) !== -1 ? steps.indexOf(currentStatus) : 0;
+
+  let mappedStatus = currentStatus;
+  if (mappedStatus === 'Rejected') mappedStatus = 'Declined';
+  else if (['Offer', 'Accepted', 'Interview', 'Approved'].includes(mappedStatus)) mappedStatus = 'Shortlisted';
+
+  const currentStepIndex = steps.indexOf(mappedStatus) !== -1 ? steps.indexOf(mappedStatus) : 0;
 
   return (
     <div className="relative w-full bg-white flex justify-center px-4 md:px-0">
@@ -253,7 +263,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
               <div className="text-left text-[#000000] text-[16px] font-medium font-['Poppins'] leading-6">
                 Application status
               </div>
-              <div className="w-full flex flex-row flex-wrap items-center p-0 self-stretch gap-2 md:gap-0 h-auto">
+              <div className="w-full flex flex-row flex-wrap justify-center items-center p-0 self-stretch gap-2 md:gap-0 h-auto">
                 {steps.map((step, idx) => {
                   const isCompleted = idx < currentStepIndex;
                   const isCurrent = idx === currentStepIndex;
@@ -264,11 +274,8 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                   if (step === 'Declined' && isCurrent) {
                     circleClass = 'bg-transparent border border-[#EF4444]';
                     textClass = 'text-[#EF4444]';
-                  } else if (isCompleted) {
+                  } else if (isCompleted || isCurrent) {
                     circleClass = 'bg-[#6366F1] border border-[#6366F1]';
-                    textClass = 'text-[#6366F1]';
-                  } else if (isCurrent) {
-                    circleClass = 'bg-transparent border border-[#6366F1]';
                     textClass = 'text-[#6366F1]';
                   } else {
                     circleClass = 'bg-transparent border border-[#DADADA]';
@@ -430,17 +437,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
             )}
             {/* Action buttons section */}
             <div className="flex-1 sm:flex-none flex justify-end items-center gap-3">
-              {job.is_closed ? (
-                /* Closed Job -> Follow / Unfollow button */
-                <button
-                  onClick={toggleFollow}
-                  className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[160px] h-10 bg-[#6366F1] border border-white rounded-[24px] transition-all active:scale-95 cursor-pointer"
-                >
-                  <span className="w-fit h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-white">
-                    {job.is_followed ? 'Unfollow' : 'Follow'}
-                  </span>
-                </button>
-              ) : job.is_offer ? (
+              {job.is_offer ? (
                 /* Offer state */
                 job.application_status === 'Accepted' ? (
                   /* Accepted -> Chat */
@@ -474,16 +471,31 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                     </button>
                   </div>
                 )
-              ) : (
-                /* Normal Job State -> Apply / Withdraw */
+              ) : job.is_applied ? (
+                /* Applied State -> Withdraw (even if closed) */
                 <button
-                  onClick={job.is_applied ? () => setShowWithdrawConfirm(true) : () => setShowApplyModal(true)}
-                  className={job.is_applied
-                    ? "w-full sm:w-40 h-10 px-4 py-2 rounded-[100px] border border-[#6B7280] text-[#6B7280] bg-white hover:bg-slate-50 flex justify-center items-center transition-all active:scale-95 text-sm font-normal font-['Poppins'] leading-5"
-                    : "w-full sm:w-40 h-10 px-4 py-2 rounded-[100px] bg-[#6366F1] hover:bg-[#6366F1]/90 text-white flex justify-center items-center transition-all active:scale-95 shadow-md text-sm font-normal font-['Poppins'] leading-5"
-                  }
+                  onClick={() => setShowWithdrawConfirm(true)}
+                  className="w-full sm:w-40 h-10 px-4 py-2 rounded-[100px] border border-[#6B7280] text-[#6B7280] bg-white hover:bg-slate-50 flex justify-center items-center transition-all active:scale-95 text-sm font-normal font-['Poppins'] leading-5"
                 >
-                  {job.is_applied ? 'Withdraw' : 'Apply'}
+                  Withdraw
+                </button>
+              ) : job.is_closed ? (
+                /* Closed and NOT Applied -> Follow / Unfollow */
+                <button
+                  onClick={toggleFollow}
+                  className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[160px] h-10 bg-[#6366F1] border border-white rounded-[24px] transition-all active:scale-95 cursor-pointer"
+                >
+                  <span className="w-fit h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-white">
+                    {job.is_followed ? 'Unfollow' : 'Follow'}
+                  </span>
+                </button>
+              ) : (
+                /* Normal Active Job State -> Apply */
+                <button
+                  onClick={() => setShowApplyModal(true)}
+                  className="w-full sm:w-40 h-10 px-4 py-2 rounded-[100px] bg-[#6366F1] hover:bg-[#6366F1]/90 text-white flex justify-center items-center transition-all active:scale-95 shadow-md text-sm font-normal font-['Poppins'] leading-5"
+                >
+                  Apply
                 </button>
               )}
             </div>

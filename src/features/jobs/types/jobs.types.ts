@@ -17,9 +17,10 @@ export interface Job {
   tags?: string[];
   is_saved?: boolean;
   is_applied?: boolean;
-  is_offer?: boolean;
   is_closed?: boolean;
   is_followed?: boolean;
+  org_id?: string;
+  recruiter_id?: string;
 
   // AI Recommendation details
   is_recommended?: boolean;
@@ -34,6 +35,7 @@ export interface Job {
   is_available?: boolean;
 
   // Offer details
+  is_offer?: boolean;
   offer_expiry_text?: string;
   offer_expiry_color?: 'orange' | 'gray' | string;
   offer_days_left?: number;

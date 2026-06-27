@@ -135,22 +135,28 @@ export const useJobDetail = (jobId: string) => {
   const toggleFollow = useCallback(async () => {
     if (!job) return;
     try {
-      const followedCompanies = jobsService.getFollowedCompanies();
-      let isFollowed = false;
-      let newFollowed: string[] = [];
-
-      if (followedCompanies.includes(job.company)) {
-        newFollowed = followedCompanies.filter((name: string) => name !== job.company);
-        isFollowed = false;
+      if (job.org_id) {
+        await jobsService.toggleFollowEntity(job.org_id, 'org', !!job.is_followed);
+      } else if (job.recruiter_id) {
+        await jobsService.toggleFollowEntity(job.recruiter_id, 'user', !!job.is_followed);
       } else {
-        newFollowed = [...followedCompanies, job.company];
-        isFollowed = true;
+        throw new Error("No organization or recruiter ID to follow.");
       }
-
+      
+      const newFollowStatus = !job.is_followed;
+      
+      // Update in-memory fallback for immediate UI update and cache
+      const followedCompanies = jobsService.getFollowedCompanies();
+      let newFollowed: string[] = [];
+      if (newFollowStatus) {
+        newFollowed = [...followedCompanies, job.company];
+      } else {
+        newFollowed = followedCompanies.filter((name: string) => name !== job.company);
+      }
       jobsService.setFollowedCompanies(newFollowed);
 
-      setJob(prev => prev ? { ...prev, is_followed: isFollowed } : null);
-      toast.success(isFollowed ? `Following ${job.company}` : `Unfollowed ${job.company}`);
+      setJob(prev => prev ? { ...prev, is_followed: newFollowStatus } : null);
+      toast.success(newFollowStatus ? `Following ${job.company}` : `Unfollowed ${job.company}`);
     } catch (error) {
       console.error('Failed to toggle follow:', error);
       toast.error('Failed to update follow status.');

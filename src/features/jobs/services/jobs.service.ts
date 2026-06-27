@@ -299,7 +299,9 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       is_applied: job.hasApplied || job.is_applied || inMemoryAppliedIds.includes(job.job_id),
       is_offer: job.is_offer || false,
       is_closed: job.status === 'CLOSED' || job.is_active === false,
-      is_followed: inMemoryFollowedCompanies.includes(job.company_name),
+      is_followed: job.is_followed || inMemoryFollowedCompanies.includes(job.company_name),
+      org_id: job.org_id,
+      recruiter_id: job.recruiter_id,
       application_status: status,
       offer_id: job.offer_id,
       offer_days_left: job.offer_days_left || 7,
@@ -435,6 +437,17 @@ export const updateApplicationStatus = async (appId: string, status: string) => 
 export const upsertApplicationNote = async (appId: string, note: string) => {
   const response = await api.put(`/jobs/applications/${appId}/note`, { note });
   return response.data;
+};
+
+export const toggleFollowEntity = async (entityId: string, entityType: 'user' | 'org', currentlyFollowed: boolean) => {
+  const basePath = entityType === 'org' ? '/organizations' : '/users';
+  if (currentlyFollowed) {
+    const response = await api.delete(`${basePath}/${entityId}/unfollow`);
+    return response.data;
+  } else {
+    const response = await api.post(`${basePath}/${entityId}/follow`);
+    return response.data;
+  }
 };
 
 export const getJobDetail = async (jobId: string) => {
