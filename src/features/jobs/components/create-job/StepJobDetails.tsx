@@ -198,30 +198,37 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
 
       let newDescription = "";
 
-      if (aiData.summary) {
-        newDescription += `${aiData.summary}\n\n`;
-      }
+      // If the backend returns the already-formatted flat markdown description, use it directly.
+      if (jobData.description && typeof jobData.description === 'string' && jobData.description.trim() !== '') {
+        newDescription = jobData.description;
+      } else {
+        const aiData = jobData.ai_content || jobData; // Fallback in case raw AI fields are returned
 
-      // Description paragraph (could be in aiData or jobData)
-      const descParagraph = aiData.description || jobData.description;
-      if (descParagraph) {
-        newDescription += `Description\n${descParagraph}\n\n`;
-      }
+        if (aiData.summary) {
+          newDescription += `${aiData.summary}\n\n`;
+        }
 
-      if (aiData.responsibilities && Array.isArray(aiData.responsibilities)) {
-        newDescription += ` Responsibilities\n${aiData.responsibilities.map((r: string) => `- ${r}`).join('\n')}\n\n`;
-      }
+        // Description paragraph
+        const descParagraph = aiData.description;
+        if (descParagraph) {
+          newDescription += `Description\n${descParagraph}\n\n`;
+        }
 
-      if (aiData.requirements && Array.isArray(aiData.requirements)) {
-        newDescription += `Requirements\n${aiData.requirements.map((r: string) => `- ${r}`).join('\n')}\n\n`;
-      }
+        if (aiData.responsibilities && Array.isArray(aiData.responsibilities)) {
+          newDescription += `Responsibilities\n${aiData.responsibilities.map((r: string) => `- ${r}`).join('\n')}\n\n`;
+        }
 
-      if (aiData.preferred_skills && Array.isArray(aiData.preferred_skills)) {
-        newDescription += `Preferred Skills\n${aiData.preferred_skills.map((s: string) => `- ${s}`).join('\n')}\n\n`;
-      }
+        if (aiData.requirements && Array.isArray(aiData.requirements)) {
+          newDescription += `Requirements\n${aiData.requirements.map((r: string) => `- ${r}`).join('\n')}\n\n`;
+        }
 
-      if (aiData.benefits && Array.isArray(aiData.benefits)) {
-        newDescription += `Benefits\n${aiData.benefits.map((b: string) => `- ${b}`).join('\n')}\n\n`;
+        if (aiData.preferred_skills && Array.isArray(aiData.preferred_skills)) {
+          newDescription += `Preferred Skills\n${aiData.preferred_skills.map((s: string) => `- ${s}`).join('\n')}\n\n`;
+        }
+
+        if (aiData.benefits && Array.isArray(aiData.benefits)) {
+          newDescription += `Benefits\n${aiData.benefits.map((b: string) => `- ${b}`).join('\n')}\n\n`;
+        }
       }
 
       newDescription = newDescription.trim();

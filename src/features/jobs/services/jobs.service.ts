@@ -583,6 +583,7 @@ export const getMyListings = async (status?: string, cursor?: string, limit: num
       company: job.company_name,
       location: job.location,
       description: job.description,
+      experience: job.experience_label || undefined,
       work_type: job.job_type,
       work_mode: job.work_mode,
       salary_min: job.salary_min,
