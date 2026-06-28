@@ -1,7 +1,8 @@
 "use client"
 
 import { Search, MapPin, X } from "lucide-react"
-import { useJobs } from "@/context/JobsContext"
+import { useJobStore } from "@/store/job.store"
+import { useShallow } from "zustand/react/shallow"
 
 interface JobSearchBarProps {
   isSearchExpanded: boolean
@@ -20,7 +21,7 @@ interface JobSearchBarProps {
 export function JobSearchBar({
   isSearchExpanded,
   setIsSearchExpanded,
-  searchKeywords: _searchKeywords, // We use context instead
+  searchKeywords: _searchKeywords, 
   setSearchKeywords: _setSearchKeywords,
   searchLocations,
   searchLocationInput,
@@ -34,9 +35,21 @@ export function JobSearchBar({
     searchKeywords,
     setSearchKeywords,
     filters,
-    updateFilters,
-    filteredJobs
-  } = useJobs()
+    setRecruiterFilterValue,
+  } = useJobStore(
+    useShallow((state) => ({
+      searchKeywords: state.filters.search,
+      setSearchKeywords: (val: string) => state.setCandidateFilterValue('search', val),
+      filters: state.filters.recruiterFilters,
+      setRecruiterFilterValue: state.setRecruiterFilterValue,
+    }))
+  );
+
+  const updateFilters = (updates: Partial<typeof filters>) => {
+    Object.keys(updates).forEach((k) => {
+      setRecruiterFilterValue(k as keyof typeof filters, updates[k as keyof typeof filters]);
+    });
+  };
 
   const activeFiltersCount =
     filters.jobType.length +

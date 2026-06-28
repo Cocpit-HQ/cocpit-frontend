@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useJobs } from "@/context/JobsContext"
+import { useJobStore } from "@/store/job.store"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Check, Upload, AlertCircle, FileText } from "lucide-react"
 import * as api from "@/services/api/jobs"
@@ -19,7 +19,7 @@ interface QuickApplyModalProps {
 }
 
 export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }: QuickApplyModalProps) {
-  const { applyToJob: refreshContext } = useJobs()
+  const addAppliedId = useJobStore(state => state.addAppliedId)
   const [internalOpen, setInternalOpen] = useState(false)
   const isControlled = open !== undefined
 
@@ -125,8 +125,7 @@ export function QuickApplyModal({ open, onOpenChange, trigger, jobId, jobTitle }
 
       await api.applyToJob(jobId, data);
 
-      // Update context to reflect changed status
-      refreshContext(jobId);
+      addAppliedId(jobId);
 
       setIsSuccess(true)
 

@@ -14,7 +14,7 @@ import { MobileJobFilters } from "@/components/jobs/MobileJobFilters"
 import { CompanyJobTabs } from "@/components/jobs/company/CompanyJobTabs"
 import { CreateJobModal } from "@/components/jobs/CreateJobModal"
 import { JobPostsDashboard } from "@/components/jobs/dashboard/JobPostsDashboard"
-import { useJobs } from "@/context/JobsContext"
+import { useRecruiterJobs } from "@/features/jobs/hooks/useRecruiterJobs"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useCompanyPermissions } from "@/hooks/use-organization"
 import type { Page } from "@/types/common"
@@ -43,9 +43,9 @@ export default function CompanyJobsPage({ companyId, searchParams }: { companyId
         isFetchingNextPage,
         hasNextPage,
         fetchNextPage,
-        jobs, // `jobs` array from JobsContext now fetches based on `activeTab` and `isCompany` logic
-        myJobs // `myJobs` array from JobsContext
-    } = useJobs()
+        jobs,
+        myJobs
+    } = useRecruiterJobs(companyId)
 
     const { activeProfile } = useActiveProfile()
     const { canPostJobs } = useCompanyPermissions(activeProfile)
@@ -131,8 +131,8 @@ export default function CompanyJobsPage({ companyId, searchParams }: { companyId
     // We just need to separate offers and non-offers if activeTab is "offers"
     // For company mode, `jobs` is the list of company jobs (unless activeTab is dashboard).
     const myCompanyJobs = (activeTab === "my-jobs" ? myJobs : jobs) || [];
-    const openCompanyJobs = myCompanyJobs.filter(j => !j.isOffer);
-    const offeredCompanyJobs = myCompanyJobs.filter(j => j.isOffer);
+    const openCompanyJobs = myCompanyJobs.filter(j => !j.is_offer);
+    const offeredCompanyJobs = myCompanyJobs.filter(j => j.is_offer);
 
     const jobsToRender =
         activeTab === "offers" ? offeredCompanyJobs :
@@ -191,7 +191,7 @@ export default function CompanyJobsPage({ companyId, searchParams }: { companyId
                         <div className="flex items-center justify-between gap-4">
                             <div className="min-w-0 flex-1">
                                 <CompanyJobTabs
-                                    mode={activeTab}
+                                    mode={activeTab as any}
                                     setMode={(m) => {
                                         setActiveTab(m)
                                         const params = new URLSearchParams(searchParamsHook.toString())
@@ -260,13 +260,13 @@ export default function CompanyJobsPage({ companyId, searchParams }: { companyId
 
                                                 {jobsToRender.length > 0 ? (
                                                     <>
-                                                        {jobsToRender.map((job) => (
-                                                            activeTab === "offers" ? (
-                                                                <GroupedOfferCard key={job.id} job={job} />
-                                                            ) : (
-                                                                <JobCard key={job.id} job={job} mode={"dashboard"} />
-                                                            )
-                                                        ))}
+                                                         {jobsToRender.map((job) => (
+                                                             activeTab === "offers" ? (
+                                                                 <GroupedOfferCard key={job.id} job={job as any} />
+                                                             ) : (
+                                                                 <JobCard key={job.id} job={job as any} mode={"dashboard"} />
+                                                             )
+                                                         ))}
 
                                                         {/* Infinite Scroll Trigger */}
                                                         {(hasNextPage || isFetchingNextPage) && (

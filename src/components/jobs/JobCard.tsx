@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Bookmark, Briefcase, Clock, MapPin, DollarSign, Zap, CheckCircle, Mic, Video, X, Share2 } from "lucide-react"
 import { type Job } from "@/types/jobs"
-import { useJobs } from "@/context/JobsContext"
+import { useJobs } from "@/features/jobs/hooks/useJobs"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -17,7 +17,7 @@ interface JobCardProps {
 }
 
 export function JobCard({ job, mode = "view" }: JobCardProps) {
-  const { saveJob, activeTab } = useJobs()
+  const { toggleSave: saveJob, activeTab } = useJobs()
   const { isCompany } = useActiveProfile()
   const [showQuickApply, setShowQuickApply] = useState(false)
   const [showTaskModal, setShowTaskModal] = useState(false)

@@ -95,7 +95,9 @@ export const StepJobPreview: React.FC<StepJobPreviewProps> = ({
             <div className="size-1.5 bg-black rounded-full flex-shrink-0" />
             <div className="flex justify-start items-center gap-2">
               <Icon icon="lucide:map-pin" className="w-5 h-5 text-black flex-shrink-0" />
-              <div className="text-black text-sm font-normal font-['Poppins'] leading-5">{work_mode} - {location}</div>
+              <div className="text-black text-sm font-normal font-['Poppins'] leading-5">
+                {work_mode && work_mode.toLowerCase() === 'remote' ? 'Remote' : `${work_mode} - ${location}`}
+              </div>
             </div>
           </div>
           <div className="flex justify-start items-center gap-1.5">

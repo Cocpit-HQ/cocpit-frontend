@@ -1,7 +1,8 @@
 "use client"
 
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
-import { useJobs } from "@/context/JobsContext"
+import { useJobStore } from "@/store/job.store"
+import { useShallow } from "zustand/react/shallow"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 
@@ -36,7 +37,20 @@ function FilterSection({ title, children, isOpen = true }: FilterSectionProps) {
 }
 
 export function JobFiltersSidebar() {
-  const { filters, updateFilters } = useJobs()
+  const { filters, setRecruiterFilterValue, resetFilters } = useJobStore(
+    useShallow((state) => ({
+      filters: state.filters.recruiterFilters,
+      setRecruiterFilterValue: state.setRecruiterFilterValue,
+      resetFilters: state.resetFilters,
+    }))
+  );
+
+  const updateFilters = (updates: Partial<typeof filters>) => {
+    Object.keys(updates).forEach((k) => {
+      setRecruiterFilterValue(k as keyof typeof filters, updates[k as keyof typeof filters]);
+    });
+  };
+
   const [locationInput, setLocationInput] = useState("")
 
   const toggleArrayFilter = (key: keyof typeof filters, value: string) => {
@@ -69,18 +83,7 @@ export function JobFiltersSidebar() {
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-foreground">Filters</h3>
             <button
-              onClick={() => updateFilters({
-                jobType: [],
-                workMode: [],
-                companyType: [],
-                industry: [],
-                locations: [],
-                experience: "All Levels",
-                salaryRange: "Any",
-                datePosted: "Any Time",
-                easyApply: false,
-                activelyHiring: false
-              })}
+              onClick={resetFilters}
               className="text-xs text-primary hover:underline"
             >
               Clear all

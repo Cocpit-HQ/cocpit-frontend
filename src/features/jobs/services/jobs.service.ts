@@ -25,26 +25,34 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
         let type = filters.job_type;
         if (type === 'Full time') type = 'Full-time';
         params.employment_type = type;
+        params.jobType = type;
       }
       
-      if (filters.work_mode) params.work_model = filters.work_mode;
+      if (filters.work_mode) {
+        params.work_model = filters.work_mode;
+        params.workMode = filters.work_mode;
+      }
 
       if (filters.experience) {
         switch (filters.experience) {
           case 'Fresher':
             params.experience_min = 0;
             params.experience_max = 1;
+            params.experienceLevel = 'Fresher';
             break;
           case 'Junior (1-3 yrs)':
             params.experience_min = 1;
             params.experience_max = 3;
+            params.experienceLevel = 'Junior';
             break;
           case 'Mid-level (3-5 yrs)':
             params.experience_min = 3;
             params.experience_max = 5;
+            params.experienceLevel = 'Mid-level';
             break;
           case 'Senior (5+ yrs)':
             params.experience_min = 5;
+            params.experienceLevel = 'Senior';
             break;
         }
       }
@@ -383,6 +391,8 @@ export const getMyApplications = async (): Promise<Job[]> => {
       salary_currency: job.salary_currency,
       posted_at: getRelativeTime(job.created_at),
       applied_date_display: `Applied ${getRelativeTime(job.applied_at)}`,
+      applied_at: job.applied_at,
+      created_at: job.created_at,
       description: job.description,
       experience: (job.experience_min != null && job.experience_max != null) 
         ? `${job.experience_min}-${job.experience_max}Yrs` 

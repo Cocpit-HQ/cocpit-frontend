@@ -194,10 +194,12 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
 
             {/* Location Frame 2608944 */}
             <div className="flex flex-row items-center p-0 gap-[8px] h-[20px]">
-              <Icon icon="lucide:map-pin" className="w-[20px] h-[20px] text-black" />
-              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black">
-                {offerGroup.work_mode || 'Hybrid'} - {offerGroup.location || 'Kolhapur'}
-              </span>
+               <Icon icon="lucide:map-pin" className="w-[20px] h-[20px] text-black" />
+               <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black">
+                 {offerGroup.work_mode && offerGroup.work_mode.toLowerCase() === 'remote'
+                   ? 'Remote'
+                   : `${offerGroup.work_mode || 'Hybrid'} - ${offerGroup.location || 'Kolhapur'}`}
+               </span>
             </div>
           </div>
 

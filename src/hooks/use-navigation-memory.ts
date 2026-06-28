@@ -43,7 +43,7 @@ export function useNavigationTracker() {
         sessionStorage.removeItem(`jobs_scroll_container_${tab}`);
       });
       sessionStorage.removeItem('coming_from_job_detail');
-      useJobStore.getState().setActiveTab('Explore');
+      useJobStore.getState().setActiveCandidateTab('Explore');
     }
   }, [pathname, searchParams]);
 }

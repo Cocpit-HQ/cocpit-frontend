@@ -33,6 +33,8 @@ export interface Job {
   // Application details
   application_status?: 'Applied' | 'in-review' | 'Shortlisted' | 'Declined' | string;
   applied_date_display?: string;
+  applied_at?: string;
+  created_at?: string;
   is_available?: boolean;
 
   // Offer details
@@ -46,6 +48,14 @@ export interface Job {
   recruiter_message?: string;
   offer_id?: string;
   offerStatus?: string;
+  applicants?: number;
+  actively_hiring?: boolean;
+  easy_apply?: boolean;
+  company_id?: string;
+  company_slug?: string;
+  company_type?: string;
+  industry?: string;
+  skills?: string[];
 }
 
 export interface JobsFilter {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useJobs } from "@/context/JobsContext"
+import { useRecruiterJobs } from "@/features/jobs/hooks/useRecruiterJobs"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Check, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -19,8 +19,9 @@ interface CreateJobModalProps {
 }
 
 export function CreateJobModal({ open, onOpenChange, trigger, initialData }: CreateJobModalProps) {
-  const { addJob } = useJobs()
   const { activeProfile, isCompany } = useActiveProfile()
+  const companyId = isCompany && activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined
+  const { createNewJob, updateExistingJob } = useRecruiterJobs(companyId)
   const [internalOpen, setInternalOpen] = useState(false)
   const isControlled = open !== undefined
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -170,10 +171,9 @@ export function CreateJobModal({ open, onOpenChange, trigger, initialData }: Cre
       }
 
       if (initialData?.id) {
-        await api.updateJob(initialData.id, apiData)
+        await updateExistingJob(initialData.id, apiData)
       } else {
-        await api.createJob(apiData)
-        await addJob({} as any)
+        await createNewJob(apiData)
       }
 
       handleOpenChange(false)

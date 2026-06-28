@@ -1,6 +1,7 @@
 import React, { use, useEffect, useRef } from "react";
 import { useJobs } from "../hooks/useJobs";
 import { useJobStore } from "@/store/job.store";
+import { useShallow } from "zustand/react/shallow";
 import RecommendedJobCard from "../components/RecommendedJobCard";
 import RecommendedJobCardSkeleton from "../components/skeletons/RecommendedJobCardSkeleton";
 import JobList from "../components/JobList";
@@ -129,34 +130,91 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
   const [applyingJob, setApplyingJob] = React.useState<Job | null>(null);
   const [withdrawJobId, setWithdrawJobId] = React.useState<string | null>(null);
   const [declineJobId, setDeclineJobId] = React.useState<string | null>(null);
-  const [selectedStatusFilter, setSelectedStatusFilter] =
-    React.useState<string>("All");
-  const [selectedDateFilter, setSelectedDateFilter] =
-    React.useState<string>("All time");
+  const selectedStatusFilter = useJobStore((state: any) => state.filters.selectedStatusFilter);
+  const selectedDateFilter = useJobStore((state: any) => state.filters.selectedDateFilter);
+  const setCandidateFilterValue = useJobStore((state: any) => state.setCandidateFilterValue);
+
+  const setSelectedStatusFilter = (val: string) => setCandidateFilterValue('selectedStatusFilter', val);
+  const setSelectedDateFilter = (val: string) => setCandidateFilterValue('selectedDateFilter', val);
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] =
     React.useState<boolean>(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
-  const filteredJobs = React.useMemo(() => {
+  const dateFilteredJobs = React.useMemo(() => {
     let result = jobs;
 
-    const parseJobDate = (postedAt: string): number => {
-      const t = new Date(postedAt).getTime();
-      if (!isNaN(t)) return t;
-      // Fallback for dummy data
-      const str = postedAt.toLowerCase();
-      if (str.includes("hour") || str.includes("minute") || str.includes("today")) {
-        return Date.now();
-      } else if (str.includes("day")) {
-        const days = parseInt(str) || 1;
-        return Date.now() - days * 24 * 60 * 60 * 1000;
-      } else if (str.includes("week")) {
-        const weeks = parseInt(str) || 1;
-        return Date.now() - weeks * 7 * 24 * 60 * 60 * 1000;
-      } else if (str.includes("month")) {
-        const months = parseInt(str) || 1;
-        return Date.now() - months * 30 * 24 * 60 * 60 * 1000;
+    const parseJobDate = (job: Job): number => {
+      // 1. If it's My applications tab, use applied_at (raw timestamp) or parse applied_date_display
+      if (activeTab === "My applications") {
+        if (job.applied_at) {
+          const t = new Date(job.applied_at).getTime();
+          if (!isNaN(t)) return t;
+        }
+        // Fallback to parsing applied_date_display (e.g. "Applied 15h ago")
+        if (job.applied_date_display) {
+          const cleanStr = job.applied_date_display.replace(/^[Aa]pplied\s+/, "");
+          const t = new Date(cleanStr).getTime();
+          if (!isNaN(t)) return t;
+          
+          const str = cleanStr.toLowerCase();
+          if (
+            str.includes("hour") ||
+            str.includes("h ") ||
+            str.endsWith("h") ||
+            str.includes("minute") ||
+            str.includes("m ") ||
+            str.endsWith("m") ||
+            str.includes("today") ||
+            str.includes("now")
+          ) {
+            return Date.now();
+          } else if (str.includes("day")) {
+            const days = parseInt(str) || 1;
+            return Date.now() - days * 24 * 60 * 60 * 1000;
+          } else if (str.includes("week")) {
+            const weeks = parseInt(str) || 1;
+            return Date.now() - weeks * 7 * 24 * 60 * 60 * 1000;
+          } else if (str.includes("month")) {
+            const months = parseInt(str) || 1;
+            return Date.now() - months * 30 * 24 * 60 * 60 * 1000;
+          }
+        }
       }
+
+      // 2. Otherwise (Explore or fallback), use created_at (raw timestamp) or parse posted_at
+      if (job.created_at) {
+        const t = new Date(job.created_at).getTime();
+        if (!isNaN(t)) return t;
+      }
+      
+      if (job.posted_at) {
+        const t = new Date(job.posted_at).getTime();
+        if (!isNaN(t)) return t;
+
+        const str = job.posted_at.toLowerCase();
+        if (
+          str.includes("hour") ||
+          str.includes("h ") ||
+          str.endsWith("h") ||
+          str.includes("minute") ||
+          str.includes("m ") ||
+          str.endsWith("m") ||
+          str.includes("today") ||
+          str.includes("now")
+        ) {
+          return Date.now();
+        } else if (str.includes("day")) {
+          const days = parseInt(str) || 1;
+          return Date.now() - days * 24 * 60 * 60 * 1000;
+        } else if (str.includes("week")) {
+          const weeks = parseInt(str) || 1;
+          return Date.now() - weeks * 7 * 24 * 60 * 60 * 1000;
+        } else if (str.includes("month")) {
+          const months = parseInt(str) || 1;
+          return Date.now() - months * 30 * 24 * 60 * 60 * 1000;
+        }
+      }
+
       return Date.now();
     };
 
@@ -165,12 +223,18 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
     const DAY = 24 * 60 * 60 * 1000;
 
     if (dp === "today") {
-      result = result.filter(j => (now - parseJobDate(j.posted_at)) <= DAY);
+      result = result.filter(j => (now - parseJobDate(j)) <= DAY);
     } else if (dp === "last 7 days") {
-      result = result.filter(j => (now - parseJobDate(j.posted_at)) <= 7 * DAY);
+      result = result.filter(j => (now - parseJobDate(j)) <= 7 * DAY);
     } else if (dp === "last 30 days") {
-      result = result.filter(j => (now - parseJobDate(j.posted_at)) <= 30 * DAY);
+      result = result.filter(j => (now - parseJobDate(j)) <= 30 * DAY);
     }
+
+    return result;
+  }, [jobs, selectedDateFilter, activeTab]);
+
+  const filteredJobs = React.useMemo(() => {
+    let result = dateFilteredJobs;
 
     if (selectedStatusFilter !== "All") {
       result = result.filter((job) => {
@@ -185,7 +249,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
     }
 
     return result;
-  }, [jobs, selectedStatusFilter, selectedDateFilter]);
+  }, [dateFilteredJobs, selectedStatusFilter]);
 
   const appliedCount = React.useMemo(() => {
     return jobs.filter(
@@ -396,7 +460,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
               {/* Card 1: Total Applied */}
               <div className="flex-1 min-h-[94px] p-[16px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
                 <div className="text-[#6366F1] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
-                  {applicationStats.totalApplied || 0}
+                  {selectedDateFilter !== "All time"
+                    ? dateFilteredJobs.length
+                    : (applicationStats.totalApplied || jobs.length)}
                 </div>
                 <div className="text-[#000000] text-[14px] font-normal font-['Poppins'] leading-[20px]">
                   Total Applied
@@ -405,7 +471,11 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
               {/* Card 2: Shortlisted */}
               <div className="flex-1 min-h-[94px] p-[16px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
                 <div className="text-[#6366F1] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
-                  {applicationStats.shortlisted || 0}
+                  {selectedDateFilter !== "All time"
+                    ? dateFilteredJobs.filter(
+                        (job) => job.application_status?.toLowerCase() === "shortlisted"
+                      ).length
+                    : (applicationStats.shortlisted || 0)}
                 </div>
                 <div className="text-[#000000] text-[14px] font-normal font-['Poppins'] leading-[20px]">
                   Shortlisted
@@ -418,17 +488,26 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
               {/* Top Filter Row */}
               <div className="w-full min-h-[40px] flex flex-col sm:flex-row justify-between items-start sm:items-center relative gap-2">
                 <span className="font-['Poppins'] text-[14px] font-normal text-[#000000] leading-[20px]">
-                  Tracking {applicationStats.totalApplied || jobs.length} active job applications across your network.
+                  Tracking {selectedDateFilter !== "All time" ? dateFilteredJobs.length : (applicationStats.totalApplied || jobs.length)} active job applications across your network.
                 </span>
                 <div ref={dropdownRef} className="relative">
                   <button
                     onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                    className="w-[56px] h-[40px] flex items-center justify-center hover:bg-slate-50 rounded-full transition-colors"
+                    className={`h-[40px] px-4 flex items-center justify-center gap-1.5 hover:bg-slate-100 rounded-full transition-all border ${
+                      selectedDateFilter !== "All time"
+                        ? "border-[#6366F1]/30 bg-[#EEF2FF] text-[#6366F1]"
+                        : "border-transparent text-black"
+                    }`}
                   >
                     <Icon
                       icon="iconoir:filter-list"
-                      className="w-[24px] h-[24px] text-black"
+                      className="w-[24px] h-[24px]"
                     />
+                    {selectedDateFilter !== "All time" && (
+                      <span className="text-[14px] font-semibold font-['Poppins'] capitalize">
+                        {selectedDateFilter}
+                      </span>
+                    )}
                   </button>
 
                   {/* Filter Options Dropdown */}

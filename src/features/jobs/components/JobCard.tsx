@@ -82,7 +82,9 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
               <div className="flex justify-start items-center gap-2">
                 <Icon icon="hugeicons:location-05" className="w-5 h-5 text-black" />
                 <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5">
-                  {job.work_mode && job.location
+                  {job.work_mode && job.work_mode.toLowerCase() === 'remote'
+                    ? 'Remote'
+                    : job.work_mode && job.location
                     ? `${job.work_mode} - ${job.location}`
                     : job.work_mode || job.location}
                 </div>

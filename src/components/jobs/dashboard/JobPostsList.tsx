@@ -6,10 +6,11 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Job } from "@/types/jobs"
+import { Job } from "@/features/jobs/types/jobs.types"
 import * as api from "@/services/api/jobs"
 import { CreateJobModal } from "../CreateJobModal"
-import { useJobs } from "@/context/JobsContext"
+import { useRecruiterJobs } from "@/features/jobs/hooks/useRecruiterJobs"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useInView } from "react-intersection-observer"
 import { useEffect } from "react"
 import { toast } from "sonner"
@@ -20,13 +21,16 @@ interface JobPostsListProps {
 }
 
 export function JobPostsList({ selectedJobId, onSelectJob }: JobPostsListProps) {
+    const { activeProfile, isCompany } = useActiveProfile()
+    const companyId = isCompany && activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined
     const {
-        jobs, // This contains the dashboard jobs because activeTab is 'dashboard'
+        jobs,
         isLoading,
         isFetchingNextPage,
         hasNextPage,
-        fetchNextPage
-    } = useJobs()
+        fetchNextPage,
+        removeJob
+    } = useRecruiterJobs(companyId)
 
     const [editingJob, setEditingJob] = useState<Job | undefined>(undefined)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -71,7 +75,7 @@ export function JobPostsList({ selectedJobId, onSelectJob }: JobPostsListProps) 
                     <>
                         {jobs.map((job) => {
                             const isSelected = selectedJobId === job.id
-                            const status = job.activelyHiring ? "Open" : "Closed"
+                            const status = job.actively_hiring ? "Open" : "Closed"
 
                             return (
                                 <div
@@ -96,7 +100,7 @@ export function JobPostsList({ selectedJobId, onSelectJob }: JobPostsListProps) 
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuItem onClick={(e) => {
                                                     e.stopPropagation()
-                                                    setEditingJob(job)
+                                                    setEditingJob(job as any)
                                                     setIsEditModalOpen(true)
                                                 }}>
                                                     <Edit className="w-4 h-4 mr-2" />
@@ -107,15 +111,11 @@ export function JobPostsList({ selectedJobId, onSelectJob }: JobPostsListProps) 
                                                     onClick={async (e) => {
                                                         e.stopPropagation()
                                                         if (confirm("Are you sure you want to delete this job?")) {
-                                                            const deletePromise = api.deleteJob(job.id);
+                                                            const deletePromise = removeJob(job.id);
                                                             
                                                             toast.promise(deletePromise, {
                                                                 loading: 'Deleting job...',
-                                                                success: () => {
-                                                                    // Short delay before reload to let user see success
-                                                                    setTimeout(() => window.location.reload(), 1000);
-                                                                    return 'Job deleted successfully';
-                                                                },
+                                                                success: 'Job deleted successfully',
                                                                 error: 'Failed to delete job'
                                                             });
                                                         }
@@ -147,7 +147,7 @@ export function JobPostsList({ selectedJobId, onSelectJob }: JobPostsListProps) 
                                             {job.location}
                                         </div>
                                         <span>•</span>
-                                        <span>{job.type}</span>
+                                        <span>{job.job_type}</span>
                                     </div>
 
                                     <div className="flex items-center justify-between text-xs text-muted-foreground pt-4 border-t border-border">
@@ -155,7 +155,7 @@ export function JobPostsList({ selectedJobId, onSelectJob }: JobPostsListProps) 
                                             <Users className="w-3.5 h-3.5" />
                                             <span>{job.applicants} applicants</span>
                                         </div>
-                                        <span>{job.postedTime}</span>
+                                        <span>{job.posted_at}</span>
                                     </div>
 
                                     {isSelected && (
@@ -194,7 +194,7 @@ export function JobPostsList({ selectedJobId, onSelectJob }: JobPostsListProps) 
                     setIsEditModalOpen(open)
                     if (!open) setEditingJob(undefined)
                 }}
-                initialData={editingJob}
+                initialData={editingJob as any}
             />
         </div>
     )

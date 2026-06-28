@@ -2,7 +2,8 @@
 
 import { Check, ChevronDown, ChevronUp, X } from "lucide-react"
 import { Drawer, DrawerContent, DrawerTrigger, DrawerClose, DrawerTitle } from "@/components/ui/drawer"
-import { useJobs } from "@/context/JobsContext"
+import { useJobStore } from "@/store/job.store"
+import { useShallow } from "zustand/react/shallow"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 
@@ -42,7 +43,20 @@ function FilterSection({ title, children, isOpen = true }: FilterSectionProps) {
 }
 
 export function MobileJobFilters({ showMobileFilters, setShowMobileFilters }: MobileJobFiltersProps) {
-  const { filters, updateFilters } = useJobs()
+  const { filters, setRecruiterFilterValue, resetFilters } = useJobStore(
+    useShallow((state) => ({
+      filters: state.filters.recruiterFilters,
+      setRecruiterFilterValue: state.setRecruiterFilterValue,
+      resetFilters: state.resetFilters,
+    }))
+  );
+
+  const updateFilters = (updates: Partial<typeof filters>) => {
+    Object.keys(updates).forEach((k) => {
+      setRecruiterFilterValue(k as keyof typeof filters, updates[k as keyof typeof filters]);
+    });
+  };
+
   const [locationInput, setLocationInput] = useState("")
 
   const toggleArrayFilter = (key: keyof typeof filters, value: string) => {
@@ -72,20 +86,9 @@ export function MobileJobFilters({ showMobileFilters, setShowMobileFilters }: Mo
       <DrawerContent className="h-[85vh] bg-background border-t border-border rounded-t-xl px-4 pb-4">
         <DrawerTitle className="sr-only">Filters</DrawerTitle>
         <div className="flex items-center justify-between py-4 border-b border-border mb-4">
-           <h2 className="text-lg font-semibold">Filters</h2>
-           <button
-              onClick={() => updateFilters({
-                jobType: [],
-                workMode: [],
-                companyType: [],
-                industry: [],
-                locations: [],
-                experience: "All Levels",
-                salaryRange: "Any",
-                datePosted: "Any Time",
-                easyApply: false,
-                activelyHiring: false
-              })}
+            <h2 className="text-lg font-semibold">Filters</h2>
+            <button
+              onClick={resetFilters}
               className="text-sm text-primary hover:underline"
             >
               Clear all

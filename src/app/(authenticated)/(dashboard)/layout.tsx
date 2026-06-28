@@ -4,7 +4,6 @@ import { AppShell } from "@/components/layout/AppShell";
 import { SocketProvider } from "@/context/SocketContext";
 import { SocialProvider } from "@/context/SocialContext";
 import { StoriesProvider } from "@/context/StoriesContext";
-import { JobsProvider } from "@/context/JobsContext";
 import { GlobalUploadProgress } from "@/components/ui/GlobalUploadProgress";
 import { usePathname } from "next/navigation";
 import { useUIStore } from "@/store/ui.store";
@@ -25,16 +24,14 @@ export default function DashboardLayout({
         <SocketProvider>
             <SocialProvider>
                 <StoriesProvider enabled={isFeedRoute}>
-                    <JobsProvider>
-                        <AppShell>{children}</AppShell>
-                        <GlobalUploadProgress />
-                        
-                        <FeedCreatePostModal
-                            isOpen={activeModal === 'create-post'}
-                            onClose={() => setActiveModal(null)}
-                            initialPostType={initialPostType}
-                        />
-                    </JobsProvider>
+                    <AppShell>{children}</AppShell>
+                    <GlobalUploadProgress />
+                    
+                    <FeedCreatePostModal
+                        isOpen={activeModal === 'create-post'}
+                        onClose={() => setActiveModal(null)}
+                        initialPostType={initialPostType}
+                    />
                 </StoriesProvider>
             </SocialProvider>
         </SocketProvider>

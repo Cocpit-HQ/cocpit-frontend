@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { User } from "next-auth";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { JOB_KEYS } from "@/components/jobs/hooks/use-job-queries";
 import { setActorRequestHeaders, trackActorMetric } from "@/lib/actor-context";
 import { getActorContext, setActorContext } from "@/services/api/auth";
 import { Company } from "@/services/organization.service";
@@ -182,7 +181,7 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
     const switchProfile = (type: ProfileType, id: string) => {
         const performSwitch = async () => {
             try {
-                queryClient.invalidateQueries({ queryKey: JOB_KEYS.all });
+                queryClient.invalidateQueries({ queryKey: ["jobs"] });
                 queryClient.invalidateQueries({ queryKey: ["feed"] });
                 queryClient.invalidateQueries({ queryKey: ["grouped-stories"] });
                 queryClient.invalidateQueries({ queryKey: ["events"] });
