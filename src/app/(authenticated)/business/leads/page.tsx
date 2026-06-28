@@ -41,9 +41,9 @@ interface Lead {
 }
 
 const DEFAULT_LEADS: Lead[] = [
-  { id: '1', name: 'Alexander Wright', headline: 'Senior DevOps Architect @ CloudScale', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex', type: 'Person', industry: 'Cloud Tech', score: 92, reasons: ['Skills match "DevOps" job', 'Follows your company'], isFollowing: true, lastActive: '2h ago' },
+  { id: '1', name: 'Alexander Wright', headline: 'Senior DevOps Architect @ CloudScale', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex', type: 'Person', industry: 'Cloud Tech', score: 92, reasons: ['Skills match "DevOps" job', 'Follows your company'], isFollowing: true, lastActive: '2 hours ago' },
   { id: '2', name: 'Nexus Cybernetics', headline: 'Full-stack development agency specializing in AI', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Nexus', type: 'Company', industry: 'Software Dev', score: 85, reasons: ['Mutual connections with Founders', 'Target industry overlap'], isFollowing: false, lastActive: '1d ago' },
-  { id: '3', name: 'Sarah Chen', headline: 'Product Manager | Ex-Google | MIT Grad', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah', type: 'Person', industry: 'Product', score: 78, reasons: ['Applied to "Product Lead"', 'Open to work'], isFollowing: true, lastActive: '5m ago' },
+  { id: '3', name: 'Sarah Chen', headline: 'Product Manager | Ex-Google | MIT Grad', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah', type: 'Person', industry: 'Product', score: 78, reasons: ['Applied to "Product Lead"', 'Open to work'], isFollowing: true, lastActive: 'Just now' },
 ]
 
 export default function LeadsPage() {

@@ -129,7 +129,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
 
   return (
     <div className="w-[998px] mx-auto bg-white flex flex-col justify-start items-center gap-[16px] overflow-hidden animate-in fade-in duration-300">
-      
+
       {/* Header Row (Frame 2608623) */}
       <div className="w-[998px] h-[48px] self-stretch flex flex-row items-center p-0 gap-[16px]">
         <button
@@ -147,10 +147,10 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
 
       {/* Job Details Card Preview (Frame 2608861) */}
       <div className="w-[998px] h-[196px] box-border p-[16px] rounded-[24px] border border-[#EEF2FF] flex flex-col items-end gap-[12px] bg-white">
-        
+
         {/* Frame 2608947: Top row (role, company, full-time, and company logo) */}
         <div className="w-[966px] h-[80px] self-stretch flex flex-row justify-between items-start p-0 gap-[10px]">
-          
+
           {/* Frame 2608946: Role details */}
           <div className="h-[80px] flex flex-col items-start p-0 gap-[8px]">
             {/* UI/UX Designer */}
@@ -188,18 +188,18 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                 {offerGroup.experience_level || '0-2Yrs'}
               </span>
             </div>
-            
+
             {/* Bullet Point / Ellipse 15 */}
             <div className="w-[6px] h-[6px] bg-black rounded-full mx-[8px]" />
 
             {/* Location Frame 2608944 */}
             <div className="flex flex-row items-center p-0 gap-[8px] h-[20px]">
-               <Icon icon="lucide:map-pin" className="w-[20px] h-[20px] text-black" />
-               <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black">
-                 {offerGroup.work_mode && offerGroup.work_mode.toLowerCase() === 'remote'
-                   ? 'Remote'
-                   : `${offerGroup.work_mode || 'Hybrid'} - ${offerGroup.location || 'Kolhapur'}`}
-               </span>
+              <Icon icon="lucide:map-pin" className="w-[20px] h-[20px] text-black" />
+              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black">
+                {offerGroup.work_mode && offerGroup.work_mode.toLowerCase() === 'remote'
+                  ? 'Remote'
+                  : `${offerGroup.work_mode || 'Hybrid'} - ${offerGroup.location || 'Kolhapur'}`}
+              </span>
             </div>
           </div>
 
@@ -240,7 +240,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
               Note
             </span>
           </div>
-          
+
           {/* Note Container (Frame 2609030) */}
           <div className="w-[998px] box-border flex flex-col items-start p-[12px_16px] gap-[8px] bg-[#F9FAFF] border-l-2 border-l-[#6366F1] rounded-[0px_16px_16px_16px]">
             {/* Sender Info Row (Frame 2609033) */}

@@ -152,14 +152,14 @@ export default function OverviewPage() {
               key="static-member-1"
               type="member"
               title="New Team Member: Sarah Connor"
-              timestamp="2M AGO"
+              timestamp="JUST NOW"
               description="Joined as Senior Software Engineer via direct application."
             />
             <ActivityItem 
               key="static-job-1"
               type="job"
               title="Job Posted: Fullstack Developer"
-              timestamp="5H AGO"
+              timestamp="5 HOURS AGO"
               description="New listing published targeting Mid-Level talent."
             />
             {recentPosts.map((post, i) => (

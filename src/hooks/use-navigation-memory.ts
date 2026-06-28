@@ -37,7 +37,7 @@ export function useNavigationTracker() {
 
     // Clear jobs scroll memory if we leave the jobs section
     if (pathname && !pathname.startsWith('/jobs')) {
-      const tabsList = ['Explore', 'My applications', 'Offers', 'Saved', 'My listings'];
+      const tabsList = ['Explore', 'My Applications', 'Offers', 'Saved', 'My Listings'];
       tabsList.forEach(tab => {
         sessionStorage.removeItem(`jobs_scroll_page_${tab}`);
         sessionStorage.removeItem(`jobs_scroll_container_${tab}`);

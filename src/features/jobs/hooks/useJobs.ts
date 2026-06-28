@@ -77,7 +77,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
   // Determine current active list from Zustand
   const getActiveList = useCallback((): CachedList<Job> => {
     if (activeTab === 'Explore') return explore;
-    if (activeTab === 'My applications') return applications.applied;
+    if (activeTab === 'My Applications') return applications.applied;
     if (activeTab === 'Offers') return applications.offers;
     return applications.saved;
   }, [activeTab, explore, applications]);
@@ -88,7 +88,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     if (activeTab === 'Explore') {
       setExploreList(updates);
     } else {
-      const key = activeTab === 'My applications' ? 'applied' : activeTab === 'Offers' ? 'offers' : 'saved';
+      const key = activeTab === 'My Applications' ? 'applied' : activeTab === 'Offers' ? 'offers' : 'saved';
       setApplicationsList(key, updates);
     }
   }, [activeTab, setExploreList, setApplicationsList]);
@@ -118,10 +118,9 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
         salary_range: filters.salary_range || undefined,
         date_posted: filters.date_posted || undefined,
         industry: filters.industry || undefined,
-        location_type: filters.location_type || undefined,
       };
 
-      if (activeTab === 'My applications') {
+      if (activeTab === 'My Applications') {
         fetchedJobs = await jobsService.getMyApplications();
         const stats = await jobsService.getApplicationStats();
         setApplicationStats(stats);
@@ -196,7 +195,6 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     filters.salary_range,
     filters.date_posted,
     filters.industry,
-    filters.location_type,
     token
   ]);
 

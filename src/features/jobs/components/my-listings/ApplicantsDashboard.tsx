@@ -400,14 +400,14 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         className="box-border flex flex-row items-center p-[16px] gap-[16px] w-[998px] h-[80px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-1 self-stretch grow-0"
       >
         {/* Job text frame (Frame 2609064) */}
-        <div className="flex flex-col items-start p-0 gap-[8px] w-[710px] h-[48px] flex-none order-0 grow-[1] min-w-0">
+        <div className="flex flex-col items-start p-0 gap-[8px] w-full h-auto flex-none order-0 grow min-w-0">
           <span
-            className="w-[121px] h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black capitalize flex-none order-0 grow-0 truncate"
+            className="w-full font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black capitalize flex-none order-0 grow-0 truncate"
           >
             {listing.title}
           </span>
           <span
-            className="w-[710px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] flex-none order-1 self-stretch grow-0 truncate"
+            className="w-full font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] flex-none order-1 self-stretch grow-0 truncate"
           >
             Posted {listing.posted_at || '2 hours ago'}
           </span>
@@ -720,16 +720,16 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
             </button>
 
             {/* Decline / Shortlist Buttons / Frame 2608841 */}
-            <div className="flex flex-row items-center p-0 gap-[16px] w-[216px] h-[40px] flex-none order-1 grow-0">
+            <div className="flex flex-row items-center p-0 gap-[16px] w-auto h-[40px] flex-none order-1 grow-0">
               {/* Decline Button / Frame 2608618 */}
               <button
                 onClick={() => handleDecline(selectedCandidate?.applicationId)}
                 disabled={candidateDetail?.status === 'Rejected'}
                 type="button"
-                className="box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-[100px] h-[40px] border border-[#818CF8] rounded-[24px] flex-none order-0 grow-0 hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border border-[#818CF8] rounded-[24px] flex-none order-0 grow-0 hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span
-                  className="w-[52px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#818CF8] flex-none order-0 grow-0"
+                  className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#818CF8] flex-none order-0 grow-0 whitespace-nowrap"
                 >
                   {candidateDetail?.status === 'Rejected' ? 'Declined' : 'Decline'}
                 </span>
@@ -740,10 +740,10 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 onClick={() => handleShortlist(selectedCandidate?.applicationId)}
                 disabled={candidateDetail?.status === 'Shortlisted'}
                 type="button"
-                className="box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-[100px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] flex-none order-1 grow-0 hover:bg-[#5558e6] transition-all disabled:opacity-75 disabled:cursor-not-allowed"
+                className="box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] flex-none order-1 grow-0 hover:bg-[#5558e6] transition-all disabled:opacity-75 disabled:cursor-not-allowed"
               >
                 <span
-                  className="w-[56px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white flex-none order-0 grow-0"
+                  className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white flex-none order-0 grow-0 whitespace-nowrap"
                 >
                   {candidateDetail?.status === 'Shortlisted' ? 'Shortlisted' : 'Shortlist'}
                 </span>

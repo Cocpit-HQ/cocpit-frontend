@@ -193,7 +193,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
           <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500" />
         </button>
         <div className="inline-flex flex-col justify-start items-start">
-          <div className="text-center justify-start text-black text-lg font-medium font-['Poppins'] leading-6">My listings</div>
+          <div className="text-center justify-start text-black text-lg font-medium font-['Poppins'] leading-6">My Listings</div>
           <div className="text-center justify-start text-gray-500 text-xs font-normal font-['Poppins'] leading-4">Post, manage, and track all your job listings in one place</div>
         </div>
       </div>

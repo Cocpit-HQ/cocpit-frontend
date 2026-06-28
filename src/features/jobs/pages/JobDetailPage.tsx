@@ -34,14 +34,14 @@ const JobDetailMap = ({ location }: { location: string }) => {
 };
 
 export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
-  const { 
-    job, 
-    isLoading, 
-    toggleSave, 
-    applyToJob, 
-    withdrawJob, 
-    respondToOffer, 
-    toggleFollow 
+  const {
+    job,
+    isLoading,
+    toggleSave,
+    applyToJob,
+    withdrawJob,
+    respondToOffer,
+    toggleFollow
   } = useJobDetail(jobId);
   const { goBack } = useSmartBack();
   const [showFullDesc, setShowFullDesc] = useState(false);
@@ -84,8 +84,8 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
   let currentStatus = job.application_status || 'Applied';
   const isDeclined = currentStatus === 'Declined' || currentStatus === 'Rejected';
 
-  const steps = isDeclined 
-    ? ['Applied', 'in-review', 'Declined'] 
+  const steps = isDeclined
+    ? ['Applied', 'in-review', 'Declined']
     : ['Applied', 'in-review', 'Shortlisted'];
 
   const stepLabels: Record<string, string> = {
@@ -104,7 +104,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
   return (
     <div className="relative w-full bg-white flex justify-center px-4 md:px-0">
       <div className="flex flex-col items-center py-0 gap-6 relative w-full max-w-[998px] bg-white pb-8">
-        
+
         {/* Header chevron and Title block */}
         <div className="w-full min-h-[48px] self-stretch flex flex-row items-start p-0 gap-[16px]">
           <button
@@ -121,7 +121,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
 
         {/* Content body wrapper */}
         <div className="self-stretch p-0 md:p-4 flex flex-col justify-start items-start gap-6 w-full">
-          
+
           {/* Active indicator and Job title card */}
           <div className="w-full h-auto self-stretch flex flex-col justify-center items-start p-0 gap-4">
             <div className="w-full flex flex-row justify-between items-center">
@@ -139,12 +139,12 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
               {job.is_offer && job.offer_days_left !== undefined && (
                 <div className="flex flex-row items-center gap-2 h-8">
                   {/* Calendar icon from page details card */}
-                  <Icon 
-                    icon="solar:calendar-linear" 
-                    className="w-6 h-6 flex-shrink-0" 
-                    style={{ color: job.offer_days_left <= 5 ? '#FF8D28' : job.offer_days_left <= 15 ? '#FBBF24' : '#6B7280' }} 
+                  <Icon
+                    icon="solar:calendar-linear"
+                    className="w-6 h-6 flex-shrink-0"
+                    style={{ color: job.offer_days_left <= 5 ? '#FF8D28' : job.offer_days_left <= 15 ? '#FBBF24' : '#6B7280' }}
                   />
-                  <span 
+                  <span
                     className="font-['Poppins'] font-normal text-sm leading-5 text-center py-1.5"
                     style={{ color: job.offer_days_left <= 5 ? '#FF8D28' : job.offer_days_left <= 15 ? '#FBBF24' : '#6B7280' }}
                   >
@@ -304,9 +304,8 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                       {/* Connector Line */}
                       {idx < steps.length - 1 && (
                         <div
-                          className={`hidden sm:block w-8 md:w-[60px] h-[1px] self-center flex-none ${
-                            idx < currentStepIndex ? 'bg-[#6366F1]' : 'bg-[#DADADA]'
-                          }`}
+                          className={`hidden sm:block w-8 md:w-[60px] h-[1px] self-center flex-none ${idx < currentStepIndex ? 'bg-[#6366F1]' : 'bg-[#DADADA]'
+                            }`}
                         />
                       )}
                     </React.Fragment>
@@ -317,7 +316,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           ) : (
             <div className="box-border w-full bg-[#FFFFFF] border border-[#EEF2FF] rounded-[28px] self-stretch p-4 flex flex-col items-start gap-4 h-auto">
               <div className="text-left text-[#000000] text-[16px] font-medium font-['Poppins'] leading-6">Company analytics</div>
-              
+
               {!job.response_rate || !job.avg_reply ? (
                 <div className="flex flex-col items-start p-0 gap-4 w-full h-auto">
                   <div className="flex flex-row items-center p-0 gap-2 w-fit h-5 flex-none">
@@ -340,8 +339,8 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                       <div className="text-[#000000] text-[24px] font-bold font-['Poppins'] leading-8">{job.response_rate}</div>
                       {/* Progress Bar */}
                       <div className="w-full h-[2px] bg-gray-200 mt-1 relative rounded-full overflow-hidden">
-                        <div 
-                          className="absolute top-0 left-0 h-full bg-[#22C55E] rounded-full" 
+                        <div
+                          className="absolute top-0 left-0 h-full bg-[#22C55E] rounded-full"
                           style={{ width: job.response_rate || '0%' }}
                         />
                       </div>
@@ -371,7 +370,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
               <div className={`text-[#000000] text-[16px] font-normal font-['Poppins'] leading-[24px] whitespace-pre-line ${!showFullDesc ? 'line-clamp-5' : ''}`}>
                 {job.description}
               </div>
-              
+
               {showFullDesc && job.requirements && job.requirements.length > 0 && (
                 <div className="mt-4 animate-in fade-in duration-200">
                   <span className="text-[#000000] text-[16px] font-semibold font-['Poppins'] leading-[24px] block">
@@ -387,7 +386,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 </div>
               )}
             </div>
-            
+
             <button
               onClick={() => setShowFullDesc(!showFullDesc)}
               className="text-center justify-start text-indigo-500 text-sm font-normal font-['Poppins'] leading-5 hover:underline"
@@ -401,7 +400,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
             <div className="self-stretch h-60 rounded-3xl border-4 border-indigo-50 overflow-hidden relative w-full">
               <JobDetailMap location={job.location || ''} />
             </div>
-            
+
             <div className="self-stretch inline-flex justify-start items-center gap-2">
               <Icon icon="solar:map-point-linear" className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1 justify-start text-gray-500 text-sm font-normal font-['Poppins'] leading-5">

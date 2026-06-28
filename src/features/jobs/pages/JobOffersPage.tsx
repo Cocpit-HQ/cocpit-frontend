@@ -35,7 +35,7 @@ export const JobOffersPage: React.FC = () => {
   // Tabs layout specification
   const tabs = [
     { id: 'Explore', label: 'Explore' },
-    { id: 'My applications', label: 'My applications' },
+    { id: 'My Applications', label: 'My Applications' },
     { id: 'Offers', label: 'Offers' },
     { id: 'Saved', label: 'Saved' }
   ];
@@ -72,14 +72,14 @@ export const JobOffersPage: React.FC = () => {
           })}
         </div>
 
-        {/* My listings tab link */}
+        {/* My Listings tab link */}
         <button
           onClick={() => {
-            router.push('/jobs?tab=My listings');
+            router.push('/jobs?tab=My Listings');
           }}
           className="h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-[#6366F1]/70 hover:text-[#6366F1] w-full md:w-auto"
         >
-          <span>My listings</span>
+          <span>My Listings</span>
           <Icon icon="lucide:chevron-right" className="w-4 h-4" />
         </button>
       </div>

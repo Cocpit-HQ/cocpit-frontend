@@ -79,11 +79,6 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       if (filters.date_posted) params.datePosted = filters.date_posted;
       if (filters.industry) params.industry = filters.industry;
 
-      if (filters.location_type) {
-        if (filters.location_type.toLowerCase() === 'country') {
-          params.work_model = params.work_model ? `${params.work_model},Remote` : 'Remote';
-        }
-      }
     }
 
     console.log("API Params:", params);
@@ -231,9 +226,8 @@ export const getRelativeTime = (dateString?: string) => {
   const diffHr = Math.floor(diffMin / 60);
   const diffDays = Math.floor(diffHr / 24);
 
-  if (diffSec < 60) return 'Just now';
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHr < 24) return `${diffHr}h ago`;
+  if (diffMin < 60) return 'Just now';
+  if (diffHr < 24) return `${diffHr} ${diffHr === 1 ? 'hour' : 'hours'} ago`;
   if (diffDays === 1) return '1 day ago';
   if (diffDays < 30) return `${diffDays} days ago`;
   const diffMonths = Math.floor(diffDays / 30);

@@ -11,9 +11,9 @@ function formatTimeAgo(dateString: string): string {
 
     if (diffInSeconds < 60) return "Just now";
     const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 60) return `Just now`;
     const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInHours < 24) return `${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'} ago`;
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) return `${diffInDays}d ago`;
     const diffInWeeks = Math.floor(diffInDays / 7);

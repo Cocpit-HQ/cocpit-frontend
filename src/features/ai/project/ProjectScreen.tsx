@@ -26,9 +26,8 @@ const getRelativeTimeString = (dateString: string) => {
     return `Updated ${months[date.getMonth()].toLowerCase()} ${date.getDate()}`;
   }
 
-  if (diffMins < 1) return "Updated just now";
-  if (diffMins < 60) return `Updated ${diffMins}m ago`;
-  if (diffHours < 24) return `Updated ${diffHours}h ago`;
+  if (diffMins < 60) return "Updated just now";
+  if (diffHours < 24) return `Updated ${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
   if (diffDays === 1) return "Updated yesterday";
   if (diffDays < 7) return `Updated ${diffDays} days ago`;
   

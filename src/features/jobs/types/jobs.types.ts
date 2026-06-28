@@ -67,7 +67,6 @@ export interface JobsFilter {
   salary_range?: string;
   date_posted?: string;
   industry?: string;
-  location_type?: string;
 }
 
 export interface JobsState {

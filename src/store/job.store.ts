@@ -47,7 +47,6 @@ export interface JobsUIState {
     salary_range?: string;
     date_posted?: string;
     industry?: string;
-    location_type?: string;
   };
 
   // ─── explore slice ────────────────────────────────────────
@@ -151,7 +150,6 @@ export const useJobStore = create<JobsUIState>((set) => ({
     salary_range: '',
     date_posted: '',
     industry: '',
-    location_type: '',
   },
   explore: createEmptyList<Job>(),
   applications: {
@@ -237,7 +235,6 @@ export const useJobStore = create<JobsUIState>((set) => ({
         salary_range: '',
         date_posted: '',
         industry: '',
-        location_type: '',
       },
     })),
 
@@ -497,3 +494,5 @@ export const useJobStore = create<JobsUIState>((set) => ({
       };
     }),
 }));
+
+// Force recompile to clear Turbopack cache issue

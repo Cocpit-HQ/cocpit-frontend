@@ -23,8 +23,7 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
     work_mode: filters.work_mode || '',
     salary_range: filters.salary_range || '',
     date_posted: filters.date_posted || '',
-    industry: filters.industry || '',
-    location_type: filters.location_type || ''
+    industry: filters.industry || ''
   });
 
   // Close dropdowns when clicking outside
@@ -38,22 +37,24 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Sync local filters when the pop up opens or prop filters change
+  // Reset expanded section only when opening the dropdown
   useEffect(() => {
     if (isOpen) {
-      setLocalFilters({
-        job_type: filters.job_type || '',
-        experience: filters.experience || '',
-        work_mode: filters.work_mode || '',
-        salary_range: filters.salary_range || '',
-        date_posted: filters.date_posted || '',
-        industry: filters.industry || '',
-        location_type: filters.location_type || ''
-      });
-      // Default expand Job Type on open if nothing is expanded
       setExpandedSection('job_type');
     }
-  }, [isOpen, filters]);
+  }, [isOpen]);
+
+  // Keep local filters synced with global filters
+  useEffect(() => {
+    setLocalFilters({
+      job_type: filters.job_type || '',
+      experience: filters.experience || '',
+      work_mode: filters.work_mode || '',
+      salary_range: filters.salary_range || '',
+      date_posted: filters.date_posted || '',
+      industry: filters.industry || ''
+    });
+  }, [filters]);
 
   const togglePopup = () => {
     setIsOpen(prev => !prev);
@@ -70,8 +71,7 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
       work_mode: '',
       salary_range: '',
       date_posted: '',
-      industry: '',
-      location_type: ''
+      industry: ''
     });
     onClearFilters();
     setIsOpen(false);
@@ -82,7 +82,6 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
   const workModeOptions = ['', 'Remote', 'Hybrid', 'Onsite'];
   const salaryOptions = ['', 'Under 3L', '3L-5L', '6L-10L', '10L+'];
   const datePostedOptions = ['', 'Today', 'Last 7 days', 'Last 30 days'];
-  const locationOptions = ['', 'City', 'Country'];
 
   const standardIndustries = ['Tech', 'Finance', 'Marketing', 'Design', 'Sales', 'Healthcare', 'Education'];
   const isCustomIndustry = !!(localFilters.industry && !standardIndustries.map(i => i.toLowerCase()).includes(localFilters.industry.toLowerCase()));
@@ -96,7 +95,14 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
     }
   }, [localFilters.industry, isCustomIndustry]);
 
-  const hasActiveFilters = Object.values(filters).some(val => !!val);
+  const hasActiveFilters = !!(
+    filters.job_type ||
+    filters.experience ||
+    filters.work_mode ||
+    filters.salary_range ||
+    filters.date_posted ||
+    filters.industry
+  );
 
   const renderAccordionSection = (
     label: string,
@@ -153,23 +159,67 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
   };
 
   return (
-    <div className="self-stretch flex justify-end items-center gap-4" ref={containerRef}>
+    <div className="self-stretch flex justify-between items-center gap-4" ref={containerRef}>
+      
+      {/* Quick Filters */}
+      <div className="flex items-center gap-6">
+        <button 
+          onClick={() => {
+            const nextVal = filters.job_type === 'Full time' ? '' : 'Full time';
+            setLocalFilters(prev => ({ ...prev, job_type: nextVal }));
+            onFilterChange('job_type', nextVal);
+          }}
+          className={`px-4 py-2 rounded-[24px] border text-sm font-medium transition-all font-['Poppins'] ${
+            filters.job_type === 'Full time'
+              ? 'border-indigo-100 bg-indigo-50 text-indigo-500'
+              : 'border-transparent text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          Full time
+        </button>
+
+        <button 
+          onClick={() => {
+            const nextVal = filters.work_mode === 'Remote' ? '' : 'Remote';
+            setLocalFilters(prev => ({ ...prev, work_mode: nextVal }));
+            onFilterChange('work_mode', nextVal);
+          }}
+          className={`px-4 py-2 rounded-[24px] border text-sm font-medium transition-all font-['Poppins'] ${
+            filters.work_mode === 'Remote'
+              ? 'border-indigo-100 bg-indigo-50 text-indigo-500'
+              : 'border-transparent text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          Remote
+        </button>
+
+        <button 
+          onClick={() => {
+            const nextVal = filters.experience === 'Fresher' ? '' : 'Fresher';
+            setLocalFilters(prev => ({ ...prev, experience: nextVal }));
+            onFilterChange('experience', nextVal);
+          }}
+          className={`px-4 py-2 rounded-[24px] border text-sm font-medium transition-all font-['Poppins'] ${
+            filters.experience === 'Fresher'
+              ? 'border-indigo-100 bg-indigo-50 text-indigo-500'
+              : 'border-transparent text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          Fresher
+        </button>
+      </div>
+
       <div className="relative">
         {/* Main Filters Button */}
         <button
           onClick={togglePopup}
-          className={`h-10 px-4 rounded-[24px] flex justify-center items-center gap-2 border transition-all active:scale-95 ${
-            hasActiveFilters
-              ? 'bg-indigo-50 border-indigo-500 text-indigo-500 font-semibold'
-              : 'bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-black font-normal'
-          }`}
+          className={`p-2 flex justify-center items-center rounded-full transition-all active:scale-95 hover:bg-gray-100`}
         >
-          <Icon icon="iconoir:filter-list" className="w-5 h-5 text-black" />
-          <span className="text-sm font-['Poppins'] leading-5">Filters</span>
+          <Icon icon="iconoir:filter-list" className="w-6 h-6 text-black" />
           {hasActiveFilters && (
-            <span className="flex h-2 w-2 relative">
+            <span className="absolute top-1 right-0 flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-indigo-500"></span>
             </span>
           )}
         </button>
@@ -281,8 +331,6 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                   </div>
                 )}
               </div>
-
-              {renderAccordionSection('Location', 'location', 'location_type', locationOptions)}
             </div>
           </div>
         )}

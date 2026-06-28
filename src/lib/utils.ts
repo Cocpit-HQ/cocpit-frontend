@@ -23,13 +23,13 @@ export function formatTimeAgo(dateString?: string, fallback?: string): string {
 
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
 
-  if (seconds < 60) return `${Math.max(1, seconds)} sec ago`;
+  if (seconds < 60) return `Just now`;
   
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return `Just now`;
 
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
 
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d ago`;

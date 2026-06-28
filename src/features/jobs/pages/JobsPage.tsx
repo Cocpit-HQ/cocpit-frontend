@@ -144,8 +144,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
     let result = jobs;
 
     const parseJobDate = (job: Job): number => {
-      // 1. If it's My applications tab, use applied_at (raw timestamp) or parse applied_date_display
-      if (activeTab === "My applications") {
+      // 1. If it's My Applications tab, use applied_at (raw timestamp) or parse applied_date_display
+      if (activeTab === "My Applications") {
         if (job.applied_at) {
           const t = new Date(job.applied_at).getTime();
           if (!isNaN(t)) return t;
@@ -347,12 +347,12 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
   // Tabs layout specification
   const tabs = [
     { id: "Explore", label: "Explore" },
-    { id: "My applications", label: "My applications" },
+    { id: "My Applications", label: "My Applications" },
     { id: "Offers", label: "Offers" },
     { id: "Saved", label: "Saved" },
   ];
 
-  if (activeTab === "My listings") {
+  if (activeTab === "My Listings") {
     return (
       <div className="w-full max-w-[998px] mx-auto min-h-screen bg-white pt-[20px] pb-6 px-4 md:px-0 flex flex-col gap-[20px]">
         <MyListingsDashboard onBack={() => handleTabChange("Explore")} />
@@ -398,15 +398,15 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
           })}
         </div>
 
-        {/* My listings tab link */}
+        {/* My Listings tab link */}
         <button
-          onClick={() => handleTabChange("My listings")}
-          className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border w-full md:w-auto ${activeTab === "My listings"
+          onClick={() => handleTabChange("My Listings")}
+          className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border w-full md:w-auto ${activeTab === "My Listings"
               ? "bg-[#EEF2FF] border-transparent text-[#6366F1]"
               : "bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-[#6366F1]/70 hover:text-[#6366F1]"
             }`}
         >
-          <span>My listings</span>
+          <span>My Listings</span>
           <Icon icon="lucide:chevron-right" className="w-4 h-4" />
         </button>
       </div>
@@ -439,8 +439,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
         </div>
       )}
 
-      {/* My applications Tab */}
-      <div className={`w-full ${activeTab === "My applications" ? "" : "hidden"}`}>
+      {/* My Applications Tab */}
+      <div className={`w-full ${activeTab === "My Applications" ? "" : "hidden"}`}>
         {jobs.length === 0 ? (
           <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
             <Icon icon="hugeicons:job-search" className="size-20 text-black flex-shrink-0" />
@@ -846,16 +846,6 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
       {/* Explore Tab */}
       <div className={`w-full ${activeTab === "Explore" ? "" : "hidden"}`}>
         <div className="w-full flex flex-col gap-[20px]">
-          {jobs.length === 0 ? (
-            <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
-              <Icon icon="hugeicons:job-search" className="size-20 text-black flex-shrink-0" />
-              <div className="flex flex-col justify-start items-center gap-2">
-                <div className="text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6">No jobs available yet</div>
-                <div className="w-80 text-center justify-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4">New jobs will appear here when they become available.</div>
-              </div>
-            </div>
-          ) : (
-            <>
               <h3 className="text-black text-lg font-semibold font-['Poppins'] leading-6">
                 All jobs
               </h3>
@@ -870,7 +860,6 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                   setFilterValue("salary_range", "");
                   setFilterValue("date_posted", "");
                   setFilterValue("industry", "");
-                  setFilterValue("location_type", "");
                 }}
               />
 
@@ -888,8 +877,6 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                   onSelect={(j) => router.push(`/jobs/${j.id}`)}
                 />
               </div>
-            </>
-          )}
         </div>
       </div>
 
@@ -942,3 +929,5 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
 };
 
 export default JobsPage;
+
+// Force recompile to clear Turbopack cache issue
