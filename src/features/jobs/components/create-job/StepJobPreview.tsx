@@ -89,7 +89,7 @@ export const StepJobPreview: React.FC<StepJobPreviewProps> = ({
         <div className="self-stretch flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 mt-2">
           <div className="flex flex-wrap justify-start items-center gap-2">
             <div className="flex justify-start items-center gap-2">
-              <Icon icon="lucide:briefcase" className="w-5 h-5 text-black flex-shrink-0" />
+              <Icon icon="hugeicons:job-search" className="w-5 h-5 text-black flex-shrink-0" />
               <div className="text-black text-sm font-normal font-['Poppins'] leading-5">{formatExperienceBadge(experience)}</div>
             </div>
             <div className="size-1.5 bg-black rounded-full flex-shrink-0" />

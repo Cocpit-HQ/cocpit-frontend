@@ -16,9 +16,41 @@ export const JobDetailHeader: React.FC<JobDetailHeaderProps> = ({ job }) => {
         </div>
       );
     }
+    if (job.company_logo === 'coreloom') {
+      return (
+        <div className="w-16 h-16 bg-[#E0E7FF] rounded-3xl flex justify-center items-center overflow-hidden flex-shrink-0 shadow-sm border border-indigo-100">
+          <Icon icon="solar:globus-linear" className="w-8 h-8 text-[#6366F1]" />
+        </div>
+      );
+    }
+    if (job.company_logo === 'prismforge') {
+      return (
+        <div className="w-16 h-16 bg-[#FFE4E6] rounded-3xl flex justify-center items-center overflow-hidden flex-shrink-0 shadow-sm border border-rose-100">
+          <Icon icon="solar:fire-linear" className="w-8 h-8 text-rose-500" />
+        </div>
+      );
+    }
+    if (job.company_logo === 'mindstack') {
+      return (
+        <div className="w-16 h-16 bg-[#ECFDF5] rounded-3xl flex justify-center items-center overflow-hidden flex-shrink-0 shadow-sm border border-emerald-100">
+          <Icon icon="solar:atom-linear" className="w-8 h-8 text-emerald-500" />
+        </div>
+      );
+    }
+    if (job.company_logo && !['coreloom', 'prismforge', 'mindstack', 'sphere'].includes(job.company_logo)) {
+      return (
+        <div className="w-16 h-16 bg-slate-50 rounded-3xl flex justify-center items-center overflow-hidden flex-shrink-0 shadow-sm border border-slate-100">
+          <img
+            src={job.company_logo}
+            alt={job.company}
+            className="w-10 h-10 object-contain rounded-full"
+          />
+        </div>
+      );
+    }
     return (
       <div className="w-16 h-16 bg-indigo-50 rounded-3xl flex justify-center items-center flex-shrink-0 shadow-sm border border-indigo-50">
-        <Icon icon="lucide:briefcase" className="w-7 h-7 text-indigo-500" />
+        <Icon icon="hugeicons:job-search" className="w-7 h-7 text-indigo-500" />
       </div>
     );
   };

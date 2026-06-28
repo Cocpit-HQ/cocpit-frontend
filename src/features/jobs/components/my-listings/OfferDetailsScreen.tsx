@@ -22,6 +22,7 @@ interface OfferDetailsScreenProps {
     salary_max?: number;
     salary_currency?: string;
     salary_period?: string;
+    company_logo?: string;
   };
   onBack: () => void;
   onViewListingDetails: () => void;
@@ -168,14 +169,35 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
           </div>
 
           {/* Company Avatar Frame 2608516 */}
-          <div
-            className="w-[56px] h-[40px] rounded-[24px] flex items-center justify-center flex-shrink-0"
-            style={{
-              backgroundImage: 'url(/assets/company-placeholder.png)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          />
+          {offerGroup.company_logo === 'sphere' ? (
+            <div className="w-[56px] h-[40px] rounded-[24px] bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200 flex-shrink-0">
+              <div className="w-[20px] h-[20px] rounded-full bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm" />
+            </div>
+          ) : offerGroup.company_logo === 'coreloom' ? (
+            <div className="w-[56px] h-[40px] rounded-[24px] bg-[#E0E7FF] flex items-center justify-center overflow-hidden border border-indigo-100 flex-shrink-0">
+              <Icon icon="solar:globus-linear" className="w-[24px] h-[24px] text-[#6366F1]" />
+            </div>
+          ) : offerGroup.company_logo === 'prismforge' ? (
+            <div className="w-[56px] h-[40px] rounded-[24px] bg-[#FFE4E6] flex items-center justify-center overflow-hidden border border-rose-100 flex-shrink-0">
+              <Icon icon="solar:fire-linear" className="w-[24px] h-[24px] text-rose-500" />
+            </div>
+          ) : offerGroup.company_logo === 'mindstack' ? (
+            <div className="w-[56px] h-[40px] rounded-[24px] bg-[#ECFDF5] flex items-center justify-center overflow-hidden border border-emerald-100 flex-shrink-0">
+              <Icon icon="solar:atom-linear" className="w-[24px] h-[24px] text-emerald-500" />
+            </div>
+          ) : offerGroup.company_logo && !['coreloom', 'prismforge', 'mindstack', 'sphere'].includes(offerGroup.company_logo) ? (
+            <div className="w-[56px] h-[40px] rounded-[24px] bg-slate-50 flex items-center justify-center overflow-hidden border border-slate-100 flex-shrink-0">
+              <img
+                src={offerGroup.company_logo}
+                alt={offerGroup.company}
+                className="w-[24px] h-[24px] object-contain rounded-full"
+              />
+            </div>
+          ) : (
+            <div className="w-[56px] h-[40px] rounded-[24px] bg-indigo-50 flex items-center justify-center border border-indigo-100 flex-shrink-0">
+              <Icon icon="hugeicons:job-search" className="w-[24px] h-[24px] text-indigo-500" />
+            </div>
+          )}
         </div>
 
         {/* Row 2: Specifications (Experience, location, bullet point, salary) */}
@@ -183,7 +205,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
           <div className="flex flex-row items-center p-0">
             {/* Experience Frame 2608943 */}
             <div className="flex flex-row items-center p-0 gap-[8px] h-[20px]">
-              <Icon icon="lucide:briefcase" className="w-[20px] h-[20px] text-black" />
+              <Icon icon="hugeicons:job-search" className="w-[20px] h-[20px] text-black" />
               <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black">
                 {offerGroup.experience_level || '0-2Yrs'}
               </span>

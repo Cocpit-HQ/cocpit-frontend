@@ -63,7 +63,16 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
         <div className="flex-1" />
 
         {/* RIGHT — Action buttons (Frame 2609059) */}
-        {offer.status === 'pending' ? (
+        {offer.is_available === false ? (
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px]"
+          >
+            <span className="font-['Poppins'] text-sm font-semibold uppercase tracking-wider text-red-500">
+              No longer available
+            </span>
+          </div>
+        ) : offer.status === 'pending' ? (
           <div 
             onClick={(e) => e.stopPropagation()}
             className="flex flex-row items-center p-0 gap-[8px] w-[288px] h-[40px] mr-[16px] my-[25px]"
@@ -127,7 +136,23 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
           {/* Recruiter info row (Frame 2609033) */}
           <div className="flex flex-row justify-start items-center p-0 gap-[8px] w-full h-[40px]">
             {/* Avatar */}
-            {offer.recruiter.avatar ? (
+            {offer.recruiter.avatar === 'sphere' ? (
+              <div className="w-10 h-10 bg-slate-100 rounded-full flex justify-center items-center overflow-hidden flex-shrink-0 border border-slate-200">
+                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm" />
+              </div>
+            ) : offer.recruiter.avatar === 'coreloom' ? (
+              <div className="w-10 h-10 bg-[#E0E7FF] rounded-full flex justify-center items-center overflow-hidden flex-shrink-0 border border-indigo-100">
+                <Icon icon="solar:globus-linear" className="w-5 h-5 text-[#6366F1]" />
+              </div>
+            ) : offer.recruiter.avatar === 'prismforge' ? (
+              <div className="w-10 h-10 bg-[#FFE4E6] rounded-full flex justify-center items-center overflow-hidden flex-shrink-0 border border-rose-100">
+                <Icon icon="solar:fire-linear" className="w-5 h-5 text-rose-500" />
+              </div>
+            ) : offer.recruiter.avatar === 'mindstack' ? (
+              <div className="w-10 h-10 bg-[#ECFDF5] rounded-full flex justify-center items-center overflow-hidden flex-shrink-0 border border-emerald-100">
+                <Icon icon="solar:atom-linear" className="w-5 h-5 text-emerald-500" />
+              </div>
+            ) : offer.recruiter.avatar && !['coreloom', 'prismforge', 'mindstack', 'sphere'].includes(offer.recruiter.avatar) ? (
               <img
                 src={offer.recruiter.avatar}
                 alt={offer.recruiter.name}

@@ -159,7 +159,19 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 <div className="w-8 h-8 bg-slate-100 rounded-full flex justify-center items-center overflow-hidden flex-shrink-0">
                   <div className="w-4 h-4 rounded-full bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm" />
                 </div>
-              ) : (job.company_logo || job.recruiter_avatar) && !avatarError ? (
+              ) : job.company_logo === 'coreloom' ? (
+                <div className="w-8 h-8 bg-[#E0E7FF] rounded-full flex justify-center items-center overflow-hidden flex-shrink-0 border border-indigo-100">
+                  <Icon icon="solar:globus-linear" className="w-4 h-4 text-[#6366F1]" />
+                </div>
+              ) : job.company_logo === 'prismforge' ? (
+                <div className="w-8 h-8 bg-[#FFE4E6] rounded-full flex justify-center items-center overflow-hidden flex-shrink-0 border border-rose-100">
+                  <Icon icon="solar:fire-linear" className="w-4 h-4 text-rose-500" />
+                </div>
+              ) : job.company_logo === 'mindstack' ? (
+                <div className="w-8 h-8 bg-[#ECFDF5] rounded-full flex justify-center items-center overflow-hidden flex-shrink-0 border border-emerald-100">
+                  <Icon icon="solar:atom-linear" className="w-4 h-4 text-emerald-500" />
+                </div>
+              ) : ((job.company_logo && !['coreloom', 'prismforge', 'mindstack', 'sphere'].includes(job.company_logo)) || job.recruiter_avatar) && !avatarError ? (
                 <img
                   className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                   src={job.company_logo || job.recruiter_avatar || "/assets/profilephoto.png"}

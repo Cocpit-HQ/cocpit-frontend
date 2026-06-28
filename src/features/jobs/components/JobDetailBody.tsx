@@ -96,7 +96,7 @@ export const JobDetailBody: React.FC<JobDetailBodyProps> = ({ job }) => {
           {/* Experience level */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-indigo-50/80 flex items-center justify-center text-indigo-500 flex-shrink-0">
-              <Icon icon="lucide:briefcase" className="w-5 h-5" />
+              <Icon icon="hugeicons:job-search" className="w-5 h-5" />
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] text-gray-400 font-semibold uppercase font-['Poppins']">

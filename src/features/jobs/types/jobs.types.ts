@@ -117,5 +117,7 @@ export interface JobOffer {
     headline: string;
     avatar?: string;
   };
+  is_closed?: boolean;
+  is_available?: boolean;
 }
 

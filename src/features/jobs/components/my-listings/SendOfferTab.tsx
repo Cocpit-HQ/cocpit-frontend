@@ -13,6 +13,7 @@ export interface SentOfferGroup {
   sentCount: number;
   acceptedCount: number;
   pendingCount: number;
+  company_logo?: string;
 }
 
 interface SendOfferTabProps {
@@ -56,6 +57,7 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({ listings, onSelectLi
         sentCount: Number(item.total_offers || 0),
         acceptedCount: Number(item.accepted_count || 0),
         pendingCount: Number(item.pending_count || 0),
+        company_logo: item.company_logo,
         // Pass original job details for details page
         job_type: item.job_type || 'Full time',
         work_mode: item.work_mode || 'Remote',
