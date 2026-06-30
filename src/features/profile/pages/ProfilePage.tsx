@@ -305,20 +305,33 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
 
       {/* Main Image / Shared / Poll / Article / Text block */}
       {localPost.shared_post ? (
-        <div className="w-full h-[300px] mb-4 bg-muted relative overflow-hidden">
-          <div className="w-full h-full p-3 bg-card overflow-hidden flex flex-col">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100">
+        <div className="w-full h-[300px] mb-4 relative overflow-hidden">
+          <div className="w-full h-full p-3 bg-[#F8FAFF] dark:bg-[#131C2E]/30 border border-[#E3E9FF] dark:border-[#232F45] rounded-[16px] flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
                 <img src={localPost.shared_post.authorAvatar || "/assets/pngegg.png"} className="w-full h-full object-cover" />
               </div>
-              <span className="text-[10px] font-medium truncate">{localPost.shared_post.author}</span>
+              <span className="text-[10px] font-medium truncate font-[family-name:var(--font-poppins)] text-foreground">{localPost.shared_post.author}</span>
             </div>
-            <p className="text-[10px] line-clamp-2 mb-2 flex-grow">{localPost.shared_post.content}</p>
-            {(localPost.shared_post.images?.length || localPost.shared_post.imageSrc) && (
+            <p className="text-[10px] leading-[14px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-2">{localPost.shared_post.content}</p>
+            {localPost.shared_post.poll ? (
+              <div className="mt-1 space-y-1.5 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-grow">
+                {localPost.shared_post.poll.options?.slice(0, 3).map((option, index) => (
+                  <div
+                    key={option.option_id || index}
+                    className="rounded-[10px] border border-[#E8ECFF] dark:border-[#232F45] bg-white dark:bg-[#1C2840] px-2.5 py-1.5 flex items-center justify-between"
+                  >
+                    <span className="text-[10px] text-foreground font-[family-name:var(--font-poppins)] truncate">
+                      {option.option_text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (localPost.shared_post.images?.length || localPost.shared_post.imageSrc) ? (
               <div className="h-[180px] w-full rounded-lg overflow-hidden">
                 <img src={localPost.shared_post.imageSrc || localPost.shared_post.images?.[0] || ''} className="w-full h-full object-cover" />
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       ) : isPollPost ? (

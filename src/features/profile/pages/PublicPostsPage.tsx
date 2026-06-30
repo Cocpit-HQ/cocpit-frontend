@@ -296,7 +296,32 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
             <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-foreground break-words line-clamp-3">
               {post.shared_post.content}
             </p>
-            {(post.shared_post.images && post.shared_post.images.length > 0 || post.shared_post.imageSrc) && (
+            {post.shared_post.poll ? (
+              <div className="mb-4 mt-3 rounded-[20px] border border-[#E3E9FF] bg-[#F8FAFF] p-4">
+                <div className="flex items-center justify-between gap-2 mb-4">
+                  <span className="inline-flex items-center rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6366F1]">
+                    Poll
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-[family-name:var(--font-poppins)]">
+                    {post.shared_post.poll.total_votes || 0} votes
+                  </span>
+                </div>
+                <div className="space-y-2.5">
+                  {post.shared_post.poll.options?.slice(0, 4).map((option, index) => (
+                    <div
+                      key={option.option_id || index}
+                      className="rounded-[14px] border border-[#E8ECFF] bg-white px-4 py-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[14px] leading-[20px] text-foreground font-[family-name:var(--font-poppins)]">
+                          {option.option_text}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (post.shared_post.images && post.shared_post.images.length > 0 || post.shared_post.imageSrc) ? (
               <div className="mt-3 rounded-lg overflow-hidden h-40 relative bg-slate-50">
                 {post.shared_post.images && post.shared_post.images.length > 1 ? (
                   <PostCarousel images={post.shared_post.images} />
@@ -304,7 +329,7 @@ const PublicPostCard = ({ post, onLike, onSave, onShare, onTogglePrivacy, onDele
                   <Image src={post.shared_post.imageSrc || post.shared_post.images?.[0] || ''} alt="Shared content" fill className="object-cover" />
                 )}
               </div>
-            )}
+            ) : null}
 
             <div className="flex items-center gap-2 mt-3">
               <span className="font-[family-name:var(--font-poppins)] font-normal text-[10px] text-[#6B7280]">{(post.shared_post as any).location || 'Kolhapur'}</span>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Icon } from '@iconify/react';
 import { useRouter } from 'next/navigation';
+import { Icon } from '@iconify/react';
 import WithdrawOfferModal from './WithdrawOfferModal';
 import { toast } from 'sonner';
 import api from '@/lib/axios';
@@ -170,14 +170,12 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
           </div>
 
           {/* Company Avatar Frame 2608516 */}
-          <div
-            className="w-[56px] h-[40px] rounded-[24px] flex items-center justify-center flex-shrink-0"
-            style={{
-              backgroundImage: 'url(/assets/company-placeholder.png)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          />
+          <div className="w-[56px] h-[40px] rounded-[24px] bg-indigo-50 flex items-center justify-center border border-indigo-100 flex-shrink-0">
+            <Icon
+              icon="hugeicons:job-search"
+              className="w-[20px] h-[20px] text-indigo-500"
+            />
+          </div>
         </div>
 
         {/* Row 2: Specifications (Experience, location, bullet point, salary) */}
@@ -185,7 +183,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
           <div className="flex flex-row items-center p-0">
             {/* Experience Frame 2608943 */}
             <div className="flex flex-row items-center p-0 gap-[8px] h-[20px]">
-              <Icon icon="lucide:briefcase" className="w-[20px] h-[20px] text-black" />
+              <Icon icon="hugeicons:job-search" className="w-[20px] h-[20px] text-black" />
               <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black">
                 {offerGroup.experience_level || '0-2Yrs'}
               </span>
@@ -262,7 +260,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
 
             {/* Note Content */}
             <div className="w-[966px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280]">
-              "{noteCandidate?.note}"
+              &ldquo;{noteCandidate?.note}&rdquo;
             </div>
           </div>
         </div>
@@ -327,8 +325,8 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                 {/* Button Frame 2608617 */}
                 {cand.status === 'chat' && (
                   <button
+                    onClick={() => router.push('/messaging')}
                     type="button"
-                    onClick={() => router.push(`/messaging?userId=${cand.userId}`)}
                     className="box-sizing: border-box w-[120px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:opacity-90 transition-all active:scale-95 cursor-pointer"
                   >
                     <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white">

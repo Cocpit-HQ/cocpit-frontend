@@ -83,7 +83,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
     );
   }
 
-  let currentStatus = job.application_status || 'Applied';
+  const currentStatus = job.application_status || 'Applied';
   const isDeclined = currentStatus === 'Declined' || currentStatus === 'Rejected';
 
   const steps = isDeclined
@@ -182,7 +182,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 />
               ) : (
                 <div className="w-8 h-8 bg-indigo-50 rounded-full flex justify-center items-center flex-shrink-0">
-                  <Icon icon="lucide:briefcase" className="w-4 h-4 text-indigo-500" />
+                  <Icon icon="hugeicons:job-search" className="w-4 h-4 text-indigo-500" />
                 </div>
               )}
               <div className="flex flex-row items-center gap-1">
@@ -197,7 +197,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
             {/* Experience Column */}
             <div className="flex-grow flex-shrink-0 flex flex-col justify-center items-start p-0 gap-2 min-w-[120px] h-auto">
               <div className="flex flex-row items-center p-0 gap-2 h-5">
-                <Icon icon="lucide:briefcase" className="w-5 h-5 text-gray-500" />
+                <Icon icon="hugeicons:job-search" className="w-5 h-5 text-gray-500" />
                 <div className="justify-start text-[#6B7280] text-[12px] font-normal font-['Poppins'] uppercase leading-[16px]">Experience</div>
               </div>
               <div className="justify-start text-[#000000] text-[16px] font-normal font-['Poppins'] leading-[24px]">{job.experience || '0-2 Yrs'}</div>
@@ -463,7 +463,13 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
             <div className="flex-1 sm:flex-none flex justify-end items-center gap-3">
               {job.is_offer ? (
                 /* Offer state */
-                job.application_status === 'Accepted' ? (
+                job.is_closed ? (
+                  <div className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-auto h-10 rounded-[24px]">
+                    <span className="font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#EF4444]">
+                      Job no longer available
+                    </span>
+                  </div>
+                ) : job.application_status === 'Accepted' ? (
                   /* Accepted -> Chat */
                   <button
                     onClick={() => toast.success('Starting chat with recruiter...')}

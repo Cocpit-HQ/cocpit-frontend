@@ -110,7 +110,9 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
       posted_at: getRelativeTime(job.created_at),
       description: job.description,
-      experience: formatExperience(job.experience_min, job.experience_max, job.experience_level),
+      experience: (job.experience_min != null && job.experience_max != null) 
+        ? `${job.experience_min}-${job.experience_max}Yrs` 
+        : (job.experience_label || job.experience_level || '0-2Yrs'),
       is_saved: job.isSaved || false,
       is_applied: job.hasApplied || false,
       is_offer: false,
@@ -156,7 +158,9 @@ export const getRecommendations = async (): Promise<Job[]> => {
       salary_currency: job.salary_currency,
       posted_at: getRelativeTime(job.created_at),
       description: job.description,
-      experience: formatExperience(job.experience_min, job.experience_max, job.experience_level),
+      experience: (job.experience_min != null && job.experience_max != null) 
+        ? `${job.experience_min}-${job.experience_max}Yrs` 
+        : (job.experience_label || job.experience_level || '0-2Yrs'),
       is_saved: job.isSaved || false,
       is_applied: job.hasApplied || false,
       is_offer: false,
@@ -197,7 +201,9 @@ export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
       salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
       posted_at: getRelativeTime(job.created_at),
       description: job.description,
-      experience: formatExperience(job.experience_min, job.experience_max, job.experience_level),
+      experience: (job.experience_min != null && job.experience_max != null) 
+        ? `${job.experience_min}-${job.experience_max}Yrs` 
+        : (job.experience_label || job.experience_level || '0-2Yrs'),
       is_saved: true,
       is_applied: job.hasApplied || false,
       is_offer: false,
@@ -290,7 +296,9 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       company_logo: job.company_logo,
       location: job.location,
       job_type: job.job_type || 'Full time',
-      experience: formatExperience(job.experience_min, job.experience_max, job.experience_level),
+      experience: (job.experience_min != null && job.experience_max != null)
+        ? `${job.experience_min}-${job.experience_max} Yrs`
+        : (job.experience_label || job.experience_level || '0-2 Yrs'),
       work_mode: job.work_mode || 'Hybrid',
       salary_min: job.salary_min,
       salary_max: job.salary_max,
@@ -390,7 +398,9 @@ export const getMyApplications = async (): Promise<Job[]> => {
       applied_at: job.applied_at,
       created_at: job.created_at,
       description: job.description,
-      experience: formatExperience(job.experience_min, job.experience_max, job.experience_level),
+      experience: (job.experience_min != null && job.experience_max != null) 
+        ? `${job.experience_min}-${job.experience_max}Yrs` 
+        : (job.experience_label || job.experience_level || '0-2Yrs'),
       is_saved: job.isSaved || job.is_saved || false,
       is_applied: true,
       is_offer: false,
@@ -495,7 +505,7 @@ export const getMyOffers = async (): Promise<Job[]> => {
         company_logo: job.company_logo,
         location: job.location,
         job_type: job.job_type || 'Full time',
-        experience: formatExperience(job.experience_min, job.experience_max, job.experience_level),
+        experience: job.experience_label || job.experience_level || '0-2 Yrs',
         work_mode: job.work_mode || 'Hybrid',
         salary_min: job.salary_min,
         salary_max: job.salary_max,

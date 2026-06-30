@@ -18,7 +18,7 @@ export const JobDetailHeader: React.FC<JobDetailHeaderProps> = ({ job }) => {
     }
     return (
       <div className="w-16 h-16 bg-indigo-50 rounded-3xl flex justify-center items-center flex-shrink-0 shadow-sm border border-indigo-50">
-        <Icon icon="lucide:briefcase" className="w-7 h-7 text-indigo-500" />
+        <Icon icon="hugeicons:job-search" className="w-7 h-7 text-indigo-500" />
       </div>
     );
   };

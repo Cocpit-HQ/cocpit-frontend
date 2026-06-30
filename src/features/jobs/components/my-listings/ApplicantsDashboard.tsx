@@ -217,21 +217,26 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
 
   const handleTriggerAI = async () => {
     if (!selectedCandId) return;
     setIsAnalyzing(true);
+    setAnalyzeError(null);
     try {
-      const updatedAnalysis = await triggerApplicationAnalysis(selectedCandId);
-      setCandidateAnalysis(updatedAnalysis);
+      await triggerApplicationAnalysis(selectedCandId);
+      // Re-fetch normalized analysis to guarantee consistent shape
+      const freshAnalysis = await getApplicationAnalysis(selectedCandId);
+      setCandidateAnalysis(freshAnalysis);
       // Update candidate's score in left sidebar list
-      setCandidates(prev => prev.map(c => 
-        c.applicationId === selectedCandId 
-          ? { ...c, matchScore: updatedAnalysis.matchScore } 
+      setCandidates(prev => prev.map(c =>
+        c.applicationId === selectedCandId
+          ? { ...c, matchScore: freshAnalysis.matchScore }
           : c
       ));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to trigger AI analysis:', error);
+      setAnalyzeError(error?.response?.data?.message || 'Analysis failed. Please try again.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -308,6 +313,17 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
     fetchDetail();
     return () => { active = false; };
   }, [selectedCandId]);
+
+  // Sync analysis match score back to list
+  useEffect(() => {
+    if (candidateAnalysis && selectedCandId) {
+      setCandidates(prev => prev.map(c =>
+        c.applicationId === selectedCandId
+          ? { ...c, matchScore: candidateAnalysis.matchScore }
+          : c
+      ));
+    }
+  }, [candidateAnalysis, selectedCandId]);
 
   // Stats Counters
   const appCount = candidates.length;
@@ -475,10 +491,24 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         </div>
       </div>
 
-      {/* Main Frame: Applicants list and Candidate details (Frame 2608633) */}
-      <div 
-        className="flex flex-row items-start p-0 gap-[16px] w-[998px] h-[901px] flex-none order-3 self-stretch grow-0"
-      >
+      {isLoadingList ? (
+        <div className="w-[998px] h-[300px] flex items-center justify-center bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-3 self-stretch grow-0">
+          <Icon icon="svg-spinners:180-ring" className="w-8 h-8 text-[#6366F1]" />
+        </div>
+      ) : candidates.length === 0 ? (
+        <div className="w-[998px] h-[300px] bg-white border border-[#EEF2FF] rounded-[24px] flex flex-col items-center justify-center gap-4 text-center flex-none order-3 self-stretch grow-0">
+          <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500">
+            <Icon icon="hugeicons:job-search" className="w-6 h-6" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-black text-base font-semibold font-['Poppins']">No applicants yet</span>
+            <span className="text-gray-400 text-xs font-['Poppins'] font-normal">Candidates who apply to this listing will appear here.</span>
+          </div>
+        </div>
+      ) : (
+        <div 
+          className="flex flex-row items-start p-0 gap-[16px] w-[998px] h-[901px] flex-none order-3 self-stretch grow-0"
+        >
         {/* Left Column: Candidates list (Frame 2609067) */}
         <div
           className="box-border flex flex-col items-start p-[12px] gap-[16px] w-[294px] h-[574px] border border-[#EEF2FF] rounded-[24px] flex-none order-0 grow-0"
@@ -838,7 +868,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
               className="flex flex-col items-start p-[16px] gap-[16px] w-[688px] bg-[#F9FAFF] rounded-[24px] flex-none order-4 self-stretch grow-0 box-border"
             >
               {/* Title frame */}
-              <div className="flex flex-row items-center p-0 gap-[8px] w-[656px] h-[20px] flex-none order-0 self-stretch grow-0">
+              <div className="flex flex-row items-center p-0 gap-[8px] w-[656px] h-auto flex-none order-0 self-stretch grow-0 flex-wrap">
                 {/* AI Icon */}
                 <img src="/assets/AI 2.svg" alt="AI Icon" className="w-[20px] h-[20px] flex-none" />
 
@@ -850,9 +880,16 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     AI Executive Summary
                   </span>
                 </div>
+
+                {/* Fallback Badge */}
+                {candidateAnalysis.analysisType === 'BACKEND' && (
+                  <span className="text-[10px] text-amber-500 font-medium px-2 py-0.5 bg-amber-50 rounded-full border border-amber-200 ml-2 font-['Poppins']">
+                    System Match Fallback
+                  </span>
+                )}
               </div>
 
-              {candidateAnalysis.analysisType === 'GEMINI' && candidateAnalysis.summary ? (
+              {candidateAnalysis.summary?.strengths ? (
                 <>
                   {/* Details container */}
                   <div className="flex flex-row items-start p-0 pb-[8px] gap-[16px] w-[656px] h-auto flex-none order-1 self-stretch grow-0 flex-wrap md:flex-nowrap">
@@ -932,6 +969,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                       <span>Generate AI Summary ✨</span>
                     )}
                   </button>
+                  {analyzeError && (
+                    <p className="text-[11px] text-red-400 text-center font-['Poppins'] mt-[-8px]">{analyzeError}</p>
+                  )}
                 </div>
               )}
             </div>
@@ -1113,6 +1153,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           )}
         </div>
       </div>
+      )}
 
       {/* Add a note modal */}
       {isNoteModalOpen && (

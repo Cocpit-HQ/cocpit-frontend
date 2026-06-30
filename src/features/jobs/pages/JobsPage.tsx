@@ -450,7 +450,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
           </div>
         ) : jobs.length === 0 ? (
           <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
-            <Icon icon="lucide:briefcase" className="size-20 text-black flex-shrink-0" />
+            <Icon icon="hugeicons:job-search" className="size-20 text-black flex-shrink-0" />
             <div className="flex flex-col justify-start items-center gap-2">
               <div className="text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6">
                 No jobs applications yet
@@ -631,7 +631,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                     const renderCompanyLogo = () => {
                       if (job.company_logo === "coreloom") {
                         return (
-                          <div className="w-[56px] h-[40px] rounded-[24px] bg-[#E0E7FF] flex items-center justify-center overflow-hidden border border-indigo-100 pt-[6px] pb-[6px] pr-[8px]">
+                          <div className="w-[56px] h-[40px] rounded-[24px] bg-[#E0E7FF] flex items-center justify-center overflow-hidden border border-indigo-100 flex-shrink-0">
                             <Icon
                               icon="solar:globus-linear"
                               className="w-[24px] h-[24px] text-[#6366F1]"
@@ -641,7 +641,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                       }
                       if (job.company_logo === "prismforge") {
                         return (
-                          <div className="w-[56px] h-[40px] rounded-[24px] bg-[#FFE4E6] flex items-center justify-center overflow-hidden border border-rose-100 pt-[6px] pb-[6px] pr-[8px]">
+                          <div className="w-[56px] h-[40px] rounded-[24px] bg-[#FFE4E6] flex items-center justify-center overflow-hidden border border-rose-100 flex-shrink-0">
                             <Icon
                               icon="solar:fire-linear"
                               className="w-[24px] h-[24px] text-rose-500"
@@ -651,7 +651,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                       }
                       if (job.company_logo === "mindstack") {
                         return (
-                          <div className="w-[56px] h-[40px] rounded-[24px] bg-[#ECFDF5] flex items-center justify-center overflow-hidden border border-emerald-100 pt-[6px] pb-[6px] pr-[8px]">
+                          <div className="w-[56px] h-[40px] rounded-[24px] bg-[#ECFDF5] flex items-center justify-center overflow-hidden border border-emerald-100 flex-shrink-0">
                             <Icon
                               icon="solar:atom-linear"
                               className="w-[24px] h-[24px] text-emerald-500"
@@ -661,15 +661,15 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                       }
                       if (job.company_logo === "sphere") {
                         return (
-                          <div className="w-[56px] h-[40px] rounded-[24px] bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200 pt-[6px] pb-[6px] pr-[8px]">
+                          <div className="w-[56px] h-[40px] rounded-[24px] bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200 flex-shrink-0">
                             <div className="w-[20px] h-[20px] rounded-full bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm" />
                           </div>
                         );
                       }
                       return (
-                        <div className="w-[56px] h-[40px] rounded-[24px] bg-indigo-50 flex items-center justify-center border border-indigo-100 flex-shrink-0 pt-[6px] pb-[6px] pr-[8px]">
+                        <div className="w-[56px] h-[40px] rounded-[24px] bg-indigo-50 flex items-center justify-center border border-indigo-100 flex-shrink-0">
                           <Icon
-                            icon="lucide:briefcase"
+                            icon="hugeicons:job-search"
                             className="w-[20px] h-[20px] text-indigo-500"
                           />
                         </div>
@@ -835,7 +835,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
               </div>
             ) : jobs.length === 0 ? (
               <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
-                <Icon icon="lucide:briefcase" className="size-20 text-black flex-shrink-0" />
+                <Icon icon="hugeicons:job-search" className="size-20 text-black flex-shrink-0" />
                 <div className="flex flex-col justify-start items-center gap-2">
                   <div className="text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6">
                     No saved jobs yet
