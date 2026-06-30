@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import { JobListing } from '../../types/jobs.types';
+import { useSession } from 'next-auth/react';
 import api from '@/lib/axios';
 
 export interface SelectableCandidate {
@@ -30,6 +31,8 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
   const [candidatesList, setCandidatesList] = useState<SelectableCandidate[]>([]);
   const [allFetchedCandidates, setAllFetchedCandidates] = useState<Record<string, SelectableCandidate>>({});
   const [isLoadingCandidates, setIsLoadingCandidates] = useState(false);
+  const { data: session } = useSession();
+  const currentUserId = (session?.user as any)?.user_id || (session?.user as any)?.id;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -46,7 +49,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
           id: item.id || item.user_id,
           name: item.full_name || 'Anonymous User',
           avatar: item.avatar_url || ''
-        }));
+        })).filter((c: SelectableCandidate) => c.id !== currentUserId);
         setCandidatesList(mapped);
         setAllFetchedCandidates(prev => {
           const updated = { ...prev };
@@ -137,7 +140,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   placeholder="Search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:ring-0 placeholder-gray-400 text-sm"
+                  className="flex-1 bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:ring-0 focus:outline-none placeholder-gray-400 text-sm"
                 />
                 <div className="w-6 h-6 relative overflow-hidden flex items-center justify-center text-gray-450 pointer-events-none">
                   <Icon icon="lucide:search" className="w-4 h-4 text-gray-400" />
@@ -233,7 +236,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   placeholder="Search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:ring-0 placeholder-gray-400 text-sm"
+                  className="flex-1 bg-transparent border-0 p-0 text-black text-base font-normal font-['Poppins'] leading-6 focus:ring-0 focus:outline-none placeholder-gray-400 text-sm"
                 />
                 <div className="w-6 h-6 relative overflow-hidden flex items-center justify-center text-gray-400 pointer-events-none">
                   <Icon icon="lucide:search" className="w-4 h-4 text-gray-400" />

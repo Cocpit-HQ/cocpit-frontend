@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { JobOffer } from '../types/jobs.types';
 import { CocpitConfirmBox } from '@/shared/commonComponents/CocpitConfirmBox';
 import { Icon } from '@iconify/react';
+import { toast } from 'sonner';
 
 interface OfferCardProps {
   offer: JobOffer;
@@ -81,15 +82,31 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
               Accept
             </button>
           </div>
+        ) : offer.status === 'accepted' ? (
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px]"
+          >
+            <button
+              onClick={() => {
+                if (offer.recruiter.id) {
+                  router.push(`/messaging?userId=${offer.recruiter.id}`);
+                } else {
+                  toast.error('Recruiter information is unavailable.');
+                }
+              }}
+              className="box-border flex justify-center items-center px-[16px] py-[8px] gap-[10px] w-[140px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] font-['Poppins'] font-normal text-[14px] text-white hover:bg-[#6366F1]/90 transition-all duration-200 active:scale-95 cursor-pointer"
+            >
+              Chat
+            </button>
+          </div>
         ) : (
           <div 
             onClick={(e) => e.stopPropagation()}
             className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px]"
           >
-            <span className={`font-['Poppins'] text-sm font-semibold uppercase tracking-wider ${
-              offer.status === 'accepted' ? 'text-green-500' : 'text-red-500'
-            }`}>
-              {offer.status === 'accepted' ? 'Accepted' : 'Declined'}
+            <span className="font-['Poppins'] text-sm font-semibold uppercase tracking-wider text-red-500">
+              Declined
             </span>
           </div>
         )}

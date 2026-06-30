@@ -113,6 +113,7 @@ export interface JobOffer {
   status: 'pending' | 'accepted' | 'declined';
   note?: string;
   recruiter: {
+    id?: string;
     name: string;
     headline: string;
     avatar?: string;

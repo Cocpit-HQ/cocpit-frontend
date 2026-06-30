@@ -7,6 +7,16 @@ import { formatSalaryRange } from '../utils/currency.utils';
 // Service layer holds zero client-side UI states.
 // All states are managed reactively inside useJobStore.
 
+export const formatExperience = (min?: number, max?: number, level?: string, label?: string): string => {
+  if (label) return label;
+  if (min != null) {
+    if (min >= 5 && (max == null || max >= 10 || max === 0)) return '5+ Yrs';
+    if (max != null) return `${min}-${max} Yrs`;
+    return `${min}+ Yrs`;
+  }
+  return level || '0-2 Yrs';
+};
+
 
 export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppliedAndOffers?: boolean) => {
   try {
@@ -100,9 +110,7 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
       posted_at: getRelativeTime(job.created_at),
       description: job.description,
-      experience: (job.experience_min != null && job.experience_max != null) 
-        ? `${job.experience_min}-${job.experience_max}Yrs` 
-        : (job.experience_level || '0-2Yrs'),
+      experience: formatExperience(job.experience_min, job.experience_max, job.experience_level),
       is_saved: job.isSaved || false,
       is_applied: job.hasApplied || false,
       is_offer: false,
@@ -148,9 +156,7 @@ export const getRecommendations = async (): Promise<Job[]> => {
       salary_currency: job.salary_currency,
       posted_at: getRelativeTime(job.created_at),
       description: job.description,
-      experience: (job.experience_min != null && job.experience_max != null) 
-        ? `${job.experience_min}-${job.experience_max}Yrs` 
-        : (job.experience_level || '0-2Yrs'),
+      experience: formatExperience(job.experience_min, job.experience_max, job.experience_level),
       is_saved: job.isSaved || false,
       is_applied: job.hasApplied || false,
       is_offer: false,
@@ -191,9 +197,7 @@ export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
       salary_display: formatSalaryRange(job.salary_min, job.salary_max, job.salary_currency),
       posted_at: getRelativeTime(job.created_at),
       description: job.description,
-      experience: (job.experience_min != null && job.experience_max != null) 
-        ? `${job.experience_min}-${job.experience_max}Yrs` 
-        : (job.experience_level || '0-2Yrs'),
+      experience: formatExperience(job.experience_min, job.experience_max, job.experience_level),
       is_saved: true,
       is_applied: job.hasApplied || false,
       is_offer: false,
@@ -286,9 +290,7 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       company_logo: job.company_logo,
       location: job.location,
       job_type: job.job_type || 'Full time',
-      experience: (job.experience_min != null && job.experience_max != null)
-        ? `${job.experience_min}-${job.experience_max} Yrs`
-        : (job.experience_level || '0-2 Yrs'),
+      experience: formatExperience(job.experience_min, job.experience_max, job.experience_level),
       work_mode: job.work_mode || 'Hybrid',
       salary_min: job.salary_min,
       salary_max: job.salary_max,
@@ -388,9 +390,7 @@ export const getMyApplications = async (): Promise<Job[]> => {
       applied_at: job.applied_at,
       created_at: job.created_at,
       description: job.description,
-      experience: (job.experience_min != null && job.experience_max != null) 
-        ? `${job.experience_min}-${job.experience_max}Yrs` 
-        : (job.experience_level || '0-2Yrs'),
+      experience: formatExperience(job.experience_min, job.experience_max, job.experience_level),
       is_saved: job.isSaved || job.is_saved || false,
       is_applied: true,
       is_offer: false,
@@ -495,7 +495,7 @@ export const getMyOffers = async (): Promise<Job[]> => {
         company_logo: job.company_logo,
         location: job.location,
         job_type: job.job_type || 'Full time',
-        experience: job.experience_level || '0-2 Yrs',
+        experience: formatExperience(job.experience_min, job.experience_max, job.experience_level),
         work_mode: job.work_mode || 'Hybrid',
         salary_min: job.salary_min,
         salary_max: job.salary_max,
@@ -577,7 +577,7 @@ export const getMyListings = async (status?: string, cursor?: string, limit: num
       company: job.company_name,
       location: job.location,
       description: job.description,
-      experience: job.experience_label || undefined,
+      experience: formatExperience(job.experience_min, job.experience_max, job.experience_level, job.experience_label),
       work_type: job.job_type,
       work_mode: job.work_mode,
       salary_min: job.salary_min,
@@ -754,6 +754,7 @@ const mapBackendToJobOffer = (raw: any): JobOffer => {
     status: raw.status as 'pending' | 'accepted' | 'declined',
     note: raw.message || undefined,
     recruiter: {
+      id: raw.recruiter_id,
       name: raw.sent_by_name || 'Recruiter',
       headline: raw.company_display_name || '',
       avatar: raw.company_logo || undefined,
