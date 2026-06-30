@@ -52,6 +52,12 @@ export const isPostUrl = (text?: string): boolean => {
   return postUrlRegex.test(text.trim());
 };
 
+export const isJobUrl = (text?: string): boolean => {
+  if (!text) return false;
+  const jobUrlRegex = /^(?:https?:\/\/[^\s]+)?\/jobs\/[a-zA-Z0-9-]+(?:\?[^\s]*)?$/i;
+  return jobUrlRegex.test(text.trim());
+};
+
 export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread => {
   if (!backendChat.other_user_id && !backendChat.is_group) {
     console.warn(`Conversation ${backendChat.conversation_id} is missing 'other_user_id'. This conversation might not support direct messaging.`);
@@ -60,7 +66,7 @@ export const mapBackendChatToChatThread = (backendChat: BackendChat): ChatThread
     id: backendChat.conversation_id,
     name: backendChat.other_user_name || "Deleted User",
     role: backendChat.other_user_headline || "",
-    lastMessage: isPostUrl(backendChat.last_message_text) ? "Shared a post" : backendChat.last_message_text,
+    lastMessage: isPostUrl(backendChat.last_message_text) ? "Shared a post" : (isJobUrl(backendChat.last_message_text) ? "Shared a job" : backendChat.last_message_text),
     time: (backendChat.last_message_at || backendChat.updated_at) 
       ? formatTimeAgo(backendChat.last_message_at || backendChat.updated_at) 
       : (backendChat.timeAgo || ""),

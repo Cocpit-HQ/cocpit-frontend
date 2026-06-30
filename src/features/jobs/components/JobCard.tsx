@@ -71,7 +71,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
         <div className="flex flex-wrap justify-start items-center gap-2">
           {/* Experience */}
           <div className="flex justify-start items-center gap-2">
-            <Icon icon="hugeicons:job-search" className="w-5 h-5 text-black" />
+            <Icon icon="lucide:briefcase" className="w-5 h-5 text-black" />
             <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5">{job.experience || '0-2Yrs'}</div>
           </div>
 

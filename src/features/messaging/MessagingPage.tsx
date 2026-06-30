@@ -15,6 +15,7 @@ import {
   formatTimeAgo,
   mapBackendMessageToMessage,
   isPostUrl,
+  isJobUrl,
 } from "@/lib/mappers/messaging.mapper";
 import { useSocket } from "@/context/SocketContext";
 import { useAuth } from "@/hooks/use-auth";
@@ -415,12 +416,14 @@ export default function MessagingPage() {
                 lastMessage:
                   isPostUrl(message.text_content)
                     ? "Shared a post"
-                    : (message.text_content ||
-                      (message.shared_post
-                        ? "Shared a post"
-                        : message.shared_profile_id
-                          ? "Shared a profile"
-                          : "Attachment")),
+                    : isJobUrl(message.text_content)
+                      ? "Shared a job"
+                      : (message.text_content ||
+                        (message.shared_post
+                          ? "Shared a post"
+                          : message.shared_profile_id
+                            ? "Shared a profile"
+                            : "Attachment")),
                 time: formatTimeAgo(
                   message.created_at || new Date().toISOString(),
                 ),
@@ -523,7 +526,7 @@ export default function MessagingPage() {
 
             targetThread = {
               ...existing,
-              lastMessage: lastMsgText !== undefined ? (isPostUrl(lastMsgText) ? "Shared a post" : lastMsgText) : existing.lastMessage,
+              lastMessage: lastMsgText !== undefined ? (isPostUrl(lastMsgText) ? "Shared a post" : (isJobUrl(lastMsgText) ? "Shared a job" : lastMsgText)) : existing.lastMessage,
               time: lastMsgAt ? formatTimeAgo(lastMsgAt) : existing.time,
               lastMessageAt: lastMsgAt || existing.lastMessageAt,
               unread: String(conversationId) === String(selectedChat?.id) ? 0 : unreadCount,
@@ -657,7 +660,7 @@ export default function MessagingPage() {
             if (c.id === payload.conversationId && payload.text_content) {
               return {
                 ...c,
-                lastMessage: payload.text_content,
+                lastMessage: payload.text_content ? (isPostUrl(payload.text_content) ? "Shared a post" : (isJobUrl(payload.text_content) ? "Shared a job" : payload.text_content)) : c.lastMessage,
               };
             }
             return c;

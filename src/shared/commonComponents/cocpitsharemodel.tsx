@@ -7,6 +7,7 @@ import { Icon } from "@iconify/react";
 import { useSocial } from "@/context/SocialContext";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useAuth } from "@/hooks/use-auth";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getShareUsers, sendMessage } from "@/services/api/messaging";
 
@@ -30,6 +31,7 @@ export default function CocpitShareModel({
   const { startChat } = useSocial();
   const { activeProfile } = useActiveProfile();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
@@ -160,6 +162,10 @@ export default function CocpitShareModel({
       );
 
       toast.success("Message sent");
+
+      // Invalidate queries so that the messaging state is updated instantly
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
 
       onShare?.([targetUserId]);
       handleClose();

@@ -758,8 +758,6 @@ const mapBackendToJobOffer = (raw: any): JobOffer => {
       headline: raw.company_display_name || '',
       avatar: raw.company_logo || undefined,
     },
-    is_closed: raw.job_status === 'CLOSED' || raw.is_active === false,
-    is_available: raw.job_status !== 'CLOSED' && raw.is_active !== false,
   };
 };
 

@@ -12,7 +12,7 @@ import { useQueryClient, useQuery, useMutation, useInfiniteQuery, InfiniteData }
 import { sendMessage as sendGroupMessage } from "@/services/api/group-chat";
 import { editMessage, deleteMessage, addOrUpdateReaction, clearReaction } from "@/services/api/messaging";
 import { Message } from "@/types/messaging";
-import { formatTimeAgo } from "@/lib/mappers/messaging.mapper";
+import { formatTimeAgo, isPostUrl, isJobUrl } from "@/lib/mappers/messaging.mapper";
 import { useSocket } from "@/context/SocketContext";
 import { TypingPayload } from "@/types/socket";
 import MessageInfoModal from "../../MessageInfoModal";
@@ -460,7 +460,7 @@ export default function GroupChat({ groupId, currentUser, messages = [], onBack,
                         return {
                             ...c,
                             last_message_text: text || "Sent an attachment",
-                            lastMessage: text || "Sent an attachment",
+                            lastMessage: text ? (isPostUrl(text) ? "Shared a post" : (isJobUrl(text) ? "Shared a job" : text)) : "Sent an attachment",
                             lastMessageAt: now,    // CRITICAL: Update timestamp for sorting
                             time: formatTimeAgo(now),         // Update time for display
                             unread_count: 0

@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Message } from "@/types/messaging"
+import { Job } from "@/types/jobs"
+import { getJobById } from "@/services/api/jobs"
 import { MoreVertical, Info, Copy, Pencil, Trash2, Check, CheckCheck, Smile, Reply } from "lucide-react"
 import {
   DropdownMenu,
@@ -476,6 +478,131 @@ const MessageMedia = ({ message, isMediaOnly, onMediaClick, onMediaLoad }: { mes
 
 import { Mention } from "./MentionCard"
 
+const JobCardSkeleton = () => {
+  return (
+    <div className="border rounded-xl p-4 w-[320px] max-w-full bg-white dark:bg-zinc-900 animate-pulse">
+      <div className="flex gap-3">
+        <div className="w-10 h-10 rounded-md bg-gray-200 dark:bg-gray-700 shrink-0"></div>
+        <div className="flex-1">
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-3"></div>
+          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const JobCard = ({ job, onClick }: { job: Job, onClick: (e: React.MouseEvent) => void }) => {
+  return (
+    <div
+      onClick={onClick}
+      className="cursor-pointer border rounded-xl p-4 w-[340px] max-w-full bg-white dark:bg-zinc-900 hover:shadow-md transition"
+    >
+      <div className="flex gap-3">
+        {/* Logo / Initial */}
+        <div className="w-10 h-10 rounded-md bg-purple-500 text-white flex items-center justify-center font-semibold shrink-0 overflow-hidden">
+          {job.companyLogo ? (
+            <img src={job.companyLogo} alt={job.company} className="w-full h-full object-cover" />
+          ) : (
+            job.company?.[0] || "J"
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Job Title */}
+          <p className="font-semibold text-sm text-gray-900 dark:text-zinc-100 truncate">
+            {job.title}
+          </p>
+
+          {/* Company */}
+          <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+            {job.company}
+          </p>
+
+          {/* Meta Info */}
+          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 truncate">
+            {job.location}{job.workMode ? ` • ${job.workMode}` : ''}{job.type ? ` • ${job.type}` : ''}
+          </p>
+
+          {/* Experience */}
+          {job.experience && (
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
+              {job.experience}
+            </p>
+          )}
+        </div>
+
+        {/* Right Side */}
+        <div className="flex flex-col items-end justify-end shrink-0 ml-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick(e);
+            }}
+            className="text-blue-600 dark:text-blue-400 text-xs font-medium mt-auto"
+          >
+            View job
+          </button>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <p className="text-[10px] text-gray-400 mt-3 border-t border-gray-100 dark:border-zinc-800 pt-2">
+        {job.postedTime || job.createdAt || "Just now"}
+      </p>
+    </div>
+  );
+};
+
+const JobPreview = ({ jobId }: { jobId: string }) => {
+  const [job, setJob] = useState<Job | null>(null);
+  const [error, setError] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    let mounted = true;
+    getJobById(jobId)
+      .then(data => {
+        if (mounted) setJob(data);
+      })
+      .catch(err => {
+        console.error("Failed to load job", err);
+        if (mounted) setError(true);
+      });
+    return () => { mounted = false; };
+  }, [jobId]);
+
+  if (error) {
+    return (
+      <a
+        href={`/jobs/${jobId}`}
+        className="text-blue-500 underline font-medium break-all hover:text-blue-600"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          router.push(`/jobs/${jobId}`);
+        }}
+      >
+        View Job
+      </a>
+    );
+  }
+
+  if (!job) return <JobCardSkeleton />;
+
+  return (
+    <JobCard
+      job={job}
+      onClick={(e) => {
+        e.stopPropagation();
+        router.push(`/jobs/${jobId}`);
+      }}
+    />
+  );
+};
+
 const MessageText = ({
   message,
   isMediaOnly,
@@ -500,19 +627,32 @@ const MessageText = ({
   const renderTextWithMentions = (text: string) => {
     if (!text) return null
 
-    // Support structured @[Name](username) and legacy @username
-    const mentionRegex = /(@\[[^\]]+\]\([^)]+\)|@[a-zA-Z0-9_.\-]+)/g
-    const parts = text.split(mentionRegex)
+    // Support structured mentions, legacy mentions, AND Job URLs
+    const combinedRegex = /(https?:\/\/[^\s]+\/jobs\/[a-zA-Z0-9-]+(?:\?[^\s]*)?)|(@\[[^\]]+\]\([^)]+\)|@[a-zA-Z0-9_.\-]+)/g
+    const parts = text.split(combinedRegex)
 
     if (parts.length <= 1) return text
 
     return parts.map((part, i) => {
-      // 1. Handle Structured Mentions (@[Display Name](handle))
+      if (!part) return null;
+
+      // 1. Handle Job URL
+      if (part.match(/^https?:\/\/[^\s]+\/jobs\/[a-zA-Z0-9-]+(?:\?[^\s]*)?$/)) {
+        const match = part.match(/^https?:\/\/[^\s]+\/jobs\/([a-zA-Z0-9-]+)(?:\?[^\s]*)?$/);
+        const jobId = match?.[1];
+        if (jobId) {
+          return (
+            <div key={i} className="my-2 max-w-full overflow-hidden">
+              <JobPreview jobId={jobId} />
+            </div>
+          );
+        }
+      }
+
+      // 2. Handle Structured Mentions (@[Display Name](handle))
       const structuredMatch = part.match(/^@\[([^\]]+)\]\(([^)]+)\)$/);
       if (structuredMatch) {
-        const displayName = structuredMatch[1];
         const username = structuredMatch[2];
-
         return (
           <Mention key={i} username={username} isMe={isMe}>
             <span
@@ -527,7 +667,7 @@ const MessageText = ({
         );
       }
 
-      // 2. Handle Simple Mentions (@username)
+      // 3. Handle Simple Mentions (@username)
       const simpleMatch = part.match(/^@([a-zA-Z0-9_.\-]+)$/);
       if (simpleMatch) {
         const username = simpleMatch[1];

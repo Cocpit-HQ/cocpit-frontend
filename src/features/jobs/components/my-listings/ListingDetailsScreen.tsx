@@ -98,9 +98,22 @@ Requirements:
         >
           <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500" />
         </button>
-        <div className="inline-flex flex-col justify-start items-start">
+        <div className="inline-flex flex-col justify-start items-start flex-1">
           <div className="text-center justify-start text-black text-lg font-medium font-['Poppins'] leading-6">Listing Details</div>
           <div className="text-center justify-start text-gray-500 text-xs font-normal font-['Poppins'] leading-4">View, and manage this listing</div>
+        </div>
+        <div
+          className={`flex flex-col justify-center items-center p-[8px] w-[70px] h-[31px] rounded-[9999px] flex-none ${
+            isClosed ? 'bg-[#F1F5F9]' : 'bg-[#F0FDF4]'
+          }`}
+        >
+          <span
+            className={`text-[10px] font-medium font-['Poppins'] uppercase leading-[15px] flex items-center text-center ${
+              isClosed ? 'text-[#64748B]' : 'text-[#22C55E]'
+            }`}
+          >
+            {isClosed ? 'CLOSED' : 'ACTIVE'}
+          </span>
         </div>
       </div>
 

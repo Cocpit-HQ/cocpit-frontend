@@ -4,6 +4,7 @@ import { useJobStore } from "@/store/job.store";
 import { useShallow } from "zustand/react/shallow";
 import RecommendedJobCard from "../components/RecommendedJobCard";
 import RecommendedJobCardSkeleton from "../components/skeletons/RecommendedJobCardSkeleton";
+import JobCardSkeleton from "../components/skeletons/JobCardSkeleton";
 import JobList from "../components/JobList";
 import JobFilters from "../components/JobFilters";
 import { Icon } from "@iconify/react";
@@ -441,9 +442,15 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
 
       {/* My Applications Tab */}
       <div className={`w-full ${activeTab === "My Applications" ? "" : "hidden"}`}>
-        {jobs.length === 0 ? (
+        {isLoading ? (
+          <div className="w-full flex flex-col gap-4 py-4">
+            {[1, 2, 3].map((n) => (
+              <JobCardSkeleton key={n} />
+            ))}
+          </div>
+        ) : jobs.length === 0 ? (
           <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
-            <Icon icon="hugeicons:job-search" className="size-20 text-black flex-shrink-0" />
+            <Icon icon="lucide:briefcase" className="size-20 text-black flex-shrink-0" />
             <div className="flex flex-col justify-start items-center gap-2">
               <div className="text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6">
                 No jobs applications yet
@@ -608,7 +615,13 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
             {/* Applications list */}
             <div className="w-full flex flex-col">
               <div className="w-full flex flex-col gap-[12px]">
-                {filteredJobs.length === 0 ? (
+                {isLoading ? (
+                  <div className="w-full flex flex-col gap-4 py-4">
+                    {[1, 2, 3].map((n) => (
+                      <JobCardSkeleton key={n} />
+                    ))}
+                  </div>
+                ) : filteredJobs.length === 0 ? (
                   <div className="text-center py-12 text-[#6B7280] font-['Poppins']">
                     No applications in this category.
                   </div>
@@ -618,7 +631,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                     const renderCompanyLogo = () => {
                       if (job.company_logo === "coreloom") {
                         return (
-                          <div className="w-[56px] h-[40px] rounded-[24px] bg-[#E0E7FF] flex items-center justify-center overflow-hidden border border-indigo-100">
+                          <div className="w-[56px] h-[40px] rounded-[24px] bg-[#E0E7FF] flex items-center justify-center overflow-hidden border border-indigo-100 pt-[6px] pb-[6px] pr-[8px]">
                             <Icon
                               icon="solar:globus-linear"
                               className="w-[24px] h-[24px] text-[#6366F1]"
@@ -628,7 +641,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                       }
                       if (job.company_logo === "prismforge") {
                         return (
-                          <div className="w-[56px] h-[40px] rounded-[24px] bg-[#FFE4E6] flex items-center justify-center overflow-hidden border border-rose-100">
+                          <div className="w-[56px] h-[40px] rounded-[24px] bg-[#FFE4E6] flex items-center justify-center overflow-hidden border border-rose-100 pt-[6px] pb-[6px] pr-[8px]">
                             <Icon
                               icon="solar:fire-linear"
                               className="w-[24px] h-[24px] text-rose-500"
@@ -638,7 +651,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                       }
                       if (job.company_logo === "mindstack") {
                         return (
-                          <div className="w-[56px] h-[40px] rounded-[24px] bg-[#ECFDF5] flex items-center justify-center overflow-hidden border border-emerald-100">
+                          <div className="w-[56px] h-[40px] rounded-[24px] bg-[#ECFDF5] flex items-center justify-center overflow-hidden border border-emerald-100 pt-[6px] pb-[6px] pr-[8px]">
                             <Icon
                               icon="solar:atom-linear"
                               className="w-[24px] h-[24px] text-emerald-500"
@@ -648,26 +661,15 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                       }
                       if (job.company_logo === "sphere") {
                         return (
-                          <div className="w-[56px] h-[40px] rounded-[24px] bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
+                          <div className="w-[56px] h-[40px] rounded-[24px] bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200 pt-[6px] pb-[6px] pr-[8px]">
                             <div className="w-[20px] h-[20px] rounded-full bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm" />
                           </div>
                         );
                       }
-                      if (job.company_logo && !["coreloom", "prismforge", "mindstack", "sphere"].includes(job.company_logo)) {
-                        return (
-                          <div className="w-[56px] h-[40px] rounded-[24px] bg-slate-50 flex items-center justify-center overflow-hidden border border-slate-100 flex-shrink-0">
-                            <img
-                              src={job.company_logo}
-                              alt={job.company}
-                              className="w-[24px] h-[24px] object-contain rounded-full"
-                            />
-                          </div>
-                        );
-                      }
                       return (
-                        <div className="w-[56px] h-[40px] rounded-[24px] bg-indigo-50 flex items-center justify-center border border-indigo-100 flex-shrink-0">
+                        <div className="w-[56px] h-[40px] rounded-[24px] bg-indigo-50 flex items-center justify-center border border-indigo-100 flex-shrink-0 pt-[6px] pb-[6px] pr-[8px]">
                           <Icon
-                            icon="hugeicons:job-search"
+                            icon="lucide:briefcase"
                             className="w-[20px] h-[20px] text-indigo-500"
                           />
                         </div>
@@ -825,9 +827,15 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
         <div className="w-full flex flex-col gap-[20px]">
           {/* Saved Jobs List container */}
           <div className="w-full">
-            {jobs.length === 0 ? (
+            {isLoading ? (
+              <div className="w-full flex flex-col gap-4 py-4">
+                {[1, 2, 3].map((n) => (
+                  <JobCardSkeleton key={n} />
+                ))}
+              </div>
+            ) : jobs.length === 0 ? (
               <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
-                <Icon icon="hugeicons:job-search" className="size-20 text-black flex-shrink-0" />
+                <Icon icon="lucide:briefcase" className="size-20 text-black flex-shrink-0" />
                 <div className="flex flex-col justify-start items-center gap-2">
                   <div className="text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6">
                     No saved jobs yet

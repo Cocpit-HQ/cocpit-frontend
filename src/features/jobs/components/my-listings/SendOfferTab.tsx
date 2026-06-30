@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import SendOfferModal, { SelectableCandidate } from './SendOfferModal';
 import api from '@/lib/axios';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 export interface SentOfferGroup {
   id: string;
@@ -13,7 +14,6 @@ export interface SentOfferGroup {
   sentCount: number;
   acceptedCount: number;
   pendingCount: number;
-  company_logo?: string;
 }
 
 interface SendOfferTabProps {
@@ -25,6 +25,7 @@ interface SendOfferTabProps {
 export const SendOfferTab: React.FC<SendOfferTabProps> = ({ listings, onSelectListing, onSelectOfferGroup }) => {
   const [isSendOpen, setIsSendOpen] = useState(false);
   const { activeProfile, userCompanies } = useActiveProfile();
+  const queryClient = useQueryClient();
 
   // Sent Offers state
   const [sentOffers, setSentOffers] = useState<SentOfferGroup[]>([]);
@@ -57,7 +58,6 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({ listings, onSelectLi
         sentCount: Number(item.total_offers || 0),
         acceptedCount: Number(item.accepted_count || 0),
         pendingCount: Number(item.pending_count || 0),
-        company_logo: item.company_logo,
         // Pass original job details for details page
         job_type: item.job_type || 'Full time',
         work_mode: item.work_mode || 'Remote',
@@ -119,6 +119,10 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({ listings, onSelectLi
       await Promise.all(promises);
       toast.success(`Offers sent successfully to: ${candidates.map(c => c.name).join(', ')}`);
       fetchSentOffers();
+      
+      // Invalidate messaging conversations so that the new offer message shows up in the chat list
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
     } catch (error: any) {
       console.error('Failed to send offers:', error);
       const errMsg = error.response?.data?.message || 'Failed to send offers.';
@@ -132,7 +136,7 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({ listings, onSelectLi
       {/* Header Row */}
       <div className="w-full h-[40px] flex flex-row justify-between items-center p-0 gap-[16px] mb-[24px]">
         <h3 className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-black py-[7px]">
-          Sent offers
+          Sent Offers
         </h3>
         
         <button
@@ -140,7 +144,7 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({ listings, onSelectLi
           className="flex flex-row items-center gap-[8px] py-[7px] text-[#6366F1] hover:opacity-85 transition-all duration-200 active:scale-95 cursor-pointer font-['Poppins'] font-medium text-[18px] leading-[26px]"
         >
           <Icon icon="iconoir:gift" className="w-[24px] h-[24px]" />
-          <span>Send offer</span>
+          <span>Sent Offers</span>
         </button>
       </div>
 

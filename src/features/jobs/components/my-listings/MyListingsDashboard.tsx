@@ -16,7 +16,7 @@ interface MyListingsDashboardProps {
   onBack: () => void;
 }
 
-type SubTab = 'Listings' | 'Send offer';
+type SubTab = 'Listings' | 'Sent Offers';
 type ViewState = 'dashboard' | 'create-job' | 'view-listing' | 'applicants' | 'offer-details';
 
 export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack }) => {
@@ -201,7 +201,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       {/* Sub-Tabs & Action Button Row */}
       <div className="w-full flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-indigo-50/50">
         <div className="flex items-center gap-3">
-          {(['Listings', 'Send offer'] as SubTab[]).map(tab => {
+          {(['Listings', 'Sent Offers'] as SubTab[]).map(tab => {
             const isActive = activeSubTab === tab;
             return (
               <button
@@ -297,7 +297,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
               />
             )
           )}
-          {activeSubTab === 'Send offer' && (
+          {activeSubTab === 'Sent Offers' && (
             <SendOfferTab
               listings={listings}
               onSelectListing={(listing, viewType) => {

@@ -100,7 +100,11 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       return;
     }
 
-    updateActiveListState({ loading: true, error: null });
+    updateActiveListState({ 
+      loading: true, 
+      error: null,
+      ...( (!isLoadMore && forceRefetch) ? { jobs: [], hasFetched: false } : {} )
+    });
 
     try {
       let fetchedJobs: Job[] = [];

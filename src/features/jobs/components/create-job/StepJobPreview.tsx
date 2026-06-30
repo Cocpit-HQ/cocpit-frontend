@@ -17,14 +17,30 @@ export const StepJobPreview: React.FC<StepJobPreviewProps> = ({
   onPublish,
 }) => {
   const [showReviewPopup, setShowReviewPopup] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
 
   const handlePublishClick = () => {
     setShowReviewPopup(true);
   };
 
-  const handlePopupClose = () => {
+  const handlePopupClose = async () => {
     setShowReviewPopup(false);
-    onPublish();
+    setIsPublishing(true);
+    try {
+      await onPublish();
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const handleSaveDraftClick = async () => {
+    setIsSavingDraft(true);
+    try {
+      await onSaveDraft();
+    } finally {
+      setIsSavingDraft(false);
+    }
   };
 
   useEffect(() => {
@@ -89,7 +105,7 @@ export const StepJobPreview: React.FC<StepJobPreviewProps> = ({
         <div className="self-stretch flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 mt-2">
           <div className="flex flex-wrap justify-start items-center gap-2">
             <div className="flex justify-start items-center gap-2">
-              <Icon icon="hugeicons:job-search" className="w-5 h-5 text-black flex-shrink-0" />
+              <Icon icon="lucide:briefcase" className="w-5 h-5 text-black flex-shrink-0" />
               <div className="text-black text-sm font-normal font-['Poppins'] leading-5">{formatExperienceBadge(experience)}</div>
             </div>
             <div className="size-1.5 bg-black rounded-full flex-shrink-0" />
@@ -124,26 +140,36 @@ export const StepJobPreview: React.FC<StepJobPreviewProps> = ({
       {/* Footer Controls */}
       <div className="self-stretch flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-2 w-full gap-4">
         <button
-          onClick={onSaveDraft}
+          onClick={handleSaveDraftClick}
+          disabled={isSavingDraft || isPublishing || showReviewPopup}
           type="button"
-          className="px-4 py-2 hover:bg-slate-50 rounded-lg flex flex-col justify-center items-center text-gray-500 hover:text-gray-700 text-base font-medium font-['Poppins'] leading-6 transition-colors active:scale-95 w-full sm:w-auto"
+          className="px-4 py-2 hover:bg-slate-50 rounded-lg flex flex-col justify-center items-center text-gray-500 hover:text-gray-700 text-base font-medium font-['Poppins'] leading-6 transition-colors active:scale-95 w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Save Draft
+          {isSavingDraft ? 'Saving...' : 'Save Draft'}
         </button>
         <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <button
             onClick={onBack}
+            disabled={isSavingDraft || isPublishing || showReviewPopup}
             type="button"
-            className="w-full sm:w-36 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-400 flex justify-center items-center gap-2.5 text-indigo-400 text-sm font-normal font-['Poppins'] leading-5 hover:bg-indigo-50/10 active:scale-95 transition-all"
+            className="w-full sm:w-36 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-400 flex justify-center items-center gap-2.5 text-indigo-400 text-sm font-normal font-['Poppins'] leading-5 hover:bg-indigo-50/10 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Back
           </button>
           <button
             onClick={handlePublishClick}
+            disabled={isSavingDraft || isPublishing || showReviewPopup}
             type="button"
-            className="w-full sm:w-36 h-10 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 text-white text-sm font-normal font-['Poppins'] leading-5 transition-all active:scale-95 shadow-sm"
+            className="w-full sm:w-48 h-10 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 text-white text-sm font-normal font-['Poppins'] leading-5 transition-all active:scale-95 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Publish
+            {isPublishing ? (
+              <>
+                <Icon icon="line-md:loading-loop" className="w-5 h-5" />
+                <span>Creating Job...</span>
+              </>
+            ) : (
+              'Publish'
+            )}
           </button>
         </div>
       </div>

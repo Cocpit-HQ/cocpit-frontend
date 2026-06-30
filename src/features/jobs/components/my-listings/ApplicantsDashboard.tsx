@@ -400,9 +400,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         className="box-border flex flex-row items-center p-[16px] gap-[16px] w-[998px] h-[80px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-1 self-stretch grow-0"
       >
         {/* Job text frame (Frame 2609064) */}
-        <div className="flex flex-col items-start p-0 gap-[8px] w-full h-auto flex-none order-0 grow min-w-0">
+        <div className="flex flex-col items-start p-0 gap-[8px] flex-1 min-w-0">
           <span
-            className="w-full h-[24px] font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black capitalize truncate"
+            className="w-full font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black capitalize flex-none order-0 grow-0 truncate"
           >
             {listing.title}
           </span>
@@ -426,10 +426,12 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         <button
           onClick={onViewDetails}
           type="button"
-          className="box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-[116px] h-[40px] bg-white border border-[#818CF8] rounded-[24px] flex-none order-2 grow-0 hover:bg-indigo-50/10 active:scale-95 transition-all"
+          style={{ width: '116px', height: '40px' }}
+          className="box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] bg-white border border-[#818CF8] rounded-[24px] flex-none order-2 grow-0 hover:bg-indigo-50/10 active:scale-95 transition-all"
         >
           <span
-            className="w-[84px] h-[20px] font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#818CF8] flex-none order-0 grow-0"
+            style={{ width: '84px', height: '20px' }}
+            className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#818CF8] flex-none order-0 grow-0"
           >
             View details
           </span>
@@ -474,24 +476,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
       </div>
 
       {/* Main Frame: Applicants list and Candidate details (Frame 2608633) */}
-      {isLoadingList ? (
-        <div className="w-[998px] h-[300px] flex items-center justify-center bg-white border border-[#EEF2FF] rounded-[24px]">
-          <Icon icon="svg-spinners:180-ring" className="w-8 h-8 text-[#6366F1]" />
-        </div>
-      ) : candidates.length === 0 ? (
-        <div className="w-[998px] h-[300px] bg-white border border-[#EEF2FF] rounded-[24px] flex flex-col items-center justify-center gap-4 text-center">
-          <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500">
-            <Icon icon="hugeicons:job-search" className="w-6 h-6" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-black text-base font-semibold font-['Poppins']">No applicants yet</span>
-            <span className="text-gray-400 text-xs font-['Poppins'] font-normal">Candidates who apply to this listing will appear here.</span>
-          </div>
-        </div>
-      ) : (
-        <div 
-          className="flex flex-row items-start p-0 gap-[16px] w-[998px] h-[901px] flex-none order-3 self-stretch grow-0"
-        >
+      <div 
+        className="flex flex-row items-start p-0 gap-[16px] w-[998px] h-[901px] flex-none order-3 self-stretch grow-0"
+      >
         {/* Left Column: Candidates list (Frame 2609067) */}
         <div
           className="box-border flex flex-col items-start p-[12px] gap-[16px] w-[294px] h-[574px] border border-[#EEF2FF] rounded-[24px] flex-none order-0 grow-0"
@@ -1126,7 +1113,6 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           )}
         </div>
       </div>
-      )}
 
       {/* Add a note modal */}
       {isNoteModalOpen && (

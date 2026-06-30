@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useJobDetail } from '../hooks/useJobDetail';
 import { Icon } from '@iconify/react';
 import { useSmartBack } from '@/hooks/use-smart-back';
@@ -44,6 +45,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
     toggleFollow
   } = useJobDetail(jobId);
   const { goBack } = useSmartBack();
+  const router = useRouter();
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
@@ -154,24 +156,24 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
               )}
             </div>
             <div className="w-full min-h-[56px] h-auto self-stretch text-[#000000] text-2xl md:text-[32px] font-semibold font-['Poppins'] leading-tight md:leading-[56px] py-1">{job.title}</div>
-            <div className="w-full h-auto min-h-8 self-stretch flex flex-row flex-wrap items-center p-0 gap-2">
-              {job.company_logo === 'sphere' ? (
+            
+            <div 
+                className="flex flex-row items-center justify-start p-0 gap-[12px] flex-grow flex-shrink-0 min-w-0 w-full sm:w-auto mt-2 sm:mt-0 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => {
+                  if (job.recruiter_id) {
+                    router.push(`/profile/${job.recruiter_id}`);
+                  }
+                }}
+              >
+              {isLoading ? (
+                <div className="relative w-8 h-8 rounded-full border border-[#D1D5DB] flex justify-center items-center flex-shrink-0 animate-pulse bg-indigo-50">
+                  <div className="w-4 h-4 rounded-full bg-indigo-200" />
+                </div>
+              ) : job.company_logo === 'sphere' ? (
                 <div className="w-8 h-8 bg-slate-100 rounded-full flex justify-center items-center overflow-hidden flex-shrink-0">
                   <div className="w-4 h-4 rounded-full bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm" />
                 </div>
-              ) : job.company_logo === 'coreloom' ? (
-                <div className="w-8 h-8 bg-[#E0E7FF] rounded-full flex justify-center items-center overflow-hidden flex-shrink-0 border border-indigo-100">
-                  <Icon icon="solar:globus-linear" className="w-4 h-4 text-[#6366F1]" />
-                </div>
-              ) : job.company_logo === 'prismforge' ? (
-                <div className="w-8 h-8 bg-[#FFE4E6] rounded-full flex justify-center items-center overflow-hidden flex-shrink-0 border border-rose-100">
-                  <Icon icon="solar:fire-linear" className="w-4 h-4 text-rose-500" />
-                </div>
-              ) : job.company_logo === 'mindstack' ? (
-                <div className="w-8 h-8 bg-[#ECFDF5] rounded-full flex justify-center items-center overflow-hidden flex-shrink-0 border border-emerald-100">
-                  <Icon icon="solar:atom-linear" className="w-4 h-4 text-emerald-500" />
-                </div>
-              ) : ((job.company_logo && !['coreloom', 'prismforge', 'mindstack', 'sphere'].includes(job.company_logo)) || job.recruiter_avatar) && !avatarError ? (
+              ) : (job.company_logo || job.recruiter_avatar) && !avatarError ? (
                 <img
                   className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                   src={job.company_logo || job.recruiter_avatar || "/assets/profilephoto.png"}
@@ -180,11 +182,13 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 />
               ) : (
                 <div className="w-8 h-8 bg-indigo-50 rounded-full flex justify-center items-center flex-shrink-0">
-                  <Icon icon="hugeicons:job-search" className="w-4 h-4 text-indigo-500" />
+                  <Icon icon="lucide:briefcase" className="w-4 h-4 text-indigo-500" />
                 </div>
               )}
-              <span className="text-[#6B7280] text-[12px] font-normal font-['Poppins'] leading-[16px]">Posted by</span>
-              <div className="text-[#000000] text-[14px] font-semibold font-['Poppins'] leading-[20px] truncate max-w-[150px]">{job.company}</div>
+              <div className="flex flex-row items-center gap-1">
+                <span className="text-[#6B7280] text-[14px] font-normal font-['Poppins'] leading-[20px]">Posted by</span>
+                <div className="text-[#000000] text-[14px] font-semibold font-['Poppins'] leading-[20px] truncate max-w-[150px]">{job.company}</div>
+              </div>
             </div>
           </div>
 
@@ -193,7 +197,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
             {/* Experience Column */}
             <div className="flex-grow flex-shrink-0 flex flex-col justify-center items-start p-0 gap-2 min-w-[120px] h-auto">
               <div className="flex flex-row items-center p-0 gap-2 h-5">
-                <Icon icon="hugeicons:job-search" className="w-5 h-5 text-gray-500" />
+                <Icon icon="lucide:briefcase" className="w-5 h-5 text-gray-500" />
                 <div className="justify-start text-[#6B7280] text-[12px] font-normal font-['Poppins'] uppercase leading-[16px]">Experience</div>
               </div>
               <div className="justify-start text-[#000000] text-[16px] font-normal font-['Poppins'] leading-[24px]">{job.experience || '0-2 Yrs'}</div>
