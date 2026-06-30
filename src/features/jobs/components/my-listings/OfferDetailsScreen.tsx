@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Icon } from '@iconify/react';
+import { useRouter } from 'next/navigation';
 import WithdrawOfferModal from './WithdrawOfferModal';
 import { toast } from 'sonner';
 import api from '@/lib/axios';
@@ -44,6 +45,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
   onBack,
   onViewListingDetails,
 }) => {
+  const router = useRouter();
   const [candidates, setCandidates] = useState<OfferCandidate[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCandId, setSelectedCandId] = useState<string | null>(null);
@@ -326,7 +328,8 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                 {cand.status === 'chat' && (
                   <button
                     type="button"
-                    className="box-sizing: border-box w-[120px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:opacity-90 transition-all active:scale-95"
+                    onClick={() => router.push(`/messaging?userId=${cand.userId}`)}
+                    className="box-sizing: border-box w-[120px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:opacity-90 transition-all active:scale-95 cursor-pointer"
                   >
                     <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white">
                       Chat
