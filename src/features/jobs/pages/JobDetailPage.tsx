@@ -98,7 +98,8 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
   };
 
   let mappedStatus = currentStatus;
-  if (mappedStatus === 'Rejected') mappedStatus = 'Declined';
+  if (mappedStatus.toLowerCase() === 'in-review') mappedStatus = 'in-review';
+  else if (mappedStatus === 'Rejected') mappedStatus = 'Declined';
   else if (['Offer', 'Accepted', 'Interview', 'Approved'].includes(mappedStatus)) mappedStatus = 'Shortlisted';
 
   const currentStepIndex = steps.indexOf(mappedStatus) !== -1 ? steps.indexOf(mappedStatus) : 0;
