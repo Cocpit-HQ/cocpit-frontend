@@ -12,6 +12,7 @@ import Image from 'next/image'
 import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { useCompanyPermissions } from '@/components/organizations/hooks/use-company'
 import { useNavigationMemoryLink } from '@/hooks/use-navigation-memory'
+import { useCompanyOnboardingStore } from '@/features/company-onboarding/store/company-onboarding.store'
 import './sidebar.css'
 
 interface DarkSidebarProps {
@@ -139,8 +140,13 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
       {/* Cocpit Business CTA */}
       <div className="sidebar__business-cta" aria-label="Business navigation">
         <Link
-          href={isCompany ? "/business/overview" : "/business/create-company"}
+          href={isCompany ? "/business/overview" : "/company-onboarding"}
           className="sidebar__business-btn"
+          onClick={() => {
+            if (!isCompany) {
+              useCompanyOnboardingStore.getState().resetStore();
+            }
+          }}
         >
           Cocpit business
         </Link>

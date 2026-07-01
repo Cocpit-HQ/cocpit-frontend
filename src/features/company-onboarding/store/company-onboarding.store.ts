@@ -1,0 +1,120 @@
+import { create } from 'zustand';
+import { CompanyOnboardingState, OrganizationType, DocumentData } from '../types/company-onboarding.types';
+import { COMPANY_STAGES } from '../constants/onboarding.constants';
+
+const initialState = {
+  currentStage: 0,
+  organizationType: null as OrganizationType | null,
+
+  // Stage 1: Identity
+  organizationName: '',
+  foundedYear: '',
+  industry: '',
+  logoFile: null,
+  logoPreview: null,
+
+  // Stage 2: Presence
+  officialEmail: '',
+  isEmailVerified: false,
+  phoneCountryCode: '+91',
+  phoneNumber: '',
+  isPhoneVerified: false,
+  website: '',
+  organizationSize: '',
+  
+  // HQ Location
+  hqCountry: '',
+  hqCity: '',
+  
+  // Content
+  headline: '',
+  description: '',
+
+  // Stage 3: Verification
+  countryOfOperation: '',
+  documents: [] as DocumentData[],
+  showValidationErrors: false,
+};
+
+export const useCompanyOnboardingStore = create<CompanyOnboardingState>((set, get) => ({
+  ...initialState,
+
+  // Actions
+  setOrganizationType: (type: OrganizationType) => set({ organizationType: type }),
+  
+  setCurrentStage: (stage: number) => set({ currentStage: stage }),
+  
+  goNext: () => {
+    const { currentStage } = get();
+    const config = COMPANY_STAGES[currentStage as keyof typeof COMPANY_STAGES];
+    if (config && config.next !== null) {
+      set({ currentStage: config.next });
+    }
+  },
+  
+  goBack: () => {
+    const { currentStage } = get();
+    const config = COMPANY_STAGES[currentStage as keyof typeof COMPANY_STAGES];
+    if (config && config.prev !== null) {
+      set({ currentStage: config.prev });
+    }
+  },
+
+  updateField: <K extends keyof CompanyOnboardingState>(key: K, value: CompanyOnboardingState[K]) => {
+    set({ [key]: value } as Partial<CompanyOnboardingState>);
+  },
+  
+  setLogo: (file: File | null) => {
+    const { logoPreview } = get();
+    if (logoPreview) {
+      URL.revokeObjectURL(logoPreview);
+    }
+    set({ 
+      logoFile: file, 
+      logoPreview: file ? URL.createObjectURL(file) : null 
+    });
+  },
+
+  addDocument: () => {
+    set((state) => ({
+      documents: [
+        ...state.documents,
+        { id: Math.random().toString(36).substring(7), file: null, preview: null }
+      ]
+    }));
+  },
+
+  removeDocument: (id: string) => {
+    set((state) => {
+      const doc = state.documents.find(d => d.id === id);
+      if (doc?.preview) {
+        URL.revokeObjectURL(doc.preview);
+      }
+      return {
+        documents: state.documents.filter(d => d.id !== id)
+      };
+    });
+  },
+
+  updateDocument: (id: string, file: File) => {
+    set((state) => {
+      const newDocs = state.documents.map(doc => {
+        if (doc.id === id) {
+          if (doc.preview) URL.revokeObjectURL(doc.preview);
+          return { ...doc, file, preview: URL.createObjectURL(file) };
+        }
+        return doc;
+      });
+      return { documents: newDocs };
+    });
+  },
+
+  resetStore: () => {
+    const { logoPreview, documents } = get();
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    documents.forEach(doc => {
+      if (doc.preview) URL.revokeObjectURL(doc.preview);
+    });
+    set(initialState);
+  }
+}));
