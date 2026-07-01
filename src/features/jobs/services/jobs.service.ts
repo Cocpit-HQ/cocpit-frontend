@@ -115,7 +115,9 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
         : (job.experience_label || job.experience_level || '0-2Yrs'),
       is_saved: job.isSaved || false,
       is_applied: job.hasApplied || false,
-      is_offer: false,
+      is_offer: job.is_offer || false,
+      offer_id: job.offer_id,
+      offerStatus: job.offerStatus,
       tags: job.tags || [],
       is_available: job.status !== 'CLOSED' && job.is_active !== false,
       is_closed: job.status === 'CLOSED' || job.is_active === false
@@ -206,7 +208,9 @@ export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
         : (job.experience_label || job.experience_level || '0-2Yrs'),
       is_saved: true,
       is_applied: job.hasApplied || false,
-      is_offer: false,
+      is_offer: job.is_offer || false,
+      offer_id: job.offer_id,
+      offerStatus: job.offerStatus,
       tags: job.tags || [],
       is_available: job.status !== 'CLOSED' && job.is_active !== false,
       is_closed: job.status === 'CLOSED' || job.is_active === false

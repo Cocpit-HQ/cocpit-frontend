@@ -15,6 +15,8 @@ interface JobListProps {
   onApply?: (jobId: string, e: React.MouseEvent) => void;
   onWithdraw?: (jobId: string, e: React.MouseEvent) => void;
   onSelect?: (job: Job) => void;
+  onAccept?: (offerId: string, e: React.MouseEvent) => void;
+  onDecline?: (offerId: string, e: React.MouseEvent) => void;
 }
 
 export const JobList: React.FC<JobListProps> = React.memo(({
@@ -26,7 +28,9 @@ export const JobList: React.FC<JobListProps> = React.memo(({
   onSave,
   onApply,
   onWithdraw,
-  onSelect
+  onSelect,
+  onAccept,
+  onDecline
 }) => {
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0,
@@ -76,6 +80,8 @@ export const JobList: React.FC<JobListProps> = React.memo(({
           onApply={onApply}
           onWithdraw={onWithdraw}
           onClick={onSelect}
+          onAccept={onAccept}
+          onDecline={onDecline}
         />
       ))}
 

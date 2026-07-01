@@ -856,6 +856,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                 onApply={handleApplyClick}
                 onWithdraw={handleWithdrawClick}
                 onSelect={(j) => router.push(`/jobs/${j.id}`)}
+                onAccept={handleOfferAccept}
+                onDecline={handleOfferDecline}
               />
             )}
           </div>
@@ -894,6 +896,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                   onApply={handleApplyClick}
                   onWithdraw={handleWithdrawClick}
                   onSelect={(j) => router.push(`/jobs/${j.id}`)}
+                  onAccept={handleOfferAccept}
+                  onDecline={handleOfferDecline}
                 />
               </div>
         </div>

@@ -11,9 +11,11 @@ interface JobCardProps {
   onApply?: (jobId: string, e: React.MouseEvent) => void;
   onWithdraw?: (jobId: string, e: React.MouseEvent) => void;
   onClick?: (job: Job) => void;
+  onAccept?: (offerId: string, e: React.MouseEvent) => void;
+  onDecline?: (offerId: string, e: React.MouseEvent) => void;
 }
 
-export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onApply, onWithdraw, onClick }) => {
+export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onApply, onWithdraw, onClick, onAccept, onDecline }) => {
   const badgeText = job.recommended_badge || 'Top 15%';
   const percentMatch = badgeText.match(/\d+/);
   const percentNum = percentMatch ? parseInt(percentMatch[0], 10) : 15;
@@ -151,15 +153,26 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
             ) : job.is_closed ? (
               <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Unavailable</span>
             ) : (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onApply?.(job.id, e);
-                }}
-                className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] hover:bg-[#6366F1]/90 text-white transition-all duration-200 active:scale-95 text-sm font-normal font-['Poppins'] leading-5"
-              >
-                Respond
-              </button>
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDecline?.(job.offer_id || job.id, e);
+                  }}
+                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] border border-[#6B7280] text-[#6B7280] bg-white hover:bg-slate-50 transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
+                >
+                  Decline
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAccept?.(job.offer_id || job.id, e);
+                  }}
+                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] hover:bg-[#6366F1]/90 text-white transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
+                >
+                  Accept
+                </button>
+              </>
             )
           ) : (
             <>
@@ -185,23 +198,23 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
                   Apply
                 </button>
               )}
-              
-              {/* Bookmark Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSave?.(job.id, e);
-                }}
-                className="w-6 h-6 flex items-center justify-center transition-all active:scale-95 flex-none"
-                aria-label="Bookmark job"
-              >
-                <Icon
-                  icon={job.is_saved ? 'solar:bookmark-bold' : 'solar:bookmark-linear'}
-                  className={`w-6 h-6 transition-colors ${job.is_saved ? 'text-[#6366F1]' : 'text-gray-500 hover:text-[#6366F1]'}`}
-                />
-              </button>
             </>
           )}
+          
+          {/* Bookmark Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSave?.(job.id, e);
+            }}
+            className="w-6 h-6 flex items-center justify-center transition-all active:scale-95 flex-none"
+            aria-label="Bookmark job"
+          >
+            <Icon
+              icon={job.is_saved ? 'solar:bookmark-bold' : 'solar:bookmark-linear'}
+              className={`w-6 h-6 transition-colors ${job.is_saved ? 'text-[#6366F1]' : 'text-gray-500 hover:text-[#6366F1]'}`}
+            />
+          </button>
         </div>
       </div>
     </div>
