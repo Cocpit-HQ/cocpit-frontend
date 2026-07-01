@@ -110,8 +110,10 @@ export interface JobOffer {
   days_remaining: number;
   company_name: string;
   location: string;
-  status: 'pending' | 'accepted' | 'declined';
+  status: 'pending' | 'accepted' | 'declined' | 'withdrawn' | 'expired';
   note?: string;
+  is_active?: boolean;
+  job_status?: string;
   recruiter: {
     id?: string;
     name: string;

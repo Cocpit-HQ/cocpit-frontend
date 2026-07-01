@@ -24,6 +24,8 @@ export interface JobOffer {
     location: string;
     experience_level: string;
     company_name: string;
+    is_active?: boolean;
+    job_status?: string;
     // From JOIN with companies
     company_display_name: string;
     company_logo: string;

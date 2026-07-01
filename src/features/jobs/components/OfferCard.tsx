@@ -85,8 +85,13 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
         ) : offer.status === 'accepted' ? (
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px]"
+            className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px] gap-[8px]"
           >
+            {(offer.is_active === false || offer.job_status === 'CLOSED') && (
+              <span className="font-['Poppins'] text-[12px] font-semibold text-red-500 bg-red-50 px-2 py-1 rounded-md">
+                Job Deleted
+              </span>
+            )}
             <button
               onClick={() => {
                 if (offer.recruiter.id) {
@@ -100,7 +105,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
               Chat
             </button>
           </div>
-        ) : (
+        ) : offer.status === 'declined' ? (
           <div 
             onClick={(e) => e.stopPropagation()}
             className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px]"
@@ -109,7 +114,25 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
               Declined
             </span>
           </div>
-        )}
+        ) : offer.status === 'withdrawn' ? (
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px]"
+          >
+            <span className="font-['Poppins'] text-sm font-semibold uppercase tracking-wider text-gray-500">
+              Withdrawn
+            </span>
+          </div>
+        ) : offer.status === 'expired' ? (
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px]"
+          >
+            <span className="font-['Poppins'] text-sm font-semibold uppercase tracking-wider text-gray-500">
+              Expired
+            </span>
+          </div>
+        ) : null}
 
         {/* CONNECTOR LINE (Vector 9) between parts */}
         {offer.note && (

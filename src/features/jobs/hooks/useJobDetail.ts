@@ -105,11 +105,15 @@ export const useJobDetail = (jobId: string) => {
       if (uploadedFile || resumeId || coverLetter) {
         formData = new FormData();
         if (uploadedFile) formData.append('resume', uploadedFile);
-        else if (resumeId) formData.append('resume_url', resumeId);
+        else if (resumeId) {
+          formData.append('resume_url', resumeId);
+          if (resumeUrlOrName) formData.append('resume_file_name', resumeUrlOrName);
+        }
         if (coverLetter) formData.append('cover_note', coverLetter);
       } else if (resumeUrlOrName || resumeId) {
         jsonBody = {
           resume_url: resumeUrlOrName || resumeId,
+          resume_file_name: resumeUrlOrName || null,
           cover_note: coverLetter
         };
       }

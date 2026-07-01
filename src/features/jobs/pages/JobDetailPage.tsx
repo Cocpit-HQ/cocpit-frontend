@@ -463,13 +463,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
             <div className="flex-1 sm:flex-none flex justify-end items-center gap-3">
               {job.is_offer ? (
                 /* Offer state */
-                job.is_closed ? (
-                  <div className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-auto h-10 rounded-[24px]">
-                    <span className="font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#EF4444]">
-                      Job no longer available
-                    </span>
-                  </div>
-                ) : job.application_status === 'Accepted' ? (
+                job.application_status === 'Accepted' ? (
                   /* Accepted -> Chat */
                   <button
                     onClick={() => toast.success('Starting chat with recruiter...')}
@@ -482,6 +476,27 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                   <div className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[140px] h-10 rounded-[24px]">
                     <span className="w-[99px] h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#6B7280]">
                       Offer declined
+                    </span>
+                  </div>
+                ) : job.application_status === 'Withdrawn' ? (
+                  /* Withdrawn -> Offer withdrawn */
+                  <div className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[140px] h-10 rounded-[24px]">
+                    <span className="font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#EF4444]">
+                      Offer withdrawn
+                    </span>
+                  </div>
+                ) : job.application_status === 'Expired' ? (
+                  /* Expired -> Offer expired */
+                  <div className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[140px] h-10 rounded-[24px]">
+                    <span className="font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#EF4444]">
+                      Offer expired
+                    </span>
+                  </div>
+                ) : job.is_closed ? (
+                  /* Pending but closed */
+                  <div className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-auto h-10 rounded-[24px]">
+                    <span className="font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#EF4444]">
+                      Job no longer available
                     </span>
                   </div>
                 ) : (

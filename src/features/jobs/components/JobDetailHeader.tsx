@@ -8,6 +8,8 @@ interface JobDetailHeaderProps {
 }
 
 export const JobDetailHeader: React.FC<JobDetailHeaderProps> = ({ job }) => {
+  const [imgError, setImgError] = React.useState(false);
+
   const renderLogo = () => {
     if (job.company_logo === 'sphere') {
       return (
@@ -16,6 +18,20 @@ export const JobDetailHeader: React.FC<JobDetailHeaderProps> = ({ job }) => {
         </div>
       );
     }
+    
+    if (job.company_logo && !imgError) {
+      return (
+        <div className="w-16 h-16 bg-white rounded-3xl flex justify-center items-center overflow-hidden flex-shrink-0 shadow-sm border border-indigo-50">
+          <img 
+            src={job.company_logo} 
+            alt={`${job.company} logo`} 
+            className="w-full h-full object-contain"
+            onError={() => setImgError(true)}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className="w-16 h-16 bg-indigo-50 rounded-3xl flex justify-center items-center flex-shrink-0 shadow-sm border border-indigo-50">
         <Icon icon="hugeicons:job-search" className="w-7 h-7 text-indigo-500" />

@@ -74,12 +74,14 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
       setUploadedFile(file);
       setSelectedResumeId(null); // deselect recent resume
       toast.success(`Selected file: ${file.name}`);
+      setStep(2); // Automatically move to next step
     }
   };
 
   const handleResumeSelect = (id: string) => {
     setSelectedResumeId(id);
     setUploadedFile(null); // deselect uploaded file
+    setStep(2); // Automatically move to next step
   };
 
   const handleRemoveSelection = () => {

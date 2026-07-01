@@ -53,8 +53,8 @@ export function OffersTab({ isOwnProfile }: OffersTabProps) {
 
     if (!isOwnProfile) return null;
 
-    const statusBadge = (status: string) => {
-        switch (status) {
+    const statusBadge = (offer: JobOffer) => {
+        switch (offer.status) {
             case "pending":
                 return (
                     <Badge className="bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-0 gap-1">
@@ -63,9 +63,16 @@ export function OffersTab({ isOwnProfile }: OffersTabProps) {
                 );
             case "accepted":
                 return (
-                    <Badge className="bg-green-500/15 text-green-700 dark:text-green-400 border-0 gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Accepted
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                        {(offer.is_active === false || offer.job_status === 'CLOSED') && (
+                            <Badge className="bg-red-500/15 text-red-700 dark:text-red-400 border-0 gap-1">
+                                <AlertCircle className="w-3 h-3" /> Job Deleted
+                            </Badge>
+                        )}
+                        <Badge className="bg-green-500/15 text-green-700 dark:text-green-400 border-0 gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> Accepted
+                        </Badge>
+                    </div>
                 );
             case "declined":
                 return (
@@ -165,7 +172,7 @@ export function OffersTab({ isOwnProfile }: OffersTabProps) {
                                 </div>
 
                                 <div className="flex items-center gap-3 shrink-0">
-                                    {statusBadge(offer.status)}
+                                    {statusBadge(offer)}
                                 </div>
                             </div>
 

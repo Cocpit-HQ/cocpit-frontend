@@ -34,14 +34,37 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
     >
       {/* Top Row: Job Info and Badge */}
       <div className="self-stretch inline-flex justify-between items-start">
-        <div className="size- inline-flex flex-col justify-start items-start gap-2">
-          <div className="justify-start text-black text-base font-medium font-['Poppins'] leading-6">{job.title}</div>
-          <div className="justify-start text-gray-500 text-sm font-normal font-['Poppins'] leading-5">{job.company}</div>
-          {(job.work_type || job.job_type) && (
-            <div className="justify-start text-gray-500 text-sm font-normal font-['Poppins'] leading-5">
-              {job.work_type || job.job_type}
-            </div>
-          )}
+        <div className="flex justify-start items-start gap-3">
+          {/* Company Logo */}
+          <div className="w-12 h-12 rounded-xl flex-shrink-0 flex justify-center items-center overflow-hidden bg-indigo-50 border border-indigo-100">
+            {job.company_logo && job.company_logo !== 'sphere' ? (
+              <img 
+                src={job.company_logo} 
+                alt={`${job.company} logo`}
+                className="w-full h-full object-contain bg-white"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+            ) : job.company_logo === 'sphere' ? (
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm" />
+            ) : null}
+            <Icon 
+              icon="hugeicons:job-search" 
+              className={`w-6 h-6 text-indigo-500 ${(job.company_logo && job.company_logo !== 'sphere') ? 'hidden' : ''}`}
+            />
+          </div>
+
+          <div className="inline-flex flex-col justify-start items-start gap-1">
+            <div className="justify-start text-black text-base font-medium font-['Poppins'] leading-6">{job.title}</div>
+            <div className="justify-start text-gray-500 text-sm font-normal font-['Poppins'] leading-5">{job.company}</div>
+            {(job.work_type || job.job_type) && (
+              <div className="justify-start text-gray-500 text-sm font-normal font-['Poppins'] leading-5">
+                {job.work_type || job.job_type}
+              </div>
+            )}
+          </div>
         </div>
         <div onClick={(e) => e.stopPropagation()}>
           <Tooltip delayDuration={100}>
@@ -121,6 +144,12 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
               <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Offer accepted</span>
             ) : (job.offerStatus === 'declined' || job.application_status === 'Declined') ? (
               <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Offer declined</span>
+            ) : (job.offerStatus === 'withdrawn' || job.application_status === 'Withdrawn') ? (
+              <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Offer withdrawn</span>
+            ) : (job.offerStatus === 'expired' || job.application_status === 'Expired') ? (
+              <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Offer expired</span>
+            ) : job.is_closed ? (
+              <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Unavailable</span>
             ) : (
               <button
                 onClick={(e) => {

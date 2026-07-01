@@ -761,8 +761,10 @@ const mapBackendToJobOffer = (raw: any): JobOffer => {
     days_remaining: computeDaysRemaining(raw.expires_at),
     company_name: raw.company_display_name || raw.company_name,
     location: raw.location || 'Remote',
-    status: raw.status as 'pending' | 'accepted' | 'declined',
+    status: raw.status as 'pending' | 'accepted' | 'declined' | 'withdrawn' | 'expired',
     note: raw.message || undefined,
+    is_active: raw.is_active,
+    job_status: raw.job_status,
     recruiter: {
       id: raw.recruiter_id,
       name: raw.sent_by_name || 'Recruiter',
