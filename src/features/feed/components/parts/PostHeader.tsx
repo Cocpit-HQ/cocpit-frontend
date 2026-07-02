@@ -38,6 +38,7 @@ interface PostHeaderProps {
   title?: string | null;
   onNotInterested?: () => void;
   content?: string;
+  hideOptions?: boolean;
 }
 
 export const PostHeader = ({
@@ -45,7 +46,7 @@ export const PostHeader = ({
   isMe, isOwnPost, isCompanyPost, poll, shared_post, content,
   optionsBtnRef, showOptions, setShowOptions, optionsPos, setOptionsPos,
   onEdit, onDelete, onToggleVisibility, onShowAnalytics, onReport, onNotInterested,
-  location, tags, authorRole, title
+  location, tags, authorRole, title, hideOptions
 }: PostHeaderProps) => {
   const avatarSrc = authorAvatar || '/assets/pngegg.png';
   const { followUser, unfollowUser, isFollowing, isFollowLoading } = useSocial();
@@ -93,7 +94,7 @@ export const PostHeader = ({
   const authorLink = isCompanyPost ? `/organization/${authorSlug}` : `/profile/${authorSlug || authorId}`;
 
   return (
-    <div className="flex flex-row justify-between items-start p-0 gap-[8px] w-full">
+    <div className={`flex flex-row justify-between p-0 gap-[8px] w-full ${hideOptions ? 'items-center h-[56px] bg-white dark:bg-card' : 'items-start'}`}>
       {/* Author Info (Frame 2608571) */}
       <div
         onClick={(e) => {
@@ -112,13 +113,13 @@ export const PostHeader = ({
           <div className="flex items-center gap-1 h-[24px]">
             {isMe || (!isCompanyPost && !authorId) ? (
               <div className="flex items-baseline gap-1.5">
-                <h3 className="text-foreground text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)] cursor-default">
+                <h3 className={`text-[16px] leading-[24px] font-[family-name:var(--font-poppins)] cursor-default ${hideOptions ? 'font-normal text-[#000000] dark:text-foreground' : 'font-medium text-foreground'}`}>
                   {author}
                 </h3>
               </div>
             ) : (
               <Link href={authorLink} className=" flex items-baseline gap-1.5" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-foreground text-[16px] leading-[24px] font-medium font-[family-name:var(--font-poppins)]">
+                <h3 className={`text-[16px] leading-[24px] font-[family-name:var(--font-poppins)] ${hideOptions ? 'font-normal text-[#000000] dark:text-foreground' : 'font-medium text-foreground'}`}>
                   {author}
                 </h3>
               </Link>
@@ -133,7 +134,7 @@ export const PostHeader = ({
             )}
           </div>
           {!shared_post && (
-            <div className="text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-muted-foreground truncate w-full block" title={authorRole || title || ''}>
+            <div className={`text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] truncate w-full block ${hideOptions ? 'text-[#6B7280]' : 'text-muted-foreground'}`} title={authorRole || title || ''}>
               {authorRole || title || ''}
             </div>
           )}
@@ -141,9 +142,9 @@ export const PostHeader = ({
             const displayLocation = location ? location.split(',')[0].trim() : '';
             const truncatedLocation = displayLocation.length > 15 ? displayLocation.slice(0, 15) + '..' : displayLocation;
             return (
-              <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
+              <div className={`flex items-center text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] ${hideOptions ? 'gap-[8px] text-[#6B7280]' : 'gap-1.5 text-muted-foreground'}`}>
                 {location && <span title={location}>{truncatedLocation}</span>}
-                {location && timeAgo && !isRepostWithoutThoughts && <span className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />}
+                {location && timeAgo && !isRepostWithoutThoughts && <span className={`rounded-full shrink-0 ${hideOptions ? 'w-[6px] h-[6px] bg-[#6B7280]' : 'w-1 h-1 bg-muted-foreground/40'}`} />}
                 {timeAgo && !isRepostWithoutThoughts && <span className="shrink-0">{timeAgo}</span>}
               </div>
             );
@@ -159,6 +160,7 @@ export const PostHeader = ({
             <TaggedPeoplePopover tags={tags} />
           )}
 
+          {!hideOptions && (
           <div className="relative">
             <button
               ref={optionsBtnRef}
@@ -253,6 +255,7 @@ export const PostHeader = ({
               document.body
             )}
           </div>
+          )}
         </div>
       </div>
     </div>

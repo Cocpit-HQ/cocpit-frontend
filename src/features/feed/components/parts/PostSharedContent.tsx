@@ -65,25 +65,29 @@ export const PostSharedContent = ({
         </Link>
       ) : (
         <Link href={`/post/${shared_post.id}`} className="block">
-          <div className="feed-card-shell box-border flex flex-col items-start p-[12px] gap-[8px] w-full border border-[#EEF2FF] rounded-[12px] mt-[8px] shadow-[0px_2px_4px_0px_#6366F10D] overflow-hidden">
+          <div className="feed-card-shell box-border flex flex-col items-start p-[12px] gap-[8px] w-full border border-[#EEF2FF] dark:border-card-border-inner bg-white dark:bg-card rounded-[12px] mt-[8px] shadow-[0px_2px_4px_0px_#6366F10D] overflow-hidden">
             {/* Header (Frame 2608569) */}
-            <div className="flex flex-row items-center p-0 gap-[8px] w-full">
-              <div className="w-[32px] h-[32px] rounded-full overflow-hidden bg-muted">
+            <div className="flex flex-row items-center p-0 gap-[8px] w-full h-[56px]">
+              <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0 bg-muted">
                 <img src={shared_post.authorAvatar || '/assets/pngegg.png'} alt={shared_post.author} className="w-full h-full object-cover" />
               </div>
-              <div className="flex flex-col items-start p-0">
-                <span className="text-[16px] leading-[24px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
+              <div className="flex flex-col items-start p-0 min-w-0 overflow-hidden">
+                <span className="text-[16px] leading-[24px] font-[family-name:var(--font-poppins)] font-normal text-[#000000] dark:text-foreground truncate w-full block">
                   {shared_post.author}
                 </span>
-                <span className="text-[10px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-muted-foreground">
+                <span className="text-[10px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-[#6B7280] truncate w-full block">
                   {shared_post.authorHeadline || shared_post.title || 'Member'}
                 </span>
-                <div className="flex items-center gap-1.5 text-[10px] leading-[16px] text-muted-foreground font-normal font-[family-name:var(--font-poppins)]">
-                  {shared_post.location && <span>{shared_post.location}</span>}
+                <div className="flex items-center gap-[8px] text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)]">
+                  {shared_post.location && (() => {
+                    const displayLocation = shared_post.location.split(',')[0].trim();
+                    const truncatedLocation = displayLocation.length > 15 ? displayLocation.slice(0, 15) + '..' : displayLocation;
+                    return <span>{truncatedLocation}</span>;
+                  })()}
                   {shared_post.location && (shared_post.timeAgo || 'Recently') && (
-                    <span className="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                    <span className="w-[6px] h-[6px] rounded-full bg-[#6B7280] shrink-0" />
                   )}
-                  <span>{shared_post.timeAgo || 'Recently'}</span>
+                  <span className="shrink-0">{shared_post.timeAgo || 'Recently'}</span>
                 </div>
               </div>
             </div>
