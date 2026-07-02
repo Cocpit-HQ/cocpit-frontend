@@ -51,6 +51,14 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
   const [selectedCandId, setSelectedCandId] = useState<string | null>(null);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
   const { activeProfile, userCompanies } = useActiveProfile();
+  const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
+
+  const toggleNoteExpanded = (candidateId: string) => {
+    setExpandedNotes((prev) => ({
+      ...prev,
+      [candidateId]: !prev[candidateId],
+    }));
+  };
 
   const getCompanyId = useCallback(() => {
     if (activeProfile && activeProfile.type === 'COMPANY') {
@@ -76,7 +84,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
         userId: item.user_id,
         name: item.full_name || 'Anonymous User',
         role: item.headline || 'Candidate',
-        companyName: item.sent_by_name || 'Recruiter',
+        companyName: item.candidate_company_name || '',
         avatar: item.avatar_url || '',
         status: item.status === 'accepted' ? 'chat' : (item.status === 'pending' ? 'withdraw' : (item.status === 'declined' ? 'declined' : 'withdrawn')),
         note: item.message || undefined,
@@ -124,9 +132,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
 
   const activeCandidates = candidates;
 
-  // Load recruiter note if present from the first candidate who has a note
-  const noteCandidate = candidates.find(c => c.note);
-  const showNote = !!noteCandidate;
+  // Removed common note logic to support per-candidate notes instead
 
 
   return (
@@ -231,40 +237,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
 
       </div>
 
-      {/* Note Section (Frame 2609091) */}
-      {showNote ? (
-        <div className="w-[998px] flex flex-col items-start p-0 gap-[8px]">
-          {/* Note Title */}
-          <div className="w-[43px] h-[26px] flex items-center justify-center">
-            <span className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-center text-black">
-              Note
-            </span>
-          </div>
-
-          {/* Note Container (Frame 2609030) */}
-          <div className="w-[998px] box-border flex flex-col items-start p-[12px_16px] gap-[8px] bg-[#F9FAFF] border-l-2 border-l-[#6366F1] rounded-[0px_16px_16px_16px]">
-            {/* Sender Info Row (Frame 2609033) */}
-            <div className="flex flex-row justify-start items-center p-0 gap-[8px] w-[282px] h-[40px]">
-              <div className="w-[40px] h-[40px] rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 font-semibold font-['Poppins'] text-xs border border-slate-100">
-                {noteCandidate?.sentByName ? noteCandidate.sentByName.substring(0, 2).toUpperCase() : 'RC'}
-              </div>
-              <div className="flex flex-col justify-center items-start">
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] uppercase">
-                  {noteCandidate?.sentByName || 'RECRUITER'}
-                </span>
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] uppercase">
-                  RECRUITER
-                </span>
-              </div>
-            </div>
-
-            {/* Note Content */}
-            <div className="w-[966px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280]">
-              &ldquo;{noteCandidate?.note}&rdquo;
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {/* Note section removed here to display per-candidate notes below */}
 
       {/* Candidates List Section (Frame 2609090) */}
       <div className="w-[998px] flex flex-col items-start p-0 gap-[16px]">
@@ -292,71 +265,122 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
             </div>
           ) : (
             activeCandidates.map((cand) => (
-              /* Candidate card Frame 2608732 */
+              /* Candidate card container containing details row and note */
               <div
                 key={cand.id}
-                className="w-[998px] h-[60px] bg-white border border-[#EEF2FF]/60 rounded-[12px] flex flex-row justify-between items-center p-[8px_16px] box-border"
+                className="w-[998px] bg-white border border-[#EEF2FF]/60 rounded-[12px] flex flex-col overflow-hidden"
               >
-                {/* User Frame 2608774 */}
-                <div className="flex flex-row items-start p-0 gap-[8px] h-[44px]">
-                  {/* User Avatar */}
-                  {cand.avatar ? (
-                    <img
-                      className="w-[40px] h-[40px] rounded-full object-cover"
-                      src={cand.avatar}
-                      alt={cand.name}
-                    />
-                  ) : (
-                    <div className="w-[40px] h-[40px] rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 font-semibold font-['Poppins'] text-sm border border-slate-100">
-                      {cand.name.substring(0, 2).toUpperCase()}
+                {/* Candidate card Row Frame 2608732 */}
+                <div className="w-[998px] h-[60px] flex flex-row justify-between items-center p-[8px_16px] box-border">
+                  {/* User Frame 2608774 */}
+                  <div className="flex flex-row items-start p-0 gap-[8px] h-[44px]">
+                    {/* User Avatar */}
+                    {cand.avatar ? (
+                      <img
+                        className="w-[40px] h-[40px] rounded-full object-cover"
+                        src={cand.avatar}
+                        alt={cand.name}
+                      />
+                    ) : (
+                      <div className="w-[40px] h-[40px] rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 font-semibold font-['Poppins'] text-sm border border-slate-100">
+                        {cand.name.substring(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    {/* Text Frame 2609008 */}
+                    <div className="flex flex-col justify-center items-start h-[44px]">
+                      <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black text-left">
+                        {cand.name}
+                      </span>
+                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] text-left">
+                        {cand.role}{cand.companyName ? ` at ${cand.companyName}` : ''}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Button Frame 2608617 */}
+                  {cand.status === 'chat' && (
+                    <button
+                      onClick={() => router.push('/messaging')}
+                      type="button"
+                      className="box-sizing: border-box w-[120px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:opacity-90 transition-all active:scale-95 cursor-pointer"
+                    >
+                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white">
+                        Chat
+                      </span>
+                    </button>
+                  )}
+                  {cand.status === 'withdraw' && (
+                    <button
+                      onClick={() => handleWithdrawClick(cand.id)}
+                      type="button"
+                      className="box-sizing: border-box w-[120px] h-[40px] border border-[#6B7280] rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:bg-slate-50 transition-all active:scale-95 bg-white"
+                    >
+                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#6B7280]">
+                        Withdraw
+                      </span>
+                    </button>
+                  )}
+                  {cand.status === 'declined' && (
+                    <div className="box-sizing: border-box w-[120px] h-[40px] border border-red-200 bg-red-50/50 rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px]">
+                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-red-500 font-semibold">
+                        Declined
+                      </span>
                     </div>
                   )}
-                  {/* Text Frame 2609008 */}
-                  <div className="flex flex-col justify-center items-start h-[44px]">
-                    <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black text-left">
-                      {cand.name}
-                    </span>
-                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] text-left">
-                      {cand.role} at {cand.companyName}
-                    </span>
-                  </div>
+                  {cand.status === 'withdrawn' && (
+                    <div className="box-sizing: border-box w-[120px] h-[40px] border border-gray-200 bg-gray-50 rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px]">
+                      <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-gray-400">
+                        Withdrawn
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Button Frame 2608617 */}
-                {cand.status === 'chat' && (
-                  <button
-                    onClick={() => router.push('/messaging')}
-                    type="button"
-                    className="box-sizing: border-box w-[120px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:opacity-90 transition-all active:scale-95 cursor-pointer"
-                  >
-                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white">
-                      Chat
-                    </span>
-                  </button>
-                )}
-                {cand.status === 'withdraw' && (
-                  <button
-                    onClick={() => handleWithdrawClick(cand.id)}
-                    type="button"
-                    className="box-sizing: border-box w-[120px] h-[40px] border border-[#6B7280] rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:bg-slate-50 transition-all active:scale-95 bg-white"
-                  >
-                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#6B7280]">
-                      Withdraw
-                    </span>
-                  </button>
-                )}
-                {cand.status === 'declined' && (
-                  <div className="box-sizing: border-box w-[120px] h-[40px] border border-red-200 bg-red-50/50 rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px]">
-                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-red-500 font-semibold">
-                      Declined
-                    </span>
-                  </div>
-                )}
-                {cand.status === 'withdrawn' && (
-                  <div className="box-sizing: border-box w-[120px] h-[40px] border border-gray-200 bg-gray-50 rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px]">
-                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-gray-400">
-                      Withdrawn
-                    </span>
+                {/* Expandable note bar */}
+                {cand.note && (
+                  <div className="w-full border-t border-[#EEF2FF] bg-[#F9FAFF] flex flex-col items-start transition-all duration-300">
+                    {/* Collapsed Bar */}
+                    <div
+                      onClick={() => toggleNoteExpanded(cand.id)}
+                      className="w-full flex flex-row justify-between items-center p-[10px_16px] cursor-pointer hover:bg-slate-50/50 select-none"
+                    >
+                      <div className="flex-1 flex flex-row items-center gap-[4px] min-w-0">
+                        <span className="font-['Poppins'] font-medium text-[12px] leading-[16px] text-[#6366F1] flex-shrink-0">
+                          note :
+                        </span>
+                        <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] truncate flex-1">
+                          {cand.note}
+                        </span>
+                      </div>
+                      <div className="w-[20px] h-[20px] rounded-full border border-black flex items-center justify-center flex-shrink-0">
+                        <Icon
+                          icon={expandedNotes[cand.id] ? "lucide:chevron-up" : "lucide:chevron-down"}
+                          className="w-3.5 h-3.5 text-black"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Expanded Detail Box */}
+                    {expandedNotes[cand.id] && (
+                      <div className="w-full px-[16px] pb-[16px] pt-1 flex flex-col gap-2 animate-in fade-in duration-200">
+                        <div className="flex flex-row justify-start items-center gap-[8px] w-full h-[40px] border-t border-dashed border-[#EEF2FF] pt-2 mt-1">
+                          <div className="w-[32px] h-[32px] rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 font-semibold font-['Poppins'] text-xs border border-slate-100">
+                            {cand.sentByName ? cand.sentByName.substring(0, 2).toUpperCase() : 'RC'}
+                          </div>
+                          <div className="flex flex-col justify-center items-start">
+                            <span className="font-['Poppins'] font-normal text-[11px] leading-[14px] text-[#6366F1] uppercase">
+                              {cand.sentByName || 'RECRUITER'}
+                            </span>
+                            <span className="font-['Poppins'] font-normal text-[10px] leading-[12px] text-muted-foreground uppercase">
+                              RECRUITER
+                            </span>
+                          </div>
+                        </div>
+                        <p className="font-['Poppins'] font-normal text-[12px] leading-[18px] text-[#6B7280] whitespace-pre-line mt-1">
+                          {cand.note}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
