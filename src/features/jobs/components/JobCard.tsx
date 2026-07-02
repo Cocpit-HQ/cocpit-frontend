@@ -4,6 +4,7 @@ import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { getCurrencyIcon } from '../utils/currency.utils';
+import { toast } from 'sonner';
 
 interface JobCardProps {
   job: Job;
@@ -143,15 +144,24 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
         <div className="flex-1 flex flex-row items-center gap-4 justify-end">
           {job.is_offer ? (
             (job.offerStatus === 'accepted' || job.application_status === 'Accepted') ? (
-              <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Offer accepted</span>
+              <div className="flex flex-row items-center gap-3">
+                <span className="text-gray-400 text-sm font-['Poppins'] leading-5">Offer accepted</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toast.success('Starting chat with recruiter...');
+                  }}
+                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] hover:bg-[#6366F1]/90 text-white transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
+                >
+                  Chat now
+                </button>
+              </div>
             ) : (job.offerStatus === 'declined' || job.application_status === 'Declined') ? (
               <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Offer declined</span>
             ) : (job.offerStatus === 'withdrawn' || job.application_status === 'Withdrawn') ? (
               <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Offer withdrawn</span>
             ) : (job.offerStatus === 'expired' || job.application_status === 'Expired') ? (
               <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Offer expired</span>
-            ) : job.is_closed ? (
-              <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Unavailable</span>
             ) : (
               <>
                 <button

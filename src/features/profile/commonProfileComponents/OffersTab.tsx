@@ -64,11 +64,15 @@ export function OffersTab({ isOwnProfile }: OffersTabProps) {
             case "accepted":
                 return (
                     <div className="flex items-center gap-2">
-                        {(offer.is_active === false || offer.job_status === 'CLOSED') && (
+                        {offer.is_active === false ? (
                             <Badge className="bg-red-500/15 text-red-700 dark:text-red-400 border-0 gap-1">
                                 <AlertCircle className="w-3 h-3" /> Job Deleted
                             </Badge>
-                        )}
+                        ) : offer.job_status === 'CLOSED' ? (
+                            <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border-0 gap-1">
+                                <AlertCircle className="w-3 h-3" /> Job Closed
+                            </Badge>
+                        ) : null}
                         <Badge className="bg-green-500/15 text-green-700 dark:text-green-400 border-0 gap-1">
                             <CheckCircle2 className="w-3 h-3" /> Accepted
                         </Badge>

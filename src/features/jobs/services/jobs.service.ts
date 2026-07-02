@@ -289,6 +289,27 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
     if (job.is_offer && offerResponse) {
       status = offerResponse === 'accept' ? 'Accepted' : 'Declined';
     }
+
+    let offer_days_left = job.offer_days_left;
+    let offer_expiry_text = job.offer_expiry_text;
+    
+    const offerExpiresAt = job.expires_at || job.offer_expires_at;
+    if (offerExpiresAt) {
+      const expiryDate = new Date(offerExpiresAt);
+      const now = new Date();
+      const diffMs = expiryDate.getTime() - now.getTime();
+      offer_days_left = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      if (offer_days_left <= 0) {
+        offer_expiry_text = 'Offer expired';
+        status = 'Expired';
+      } else {
+        offer_expiry_text = `Ends in ${offer_days_left} ${offer_days_left === 1 ? 'day' : 'days'}`;
+      }
+    } else {
+      offer_days_left = offer_days_left || 7;
+      offer_expiry_text = offer_expiry_text || 'Ends in 7 days';
+    }
+
     if (status) {
       status = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
     }
@@ -321,8 +342,8 @@ export const getJobById = async (jobId: string): Promise<Job | null> => {
       recruiter_id: job.recruiter_id,
       application_status: status,
       offer_id: job.offer_id,
-      offer_days_left: job.offer_days_left || 7,
-      offer_expiry_text: job.offer_expiry_text || 'Ends in 7 days',
+      offer_days_left,
+      offer_expiry_text,
       recruiter_name: job.recruiter_name,
       recruiter_title: job.recruiter_title || 'HR Manager',
       recruiter_avatar: job.recruiter_avatar,
@@ -498,6 +519,24 @@ export const getMyOffers = async (): Promise<Job[]> => {
       if (offerResponse) {
         status = offerResponse === 'accept' ? 'Accepted' : 'Declined';
       }
+
+      let offer_days_left = 7;
+      let offer_expiry_text = 'Ends in 7 days';
+      
+      const offerExpiresAt = job.expires_at || job.offer_expires_at;
+      if (offerExpiresAt) {
+        const expiryDate = new Date(offerExpiresAt);
+        const now = new Date();
+        const diffMs = expiryDate.getTime() - now.getTime();
+        offer_days_left = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        if (offer_days_left <= 0) {
+          offer_expiry_text = 'Offer expired';
+          status = 'Expired';
+        } else {
+          offer_expiry_text = `Ends in ${offer_days_left} ${offer_days_left === 1 ? 'day' : 'days'}`;
+        }
+      }
+
       if (status) {
         status = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
       }
@@ -521,14 +560,14 @@ export const getMyOffers = async (): Promise<Job[]> => {
         is_saved: useJobStore.getState().savedJobIds.has(job.job_id),
         is_applied: useJobStore.getState().appliedJobIds.has(job.job_id),
         is_offer: true,
-        is_closed: false,
+        is_closed: job.job_status === 'CLOSED' || job.is_active === false,
         is_followed: useJobStore.getState().followedCompanies.has(job.company_name),
         org_id: job.org_id,
         recruiter_id: job.recruiter_id,
         application_status: status,
         offer_id: job.offer_id,
-        offer_days_left: 7,
-        offer_expiry_text: 'Ends in 7 days',
+        offer_days_left,
+        offer_expiry_text,
         recruiter_name: job.sent_by_name,
         recruiter_title: 'HR Manager',
         recruiter_avatar: undefined,

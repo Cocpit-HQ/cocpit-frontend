@@ -139,7 +139,8 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
               )}
 
               {/* Offer timeline indicator */}
-              {job.is_offer && job.offer_days_left !== undefined && (
+              {job.is_offer && job.offer_days_left !== undefined && 
+               !['Accepted', 'Declined', 'Withdrawn', 'Expired'].includes(job.application_status || '') && (
                 <div className="flex flex-row items-center gap-2 h-8">
                   {/* Calendar icon from page details card */}
                   <Icon
@@ -491,13 +492,6 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                   <div className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[140px] h-10 rounded-[24px]">
                     <span className="font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#EF4444]">
                       Offer expired
-                    </span>
-                  </div>
-                ) : job.is_closed ? (
-                  /* Pending but closed */
-                  <div className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-auto h-10 rounded-[24px]">
-                    <span className="font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#EF4444]">
-                      Job no longer available
                     </span>
                   </div>
                 ) : (

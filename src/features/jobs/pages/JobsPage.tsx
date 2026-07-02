@@ -721,11 +721,6 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                         >
                           {job.application_status?.toLowerCase() === "declined" ? (
                             <div className="hidden md:block w-[120px]" />
-                          ) : job.application_status?.toLowerCase() === "in-review" ? (
-                            <span className="text-[#EF4444] text-[14px] font-normal font-['Poppins'] text-left md:text-center leading-[20px] w-full md:w-[120px]">
-                              This job is no
-                              <br className="hidden md:inline" /> longer available
-                            </span>
                           ) : job.is_available === false ? (
                             <span className="text-[#EF4444] text-[14px] font-normal font-['Poppins'] text-left md:text-center leading-[20px] w-full md:w-[120px]">
                               This job is no

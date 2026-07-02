@@ -87,11 +87,15 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
             onClick={(e) => e.stopPropagation()}
             className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px] gap-[8px]"
           >
-            {(offer.is_active === false || offer.job_status === 'CLOSED') && (
+            {offer.is_active === false ? (
               <span className="font-['Poppins'] text-[12px] font-semibold text-red-500 bg-red-50 px-2 py-1 rounded-md">
                 Job Deleted
               </span>
-            )}
+            ) : offer.job_status === 'CLOSED' ? (
+              <span className="font-['Poppins'] text-[12px] font-semibold text-amber-500 bg-amber-50 px-2 py-1 rounded-md">
+                Job Closed
+              </span>
+            ) : null}
             <button
               onClick={() => {
                 if (offer.recruiter.id) {
