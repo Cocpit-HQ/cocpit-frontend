@@ -51,15 +51,53 @@ export function CompanyOnboardingPage() {
 
   // Derived validation state
   const isNextDisabled = React.useMemo(() => {
+    if (currentStage === 1) {
+      const yearTrimmed = foundedYear.trim();
+      const isYearInvalid = yearTrimmed.length > 0 && (
+        yearTrimmed.length !== 4 ||
+        parseInt(yearTrimmed, 10) < 1000 ||
+        parseInt(yearTrimmed, 10) > new Date().getFullYear()
+      );
+      return !organizationName.trim() || !logoPreview || isYearInvalid;
+    }
+    if (currentStage === 2) {
+      return (
+        !officialEmail.trim() ||
+        !phoneNumber.trim() ||
+        !hqCountry.trim() ||
+        !hqCity.trim() ||
+        !headline.trim() ||
+        !isEmailVerified ||
+        !isPhoneVerified
+      );
+    }
     if (currentStage === 3) {
       return documents.length === 0 || documents.every(d => !d.file);
     }
     return false;
-  }, [currentStage, documents]);
+  }, [
+    currentStage,
+    organizationName,
+    logoPreview,
+    officialEmail,
+    phoneNumber,
+    hqCountry,
+    hqCity,
+    headline,
+    isEmailVerified,
+    isPhoneVerified,
+    documents,
+  ]);
 
   const handleNext = useCallback(async () => {
     if (currentStage === 1) {
-      const hasErrors = !organizationName.trim() || !logoPreview;
+      const yearTrimmed = foundedYear.trim();
+      const isYearInvalid = yearTrimmed.length > 0 && (
+        yearTrimmed.length !== 4 ||
+        parseInt(yearTrimmed, 10) < 1000 ||
+        parseInt(yearTrimmed, 10) > new Date().getFullYear()
+      );
+      const hasErrors = !organizationName.trim() || !logoPreview || isYearInvalid;
       if (hasErrors) {
         updateField('showValidationErrors', true);
         return;

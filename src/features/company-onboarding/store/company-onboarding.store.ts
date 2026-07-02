@@ -36,7 +36,7 @@ const initialState = {
 
   // Stage 3: Verification
   countryOfOperation: '',
-  documents: [] as DocumentData[],
+  documents: [{ id: 'doc-1', file: null, preview: null }] as DocumentData[],
   showValidationErrors: false,
 };
 

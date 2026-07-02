@@ -303,17 +303,20 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                   if (emailDomainError) setEmailDomainError('');
                 }}
                 placeholder="contact@company.com"
-                className={`w-[309px] h-[54px] px-6 rounded-[24px] border focus:outline-none font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] placeholder:text-[#6B7280] dark:placeholder:text-[#6B7280] transition-colors flex-none ${emailDomainError || (showValidationErrors && (!officialEmail.trim() || !isEmailVerified))
+                className={`h-[54px] px-6 rounded-[24px] border focus:outline-none font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] placeholder:text-[#6B7280] dark:placeholder:text-[#6B7280] transition-all flex-none ${
+                  isEmailVerified ? 'w-[412px]' : 'w-[309px]'
+                } ${
+                  emailDomainError || (showValidationErrors && (!officialEmail.trim() || !isEmailVerified))
                     ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171]'
                     : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF]'
-                  }`}
+                }`}
               />
-              <button
-                onClick={handleVerifyEmailClick}
-                disabled={isEmailVerified || verifyingEmail || !officialEmail.trim() || showEmailCode}
-                className={`w-[95px] h-[54px] rounded-[24px] border flex items-center justify-center font-poppins font-normal text-[16px] leading-[24px] transition-all flex-none select-none ${isEmailVerified
-                    ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/50 text-green-600 dark:text-green-400 font-semibold cursor-default'
-                    : verifyingEmail
+              {!isEmailVerified && (
+                <button
+                  onClick={handleVerifyEmailClick}
+                  disabled={verifyingEmail || !officialEmail.trim() || showEmailCode}
+                  className={`w-[95px] h-[54px] rounded-[24px] border flex items-center justify-center font-poppins font-normal text-[16px] leading-[24px] transition-all flex-none select-none ${
+                    verifyingEmail
                       ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 text-blue-500 dark:text-blue-400 cursor-wait'
                       : showEmailCode
                         ? 'bg-white dark:bg-[#1A2236] border-[#E0E0E7] dark:border-[#1C2840] text-[#6B7280] dark:text-[#A1A8B3] cursor-not-allowed'
@@ -321,11 +324,12 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                           ? 'bg-[#1A73E8] border-[#1A73E8] text-white hover:bg-[#1557b0] active:scale-[0.98]'
                           : 'bg-white dark:bg-[#1A2236] border-[#E0E0E7] dark:border-[#1C2840] text-[#6B7280] dark:text-[#A1A8B3] cursor-not-allowed'
                   }`}
-              >
-                {isEmailVerified ? 'Verified' : verifyingEmail ? (
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                ) : 'Verify'}
-              </button>
+                >
+                  {verifyingEmail ? (
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                  ) : 'Verify'}
+                </button>
+              )}
             </div>
             {/* Email domain validation error */}
             {emailDomainError && (
@@ -405,7 +409,9 @@ const Stage2Presence = React.memo(function Stage2Presence() {
               </label>
             </div>
             <div className="w-[412px] h-[54px] flex flex-row items-start p-0 gap-2 flex-none">
-              <div className="w-[309px] h-[54px] relative flex-none">
+              <div className={`h-[54px] relative flex-none transition-all ${
+                isPhoneVerified ? 'w-[412px]' : 'w-[309px]'
+              }`}>
                 <div className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center gap-1 cursor-pointer select-none">
                   <span className="text-[20px] leading-none">🇮🇳</span>
                   <svg className="w-3.5 h-3.5 text-black dark:text-[#FFFFFF]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -430,12 +436,12 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                     }`}
                 />
               </div>
-              <button
-                onClick={handleVerifyPhoneClick}
-                disabled={isPhoneVerified || verifyingPhone || !phoneNumber.trim() || showPhoneCode}
-                className={`w-[95px] h-[54px] rounded-[24px] border flex items-center justify-center font-poppins font-normal text-[16px] leading-[24px] transition-all flex-none select-none ${isPhoneVerified
-                    ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900/50 text-green-600 dark:text-green-400 font-semibold cursor-default'
-                    : verifyingPhone
+              {!isPhoneVerified && (
+                <button
+                  onClick={handleVerifyPhoneClick}
+                  disabled={verifyingPhone || !phoneNumber.trim() || showPhoneCode}
+                  className={`w-[95px] h-[54px] rounded-[24px] border flex items-center justify-center font-poppins font-normal text-[16px] leading-[24px] transition-all flex-none select-none ${
+                    verifyingPhone
                       ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/50 text-blue-500 dark:text-blue-400 cursor-wait'
                       : showPhoneCode
                         ? 'bg-white dark:bg-[#1A2236] border-[#E0E0E7] dark:border-[#1C2840] text-[#6B7280] dark:text-[#A1A8B3] cursor-not-allowed'
@@ -443,11 +449,12 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                           ? 'bg-[#1A73E8] border-[#1A73E8] text-white hover:bg-[#1557b0] active:scale-[0.98]'
                           : 'bg-white dark:bg-[#1A2236] border-[#E0E0E7] dark:border-[#1C2840] text-[#6B7280] dark:text-[#A1A8B3] cursor-not-allowed'
                   }`}
-              >
-                {isPhoneVerified ? 'Verified' : verifyingPhone ? (
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                ) : 'Verify'}
-              </button>
+                >
+                  {verifyingPhone ? (
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                  ) : 'Verify'}
+                </button>
+              )}
             </div>
             {/* Phone length validation error */}
             {phoneLengthError && (

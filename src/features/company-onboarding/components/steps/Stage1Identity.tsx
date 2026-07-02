@@ -20,6 +20,17 @@ const Stage1Identity = React.memo(function Stage1Identity() {
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  const isYearError = React.useMemo(() => {
+    const trimmed = foundedYear.trim();
+    if (!trimmed) return false;
+    const year = parseInt(trimmed, 10);
+    const currentYear = new Date().getFullYear();
+    if (trimmed.length === 4) {
+      return year < 1000 || year > currentYear;
+    }
+    return showValidationErrors;
+  }, [foundedYear, showValidationErrors]);
+
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -86,7 +97,9 @@ const Stage1Identity = React.memo(function Stage1Identity() {
         {/* Card 2 - Founded Year */}
         <div className="w-[540px] h-[130px] bg-white dark:bg-[#111827] border border-slate-100/50 dark:border-[#1C2840] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none rounded-[12px] p-6 flex flex-col gap-2 flex-none">
           <div className="w-[492px] h-[20px] flex flex-col justify-center flex-none">
-            <label className="w-[492px] h-[20px] font-poppins font-medium text-[14px] leading-[20px] tracking-[0.14px] text-black dark:text-[#A1A8B3] flex items-center">
+            <label className={`w-[492px] h-[20px] font-poppins font-medium text-[14px] leading-[20px] tracking-[0.14px] flex items-center transition-colors ${
+              isYearError ? 'text-[#EF4444] dark:text-[#F87171]' : 'text-black dark:text-[#A1A8B3]'
+            }`}>
               Founded Year
             </label>
           </div>
@@ -95,7 +108,11 @@ const Stage1Identity = React.memo(function Stage1Identity() {
             value={foundedYear}
             onChange={handleYearChange}
             placeholder="2024"
-            className="w-[492px] h-[54px] px-6 rounded-[24px] border border-[#E0E0E7] dark:border-[#1C2840] focus:outline-none focus:border-blue-500 dark:focus:border-[#82B8FF] font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] placeholder:text-[#6B7280] dark:placeholder:text-[#6B7280] transition-colors flex-none"
+            className={`w-[492px] h-[54px] px-6 rounded-[24px] border focus:outline-none font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] placeholder:text-[#6B7280] dark:placeholder:text-[#6B7280] transition-colors flex-none ${
+              isYearError
+                ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171]'
+                : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF]'
+            }`}
           />
         </div>
 
@@ -175,15 +192,15 @@ const Stage1Identity = React.memo(function Stage1Identity() {
         />
 
         {/* Frame 2609064 - Upload Zone Wrapper */}
-        <div className="w-[380px] h-[154px] flex flex-col items-center justify-center pb-4 flex-none">
+        <div className="w-[380px] h-[180px] flex flex-col items-center justify-center pb-4 flex-none">
           {logoPreview ? (
             <div className="flex flex-col items-center justify-center flex-none">
-              <div className="w-[120px] h-[120px] relative rounded-[12px] overflow-hidden border-[4px] border-white dark:border-[#1A2236] shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] bg-white dark:bg-[#1A2236] flex items-center justify-center p-2 flex-none">
+              <div className="w-[120px] h-[120px] relative rounded-[12px] overflow-hidden border-[4px] border-white dark:border-[#1A2236] shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] bg-white dark:bg-[#1A2236] flex items-center justify-center p-0 flex-none">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={logoPreview}
                   alt="Logo Preview"
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-cover block"
                 />
               </div>
               <span 
