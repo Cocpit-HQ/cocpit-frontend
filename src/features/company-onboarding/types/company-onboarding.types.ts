@@ -15,6 +15,10 @@ export interface CompanyOnboardingState {
   // Navigation
   currentStage: number;
   organizationType: OrganizationType | null;
+  orgId: string | null;
+  isSubmitting: boolean;
+  apiError: string | null;
+  slug: string | null;
 
   // Stage 1: Identity
   organizationName: string;
@@ -56,4 +60,8 @@ export interface CompanyOnboardingState {
   removeDocument: (id: string) => void;
   updateDocument: (id: string, file: File) => void;
   resetStore: () => void;
+  setOrgId: (id: string) => void;
+  setIsSubmitting: (val: boolean) => void;
+  setApiError: (msg: string | null) => void;
+  hydrateFromProgress: (orgData: any, docs: any[]) => void;
 }

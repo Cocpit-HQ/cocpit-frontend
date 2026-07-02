@@ -81,7 +81,7 @@
     --accent: #2d3548;
     --accent-foreground: #ffffff;
 
-    --destructive: #ef4444;
+    --destructive: #F87171;
     --destructive-foreground: #ffffff;
 
     --border: #2d3548;
@@ -135,6 +135,9 @@
     --profile-text: #000000;
     --edit-btn-hover: #2A3150;
     --subtle: #2A3150;
+
+    /* Company Onboarding */
+    --onboarding-accent: #82B8FF;
   }
 
   [data-theme="navy"] {
@@ -153,7 +156,7 @@
     --muted-foreground: #9ca3af;
     --accent: #2d3548;
     --accent-foreground: #ffffff;
-    --destructive: #ef4444;
+    --destructive: #F87171;
     --destructive-foreground: #ffffff;
     --border: #2d3548;
     --input: #2d3548;

@@ -15,9 +15,12 @@ export const INDUSTRY_OPTIONS = [
 ];
 
 export const COMPANY_SIZE_OPTIONS = [
-  { label: '1-10 Members', value: '1-10' },
-  { label: '11-50 Members', value: '11-50' },
-  { label: '51-200 Members', value: '51-200' },
-  { label: '201-1000 Members', value: '201-1000' },
-  { label: '1000+ Members', value: '1000+' },
+  { label: '1–10 members', value: '1-10' },
+  { label: '11–50 members', value: '11-50' },
+  { label: '51–200 members', value: '51-200' },
+  { label: '201–500 members', value: '201-500' },
+  { label: '501–1,000 members', value: '501-1000' },
+  { label: '1,001–5,000 members', value: '1001-5000' },
+  { label: '5,001–10,000 members', value: '5001-10000' },
+  { label: '10,000+ members', value: '10000+' },
 ];

@@ -252,7 +252,7 @@ export function ProfileSwitcher({
 
         <div className="pt-2 border-t border-profile-active-border space-y-1">
           <DropdownMenuItem
-            onClick={() => router.push("/create-organization")}
+            onClick={() => router.push("/company-onboarding")}
             className="profile-switcher-item flex items-center gap-3 p-2 h-[44px] cursor-pointer rounded-[12px] transition-colors focus:bg-profile-hover hover:bg-profile-hover focus:text-inherit outline-none"
           >
             <Plus className="w-5 h-5" />

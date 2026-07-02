@@ -21,23 +21,23 @@ const StageProgressBar = React.memo(function StageProgressBar({ currentStage }: 
         const isCompleted = currentStage > stage.num;
 
         // Col1 (Left progress line) status
-        let leftLineColor = 'bg-[#E0E0E7]';
+        let leftLineColor = 'bg-[#E0E0E7] dark:bg-[#1C2840]';
         if (stage.num === 1) {
           leftLineColor = 'bg-transparent'; // No left line on first step
         } else if (stage.num === 2) {
-          leftLineColor = currentStage >= 2 ? 'bg-[#1A73E8]' : 'bg-[#E0E0E7]';
+          leftLineColor = currentStage >= 2 ? 'bg-[#1A73E8]' : 'bg-[#E0E0E7] dark:bg-[#1C2840]';
         } else if (stage.num === 3) {
-          leftLineColor = currentStage >= 3 ? 'bg-[#1A73E8]' : 'bg-[#E0E0E7]';
+          leftLineColor = currentStage >= 3 ? 'bg-[#1A73E8]' : 'bg-[#E0E0E7] dark:bg-[#1C2840]';
         }
 
         // Col3 (Right progress line) status
-        let rightLineColor = 'bg-[#E0E0E7]';
+        let rightLineColor = 'bg-[#E0E0E7] dark:bg-[#1C2840]';
         if (stage.num === 3) {
           rightLineColor = 'bg-transparent'; // No right line on last step
         } else if (stage.num === 1) {
-          rightLineColor = currentStage >= 2 ? 'bg-[#1A73E8]' : 'bg-[#E0E0E7]';
+          rightLineColor = currentStage >= 2 ? 'bg-[#1A73E8]' : 'bg-[#E0E0E7] dark:bg-[#1C2840]';
         } else if (stage.num === 2) {
-          rightLineColor = currentStage >= 3 ? 'bg-[#1A73E8]' : 'bg-[#E0E0E7]';
+          rightLineColor = currentStage >= 3 ? 'bg-[#1A73E8]' : 'bg-[#E0E0E7] dark:bg-[#1C2840]';
         }
 
         return (
@@ -56,7 +56,7 @@ const StageProgressBar = React.memo(function StageProgressBar({ currentStage }: 
               {/* Col2 - Circle Indicator */}
               <div className="w-4 h-4 flex flex-row justify-center items-center p-0 gap-[10px] flex-none relative">
                 {isActive && (
-                  <div className="absolute w-4 h-4 rounded-full border-[4px] border-[#1A73E8] bg-white flex-none" />
+                  <div className="absolute w-4 h-4 rounded-full border-[4px] border-[#1A73E8] bg-white dark:bg-[#0B0F19] flex-none" />
                 )}
                 {isCompleted && (
                   <div className="absolute w-4 h-4 rounded-full bg-[#1A73E8] flex items-center justify-center flex-none">
@@ -66,7 +66,7 @@ const StageProgressBar = React.memo(function StageProgressBar({ currentStage }: 
                   </div>
                 )}
                 {!isActive && !isCompleted && (
-                  <div className="absolute w-4 h-4 rounded-full border-[4px] border-white bg-[#E0E0E7] shadow-[0_0_0_1px_#E0E0E7] flex-none" />
+                  <div className="absolute w-4 h-4 rounded-full border-[4px] border-white dark:border-[#0B0F19] bg-[#E0E0E7] dark:bg-[#1C2840] shadow-[0_0_0_1px_#E0E0E7] dark:shadow-[0_0_0_1px_#1C2840] flex-none" />
                 )}
               </div>
 
@@ -81,7 +81,7 @@ const StageProgressBar = React.memo(function StageProgressBar({ currentStage }: 
             <div className={`${stage.textWidthClass} h-[18px] flex flex-row justify-center items-center px-4 flex-none`}>
               <span 
                 className={`${stage.innerWidthClass} h-[18px] text-[16px] leading-[18px] font-poppins font-normal text-center flex items-center justify-center tracking-[-0.32px] flex-none transition-colors duration-300
-                  ${isActive ? 'text-[#1A73E8]' : 'text-[#6B7280]'}
+                  ${isActive ? 'text-[#1A73E8]' : 'text-[#6B7280] dark:text-[#A1A8B3]'}
                 `}
               >
                 {stage.label}

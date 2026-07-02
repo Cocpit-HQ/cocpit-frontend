@@ -3,12 +3,7 @@
 import React, { useCallback, useState } from 'react';
 import { Icon } from '@iconify/react';
 import { useCompanyOnboardingStore } from '../../store/company-onboarding.store';
-
-const COUNTRY_OPTIONS = [
-  { label: 'India', value: 'IN' },
-  { label: 'Singapore', value: 'SG' },
-  { label: 'United Arab Emirates', value: 'AE' },
-];
+import { getCountries, getProfilePreview } from '../../services/company-onboarding.api';
 
 const Stage3Verification = React.memo(function Stage3Verification() {
   const organizationName = useCompanyOnboardingStore(s => s.organizationName);
@@ -24,6 +19,28 @@ const Stage3Verification = React.memo(function Stage3Verification() {
   const addDocument = useCompanyOnboardingStore(s => s.addDocument);
   const removeDocument = useCompanyOnboardingStore(s => s.removeDocument);
   const updateDocument = useCompanyOnboardingStore(s => s.updateDocument);
+  const orgId = useCompanyOnboardingStore(s => s.orgId);
+
+  const [countryOptions, setCountryOptions] = useState<{label: string, value: string}[]>([]);
+  const [previewData, setPreviewData] = useState<any>(null);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    getCountries().then(countries => {
+      if (isMounted) {
+        setCountryOptions(countries.map(c => ({ label: c, value: c })));
+      }
+    }).catch(console.error);
+
+    if (orgId) {
+      getProfilePreview(orgId).then(res => {
+        if (isMounted && res.success) {
+          setPreviewData(res.preview);
+        }
+      }).catch(console.error);
+    }
+    return () => { isMounted = false; };
+  }, [orgId]);
 
   // Custom Dropdown open state
   const [isCountryOpen, setIsCountryOpen] = useState(false);
@@ -61,35 +78,35 @@ const Stage3Verification = React.memo(function Stage3Verification() {
       <div className="w-[600px] flex flex-col gap-4 flex-none">
         
         {/* Card 1 - Country of Operation (600px x 130px) */}
-        <div className="w-[600px] h-[130px] bg-white border border-slate-100/50 shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-[12px] p-6 flex flex-col gap-2 flex-none">
+        <div className="w-[600px] h-[130px] bg-white dark:bg-[#111827] border border-slate-100/50 dark:border-[#1C2840] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none rounded-[12px] p-6 flex flex-col gap-2 flex-none">
           <div className="w-[552px] h-[20px] flex flex-col justify-center flex-none">
-            <label className="w-[552px] h-[20px] font-poppins font-medium text-[14px] leading-[20px] tracking-[0.14px] text-black flex items-center">
+            <label className="w-[552px] h-[20px] font-poppins font-medium text-[14px] leading-[20px] tracking-[0.14px] text-black dark:text-[#A1A8B3] flex items-center">
               Country of Operation
             </label>
           </div>
           <div ref={countryRef} className="w-[552px] h-[54px] relative flex-none">
             <div 
               onClick={() => setIsCountryOpen(!isCountryOpen)}
-              className="w-full h-full px-6 rounded-[24px] border border-[#E0E0E7] focus:outline-none hover:border-blue-500 font-poppins font-normal text-[16px] leading-[24px] text-black bg-white transition-colors cursor-pointer flex items-center justify-between select-none"
+              className="w-full h-full px-6 rounded-[24px] border border-[#E0E0E7] dark:border-[#1C2840] focus:outline-none hover:border-blue-500 dark:hover:border-[#82B8FF] font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] transition-colors cursor-pointer flex items-center justify-between select-none"
             >
-              <span className={countryOfOperation ? "text-black" : "text-[#6B7280]"}>
-                {countryOfOperation ? COUNTRY_OPTIONS.find(o => o.value === countryOfOperation)?.label : "Select Country"}
+              <span className={countryOfOperation ? "text-black dark:text-[#FFFFFF]" : "text-[#6B7280] dark:text-[#A1A8B3]"}>
+                {countryOfOperation ? countryOptions.find(o => o.value === countryOfOperation)?.label : "Select Country"}
               </span>
-              <svg className="w-4 h-4 text-black" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-black dark:text-[#FFFFFF]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
 
             {isCountryOpen && (
-              <div className="absolute top-[60px] left-0 w-full bg-white border border-[#E0E0E7] shadow-[0px_4px_20px_rgba(0,0,0,0.08)] rounded-[16px] py-2 z-[9999] max-h-[140px] overflow-y-auto no-scrollbar">
-                {COUNTRY_OPTIONS.map((opt) => (
+              <div className="absolute top-[60px] left-0 w-full bg-white dark:bg-[#161D2E] border border-[#E0E0E7] dark:border-[#1C2840] shadow-[0px_4px_20px_rgba(0,0,0,0.08)] rounded-[16px] py-2 z-[9999] max-h-[140px] overflow-y-auto no-scrollbar">
+                {countryOptions.map((opt) => (
                   <div
                     key={opt.value}
                     onClick={() => {
                       updateField('countryOfOperation', opt.value);
                       setIsCountryOpen(false);
                     }}
-                    className="w-full px-6 py-3 font-poppins font-normal text-[16px] text-black hover:bg-[#EEF2FF] transition-colors cursor-pointer text-left"
+                    className="w-full px-6 py-3 font-poppins font-normal text-[16px] text-black dark:text-[#A1A8B3] hover:bg-[#EEF2FF] dark:hover:bg-[#1A2236] transition-colors cursor-pointer text-left"
                   >
                     {opt.label}
                   </div>
@@ -101,12 +118,12 @@ const Stage3Verification = React.memo(function Stage3Verification() {
 
         {/* Documents Section Header Row */}
         <div className="w-[600px] h-[40px] flex flex-row justify-between items-center px-6 pt-4 flex-none">
-          <span className="text-[#0D47A1] font-poppins font-bold text-[16px] leading-[20px] tracking-[0.7px] uppercase">
+          <span className="text-[#0D47A1] dark:text-[#82B8FF] font-poppins font-bold text-[16px] leading-[20px] tracking-[0.7px] uppercase">
             Documents
           </span>
           <button
             onClick={addDocument}
-            className="flex items-center justify-center w-6 h-6 text-[#1A73E8] hover:text-[#1557b0] active:scale-90 transition-transform flex-none"
+            className="flex items-center justify-center w-6 h-6 text-[#1A73E8] dark:text-[#82B8FF] hover:text-[#1557b0] active:scale-90 transition-transform flex-none"
           >
             <Icon icon="mynaui:plus" className="w-6 h-6" />
           </button>
@@ -115,9 +132,9 @@ const Stage3Verification = React.memo(function Stage3Verification() {
         {/* List of Document Cards (each is 600px x 178px or 154px stacked with delete row) */}
         <div className="w-[600px] flex flex-col gap-4 flex-none">
           {documents.length === 0 ? (
-            <div className="w-full h-[120px] flex flex-col items-center justify-center border border-dashed border-slate-200 rounded-[12px] p-6 text-center bg-slate-50/50">
-              <Icon icon="mynaui:file" className="w-8 h-8 text-slate-400 mb-2" />
-              <p className="font-poppins font-normal text-[12px] text-slate-400">
+            <div className="w-full h-[120px] flex flex-col items-center justify-center border border-dashed border-slate-200 dark:border-[#1C2840]/50 rounded-[12px] p-6 text-center bg-slate-50/50 dark:bg-[#1A2236]/10">
+              <Icon icon="mynaui:file" className="w-8 h-8 text-slate-400 dark:text-[#6B7280] mb-2" />
+              <p className="font-poppins font-normal text-[12px] text-slate-400 dark:text-[#A1A8B3]">
                 No documents added yet. Click &quot;+&quot; to upload legal verification certificates.
               </p>
             </div>
@@ -126,29 +143,29 @@ const Stage3Verification = React.memo(function Stage3Verification() {
               <div key={doc.id} className="w-[600px] flex flex-col gap-1 flex-none">
                 {/* Background+Border+Shadow Card */}
                 <div 
-                  className="w-[600px] h-[126px] bg-white border border-slate-100/50 shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-[12px] p-6 flex flex-col justify-between flex-none relative"
+                  className="w-[600px] h-[126px] bg-white dark:bg-[#111827] border border-slate-100/50 dark:border-[#1C2840] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none rounded-[12px] p-6 flex flex-col justify-between flex-none relative"
                 >
                   {/* Label Row */}
                   <div className="w-[552px] h-[20px] flex items-center justify-between flex-none">
-                    <span className="font-poppins font-medium text-[14px] leading-[20px] tracking-[0.14px] text-black">
+                    <span className="font-poppins font-medium text-[14px] leading-[20px] tracking-[0.14px] text-black dark:text-[#A1A8B3]">
                       Verification Document
                     </span>
                   </div>
 
                   {/* Input Pill / File Picker */}
                   {doc.file ? (
-                    <div className="w-[552px] h-[50px] bg-white border border-[#E0E0E7] rounded-[24px] px-6 flex items-center justify-between relative flex-none">
+                    <div className="w-[552px] h-[50px] bg-white dark:bg-[#1A2236] border border-[#E0E0E7] dark:border-[#1C2840] rounded-[24px] px-6 flex items-center justify-between relative flex-none">
                       <div className="flex items-center gap-3">
-                        <div className="w-[20px] h-[20px] rounded-[8px] bg-[#D9D9D9] flex items-center justify-center flex-none">
-                          <Icon icon="mynaui:file" className="w-4 h-4 text-slate-600" />
+                        <div className="w-[20px] h-[20px] rounded-[8px] bg-[#D9D9D9] dark:bg-[#1C2840] flex items-center justify-center flex-none">
+                          <Icon icon="mynaui:file" className="w-4 h-4 text-slate-600 dark:text-[#A1A8B3]" />
                         </div>
-                        <span className="font-poppins font-normal text-[14px] leading-[20px] text-black truncate max-w-[380px] text-left">
+                        <span className="font-poppins font-normal text-[14px] leading-[20px] text-black dark:text-[#FFFFFF] truncate max-w-[380px] text-left">
                           {doc.file.name}
                         </span>
                       </div>
                       <span
                         onClick={() => document.getElementById(`file-input-${doc.id}`)?.click()}
-                        className="font-poppins font-normal text-[12px] leading-[20px] text-[#1A73E8] hover:underline cursor-pointer flex-none"
+                        className="font-poppins font-normal text-[12px] leading-[20px] text-[#1A73E8] dark:text-[#82B8FF] hover:underline cursor-pointer flex-none"
                       >
                         Change
                       </span>
@@ -156,9 +173,9 @@ const Stage3Verification = React.memo(function Stage3Verification() {
                   ) : (
                     <label 
                       htmlFor={`file-input-${doc.id}`}
-                      className="w-[552px] h-[50px] px-6 rounded-[24px] border border-[#E0E0E7] bg-white hover:border-blue-500 transition-colors flex items-center justify-center cursor-pointer flex-none select-none"
+                      className="w-[552px] h-[50px] px-6 rounded-[24px] border border-[#E0E0E7] dark:border-[#1C2840] bg-white dark:bg-[#1A2236] hover:border-blue-500 dark:hover:border-[#82B8FF] transition-colors flex items-center justify-center cursor-pointer flex-none select-none"
                     >
-                      <Icon icon="iconoir:cloud-upload" className="w-6 h-6 text-[#6B7280]" />
+                      <Icon icon="iconoir:cloud-upload" className="w-6 h-6 text-[#6B7280] dark:text-[#A1A8B3]" />
                     </label>
                   )}
 
@@ -177,7 +194,7 @@ const Stage3Verification = React.memo(function Stage3Verification() {
                   <div className="w-[600px] h-[24px] flex flex-row justify-end items-center px-6 flex-none">
                     <button
                       onClick={() => removeDocument(doc.id)}
-                      className="w-6 h-6 flex items-center justify-center text-[#EF4444] hover:text-red-700 transition-colors active:scale-90"
+                      className="w-6 h-6 flex items-center justify-center text-[#EF4444] dark:text-[#F87171] hover:text-red-700 dark:hover:text-red-400 transition-colors active:scale-90"
                     >
                       <Icon icon="mynaui:trash" className="w-5 h-5" />
                     </button>
@@ -191,69 +208,69 @@ const Stage3Verification = React.memo(function Stage3Verification() {
       </div>
 
       {/* Right Column - Live Profile Preview Card (300px x 427px) */}
-      <div className="w-[300px] h-[427px] bg-white border border-[#E0E0E7] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] backdrop-blur-[6px] rounded-[24px] p-6 flex flex-col justify-between flex-none">
+      <div className="w-[300px] h-[427px] bg-white dark:bg-[#111827] border border-[#E0E0E7] dark:border-[#1C2840] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none backdrop-blur-[6px] rounded-[24px] p-6 flex flex-col justify-between flex-none">
         <div className="w-full flex flex-col gap-4 text-left">
           
           <div className="w-[250px] h-[20px] flex items-center justify-start flex-none">
-            <span className="font-poppins font-semibold text-[14px] leading-[20px] tracking-[0.7px] text-[#6B7280] uppercase">
+            <span className="font-poppins font-semibold text-[14px] leading-[20px] tracking-[0.7px] text-[#6B7280] dark:text-[#A1A8B3] uppercase">
               PREVIEW ON PROFILE
             </span>
           </div>
 
           {/* Inner Profile Card (250px x 187px) */}
-          <div className="w-[250px] h-[187px] bg-[#F2F7FF] rounded-[12px] p-4 flex flex-col justify-between flex-none relative">
+          <div className="w-[250px] h-[187px] bg-[#F2F7FF] dark:bg-[#1C2840]/20 rounded-[12px] p-4 flex flex-col justify-between flex-none relative">
             <div className="flex flex-row items-center gap-3">
-              <div className="w-[40px] h-[40px] rounded-[8px] bg-[#D3E4FE] border border-white shadow-sm flex items-center justify-center p-1 flex-none overflow-hidden">
-                {logoPreview ? (
+              <div className="w-[40px] h-[40px] rounded-[8px] bg-[#D3E4FE] dark:bg-[#1C2840] border border-white dark:border-[#1A2236] shadow-sm flex items-center justify-center p-1 flex-none overflow-hidden">
+                {previewData?.logo_url || logoPreview ? (
                   <img
-                    src={logoPreview}
+                    src={previewData?.logo_url || logoPreview}
                     alt="Logo"
                     className="w-full h-full object-contain"
                   />
                 ) : (
                   <div className="w-full h-full bg-[#1A73E8] flex items-center justify-center text-white font-poppins font-bold text-[18px]">
-                    {organizationName ? organizationName[0].toUpperCase() : 'C'}
+                    {(previewData?.name || organizationName) ? (previewData?.name || organizationName)[0].toUpperCase() : 'C'}
                   </div>
                 )}
               </div>
               <div className="flex flex-col text-left justify-center min-w-0">
                 <div className="flex items-center gap-1">
-                  <span className="font-poppins font-semibold text-[16px] leading-[24px] text-black truncate max-w-[146px]">
-                    {organizationName || 'Cocpit'}
+                  <span className="font-poppins font-semibold text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] truncate max-w-[146px]">
+                    {previewData?.name || organizationName || 'Cocpit'}
                   </span>
                   <Icon icon="material-symbols:verified" className="w-5 h-5 text-[#1A73E8] flex-none" />
                 </div>
-                <span className="font-poppins font-normal text-[12px] leading-[18px] text-[#6B7280] truncate max-w-[149px]">
-                  {industry || 'SaaS & FinTech Solutions'}
+                <span className="font-poppins font-normal text-[12px] leading-[18px] text-[#6B7280] dark:text-[#A1A8B3] truncate max-w-[149px]">
+                  {previewData?.headline || headline || 'SaaS & FinTech Solutions'}
                 </span>
               </div>
             </div>
 
             {/* Skeleton text bars */}
             <div className="flex flex-col gap-2 mt-2">
-              <div className="w-[148.98px] h-[8px] bg-[#E8F1FF] rounded-full" />
-              <div className="w-[218px] h-[8px] bg-[#E8F1FF] rounded-full" />
-              <div className="w-[99.33px] h-[8px] bg-[#E8F1FF] rounded-full" />
+              <div className="w-[148.98px] h-[8px] bg-[#E8F1FF] dark:bg-[#1C2840]/40 rounded-full" />
+              <div className="w-[218px] h-[8px] bg-[#E8F1FF] dark:bg-[#1C2840]/40 rounded-full" />
+              <div className="w-[99.33px] h-[8px] bg-[#E8F1FF] dark:bg-[#1C2840]/40 rounded-full" />
             </div>
 
             {/* Bottom Row Divider & Content */}
-            <div className="flex items-center justify-between border-t border-[#C1C6D6] mt-3 pt-3">
+            <div className="flex items-center justify-between border-t border-[#C1C6D6] dark:border-[#1C2840]/60 mt-3 pt-3">
               <div className="flex items-center -space-x-2">
-                <div className="w-6 h-6 rounded-full bg-[#D8E2FF] border-2 border-[#F8F9FF]" />
-                <div className="w-6 h-6 rounded-full bg-[#DAE2FD] border-2 border-[#F8F9FF]" />
-                <div className="w-6 h-6 rounded-full bg-[#E0E3E5] border-2 border-[#F8F9FF]" />
+                <div className="w-6 h-6 rounded-full bg-[#D8E2FF] dark:bg-[#1C2840] border-2 border-[#F8F9FF] dark:border-[#111827]" />
+                <div className="w-6 h-6 rounded-full bg-[#DAE2FD] dark:bg-[#1C2840] border-2 border-[#F8F9FF] dark:border-[#111827]" />
+                <div className="w-6 h-6 rounded-full bg-[#E0E3E5] dark:bg-[#1C2840] border-2 border-[#F8F9FF] dark:border-[#111827]" />
               </div>
-              <span className="font-poppins font-semibold text-[12px] leading-[16px] text-[#0D47A1]">
+              <span className="font-poppins font-semibold text-[12px] leading-[16px] text-[#0D47A1] dark:text-[#82B8FF]">
                 1.2k Partners
               </span>
             </div>
           </div>
 
           {/* Tips Info Box (250px x 138px) */}
-          <div className="w-[250px] h-[138px] bg-[#EFF4FF] border-l-[3px] border-[#0D47A1] rounded-[8px] p-4 flex items-start gap-2 text-left flex-none">
+          <div className="w-[250px] h-[138px] bg-[#EFF4FF] dark:bg-[#1C2840]/10 border-l-[3px] border-[#0D47A1] dark:border-[#82B8FF] rounded-[8px] p-4 flex items-start gap-2 text-left flex-none">
             <div className="w-[215px] h-[106px] flex flex-col justify-start">
-              <span className="font-poppins font-bold text-[12px] leading-[21px] text-black">
-                Did you know? <span className="font-normal text-[#000000]">Verified organizations receive an average of 4x more inbound partnership inquiries than unverified peers.</span>
+              <span className="font-poppins font-bold text-[12px] leading-[21px] text-black dark:text-[#FFFFFF]">
+                Did you know? <span className="font-normal text-[#000000] dark:text-[#A1A8B3]">Verified organizations receive an average of 4x more inbound partnership inquiries than unverified peers.</span>
               </span>
             </div>
           </div>

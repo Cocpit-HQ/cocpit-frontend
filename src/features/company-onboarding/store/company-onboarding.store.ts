@@ -5,6 +5,10 @@ import { COMPANY_STAGES } from '../constants/onboarding.constants';
 const initialState = {
   currentStage: 0,
   organizationType: null as OrganizationType | null,
+  orgId: null as string | null,
+  isSubmitting: false,
+  apiError: null as string | null,
+  slug: null as string | null,
 
   // Stage 1: Identity
   organizationName: '',
@@ -116,5 +120,43 @@ export const useCompanyOnboardingStore = create<CompanyOnboardingState>((set, ge
       if (doc.preview) URL.revokeObjectURL(doc.preview);
     });
     set(initialState);
+  },
+
+  setOrgId: (id: string) => set({ orgId: id }),
+  setIsSubmitting: (val: boolean) => set({ isSubmitting: val }),
+  setApiError: (msg: string | null) => set({ apiError: msg }),
+
+  hydrateFromProgress: (orgData: any, docs: any[]) => {
+    set({
+      orgId: orgData.org_id,
+      organizationType: orgData.entity_type as OrganizationType,
+      
+      // Identity
+      organizationName: orgData.name !== "Draft Organization" ? orgData.name : '',
+      foundedYear: orgData.established_year ? String(orgData.established_year) : '',
+      industry: orgData.industry || '',
+      logoPreview: orgData.logo_url || null,
+      
+      // Presence
+      officialEmail: orgData.email || '',
+      isEmailVerified: orgData.email_verified || false,
+      phoneNumber: orgData.phone || '',
+      isPhoneVerified: orgData.phone_verified || false,
+      website: orgData.website || '',
+      organizationSize: orgData.size || '',
+      hqCountry: orgData.country || '',
+      hqCity: orgData.city || '',
+      headline: orgData.headline || '',
+      description: orgData.description || '',
+
+      // Verification
+      countryOfOperation: orgData.country || '',
+      // Map remote docs
+      documents: docs.map(d => ({
+        id: d.document_id,
+        file: null, // we can't restore File objects from URLs
+        preview: d.document_url
+      }))
+    });
   }
 }));
