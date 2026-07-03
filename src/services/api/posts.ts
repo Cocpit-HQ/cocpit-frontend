@@ -104,9 +104,11 @@ export const updateComment = async (commentId: string, content: string, companyI
   return response.data;
 };
 
-export const getComments = async (postId: string, companyId?: string) => {
+export const getComments = async (postId: string, companyId?: string, targetCommentId?: string) => {
   void companyId;
-  const response = await api.get(`/post/${postId}/comments`);
+  const params = new URLSearchParams();
+  if (targetCommentId) params.append('target_comment_id', targetCommentId);
+  const response = await api.get(`/post/${postId}/comments?${params.toString()}`);
   return response.data;
 };
 

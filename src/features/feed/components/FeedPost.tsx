@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { FeedPostProps } from '../types';
 import { usePostInteractions } from '../hooks/use-post-interactions';
@@ -63,7 +63,19 @@ export const FeedPost = (props: FeedPostProps) => {
   const { videoRef, finalAspectRatio, isVerticalVideo, handleMediaLoad } = usePostMediaObserver(id, videoSrc, props.aspectRatio);
 
   // Local UI State
-  const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(props.initialShowComments || false);
+  const [isCommentSectionOpen, setIsCommentSectionOpen] = useState(
+    props.initialShowComments || props.isFullContent || false
+  );
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (props.isFullContent || searchParams?.get("comments") === "true" || !!searchParams?.get("commentId")) {
+      setIsCommentSectionOpen(true);
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        setIsMobileDrawerOpen(true);
+      }
+    }
+  }, [searchParams, props.isFullContent]);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showPollAnalytics, setShowPollAnalytics] = useState(false);

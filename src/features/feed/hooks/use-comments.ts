@@ -8,25 +8,28 @@ import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { toast } from 'sonner';
 import { usePostSync } from './use-post-sync';
+import { useSearchParams } from 'next/navigation';
 
 export const useComments = (postId: string) => {
   const [comments, setComments] = useState<CommentType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { data: session } = useSession();
   const { isCompany, activeProfile } = useActiveProfile();
+  const searchParams = useSearchParams();
+  const targetCommentId = searchParams?.get('commentId') || undefined;
 
   const fetchComments = useCallback(async () => {
     if (!postId) return;
     try {
       setIsLoading(true);
-      const data = await getComments(postId);
+      const data = await getComments(postId, undefined, targetCommentId);
       setComments(data.map(mapBackendCommentToFrontend));
     } catch (error) {
       console.error('Failed to fetch comments:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [postId]);
+  }, [postId, targetCommentId]);
 
   useEffect(() => {
     fetchComments();

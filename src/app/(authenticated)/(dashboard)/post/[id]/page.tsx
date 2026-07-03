@@ -20,7 +20,7 @@ export default function SinglePostPage({ params }: PageProps) {
     const { id } = use(params)
     const router = useRouter()
     const searchParams = useSearchParams()
-    const showComments = searchParams.get("comments") === "true"
+    const showComments = searchParams.get("comments") === "true" || !!searchParams.get("commentId")
     const { data: session } = useSession()
     const [post, setPost] = useState<Post | null>(null)
     const [loading, setLoading] = useState(true)

@@ -77,9 +77,23 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
         } else if ((notification.type === 'connection_accepted' || notification.type === 'connection_request') && notification.reference_id) {
             router.push(`/profile/${notification.reference_id}`)
         } else if ((notification.type === 'comment' || notification.type === 'mention' || notification.type === 'reply' || notification.type === 'post_tag') && postReferenceId) {
-            // Handle comment links (extract post ID if possible, or just go to post)
-            // Ideally reference_id for comment is post_id, and we can pass commentId via query param if we had it
-            router.push(`/post/${postReferenceId}`)
+            let commentId;
+            try {
+                if (typeof (notification as any).metadata === 'string') {
+                    const meta = JSON.parse((notification as any).metadata);
+                    commentId = meta.comment_id;
+                } else if (typeof (notification as any).metadata === 'object') {
+                    commentId = (notification as any).metadata?.comment_id;
+                }
+            } catch (e) {
+                console.error("Error parsing notification metadata", e);
+            }
+
+            const url = (notification.type !== 'post_tag' && commentId)
+                ? `/post/${postReferenceId}?commentId=${commentId}`
+                : `/post/${postReferenceId}`;
+                
+            router.push(url);
         } else if (notification.type === 'advocacy' && postReferenceId) {
             router.push(`/post/${postReferenceId}`)
         } else if (notification.type.includes('job') && notification.reference_id) {

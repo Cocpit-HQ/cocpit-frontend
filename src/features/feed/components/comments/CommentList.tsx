@@ -20,6 +20,9 @@ interface CommentListProps {
 export default function CommentList({ comments, onReply, onDelete, onEdit, currentUserId, isPostOwner, postId, onReport, onHide }: CommentListProps) {
   const [showAllComments, setShowAllComments] = useState(false);
 
+  const searchParams = useSearchParams();
+  const targetCommentId = searchParams.get('commentId');
+
   // ✅ CORRECTED: Use parent_id, not heuristics
   const { rootComments, replyMap } = useMemo(() => {
     const replyMap = new Map<string | number, CommentType[]>();
@@ -34,21 +37,8 @@ export default function CommentList({ comments, onReply, onDelete, onEdit, curre
       }
     });
 
-    const rootComments = comments
-      .filter(c => !c.parent_id)
-      .sort((a, b) => {
-        // 1. Pinned comments first
-        if (a.is_pinned && !b.is_pinned) return -1;
-        if (!a.is_pinned && b.is_pinned) return 1;
-
-        // 2. If both are pinned, sort by pinned_at DESC (newest pin at top)
-        if (a.is_pinned && b.is_pinned) {
-          return new Date(b.pinned_at || b.created_at).getTime() - new Date(a.pinned_at || a.created_at).getTime();
-        }
-
-        // 3. Otherwise sort by created_at DESC (newest first)
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
+    // The backend guarantees the array is sorted correctly (including target threads and pins)
+    const rootComments = comments.filter(c => !c.parent_id);
 
     // Sort replies chronologically (ASC) for readability
     replyMap.forEach((replies) => {
@@ -56,27 +46,36 @@ export default function CommentList({ comments, onReply, onDelete, onEdit, curre
     });
 
     return { rootComments, replyMap };
-  }, [comments]);
+  }, [comments, targetCommentId]);
 
 
   // Scroll to comment logic
-  const searchParams = useSearchParams();
-  const targetCommentId = searchParams.get('commentId');
-
   useEffect(() => {
-    if (targetCommentId && comments.length > 0) {
-      // Slight delay to ensure rendering
-      setTimeout(() => {
-        const element = document.getElementById(`comment-${targetCommentId}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          element.classList.add('bg-blue-50/50', 'dark:bg-blue-900/20');
-          setTimeout(() => {
-            element.classList.remove('bg-blue-50/50', 'dark:bg-blue-900/20');
-          }, 2000);
-        }
-      }, 500);
-    }
+    if (!targetCommentId || comments.length === 0) return;
+
+    // Clear any existing timeouts to prevent race conditions on re-render
+    const timer = setTimeout(() => {
+      const elementId = `comment-${targetCommentId}`;
+      const element = document.getElementById(elementId);
+      
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Use extremely visible inline styles
+        element.style.transition = 'all 0.5s ease-in-out';
+        element.style.backgroundColor = '#E0E7FF'; // Indigo 100 (Solid, very visible)
+        element.style.borderRadius = '12px';
+        element.style.padding = '12px';
+        element.style.margin = '0 -12px';
+        
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+          element.style.backgroundColor = 'transparent';
+        }, 3000);
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
   }, [targetCommentId, comments]); // Re-run when comments load
 
   const visibleRootComments = showAllComments
