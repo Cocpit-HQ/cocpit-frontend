@@ -4,6 +4,7 @@ export interface JobOffer {
     offer_id: string;
     job_id: string;
     company_id: string;
+    context_sent?: boolean;
     user_id: string;
     sent_by: string;
     message: string | null;
@@ -126,3 +127,12 @@ export const getCompanyOfferRecipients = async (
     );
     return response.data;
 };
+
+/** Trigger a one-time rich job card context message when initiating chat from an offer */
+export const sendOfferChatContext = async (
+    offerId: string
+): Promise<{ sent: boolean; already_sent?: boolean; no_conversation?: boolean; conversation_id?: string; message_id?: string }> => {
+    const response = await api.post(`/jobs/offers/${offerId}/chat-context`);
+    return response.data;
+};
+

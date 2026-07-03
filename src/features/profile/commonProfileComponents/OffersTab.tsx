@@ -9,6 +9,7 @@ import { getMyOffers, respondToOffer, JobOffer } from "@/services/api/offers";
 import Avatar from "@/components/shared/Avatar";
 import { Icon } from "@iconify/react";
 import { getCurrencyIcon, formatSalaryRange } from "@/features/jobs/utils/currency.utils";
+import { toast } from "sonner";
 
 interface OffersTabProps {
     isOwnProfile: boolean;
@@ -41,6 +42,21 @@ export function OffersTab({ isOwnProfile }: OffersTabProps) {
         try {
             setActionLoading(offerId);
             await respondToOffer(offerId, action);
+            toast.success(`Offer ${action} successfully`);
+            
+            // Trigger chat context directly if accepted
+            if (action === "accepted") {
+                try {
+                    const { sendOfferChatContext } = await import('@/services/api/offers');
+                    const res = await sendOfferChatContext(offerId);
+                    if (res.no_conversation) {
+                        sessionStorage.setItem('pendingOfferContext', offerId);
+                    }
+                } catch (e) {
+                    console.error("Failed to send chat context automatically:", e);
+                }
+            }
+
             setOffers(prev =>
                 prev.map(o => (o.offer_id === offerId ? { ...o, status: action, responded_at: new Date().toISOString() } : o))
             );

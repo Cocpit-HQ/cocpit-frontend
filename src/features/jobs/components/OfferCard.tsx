@@ -28,7 +28,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
 
   return (
     <div 
-      onClick={() => router.push(`/jobs/${offer.id}`)}
+      onClick={() => router.push(`/jobs/${offer.job_id || offer.id}`)}
       className="relative w-full flex flex-col items-end cursor-pointer group"
     >
       {/* PART 1 — Job Details Frame (Frame 2609038) */}
@@ -97,9 +97,20 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
               </span>
             ) : null}
             <button
-              onClick={() => {
+              onClick={async () => {
                 if (offer.recruiter.id) {
-                  router.push(`/messaging?userId=${offer.recruiter.id}`);
+                  if (offer.offer_id && !offer.context_sent) {
+                    try {
+                      const { sendOfferChatContext } = await import('@/services/api/offers');
+                      await sendOfferChatContext(offer.offer_id);
+                    } catch (err) {
+                      console.error("Failed to send context message:", err);
+                    }
+                  }
+                  const params = new URLSearchParams({ userId: offer.recruiter.id });
+                  if (offer.offer_id) params.set('offerId', offer.offer_id);
+                  if (offer.job_id) params.set('jobId', offer.job_id);
+                  router.push(`/messaging?${params.toString()}`);
                 } else {
                   toast.error('Recruiter information is unavailable.');
                 }

@@ -106,6 +106,9 @@ export interface ListingsCounts {
 
 export interface JobOffer {
   id: string;
+  offer_id?: string;
+  job_id?: string;
+  context_sent?: boolean;
   job_role: string;
   days_remaining: number;
   company_name: string;

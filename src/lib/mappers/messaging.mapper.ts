@@ -104,6 +104,7 @@ export const mapBackendMessageToMessage = (backendMessage: BackendMessage, curre
     senderAvatar: backendMessage.sender_avatar,
     text: backendMessage.text_content,
     time: formatTime(backendMessage.created_at),
+    messageType: backendMessage.message_type,
     type: (backendMessage.message_type === 'system' || (backendMessage as any).type === 'system' || (backendMessage as any).is_system || backendMessage.action_type) ? 'system' : 'text',
     sharedPost: backendMessage.shared_post ? {
       id: backendMessage.shared_post.post_id,

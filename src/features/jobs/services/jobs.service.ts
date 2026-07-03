@@ -800,6 +800,9 @@ const mapBackendToJobOffer = (raw: any): JobOffer => {
 
   return {
     id: raw.offer_id,
+    offer_id: raw.offer_id,
+    job_id: raw.job_id,
+    context_sent: raw.context_sent,
     job_role: raw.title,
     days_remaining: computeDaysRemaining(raw.expires_at),
     company_name: raw.company_display_name || raw.company_name,

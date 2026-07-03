@@ -10,6 +10,7 @@ import { ChatThread, Message } from "@/types/messaging";
 import { InfiniteData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getConversations, getActiveSession } from "@/services/api/messaging";
 import { getUserById } from "@/services/api/user";
+import { sendOfferChatContext } from "@/services/api/offers";
 import {
   mapBackendChatToChatThread,
   formatTimeAgo,
@@ -314,6 +315,51 @@ export default function MessagingPage() {
       processedUserIdRef.current = null;
     }
   }, [searchParams, chats, isMobile, isLoading, activeProfile]); // Added activeProfile
+
+  // --- Offer Chat Context: auto-send one-time context message on offer-initiated chat ---
+  useEffect(() => {
+    const offerId = searchParams.get('offerId');
+    if (!offerId) return;
+
+    // Only fire when a real (non-draft) conversation is selected
+    if (!selectedChat || selectedChat.id === 'new') {
+      // Store in sessionStorage for retry after first message creates the conversation
+      sessionStorage.setItem('pendingOfferContext', offerId);
+      return;
+    }
+
+    // Clear sessionStorage if set
+    sessionStorage.removeItem('pendingOfferContext');
+
+    const triggerContext = async () => {
+      try {
+        const result = await sendOfferChatContext(offerId);
+        if (result.sent || result.already_sent) {
+          // Strip offer params from URL to prevent re-firing on re-render
+          const newParams = new URLSearchParams(searchParams.toString());
+          newParams.delete('offerId');
+          newParams.delete('jobId');
+          router.replace(`/messaging?${newParams.toString()}`);
+        }
+      } catch (err) {
+        console.error('[OfferChatContext] Failed:', err);
+      }
+    };
+
+    triggerContext();
+  }, [searchParams, selectedChat?.id]);
+
+  // --- Retry context after first message creates a real conversation ---
+  useEffect(() => {
+    const pendingOfferId = sessionStorage.getItem('pendingOfferContext');
+    if (!pendingOfferId || !selectedChat || selectedChat.id === 'new') return;
+
+    // Conversation now exists — retry the context call
+    sessionStorage.removeItem('pendingOfferContext');
+    sendOfferChatContext(pendingOfferId).catch(err => {
+      console.error('[OfferChatContext] Retry failed:', err);
+    });
+  }, [selectedChat?.id]);
 
   // Listen for new messages to update the conversation list
   useEffect(() => {

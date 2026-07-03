@@ -38,6 +38,17 @@ export const useJobOffers = () => {
           prev.map(o => (o.id === id ? { ...o, status: 'accepted' as const } : o))
         );
         toast.success('Offer accepted successfully!');
+        
+        // Trigger chat context automatically if accepted
+        try {
+            const { sendOfferChatContext } = await import('@/services/api/offers');
+            const contextRes = await sendOfferChatContext(id);
+            if (contextRes.no_conversation) {
+                sessionStorage.setItem('pendingOfferContext', id);
+            }
+        } catch (e) {
+            console.error('Failed to send chat context automatically:', e);
+        }
       } else {
         toast.error('Failed to accept offer.');
       }

@@ -761,6 +761,102 @@ const MessageEditor = ({
   )
 }
 
+const JobOfferContextMessage = ({ jobId }: { jobId: string }) => {
+  const [job, setJob] = useState<Job | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!jobId) {
+      setLoading(false);
+      return;
+    }
+    let mounted = true;
+    getJobById(jobId)
+      .then(data => {
+        if (mounted) {
+          setJob(data);
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to load job for offer context", err);
+        if (mounted) setLoading(false);
+      });
+    return () => { mounted = false; };
+  }, [jobId]);
+
+  const getCityName = (loc: string) => {
+    if (!loc) return '';
+    if (loc.includes(',')) {
+      return loc.split(',')[0].trim();
+    }
+    return loc.split(' ')[0];
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-[740px] border border-[#EEF2FF] dark:border-zinc-800 rounded-[24px] p-[16px] bg-slate-50/50 dark:bg-zinc-900/50 animate-pulse flex flex-col md:flex-row justify-between items-center gap-[12px] mr-auto my-3 min-h-[116px]">
+        <div className="flex flex-col items-start gap-[8px] flex-1">
+          <div className="h-[24px] bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+          <div className="h-[20px] bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+          <div className="h-[20px] bg-gray-200 dark:bg-gray-700 rounded w-1/5"></div>
+        </div>
+        <div className="flex flex-col items-start gap-[12px] shrink-0 w-[152px]">
+          <div className="h-[20px] bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+          <div className="h-[20px] bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+          <div className="h-[20px] bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!job) return null;
+
+  return (
+    <div 
+      onClick={() => router.push(`/jobs/${jobId}`)}
+      className="w-full max-w-[740px] border border-[#EEF2FF] dark:border-zinc-800 rounded-[24px] p-[16px] bg-white dark:bg-zinc-950 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer flex flex-col md:flex-row justify-between items-center gap-[12px] mr-auto my-3 min-h-[116px]"
+    >
+      {/* Left side */}
+      <div className="flex flex-col items-start gap-[8px] min-w-0">
+        <h3 className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black dark:text-zinc-100 m-0 truncate">
+          {job.title}
+        </h3>
+        <p className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] m-0 truncate">
+          {job.company}
+        </p>
+        <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-[#6B7280] m-0">
+          {job.type || 'Full time'}
+        </span>
+      </div>
+
+      {/* Right side (icons) */}
+      <div className="flex flex-col items-start gap-[12px] shrink-0">
+        <div className="flex flex-row items-center gap-[8px]">
+          <Icon icon="hugeicons:job-search" className="w-[20px] h-[20px] text-black dark:text-zinc-100 shrink-0" style={{ strokeWidth: '1.5px' }} />
+          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black dark:text-zinc-100">
+            {job.experience || '0-2Yrs'}
+          </span>
+        </div>
+        <div className="flex flex-row items-center gap-[8px]">
+          <Icon icon="hugeicons:location-05" className="w-[20px] h-[20px] text-black dark:text-zinc-100 shrink-0" style={{ strokeWidth: '1.5px' }} />
+          <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black dark:text-zinc-100">
+            {job.workMode ? `${job.workMode} - ${getCityName(job.location)}` : getCityName(job.location)}
+          </span>
+        </div>
+        {job.salary && job.salary !== 'Competitive' && (
+          <div className="flex flex-row items-center gap-[8px]">
+            <Icon icon="hugeicons:money-bag-02" className="w-[20px] h-[20px] text-black dark:text-zinc-100 shrink-0" style={{ strokeWidth: '1.5px' }} />
+            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black dark:text-zinc-100">
+              {job.salary}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 // --- Main Component ---
 
@@ -945,6 +1041,14 @@ function MessageBubble(props: MessageBubbleProps) {
   const myReaction = validReactions.find(r => r.user_id === currentUserId)
   // Display user's reaction if exists, else the last reaction in the list
   const displayReaction = myReaction || validReactions[validReactions.length - 1]
+
+  if (message.messageType === 'offer_context') {
+    return (
+      <div className="w-full py-2 flex justify-start">
+        <JobOfferContextMessage jobId={message.entityId || ''} />
+      </div>
+    );
+  }
 
   return (
     <>

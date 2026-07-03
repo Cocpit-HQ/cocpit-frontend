@@ -135,6 +135,7 @@ export interface Message {
 
   time: string;
   type?: 'text' | 'system';
+  messageType?: string;
   action_type?: string;
   target_id?: string;
   isFirstInGroup?: boolean;
