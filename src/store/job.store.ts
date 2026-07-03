@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { Job, JobsFilter } from '@/features/jobs/types/jobs.types';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import type { Job, JobsFilter, JobListing } from '@/features/jobs/types/jobs.types';
 
 export interface CachedList<T> {
   jobs: T[];
@@ -106,6 +107,23 @@ export interface JobsUIState {
   updateRecruiterJob: (job: Job) => void;
   deleteRecruiterJob: (jobId: string) => void;
   publishRecruiterDraft: (jobId: string) => void;
+
+  // ─── Create Job Flow ───────────────────────────────────────
+  createJobStep: 'verification' | 'role-input' | 'details' | 'preview';
+  createJobTitle: string;
+  createJobId: string | null;
+  createJobDetails: Partial<JobListing>;
+  isDrafting: boolean;
+  setCreateJobStep: (step: 'verification' | 'role-input' | 'details' | 'preview') => void;
+  setCreateJobTitle: (title: string) => void;
+  setCreateJobId: (id: string | null) => void;
+  setCreateJobDetails: (details: Partial<JobListing>) => void;
+  setIsDrafting: (isDrafting: boolean) => void;
+  resetCreateJobFlow: () => void;
+
+  // ─── My Listings Dashboard ─────────────────────────────────
+  selectedOfferGroup: any | null;
+  setSelectedOfferGroup: (group: any | null) => void;
 }
 
 const createEmptyList = <T>(): CachedList<T> => ({
@@ -118,7 +136,9 @@ const createEmptyList = <T>(): CachedList<T> => ({
   lastFetched: undefined,
 });
 
-export const useJobStore = create<JobsUIState>((set) => ({
+export const useJobStore = create<JobsUIState>()(
+  persist(
+    (set) => ({
   // ─── Slices Initialization ────────────────────────────────
   ui: {
     activeCandidateTab: 'Explore',
@@ -493,6 +513,46 @@ export const useJobStore = create<JobsUIState>((set) => ({
         },
       };
     }),
-}));
 
-// Force recompile to clear Turbopack cache issue
+  // ─── Create Job Flow ───────────────────────────────────────
+  createJobStep: 'verification',
+  createJobTitle: '',
+  createJobId: null,
+  createJobDetails: {},
+  isDrafting: false,
+
+  setCreateJobStep: (step) => set({ createJobStep: step }),
+  setCreateJobTitle: (title) => set({ createJobTitle: title }),
+  setCreateJobId: (id) => set({ createJobId: id }),
+  setCreateJobDetails: (details) =>
+    set((state) => ({
+      createJobDetails: { ...state.createJobDetails, ...details },
+    })),
+  setIsDrafting: (isDrafting) => set({ isDrafting }),
+  resetCreateJobFlow: () =>
+    set({
+      createJobStep: 'verification',
+      createJobTitle: '',
+      createJobId: null,
+      createJobDetails: {},
+      isDrafting: false,
+    }),
+
+  // ─── My Listings Dashboard ─────────────────────────────────
+  selectedOfferGroup: null,
+  setSelectedOfferGroup: (group) => set({ selectedOfferGroup: group }),
+    }),
+    {
+      name: 'job-flow-storage',
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: (state) => ({
+        createJobStep: state.createJobStep,
+        createJobTitle: state.createJobTitle,
+        createJobId: state.createJobId,
+        createJobDetails: state.createJobDetails,
+        isDrafting: state.isDrafting,
+        selectedOfferGroup: state.selectedOfferGroup,
+      }),
+    }
+  )
+);

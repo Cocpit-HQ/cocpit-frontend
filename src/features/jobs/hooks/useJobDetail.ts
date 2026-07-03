@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Job } from '../types/jobs.types';
 import * as jobsService from '../services/jobs.service';
 import { toast } from 'sonner';
 import { useJobStore } from '@/store/job.store';
 
 export const useJobDetail = (jobId: string) => {
-  const [job, setJob] = useState<Job | null>(null);
+  const [rawJob, setRawJob] = useState<Job | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const activeJobIdRef = useRef<string | null>(null);
 
   const {
     savedJobIds,
@@ -22,54 +23,84 @@ export const useJobDetail = (jobId: string) => {
   } = useJobStore();
 
   const fetchJob = useCallback(async () => {
-    if (!jobId) return;
+    if (!jobId || jobId === 'undefined' || jobId === 'null') {
+      setIsLoading(true);
+      return;
+    }
     setIsLoading(true);
+    activeJobIdRef.current = jobId;
     try {
       const res = await jobsService.getJobById(jobId);
-      if (res) {
-        // Keep API value as baseline; in-memory/Zustand store can only upgrade
-        res.is_saved = res.is_saved || savedJobIds.has(res.id);
-        res.is_applied = res.is_applied || appliedJobIds.has(res.id);
-
-        // Seed store if API says applied but store doesn't have it
-        if (res.is_applied && !appliedJobIds.has(res.id)) {
-          addAppliedId(res.id);
-        }
-        
-        // Seed store if API says saved but store doesn't have it
-        if (res.is_saved && !savedJobIds.has(res.id)) {
-          addSavedId(res.id);
-        }
-
-        // Handle offer statuses
-        if (res.is_offer) {
-          if (res.offerStatus) {
-            res.application_status = res.offerStatus.charAt(0).toUpperCase() + res.offerStatus.slice(1);
-          }
-          const offerResponse = respondedOffers[res.id];
-          if (offerResponse) {
-            res.application_status = offerResponse === 'accept' ? 'Accepted' : 'Declined';
-          }
-        }
-
-        // Handle followed status for company
-        res.is_followed = res.is_followed || followedCompanies.has(res.company);
-        if (res.is_followed && !followedCompanies.has(res.company)) {
-          toggleFollowCompany(res.company);
-        }
+      if (activeJobIdRef.current === jobId) {
+        setRawJob(res);
       }
-      setJob(res);
     } catch (err) {
       console.error('Failed to load job details:', err);
-      toast.error('Failed to load job details.');
+      if (activeJobIdRef.current === jobId) {
+        toast.error('Failed to load job details.');
+      }
     } finally {
-      setIsLoading(false);
+      if (activeJobIdRef.current === jobId) {
+        setIsLoading(false);
+      }
     }
-  }, [jobId, savedJobIds, appliedJobIds, respondedOffers, followedCompanies, addAppliedId, addSavedId, toggleFollowCompany]);
+  }, [jobId]);
 
+  // Handle initial fetch and cancellation
   useEffect(() => {
+    if (!jobId || jobId === 'undefined' || jobId === 'null') {
+      setIsLoading(true);
+      return;
+    }
     fetchJob();
+    return () => {
+      activeJobIdRef.current = null;
+    };
   }, [jobId, fetchJob]);
+
+  // Dynamically compute the merged job object
+  const job = useMemo(() => {
+    if (!rawJob) return null;
+    
+    const processed = { ...rawJob };
+    processed.is_saved = processed.is_saved || savedJobIds.has(processed.id);
+    processed.is_applied = processed.is_applied || appliedJobIds.has(processed.id);
+
+    // Handle offer statuses
+    if (processed.is_offer) {
+      if (processed.offerStatus) {
+        processed.application_status = processed.offerStatus.charAt(0).toUpperCase() + processed.offerStatus.slice(1);
+      }
+      const offerResponse = respondedOffers[processed.id];
+      if (offerResponse) {
+        processed.application_status = offerResponse === 'accept' ? 'Accepted' : 'Declined';
+      }
+    }
+
+    // Handle followed status for company
+    processed.is_followed = processed.is_followed || followedCompanies.has(processed.company);
+    return processed;
+  }, [rawJob, savedJobIds, appliedJobIds, respondedOffers, followedCompanies]);
+
+  // Seed the store with initial values from the API
+  useEffect(() => {
+    if (!rawJob) return;
+
+    // Seed store if API says applied but store doesn't have it
+    if (rawJob.is_applied && !appliedJobIds.has(rawJob.id)) {
+      addAppliedId(rawJob.id);
+    }
+    
+    // Seed store if API says saved but store doesn't have it
+    if (rawJob.is_saved && !savedJobIds.has(rawJob.id)) {
+      addSavedId(rawJob.id);
+    }
+
+    // Seed store if API says followed but store doesn't have it
+    if (rawJob.is_followed && !followedCompanies.has(rawJob.company)) {
+      toggleFollowCompany(rawJob.company);
+    }
+  }, [rawJob, appliedJobIds, savedJobIds, followedCompanies, addAppliedId, addSavedId, toggleFollowCompany]);
 
   const toggleSave = useCallback(async () => {
     if (!job) return;
@@ -82,10 +113,7 @@ export const useJobDetail = (jobId: string) => {
       } else {
         addSavedId(job.id);
       }
-      const updatedSaved = !isCurrentlySaved;
-
-      setJob(prev => prev ? { ...prev, is_saved: updatedSaved } : null);
-      toast.success(updatedSaved ? 'Job saved successfully' : 'Job removed from saved list');
+      toast.success(!isCurrentlySaved ? 'Job saved successfully' : 'Job removed from saved list');
     } catch (error) {
       console.error('Failed to save job:', error);
       toast.error('Failed to update save status.');
@@ -120,8 +148,6 @@ export const useJobDetail = (jobId: string) => {
 
       await jobsService.applyJob(job.id, formData, jsonBody);
       addAppliedId(job.id);
-
-      setJob(prev => prev ? { ...prev, is_applied: true } : null);
       toast.success('Successfully applied to the job!');
     } catch (error) {
       console.error('Failed to apply to job:', error);
@@ -134,8 +160,6 @@ export const useJobDetail = (jobId: string) => {
     try {
       await jobsService.withdrawApplication(job.id);
       removeAppliedId(job.id);
-
-      setJob(prev => prev ? { ...prev, is_applied: false } : null);
       toast.success('Application withdrawn successfully.');
     } catch (error) {
       console.error('Failed to withdraw application:', error);
@@ -148,12 +172,6 @@ export const useJobDetail = (jobId: string) => {
     try {
       await jobsService.respondToOffer(job.offer_id || job.id, action);
       setOfferResponse(job.offer_id || job.id, action);
-
-      setJob(prev => prev ? { 
-        ...prev, 
-        application_status: action === 'accept' ? 'Accepted' : 'Declined' 
-      } : null);
-      
       toast.success(action === 'accept' ? 'Offer accepted!' : 'Offer declined.');
     } catch (error) {
       console.error('Failed to respond to offer:', error);
@@ -165,7 +183,6 @@ export const useJobDetail = (jobId: string) => {
     if (!job) return;
     try {
       const isCurrentlyFollowed = followedCompanies.has(job.company);
-      const nextFollowStatus = !isCurrentlyFollowed;
 
       if (job.org_id) {
         await jobsService.toggleFollowEntity(job.org_id, 'org', isCurrentlyFollowed);
@@ -176,9 +193,7 @@ export const useJobDetail = (jobId: string) => {
       }
 
       toggleFollowCompany(job.company);
-
-      setJob(prev => prev ? { ...prev, is_followed: nextFollowStatus } : null);
-      toast.success(nextFollowStatus ? `Following ${job.company}` : `Unfollowed ${job.company}`);
+      toast.success(!isCurrentlyFollowed ? `Following ${job.company}` : `Unfollowed ${job.company}`);
     } catch (error) {
       console.error('Failed to toggle follow:', error);
       toast.error('Failed to update follow status.');
@@ -193,6 +208,6 @@ export const useJobDetail = (jobId: string) => {
     withdrawJob,
     respondToOffer,
     toggleFollow,
-    refetch: fetchJob
+    refetch: () => fetchJob()
   };
 };

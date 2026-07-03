@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -8,6 +8,12 @@ import StepJobDetails from './StepJobDetails';
 import StepJobPreview from './StepJobPreview';
 import { JobListing } from '../../types/jobs.types';
 import * as jobsService from '../../services/jobs.service';
+import { useJobStore } from '@/store/job.store';
+import { useRouter } from 'next/navigation';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { useCreateJobInit } from '../../hooks/useCreateJobInit';
+import { useCreateJobUrlSync } from '../../hooks/useCreateJobUrlSync';
+import { useCreateJobHydration } from '../../hooks/useCreateJobHydration';
 
 interface CreateJobFlowProps {
   onBack: () => void;
@@ -15,15 +21,45 @@ interface CreateJobFlowProps {
   initialListing?: JobListing | null;
 }
 
-type Step = 'verification' | 'role-input' | 'details' | 'preview';
-
 export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, initialListing }) => {
-  const [step, setStep] = useState<Step>(initialListing ? 'details' : 'verification');
-  const [title, setTitle] = useState(initialListing?.title || '');
-  const [jobId, setJobId] = useState<string | null>(initialListing?.id || null);
-  const [isDrafting, setIsDrafting] = useState(false);
-  const [accumulatedDetails, setAccumulatedDetails] = useState<Partial<JobListing>>(initialListing || {});
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const router = useRouter();
+  const { activeProfile, userCompanies } = useActiveProfile();
+
+  // Compute if the active company is verified
+  const activeCompany = userCompanies?.find(
+    (c) => (c.org_id || c.company_id) === activeProfile?.id
+  );
+  const isCompanyVerified = activeCompany?.verification_status === 'DOMAIN_VERIFIED';
+
+  const {
+    createJobStep: step,
+    setCreateJobStep: setStep,
+    createJobTitle: title,
+    setCreateJobTitle: setTitle,
+    createJobId: jobId,
+    setCreateJobId: setJobId,
+    isDrafting,
+    setIsDrafting,
+    createJobDetails: accumulatedDetails,
+    setCreateJobDetails: setAccumulatedDetails,
+    resetCreateJobFlow,
+  } = useJobStore();
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+
+  // Hook 1: Initialize step/title/jobId from URL params on mount
+  useCreateJobInit({ initialListing, isCompanyVerified });
+
+  // Hook 2: Hydrate store from API on refresh (details/preview steps with jobId)
+  const { isHydrating } = useCreateJobHydration({ initialListing });
+
+  // Hook 3: Sync step + title + jobId changes back to URL atomically
+  useCreateJobUrlSync(step, title, jobId);
+
+  const handleBack = () => {
+    resetCreateJobFlow();
+    onBack();
+  };
 
   const handleRoleContinue = async () => {
     setIsDrafting(true);
@@ -33,9 +69,6 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
       const newJobId = await jobsService.initializeJobDraft(title);
       if (newJobId) {
         setJobId(newJobId);
-        // NOTE: No separate generate call needed here.
-        // createJob on the backend already runs AI generation and saves the description.
-        // The background polling in StepJobDetails will pick it up automatically.
       }
     } catch (error) {
       console.error('Failed to create initial draft', error);
@@ -55,6 +88,12 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
 
   const handleSaveDraft = async (details: Partial<JobListing>) => {
     await onSubmit(details.title || title, 'DRAFT', { ...details, id: jobId || undefined });
+    resetCreateJobFlow();
+  };
+
+  const handlePublish = async () => {
+    await onSubmit(title, 'ACTIVE', { ...accumulatedDetails, id: jobId || undefined });
+    resetCreateJobFlow();
   };
 
   const handleDeleteDraft = async () => {
@@ -68,81 +107,102 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
         return;
       }
     }
+    resetCreateJobFlow();
     onBack();
   };
 
-  const renderStep = () => {
-    if (step === 'verification') {
+  if (step === 'verification') {
+    return (
+      <StepIdentityVerification
+        onBack={handleBack}
+        onVerifySuccess={() => setStep('role-input')}
+        title={title}
+      />
+    );
+  }
+
+  if (step === 'details') {
+    if (isHydrating) {
       return (
-        <StepIdentityVerification
-          onBack={onBack}
-          onVerifySuccess={() => setStep('role-input')}
-        />
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-500 border-t-transparent" />
+          <p className="text-sm text-gray-500 font-['Poppins']">Restoring your draft...</p>
+        </div>
       );
     }
-
-    if (step === 'details') {
-      return (
+    return (
+      <>
         <StepJobDetails
           jobId={jobId}
           initialRole={title}
           initialDetails={accumulatedDetails}
-          onBack={initialListing ? onBack : () => setStep('role-input')}
+          onBack={initialListing ? handleBack : () => setStep('role-input')}
           onSaveDraft={handleSaveDraft}
           onContinue={handleDetailsContinue}
           onDeleteDraft={jobId ? () => setShowDeleteConfirm(true) : undefined}
         />
-      );
-    }
+        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <AlertDialogContent className="bg-card border-border text-foreground rounded-[24px]">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Draft?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this job draft? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteDraft} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    );
+  }
 
-    if (step === 'preview') {
-      return (
+  if (step === 'preview') {
+    return (
+      <>
         <StepJobPreview
           details={{ ...accumulatedDetails, title }}
           onBack={() => setStep('details')}
           onSaveDraft={async () => {
-            await onSubmit(title, 'DRAFT', { ...accumulatedDetails, id: jobId || undefined });
+            await handleSaveDraft(accumulatedDetails);
           }}
           onPublish={async () => {
-            await onSubmit(title, 'ACTIVE', { ...accumulatedDetails, id: jobId || undefined });
+            await handlePublish();
           }}
           onDeleteDraft={jobId ? () => setShowDeleteConfirm(true) : undefined}
         />
-      );
-    }
-
-    return (
-      <StepRoleInput
-        onBack={() => setStep('verification')}
-        title={title}
-        setTitle={setTitle}
-        onContinue={handleRoleContinue}
-        isDrafting={isDrafting}
-      />
+        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <AlertDialogContent className="bg-card border-border text-foreground rounded-[24px]">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Draft?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this job draft? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteDraft} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
     );
-  };
+  }
 
   return (
-    <>
-      {renderStep()}
-      
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent className="bg-card border-border text-foreground rounded-[24px]">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Draft?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this job draft? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteDraft} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    <StepRoleInput
+      onBack={isCompanyVerified ? handleBack : () => setStep('verification')}
+      title={title}
+      setTitle={setTitle}
+      onContinue={handleRoleContinue}
+      isDrafting={isDrafting}
+    />
   );
 };
 

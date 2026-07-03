@@ -91,6 +91,7 @@ Centralize and stabilize the state management in the Jobs feature. Replace buggy
 
 **Time:** Sprint Completion
 **Run by:** Developer
+
 **Checklist:**
 
 - [ ] Stays on correct tab when refreshing (Explore, My applications, Offers, Saved)

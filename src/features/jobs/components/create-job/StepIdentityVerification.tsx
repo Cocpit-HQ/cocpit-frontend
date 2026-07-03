@@ -5,11 +5,13 @@ import { toast } from 'sonner';
 interface StepIdentityVerificationProps {
   onBack: () => void;
   onVerifySuccess: () => void;
+  title?: string;
 }
 
 export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> = ({
   onBack,
   onVerifySuccess,
+  title,
 }) => {
   const [isVerifying, setIsVerifying] = useState(false);
 
@@ -37,7 +39,7 @@ export const StepIdentityVerification: React.FC<StepIdentityVerificationProps> =
         <div className="flex flex-col justify-start items-start">
           <div className="text-black text-lg font-medium font-['Poppins'] leading-6">Create job</div>
           <div className="text-gray-500 text-xs font-normal font-['Poppins'] leading-4">
-            Tell us the role, AI will draft the rest
+            {title || 'Tell us the role, AI will draft the rest'}
           </div>
         </div>
       </div>

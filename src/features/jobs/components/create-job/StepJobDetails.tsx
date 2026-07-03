@@ -4,6 +4,7 @@ import { JobListing } from '../../types/jobs.types';
 import { useMyProfile } from '@/hooks/use-my-profile';
 import api from '@/lib/axios';
 import { generateJobDescription } from '../../services/jobs.service';
+import { useJobStore } from '@/store/job.store';
 import { CURRENCIES } from '../../utils/currency.utils';
 import { toast } from 'sonner';
 
@@ -26,6 +27,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   onContinue,
   onDeleteDraft,
 }) => {
+  const { setCreateJobDetails } = useJobStore();
   const { data: profileData } = useMyProfile();
   const userProfile = profileData?.user;
   const hasPopulated = useRef(false);
@@ -71,6 +73,43 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
       hasPopulated.current = true;
     }
   }, [userProfile, company, location, initialDetails]);
+
+  // Sync form fields when initialDetails updates (e.g., after hydration on refresh)
+  const hasHydratedFields = useRef(false);
+  useEffect(() => {
+    if (hasHydratedFields.current) return;
+    if (!initialDetails || Object.keys(initialDetails).length === 0) return;
+
+    // Only sync fields that are still empty (don't overwrite user edits)
+    hasHydratedFields.current = true;
+
+    if (initialDetails.title && !role) setRole(initialDetails.title);
+    if (initialDetails.company && !company) setCompany(initialDetails.company);
+    if (initialDetails.location && !location) setLocation(initialDetails.location);
+    if (initialDetails.description && !description) setDescription(initialDetails.description);
+    if (initialDetails.experience) setExperience(normalizeExperience(initialDetails.experience));
+    if (initialDetails.work_type) setWorkType(normalizeWorkType(initialDetails.work_type));
+    if (initialDetails.work_mode) setWorkMode(initialDetails.work_mode);
+    if (initialDetails.salary_min) setMinSalary(String(initialDetails.salary_min));
+    if (initialDetails.salary_max) setMaxSalary(String(initialDetails.salary_max));
+    if (initialDetails.salary_currency) setCurrency(initialDetails.salary_currency);
+  }, [initialDetails]);
+
+  // Auto-save typed form fields directly into Zustand to trigger sessionStorage persist
+  useEffect(() => {
+    setCreateJobDetails({
+      title: role,
+      company: company,
+      location: location,
+      description: description,
+      experience: experience,
+      work_type: workType,
+      work_mode: workMode,
+      salary_min: minSalary ? Number(minSalary) : undefined,
+      salary_max: maxSalary ? Number(maxSalary) : undefined,
+      salary_currency: currency,
+    });
+  }, [role, company, location, description, experience, workType, workMode, minSalary, maxSalary, currency, setCreateJobDetails]);
 
   // Fetch background AI generation if description is empty
   useEffect(() => {

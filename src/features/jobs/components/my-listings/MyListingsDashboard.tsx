@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Icon } from '@iconify/react';
 import * as jobsService from '../../services/jobs.service';
 import { JobListing } from '../../types/jobs.types';
@@ -11,6 +11,8 @@ import SendOfferTab from './SendOfferTab';
 import OfferDetailsScreen from './OfferDetailsScreen';
 import { toast } from 'sonner';
 import ListingsSkeleton from '../skeletons/ListingsSkeleton';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useJobStore } from '@/store/job.store';
 
 interface MyListingsDashboardProps {
   onBack: () => void;
@@ -20,25 +22,104 @@ type SubTab = 'Listings' | 'Sent Offers';
 type ViewState = 'dashboard' | 'create-job' | 'view-listing' | 'applicants' | 'offer-details';
 
 export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack }) => {
-  const [view, setView] = useState<ViewState>('dashboard');
-  const [activeSubTab, setActiveSubTab] = useState<SubTab>('Listings');
-  const { 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlView = searchParams?.get('view') as ViewState | null;
+  const urlJobId = searchParams?.get('jobId') || null;
+
+  // Initialize the local view state based on URL, defaulting to 'dashboard'
+  const [view, setView] = useState<ViewState>(() => {
+    if (urlView && ['dashboard', 'create-job', 'view-listing', 'applicants', 'offer-details'].includes(urlView)) {
+      return urlView;
+    }
+    return 'dashboard';
+  });
+
+  const urlSubTab = searchParams?.get('subtab');
+  const [activeSubTab, setActiveSubTabLocal] = useState<SubTab>(() => {
+    if (urlSubTab === 'Sent Offers' || urlSubTab === 'Send offer') return 'Sent Offers';
+    return 'Listings';
+  });
+
+  // Wrap setActiveSubTab to also update URL
+  const setActiveSubTab = useCallback((tab: SubTab) => {
+    setActiveSubTabLocal(tab);
+    const params = new URLSearchParams(window.location.search);
+    if (tab === 'Listings') {
+      params.delete('subtab');
+    } else {
+      params.set('subtab', tab);
+    }
+    router.replace(`/jobs?${params.toString()}`);
+  }, [router]);
+  const {
     listings, isLoading, isFetchingMore, hasMore, counts,
     statusFilter, setStatusFilter, loadMore, refresh
   } = useMyListings();
 
   const [selectedListing, setSelectedListing] = useState<JobListing | null>(null);
-  const [selectedOfferGroup, setSelectedOfferGroup] = useState<any | null>(null);
+  const { selectedOfferGroup, setSelectedOfferGroup } = useJobStore();
 
-  const handleCreateJob = async (title: string, status: string, details?: Partial<JobListing>) => {
+  // Helper to transition views and update URL query parameters atomically
+  const transitionTo = useCallback((nextView: ViewState, nextJobId?: string | null) => {
+    setView(nextView);
+    const params = new URLSearchParams(window.location.search);
+    if (nextView === 'dashboard') {
+      params.delete('view');
+      params.delete('jobId');
+      params.delete('step');
+      params.delete('title');
+    } else {
+      params.set('view', nextView);
+      if (nextJobId) {
+        params.set('jobId', nextJobId);
+      } else {
+        params.delete('jobId');
+      }
+      
+      // Clear wizard-specific query parameters when not deep linking into the wizard
+      if (nextView !== 'create-job') {
+        params.delete('step');
+        params.delete('title');
+      } else if (!nextJobId) {
+        // If we are starting a FRESH create-job flow, wipe any lingering URL parameters
+        params.delete('step');
+        params.delete('title');
+      }
+    }
+    router.replace(`/jobs?${params.toString()}`);
+  }, [router]);
+
+  // Synchronize local view state with URL view parameter (browser navigation)
+  useEffect(() => {
+    const currentUrlView = searchParams?.get('view') as ViewState | null;
+    if (currentUrlView) {
+      setView(currentUrlView);
+    } else {
+      setView('dashboard');
+    }
+  }, [searchParams]);
+
+  // Resolve selectedListing if urlJobId is present in URL
+  useEffect(() => {
+    if (urlJobId && listings.length > 0) {
+      const matched = listings.find(l => l.id === urlJobId);
+      if (matched) {
+        setSelectedListing(matched);
+      }
+    } else if (!urlJobId) {
+      setSelectedListing(null);
+    }
+  }, [urlJobId, listings]);
+
+  const handleCreateJob = useCallback(async (title: string, status: string, details?: Partial<JobListing>) => {
     try {
       const listingData = selectedListing ? { ...details, id: selectedListing.id } : details;
       const newListing = await jobsService.createJobListing(title, status, listingData);
       if (newListing) {
         refresh();
-        setView('dashboard');
+        transitionTo('dashboard');
         setActiveSubTab('Listings');
-        setSelectedListing(null);
         if (status === 'ACTIVE') {
           toast.success('Job listing published successfully!');
         } else {
@@ -58,9 +139,9 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       }
       toast.error(errMsg);
     }
-  };
+  }, [selectedListing, refresh, transitionTo, setActiveSubTab]);
 
-  const handleCloseJob = async (id: string) => {
+  const handleCloseJob = useCallback(async (id: string) => {
     try {
       const success = await jobsService.closeJobListing(id);
       if (success) {
@@ -74,14 +155,14 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       console.error('Error closing job listing:', error);
       toast.error('Failed to close job listing.');
     }
-  };
+  }, [refresh]);
 
-  const handleDeleteJob = async (id: string) => {
+  const handleDeleteJob = useCallback(async (id: string) => {
     try {
       const success = await jobsService.deleteJobListing(id);
       if (success) {
         refresh();
-        setView('dashboard');
+        transitionTo('dashboard');
         toast.success('Job listing deleted.');
       } else {
         toast.error('Failed to delete job listing.');
@@ -90,15 +171,33 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       console.error('Error deleting job listing:', error);
       toast.error('Failed to delete job listing.');
     }
-  };
+  }, [refresh, transitionTo]);
+
+  // Memoize stable callbacks for child components
+  const handleCreateJobBack = useCallback(() => {
+    transitionTo('dashboard');
+  }, [transitionTo]);
+
+  const handleSelectListing = useCallback((listing: JobListing) => {
+    const status = listing.status?.toUpperCase();
+    if (status === 'ACTIVE') {
+      transitionTo('applicants', listing.id);
+    } else if (status === 'DRAFT') {
+      transitionTo('create-job', listing.id);
+    } else {
+      transitionTo('view-listing', listing.id);
+    }
+  }, [transitionTo]);
+
+  const handleSelectOfferGroup = useCallback((group: any) => {
+    setSelectedOfferGroup(group);
+    transitionTo('offer-details');
+  }, [transitionTo]);
 
   if (view === 'create-job') {
     return (
       <CreateJobFlow
-        onBack={() => {
-          setSelectedListing(null);
-          setView('dashboard');
-        }}
+        onBack={handleCreateJobBack}
         onSubmit={handleCreateJob}
         initialListing={selectedListing}
       />
@@ -110,7 +209,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       <OfferDetailsScreen
         offerGroup={selectedOfferGroup}
         onBack={() => {
-          setView('dashboard');
+          transitionTo('dashboard');
           setSelectedOfferGroup(null);
         }}
         onViewListingDetails={() => {
@@ -121,8 +220,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
             sessionStorage.setItem('coming_from_send_offer_details', 'true');
           }
           if (matchingListing) {
-            setSelectedListing(matchingListing);
-            setView('view-listing');
+            transitionTo('view-listing', matchingListing.id);
           } else {
             const mockListing: JobListing = {
               id: 'list-mock',
@@ -132,7 +230,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
               posted_at: 'Posted 2 hours ago',
             };
             setSelectedListing(mockListing);
-            setView('view-listing');
+            transitionTo('view-listing');
           }
         }}
       />
@@ -149,11 +247,11 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
             if (typeof window !== 'undefined') {
               sessionStorage.removeItem('coming_from_send_offer_details');
             }
-            setView('offer-details');
+            transitionTo('offer-details');
           } else if (selectedListing.status?.toUpperCase() === 'ACTIVE') {
-            setView('applicants');
+            transitionTo('applicants', selectedListing.id);
           } else {
-            setView('dashboard');
+            transitionTo('dashboard');
           }
         }}
         onCloseListing={handleCloseJob}
@@ -172,12 +270,12 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
             if (typeof window !== 'undefined') {
               sessionStorage.removeItem('coming_from_send_offer_details');
             }
-            setView('offer-details');
+            transitionTo('offer-details');
           } else {
-            setView('dashboard');
+            transitionTo('dashboard');
           }
         }}
-        onViewDetails={() => setView('view-listing')}
+        onViewDetails={() => transitionTo('view-listing', selectedListing.id)}
       />
     );
   }
@@ -207,11 +305,10 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
               <button
                 key={tab}
                 onClick={() => setActiveSubTab(tab)}
-                className={`h-10 px-5 py-1.5 rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 ${
-                  isActive
+                className={`h-10 px-5 py-1.5 rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 ${isActive
                     ? 'bg-indigo-50 outline-indigo-50 text-indigo-500 shadow-sm'
                     : 'bg-white outline-indigo-400/50 hover:outline-indigo-400 text-indigo-400/80 hover:text-indigo-400'
-                }`}
+                  }`}
               >
                 {tab}
               </button>
@@ -222,8 +319,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
         {/* Create Job Action Button */}
         <button
           onClick={() => {
-            setSelectedListing(null);
-            setView('create-job');
+            transitionTo('create-job');
           }}
           className="w-[140px] h-[40px] bg-white border border-[#818CF8] rounded-[24px] py-[8px] px-[16px] gap-[10px] flex flex-row justify-center items-center font-['Poppins'] font-semibold text-sm text-[#818CF8] hover:bg-indigo-50/10 transition-all duration-200 active:scale-95 cursor-pointer"
         >
@@ -264,8 +360,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
                 </div>
                 <button
                   onClick={() => {
-                    setSelectedListing(null);
-                    setView('create-job');
+                    transitionTo('create-job');
                   }}
                   type="button"
                   className="w-48 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 transition-all active:scale-95 rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex justify-center items-center gap-2.5 text-white"
@@ -283,17 +378,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
                 counts={counts}
                 statusFilter={statusFilter}
                 onStatusFilterChange={setStatusFilter}
-                onSelectListing={(listing) => {
-                  setSelectedListing(listing);
-                  const status = listing.status?.toUpperCase();
-                  if (status === 'ACTIVE') {
-                    setView('applicants');
-                  } else if (status === 'DRAFT') {
-                    setView('create-job');
-                  } else {
-                    setView('view-listing');
-                  }
-                }}
+                onSelectListing={handleSelectListing}
               />
             )
           )}
@@ -301,24 +386,13 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
             <SendOfferTab
               listings={listings}
               onSelectListing={(listing, viewType) => {
-                setSelectedListing(listing);
                 if (viewType) {
-                  setView(viewType);
+                  transitionTo(viewType, listing.id);
                 } else {
-                  const status = listing.status?.toUpperCase();
-                  if (status === 'ACTIVE') {
-                    setView('applicants');
-                  } else if (status === 'DRAFT') {
-                    setView('create-job');
-                  } else {
-                    setView('view-listing');
-                  }
+                  handleSelectListing(listing);
                 }
               }}
-              onSelectOfferGroup={(group) => {
-                setSelectedOfferGroup(group);
-                setView('offer-details');
-              }}
+              onSelectOfferGroup={handleSelectOfferGroup}
             />
           )}
         </div>
