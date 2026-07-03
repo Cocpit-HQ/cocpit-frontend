@@ -128,6 +128,32 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
     handleDecline: handleOfferDecline,
   } = useJobOffers();
 
+  const urlSubTab = urlParams?.get('subTab');
+  const [activeFilter, setActiveFilter] = React.useState<'All' | 'Current' | 'Decline' | 'Expired'>(
+    (urlSubTab as any) || 'All'
+  );
+
+  useEffect(() => {
+    if (urlSubTab && ['All', 'Current', 'Decline', 'Expired'].includes(urlSubTab)) {
+      setActiveFilter(urlSubTab as any);
+    }
+  }, [urlSubTab]);
+
+  const handleSubTabChange = (subTab: 'All' | 'Current' | 'Decline' | 'Expired') => {
+    setActiveFilter(subTab);
+    const params = new URLSearchParams(window.location.search);
+    params.set("subTab", subTab);
+    router.replace(`/jobs?${params.toString()}`);
+  };
+
+  const filteredOffers = React.useMemo(() => {
+    if (activeFilter === 'All') return offers;
+    if (activeFilter === 'Current') return offers.filter(o => o.status === 'pending');
+    if (activeFilter === 'Decline') return offers.filter(o => o.status === 'declined');
+    if (activeFilter === 'Expired') return offers.filter(o => o.status === 'expired');
+    return offers;
+  }, [offers, activeFilter]);
+
   const [applyingJob, setApplyingJob] = React.useState<Job | null>(null);
   const [withdrawJobId, setWithdrawJobId] = React.useState<string | null>(null);
   const [declineJobId, setDeclineJobId] = React.useState<string | null>(null);
@@ -772,37 +798,58 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
       {/* Offers Tab */}
       <div className={`w-full ${activeTab === "Offers" ? "" : "hidden"}`}>
         <div className="w-full flex flex-col gap-[20px]">
-          {/* Header */}
-          <div className="flex justify-start items-center">
+          {/* Header & Sub-tabs */}
+          <div className="w-full flex flex-col items-start gap-4">
             <h3 className="text-black text-xl font-bold font-['Poppins'] leading-8">
               Official Job Offers
             </h3>
+            
+            <div className="w-full flex flex-row items-start gap-4 h-[36px] p-0">
+              {(['All', 'Current', 'Decline', 'Expired'] as const).map((subTab) => {
+                const isActive = activeFilter === subTab;
+                return (
+                  <button
+                    key={subTab}
+                    onClick={() => handleSubTabChange(subTab)}
+                    className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] h-[36px] box-border font-['Poppins'] text-sm leading-5 transition-all ${
+                      isActive
+                        ? 'text-[#6366F1] font-semibold border-b border-[#6366F1] drop-shadow-[0_1px_4px_rgba(99,102,241,0.08)]'
+                        : 'text-black font-normal rounded-3xl hover:bg-gray-50'
+                    }`}
+                  >
+                    {subTab}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Offers list */}
-          <div className="w-full flex flex-col gap-6">
+          <div className="w-full flex flex-col gap-6 mt-2">
             {isOffersLoading ? (
               <div className="w-full flex flex-col gap-6">
                 {[1, 2, 3].map(n => (
                   <OfferCardSkeleton key={n} />
                 ))}
               </div>
-            ) : offers.length === 0 ? (
+            ) : filteredOffers.length === 0 ? (
               <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
                 <Icon icon="hugeicons:gift" className="size-20 text-black flex-shrink-0" />
                 <div className="flex flex-col justify-start items-center gap-2">
                   <div className="text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6">
-                    No job offers yet
+                    {activeFilter === 'All' ? 'No job offers yet' : 'No offers found'}
                   </div>
                   <div className="w-80 text-center justify-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4">
-                    Job offers from recruiters and hiring teams will appear here when they match your profile.
+                    {activeFilter === 'All' 
+                      ? 'Job offers from recruiters and hiring teams will appear here when they match your profile.'
+                      : 'There are no offers in this category.'}
                   </div>
                 </div>
               </div>
             ) : (
               <div className="w-full">
                 <div className="flex flex-col gap-6 w-full">
-                  {offers.map((offer) => (
+                  {filteredOffers.map((offer) => (
                     <OfferCard
                       key={offer.id}
                       offer={offer}

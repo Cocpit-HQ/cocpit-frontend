@@ -32,6 +32,16 @@ export const JobOffersPage: React.FC = () => {
     };
   }, []);
 
+  const [activeFilter, setActiveFilter] = React.useState<'All' | 'Current' | 'Decline' | 'Expired'>('All');
+
+  const filteredOffers = React.useMemo(() => {
+    if (activeFilter === 'All') return offers;
+    if (activeFilter === 'Current') return offers.filter(o => o.status === 'pending');
+    if (activeFilter === 'Decline') return offers.filter(o => o.status === 'declined');
+    if (activeFilter === 'Expired') return offers.filter(o => o.status === 'expired');
+    return offers;
+  }, [offers, activeFilter]);
+
   // Tabs layout specification
   const tabs = [
     { id: 'Explore', label: 'Explore' },
@@ -43,6 +53,8 @@ export const JobOffersPage: React.FC = () => {
   const handleTabClick = (tabId: string) => {
     router.push(`/jobs?tab=${tabId}`);
   };
+
+  const subTabs = ['All', 'Current', 'Decline', 'Expired'] as const;
 
   return (
     <div className="w-full max-w-[998px] h-auto min-h-[814px] mx-auto bg-white pt-[20px] px-4 md:px-[20px] pb-[20px] flex flex-col items-center gap-6 border border-slate-100/50 rounded-3xl">
@@ -84,14 +96,32 @@ export const JobOffersPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Section 2 — Title row (margin-top 24px) */}
-      <div className="w-full flex flex-row items-center flex-none">
+      {/* Section 2 — Title row & Filters (margin-top 24px) */}
+      <div className="w-full flex flex-col items-start gap-4 flex-none">
         <h1 className="font-['Poppins'] font-semibold text-lg leading-6 text-black">
           Official Job Offers
         </h1>
+        
+        {/* Sub-tabs / Filters */}
+        <div className="w-full flex items-center border-b border-gray-200 gap-6">
+          {subTabs.map((subTab) => (
+            <button
+              key={subTab}
+              onClick={() => setActiveFilter(subTab)}
+              className={`pb-2 text-sm font-medium font-['Poppins'] relative transition-colors ${
+                activeFilter === subTab ? 'text-[#6366F1]' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              {subTab}
+              {activeFilter === subTab && (
+                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#6366F1] rounded-t-sm" />
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Section 3 — Offers list (margin-top 24px) */}
+      {/* Section 3 — Offers list */}
       <div 
         onScroll={triggerScrollbar}
         onMouseEnter={triggerScrollbar}
@@ -108,24 +138,26 @@ export const JobOffersPage: React.FC = () => {
               <OfferCardSkeleton key={n} />
             ))}
           </div>
-        ) : offers.length === 0 ? (
+        ) : filteredOffers.length === 0 ? (
           <div className="w-full py-16 flex flex-col items-center justify-center gap-4 bg-slate-50 rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50">
             <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center text-[#6366F1]">
               <Icon icon="solar:letter-linear" className="w-8 h-8" />
             </div>
-            <h4 className="text-black text-lg font-semibold font-['Poppins']">No active offers</h4>
+            <h4 className="text-black text-lg font-semibold font-['Poppins']">No offers found</h4>
             <p className="text-gray-500 text-sm font-['Poppins'] max-w-xs text-center">
-              You don't have any job offers right now. Keep applying to matching roles to get scouted by recruiters!
+              There are no offers in this category.
             </p>
-            <button
-              onClick={() => handleTabClick('Explore')}
-              className="px-6 py-2.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white rounded-[24px] text-sm font-semibold font-['Poppins'] transition-all"
-            >
-              Browse Jobs
-            </button>
+            {activeFilter !== 'All' && (
+              <button
+                onClick={() => setActiveFilter('All')}
+                className="px-6 py-2.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white rounded-[24px] text-sm font-semibold font-['Poppins'] transition-all mt-2"
+              >
+                View All Offers
+              </button>
+            )}
           </div>
         ) : (
-          offers.map(offer => (
+          filteredOffers.map(offer => (
             <OfferCard
               key={offer.id}
               offer={offer}
