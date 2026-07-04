@@ -86,7 +86,7 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({ listings, onSelectLi
     }
   };
 
-  const handleSendOfferSubmit = async (jobId: string, candidates: SelectableCandidate[], note: string) => {
+  const handleSendOfferSubmit = async (jobId: string, candidates: SelectableCandidate[], notes: Record<string, string>) => {
     let companyId = '';
     if (activeProfile && activeProfile.type === 'COMPANY') {
       companyId = activeProfile.id;
@@ -101,17 +101,18 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({ listings, onSelectLi
 
     try {
       const promises = candidates.map((c) => {
+        const message = (notes[c.id] || '').trim() || undefined;
         if (companyId) {
           return api.post(`/jobs/companies/${companyId}/offers`, {
             jobId,
             userId: c.id,
-            message: note.trim() || undefined
+            message
           });
         } else {
           return api.post(`/jobs/offers`, {
             jobId,
             userId: c.id,
-            message: note.trim() || undefined
+            message
           });
         }
       });

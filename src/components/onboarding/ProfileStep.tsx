@@ -128,6 +128,20 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
       setInitialAccountName(accountName);
 
       toast({ title: "Profile Updated", description: "Your basic profile has been saved." });
+      
+      // Fetch the updated profile to get the new avatar URL and manually sync NextAuth session
+      try {
+        const freshProfile = await getProfile();
+        if (freshProfile && freshProfile.user) {
+          await update({
+            name: freshProfile.user.name,
+            image: freshProfile.user.avatar,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to sync session with fresh profile", err);
+      }
+
       onNext();
       router.refresh();
     } catch (error: any) {
@@ -149,13 +163,12 @@ export default function ProfileStep({ onNext, onBack, currentStep, totalSteps }:
   }, [profileImage]);
 
   const isValid = useMemo(() => {
-    return (!!profileImage || !!profileImageFile) && 
-           !!accountName.trim() && 
+    return !!accountName.trim() && 
            nameAvailable === true && 
            !checking && 
            validateAccountName(accountName) && 
            !!fullName.trim();
-  }, [profileImage, profileImageFile, accountName, nameAvailable, checking, fullName]);
+  }, [accountName, nameAvailable, checking, fullName]);
 
   return (
     <div className={styles.container}>

@@ -72,7 +72,7 @@ export function CompanyOnboardingPage() {
       );
     }
     if (currentStage === 3) {
-      return documents.length === 0 || documents.every(d => !d.file);
+      return false;
     }
     return false;
   }, [

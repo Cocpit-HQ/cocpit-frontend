@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Job } from '../types/jobs.types';
 import JobCard from './JobCard';
 import JobCardSkeleton from './skeletons/JobCardSkeleton';
-import { useInView } from '@/hooks/use-in-view';
+import { useInView } from 'react-intersection-observer';
 import { Icon } from '@iconify/react';
 
 interface JobListProps {
@@ -54,7 +54,7 @@ export const JobList: React.FC<JobListProps> = React.memo(({
     );
   }
 
-  if (jobs.length === 0) {
+  if (jobs.length === 0 && !hasMore && !isLoading) {
     return (
       <div className="w-full py-12 flex flex-col items-center justify-center text-center gap-3 bg-slate-50/50 rounded-3xl outline outline-1 outline-indigo-50/50">
         <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500">

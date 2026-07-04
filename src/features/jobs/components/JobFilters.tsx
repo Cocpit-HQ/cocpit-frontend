@@ -84,12 +84,14 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
   const datePostedOptions = ['', 'Today', 'Last 7 days', 'Last 30 days'];
 
   const standardIndustries = ['Tech', 'Finance', 'Marketing', 'Design', 'Sales', 'Healthcare', 'Education'];
-  const isCustomIndustry = !!(localFilters.industry && !standardIndustries.map(i => i.toLowerCase()).includes(localFilters.industry.toLowerCase()));
+  const currentIndustryVals = localFilters.industry ? localFilters.industry.split(',').map(s => s.trim()) : [];
+  const customIndustries = currentIndustryVals.filter(v => v && !standardIndustries.map(i => i.toLowerCase()).includes(v.toLowerCase()));
+  const isCustomIndustry = customIndustries.length > 0;
   const [customIndustryText, setCustomIndustryText] = useState('');
 
   useEffect(() => {
     if (isCustomIndustry) {
-      setCustomIndustryText(localFilters.industry || '');
+      setCustomIndustryText(customIndustries.join(', '));
     } else {
       setCustomIndustryText('');
     }
@@ -108,10 +110,12 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
     label: string,
     sectionKey: string,
     filterKey: keyof JobsFilter,
-    options: string[]
+    options: string[],
+    isMultiSelect: boolean = true
   ) => {
     const isExpanded = expandedSection === sectionKey;
     const currentVal = localFilters[filterKey] || '';
+    const selectedValues = currentVal ? currentVal.split(',').map(s => s.trim()) : [];
 
     return (
       <div className="flex flex-col border-b border-indigo-50/50 pb-2">
@@ -133,12 +137,25 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
         {isExpanded && (
           <div className="flex flex-col pl-2 gap-1 animate-in fade-in slide-in-from-top-1 duration-150">
             {options.map(opt => {
-              const isSelected = currentVal === opt;
+              const isSelected = opt === '' ? selectedValues.length === 0 : selectedValues.includes(opt);
               return (
                 <button
                   key={opt}
                   onClick={() => {
-                    const nextVal = isSelected ? '' : opt;
+                    let nextVal = '';
+                    if (!isMultiSelect) {
+                      nextVal = isSelected ? '' : opt;
+                    } else {
+                      if (opt === '') {
+                        nextVal = '';
+                      } else {
+                        if (isSelected) {
+                          nextVal = selectedValues.filter(v => v !== opt).join(',');
+                        } else {
+                          nextVal = [...selectedValues, opt].join(',');
+                        }
+                      }
+                    }
                     setLocalFilters(prev => ({ ...prev, [filterKey]: nextVal }));
                     onFilterChange(filterKey, nextVal);
                   }}
@@ -165,12 +182,14 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
       <div className="flex items-center gap-6">
         <button 
           onClick={() => {
-            const nextVal = filters.job_type === 'Full time' ? '' : 'Full time';
+            const currentVals = (filters.job_type || '').split(',').map(s => s.trim()).filter(Boolean);
+            const isSelected = currentVals.includes('Full time');
+            const nextVal = isSelected ? currentVals.filter(v => v !== 'Full time').join(',') : [...currentVals, 'Full time'].join(',');
             setLocalFilters(prev => ({ ...prev, job_type: nextVal }));
             onFilterChange('job_type', nextVal);
           }}
           className={`px-4 py-2 rounded-[24px] border text-sm font-medium transition-all font-['Poppins'] ${
-            filters.job_type === 'Full time'
+            (filters.job_type || '').split(',').map(s => s.trim()).includes('Full time')
               ? 'border-indigo-100 bg-indigo-50 text-indigo-500'
               : 'border-transparent text-gray-700 hover:bg-gray-50'
           }`}
@@ -180,12 +199,14 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
 
         <button 
           onClick={() => {
-            const nextVal = filters.work_mode === 'Remote' ? '' : 'Remote';
+            const currentVals = (filters.work_mode || '').split(',').map(s => s.trim()).filter(Boolean);
+            const isSelected = currentVals.includes('Remote');
+            const nextVal = isSelected ? currentVals.filter(v => v !== 'Remote').join(',') : [...currentVals, 'Remote'].join(',');
             setLocalFilters(prev => ({ ...prev, work_mode: nextVal }));
             onFilterChange('work_mode', nextVal);
           }}
           className={`px-4 py-2 rounded-[24px] border text-sm font-medium transition-all font-['Poppins'] ${
-            filters.work_mode === 'Remote'
+            (filters.work_mode || '').split(',').map(s => s.trim()).includes('Remote')
               ? 'border-indigo-100 bg-indigo-50 text-indigo-500'
               : 'border-transparent text-gray-700 hover:bg-gray-50'
           }`}
@@ -195,12 +216,14 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
 
         <button 
           onClick={() => {
-            const nextVal = filters.experience === 'Fresher' ? '' : 'Fresher';
+            const currentVals = (filters.experience || '').split(',').map(s => s.trim()).filter(Boolean);
+            const isSelected = currentVals.includes('Fresher');
+            const nextVal = isSelected ? currentVals.filter(v => v !== 'Fresher').join(',') : [...currentVals, 'Fresher'].join(',');
             setLocalFilters(prev => ({ ...prev, experience: nextVal }));
             onFilterChange('experience', nextVal);
           }}
           className={`px-4 py-2 rounded-[24px] border text-sm font-medium transition-all font-['Poppins'] ${
-            filters.experience === 'Fresher'
+            (filters.experience || '').split(',').map(s => s.trim()).includes('Fresher')
               ? 'border-indigo-100 bg-indigo-50 text-indigo-500'
               : 'border-transparent text-gray-700 hover:bg-gray-50'
           }`}
@@ -242,11 +265,10 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
 
             {/* Scrollable Sections Container */}
             <div className="flex flex-col gap-1 max-h-[380px] overflow-y-auto pr-1 scrollbar-hide">
-              {renderAccordionSection('Job type', 'job_type', 'job_type', jobTypeOptions)}
-              {renderAccordionSection('Experience level', 'experience', 'experience', experienceOptions)}
-              {renderAccordionSection('Work mode', 'work_mode', 'work_mode', workModeOptions)}
-              {renderAccordionSection('Salary range', 'salary_range', 'salary_range', salaryOptions)}
-              {renderAccordionSection('Date posted', 'date_posted', 'date_posted', datePostedOptions)}
+              {renderAccordionSection('Job type', 'job_type', 'job_type', jobTypeOptions, true)}
+              {renderAccordionSection('Experience level', 'experience', 'experience', experienceOptions, true)}
+              {renderAccordionSection('Work mode', 'work_mode', 'work_mode', workModeOptions, true)}
+              {renderAccordionSection('Salary range', 'salary_range', 'salary_range', salaryOptions, true)}
 
               {/* Accordion: Industry */}
               <div className="flex flex-col border-b border-indigo-50/50 pb-2">
@@ -268,12 +290,22 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                 {expandedSection === 'industry' && (
                   <div className="flex flex-col pl-2 gap-1 max-h-48 overflow-y-auto pr-1 pr-1 scrollbar-hide animate-in fade-in slide-in-from-top-1 duration-150">
                     {['', ...standardIndustries].map(opt => {
-                      const isSelected = localFilters.industry === opt;
+                      const selectedValues = localFilters.industry ? localFilters.industry.split(',').map(s => s.trim()) : [];
+                      const isSelected = opt === '' ? selectedValues.length === 0 : selectedValues.includes(opt);
                       return (
                         <button
                           key={opt}
                           onClick={() => {
-                            const nextVal = isSelected ? '' : opt;
+                            let nextVal = '';
+                            if (opt === '') {
+                              nextVal = '';
+                            } else {
+                              if (isSelected) {
+                                nextVal = selectedValues.filter(v => v !== opt).join(',');
+                              } else {
+                                nextVal = [...selectedValues, opt].join(',');
+                              }
+                            }
                             setLocalFilters(prev => ({ ...prev, industry: nextVal }));
                             onFilterChange('industry', nextVal);
                           }}
@@ -289,22 +321,28 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                     })}
                     <button
                       onClick={() => {
-                        const isOtherSelected = localFilters.industry === 'Other' || isCustomIndustry;
-                        const nextVal = isOtherSelected ? '' : 'Other';
+                        const selectedValues = localFilters.industry ? localFilters.industry.split(',').map(s => s.trim()) : [];
+                        const isOtherSelected = selectedValues.some(v => !standardIndustries.includes(v)) || isCustomIndustry;
+                        let nextVal = '';
+                        if (isOtherSelected) {
+                          nextVal = selectedValues.filter(v => standardIndustries.includes(v)).join(',');
+                        } else {
+                          nextVal = [...selectedValues, 'Other'].join(',');
+                        }
                         setLocalFilters(prev => ({ ...prev, industry: nextVal }));
                         if (!nextVal) {
                           onFilterChange('industry', '');
                         }
                       }}
                       className={`w-full py-1.5 text-left text-[13px] font-['Poppins'] transition-colors ${
-                        localFilters.industry === 'Other' || isCustomIndustry
+                        isCustomIndustry || (localFilters.industry ? localFilters.industry.split(',').map(s => s.trim()).includes('Other') : false)
                           ? 'text-[#6366F1] font-medium'
                           : 'text-gray-500 hover:text-black font-normal'
                       }`}
                     >
                       Other
                     </button>
-                    {(localFilters.industry === 'Other' || isCustomIndustry) && (
+                    {(isCustomIndustry || (localFilters.industry ? localFilters.industry.split(',').map(s => s.trim()).includes('Other') : false)) && (
                       <div className="w-full pl-1 pr-2 pb-2">
                         <input
                           type="text"
@@ -312,14 +350,17 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                           onChange={(e) => {
                             const val = e.target.value;
                             setCustomIndustryText(val);
-                            setLocalFilters(prev => ({ ...prev, industry: val || 'Other' }));
+                            const selectedValues = localFilters.industry ? localFilters.industry.split(',').map(s => s.trim()) : [];
+                            const standardVals = selectedValues.filter(v => standardIndustries.includes(v));
+                            const nextVal = val ? [...standardVals, val].join(',') : standardVals.join(',');
+                            setLocalFilters(prev => ({ ...prev, industry: nextVal || 'Other' }));
                           }}
                           onBlur={() => {
-                            onFilterChange('industry', customIndustryText || '');
+                            onFilterChange('industry', localFilters.industry || '');
                           }}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
-                              onFilterChange('industry', customIndustryText || '');
+                              onFilterChange('industry', localFilters.industry || '');
                             }
                           }}
                           placeholder="Art.."
@@ -331,6 +372,8 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                   </div>
                 )}
               </div>
+              
+              {renderAccordionSection('Date posted', 'date_posted', 'date_posted', datePostedOptions, false)}
             </div>
           </div>
         )}

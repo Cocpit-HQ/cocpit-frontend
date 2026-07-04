@@ -91,10 +91,18 @@ export default function InterestsStep({
     onSearchChange?.(value);
   };
 
+  // Include selected items so custom additions remain visible
+  const allKnownItems = Array.from(new Set([...initialData, ...selectedItems]));
+
   // Client-side filter — instant feedback while server debounce is in-flight
-  const filteredItems = initialData.filter((item) =>
+  const filteredItems = allKnownItems.filter((item) =>
     item.toLowerCase().includes(search.toLowerCase())
   );
+
+  const exactMatchExists = allKnownItems.some(
+    (item) => item.toLowerCase() === search.trim().toLowerCase()
+  );
+  const showAddCustom = search.trim().length > 0 && !exactMatchExists;
 
   // IntersectionObserver: fire onLoadMore when the sentinel enters view
   const handleIntersection = useCallback(
@@ -184,6 +192,20 @@ export default function InterestsStep({
                     {item}
                   </button>
                 ))}
+
+                {showAddCustom && (
+                  <button
+                    key="custom-add"
+                    type="button"
+                    className={styles.tag}
+                    onClick={() => {
+                      toggleItem(search.trim());
+                      setSearch("");
+                    }}
+                  >
+                    + Add "{search.trim()}"
+                  </button>
+                )}
               </div>
 
               {/* Sentinel — triggers next page when scrolled into view */}

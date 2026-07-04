@@ -218,9 +218,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                 </span>
               </>
             ) : (
-              <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-400">
-                Salary not disclosed
-              </span>
+              <span className="opacity-0 select-none">-</span>
             )}
           </div>
         </div>

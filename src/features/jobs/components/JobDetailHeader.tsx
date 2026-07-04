@@ -79,7 +79,7 @@ export const JobDetailHeader: React.FC<JobDetailHeaderProps> = ({ job }) => {
               </span>
             </>
           ) : (
-            <span>Salary not disclosed</span>
+            <span className="opacity-0 select-none">-</span>
           )}
         </span>
       </div>

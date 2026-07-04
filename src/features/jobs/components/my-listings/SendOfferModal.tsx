@@ -14,7 +14,7 @@ interface SendOfferModalProps {
   isOpen: boolean;
   onClose: () => void;
   activeListings: JobListing[];
-  onSubmit: (jobId: string, candidates: SelectableCandidate[], note: string) => void;
+  onSubmit: (jobId: string, candidates: SelectableCandidate[], notes: Record<string, string>) => void;
 }
 
 export const SendOfferModal: React.FC<SendOfferModalProps> = ({
@@ -27,10 +27,12 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedJobId, setSelectedJobId] = useState('');
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]); // Array of candidate IDs
-  const [personalNote, setPersonalNote] = useState('');
+  const [personalNotes, setPersonalNotes] = useState<Record<string, string>>({});
   const [candidatesList, setCandidatesList] = useState<SelectableCandidate[]>([]);
   const [allFetchedCandidates, setAllFetchedCandidates] = useState<Record<string, SelectableCandidate>>({});
   const [isLoadingCandidates, setIsLoadingCandidates] = useState(false);
+  const [alreadyOfferedCandidates, setAlreadyOfferedCandidates] = useState<Record<string, string>>({});
+  const [isFetchingRecipients, setIsFetchingRecipients] = useState(false);
   const { data: session } = useSession();
   const currentUserId = (session?.user as any)?.user_id || (session?.user as any)?.id;
 
@@ -88,7 +90,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
     setStage(1);
     setSelectedJobId('');
     setSelectedCandidates([]);
-    setPersonalNote('');
+    setPersonalNotes({});
     onClose();
   };
 
@@ -96,13 +98,13 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
     if (!selectedJob) return;
     const selectedList = selectedCandidates.map(id => allFetchedCandidates[id]).filter(Boolean);
 
-    onSubmit(selectedJob.id, selectedList, personalNote);
+    onSubmit(selectedJob.id, selectedList, personalNotes);
     
     // Reset state
     setStage(1);
     setSelectedJobId('');
     setSelectedCandidates([]);
-    setPersonalNote('');
+    setPersonalNotes({});
     onClose();
   };
 
@@ -192,15 +194,35 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    setStage(2);
-                    setSearchQuery('');
+                  onClick={async () => {
+                    if (!selectedJob) return;
+                    setIsFetchingRecipients(true);
+                    try {
+                      const companyId = selectedJob.org_id || (selectedJob as any).company_id;
+                      const endpoint = companyId 
+                        ? `/jobs/companies/${companyId}/offers/job/${selectedJobId}/recipients`
+                        : `/jobs/offers/job/${selectedJobId}/recipients`;
+                      const res = await api.get(endpoint);
+                      const offeredMap: Record<string, string> = {};
+                      res.data.forEach((r: any) => {
+                        offeredMap[r.user_id] = r.status;
+                      });
+                      setAlreadyOfferedCandidates(offeredMap);
+                      setStage(2);
+                      setSearchQuery('');
+                    } catch (err) {
+                      console.error("Failed to fetch recipients", err);
+                      setStage(2);
+                      setSearchQuery('');
+                    } finally {
+                      setIsFetchingRecipients(false);
+                    }
                   }}
-                  disabled={!selectedJobId}
+                  disabled={!selectedJobId || isFetchingRecipients}
                   type="button"
                   className="flex-1 h-10 px-4 py-2 bg-indigo-500 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 hover:bg-indigo-600 active:scale-95 transition-all text-white text-sm font-normal font-['Poppins'] leading-5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Continue
+                  {isFetchingRecipients ? <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin" /> : "Continue"}
                 </button>
               </div>
             </div>
@@ -250,11 +272,16 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                 <div className="self-stretch flex flex-col justify-start items-start gap-2 max-h-[220px] overflow-y-auto pr-1 w-full [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full">
                   {candidatesList.map((cand) => {
                     const isChecked = selectedCandidates.includes(cand.id);
+                    const offerStatus = alreadyOfferedCandidates[cand.id];
+                    const isAlreadyOffered = offerStatus && ['pending', 'accepted', 'declined'].includes(offerStatus);
+
                     return (
                       <div
                         key={cand.id}
-                        onClick={() => toggleCandidateSelection(cand.id)}
-                        className="self-stretch h-12 inline-flex justify-between items-center cursor-pointer hover:bg-indigo-50/20 rounded-xl px-2 transition-colors w-full box-border"
+                        onClick={() => {
+                          if (!isAlreadyOffered) toggleCandidateSelection(cand.id);
+                        }}
+                        className={`self-stretch h-12 inline-flex justify-between items-center rounded-xl px-2 transition-colors w-full box-border ${isAlreadyOffered ? 'opacity-50 cursor-not-allowed bg-slate-50' : 'cursor-pointer hover:bg-indigo-50/20'}`}
                       >
                         <div className="flex justify-start items-center gap-2">
                           {cand.avatar ? (
@@ -269,7 +296,14 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                             </div>
                           )}
                           <div className="inline-flex flex-col justify-center items-start">
-                            <div className="text-left text-black text-base font-normal font-['Poppins'] leading-6">{cand.name}</div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-left text-black text-base font-normal font-['Poppins'] leading-6">{cand.name}</span>
+                              {isAlreadyOffered && (
+                                <span className="px-1.5 py-0.5 rounded-md bg-gray-200 text-gray-600 text-[10px] uppercase font-semibold font-['Poppins'] tracking-wider">
+                                  {offerStatus}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         
@@ -282,7 +316,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                           </div>
                         ) : (
                           <div className="p-1 inline-flex flex-col justify-center items-center">
-                            <div className="w-5 h-5 rounded border border-gray-300 bg-white" />
+                            <div className={`w-5 h-5 rounded border bg-white ${isAlreadyOffered ? 'border-gray-200' : 'border-gray-300'}`} />
                           </div>
                         )}
                       </div>
@@ -341,39 +375,34 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                 <div className="text-center justify-start text-gray-500 text-xs font-normal font-['Poppins'] leading-4">Choose or create a job to send an offer.</div>
               </div>
 
-              {/* Candidate avatars list */}
-              <div className="w-96 py-2 inline-flex justify-start items-start gap-y-4 gap-x-2 flex-wrap max-h-[140px] overflow-y-auto pr-1 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full">
+              {/* Individual Candidate Textareas */}
+              <div className="w-full max-h-[300px] overflow-y-auto flex flex-col gap-4 pr-2 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full">
                 {selectedCandidates.map((id) => {
                   const c = allFetchedCandidates[id];
                   if (!c) return null;
                   return (
-                    <div key={c.id} className="w-24 h-16 relative">
-                      {c.avatar ? (
-                        <img className="w-10 h-10 left-[28px] top-0 absolute rounded-full object-cover border border-slate-100" src={c.avatar} alt={c.name} />
-                      ) : (
-                        <div className="w-10 h-10 left-[28px] top-0 absolute rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 font-semibold font-['Poppins'] text-xs border border-slate-100">
-                          {c.name.substring(0, 2).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="left-0 right-0 text-center top-[48px] absolute text-gray-500 text-xs font-normal font-['Poppins'] leading-4 truncate px-1 capitalize">
-                        {c.name.split(' ')[0]} {c.name.split(' ')[1] ? c.name.split(' ')[1].toLowerCase() : ''}
+                    <div key={c.id} className="w-full flex flex-col gap-2 p-3 bg-slate-50/50 rounded-xl border border-slate-100">
+                      <div className="flex items-center gap-3">
+                        {c.avatar ? (
+                          <img className="w-8 h-8 rounded-full object-cover border border-slate-200" src={c.avatar} alt={c.name} />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 font-semibold font-['Poppins'] text-[10px] border border-slate-200">
+                            {c.name.substring(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <span className="text-black text-sm font-medium font-['Poppins'] leading-tight">{c.name}</span>
                       </div>
-                      <div className="w-4 h-4 left-[50px] top-[24px] absolute rounded bg-indigo-500 inline-flex justify-center items-center shadow-sm border border-indigo-500">
-                        <Icon icon="lucide:check" className="w-2.5 h-2.5 text-white stroke-[3]" />
+                      <div className="self-stretch h-20 px-3 py-2 bg-white rounded-lg outline outline-1 outline-zinc-200 inline-flex justify-start items-start w-full box-border">
+                        <textarea
+                          value={personalNotes[c.id] || ''}
+                          onChange={(e) => setPersonalNotes({ ...personalNotes, [c.id]: e.target.value })}
+                          placeholder={`Add a personal note for ${c.name.split(' ')[0]}...`}
+                          className="flex-1 w-full h-full bg-transparent border-0 p-0 text-black text-xs font-normal font-['Poppins'] focus:outline-none focus:ring-0 resize-none placeholder-gray-400"
+                        />
                       </div>
                     </div>
                   );
                 })}
-              </div>
-
-              {/* Personal message textarea */}
-              <div className="self-stretch h-24 px-4 py-2 bg-white/10 rounded-2xl outline outline-1 outline-offset-[-1px] outline-zinc-200 backdrop-blur-md inline-flex justify-start items-start gap-2.5 w-full box-border">
-                <textarea
-                  value={personalNote}
-                  onChange={(e) => setPersonalNote(e.target.value)}
-                  placeholder="Add a personal note...."
-                  className="flex-1 w-full h-full bg-transparent border-0 p-0 text-black text-sm font-normal font-['Poppins'] leading-5 focus:outline-none focus:ring-0 resize-none placeholder-gray-500"
-                />
               </div>
 
               {/* Footer Buttons */}

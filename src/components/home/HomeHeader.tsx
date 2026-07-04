@@ -582,44 +582,45 @@ export const HomeHeader = () => {
                                                                 <Clock className="w-6 h-6 text-black dark:text-white" />
                                                             </div>
 
-                                                            {/* UI UX job */}
-                                                            <span
-                                                                className="font-poppins text-black dark:text-white truncate"
-                                                                style={{
-                                                                    height: '24px',
-                                                                    fontStyle: 'normal',
-                                                                    fontWeight: 400,
-                                                                    fontSize: '16px',
-                                                                    lineHeight: '24px',
-                                                                    color: 'currentColor',
-                                                                    flex: 'none',
-                                                                    order: 1,
-                                                                    flexGrow: 0,
-                                                                }}
-                                                            >
-                                                                {item.value as string}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            e.preventDefault();
-                                                            removeSearch(item.id);
-                                                        }}
-                                                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-lg opacity-0 group-hover/history:opacity-100 hover:bg-muted/10 transition-all text-xs"
-                                                        title="Remove from history"
-                                                    >
-                                                        ❌
-                                                    </button>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="py-8 text-center text-sm text-muted-foreground w-full">
-                                                No recent searches yet.
+                                                        {/* UI UX job */}
+                                                        <span
+                                                            className="font-poppins text-black dark:text-white truncate"
+                                                            style={{
+                                                                height: '24px',
+                                                                fontStyle: 'normal',
+                                                                fontWeight: 400,
+                                                                fontSize: '16px',
+                                                                lineHeight: '24px',
+                                                                color: 'currentColor',
+                                                                flex: 'none',
+                                                                order: 1,
+                                                                flexGrow: 0,
+                                                            }}
+                                                        >
+                                                            {item.value as string}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <button
+                                                    onMouseDown={(e) => e.preventDefault()}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        e.preventDefault();
+                                                        removeSearch(item.id);
+                                                    }}
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-lg opacity-0 group-hover/history:opacity-100 hover:bg-muted/10 transition-all text-xs"
+                                                    title="Remove from history"
+                                                >
+                                                    ❌
+                                                </button>
                                             </div>
-                                        )}
-                                    </div>
+                                        ))
+                                    ) : (
+                                        <div className="py-8 text-center text-sm text-muted-foreground w-full">
+                                            No recent searches yet.
+                                        </div>
+                                    )}
+                                </div>
 
                                     {/* Frame 2608719 */}
                                     {history.length > 0 && (

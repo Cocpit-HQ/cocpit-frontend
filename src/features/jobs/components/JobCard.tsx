@@ -130,7 +130,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
                 </span>
               </>
             ) : (
-              <span className="text-gray-400 text-xs">Salary not disclosed</span>
+              <span className="opacity-0 select-none text-xs">-</span>
             )}
           </div>
         </div>

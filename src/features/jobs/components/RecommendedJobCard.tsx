@@ -79,7 +79,7 @@ export const RecommendedJobCard: React.FC<RecommendedJobCardProps> = ({ job, onC
                   </span>
                 </>
               ) : (
-                <span className="text-gray-400">Salary not disclosed</span>
+                <span className="opacity-0 select-none">-</span>
               )}
             </div>
         </div>

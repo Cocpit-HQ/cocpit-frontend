@@ -5,6 +5,7 @@ import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState, useRef } from "react"
+import { useSession } from "next-auth/react"
 
 import { PostCarousel } from "@/components/shared/PostCarousel"
 import {
@@ -551,6 +552,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
 export default function ProfilePage() {
   const router = useRouter()
   const { setActiveModal } = useUIStore()
+  const { data: session, update: updateSession } = useSession()
 
   // New TanStack Query Hook
   const { data: profileData, isLoading } = useMyProfile();
@@ -846,6 +848,21 @@ export default function ProfilePage() {
       setCoverImage(profileData.user.cover_image);
     }
   }, [profileData]);
+
+  // Sync stale NextAuth session with fresh profile data
+  useEffect(() => {
+    if (profileData?.user && session?.user) {
+      if (
+        (profileData.user.avatar && session.user.image !== profileData.user.avatar) ||
+        (profileData.user.name && session.user.name !== profileData.user.name)
+      ) {
+        updateSession({
+          name: profileData.user.name,
+          image: profileData.user.avatar,
+        });
+      }
+    }
+  }, [profileData?.user?.avatar, profileData?.user?.name, session?.user?.image, session?.user?.name, updateSession]);
 
   const [postsLoading, setPostsLoading] = useState(true);
 
