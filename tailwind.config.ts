@@ -13,7 +13,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        poppins: ["var(--font-poppins)", "Poppins", "sans-serif"],
+        poppins: ["Twemoji Country Flags", "var(--font-poppins)", "Poppins", "sans-serif"],
       },
       boxShadow: {
         "indigo-xs": "var(--feed-card-shadow)",

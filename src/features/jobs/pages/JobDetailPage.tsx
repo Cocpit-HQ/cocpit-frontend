@@ -19,14 +19,23 @@ const JobDetailMap = ({ location }: { location: string }) => {
   return (
     <div className="w-full h-full bg-[#E5E9F0] relative overflow-hidden flex items-center justify-center">
       {location ? (
-        <iframe
-          width="100%"
-          height="100%"
-          className="border-0"
-          loading="lazy"
-          allowFullScreen
-          src={`https://maps.google.com/maps?q=${encodeURIComponent(location)}&z=14&output=embed`}
-        />
+        <>
+          <iframe
+            width="100%"
+            height="100%"
+            className="border-0 relative z-0"
+            loading="lazy"
+            allowFullScreen
+            src={`https://maps.google.com/maps?q=${encodeURIComponent(location)}&z=14&output=embed`}
+          />
+          <a
+            href={`https://maps.google.com/maps?q=${encodeURIComponent(location)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute inset-0 z-10 cursor-pointer"
+            aria-label="Open in Google Maps"
+          />
+        </>
       ) : (
         <div className="text-gray-400 text-sm font-['Poppins']">No location specified</div>
       )}
@@ -419,12 +428,17 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
               <JobDetailMap location={job.location || ''} />
             </div>
 
-            <div className="self-stretch inline-flex justify-start items-center gap-2">
-              <Icon icon="solar:map-point-linear" className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-              <div className="flex-1 justify-start text-gray-500 text-sm font-normal font-['Poppins'] leading-5">
+            <a 
+              href={job.location ? `https://maps.google.com/maps?q=${encodeURIComponent(job.location)}` : '#'}
+              target={job.location ? "_blank" : undefined}
+              rel={job.location ? "noopener noreferrer" : undefined}
+              className="self-stretch inline-flex justify-start items-center gap-2 cursor-pointer group"
+            >
+              <Icon icon="solar:map-point-linear" className="w-5 h-5 text-gray-400 group-hover:text-indigo-500 flex-shrink-0 mt-0.5 transition-colors" />
+              <div className="flex-1 justify-start text-gray-500 group-hover:text-indigo-500 text-sm font-normal font-['Poppins'] leading-5 transition-colors">
                 {job.location || 'Location not specified'}
               </div>
-            </div>
+            </a>
           </div>
 
         </div>

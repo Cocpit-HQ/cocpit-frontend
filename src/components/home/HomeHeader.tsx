@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, MessageCircle, Clock, Trash2, Bell, MessageSquareText } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
-import { NotificationPopover } from '@/components/notifications/NotificationPopover';
 import { useDebounce } from '@/hooks/use-debounce';
 import { searchUsers } from '@/services/api/user';
 import { searchHashtags, HashtagSuggestion } from '@/services/api/hashtags';
@@ -677,11 +676,12 @@ export const HomeHeader = () => {
 
                         {/* Icons group — gap-2 (8px) between each, each icon 56×40 */}
                         <div className="flex items-center gap-2">
-                            <NotificationPopover
-                                className={`relative flex items-center justify-center transition-colors w-14 h-10 rounded-[24px] ${isNotificationsActive || isPopoverOpen ? 'bg-primary-tint text-primary-tint-foreground' : 'text-foreground hover:bg-profile-hover'}`}
-                                icon={<Bell width={24} height={24} strokeWidth={1.5} />}
-                                onOpenChange={setIsPopoverOpen}
-                            />
+                            <Link
+                                href="/notifications"
+                                className={`flex items-center justify-center w-14 h-10 rounded-[24px] transition-colors ${isNotificationsActive ? 'bg-primary-tint text-primary-tint-foreground' : 'text-foreground hover:bg-profile-hover'}`}
+                            >
+                                <Bell width={24} height={24} strokeWidth={1.5} />
+                            </Link>
                             <Link
                                 href="/messaging"
                                 className={`flex items-center justify-center w-14 h-10 rounded-[24px] transition-colors ${pathname === '/messaging' || pathname.startsWith('/messaging') ? 'bg-primary-tint text-primary-tint-foreground' : 'text-foreground hover:bg-profile-hover'}`}
@@ -890,11 +890,12 @@ export const HomeHeader = () => {
                     {/* Mobile Icons */}
                     {!isSearchFocused && (
                         <div className="flex items-center gap-1">
-                            <NotificationPopover
-                                className={`relative flex items-center justify-center transition-colors hover:text-foreground ${isNotificationsActive || isPopoverOpen ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-primary dark:text-[#818CF8] w-14 h-10 px-4 py-2 rounded-[24px]' : 'text-muted-foreground hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50 p-2 rounded-full'}`}
-                                icon={<Bell className="w-5 h-5" />}
-                                onOpenChange={setIsPopoverOpen}
-                            />
+                            <Link
+                                href="/notifications"
+                                className={`relative flex items-center justify-center transition-colors hover:text-foreground ${isNotificationsActive ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-primary dark:text-[#818CF8] w-14 h-10 px-4 py-2 rounded-[24px]' : 'text-muted-foreground hover:bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 p-2 rounded-full'}`}
+                            >
+                                <Bell className="w-5 h-5" />
+                            </Link>
                             <Link
                                 href="/messaging"
                                 className={`p-2 rounded-full transition-colors ${pathname === '/messaging' || pathname.startsWith('/messaging') ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-primary dark:text-[#818CF8]' : 'text-muted-foreground hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50'}`}

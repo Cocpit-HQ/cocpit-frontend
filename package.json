@@ -43,6 +43,7 @@
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",
+    "country-flag-emoji-polyfill": "^0.1.8",
     "currency-codes": "^2.2.0",
     "currency-symbol-map": "^5.1.0",
     "dayjs": "^1.11.19",

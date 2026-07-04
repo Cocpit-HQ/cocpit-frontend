@@ -13,6 +13,7 @@ import { useActiveProfile } from '@/context/ActiveProfileContext'
 import { useCompanyPermissions } from '@/components/organizations/hooks/use-company'
 import { useNavigationMemoryLink } from '@/hooks/use-navigation-memory'
 import { useCompanyOnboardingStore } from '@/features/company-onboarding/store/company-onboarding.store'
+import { useQueryClient } from '@tanstack/react-query'
 import './sidebar.css'
 
 interface DarkSidebarProps {
@@ -21,6 +22,7 @@ interface DarkSidebarProps {
 
 export function DarkSidebar({ className }: DarkSidebarProps) {
   const pathname = usePathname()
+  const queryClient = useQueryClient()
   const [optimisticPath, setOptimisticPath] = React.useState(pathname)
 
   React.useEffect(() => {
@@ -86,14 +88,24 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
     <aside className={`sidebar ${className || ''}`} aria-label="Primary navigation">
       {/* Logo */}
       <div className="sidebar__logo">
-        <div className="relative w-14 h-14">
+        <Link 
+          href="/feed"
+          onClick={(e) => {
+            if (pathname === '/feed' || pathname === '/') {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              queryClient.invalidateQueries({ queryKey: ['feed'] });
+            }
+          }}
+          className="relative w-14 h-14 block"
+        >
           <Image
             src="/assets/weblogo.png.PNG"
             alt="Cocpit"
             fill
             className="sidebar__logo-img"
           />
-        </div>
+        </Link>
       </div>
 
       {/* Navigation Sections */}

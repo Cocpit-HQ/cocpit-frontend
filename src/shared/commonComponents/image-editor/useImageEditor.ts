@@ -101,8 +101,20 @@ export function useImageEditor({
         hasMoved.current = true;
       }
       lastPointer.current = { x: clientX, y: clientY };
-      setPositionX((prev) => prev + dx);
-      setPositionY((prev) => prev + dy);
+
+      const zoomScale = 1 + (zoom / 100);
+      let containerWidth = 200;
+      let containerHeight = 200;
+      if (containerRef.current) {
+        containerWidth = containerRef.current.offsetWidth;
+        containerHeight = containerRef.current.offsetHeight;
+      }
+
+      const maxTranslateX = (containerWidth * zoomScale - containerWidth) / 2;
+      const maxTranslateY = (containerHeight * zoomScale - containerHeight) / 2;
+
+      setPositionX((prev) => Math.min(Math.max(prev + dx, -maxTranslateX), maxTranslateX));
+      setPositionY((prev) => Math.min(Math.max(prev + dy, -maxTranslateY), maxTranslateY));
     };
 
     const onMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
@@ -178,6 +190,22 @@ export function useImageEditor({
     if (disabled) return;
     fileInputRef.current?.click();
   }, [disabled]);
+
+  // Clamp position when zoom changes
+  useEffect(() => {
+    const zoomScale = 1 + (zoom / 100);
+    let containerWidth = 200;
+    let containerHeight = 200;
+    if (containerRef.current) {
+      containerWidth = containerRef.current.offsetWidth;
+      containerHeight = containerRef.current.offsetHeight;
+    }
+    const maxTranslateX = (containerWidth * zoomScale - containerWidth) / 2;
+    const maxTranslateY = (containerHeight * zoomScale - containerHeight) / 2;
+
+    setPositionX((prev) => Math.min(Math.max(prev, -maxTranslateX), maxTranslateX));
+    setPositionY((prev) => Math.min(Math.max(prev, -maxTranslateY), maxTranslateY));
+  }, [zoom]);
 
   return {
     zoom,

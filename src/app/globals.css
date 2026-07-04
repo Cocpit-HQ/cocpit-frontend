@@ -3,11 +3,15 @@
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, [data-theme=navy], [data-theme=navy] *));
 
-
+@layer base {
+  :root, body {
+    --font-poppins: "Twemoji Country Flags", var(--font-poppins-base), sans-serif;
+  }
+}
 
 @theme {
-  --font-sans: 'Inter', var(--font-geist-sans), sans-serif;
-  --font-heading: 'Sora', var(--font-geist-sans), sans-serif;
+  --font-sans: "Twemoji Country Flags", 'Inter', var(--font-geist-sans), sans-serif;
+  --font-heading: "Twemoji Country Flags", 'Sora', var(--font-geist-sans), sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

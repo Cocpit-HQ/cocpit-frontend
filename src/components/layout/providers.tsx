@@ -3,12 +3,16 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SessionProvider } from "next-auth/react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { ActiveProfileProvider } from "@/context/ActiveProfileContext";
+import { polyfillCountryFlagEmojis } from "country-flag-emoji-polyfill";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    polyfillCountryFlagEmojis();
+  }, []);
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {

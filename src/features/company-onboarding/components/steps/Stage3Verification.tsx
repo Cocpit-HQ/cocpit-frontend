@@ -81,7 +81,7 @@ const Stage3Verification = React.memo(function Stage3Verification() {
         <div className="w-[600px] h-[130px] bg-white dark:bg-[#111827] border border-slate-100/50 dark:border-[#1C2840] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none rounded-[12px] p-6 flex flex-col gap-2 flex-none">
           <div className="w-[552px] h-[20px] flex flex-col justify-center flex-none">
             <label className="w-[552px] h-[20px] font-poppins font-medium text-[14px] leading-[20px] tracking-[0.14px] text-black dark:text-[#A1A8B3] flex items-center">
-              Country of Operation
+              Country of Operation <span className="font-normal text-[#6B7280] dark:text-[#A1A8B3] ml-1">(Optional)</span>
             </label>
           </div>
           <div ref={countryRef} className="w-[552px] h-[54px] relative flex-none">
@@ -119,7 +119,7 @@ const Stage3Verification = React.memo(function Stage3Verification() {
         {/* Documents Section Header Row */}
         <div className="w-[600px] h-[40px] flex flex-row justify-between items-center px-6 pt-4 flex-none">
           <span className="text-[#0D47A1] dark:text-[#82B8FF] font-poppins font-bold text-[16px] leading-[20px] tracking-[0.7px] uppercase">
-            Documents
+            Documents <span className="font-normal normal-case tracking-normal text-[#6B7280] dark:text-[#A1A8B3]">(Optional)</span>
           </span>
           <button
             onClick={addDocument}
@@ -128,6 +128,10 @@ const Stage3Verification = React.memo(function Stage3Verification() {
             <Icon icon="mynaui:plus" className="w-6 h-6" />
           </button>
         </div>
+
+        <p className="w-[600px] px-6 -mt-2 font-poppins font-normal text-[12px] leading-[18px] text-slate-400 dark:text-[#A1A8B3] flex-none">
+          You can skip this step and publish your profile now — verification documents can be added later from your organization settings.
+        </p>
 
         {/* List of Document Cards (each is 600px x 178px or 154px stacked with delete row) */}
         <div className="w-[600px] flex flex-col gap-4 flex-none">

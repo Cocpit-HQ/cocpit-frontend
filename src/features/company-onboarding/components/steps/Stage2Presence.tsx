@@ -22,11 +22,18 @@ const FREE_EMAIL_DOMAINS = [
   'rediffmail.com', 'mailinator.com'
 ];
 
+const PHONE_COUNTRY_OPTIONS = [
+  { code: '+91', flag: '🇮🇳', label: 'India', digits: 10 },
+  { code: '+971', flag: '🇦🇪', label: 'UAE', digits: 9 },
+  { code: '+81', flag: '🇯🇵', label: 'Japan', digits: 10 }
+];
+
 const Stage2Presence = React.memo(function Stage2Presence() {
   const sessionToken = useRef(uuidv4());
   const officialEmail = useCompanyOnboardingStore(s => s.officialEmail);
   const isEmailVerified = useCompanyOnboardingStore(s => s.isEmailVerified);
   const phoneNumber = useCompanyOnboardingStore(s => s.phoneNumber);
+  const phoneCountryCode = useCompanyOnboardingStore(s => s.phoneCountryCode);
   const isPhoneVerified = useCompanyOnboardingStore(s => s.isPhoneVerified);
   const website = useCompanyOnboardingStore(s => s.website);
   const organizationSize = useCompanyOnboardingStore(s => s.organizationSize);
@@ -59,15 +66,18 @@ const Stage2Presence = React.memo(function Stage2Presence() {
   const [isSizeOpen, setIsSizeOpen] = useState(false);
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const [isCityOpen, setIsCityOpen] = useState(false);
+  const [isPhoneCountryOpen, setIsPhoneCountryOpen] = useState(false);
 
   const sizeRef = React.useRef<HTMLDivElement>(null);
   const countryRef = React.useRef<HTMLDivElement>(null);
   const cityRef = React.useRef<HTMLDivElement>(null);
+  const phoneCountryRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (sizeRef.current && !sizeRef.current.contains(event.target as Node)) setIsSizeOpen(false);
       if (countryRef.current && !countryRef.current.contains(event.target as Node)) setIsCountryOpen(false);
+      if (phoneCountryRef.current && !phoneCountryRef.current.contains(event.target as Node)) setIsPhoneCountryOpen(false);
       if (cityRef.current && !cityRef.current.contains(event.target as Node)) {
         setIsCityOpen(false);
         setShowCityDropdown(false);
@@ -190,9 +200,12 @@ const Stage2Presence = React.memo(function Stage2Presence() {
   const handleVerifyPhoneClick = useCallback(async () => {
     if (!phoneNumber.trim() || isPhoneVerified || verifyingPhone || !orgId) return;
 
-    // Check for at least 10 digits
-    if (phoneNumber.replace(/\D/g, '').length < 10) {
-      setPhoneLengthError('Enter a valid number');
+    const selectedCountry = PHONE_COUNTRY_OPTIONS.find(c => c.code === phoneCountryCode) || PHONE_COUNTRY_OPTIONS[0];
+    const numericLength = phoneNumber.replace(/\D/g, '').length;
+
+    // Check for exact digits
+    if (numericLength !== selectedCountry.digits) {
+      setPhoneLengthError(`Enter a valid ${selectedCountry.digits}-digit number`);
       return;
     }
     setPhoneLengthError('');
@@ -208,7 +221,7 @@ const Stage2Presence = React.memo(function Stage2Presence() {
     } finally {
       setVerifyingPhone(false);
     }
-  }, [phoneNumber, isPhoneVerified, verifyingPhone, orgId]);
+  }, [phoneNumber, phoneCountryCode, isPhoneVerified, verifyingPhone, orgId]);
 
   // Handle verification code changes
   const handleEmailCodeChange = async (val: string) => {
@@ -281,6 +294,14 @@ const Stage2Presence = React.memo(function Stage2Presence() {
 
       {/* Grid Layout for Contact and Presence fields */}
       <div className="w-[944px] flex flex-col items-start p-0 gap-4 flex-none">
+
+        {/* Official Email Note */}
+        <div className="w-full flex items-start gap-3 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 p-4 rounded-[12px]">
+          <Icon icon="material-symbols:info-outline" className="w-5 h-5 text-blue-500 flex-none mt-0.5" />
+          <span className="font-poppins font-normal text-[14px] leading-[20px] text-blue-800 dark:text-blue-200">
+            If your company has an official website, please use the email address associated with the same domain when creating the company page.
+          </span>
+        </div>
 
         {/* Row 1 - Email & Code */}
         <div className="flex flex-row gap-6 w-full">
@@ -411,13 +432,40 @@ const Stage2Presence = React.memo(function Stage2Presence() {
             <div className="w-[412px] h-[54px] flex flex-row items-start p-0 gap-2 flex-none">
               <div className={`h-[54px] relative flex-none transition-all ${
                 isPhoneVerified ? 'w-[412px]' : 'w-[309px]'
-              }`}>
-                <div className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center gap-1 cursor-pointer select-none">
-                  <span className="text-[20px] leading-none">🇮🇳</span>
-                  <svg className="w-3.5 h-3.5 text-black dark:text-[#FFFFFF]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
+              }`} ref={phoneCountryRef}>
+                <div 
+                  className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1 cursor-pointer select-none z-10"
+                  onClick={() => { if (!isPhoneVerified) setIsPhoneCountryOpen(!isPhoneCountryOpen); }}
+                >
+                  <span className="text-[20px] leading-none">{PHONE_COUNTRY_OPTIONS.find(c => c.code === phoneCountryCode)?.flag || '🇮🇳'}</span>
+                  {!isPhoneVerified && (
+                    <svg className="w-3.5 h-3.5 text-black dark:text-[#FFFFFF]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  )}
                 </div>
+
+                {isPhoneCountryOpen && !isPhoneVerified && (
+                  <div className="absolute top-[calc(100%+4px)] left-0 w-[140px] bg-white dark:bg-[#1A2236] border border-slate-100/50 dark:border-[#1C2840] shadow-lg rounded-[12px] py-2 z-50">
+                    {PHONE_COUNTRY_OPTIONS.map(opt => (
+                      <div
+                        key={opt.code}
+                        className="px-4 py-2 font-poppins font-normal text-[14px] text-black dark:text-[#FFFFFF] hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors flex items-center gap-2"
+                        onClick={() => {
+                          updateField('phoneCountryCode', opt.code);
+                          setIsPhoneCountryOpen(false);
+                          if (isPhoneVerified) updateField('isPhoneVerified', false);
+                          if (showPhoneCode) setShowPhoneCode(false);
+                          if (phoneLengthError) setPhoneLengthError('');
+                        }}
+                      >
+                        <span className="text-[16px]">{opt.flag}</span>
+                        <span>{opt.code}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
                 <input
                   type="tel"
                   value={phoneNumber}
@@ -699,32 +747,30 @@ const Stage2Presence = React.memo(function Stage2Presence() {
         </div>
 
         {/* Map Placeholder Card (896px x 191px) */}
-        <div className="w-[896px] h-[191px] bg-white dark:bg-[#111827] border border-[#E0E0E7] dark:border-[#1C2840] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none rounded-[24px] overflow-hidden relative flex items-center justify-center flex-none mt-2">
-          <div className="absolute inset-0 bg-[#E3F2FD] dark:bg-[#1A2236] opacity-70 dark:opacity-30">
-            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
-                  <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#BBDEFB" strokeWidth="1" className="dark:stroke-[#2A3A55]" />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
-              {/* Abstract land shapes */}
-              <path d="M10 50 Q 80 80 120 40 T 250 80 T 360 40" fill="none" stroke="#90CAF9" strokeWidth="3" strokeDasharray="5,5" className="dark:stroke-[#2A3A55]/50" />
-              <path d="M30 110 Q 150 140 280 100" fill="none" stroke="#90CAF9" strokeWidth="2" className="dark:stroke-[#2A3A55]/30" />
-            </svg>
-          </div>
+        <div className="w-[896px] h-[191px] bg-[#E5E9F0] dark:bg-[#111827] border border-[#E0E0E7] dark:border-[#1C2840] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none rounded-[24px] overflow-hidden relative flex items-center justify-center flex-none mt-2">
+          {hqCountry || hqCity ? (
+            <>
+              <iframe
+                width="100%"
+                height="100%"
+                className="border-0 relative z-0"
+                loading="lazy"
+                allowFullScreen
+                src={`https://maps.google.com/maps?q=${encodeURIComponent([hqCity, hqCountry].filter(Boolean).join(', '))}&z=${hqCity ? 12 : 5}&output=embed`}
+              />
+              <a
+                href={`https://maps.google.com/maps?q=${encodeURIComponent([hqCity, hqCountry].filter(Boolean).join(', '))}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute inset-0 z-10 cursor-pointer"
+                aria-label="Open in Google Maps"
+              />
+            </>
+          ) : (
+            <div className="text-gray-400 text-sm font-poppins">Select a country or city to view map</div>
+          )}
 
-          {/* Centered Pulse Marker */}
-          <div className="relative z-10 flex flex-col items-center">
-            <span className="relative flex h-5 w-5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-5 w-5 bg-[#1A73E8] border-2 border-white dark:border-[#111827] flex items-center justify-center">
-                <Icon icon="mynaui:location" className="w-3.5 h-3.5 text-white" />
-              </span>
-            </span>
-          </div>
-
-          <div className="absolute bottom-3.5 px-3.5 py-1 bg-white/95 dark:bg-[#1C2840]/95 rounded-full shadow-sm text-center border border-slate-100 dark:border-[#1C2840]/50 flex items-center gap-1 select-none z-20">
+          <div className="absolute bottom-3.5 px-3.5 py-1 bg-white/95 dark:bg-[#1C2840]/95 rounded-full shadow-sm text-center border border-slate-100 dark:border-[#1C2840]/50 flex items-center gap-1 select-none z-20 pointer-events-none">
             <Icon icon="mynaui:map" className="w-3.5 h-3.5 text-slate-500 dark:text-[#A1A8B3]" />
             <span className="text-[10px] font-poppins font-medium text-slate-600 dark:text-[#A1A8B3]">HQ Map Preview</span>
           </div>

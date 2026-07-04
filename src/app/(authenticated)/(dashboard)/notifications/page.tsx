@@ -209,7 +209,7 @@ export default function NotificationsPage() {
             <>
 
           <TabsContent value="all" className="space-y-4">
-            <div className="bg-card rounded-xl border border-transparent shadow-none overflow-hidden">
+            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col">
               {loading ? (
                 <div className="p-8 text-center text-muted-foreground">Loading...</div>
               ) : notifications.length > 0 ? (
@@ -233,7 +233,7 @@ export default function NotificationsPage() {
           </TabsContent>
 
           <TabsContent value="mentions">
-            <div className="bg-card rounded-xl border border-transparent shadow-none overflow-hidden">
+            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col">
               {mentions.length > 0 ? (
                 <div>
                   {mentions.map(notification => (
@@ -255,7 +255,7 @@ export default function NotificationsPage() {
           </TabsContent>
 
           <TabsContent value="jobs">
-            <div className="bg-card rounded-xl border border-transparent shadow-none overflow-hidden">
+            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col">
               {jobs.length > 0 ? (
                 <div>
                   {jobs.map(notification => (
@@ -277,7 +277,7 @@ export default function NotificationsPage() {
           </TabsContent>
 
           <TabsContent value="events">
-            <div className="bg-card rounded-xl border border-transparent shadow-none overflow-hidden">
+            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col">
               <EmptyState
                 title="No event updates yet"
                 description="You'll see event activity here when it happens"

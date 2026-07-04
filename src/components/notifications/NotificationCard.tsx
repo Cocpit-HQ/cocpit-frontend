@@ -105,8 +105,9 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
         <div
             onClick={handleClick}
             className={cn(
-                "p-4 flex flex-row items-start justify-between gap-4 transition-all cursor-pointer rounded-xl",
-                "bg-card hover:bg-indigo-50 dark:hover:bg-indigo-300/20"
+                "p-4 flex flex-row items-start justify-between gap-4 transition-all cursor-pointer",
+                "border-b border-border last:border-0 hover:bg-muted/50",
+                !notification.is_read ? "bg-indigo-50/30 dark:bg-indigo-900/10" : "bg-transparent"
             )}
         >
             <div className="flex gap-4">

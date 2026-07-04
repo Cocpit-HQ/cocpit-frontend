@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 
 import { Roboto } from "next/font/google";
 const poppins = Poppins({
-  variable: "--font-poppins",
+  variable: "--font-poppins-base",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
