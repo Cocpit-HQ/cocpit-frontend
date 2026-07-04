@@ -79,7 +79,11 @@ export const useRecruiterJobs = (companyId?: string) => {
     if (activeTab === 'offers') targetListKey = 'offers';
     else if (activeTab === 'dashboard') targetListKey = 'drafts'; 
 
-    const currentList = targetListKey === 'offers' ? offers : recruiterListFor(targetListKey);
+    // Read current list state fresh from the store to avoid stale closure values
+    const storeState = useJobStore.getState();
+    const currentList = targetListKey === 'offers'
+      ? storeState.applications.offers
+      : storeState.recruiter[targetListKey as 'published' | 'drafts' | 'archived'];
     
     // Don't refetch if already fetched, unless doing loadMore
     if (!isLoadMore && currentList.hasFetched && currentList.jobs.length > 0) {
@@ -131,19 +135,15 @@ export const useRecruiterJobs = (companyId?: string) => {
       });
       toast.error('Failed to load company jobs.');
     }
-  }, [companyId, activeTab, searchKeywords, published, drafts, archived, offers]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId, activeTab, searchKeywords]);
 
   // Initial fetch trigger
   useEffect(() => {
     fetchList(false);
   }, [fetchList]);
 
-  // Helper getters/setters for store slices
-  function recruiterListFor(key: 'published' | 'drafts' | 'archived') {
-    if (key === 'published') return published;
-    if (key === 'drafts') return drafts;
-    return archived;
-  }
+
 
   function updateListState(key: 'published' | 'drafts' | 'archived' | 'offers', updates: any) {
     if (key === 'offers') {

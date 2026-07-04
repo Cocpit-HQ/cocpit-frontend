@@ -283,383 +283,383 @@ export const HomeHeader = () => {
                     ) : (
                         /* === DEFAULT FEED / OTHER SEARCH === */
                         <div className="relative flex flex-row justify-between items-center flex-1 min-w-0 max-w-[360px] h-10 px-4 py-2 gap-[10px] rounded-[24px] border border-[#6B7280] bg-transparent transition-all duration-300">
-                        <input
-                            type="text"
-                            placeholder="Search"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onFocus={() => setIsSearchFocused(true)}
-                            onBlur={() => {
-                                setTimeout(() => setIsSearchFocused(false), 200);
-                            }}
-                            onKeyDown={handleKeyDown}
-                            className="flex-grow min-w-0 bg-transparent text-foreground placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none"
-                        />
-                        <Search
-                            className="w-6 h-6 text-[#6B7280] cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                            onClick={() => {
-                                if (searchQuery.trim()) {
-                                    saveSearch(searchQuery);
-                                    setIsSearchFocused(false);
-                                }
-                            }}
-                        />
+                            <input
+                                type="text"
+                                placeholder="Search"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => setIsSearchFocused(true)}
+                                onBlur={() => {
+                                    setTimeout(() => setIsSearchFocused(false), 200);
+                                }}
+                                onKeyDown={handleKeyDown}
+                                className="flex-grow min-w-0 bg-transparent text-foreground placeholder-[#6B7280] text-[16px] font-normal leading-[24px] font-poppins focus:outline-none outline-none"
+                            />
+                            <Search
+                                className="w-6 h-6 text-[#6B7280] cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
+                                onClick={() => {
+                                    if (searchQuery.trim()) {
+                                        saveSearch(searchQuery);
+                                        setIsSearchFocused(false);
+                                    }
+                                }}
+                            />
 
-                        {/* Search Dropdown */}
-                        {isSearchFocused && searchQuery && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
-                                {hashtagResults.length > 0 && (
-                                    <>
-                                        <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/20">
-                                            Hashtags
-                                        </div>
-                                        {hashtagResults.slice(0, 5).map((h, idx) => (
-                                            <Link
-                                                key={h.tag}
-                                                href={`/hashtag/${h.tag.toLowerCase()}`}
-                                                className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${activeIndex === idx ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-[#6366F1] dark:text-[#818CF8]' : 'hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50 text-foreground'}`}
-                                                onClick={() => {
-                                                    saveSearch(`#${h.tag}`);
-                                                    setIsSearchFocused(false);
-                                                    setSearchQuery("");
-                                                }}
-                                            >
-                                                <div className="w-10 h-10 rounded-full bg-muted/80 flex items-center justify-center flex-shrink-0">
-                                                    <Hash className="w-5 h-5 text-primary" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-semibold text-foreground truncate">
-                                                        #{highlightMatch(h.tag, searchQuery)}
-                                                    </p>
-                                                    <p className="text-[10px] text-muted-foreground truncate uppercase font-medium mt-0.5 tracking-tight">{h.usage_count} Posts</p>
-                                                </div>
-                                            </Link>
-                                        ))}
-                                        {hashtagResults.length > 5 && (
-                                            <button
-                                                onClick={() => {
-                                                    setIsSearchFocused(false);
-                                                    router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-                                                }}
-                                                className={`w-full px-4 py-2 text-xs font-bold text-primary transition-colors text-left border-t border-border/50 bg-muted/5 ${activeIndex === 5 ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50' : 'hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50'}`}
-                                            >
-                                                See more results for &quot;{searchQuery}&quot;
-                                            </button>
-                                        )}
-                                    </>
-                                )}
-
-                                {searchResults.length > 0 && (
-                                    <>
-                                        <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/20">
-                                            People & Organizations
-                                        </div>
-                                        {searchResults.map((user, idx) => {
-                                            const visibleHashtagsCount = Math.min(hashtagResults.length, 5);
-                                            const hasSeeMore = hashtagResults.length > 5;
-                                            const adjustedIdx = idx + visibleHashtagsCount + (hasSeeMore ? 1 : 0);
-                                            return (
+                            {/* Search Dropdown */}
+                            {isSearchFocused && searchQuery && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
+                                    {hashtagResults.length > 0 && (
+                                        <>
+                                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/20">
+                                                Hashtags
+                                            </div>
+                                            {hashtagResults.slice(0, 5).map((h, idx) => (
                                                 <Link
-                                                    key={user.type === 'COMPANY' ? user.slug : user.id}
-                                                    href={user.type === 'COMPANY' ? `/organization/${user.slug}` : `/profile/${user.account_name || user.id}`}
-                                                    className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${activeIndex === adjustedIdx ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-foreground' : 'hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50 text-foreground'}`}
+                                                    key={h.tag}
+                                                    href={`/hashtag/${h.tag.toLowerCase()}`}
+                                                    className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${activeIndex === idx ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-[#6366F1] dark:text-[#818CF8]' : 'hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50 text-foreground'}`}
                                                     onClick={() => {
-                                                        saveSearch(user);
+                                                        saveSearch(`#${h.tag}`);
                                                         setIsSearchFocused(false);
                                                         setSearchQuery("");
                                                     }}
                                                 >
-                                                    <img src={user.avatar_url || (user.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')} alt={user.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                                                    <div className="w-10 h-10 rounded-full bg-muted/80 flex items-center justify-center flex-shrink-0">
+                                                        <Hash className="w-5 h-5 text-primary" />
+                                                    </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2">
-                                                            <p className="text-sm font-semibold text-foreground truncate">{highlightMatch(user.full_name, searchQuery)}</p>
-                                                            {user.type === 'COMPANY' && (
-                                                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">Company</span>
-                                                            )}
-                                                        </div>
-                                                        {(user.headline || (user.type === 'COMPANY' && user.industry)) && (
-                                                            <div className="flex items-center gap-1 text-xs text-muted-foreground truncate font-normal mt-0.5">
-                                                                {user.headline && <span className="truncate">{user.headline}</span>}
-                                                                {user.headline && user.type === 'COMPANY' && user.industry && <span className="flex-shrink-0">·</span>}
-                                                                {user.type === 'COMPANY' && user.industry && <span className="truncate text-primary/70">{user.industry}</span>}
-                                                            </div>
-                                                        )}
+                                                        <p className="text-sm font-semibold text-foreground truncate">
+                                                            #{highlightMatch(h.tag, searchQuery)}
+                                                        </p>
+                                                        <p className="text-[10px] text-muted-foreground truncate uppercase font-medium mt-0.5 tracking-tight">{h.usage_count} Posts</p>
                                                     </div>
                                                 </Link>
-                                            );
-                                        })}
-                                    </>
-                                )}
+                                            ))}
+                                            {hashtagResults.length > 5 && (
+                                                <button
+                                                    onClick={() => {
+                                                        setIsSearchFocused(false);
+                                                        router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+                                                    }}
+                                                    className={`w-full px-4 py-2 text-xs font-bold text-primary transition-colors text-left border-t border-border/50 bg-muted/5 ${activeIndex === 5 ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50' : 'hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50'}`}
+                                                >
+                                                    See more results for &quot;{searchQuery}&quot;
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
 
-                                {!searchLoading && searchResults.length === 0 && hashtagResults.length === 0 && (
-                                    <div className="p-4 text-center text-muted-foreground">No matches found.</div>
-                                )}
-
-                                {searchLoading && (
-                                    <div className="p-4 text-center text-muted-foreground">Loading matches...</div>
-                                )}
-                            </div>
-                        )}
-                        {isSearchFocused && !searchQuery && (
-                            <div
-                                className="absolute top-full left-0 mt-2 notification-popover-custom border rounded-[24px] shadow-lg overflow-hidden z-50 flex flex-col items-start py-4 px-0"
-                                style={{
-                                    boxSizing: 'border-box',
-                                    width: '421px',
-                                    height: '410px',
-                                    gap: '16px',
-                                }}
-                            >
-                                {/* Frame 2608712 */}
-                                <div
-                                    className="w-full flex flex-row items-center px-4"
-                                    style={{
-                                        height: '26px',
-                                        gap: '10px',
-                                        flex: 'none',
-                                        order: 0,
-                                        alignSelf: 'stretch',
-                                        flexGrow: 0,
-                                    }}
-                                >
-                                    <span
-                                        className="font-poppins text-black dark:text-white"
-                                        style={{
-                                            width: '63px',
-                                            height: '26px',
-                                            fontStyle: 'normal',
-                                            fontWeight: 500,
-                                            fontSize: '18px',
-                                            lineHeight: '26px',
-                                            color: 'currentColor',
-                                            flex: 'none',
-                                            order: 0,
-                                            flexGrow: 0,
-                                        }}
-                                    >
-                                        Recent
-                                    </span>
-                                </div>
-
-                                {/* Scrollable list */}
-                                <div className="w-full flex-1 overflow-y-auto scrollbar-hide flex flex-col gap-2">
-                                    {history.length > 0 ? (
-                                        history.map((item, idx) => (
-                                            <div
-                                                key={item.id}
-                                                className="relative group/history w-full"
-                                            >
-                                                {item.type === 'USER' ? (
-                                                    /* Frame 2608727 */
+                                    {searchResults.length > 0 && (
+                                        <>
+                                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border bg-muted/20">
+                                                People & Organizations
+                                            </div>
+                                            {searchResults.map((user, idx) => {
+                                                const visibleHashtagsCount = Math.min(hashtagResults.length, 5);
+                                                const hasSeeMore = hashtagResults.length > 5;
+                                                const adjustedIdx = idx + visibleHashtagsCount + (hasSeeMore ? 1 : 0);
+                                                return (
                                                     <Link
-                                                        href={item.value.type === 'COMPANY' ? `/organization/${item.value.slug}` : `/profile/${item.value.account_name || item.value.id}`}
-                                                        className="w-full flex flex-row items-start px-4 py-2 transition-colors hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50"
-                                                        style={{
-                                                            height: '56px',
-                                                            gap: '16px',
-                                                            backgroundColor: activeIndex === idx ? '#EEF2FF' : 'transparent',
-                                                            flex: 'none',
-                                                            alignSelf: 'stretch',
-                                                            flexGrow: 0,
+                                                        key={user.type === 'COMPANY' ? user.slug : user.id}
+                                                        href={user.type === 'COMPANY' ? `/organization/${user.slug}` : `/profile/${user.account_name || user.id}`}
+                                                        className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${activeIndex === adjustedIdx ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-foreground' : 'hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50 text-foreground'}`}
+                                                        onClick={() => {
+                                                            saveSearch(user);
+                                                            setIsSearchFocused(false);
+                                                            setSearchQuery("");
                                                         }}
-                                                        onClick={() => saveSearch(item.value)}
                                                     >
-                                                        {/* Frame 2608720 */}
-                                                        <div
-                                                            style={{
-                                                                display: 'flex',
-                                                                flexDirection: 'row',
-                                                                alignItems: 'center',
-                                                                padding: '0px',
-                                                                gap: '8px',
-                                                                width: '389px',
-                                                                height: '40px',
-                                                                flex: 'none',
-                                                                order: 0,
-                                                                flexGrow: 1,
-                                                            }}
-                                                        >
-                                                            {/* Ellipse 2 / Ellipse 24 */}
-                                                            <img
-                                                                src={item.value.avatar_url || (item.value.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')}
-                                                                alt={item.value.full_name}
-                                                                className="rounded-full object-cover"
-                                                                style={{
-                                                                    width: '40px',
-                                                                    height: '40px',
-                                                                    flex: 'none',
-                                                                    order: 0,
-                                                                    flexGrow: 0,
-                                                                }}
-                                                            />
-
-                                                            {/* Frame 2608728 */}
-                                                            <div
-                                                                style={{
-                                                                    display: 'flex',
-                                                                    flexDirection: 'column',
-                                                                    justifyContent: 'center',
-                                                                    alignItems: 'flex-start',
-                                                                    padding: '0px',
-                                                                    width: '144px',
-                                                                    height: '40px',
-                                                                    flex: 'none',
-                                                                    order: 1,
-                                                                    flexGrow: 0,
-                                                                }}
-                                                            >
-                                                                {/* Amara okafor / Sara chen */}
-                                                                <span
-                                                                    className="font-poppins text-black dark:text-white truncate"
-                                                                    style={{
-                                                                        height: '24px',
-                                                                        fontStyle: 'normal',
-                                                                        fontWeight: 400,
-                                                                        fontSize: '16px',
-                                                                        lineHeight: '24px',
-                                                                        color: 'currentColor',
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                        flex: 'none',
-                                                                        order: 0,
-                                                                        flexGrow: 0,
-                                                                    }}
-                                                                >
-                                                                    {item.value.full_name}
-                                                                </span>
-
-                                                                {/* Senior product designer */}
-                                                                <span
-                                                                    className="font-poppins text-muted-foreground truncate"
-                                                                    style={{
-                                                                        width: '144px',
-                                                                        height: '16px',
-                                                                        fontStyle: 'normal',
-                                                                        fontWeight: 400,
-                                                                        fontSize: '12px',
-                                                                        lineHeight: '16px',
-                                                                        color: '#6B7280',
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                        flex: 'none',
-                                                                        order: 1,
-                                                                        flexGrow: 0,
-                                                                    }}
-                                                                >
-                                                                    {item.value.headline || (item.value.type === 'COMPANY' ? item.value.industry : 'Product Designer')}
-                                                                </span>
+                                                        <img src={user.avatar_url || (user.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')} alt={user.full_name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="text-sm font-semibold text-foreground truncate">{highlightMatch(user.full_name, searchQuery)}</p>
+                                                                {user.type === 'COMPANY' && (
+                                                                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary flex-shrink-0">Company</span>
+                                                                )}
                                                             </div>
+                                                            {(user.headline || (user.type === 'COMPANY' && user.industry)) && (
+                                                                <div className="flex items-center gap-1 text-xs text-muted-foreground truncate font-normal mt-0.5">
+                                                                    {user.headline && <span className="truncate">{user.headline}</span>}
+                                                                    {user.headline && user.type === 'COMPANY' && user.industry && <span className="flex-shrink-0">·</span>}
+                                                                    {user.type === 'COMPANY' && user.industry && <span className="truncate text-primary/70">{user.industry}</span>}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </Link>
-                                                ) : (
-                                                    /* Frame 2608724 */
-                                                    <div
-                                                        className="w-full flex flex-row items-center px-4 py-2 transition-colors cursor-pointer hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50"
-                                                        style={{
-                                                            height: '40px',
-                                                            gap: '10px',
-                                                            backgroundColor: activeIndex === idx ? '#EEF2FF' : 'transparent',
-                                                            flex: 'none',
-                                                            alignSelf: 'stretch',
-                                                            flexGrow: 0,
-                                                        }}
-                                                        onClick={() => {
-                                                            const queryText = item.value as string;
-                                                            setSearchQuery(queryText);
-                                                            saveSearch(queryText);
-                                                        }}
-                                                    >
-                                                        {/* Recent Icon */}
-                                                        <div
-                                                            style={{
-                                                                width: '24px',
-                                                                height: '24px',
-                                                                flex: 'none',
-                                                                order: 0,
-                                                                flexGrow: 0,
-                                                            }}
-                                                        >
-                                                            <Clock className="w-6 h-6 text-black dark:text-white" />
-                                                        </div>
+                                                );
+                                            })}
+                                        </>
+                                    )}
 
-                                                        {/* UI UX job */}
-                                                        <span
-                                                            className="font-poppins text-black dark:text-white truncate"
-                                                            style={{
-                                                                height: '24px',
-                                                                fontStyle: 'normal',
-                                                                fontWeight: 400,
-                                                                fontSize: '16px',
-                                                                lineHeight: '24px',
-                                                                color: 'currentColor',
-                                                                flex: 'none',
-                                                                order: 1,
-                                                                flexGrow: 0,
-                                                            }}
-                                                        >
-                                                            {item.value as string}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        e.preventDefault();
-                                                        removeSearch(item.id);
-                                                    }}
-                                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-lg opacity-0 group-hover/history:opacity-100 hover:bg-muted/10 transition-all text-xs"
-                                                    title="Remove from history"
-                                                >
-                                                    ❌
-                                                </button>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="py-8 text-center text-sm text-muted-foreground w-full">
-                                            No recent searches yet.
-                                        </div>
+                                    {!searchLoading && searchResults.length === 0 && hashtagResults.length === 0 && (
+                                        <div className="p-4 text-center text-muted-foreground">No matches found.</div>
+                                    )}
+
+                                    {searchLoading && (
+                                        <div className="p-4 text-center text-muted-foreground">Loading matches...</div>
                                     )}
                                 </div>
-
-                                {/* Frame 2608719 */}
-                                {history.length > 0 && (
+                            )}
+                            {isSearchFocused && !searchQuery && (
+                                <div
+                                    className="absolute top-full left-0 mt-2 notification-popover-custom border rounded-[24px] shadow-lg overflow-hidden z-50 flex flex-col items-start py-4 px-0"
+                                    style={{
+                                        boxSizing: 'border-box',
+                                        width: '421px',
+                                        height: '410px',
+                                        gap: '16px',
+                                    }}
+                                >
+                                    {/* Frame 2608712 */}
                                     <div
-                                        className="w-full flex flex-row justify-center items-center px-4"
+                                        className="w-full flex flex-row items-center px-4"
                                         style={{
-                                            height: '24px',
+                                            height: '26px',
                                             gap: '10px',
                                             flex: 'none',
-                                            order: 6,
+                                            order: 0,
                                             alignSelf: 'stretch',
                                             flexGrow: 0,
                                         }}
                                     >
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                clearAll();
-                                            }}
-                                            className="font-poppins text-[#6366F1] hover:text-[#6366F1]/80 transition-colors"
+                                        <span
+                                            className="font-poppins text-black dark:text-white"
                                             style={{
-                                                width: '67px',
-                                                height: '24px',
+                                                width: '63px',
+                                                height: '26px',
                                                 fontStyle: 'normal',
                                                 fontWeight: 500,
-                                                fontSize: '16px',
-                                                lineHeight: '24px',
-                                                color: '#6366F1',
+                                                fontSize: '18px',
+                                                lineHeight: '26px',
+                                                color: 'currentColor',
                                                 flex: 'none',
                                                 order: 0,
                                                 flexGrow: 0,
                                             }}
                                         >
-                                            Clear all
-                                        </button>
+                                            Recent
+                                        </span>
                                     </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+
+                                    {/* Scrollable list */}
+                                    <div className="w-full flex-1 overflow-y-auto scrollbar-hide flex flex-col gap-2">
+                                        {history.length > 0 ? (
+                                            history.map((item, idx) => (
+                                                <div
+                                                    key={item.id}
+                                                    className="relative group/history w-full"
+                                                >
+                                                    {item.type === 'USER' ? (
+                                                        /* Frame 2608727 */
+                                                        <Link
+                                                            href={item.value.type === 'COMPANY' ? `/organization/${item.value.slug}` : `/profile/${item.value.account_name || item.value.id}`}
+                                                            className="w-full flex flex-row items-start px-4 py-2 transition-colors hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50"
+                                                            style={{
+                                                                height: '56px',
+                                                                gap: '16px',
+                                                                backgroundColor: activeIndex === idx ? '#EEF2FF' : 'transparent',
+                                                                flex: 'none',
+                                                                alignSelf: 'stretch',
+                                                                flexGrow: 0,
+                                                            }}
+                                                            onClick={() => saveSearch(item.value)}
+                                                        >
+                                                            {/* Frame 2608720 */}
+                                                            <div
+                                                                style={{
+                                                                    display: 'flex',
+                                                                    flexDirection: 'row',
+                                                                    alignItems: 'center',
+                                                                    padding: '0px',
+                                                                    gap: '8px',
+                                                                    width: '389px',
+                                                                    height: '40px',
+                                                                    flex: 'none',
+                                                                    order: 0,
+                                                                    flexGrow: 1,
+                                                                }}
+                                                            >
+                                                                {/* Ellipse 2 / Ellipse 24 */}
+                                                                <img
+                                                                    src={item.value.avatar_url || (item.value.type === 'COMPANY' ? '/assets/company-placeholder.png' : '/assets/pngegg.png')}
+                                                                    alt={item.value.full_name}
+                                                                    className="rounded-full object-cover"
+                                                                    style={{
+                                                                        width: '40px',
+                                                                        height: '40px',
+                                                                        flex: 'none',
+                                                                        order: 0,
+                                                                        flexGrow: 0,
+                                                                    }}
+                                                                />
+
+                                                                {/* Frame 2608728 */}
+                                                                <div
+                                                                    style={{
+                                                                        display: 'flex',
+                                                                        flexDirection: 'column',
+                                                                        justifyContent: 'center',
+                                                                        alignItems: 'flex-start',
+                                                                        padding: '0px',
+                                                                        width: '144px',
+                                                                        height: '40px',
+                                                                        flex: 'none',
+                                                                        order: 1,
+                                                                        flexGrow: 0,
+                                                                    }}
+                                                                >
+                                                                    {/* Amara okafor / Sara chen */}
+                                                                    <span
+                                                                        className="font-poppins text-black dark:text-white truncate"
+                                                                        style={{
+                                                                            height: '24px',
+                                                                            fontStyle: 'normal',
+                                                                            fontWeight: 400,
+                                                                            fontSize: '16px',
+                                                                            lineHeight: '24px',
+                                                                            color: 'currentColor',
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            flex: 'none',
+                                                                            order: 0,
+                                                                            flexGrow: 0,
+                                                                        }}
+                                                                    >
+                                                                        {item.value.full_name}
+                                                                    </span>
+
+                                                                    {/* Senior product designer */}
+                                                                    <span
+                                                                        className="font-poppins text-muted-foreground truncate"
+                                                                        style={{
+                                                                            width: '144px',
+                                                                            height: '16px',
+                                                                            fontStyle: 'normal',
+                                                                            fontWeight: 400,
+                                                                            fontSize: '12px',
+                                                                            lineHeight: '16px',
+                                                                            color: '#6B7280',
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            flex: 'none',
+                                                                            order: 1,
+                                                                            flexGrow: 0,
+                                                                        }}
+                                                                    >
+                                                                        {item.value.headline || (item.value.type === 'COMPANY' ? item.value.industry : 'Product Designer')}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </Link>
+                                                    ) : (
+                                                        /* Frame 2608724 */
+                                                        <div
+                                                            className="w-full flex flex-row items-center px-4 py-2 transition-colors cursor-pointer hover:bg-[#EEF2FF] dark:hover:bg-[#1e1b4b]/50"
+                                                            style={{
+                                                                height: '40px',
+                                                                gap: '10px',
+                                                                backgroundColor: activeIndex === idx ? '#EEF2FF' : 'transparent',
+                                                                flex: 'none',
+                                                                alignSelf: 'stretch',
+                                                                flexGrow: 0,
+                                                            }}
+                                                            onClick={() => {
+                                                                const queryText = item.value as string;
+                                                                setSearchQuery(queryText);
+                                                                saveSearch(queryText);
+                                                            }}
+                                                        >
+                                                            {/* Recent Icon */}
+                                                            <div
+                                                                style={{
+                                                                    width: '24px',
+                                                                    height: '24px',
+                                                                    flex: 'none',
+                                                                    order: 0,
+                                                                    flexGrow: 0,
+                                                                }}
+                                                            >
+                                                                <Clock className="w-6 h-6 text-black dark:text-white" />
+                                                            </div>
+
+                                                            {/* UI UX job */}
+                                                            <span
+                                                                className="font-poppins text-black dark:text-white truncate"
+                                                                style={{
+                                                                    height: '24px',
+                                                                    fontStyle: 'normal',
+                                                                    fontWeight: 400,
+                                                                    fontSize: '16px',
+                                                                    lineHeight: '24px',
+                                                                    color: 'currentColor',
+                                                                    flex: 'none',
+                                                                    order: 1,
+                                                                    flexGrow: 0,
+                                                                }}
+                                                            >
+                                                                {item.value as string}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            e.preventDefault();
+                                                            removeSearch(item.id);
+                                                        }}
+                                                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-lg opacity-0 group-hover/history:opacity-100 hover:bg-muted/10 transition-all text-xs"
+                                                        title="Remove from history"
+                                                    >
+                                                        ❌
+                                                    </button>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="py-8 text-center text-sm text-muted-foreground w-full">
+                                                No recent searches yet.
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Frame 2608719 */}
+                                    {history.length > 0 && (
+                                        <div
+                                            className="w-full flex flex-row justify-center items-center px-4"
+                                            style={{
+                                                height: '24px',
+                                                gap: '10px',
+                                                flex: 'none',
+                                                order: 6,
+                                                alignSelf: 'stretch',
+                                                flexGrow: 0,
+                                            }}
+                                        >
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    clearAll();
+                                                }}
+                                                className="font-poppins text-[#6366F1] hover:text-[#6366F1]/80 transition-colors"
+                                                style={{
+                                                    width: '67px',
+                                                    height: '24px',
+                                                    fontStyle: 'normal',
+                                                    fontWeight: 500,
+                                                    fontSize: '16px',
+                                                    lineHeight: '24px',
+                                                    color: '#6366F1',
+                                                    flex: 'none',
+                                                    order: 0,
+                                                    flexGrow: 0,
+                                                }}
+                                            >
+                                                Clear all
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     )}
 
                     {/* Header Right Section (Action Buttons) */}

@@ -1,6 +1,7 @@
 "use client"
 
-import { Search, MapPin, X } from "lucide-react"
+import { useCallback } from "react"
+import { Search, X } from "lucide-react"
 import { useJobStore } from "@/store/job.store"
 import { useShallow } from "zustand/react/shallow"
 
@@ -33,16 +34,21 @@ export function JobSearchBar({
 }: JobSearchBarProps) {
   const {
     searchKeywords,
-    setSearchKeywords,
+    setCandidateFilterValue,
     filters,
     setRecruiterFilterValue,
   } = useJobStore(
     useShallow((state) => ({
       searchKeywords: state.filters.search,
-      setSearchKeywords: (val: string) => state.setCandidateFilterValue('search', val),
+      setCandidateFilterValue: state.setCandidateFilterValue,
       filters: state.filters.recruiterFilters,
       setRecruiterFilterValue: state.setRecruiterFilterValue,
     }))
+  );
+
+  const setSearchKeywords = useCallback(
+    (val: string) => setCandidateFilterValue('search', val),
+    [setCandidateFilterValue]
   );
 
   const updateFilters = (updates: Partial<typeof filters>) => {

@@ -1,0 +1,49 @@
+export interface CompanyProfileStats {
+  following: number;
+  followers: number;
+  subscribers: number;
+}
+
+export interface CompanyTeamMember {
+  id: string;
+  name: string;
+  role: string;
+  avatarUrl: string;
+}
+
+export interface CompanyPost {
+  id: string;
+  authorName: string;
+  authorAvatarUrl: string;
+  authorSubLabel: string;
+  timestamp: string;
+  content: string;
+  imageUrl?: string;
+  likesCount: number;
+  commentsCount: number;
+  repostsCount: number;
+  sharesCount: number;
+  likedBy: { name: string; isOthers: boolean }[];
+}
+
+export interface CompanyProfileData {
+  id: string;
+  name: string;
+  isVerified: boolean;
+  tagline: string;
+  industry: string;
+  location: string;
+  employeeCount: string;
+  websiteUrl: string;
+  description: string;
+  slogan: string;
+  socialLinks: { label: string; url: string }[];
+  phoneNumber?: string;
+  founded?: string;
+  offices?: { city: string; address: string }[];
+  specialties?: string[];
+  stats: CompanyProfileStats;
+  coreTeam: CompanyTeamMember[];
+  posts: CompanyPost[];
+  entityType?: 'COMPANY' | 'INSTITUTE';
+}
