@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { Icon } from '@iconify/react';
 import { useCompanyOnboardingStore } from '../../store/company-onboarding.store';
 import { INDUSTRY_OPTIONS } from '../../constants/onboarding.constants';
+import { CocpitProfileUpload } from '@/shared/commonComponents/Cocpitprofileupload';
 
 const Stage1Identity = React.memo(function Stage1Identity() {
   const organizationName = useCompanyOnboardingStore(s => s.organizationName);
@@ -18,8 +19,6 @@ const Stage1Identity = React.memo(function Stage1Identity() {
 
   const [isOpen, setIsOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
   const isYearError = React.useMemo(() => {
     const trimmed = foundedYear.trim();
     if (!trimmed) return false;
@@ -53,19 +52,26 @@ const Stage1Identity = React.memo(function Stage1Identity() {
     updateField('foundedYear', value);
   }, [updateField]);
 
-  const handleLogoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setLogo(e.target.files[0]);
+  const handleLogoChange = useCallback((dataUrl: string) => {
+    if (!dataUrl) {
+      setLogo(null);
+      return;
+    }
+    try {
+      const arr = dataUrl.split(',');
+      const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while(n--){
+          u8arr[n] = bstr.charCodeAt(n);
+      }
+      const file = new File([u8arr], "logo.jpg", { type: mime });
+      setLogo(file);
+    } catch (e) {
+      console.error("Failed to parse data URL to File", e);
     }
   }, [setLogo]);
-
-  const handleRemoveLogo = useCallback(() => {
-    setLogo(null);
-  }, [setLogo]);
-
-  const triggerLogoSelection = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-center w-full max-w-[944px] min-h-[414px] mx-auto gap-8 md:gap-0 select-none">
@@ -181,46 +187,42 @@ const Stage1Identity = React.memo(function Stage1Identity() {
       {/* Right: Asset Uploads */}
       <div className="w-[380px] h-[414px] bg-white dark:bg-[#111827] border border-[#E0E0E7] dark:border-[#1C2840] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none rounded-[24px] flex flex-col justify-center items-center p-0 flex-none">
         
-        {/* Hidden file input */}
-        <input
-          type="file"
-          id="logo-file-input"
-          ref={fileInputRef}
-          accept="image/*"
-          onChange={handleLogoChange}
-          className="hidden"
-        />
-
         {/* Frame 2609064 - Upload Zone Wrapper */}
         <div className="w-[380px] h-[180px] flex flex-col items-center justify-center pb-4 flex-none">
-          {logoPreview ? (
-            <div className="flex flex-col items-center justify-center flex-none">
-              <div className="w-[120px] h-[120px] relative rounded-[12px] overflow-hidden border-[4px] border-white dark:border-[#1A2236] shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] bg-white dark:bg-[#1A2236] flex items-center justify-center p-0 flex-none">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={logoPreview}
-                  alt="Logo Preview"
-                  className="w-full h-full object-cover block"
-                />
-              </div>
-              <span 
-                onClick={triggerLogoSelection}
-                className="font-poppins font-normal text-[12px] leading-[20px] text-[#1A73E8] hover:underline cursor-pointer text-center mt-2 flex-none"
-              >
-                Change
-              </span>
-            </div>
-          ) : (
-            <label 
-              htmlFor="logo-file-input"
-              className="w-[120px] h-[120px] bg-white dark:bg-[#1A2236] border-[4px] border-white dark:border-[#1A2236] shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] rounded-[12px] flex flex-col items-center justify-center cursor-pointer flex-none"
-            >
-              <Icon icon="mynaui:upload" className="w-6 h-6 text-black dark:text-[#A1A8B3] mb-2 flex-none" />
-              <span className="w-[81px] h-[20px] font-poppins font-normal text-[12px] leading-[20px] tracking-[0.14px] text-[#6B7280] dark:text-[#A1A8B3] text-center flex items-center justify-center flex-none">
-                Profile Image
-              </span>
-            </label>
-          )}
+          <CocpitProfileUpload
+            value={logoPreview || ""}
+            onChange={handleLogoChange}
+            title="Organization Logo"
+            showCircle={true}
+            trigger={
+              logoPreview ? (
+                <div className="flex flex-col items-center justify-center flex-none">
+                  <div className="w-[120px] h-[120px] relative rounded-[12px] overflow-hidden border-[4px] border-white dark:border-[#1A2236] shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] bg-white dark:bg-[#1A2236] flex items-center justify-center p-0 flex-none">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={logoPreview}
+                      alt="Logo Preview"
+                      className="w-full h-full object-cover block"
+                    />
+                  </div>
+                  <span 
+                    className="font-poppins font-normal text-[12px] leading-[20px] text-[#1A73E8] hover:underline cursor-pointer text-center mt-2 flex-none"
+                  >
+                    Change
+                  </span>
+                </div>
+              ) : (
+                <div 
+                  className="w-[120px] h-[120px] bg-white dark:bg-[#1A2236] border-[4px] border-white dark:border-[#1A2236] shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] rounded-[12px] flex flex-col items-center justify-center cursor-pointer flex-none"
+                >
+                  <Icon icon="mynaui:upload" className="w-6 h-6 text-black dark:text-[#A1A8B3] mb-2 flex-none" />
+                  <span className="w-[81px] h-[20px] font-poppins font-normal text-[12px] leading-[20px] tracking-[0.14px] text-[#6B7280] dark:text-[#A1A8B3] text-center flex items-center justify-center flex-none">
+                    Profile Image
+                  </span>
+                </div>
+              )
+            }
+          />
         </div>
 
         {/* Frame 2608500 - Texts Block */}

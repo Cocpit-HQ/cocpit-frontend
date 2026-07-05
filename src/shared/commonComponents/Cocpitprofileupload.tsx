@@ -96,6 +96,7 @@ export function CocpitProfileUpload({
   const [lastClickTime, setLastClickTime] = useState(0);
 
   const editor = useImageEditor({
+    onClickWithoutDrag: () => editor.openFilePicker(),
     disabled: isUploading || isDeleting,
   });
 
@@ -236,13 +237,26 @@ export function CocpitProfileUpload({
         onClose={handleClose}
         title={`${title} image`}
         descriptionText="Square image works best for profile display"
-        hideCloseButton={false}
+        poppinsFamilyClass={true}
+        animateClasses={true}
+        extraContentClass="shadow-none"
         portalContainerId={portalContainerId}
         mobileHeaderSaveButton={
           <button
             onClick={handleSave}
-            disabled={isUploading || isDeleting || !hasImage}
-            className="px-4 py-1.5 rounded-full bg-[#EEF2FF] text-[#6366F1] font-medium text-[14px] disabled:opacity-50 transition-all cursor-pointer"
+            disabled={
+              isUploading ||
+              isDeleting ||
+              !hasImage ||
+              (!editor.previewUrl &&
+                editor.zoom === 0 &&
+                editor.rotation === 0 &&
+                !editor.flipH &&
+                !editor.flipV &&
+                editor.positionX === 0 &&
+                editor.positionY === 0)
+            }
+            className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             {isUploading ? "..." : "Save"}
           </button>
@@ -253,23 +267,27 @@ export function CocpitProfileUpload({
               type="button"
               onClick={handleClose}
               disabled={isUploading || isDeleting}
-              className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[160px] h-[40px] bg-transparent border border-primary rounded-[24px] font-['Poppins'] font-normal text-[14px] text-primary hover:bg-primary/5 transition-colors disabled:opacity-50 cursor-pointer"
+              className="w-[160px] h-[40px] rounded-[24px] border border-primary text-primary bg-transparent text-[14px] flex items-center justify-center transition-all disabled:opacity-50 cursor-pointer"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              disabled={isUploading || isDeleting || !hasImage}
-              className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-[160px] h-[40px] bg-primary border border-white dark:border-none rounded-[24px] font-['Poppins'] font-normal text-[14px] text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              disabled={
+                isUploading ||
+                isDeleting ||
+                !hasImage ||
+                (!editor.previewUrl &&
+                  editor.zoom === 0 &&
+                  editor.rotation === 0 &&
+                  !editor.flipH &&
+                  !editor.flipV &&
+                  editor.positionX === 0 &&
+                  editor.positionY === 0)
+              }
+              className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center shadow-sm cursor-pointer"
             >
-              {isUploading ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Saving...
-                </span>
-              ) : (
-                "Save"
-              )}
+              {isUploading ? "Saving..." : "Save"}
             </button>
           </>
         }
@@ -288,6 +306,8 @@ export function CocpitProfileUpload({
               onRotate={() => editor.setRotation((prev) => (prev + 90) % 360)}
               onDelete={handleDelete}
               isDeleting={isDeleting}
+              deleteIconRed={true}
+              disableDelete={!value}
             />
 
             <ImagePreview
@@ -303,19 +323,25 @@ export function CocpitProfileUpload({
               isDragging={editor.isDraggingImage}
               onPointerDown={editor.handlePointerDown}
               showCircle={showCircle}
-              className="w-[240px] h-[240px] mx-auto rounded-md"
-              onHoverClick={() => editor.setModalState("upload")}
+              circleShadowColor={showCircle ? "rgba(217, 217, 217, 0.5)" : undefined}
+              className={showCircle ? "w-[200px] h-[200px] rounded-none aspect-square flex-shrink-0" : "w-[240px] h-[240px] mx-auto rounded-md"}
+              poppinsFamilyClass={true}
+              onHoverClick={() => editor.openFilePicker()}
+              onWheel={(e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -5 : 5;
+                editor.setZoom((prev) => Math.min(100, Math.max(0, prev + delta)));
+              }}
             />
 
             <div className="mt-auto sm:mt-8 max-w-[400px] mx-auto w-full px-4 sm:px-0">
-              <p className="text-[14px] font-medium text-foreground mb-3 font-['Poppins']">Zoom</p>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={editor.zoom}
-                onChange={(e) => editor.setZoom(Number(e.target.value))}
-                className="w-full h-1.5 bg-[#EEF2FF] rounded-full accent-[#6366F1] cursor-pointer"
+              <p className="text-[14px] font-medium text-foreground mb-3 font-[family-name:var(--font-poppins)]">Zoom</p>
+              <Slider
+                value={[editor.zoom]}
+                onValueChange={(vals) => editor.setZoom(vals[0])}
+                max={100}
+                step={1}
+                className="w-full"
               />
             </div>
           </div>
@@ -331,6 +357,7 @@ export function CocpitProfileUpload({
               onDrop={editor.handleDrop}
               onClick={editor.openFilePicker}
               isDragOver={editor.isDragOver}
+              poppinsFamilyClass={true}
             />
           </div>
         </div>

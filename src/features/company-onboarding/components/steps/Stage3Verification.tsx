@@ -3,7 +3,7 @@
 import React, { useCallback, useState } from 'react';
 import { Icon } from '@iconify/react';
 import { useCompanyOnboardingStore } from '../../store/company-onboarding.store';
-import { getCountries, getProfilePreview } from '../../services/company-onboarding.api';
+import { getCountries } from '../../services/company-onboarding.api';
 
 const Stage3Verification = React.memo(function Stage3Verification() {
   const organizationName = useCompanyOnboardingStore(s => s.organizationName);
@@ -19,10 +19,7 @@ const Stage3Verification = React.memo(function Stage3Verification() {
   const addDocument = useCompanyOnboardingStore(s => s.addDocument);
   const removeDocument = useCompanyOnboardingStore(s => s.removeDocument);
   const updateDocument = useCompanyOnboardingStore(s => s.updateDocument);
-  const orgId = useCompanyOnboardingStore(s => s.orgId);
-
   const [countryOptions, setCountryOptions] = useState<{label: string, value: string}[]>([]);
-  const [previewData, setPreviewData] = useState<any>(null);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -32,15 +29,7 @@ const Stage3Verification = React.memo(function Stage3Verification() {
       }
     }).catch(console.error);
 
-    if (orgId) {
-      getProfilePreview(orgId).then(res => {
-        if (isMounted && res.success) {
-          setPreviewData(res.preview);
-        }
-      }).catch(console.error);
-    }
-    return () => { isMounted = false; };
-  }, [orgId]);
+  }, []);
 
   // Custom Dropdown open state
   const [isCountryOpen, setIsCountryOpen] = useState(false);
@@ -225,27 +214,27 @@ const Stage3Verification = React.memo(function Stage3Verification() {
           <div className="w-[250px] h-[187px] bg-[#F2F7FF] dark:bg-[#1C2840]/20 rounded-[12px] p-4 flex flex-col justify-between flex-none relative">
             <div className="flex flex-row items-center gap-3">
               <div className="w-[40px] h-[40px] rounded-[8px] bg-[#D3E4FE] dark:bg-[#1C2840] border border-white dark:border-[#1A2236] shadow-sm flex items-center justify-center p-1 flex-none overflow-hidden">
-                {previewData?.logo_url || logoPreview ? (
+                {logoPreview ? (
                   <img
-                    src={previewData?.logo_url || logoPreview}
+                    src={logoPreview}
                     alt="Logo"
                     className="w-full h-full object-contain"
                   />
                 ) : (
                   <div className="w-full h-full bg-[#1A73E8] flex items-center justify-center text-white font-poppins font-bold text-[18px]">
-                    {(previewData?.name || organizationName) ? (previewData?.name || organizationName)[0].toUpperCase() : 'C'}
+                    {organizationName ? organizationName[0].toUpperCase() : 'C'}
                   </div>
                 )}
               </div>
               <div className="flex flex-col text-left justify-center min-w-0">
                 <div className="flex items-center gap-1">
                   <span className="font-poppins font-semibold text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] truncate max-w-[146px]">
-                    {previewData?.name || organizationName || 'Cocpit'}
+                    {organizationName || 'Cocpit'}
                   </span>
                   <Icon icon="material-symbols:verified" className="w-5 h-5 text-[#1A73E8] flex-none" />
                 </div>
                 <span className="font-poppins font-normal text-[12px] leading-[18px] text-[#6B7280] dark:text-[#A1A8B3] truncate max-w-[149px]">
-                  {previewData?.headline || headline || 'SaaS & FinTech Solutions'}
+                  {headline || 'SaaS & FinTech Solutions'}
                 </span>
               </div>
             </div>

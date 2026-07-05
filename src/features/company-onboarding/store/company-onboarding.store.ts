@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { CompanyOnboardingState, OrganizationType, DocumentData } from '../types/company-onboarding.types';
 import { COMPANY_STAGES } from '../constants/onboarding.constants';
 
@@ -40,27 +41,30 @@ const initialState = {
   showValidationErrors: false,
 };
 
-export const useCompanyOnboardingStore = create<CompanyOnboardingState>((set, get) => ({
-  ...initialState,
+export const useCompanyOnboardingStore = create<CompanyOnboardingState>()(
+  persist(
+    (set, get) => ({
+      ...initialState,
 
   // Actions
   setOrganizationType: (type: OrganizationType) => set({ organizationType: type }),
   
-  setCurrentStage: (stage: number) => set({ currentStage: stage }),
+  setCurrentStage: (stage: number) => set({ currentStage: stage, apiError: null }),
   
   goNext: () => {
     const { currentStage } = get();
     const config = COMPANY_STAGES[currentStage as keyof typeof COMPANY_STAGES];
     if (config && config.next !== null) {
-      set({ currentStage: config.next });
+      set({ currentStage: config.next, apiError: null });
     }
   },
   
+
   goBack: () => {
     const { currentStage } = get();
     const config = COMPANY_STAGES[currentStage as keyof typeof COMPANY_STAGES];
     if (config && config.prev !== null) {
-      set({ currentStage: config.prev });
+      set({ currentStage: config.prev, apiError: null });
     }
   },
 
@@ -69,14 +73,18 @@ export const useCompanyOnboardingStore = create<CompanyOnboardingState>((set, ge
   },
   
   setLogo: (file: File | null) => {
-    const { logoPreview } = get();
-    if (logoPreview) {
-      URL.revokeObjectURL(logoPreview);
+    if (!file) {
+      set({ logoFile: null, logoPreview: null });
+      return;
     }
-    set({ 
-      logoFile: file, 
-      logoPreview: file ? URL.createObjectURL(file) : null 
-    });
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      set({ 
+        logoFile: file, 
+        logoPreview: reader.result as string 
+      });
+    };
+    reader.readAsDataURL(file);
   },
 
   addDocument: () => {
@@ -159,4 +167,10 @@ export const useCompanyOnboardingStore = create<CompanyOnboardingState>((set, ge
       }))
     });
   }
+}), {
+  name: 'company-onboarding-storage',
+  storage: createJSONStorage(() => sessionStorage),
+  partialize: (state) => Object.fromEntries(
+    Object.entries(state).filter(([key]) => !['logoFile', 'documents'].includes(key))
+  ),
 }));

@@ -6,7 +6,7 @@ import { X } from 'lucide-react';
 import { useCompanyOnboardingStore } from '../store/company-onboarding.store';
 import StageProgressBar from './StageProgressBar';
 import StageNavigationButtons from './StageNavigationButtons';
-import { saveDraftIdentity, saveDraftPresence, saveDraftVerification, completeOnboarding, createDraftType, getOnboardingProgress } from '../services/company-onboarding.api';
+import { publishNewOrganization } from '../services/company-onboarding.api';
 
 import ChooseOrganization from './steps/ChooseOrganization';
 import Stage1Identity from './steps/Stage1Identity';
@@ -31,6 +31,7 @@ export function CompanyOnboardingPage() {
   const officialEmail = useCompanyOnboardingStore(s => s.officialEmail);
   const isEmailVerified = useCompanyOnboardingStore(s => s.isEmailVerified);
   const phoneNumber = useCompanyOnboardingStore(s => s.phoneNumber);
+  const phoneCountryCode = useCompanyOnboardingStore(s => s.phoneCountryCode);
   const isPhoneVerified = useCompanyOnboardingStore(s => s.isPhoneVerified);
   const hqCountry = useCompanyOnboardingStore(s => s.hqCountry);
   const hqCity = useCompanyOnboardingStore(s => s.hqCity);
@@ -48,6 +49,7 @@ export function CompanyOnboardingPage() {
   const organizationSize = useCompanyOnboardingStore(s => s.organizationSize);
   const description = useCompanyOnboardingStore(s => s.description);
   const countryOfOperation = useCompanyOnboardingStore(s => s.countryOfOperation);
+  const organizationType = useCompanyOnboardingStore(s => s.organizationType);
 
   // Derived validation state
   const isNextDisabled = React.useMemo(() => {
@@ -89,7 +91,7 @@ export function CompanyOnboardingPage() {
     documents,
   ]);
 
-  const handleNext = useCallback(async () => {
+  const handleNext = useCallback(() => {
     if (currentStage === 1) {
       const yearTrimmed = foundedYear.trim();
       const isYearInvalid = yearTrimmed.length > 0 && (
@@ -103,40 +105,8 @@ export function CompanyOnboardingPage() {
         return;
       }
       
-      if (!orgId) return; // Should not happen
-      
-      try {
-        setIsSubmitting(true);
-        setApiError(null);
-        
-        const formData = new FormData();
-        formData.append('name', organizationName);
-        if (foundedYear) formData.append('established_year', foundedYear);
-        if (industry) formData.append('industry', industry);
-        if (logoFile) formData.append('logo', logoFile);
-        
-        const res = await saveDraftIdentity(orgId, formData);
-        
-        if (res.success) {
-          if (res.logo_url) {
-            updateField('logoPreview', res.logo_url);
-            // Optionally clear the File object to save memory since we have a URL now
-          }
-          updateField('showValidationErrors', false);
-          goNext();
-        }
-      } catch (err: any) {
-        console.error("Identity save error:", err);
-        let msg = err.response?.data?.message || err.message || "Failed to save identity";
-        if (err.response?.status === 413 || msg.includes('File size too large')) {
-          msg = "File size is too large. Please upload an image smaller than 10MB.";
-        } else if (err.code === 'ECONNABORTED' || err.message.toLowerCase().includes('timeout')) {
-          msg = "Network timeout. Please check your connection and try again.";
-        }
-        setApiError(msg);
-      } finally {
-        setIsSubmitting(false);
-      }
+      updateField('showValidationErrors', false);
+      goNext();
       return;
     }
     
@@ -147,41 +117,8 @@ export function CompanyOnboardingPage() {
         return;
       }
 
-      if (!orgId) return;
-
-      try {
-        setIsSubmitting(true);
-        setApiError(null);
-
-        const body = {
-          email: officialEmail,
-          phone: phoneNumber,
-          website: website,
-          size: organizationSize,
-          country: hqCountry,
-          city: hqCity,
-          headline: headline,
-          description: description
-        };
-
-        const res = await saveDraftPresence(orgId, body);
-
-        if (res.success) {
-          updateField('showValidationErrors', false);
-          goNext();
-        }
-      } catch (err: any) {
-        console.error("Presence save error:", err);
-        let msg = err.response?.data?.message || err.message || "Failed to save presence";
-        if (err.response?.status === 413 || msg.includes('File size too large')) {
-          msg = "File size is too large. Please upload an image smaller than 10MB.";
-        } else if (err.code === 'ECONNABORTED' || err.message.toLowerCase().includes('timeout')) {
-          msg = "Network timeout. Please check your connection and try again.";
-        }
-        setApiError(msg);
-      } finally {
-        setIsSubmitting(false);
-      }
+      updateField('showValidationErrors', false);
+      goNext();
       return;
     }
     
@@ -189,8 +126,7 @@ export function CompanyOnboardingPage() {
     goNext();
   }, [
     currentStage, organizationName, logoPreview, officialEmail, phoneNumber, hqCountry, hqCity, headline, 
-    isEmailVerified, isPhoneVerified, goNext, updateField, orgId, foundedYear, industry, logoFile, 
-    setIsSubmitting, setApiError, website, organizationSize, description
+    isEmailVerified, isPhoneVerified, goNext, updateField, foundedYear
   ]);
 
   const [hasPublishError, setHasPublishError] = useState(true);
@@ -201,30 +137,52 @@ export function CompanyOnboardingPage() {
   }, [resetStore]);
 
   const handlePublish = useCallback(async () => {
-    if (!orgId) return;
-
     try {
       setIsSubmitting(true);
       setApiError(null);
       setHasPublishError(false);
 
       const formData = new FormData();
-      if (countryOfOperation) {
-        formData.append('country_of_operation', countryOfOperation);
+      formData.append('type', organizationType || '');
+      formData.append('name', organizationName);
+      if (foundedYear) formData.append('established_year', foundedYear);
+      if (industry) formData.append('industry', industry);
+      
+      if (logoFile) {
+        formData.append('logo', logoFile);
+      } else if (logoPreview && logoPreview.startsWith('data:image')) {
+        const arr = logoPreview.split(',');
+        const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while(n--){
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        const reconstructedFile = new File([u8arr], 'logo.png', { type: mime });
+        formData.append('logo', reconstructedFile);
       }
+
+      formData.append('email', officialEmail);
+      formData.append('phone', `${phoneCountryCode}${phoneNumber}`);
+      if (website) formData.append('website', website);
+      formData.append('size', organizationSize);
+      formData.append('country', hqCountry);
+      formData.append('city', hqCity);
+      formData.append('headline', headline);
+      if (description) formData.append('description', description);
+      if (countryOfOperation) formData.append('country_of_operation', countryOfOperation);
+
       documents.forEach(doc => {
         if (doc.file) {
           formData.append('documents', doc.file);
         }
       });
 
-      const res = await saveDraftVerification(orgId, formData);
+      const res = await publishNewOrganization(formData);
       if (res.success) {
-        const completeRes = await completeOnboarding(orgId);
-        if (completeRes.success) {
-          updateField('slug', completeRes.slug);
-          goNext();
-        }
+        updateField('slug', res.slug);
+        goNext();
       }
     } catch (err: any) {
       console.error("Publish error:", err);
@@ -240,32 +198,16 @@ export function CompanyOnboardingPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [orgId, countryOfOperation, documents, goNext, setIsSubmitting, setApiError, updateField]);
+  }, [
+    organizationType, organizationName, foundedYear, industry, logoFile, 
+    officialEmail, phoneCountryCode, phoneNumber, website, organizationSize, 
+    hqCountry, hqCity, headline, description, countryOfOperation, documents, 
+    goNext, setIsSubmitting, setApiError, updateField
+  ]);
 
   const handleTryAgain = useCallback(async () => {
-    if (!orgId) return;
-    try {
-      setIsSubmitting(true);
-      setApiError(null);
-      
-      const completeRes = await completeOnboarding(orgId);
-      if (completeRes.success) {
-        updateField('slug', completeRes.slug);
-        setHasPublishError(false);
-      }
-    } catch (err: any) {
-      console.error("Retry publish error:", err);
-      let msg = err.response?.data?.message || err.message || "Failed to publish organization";
-      if (err.response?.status === 413 || msg.includes('File size too large')) {
-        msg = "Files are too large. Please upload smaller documents (max 10MB total).";
-      } else if (err.code === 'ECONNABORTED' || err.message.toLowerCase().includes('timeout')) {
-        msg = "Network timeout. Please check your connection and try again.";
-      }
-      setApiError(msg);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [orgId, setIsSubmitting, setApiError, updateField]);
+    handlePublish();
+  }, [handlePublish]);
 
   const renderCurrentStage = () => {
     switch (currentStage) {

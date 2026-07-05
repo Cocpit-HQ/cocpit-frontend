@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 import Image from 'next/image';
 import { useCompanyOnboardingStore } from '../../store/company-onboarding.store';
 import { OrganizationType } from '../../types/company-onboarding.types';
-import { createDraftType, getOnboardingProgress } from '../../services/company-onboarding.api';
 
 const ChooseOrganization = React.memo(function ChooseOrganization() {
   const setOrganizationType = useCompanyOnboardingStore(s => s.setOrganizationType);
@@ -13,60 +12,10 @@ const ChooseOrganization = React.memo(function ChooseOrganization() {
   const [loadingType, setLoadingType] = useState<OrganizationType | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSelect = useCallback(async (type: OrganizationType) => {
-    try {
-      setLoadingType(type);
-      setError(null);
-      
-      const res = await createDraftType(type === 'INSTITUTE' ? 'INSTITUTION' : 'COMPANY');
-      
-      if (res.success) {
-        setOrgId(res.org_id);
-        setOrganizationType(type);
-        
-        if (res.onboarding_step && res.onboarding_step !== 'IDENTITY') {
-          const prog = await getOnboardingProgress(res.org_id);
-          if (prog.success) {
-            const org = prog.organization;
-            if (org.name) updateField('organizationName', org.name);
-            if (org.founded_year) updateField('foundedYear', String(org.founded_year));
-            if (org.industry) updateField('industry', org.industry);
-            if (org.logo_url) updateField('logoPreview', org.logo_url);
-            if (org.email) {
-              updateField('officialEmail', org.email);
-              if (org.email_verified) updateField('isEmailVerified', true);
-            }
-            if (org.phone) {
-              updateField('phoneNumber', org.phone);
-              if (org.phone_verified) updateField('isPhoneVerified', true);
-            }
-            if (org.website) updateField('website', org.website);
-            if (org.size) updateField('organizationSize', org.size);
-            if (org.country) updateField('hqCountry', org.country);
-            if (org.city) updateField('hqCity', org.city);
-            if (org.headline) updateField('headline', org.headline);
-            if (org.description) updateField('description', org.description);
-          }
-        }
-
-        // If returning to a partially completed draft, jump to that stage
-        const stepMap: Record<string, number> = {
-          'IDENTITY': 1,
-          'PRESENCE': 2,
-          'VERIFICATION': 3,
-        };
-        const targetStage = res.onboarding_step === null ? 4 : (stepMap[res.onboarding_step] || 1);
-        setCurrentStage(targetStage);
-      } else {
-        throw new Error('Failed to create draft');
-      }
-    } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.message || err.message || 'An error occurred');
-    } finally {
-      setLoadingType(null);
-    }
-  }, [setOrganizationType, setOrgId, setCurrentStage, updateField]);
+  const handleSelect = useCallback((type: OrganizationType) => {
+    setOrganizationType(type);
+    goNext();
+  }, [setOrganizationType, goNext]);
 
   return (
     <div className="w-full flex flex-col items-center mx-auto">

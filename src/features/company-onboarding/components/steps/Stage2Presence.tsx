@@ -15,17 +15,12 @@ import {
   getPlaceDetails
 } from '../../services/company-onboarding.api';
 
-const FREE_EMAIL_DOMAINS = [
-  'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com',
-  'icloud.com', 'mail.com', 'protonmail.com', 'zoho.com', 'yandex.com',
-  'live.com', 'msn.com', 'me.com', 'gmx.com', 'inbox.com',
-  'rediffmail.com', 'mailinator.com'
-];
+
 
 const PHONE_COUNTRY_OPTIONS = [
-  { code: '+91', flag: '🇮🇳', label: 'India', digits: 10 },
-  { code: '+971', flag: '🇦🇪', label: 'UAE', digits: 9 },
-  { code: '+81', flag: '🇯🇵', label: 'Japan', digits: 10 }
+  { code: '+91', iso: 'in', label: 'India', digits: 10 },
+  { code: '+971', iso: 'ae', label: 'UAE', digits: 9 },
+  { code: '+81', iso: 'jp', label: 'Japan', digits: 10 }
 ];
 
 const Stage2Presence = React.memo(function Stage2Presence() {
@@ -52,7 +47,13 @@ const Stage2Presence = React.memo(function Stage2Presence() {
     let isMounted = true;
     getCountries().then(countries => {
       if (isMounted) {
-        setCountryOptions(countries.map(c => ({ label: c, value: c })));
+        const getFlag = (c: string) => {
+          if (c === 'India') return '🇮🇳 ';
+          if (c === 'UAE') return '🇦🇪 ';
+          if (c === 'Japan') return '🇯🇵 ';
+          return '';
+        };
+        setCountryOptions(countries.map(c => ({ label: `${getFlag(c)}${c}`, value: c })));
       }
     }).catch(console.error);
     return () => { isMounted = false; };
@@ -113,7 +114,7 @@ const Stage2Presence = React.memo(function Stage2Presence() {
       if (citySearch.trim().length > 1) {
         setIsSearchingCity(true);
         try {
-          const res = await getPlacesAutocomplete(citySearch, sessionToken.current);
+          const res = await getPlacesAutocomplete(citySearch, sessionToken.current, hqCountry);
           if (res.success && res.data) {
             setCitySuggestions(res.data);
             setShowCityDropdown(true);
@@ -130,7 +131,7 @@ const Stage2Presence = React.memo(function Stage2Presence() {
     }, 400);
 
     return () => clearTimeout(delay);
-  }, [citySearch]);
+  }, [citySearch, hqCountry]);
 
   const handleCitySelect = async (placeId: string) => {
     setShowCityDropdown(false);
@@ -141,7 +142,14 @@ const Stage2Presence = React.memo(function Stage2Presence() {
         updateField('hqCity', res.data.city || '');
         if (res.data.country) {
           // Find the country code that matches the country name
-          const matchedCountry = countryOptions.find(o => o.label.toLowerCase() === res.data.country.toLowerCase() || o.value === res.data.country);
+          const googleCountry = res.data.country.toLowerCase();
+          const countryMap: Record<string, string> = {
+            "united arab emirates": "UAE",
+            "india": "India",
+            "japan": "Japan"
+          };
+          const mappedName = countryMap[googleCountry] || res.data.country;
+          const matchedCountry = countryOptions.find(o => o.label.toLowerCase() === mappedName.toLowerCase() || o.value.toLowerCase() === mappedName.toLowerCase());
           if (matchedCountry) {
             updateField('hqCountry', matchedCountry.value);
           }
@@ -174,19 +182,13 @@ const Stage2Presence = React.memo(function Stage2Presence() {
   }, [phoneTimer]);
 
   const handleVerifyEmailClick = useCallback(async () => {
-    if (!officialEmail.trim() || isEmailVerified || verifyingEmail || !orgId) return;
+    if (!officialEmail.trim() || isEmailVerified || verifyingEmail) return;
 
-    // Check for free email domain
-    const domain = officialEmail.split('@')[1]?.toLowerCase();
-    if (domain && FREE_EMAIL_DOMAINS.includes(domain)) {
-      setEmailDomainError('Use a company domain email (e.g. you@company.com)');
-      return;
-    }
     setEmailDomainError('');
 
     setVerifyingEmail(true);
     try {
-      await sendEmailOTP(orgId, officialEmail);
+      await sendEmailOTP(officialEmail);
       setShowEmailCode(true);
       setEmailTimer(30);
       setEmailCodeError('');
@@ -195,10 +197,10 @@ const Stage2Presence = React.memo(function Stage2Presence() {
     } finally {
       setVerifyingEmail(false);
     }
-  }, [officialEmail, isEmailVerified, verifyingEmail, orgId]);
+  }, [officialEmail, isEmailVerified, verifyingEmail]);
 
   const handleVerifyPhoneClick = useCallback(async () => {
-    if (!phoneNumber.trim() || isPhoneVerified || verifyingPhone || !orgId) return;
+    if (!phoneNumber.trim() || isPhoneVerified || verifyingPhone) return;
 
     const selectedCountry = PHONE_COUNTRY_OPTIONS.find(c => c.code === phoneCountryCode) || PHONE_COUNTRY_OPTIONS[0];
     const numericLength = phoneNumber.replace(/\D/g, '').length;
@@ -212,7 +214,7 @@ const Stage2Presence = React.memo(function Stage2Presence() {
 
     setVerifyingPhone(true);
     try {
-      await sendPhoneOTP(orgId, phoneNumber);
+      await sendPhoneOTP(`${phoneCountryCode}${phoneNumber}`);
       setShowPhoneCode(true);
       setPhoneTimer(30);
       setPhoneCodeError('');
@@ -221,7 +223,7 @@ const Stage2Presence = React.memo(function Stage2Presence() {
     } finally {
       setVerifyingPhone(false);
     }
-  }, [phoneNumber, phoneCountryCode, isPhoneVerified, verifyingPhone, orgId]);
+  }, [phoneNumber, phoneCountryCode, isPhoneVerified, verifyingPhone]);
 
   // Handle verification code changes
   const handleEmailCodeChange = async (val: string) => {
@@ -229,9 +231,8 @@ const Stage2Presence = React.memo(function Stage2Presence() {
     setEmailCode(clean);
     setEmailCodeError('');
     if (clean.length === 6) {
-      if (!orgId) return;
       try {
-        const res = await confirmEmailOTP(orgId, officialEmail, clean);
+        const res = await confirmEmailOTP(officialEmail, clean);
         if (res.verified) {
           updateField('isEmailVerified', true);
         } else {
@@ -252,11 +253,21 @@ const Stage2Presence = React.memo(function Stage2Presence() {
     setPhoneCode(clean);
     setPhoneCodeError('');
     if (clean.length === 6) {
-      if (!orgId) return;
       try {
-        const res = await confirmPhoneOTP(orgId, phoneNumber, clean);
+        const res = await confirmPhoneOTP(`${phoneCountryCode}${phoneNumber}`, clean);
         if (res.verified) {
           updateField('isPhoneVerified', true);
+          // Auto-set HQ country from verified phone country code
+          const phoneCountryToHq: Record<string, string> = {
+            '+91':  'India',
+            '+971': 'UAE',
+            '+81':  'Japan',
+          };
+          const detectedCountry = phoneCountryToHq[phoneCountryCode];
+          if (detectedCountry) {
+            updateField('hqCountry', detectedCountry);
+            updateField('hqCity', ''); // reset city when country changes
+          }
         } else {
           setPhoneCodeError(res.message || 'Invalid verification code');
         }
@@ -317,6 +328,7 @@ const Stage2Presence = React.memo(function Stage2Presence() {
               <input
                 type="email"
                 value={officialEmail}
+                disabled={isEmailVerified}
                 onChange={(e) => {
                   updateField('officialEmail', e.target.value);
                   if (isEmailVerified) updateField('isEmailVerified', false);
@@ -369,7 +381,8 @@ const Stage2Presence = React.memo(function Stage2Presence() {
             <div className="w-[412px] h-[54px] relative flex-none">
               <input
                 type="text"
-                value={emailCode}
+                value={isEmailVerified ? 'XXXXXX' : emailCode}
+                disabled={isEmailVerified}
                 onChange={(e) => handleEmailCodeChange(e.target.value)}
                 placeholder="000000"
                 className={`w-full h-full px-6 pr-12 rounded-[24px] border focus:outline-none font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] placeholder:text-[#E0E0E7] dark:placeholder:text-[#6B7280] transition-colors ${!!emailCodeError
@@ -437,7 +450,9 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                   className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1 cursor-pointer select-none z-10"
                   onClick={() => { if (!isPhoneVerified) setIsPhoneCountryOpen(!isPhoneCountryOpen); }}
                 >
-                  <span className="text-[20px] leading-none">{PHONE_COUNTRY_OPTIONS.find(c => c.code === phoneCountryCode)?.flag || '🇮🇳'}</span>
+                  <span className="flex items-center">
+                    <img src={`https://flagcdn.com/w20/${PHONE_COUNTRY_OPTIONS.find(c => c.code === phoneCountryCode)?.iso || 'in'}.png`} alt="flag" className="w-[20px] h-[15px] object-cover rounded-[2px]" />
+                  </span>
                   {!isPhoneVerified && (
                     <svg className="w-3.5 h-3.5 text-black dark:text-[#FFFFFF]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -459,7 +474,9 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                           if (phoneLengthError) setPhoneLengthError('');
                         }}
                       >
-                        <span className="text-[16px]">{opt.flag}</span>
+                        <span className="flex items-center">
+                          <img src={`https://flagcdn.com/w20/${opt.iso}.png`} alt={opt.iso} className="w-[20px] h-[15px] object-cover rounded-[2px]" />
+                        </span>
                         <span>{opt.code}</span>
                       </div>
                     ))}
@@ -469,10 +486,14 @@ const Stage2Presence = React.memo(function Stage2Presence() {
                 <input
                   type="tel"
                   value={phoneNumber}
+                  disabled={isPhoneVerified}
                   onChange={(e) => {
-                    // Allow digits, spaces, and + 
+                    const selectedCountry = PHONE_COUNTRY_OPTIONS.find(c => c.code === phoneCountryCode) || PHONE_COUNTRY_OPTIONS[0];
                     const val = e.target.value.replace(/[^\d\s\+]/g, '');
-                    updateField('phoneNumber', val.slice(0, 20));
+                    const digitsOnly = val.replace(/\D/g, '');
+                    if (digitsOnly.length > selectedCountry.digits) return;
+                    
+                    updateField('phoneNumber', val);
                     if (isPhoneVerified) updateField('isPhoneVerified', false);
                     if (showPhoneCode) setShowPhoneCode(false);
                     if (phoneLengthError) setPhoneLengthError('');
@@ -521,7 +542,8 @@ const Stage2Presence = React.memo(function Stage2Presence() {
             <div className="w-[412px] h-[54px] relative flex-none">
               <input
                 type="text"
-                value={phoneCode}
+                value={isPhoneVerified ? 'XXXXXX' : phoneCode}
+                disabled={isPhoneVerified}
                 onChange={(e) => handlePhoneCodeChange(e.target.value)}
                 placeholder="000000"
                 className={`w-full h-full px-6 pr-12 rounded-[24px] border focus:outline-none font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] placeholder:text-[#E0E0E7] dark:placeholder:text-[#6B7280] transition-colors ${!!phoneCodeError
@@ -651,21 +673,30 @@ const Stage2Presence = React.memo(function Stage2Presence() {
             </div>
             <div ref={countryRef} className="w-[412px] h-[54px] relative flex-none">
               <div
-                onClick={() => setIsCountryOpen(!isCountryOpen)}
-                className={`w-full h-full px-6 rounded-[24px] border focus:outline-none hover:border-blue-500 dark:hover:border-[#82B8FF] font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] transition-colors cursor-pointer flex items-center justify-between select-none ${showValidationErrors && !hqCountry
-                    ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171]'
-                    : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF]'
-                  }`}
+                onClick={() => { if (!isPhoneVerified) setIsCountryOpen(!isCountryOpen); }}
+                className={`w-full h-full px-6 rounded-[24px] border focus:outline-none font-poppins font-normal text-[16px] leading-[24px] text-black dark:text-[#FFFFFF] bg-white dark:bg-[#1A2236] transition-colors flex items-center justify-between select-none ${
+                  isPhoneVerified
+                    ? 'border-[#E0E0E7] dark:border-[#1C2840] cursor-not-allowed opacity-70'
+                    : showValidationErrors && !hqCountry
+                      ? 'border-[#EF4444] dark:border-[#F87171] focus:border-[#EF4444] dark:focus:border-[#F87171] cursor-pointer hover:border-blue-500 dark:hover:border-[#82B8FF]'
+                      : 'border-[#E0E0E7] dark:border-[#1C2840] focus:border-blue-500 dark:focus:border-[#82B8FF] cursor-pointer hover:border-blue-500 dark:hover:border-[#82B8FF]'
+                }`}
               >
                 <span className={hqCountry ? "text-black dark:text-[#FFFFFF]" : "text-[#6B7280] dark:text-[#A1A8B3]"}>
                   {hqCountry ? countryOptions.find(o => o.value === hqCountry)?.label : "Select Country"}
                 </span>
-                <svg className="w-4 h-4 text-black dark:text-[#FFFFFF]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
+                {isPhoneVerified ? (
+                  <svg className="w-4 h-4 text-[#6B7280]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m0 0v2m0-2h2m-2 0H10M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4 text-black dark:text-[#FFFFFF]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                )}
               </div>
 
-              {isCountryOpen && (
+              {!isPhoneVerified && isCountryOpen && (
                 <div className="absolute top-[60px] left-0 w-full bg-white dark:bg-[#161D2E] border border-[#E0E0E7] dark:border-[#1C2840] shadow-[0px_4px_20px_rgba(0,0,0,0.08)] rounded-[16px] py-2 z-[9999] max-h-[140px] overflow-y-auto no-scrollbar">
                   {countryOptions.map((opt) => (
                     <div
