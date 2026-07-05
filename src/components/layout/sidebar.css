@@ -66,11 +66,15 @@
   color: var(--feed-primary, #6366F1);
 }
 
+.sidebar__item:hover .sidebar__item-icon {
+  color: var(--feed-primary, #6366F1);
+}
+
 /* ---- Active Item ---- */
 .sidebar__item--active {
   background-color: var(--feed-light, #E0E7FF);
   color: var(--feed-primary, #6366F1);
-  border-right: 3px solid var(--feed-primary, #6366F1);
+  border-right: 5px solid var(--feed-primary, #6366F1);
 }
 
 .sidebar__item--active:hover {
@@ -165,7 +169,7 @@
   width: 200px;
   height: 40px;
   background: #818CF8;
-  border-right: 3px solid #F9FAFB;
+  border-right: 5px solid #F9FAFB;
   border-radius: 8px;
   box-sizing: border-box;
   color: #F9FAFB;

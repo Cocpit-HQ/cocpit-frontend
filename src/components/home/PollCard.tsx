@@ -16,7 +16,7 @@ export const PollCard: React.FC<PollCardProps> = ({ poll, onVote, votedOptionId,
     <div className="w-full flex flex-col justify-start items-start gap-4 font-poppins">
       <div className="self-stretch flex flex-col justify-start items-start gap-3 w-full">
         {question && (
-          <div className="w-full text-left text-black dark:text-white text-[20px] font-semibold leading-[28px] tracking-[-0.4px] mb-1">
+          <div className="w-full text-left text-black dark:text-white text-[14px] font-normal leading-[20px] mb-1">
             {question}
           </div>
         )}

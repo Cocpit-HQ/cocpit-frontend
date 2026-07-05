@@ -48,15 +48,15 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
       items: [
         { icon: IconoirHome, label: 'Feed', href: '/feed', show: true },
         { icon: Users, label: 'Connection', href: '/connections', show: true },
-        { icon: Compass, label: 'Explore', href: '/explore', show: true },
-        { icon: Sparkles, label: 'AI', href: '/ai-assistant', show: true },
+        { icon: Compass, label: 'Explore', href: '/explore', show: false },
+        { icon: Sparkles, label: 'AI', href: '/ai-assistant', show: false },
       ]
     },
     {
       title: 'Work',
       items: [
         { icon: (props: any) => <Icon icon="hugeicons:job-search" {...props} />, label: 'Jobs', href: '/jobs', show: !isCompany || checkPermission('POST_JOBS') || checkPermission('VIEW_APPLICANTS') },
-        { icon: (props: any) => <Icon icon="uit:calender" {...props} />, label: 'Events', href: '/events', show: true },
+        { icon: (props: any) => <Icon icon="uit:calender" {...props} />, label: 'Events', href: '/events', show: false },
       ]
     },
     {

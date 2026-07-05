@@ -25,7 +25,7 @@ export function ProfileEducation({
             id="education-section"
             className="w-full bg-card mt-[16px] md:rounded-[24px] transition-all duration-500 ease-in-out overflow-hidden"
         >
-            <div className="pt-[16px] pb-[40px] flex flex-col gap-0">
+            <div className="pb-[40px] flex flex-col gap-0">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 md:pl-10 md:pr-4">
                     <h2 className="text-[18px] leading-[26px] text-foreground font-medium font-[family-name:var(--font-poppins)]">Education</h2>

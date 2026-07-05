@@ -361,7 +361,7 @@ const ProfilePostCard = ({ post, isOwnPost, onDelete, onToggleVisibility, onUpda
                 </div>
               )}
 
-              <div className="space-y-2.5">
+              <div className="space-y-2.5 overflow-y-auto min-h-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {pollOptions.map((option, index) => (
                   <div
                     key={option.option_id || `${option.option_text}-${index}`}
