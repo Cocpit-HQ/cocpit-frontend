@@ -86,6 +86,33 @@
   color: var(--feed-primary, #6366F1);
 }
 
+/* ---- Active Item (Company) ---- */
+.sidebar__item--company-active {
+  background-color: #E8F1FF;
+  color: #1A73E8;
+  border-right: 3px solid #1A73E8;
+  border-radius: 8px;
+}
+
+.sidebar__item--company-active:hover {
+  background-color: #E8F1FF;
+  color: #1A73E8;
+}
+
+.sidebar__item--company-active .sidebar__item-icon {
+  color: #1A73E8;
+}
+
+/* ---- Hover Item (Company) ---- */
+.sidebar__item--company:not(.sidebar__item--company-active):hover {
+  background-color: #E8F1FF;
+  color: #1A73E8;
+}
+
+.sidebar__item--company:not(.sidebar__item--company-active):hover .sidebar__item-icon {
+  color: #1A73E8;
+}
+
 /* ---- Item Icon ---- */
 .sidebar__item-icon {
   @apply shrink-0 transition-all duration-100 ease-out;
@@ -160,7 +187,9 @@
 [data-theme="dark"] .sidebar__item:hover,
 [data-theme="navy"] .sidebar__item:hover,
 [data-theme="dark"] .sidebar__item--active,
-[data-theme="navy"] .sidebar__item--active {
+[data-theme="navy"] .sidebar__item--active,
+[data-theme="dark"] .sidebar__item--company-active,
+[data-theme="navy"] .sidebar__item--company-active {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -178,7 +207,9 @@
 [data-theme="dark"] .sidebar__item:hover .sidebar__item-label,
 [data-theme="navy"] .sidebar__item:hover .sidebar__item-label,
 [data-theme="dark"] .sidebar__item--active .sidebar__item-label,
-[data-theme="navy"] .sidebar__item--active .sidebar__item-label {
+[data-theme="navy"] .sidebar__item--active .sidebar__item-label,
+[data-theme="dark"] .sidebar__item--company-active .sidebar__item-label,
+[data-theme="navy"] .sidebar__item--company-active .sidebar__item-label {
   font-family: var(--font-poppins), 'Poppins', sans-serif;
   font-weight: 500;
   font-size: 16px;
@@ -189,7 +220,9 @@
 [data-theme="dark"] .sidebar__item:hover .sidebar__item-icon,
 [data-theme="navy"] .sidebar__item:hover .sidebar__item-icon,
 [data-theme="dark"] .sidebar__item--active .sidebar__item-icon,
-[data-theme="navy"] .sidebar__item--active .sidebar__item-icon {
+[data-theme="navy"] .sidebar__item--active .sidebar__item-icon,
+[data-theme="dark"] .sidebar__item--company-active .sidebar__item-icon,
+[data-theme="navy"] .sidebar__item--company-active .sidebar__item-icon {
   width: 24px;
   height: 24px;
   color: #F9FAFB;

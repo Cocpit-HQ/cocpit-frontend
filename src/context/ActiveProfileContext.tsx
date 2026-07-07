@@ -58,15 +58,26 @@ const buildCompanyProfile = (company: Company & { viewer_role_data?: { name: str
 export function ActiveProfileProvider({ children }: { children: React.ReactNode }) {
     const { data: session, status } = useSession();
     const [bootstrappedCompanies, setBootstrappedCompanies] = useState<(Company & { role: string })[]>([]);
-    const [activeProfile, setActiveProfile] = useState<ActiveProfile | null>(null);
+    const [activeProfile, setActiveProfile] = useState<ActiveProfile | null>(() => {
+        if (typeof window !== "undefined") {
+            const stored = sessionStorage.getItem("cocpit_active_profile");
+            if (stored) {
+                try { return JSON.parse(stored); } catch (e) {}
+            }
+        }
+        return null;
+    });
     const [isInitialized, setIsInitialized] = useState(false);
     const router = useRouter();
     const queryClient = useQueryClient();
     const companies = bootstrappedCompanies;
     const bootstrapLockRef = React.useRef<string | null>(null);
 
-    const canSwitchToCompany = (company: Company & { viewer_role_data?: { permissions: string[] } | null }) => {
-        const permissions = company?.viewer_role_data?.permissions || [];
+    const canSwitchToCompany = (company: Company & { viewer_role_data?: { permissions: string[] | string } | null }) => {
+        let permissions = company?.viewer_role_data?.permissions || [];
+        if (typeof permissions === 'string') {
+            try { permissions = JSON.parse(permissions); } catch (e) { permissions = []; }
+        }
         return permissions.includes("*") || permissions.includes("SWITCH_TO_COMPANY");
     };
 
@@ -160,6 +171,11 @@ export function ActiveProfileProvider({ children }: { children: React.ReactNode 
 
     useEffect(() => {
         setActorRequestHeaders(activeProfile ? { type: activeProfile.type, id: activeProfile.id } : null);
+        if (activeProfile) {
+            sessionStorage.setItem("cocpit_active_profile", JSON.stringify(activeProfile));
+        } else {
+            sessionStorage.removeItem("cocpit_active_profile");
+        }
     }, [activeProfile]);
 
     useEffect(() => {

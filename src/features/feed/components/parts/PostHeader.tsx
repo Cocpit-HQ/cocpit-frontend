@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { Icon } from "@iconify/react";
 import { TaggedPeoplePopover } from "@/shared/commonComponents/TaggedPeoplePopover";
 import { useSocial } from '@/context/SocialContext';
+import { companyProfileService } from '@/features/companyprofile/services/companyprofile.service';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface PostHeaderProps {
   id: string | number;
@@ -49,20 +51,69 @@ export const PostHeader = ({
   location, tags, authorRole, title, hideOptions
 }: PostHeaderProps) => {
   const avatarSrc = authorAvatar || '/assets/pngegg.png';
-  const { followUser, unfollowUser, isFollowing, isFollowLoading } = useSocial();
+  const { followUser, unfollowUser, isFollowing, isFollowLoading, syncFollowStatus } = useSocial();
   const isRepostWithoutThoughts = !!shared_post && (!content || content.trim() === '');
   const authorUserId = authorId?.toString();
   const isAuthorFollowing = authorUserId ? isFollowing(authorUserId) : false;
   const isAuthorFollowLoading = authorUserId ? isFollowLoading(authorUserId) : false;
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const followCompanyMutation = useMutation({
+    mutationFn: (orgId: string) => companyProfileService.followOrganization(orgId),
+    onSuccess: (_, orgId) => {
+      // Opt-in sync for SocialContext if we decide to store company IDs there
+      syncFollowStatus(orgId, true);
+      // Update state instead of invalidating to prevent "Organization not found" flicker
+      if (authorSlug) {
+        queryClient.setQueryData(["company", authorSlug], (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            relationship: {
+              ...(oldData.relationship || {}),
+              is_following: true
+            }
+          };
+        });
+      }
+    }
+  });
+
+  const unfollowCompanyMutation = useMutation({
+    mutationFn: (orgId: string) => companyProfileService.unfollowOrganization(orgId),
+    onSuccess: (_, orgId) => {
+      syncFollowStatus(orgId, false);
+      if (authorSlug) {
+        queryClient.setQueryData(["company", authorSlug], (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            relationship: {
+              ...(oldData.relationship || {}),
+              is_following: false
+            }
+          };
+        });
+      }
+    }
+  });
 
   const handleToggleFollowAuthor = () => {
-    if (!authorUserId || isAuthorFollowLoading || isCompanyPost) return;
+    if (!authorUserId || isAuthorFollowLoading) return;
 
-    if (isAuthorFollowing) {
-      unfollowUser(authorUserId);
+    if (isCompanyPost) {
+      if (isAuthorFollowing) {
+        unfollowCompanyMutation.mutate(authorUserId);
+      } else {
+        followCompanyMutation.mutate(authorUserId);
+      }
     } else {
-      followUser(authorUserId);
+      if (isAuthorFollowing) {
+        unfollowUser(authorUserId);
+      } else {
+        followUser(authorUserId);
+      }
     }
     setShowOptions(false);
   };
@@ -104,7 +155,7 @@ export const PostHeader = ({
         className="flex flex-row items-center p-0 gap-[8px] flex-1 min-w-0 overflow-hidden cursor-pointer group"
       >
         {/* Avatar (Ellipse 10) */}
-        <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex-shrink-0 bg-muted">
+        <div className="w-10 h-10 min-w-10 min-h-10 rounded-full overflow-hidden flex-shrink-0 bg-white">
           <img src={avatarSrc} alt={author} className="w-full h-full object-cover" />
         </div>
 
@@ -123,9 +174,6 @@ export const PostHeader = ({
                   {author}
                 </h3>
               </Link>
-            )}
-            {isCompanyPost && (
-              <Icon icon="solar:check-circle-bold" className="w-4 h-4 text-primary" />
             )}
             {shared_post && (
               <span className="text-[#6B7280] text-[10px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] ml-1 w-[45px] h-[16px] flex-none text-center">
@@ -182,11 +230,14 @@ export const PostHeader = ({
                     <>
                       <button
                         onClick={handleToggleFollowAuthor}
-                        disabled={!authorUserId || isAuthorFollowLoading || isCompanyPost}
+                        disabled={!authorUserId || isAuthorFollowLoading || followCompanyMutation.isPending || unfollowCompanyMutation.isPending}
                         className="flex items-start justify-between w-full px-4 py-2 cursor-pointer focus:bg-primary-tint focus:text-primary-tint-foreground rounded-3xl outline-none transition-colors"
                       >
                         <span className="text-sm font-normal font-poppins text-foreground break-words text-left pr-2">
-                          {isAuthorFollowing ? `Unfollow user` : `Follow user`}
+                          {isCompanyPost 
+                            ? (isAuthorFollowing ? `Unfollow company` : `Follow company`)
+                            : (isAuthorFollowing ? `Unfollow user` : `Follow user`)
+                          }
                         </span>
                         <img src={avatarSrc} alt={author} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
                       </button>

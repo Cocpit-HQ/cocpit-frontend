@@ -36,6 +36,7 @@ export const usePostInteractions = (props: FeedPostProps) => {
   // Dirty flag: true when commentCount has been mutated locally.
   // Prevents the props-sync effect from overwriting an optimistic update.
   const hasLocalCountChange = useRef(false);
+  const hasLocalLikeChange = useRef(false);
 
   // Sync non-count state with props (safe — these are not locally mutated)
   useEffect(() => {
@@ -46,6 +47,13 @@ export const usePostInteractions = (props: FeedPostProps) => {
     setShareCount(typeof props.shares === 'string' ? parseInt(props.shares || '0') : (props.shares || 0));
   }, [initialIsLiked, initialIsCommented, is_saved, poll, props.shares]);
 
+  // Sync likeCount from props when no local optimistic like is in flight.
+  useEffect(() => {
+    if (!hasLocalLikeChange.current) {
+      setLikeCount(typeof likes === 'string' ? parseInt(likes) : likes);
+    }
+  }, [likes]);
+
   // Sync commentCount only when not locally modified.
   // Prevents optimistic increments from being overwritten by stale prop values.
   useEffect(() => {
@@ -54,15 +62,17 @@ export const usePostInteractions = (props: FeedPostProps) => {
     }
   }, [props.comments]);
 
-  // Reset dirty flag when the post ID changes (component recycled for a new post)
+  // Reset dirty flags when the post ID changes (component recycled for a new post)
   useEffect(() => {
     hasLocalCountChange.current = false;
+    hasLocalLikeChange.current = false;
   }, [id]);
 
   const handleLike = async (isCompany: boolean, activeProfileId?: string) => {
     const prevLiked = isLiked;
     const prevCount = likeCount;
 
+    hasLocalLikeChange.current = true;
     setIsLiked(!isLiked);
     setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
 
@@ -77,6 +87,8 @@ export const usePostInteractions = (props: FeedPostProps) => {
       console.error("Failed to toggle like:", error);
       setIsLiked(prevLiked);
       setLikeCount(prevCount);
+    } finally {
+      hasLocalLikeChange.current = false;
     }
   };
 

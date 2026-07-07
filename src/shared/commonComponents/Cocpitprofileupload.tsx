@@ -614,7 +614,225 @@ export function EditAvatarModal({
 
 
 // ──────────────────────────────────────────────────────────────────────────
-// 3. EDIT COVER PHOTO
+// 3. EDIT COVER MODAL
+// ──────────────────────────────────────────────────────────────────────────
+export interface EditCoverModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  currentCoverUrl: string | null;
+  onUpload: (file: File) => Promise<void>;
+  onDelete: () => Promise<void>;
+  portalContainerId?: string;
+}
+
+export function EditCoverModal({
+  isOpen,
+  onClose,
+  currentCoverUrl,
+  onUpload,
+  onDelete,
+  portalContainerId,
+}: EditCoverModalProps) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const editor = useImageEditor({
+    allowedTypes: ["image/jpeg", "image/png", "image/webp", "image/heic", "image/jpg"],
+    fileProcessMode: "objectUrl",
+    onClickWithoutDrag: () => editor.openFilePicker(),
+    disabled: isUploading || isDeleting,
+  });
+
+  useEffect(() => {
+    if (isOpen) {
+      editor.resetTransforms();
+      if (currentCoverUrl || editor.previewUrl) {
+        editor.setModalState("edit");
+      } else {
+        editor.setModalState("upload");
+      }
+    }
+  }, [isOpen]);
+
+  const displayUrl = editor.previewUrl || currentCoverUrl || null;
+  const hasImage = !!displayUrl;
+
+  const handleSave = async () => {
+    const sourceUrl = editor.previewUrl || currentCoverUrl;
+    if (!sourceUrl) return;
+
+    try {
+      setIsUploading(true);
+
+      const blob = await processImageWithTransforms({
+        sourceUrl,
+        zoom: editor.zoom,
+        rotation: editor.rotation,
+        flipH: editor.flipH,
+        flipV: editor.flipV,
+        positionX: editor.positionX,
+        positionY: editor.positionY,
+        previewSizeWidth: editor.containerRef.current?.offsetWidth || 800,
+        canvasWidth: 1500,
+        canvasHeight: 480,
+        quality: 0.9,
+        outputType: "blob",
+      }) as Blob;
+
+      const file = new File([blob], "cover_photo.jpg", { type: "image/jpeg" });
+      await onUpload(file);
+      onClose();
+    } catch (error) {
+      console.error("Save failed", error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await onDelete();
+      editor.handleCancelPreview();
+    } catch (error) {
+      console.error("Delete failed", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <BaseImageEditorModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Cover image"
+      descriptionText="This will appear at the top of your profile"
+      maxWidthClass="sm:max-w-[800px]"
+      cardPaddingClass="p-[16px] w-[800px] max-w-full"
+      poppinsFamilyClass={true}
+      hideCloseButton={false}
+      animateClasses={true}
+      portalContainerId={portalContainerId}
+      desktopFooter={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isUploading || isDeleting}
+            className="w-[160px] h-[40px] rounded-[24px] border-primary text-primary hover:bg-primary/5 bg-transparent text-[14px]"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={
+              isUploading ||
+              isDeleting ||
+              !hasImage ||
+              (!editor.previewUrl &&
+                editor.zoom === 0 &&
+                editor.rotation === 0 &&
+                !editor.flipH &&
+                !editor.flipV &&
+                editor.positionX === 0 &&
+                editor.positionY === 0)
+            }
+            className="w-[160px] h-[40px] rounded-[24px] bg-primary text-primary-foreground border-none text-[14px] disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:bg-primary shadow-sm"
+          >
+            {isUploading ? "Saving..." : "Save"}
+          </Button>
+        </>
+      }
+    >
+      <div className="relative min-h-[340px] flex flex-col items-center justify-center">
+        {/* Edit state */}
+        <div className={cn(
+          "absolute inset-0 flex flex-col items-center transition-all duration-300 ease-in-out",
+          editor.modalState === "edit" ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"
+        )}>
+          <ImageEditorToolbar
+            flipH={editor.flipH}
+            flipV={editor.flipV}
+            onToggleFlipH={() => {
+              editor.setFlipH(!editor.flipH);
+              editor.setFlipV(false);
+            }}
+            onToggleFlipV={() => {
+              editor.setFlipV(!editor.flipV);
+              editor.setFlipH(false);
+            }}
+            onRotate={() => editor.setRotation((prev) => (prev + 90) % 360)}
+            onDelete={handleDelete}
+            isDeleting={isDeleting}
+            deleteIconRed={true}
+            disableDelete={!currentCoverUrl}
+          />
+
+          <ImagePreview
+            ref={editor.containerRef}
+            displayUrl={displayUrl!}
+            hasImage={hasImage}
+            zoom={editor.zoom}
+            rotation={editor.rotation}
+            flipH={editor.flipH}
+            flipV={editor.flipV}
+            positionX={editor.positionX}
+            positionY={editor.positionY}
+            isDragging={editor.isDraggingImage}
+            onPointerDown={editor.handlePointerDown}
+            className="w-full h-[200px] rounded-[24px]"
+            poppinsFamilyClass={true}
+            customOverlayClass={true}
+            onWheel={(e) => {
+              e.preventDefault();
+              const delta = e.deltaY > 0 ? -5 : 5;
+              editor.setZoom((prev) => Math.min(100, Math.max(0, prev + delta)));
+            }}
+          />
+
+          <div className="mt-8 max-w-[400px] mx-auto w-full">
+            <p className="text-[14px] font-medium text-foreground mb-3 font-[family-name:var(--font-poppins)]">Zoom</p>
+            <Slider
+              value={[editor.zoom]}
+              onValueChange={(vals) => editor.setZoom(vals[0])}
+              max={100}
+              step={1}
+              className="w-full"
+            />
+          </div>
+        </div>
+
+        {/* Upload state */}
+        <div className={cn(
+          "absolute inset-0 flex flex-col items-center justify-center transition-all duration-300 ease-in-out",
+          editor.modalState === "upload" ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"
+        )}>
+          <ImageUploadDropzone
+            onDragOver={editor.handleDragOver}
+            onDragLeave={editor.handleDragLeave}
+            onDrop={editor.handleDrop}
+            onClick={editor.openFilePicker}
+            isDragOver={editor.isDragOver}
+            recommendedSizeText="Recommended size: 1500 × 480 px"
+            poppinsFamilyClass={true}
+          />
+        </div>
+      </div>
+
+      <input
+        type="file"
+        ref={editor.fileInputRef}
+        onChange={editor.handleFileChange}
+        accept="image/jpeg,image/png,image/webp,image/jpg"
+        className="hidden"
+      />
+    </BaseImageEditorModal>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// 4. EDIT COVER PHOTO
 // ──────────────────────────────────────────────────────────────────────────
 export interface EditCoverPhotoProps {
   coverImage: string | null;

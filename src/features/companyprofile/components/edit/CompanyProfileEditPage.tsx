@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import * as Tabs from "@radix-ui/react-tabs";
 import { ChevronLeft } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { companyProfileService } from "../../services/companyprofile.service";
 import CompanyEditProfileTab from "./CompanyEditProfileTab";
 import CompanyEditAboutTab from "./CompanyEditAboutTab";
 import CompanyEditVerificationTab from "./CompanyEditVerificationTab";
@@ -13,6 +15,13 @@ export default function CompanyProfileEditPage() {
   const params = useParams();
   const slug = params.slug as string || "nexsus-global-systems";
   const [activeTab, setActiveTab] = useState("profile");
+
+  const { data: profileData } = useQuery({
+    queryKey: ["orgProfile", slug],
+    queryFn: () => companyProfileService.getOrgProfile(slug),
+  });
+  
+  const orgId = profileData?.org?.org_id || profileData?.org?.id || profileData?.id || profileData?.orgId || slug;
 
   const handleBack = () => {
     router.push(`/organization/${slug}`);
@@ -66,17 +75,17 @@ export default function CompanyProfileEditPage() {
 
           {/* Profile Tab Panel */}
           <Tabs.Content value="profile" className="outline-none">
-            <CompanyEditProfileTab onCancel={handleBack} />
+            <CompanyEditProfileTab onCancel={handleBack} orgId={orgId} />
           </Tabs.Content>
 
           {/* About Tab Panel */}
           <Tabs.Content value="about" className="outline-none">
-            <CompanyEditAboutTab onCancel={handleBack} />
+            <CompanyEditAboutTab onCancel={handleBack} orgId={orgId} />
           </Tabs.Content>
 
           {/* Verification Tab Panel */}
           <Tabs.Content value="verification" className="outline-none">
-            <CompanyEditVerificationTab onCancel={handleBack} />
+            <CompanyEditVerificationTab onCancel={handleBack} orgId={orgId} />
           </Tabs.Content>
 
         </Tabs.Root>

@@ -1,15 +1,55 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
+import { useParams } from "next/navigation";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { CompanyProfileData } from "../../../types/company-profile.types";
+import { companyProfileService } from "../../../services/companyprofile.service";
 
 interface CommunitySectionProps {
   data: CompanyProfileData;
 }
 
 export default function CommunitySection({ data }: CommunitySectionProps) {
-  const [subscribed, setSubscribed] = useState(false);
+  const queryClient = useQueryClient();
+  const params = useParams();
+  const slug = params.slug as string || "nexsus-global-systems";
+  const orgId = data.orgId || data.id;
+
+  const subscribeMutation = useMutation({
+    mutationFn: () => data.isSubscribed
+      ? companyProfileService.unsubscribeOrganization(orgId!)
+      : companyProfileService.subscribeOrganization(orgId!),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["company", slug] });
+      const previousProfile = queryClient.getQueryData(["company", slug]);
+      
+      queryClient.setQueryData(["company", slug], (old: any) => {
+        if (!old) return old;
+        const newIsSubscribed = !data.isSubscribed;
+        const countDiff = newIsSubscribed ? 1 : -1;
+        return {
+          ...old,
+          org: {
+            ...old.org,
+            subscribers_count: Math.max(0, (old.org?.subscribers_count || 0) + countDiff)
+          },
+          relationship: {
+            ...(old.relationship || {}),
+            is_subscribed: newIsSubscribed
+          }
+        };
+      });
+      
+      return { previousProfile };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousProfile) {
+        queryClient.setQueryData(["company", slug], context.previousProfile);
+      }
+    }
+  });
 
   return (
     <div
@@ -161,13 +201,14 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
               }}
               className="dark:text-zinc-400"
             >
-              {data.stats.subscribers} Subscriber
+              {data.stats?.subscribers || 0} Subscriber
             </span>
           </div>
 
           {/* Frame 2608519: Subscribe Button */}
           <button
-            onClick={() => setSubscribed((s) => !s)}
+            onClick={() => subscribeMutation.mutate()}
+            disabled={subscribeMutation.isPending || !orgId}
             style={{
               boxSizing: "border-box",
               display: "flex",
@@ -178,18 +219,18 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
               gap: "10px",
               width: "142px",
               height: "40px",
-              background: subscribed ? "#EFF4FF" : "#FFFFFF",
+              background: data.isSubscribed ? "#EFF4FF" : "#FFFFFF",
               border: "1px solid #1A73E8",
               borderRadius: "24px",
               flex: "none",
               flexGrow: 0,
-              cursor: "pointer",
+              cursor: subscribeMutation.isPending ? "not-allowed" : "pointer",
             }}
             className="hover:bg-blue-50 dark:hover:bg-zinc-900 transition-colors"
           >
             <span
               style={{
-                width: "70px",
+                width: "auto",
                 height: "20px",
                 fontFamily: "'Poppins', sans-serif",
                 fontWeight: 400,
@@ -201,7 +242,7 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
                 flexGrow: 0,
               }}
             >
-              {subscribed ? "Subscribed" : "Subscribe"}
+              {subscribeMutation.isPending ? "..." : (data.isSubscribed ? "Unsubscribe" : "Subscribe")}
             </span>
           </button>
         </div>

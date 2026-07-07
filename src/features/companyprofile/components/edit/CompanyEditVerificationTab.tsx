@@ -6,6 +6,7 @@ import { Icon } from "@iconify/react";
 
 interface CompanyEditVerificationTabProps {
   onCancel: () => void;
+  orgId: string;
 }
 
 interface DocumentItem {
@@ -14,7 +15,7 @@ interface DocumentItem {
   name?: string;
 }
 
-export default function CompanyEditVerificationTab({ onCancel }: CompanyEditVerificationTabProps) {
+export default function CompanyEditVerificationTab({ onCancel, orgId }: CompanyEditVerificationTabProps) {
   const [country, setCountry] = useState("India");
   const [documents, setDocuments] = useState<DocumentItem[]>([
     { id: "1", file: null, name: "BRN.jpeg" }

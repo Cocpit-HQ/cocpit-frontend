@@ -24,11 +24,17 @@ export interface CompanyPost {
   repostsCount: number;
   sharesCount: number;
   likedBy: { name: string; isOthers: boolean }[];
+  sampleLikerUsername?: string;
 }
 
 export interface CompanyProfileData {
   id: string;
+  _id?: string;
+  orgId: string;
   name: string;
+  slug?: string;
+  logoUrl?: string;
+  coverUrl?: string;
   isVerified: boolean;
   tagline: string;
   industry: string;
@@ -37,13 +43,15 @@ export interface CompanyProfileData {
   websiteUrl: string;
   description: string;
   slogan: string;
-  socialLinks: { label: string; url: string }[];
+  socialLinks: { label: string; platform?: string; url: string }[];
   phoneNumber?: string;
   founded?: string;
   offices?: { city: string; address: string }[];
   specialties?: string[];
-  stats: CompanyProfileStats;
-  coreTeam: CompanyTeamMember[];
-  posts: CompanyPost[];
+  stats?: CompanyProfileStats;
+  coreTeam?: CompanyTeamMember[];
+  posts?: CompanyPost[];
   entityType?: 'COMPANY' | 'INSTITUTE';
+  isFollowing?: boolean;
+  isSubscribed?: boolean;
 }

@@ -3,12 +3,32 @@
 import React from "react";
 import Image from "next/image";
 import { CompanyProfileData } from "../../../types/company-profile.types";
+import { useQuery } from "@tanstack/react-query";
+import { companyProfileService } from "../../../services/companyprofile.service";
 
 interface PeopleSectionProps {
   data: CompanyProfileData;
+  onViewMoreClick?: () => void;
 }
 
-export default function PeopleSection({ data }: PeopleSectionProps) {
+export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionProps) {
+  const isEdu = data.entityType === "INSTITUTE";
+  const { data: peopleData, isLoading } = useQuery({
+    queryKey: ["orgPeople", data.id, "preview", isEdu],
+    queryFn: () => 
+      isEdu
+        ? companyProfileService.getOrgAlumni(data.id, { page: 1, limit: 3 })
+        : companyProfileService.getOrgPeople(data.id, { page: 1, limit: 3 }),
+  });
+
+  const employeesList = (peopleData?.people || []).map((emp: any) => ({
+    id: emp.user_id || emp.id || emp._id,
+    name: emp.full_name || emp.name || "Unknown",
+    role: emp.role_display || emp.title || emp.headline || emp.role || "Associate",
+    avatar: emp.avatar_url || emp.avatar || emp.profile_image || "/images/companyonboarding/companyprofileDefault.jpg",
+  }));
+  const displayEmployees = employeesList.slice(0, 3);
+  const totalCount = peopleData?.meta?.total || displayEmployees.length;
   return (
     <div
       style={{
@@ -81,7 +101,7 @@ export default function PeopleSection({ data }: PeopleSectionProps) {
           flexGrow: 0,
         }}
       >
-        {/* 1 Connections */}
+        {/* Connections Count */}
         <span
           style={{
             height: "16px",
@@ -97,7 +117,7 @@ export default function PeopleSection({ data }: PeopleSectionProps) {
           }}
           className="dark:text-zinc-300"
         >
-          1 Connections
+          {isLoading ? "Loading..." : `${totalCount} Connections`}
         </span>
 
         {/* Container */}
@@ -116,111 +136,112 @@ export default function PeopleSection({ data }: PeopleSectionProps) {
             flexGrow: 0,
           }}
         >
-          {/* Frame 2608774 */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              padding: "0px",
-              gap: "8px",
-              width: "327px",
-              height: "44px",
-              flex: "none",
-              order: 0,
-              flexGrow: 0,
-            }}
-          >
-            {/* Ellipse 2: Avatar */}
+          {displayEmployees.map((emp: any, idx: number) => (
             <div
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                overflow: "hidden",
-                position: "relative",
-                flex: "none",
-                order: 0,
-                flexGrow: 0,
-              }}
-            >
-              <Image
-                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150"
-                alt="Alex Rivera"
-                fill
-                className="object-cover"
-                unoptimized
-              />
-            </div>
-
-            {/* Frame 2609008 */}
-            <div
+              key={emp.id}
               style={{
                 display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "flex-start",
+                flexDirection: "row",
+                alignItems: "center",
                 padding: "0px",
                 gap: "8px",
-                width: "279px",
+                width: "327px",
                 height: "44px",
                 flex: "none",
-                order: 1,
+                order: idx,
                 flexGrow: 0,
               }}
             >
-              {/* Frame 2609009 */}
+              {/* Avatar */}
               <div
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-start",
-                  padding: "0px",
-                  width: "279px",
-                  height: "44px",
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  position: "relative",
                   flex: "none",
                   order: 0,
                   flexGrow: 0,
                 }}
               >
-                {/* Name: Alex Rivera */}
-                <span
+                <Image
+                  src={emp.avatar}
+                  alt={emp.name}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+
+              {/* Info */}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "flex-start",
+                  padding: "0px",
+                  gap: "8px",
+                  width: "279px",
+                  height: "44px",
+                  flex: "none",
+                  order: 1,
+                  flexGrow: 0,
+                }}
+              >
+                <div
                   style={{
-                    height: "24px",
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 500,
-                    fontSize: "16px",
-                    lineHeight: "24px",
-                    color: "#000000",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    padding: "0px",
+                    width: "279px",
+                    height: "44px",
                     flex: "none",
                     order: 0,
                     flexGrow: 0,
                   }}
-                  className="dark:text-white"
                 >
-                  Alex Rivera
-                </span>
+                  {/* Name */}
+                  <span
+                    style={{
+                      height: "24px",
+                      fontFamily: "'Poppins', sans-serif",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                      lineHeight: "24px",
+                      color: "#000000",
+                      flex: "none",
+                      order: 0,
+                      flexGrow: 0,
+                    }}
+                    className="dark:text-white truncate w-full"
+                  >
+                    {emp.name}
+                  </span>
 
-                {/* Subtitle: Principal Architect at Quantum Systems */}
-                <span
-                  style={{
-                    height: "20px",
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 400,
-                    fontSize: "14px",
-                    lineHeight: "20px",
-                    color: "#6B7280",
-                    flex: "none",
-                    order: 1,
-                    flexGrow: 0,
-                  }}
-                  className="dark:text-zinc-400"
-                >
-                  Principal Architect at Quantum Systems
-                </span>
+                  {/* Subtitle */}
+                  <span
+                    style={{
+                      height: "20px",
+                      fontFamily: "'Poppins', sans-serif",
+                      fontWeight: 400,
+                      fontSize: "14px",
+                      lineHeight: "20px",
+                      color: "#6B7280",
+                      flex: "none",
+                      order: 1,
+                      flexGrow: 0,
+                    }}
+                    className="dark:text-zinc-400 truncate w-full"
+                  >
+                    {emp.role}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          ))}
         </div>
       </div>
 
@@ -258,7 +279,8 @@ export default function PeopleSection({ data }: PeopleSectionProps) {
             order: 0,
             flexGrow: 0,
           }}
-          className="hover:text-gray-900 dark:hover:text-zinc-200 transition-colors"
+          className="hover:text-gray-900 dark:hover:text-zinc-200 transition-colors flex items-center justify-center flex-none"
+          onClick={onViewMoreClick}
         >
           View more
         </button>

@@ -408,7 +408,7 @@ export function EditPostModal({ isOpen, onClose, editPostId, onUpdate }: EditPos
                 <button
                   type="button"
                   onClick={handleSave}
-                  disabled={isSubmitting || !description.trim()}
+                  disabled={isSubmitting || (postType === 'text' && !description.trim())}
                   className="w-1/2 h-11 bg-indigo-500 hover:bg-indigo-600 text-white rounded-[24px] font-medium text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   {isSubmitting && <Loader2 className="w-4 h-4 text-white animate-spin" />}
@@ -461,7 +461,7 @@ export function EditPostModal({ isOpen, onClose, editPostId, onUpdate }: EditPos
                   {/* Save button */}
                   <button
                     onClick={handleSave}
-                    disabled={isSubmitting || !description.trim()}
+                    disabled={isSubmitting || (postType === 'text' && !description.trim())}
                     className={`flex flex-row items-center justify-center gap-2 px-7 py-2 border border-transparent rounded-full transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none group shadow-sm bg-indigo-500 hover:bg-indigo-600`}
                   >
                     {isSubmitting && <Loader2 className="w-4 h-4 text-white animate-spin" />}

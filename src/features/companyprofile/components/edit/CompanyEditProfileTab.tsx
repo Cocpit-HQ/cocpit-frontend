@@ -1,26 +1,122 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
+import { Icon } from "@iconify/react";
+import { v4 as uuidv4 } from "uuid";
+import { getPlacesAutocomplete, getPlaceDetails } from "@/features/company-onboarding/services/company-onboarding.api";
+import { useParams } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { companyProfileService } from "../../services/companyprofile.service";
+import { useToast } from "@/hooks/use-toast";
 
 interface CompanyEditProfileTabProps {
   onCancel: () => void;
+  orgId: string;
 }
 
-export default function CompanyEditProfileTab({ onCancel }: CompanyEditProfileTabProps) {
-  // Mock initial state
-  const [formData, setFormData] = useState({
-    name: "Nexsus Global Systems",
-    industry: "Technology",
-    foundedYear: "2026",
-    size: "1 - 10 Members",
-    website: "https://www.nexsus.com",
-    country: "India",
-    city: "Mumbai",
-    headline: "SaaS and Fintech Solutions",
+export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditProfileTabProps) {
+  const { slug } = useParams() as { slug: string };
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: profileData, isLoading } = useQuery({
+    queryKey: ["orgProfile", slug],
+    queryFn: () => companyProfileService.getOrgProfile(slug),
   });
 
-  const [initialData] = useState({ ...formData });
+  const [formData, setFormData] = useState({
+    name: "",
+    industry: "Technology",
+    foundedYear: "",
+    size: "1 - 10 Members",
+    website: "",
+    country: "India",
+    city: "Mumbai",
+    headline: "",
+  });
+
+  const [initialData, setInitialData] = useState({ ...formData });
+
+  const sessionToken = useRef(uuidv4());
+  const [citySearchQuery, setCitySearchQuery] = useState<string | null>(null);
+  const [isSearchingCity, setIsSearchingCity] = useState(false);
+  const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+  const cityRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (cityRef.current && !cityRef.current.contains(event.target as Node)) {
+        setIsCityDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!isCityDropdownOpen) return;
+    const query = citySearchQuery || "";
+    
+    const delay = setTimeout(async () => {
+      if (query.trim().length > 1) {
+        setIsSearchingCity(true);
+        try {
+          const res = await getPlacesAutocomplete(query, sessionToken.current, formData.country);
+          if (res.success && res.data) {
+            setCitySuggestions(res.data);
+          }
+        } catch (e) {
+          console.error("Failed to fetch cities", e);
+        } finally {
+          setIsSearchingCity(false);
+        }
+      } else {
+        setCitySuggestions([]);
+      }
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [citySearchQuery, isCityDropdownOpen, formData.country]);
+
+  const handleCitySelect = async (placeId: string, displayName: string) => {
+    setIsCityDropdownOpen(false);
+    setCitySearchQuery(null);
+    
+    setFormData((prev) => ({ ...prev, city: displayName }));
+    
+    try {
+      const res = await getPlaceDetails(placeId, sessionToken.current);
+      if (res.success && res.data) {
+        setFormData((prev) => ({
+          ...prev,
+          city: res.data.city || displayName,
+          ...(res.data.country && { country: res.data.country }),
+        }));
+      }
+    } catch (e) {
+      console.error("Failed to get place details", e);
+    }
+  };
+
+  useEffect(() => {
+    if (profileData) {
+      const org = profileData.org || profileData;
+      const newForm = {
+        name: org.name || "",
+        industry: org.industry || "Technology",
+        foundedYear: org.established_year?.toString() || org.founded?.toString() || "",
+        size: org.size || org.employeeCount || "1 - 10 Members",
+        website: org.website || org.websiteUrl || "",
+        country: org.country || "India",
+        city: org.city || (org.location ? org.location.split(',')[0] : "Mumbai"),
+        headline: org.headline || org.tagline || "",
+      };
+      setFormData(newForm);
+      setInitialData(newForm);
+    }
+  }, [profileData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -29,12 +125,45 @@ export default function CompanyEditProfileTab({ onCancel }: CompanyEditProfileTa
 
   const isDirty = JSON.stringify(formData) !== JSON.stringify(initialData);
 
+  const updateMutation = useMutation({
+    mutationFn: (data: any) => companyProfileService.updateOrgProfile(orgId, data),
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Profile changes saved successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["orgProfile", slug] });
+      queryClient.invalidateQueries({ queryKey: ["company", slug] });
+      onCancel();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.response?.data?.message || "Failed to update profile",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isDirty) return;
-    alert("Profile changes saved successfully!");
-    onCancel();
+    if (!isDirty || updateMutation.isPending) return;
+    
+    updateMutation.mutate({
+      name: formData.name,
+      headline: formData.headline,
+      industry: formData.industry,
+      size: formData.size,
+      website: formData.website,
+      country: formData.country,
+      city: formData.city,
+      established_year: parseInt(formData.foundedYear) || undefined,
+    });
   };
+
+  if (isLoading) {
+    return <div className="py-10 text-center text-zinc-500">Loading profile...</div>;
+  }
 
   return (
     <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6">
@@ -160,19 +289,57 @@ export default function CompanyEditProfileTab({ onCancel }: CompanyEditProfileTa
           <label className="text-[14px] font-medium text-[#000000] dark:text-white">
             City
           </label>
-          <div className="relative w-full h-11">
-            <select
-              name="city"
-              value={formData.city}
-              onChange={handleChange}
-              className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-xl bg-transparent text-[16px] appearance-none focus:outline-none dark:text-white focus:border-[#1A73E8]"
-            >
-              <option value="Mumbai">Mumbai</option>
-              <option value="Bangalore">Bangalore</option>
-              <option value="New York">New York</option>
-              <option value="London">London</option>
-            </select>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
+          <div className="relative w-full h-11" ref={cityRef}>
+            <input
+              type="text"
+              autoComplete="new-password"
+              value={isCityDropdownOpen ? (citySearchQuery ?? formData.city) : formData.city}
+              onChange={(e) => {
+                setCitySearchQuery(e.target.value);
+                if (e.target.value === "") {
+                  setFormData((prev) => ({ ...prev, city: "" }));
+                }
+              }}
+              onFocus={() => {
+                setIsCityDropdownOpen(true);
+                if (citySearchQuery === null && formData.city) {
+                  setCitySearchQuery(formData.city);
+                }
+              }}
+              placeholder="Search city"
+              className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-xl bg-transparent text-[16px] focus:outline-none dark:text-white focus:border-[#1A73E8] placeholder-gray-400"
+            />
+            <Icon icon="mynaui:search" className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
+            
+            {isCityDropdownOpen && ((citySearchQuery || "").length > 1 || isSearchingCity) && (
+              <div className="absolute top-[50px] left-0 w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-lg rounded-2xl py-2 z-50 max-h-[200px] overflow-y-auto no-scrollbar">
+                {isSearchingCity ? (
+                  <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center flex items-center justify-center gap-2">
+                    <Icon icon="eos-icons:loading" className="w-4 h-4 animate-spin" />
+                    Searching...
+                  </div>
+                ) : citySuggestions.length > 0 ? (
+                  citySuggestions.map((suggestion, i) => (
+                    <div
+                      key={i}
+                      onMouseDown={() => handleCitySelect(suggestion.placeId, suggestion.displayName)}
+                      className="w-full px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors border-b border-gray-50 dark:border-zinc-800/50 last:border-0"
+                    >
+                      <div className="font-medium text-[14px] text-gray-900 dark:text-white">
+                        {suggestion.displayName}
+                      </div>
+                      <div className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                        {suggestion.description}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                    No cities found
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -203,14 +370,14 @@ export default function CompanyEditProfileTab({ onCancel }: CompanyEditProfileTa
         </button>
         <button
           type="submit"
-          disabled={!isDirty}
+          disabled={!isDirty || updateMutation.isPending}
           className={`h-10 px-8 rounded-full font-semibold text-[14px] transition-colors flex items-center justify-center ${
-            isDirty
+            isDirty && !updateMutation.isPending
               ? "bg-[#1A73E8] text-white hover:bg-blue-700 cursor-pointer"
               : "bg-gray-200 text-gray-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed"
           }`}
         >
-          Save
+          {updateMutation.isPending ? "Saving..." : "Save"}
         </button>
       </div>
 

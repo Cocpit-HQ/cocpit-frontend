@@ -42,37 +42,74 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
     ? `/organization/${activeProfile.slug}`
     : '/profile';
 
-  const sections = useMemo(() => [
-    {
-      title: 'Core',
-      items: [
-        { icon: IconoirHome, label: 'Feed', href: '/feed', show: true },
-        { icon: Users, label: 'Connection', href: '/connections', show: true },
-        { icon: Compass, label: 'Explore', href: '/explore', show: false },
-        { icon: Sparkles, label: 'AI', href: '/ai-assistant', show: false },
-      ]
-    },
-    {
-      title: 'Work',
-      items: [
-        { icon: (props: any) => <Icon icon="hugeicons:job-search" {...props} />, label: 'Jobs', href: '/jobs', show: !isCompany || checkPermission('POST_JOBS') || checkPermission('VIEW_APPLICANTS') },
-        { icon: (props: any) => <Icon icon="uit:calender" {...props} />, label: 'Events', href: '/events', show: false },
-      ]
-    },
-    {
-      title: 'Insights',
-      items: [
-        { icon: (props: any) => <Icon icon="hugeicons:analytics-up" {...props} />, label: 'Analytics', href: analyticsHref, show: !isCompany || checkPermission('VIEW_ANALYTICS') },
-      ]
-    },
-    {
-      title: 'Account',
-      items: [
-        { icon: (props: any) => <Icon icon="iconoir:profile-circle" {...props} />, label: 'Profile', href: profileHref, show: true },
-        { icon: Settings, label: 'Settings', href: settingsHref, show: !isCompany || canEdit || checkPermission('MANAGE_SETTINGS') },
-      ]
+  const sections = useMemo(() => {
+    if (isCompany) {
+      return [
+        {
+          title: 'Core',
+          items: [
+            { icon: IconoirHome, label: 'Feed', href: '/feed', show: true },
+            { icon: Users, label: 'Community', href: '/community', show: true },
+            { icon: Compass, label: 'Explore', href: '/explore', show: false },
+            { icon: Sparkles, label: 'AI', href: '/ai-assistant', show: false },
+          ]
+        },
+        {
+          title: 'Work',
+          items: [
+            { icon: (props: any) => <Icon icon="hugeicons:job-search" {...props} />, label: 'Jobs', href: '/jobs', show: checkPermission('POST_JOBS') || checkPermission('VIEW_APPLICANTS') },
+            { icon: (props: any) => <Icon icon="uit:calender" {...props} />, label: 'Events', href: '/events', show: false },
+          ]
+        },
+        {
+          title: 'Insights',
+          items: [
+            { icon: Users, label: 'Team', href: '/team', show: true },
+            { icon: (props: any) => <Icon icon="hugeicons:analytics-up" {...props} />, label: 'Analytics', href: analyticsHref, show: checkPermission('VIEW_ANALYTICS') },
+          ]
+        },
+        {
+          title: 'Account',
+          items: [
+            { icon: (props: any) => <Icon icon="iconoir:profile-circle" {...props} />, label: 'Profile', href: profileHref, show: true },
+            { icon: Settings, label: 'Settings', href: settingsHref, show: canEdit || checkPermission('MANAGE_SETTINGS') },
+          ]
+        }
+      ];
     }
-  ], [isCompany, checkPermission, analyticsHref, profileHref, settingsHref, canEdit]);
+    
+    return [
+      {
+        title: 'Core',
+        items: [
+          { icon: IconoirHome, label: 'Feed', href: '/feed', show: true },
+          { icon: Users, label: 'Connection', href: '/connections', show: true },
+          { icon: Compass, label: 'Explore', href: '/explore', show: false },
+          { icon: Sparkles, label: 'AI', href: '/ai-assistant', show: false },
+        ]
+      },
+      {
+        title: 'Work',
+        items: [
+          { icon: (props: any) => <Icon icon="hugeicons:job-search" {...props} />, label: 'Jobs', href: '/jobs', show: true },
+          { icon: (props: any) => <Icon icon="uit:calender" {...props} />, label: 'Events', href: '/events', show: false },
+        ]
+      },
+      {
+        title: 'Insights',
+        items: [
+          { icon: (props: any) => <Icon icon="hugeicons:analytics-up" {...props} />, label: 'Analytics', href: analyticsHref, show: true },
+        ]
+      },
+      {
+        title: 'Account',
+        items: [
+          { icon: (props: any) => <Icon icon="iconoir:profile-circle" {...props} />, label: 'Profile', href: profileHref, show: true },
+          { icon: Settings, label: 'Settings', href: settingsHref, show: true },
+        ]
+      }
+    ];
+  }, [isCompany, checkPermission, analyticsHref, profileHref, settingsHref, canEdit]);
 
   const isActive = (href: string) => {
     const currentPath = optimisticPath || pathname
@@ -134,7 +171,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
                         })
                         handleNavClick(e, item.href)
                       }}
-                      className={`sidebar__item ${active ? 'sidebar__item--active' : ''}`}
+                      className={`sidebar__item ${isCompany ? 'sidebar__item--company' : ''} ${active ? (isCompany ? 'sidebar__item--company-active' : 'sidebar__item--active') : ''}`}
                     >
                       <item.icon className="sidebar__item-icon" />
                       <span className="sidebar__item-label">
@@ -160,7 +197,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
             }
           }}
         >
-          Cocpit business
+          {isCompany ? 'Cocpit Engine' : 'Cocpit business'}
         </Link>
       </div>
     </aside>

@@ -15,8 +15,10 @@ interface CompanyProfileTabsProps {
 }
 
 export default function CompanyProfileTabs({ data, isOwnProfile }: CompanyProfileTabsProps) {
+  const [activeTab, setActiveTab] = React.useState("home");
+
   return (
-    <Tabs.Root defaultValue="home" className="w-full mt-0">
+    <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="w-full mt-0">
 
       {/* Scrollable Tabs List */}
       <Tabs.List className="flex w-full md:w-[428px] h-[36px] items-start gap-[16px] p-0 overflow-x-auto whitespace-nowrap scrollbar-hide">
@@ -41,7 +43,7 @@ export default function CompanyProfileTabs({ data, isOwnProfile }: CompanyProfil
 
       {/* Home Tab Content */}
       <Tabs.Content value="home" className="mt-6 outline-none">
-        <HomeTab data={data} isOwnProfile={isOwnProfile} />
+        <HomeTab data={data} isOwnProfile={isOwnProfile} onTabChange={setActiveTab} />
       </Tabs.Content>
 
       <Tabs.Content value="about" className="mt-6 outline-none">

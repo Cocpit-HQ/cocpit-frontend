@@ -1,9 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { ChevronDown, Plus, MapPin } from "lucide-react";
 import { Icon } from "@iconify/react";
+import { v4 as uuidv4 } from "uuid";
+import { getPlacesAutocomplete, getPlaceDetails } from "@/features/company-onboarding/services/company-onboarding.api";
+import { useParams } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { companyProfileService } from "../../services/companyprofile.service";
+import { useToast } from "@/hooks/use-toast";
 
 interface Office {
   id: string;
@@ -21,40 +27,138 @@ interface CustomLink {
 
 interface CompanyEditAboutTabProps {
   onCancel: () => void;
+  orgId: string;
 }
 
-export default function CompanyEditAboutTab({ onCancel }: CompanyEditAboutTabProps) {
-  const [description, setDescription] = useState(
-    "we are more than just a digital marketing agency; we are your trusted partners in achieving online success. We understand that the digital landscape is ever-evolving, and staying ahead requires innovation, expertise, and creativity. That’s where our team of digital marketing superheroes comes in."
-  );
-  
-  const [slogan, setSlogan] = useState("Innovating the infrastructure of tomorrow, today.");
-  
-  const [offices, setOffices] = useState<Office[]>([
-    {
-      id: "1",
-      country: "India",
-      city: "Mumbai",
-      address: "22 Canary Wharf, E14 5AB",
-      mapUrl: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&h=200&fit=crop",
-    },
-    {
-      id: "2",
-      country: "India",
-      city: "Bangalore",
-      address: "450 Hudson Yards, NY 10001",
-      mapUrl: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&h=200&fit=crop",
-    },
-  ]);
+export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAboutTabProps) {
+  const { slug } = useParams() as { slug: string };
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const [links, setLinks] = useState<CustomLink[]>([
-    { id: "1", label: "Technova.ai", url: "https://www.nexsus.com" },
-    { id: "2", label: "Twitter", url: "https://www.nexsus.com" },
-  ]);
+  const { data: aboutData, isLoading } = useQuery({
+    queryKey: ["orgAbout", slug],
+    queryFn: () => companyProfileService.getOrgAbout(slug),
+  });
 
-  const [specialties, setSpecialties] = useState(
-    "mobile app development, Web application development, augmented reality, react native, Android development, iOS development, Virtual reality, Cyber Security, and Software development"
-  );
+  const [description, setDescription] = useState("");
+  const [slogan, setSlogan] = useState("");
+  const [offices, setOffices] = useState<Office[]>([]);
+  const [links, setLinks] = useState<CustomLink[]>([]);
+  const [specialties, setSpecialties] = useState("");
+  const [initialDataStr, setInitialDataStr] = useState("");
+
+  const sessionToken = useRef(uuidv4());
+  const [activeCitySearchOfficeId, setActiveCitySearchOfficeId] = useState<string | null>(null);
+  const [citySearchQueries, setCitySearchQueries] = useState<Record<string, string>>({});
+  const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
+  const [isSearchingCity, setIsSearchingCity] = useState(false);
+  const cityRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (activeCitySearchOfficeId && cityRefs.current[activeCitySearchOfficeId]) {
+        if (!cityRefs.current[activeCitySearchOfficeId]!.contains(event.target as Node)) {
+          setActiveCitySearchOfficeId(null);
+        }
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [activeCitySearchOfficeId]);
+
+  useEffect(() => {
+    if (!activeCitySearchOfficeId) return;
+    const query = citySearchQueries[activeCitySearchOfficeId] || "";
+    
+    const delay = setTimeout(async () => {
+      if (query.trim().length > 1) {
+        setIsSearchingCity(true);
+        try {
+          const office = offices.find(o => o.id === activeCitySearchOfficeId);
+          const res = await getPlacesAutocomplete(query, sessionToken.current, office?.country || "");
+          if (res.success && res.data) {
+            setCitySuggestions(res.data);
+          }
+        } catch (e) {
+          console.error("Failed to fetch cities", e);
+        } finally {
+          setIsSearchingCity(false);
+        }
+      } else {
+        setCitySuggestions([]);
+      }
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [activeCitySearchOfficeId, citySearchQueries, offices]);
+
+  const handleCitySelect = async (officeId: string, placeId: string, displayName: string) => {
+    setActiveCitySearchOfficeId(null);
+    setCitySearchQueries(prev => ({ ...prev, [officeId]: "" }));
+    
+    // Immediately update the UI to make it feel responsive and ensure it "takes"
+    // Even if the backend fails to resolve a specific 'city' field for this placeId
+    handleOfficeChange(officeId, "city", displayName);
+    
+    try {
+      const res = await getPlaceDetails(placeId, sessionToken.current);
+      if (res.success && res.data) {
+        // If the backend found a more accurate city name, use it, otherwise keep the display name
+        if (res.data.city) {
+          handleOfficeChange(officeId, "city", res.data.city);
+        }
+        if (res.data.country) {
+          handleOfficeChange(officeId, "country", res.data.country);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to get place details", e);
+    }
+  };
+
+  useEffect(() => {
+    if (aboutData) {
+      // Backend returns { about: {...}, offices: [...], links: [...], specialties: [{specialty_id, name}] }
+      const about = aboutData.about || aboutData;
+      const officesArr = aboutData.offices || [];
+      const linksArr = aboutData.links || [];
+      const specialtiesArr = aboutData.specialties || [];
+
+      setDescription(about.description || "");
+      setSlogan(about.slogan || "");
+      
+      const parsedOffices = officesArr.map((o: any, idx: number) => ({
+        id: o.office_id || o.id || String(idx),
+        country: o.country || "India",
+        city: o.city || "Mumbai",
+        address: o.address || "",
+        mapUrl: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&h=200&fit=crop",
+      }));
+      setOffices(parsedOffices);
+      
+      const parsedLinks = linksArr.map((l: any, idx: number) => ({
+        id: l.link_id || l.id || String(idx),
+        label: l.display_label || l.platform || l.label || "",
+        url: l.url || "",
+      }));
+      setLinks(parsedLinks);
+      
+      // specialties is [{specialty_id, name}] — join the names
+      const specString = specialtiesArr.map((s: any) => s.name || s).filter(Boolean).join(", ");
+      setSpecialties(specString);
+
+      setInitialDataStr(JSON.stringify({
+        description: about.description || "",
+        slogan: about.slogan || "",
+        offices: parsedOffices,
+        links: parsedLinks,
+        specialties: specString,
+      }));
+    }
+  }, [aboutData]);
+
+  const currentDataStr = JSON.stringify({ description, slogan, offices, links, specialties });
+  const isDirty = initialDataStr !== "" && initialDataStr !== currentDataStr;
 
   const handleAddOffice = () => {
     const newOffice: Office = {
@@ -64,16 +168,16 @@ export default function CompanyEditAboutTab({ onCancel }: CompanyEditAboutTabPro
       address: "",
       mapUrl: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&h=200&fit=crop",
     };
-    setOffices([...offices, newOffice]);
+    setOffices((prev) => [...prev, newOffice]);
   };
 
   const handleRemoveOffice = (id: string) => {
-    setOffices(offices.filter((o) => o.id !== id));
+    setOffices((prev) => prev.filter((o) => o.id !== id));
   };
 
   const handleOfficeChange = (id: string, field: keyof Office, value: string) => {
-    setOffices(
-      offices.map((o) => (o.id === id ? { ...o, [field]: value } : o))
+    setOffices((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, [field]: value } : o))
     );
   };
 
@@ -83,24 +187,55 @@ export default function CompanyEditAboutTab({ onCancel }: CompanyEditAboutTabPro
       label: "",
       url: "",
     };
-    setLinks([...links, newLink]);
+    setLinks((prev) => [...prev, newLink]);
   };
 
   const handleRemoveLink = (id: string) => {
-    setLinks(links.filter((l) => l.id !== id));
+    setLinks((prev) => prev.filter((l) => l.id !== id));
   };
 
   const handleLinkChange = (id: string, field: keyof CustomLink, value: string) => {
-    setLinks(
-      links.map((l) => (l.id === id ? { ...l, [field]: value } : l))
+    setLinks((prev) =>
+      prev.map((l) => (l.id === id ? { ...l, [field]: value } : l))
     );
   };
 
+  const updateMutation = useMutation({
+    mutationFn: (data: any) => companyProfileService.updateOrgAbout(orgId, data),
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "About info saved successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["orgAbout", slug] });
+      queryClient.invalidateQueries({ queryKey: ["company", slug] });
+      onCancel();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.response?.data?.message || "Failed to update about info",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert("About info saved successfully!");
-    onCancel();
+    if (!isDirty || updateMutation.isPending) return;
+
+    updateMutation.mutate({
+      description,
+      slogan,
+      offices: offices.map((o) => ({ city: o.city, country: o.country, address: o.address })),
+      links: links.map((l) => ({ platform: l.label, display_label: l.label, url: l.url })),
+      specialties: specialties.split(",").map(s => s.trim()).filter(Boolean),
+    });
   };
+
+  if (isLoading) {
+    return <div className="py-10 text-center text-zinc-500">Loading about info...</div>;
+  }
 
   return (
     <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6 font-poppins">
@@ -149,8 +284,17 @@ export default function CompanyEditAboutTab({ onCancel }: CompanyEditAboutTabPro
       {/* Offices list */}
       <div className="flex flex-col gap-6 w-full">
         {offices.map((office) => (
-          <div key={office.id} className="flex flex-col gap-4 w-full">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+          <div key={office.id} className="flex flex-col gap-4 w-full relative p-5 border border-gray-100 dark:border-zinc-800/60 rounded-2xl bg-white/50 dark:bg-zinc-900/20">
+            {/* Delete button at top right */}
+            <button
+              type="button"
+              onClick={() => handleRemoveOffice(office.id)}
+              className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-colors cursor-pointer"
+              title="Remove office"
+            >
+              <Icon icon="hugeicons:delete-02" className="w-5 h-5" />
+            </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full pr-8">
               {/* Country */}
               <div className="flex flex-col gap-2">
                 <label className="text-[14px] font-medium text-[#000000] dark:text-white">
@@ -171,20 +315,60 @@ export default function CompanyEditAboutTab({ onCancel }: CompanyEditAboutTabPro
                 <label className="text-[14px] font-medium text-[#000000] dark:text-white">
                   City
                 </label>
-                <div className="relative w-full h-11">
-                  <select
-                    value={office.city}
-                    onChange={(e) => handleOfficeChange(office.id, "city", e.target.value)}
-                    className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] appearance-none focus:outline-none dark:text-white focus:border-[#1A73E8]"
-                  >
-                    <option value="Select city" disabled>Select city</option>
-                    <option value="Mumbai">Mumbai</option>
-                    <option value="Bangalore">Bangalore</option>
-                    <option value="Delhi">Delhi</option>
-                    <option value="Pune">Pune</option>
-                    <option value="Chennai">Chennai</option>
-                  </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
+                <div 
+                  className="relative w-full h-11"
+                  ref={(el) => { cityRefs.current[office.id] = el; }}
+                >
+                  <input
+                    type="text"
+                    autoComplete="new-password"
+                    value={activeCitySearchOfficeId === office.id ? (citySearchQueries[office.id] ?? office.city) : office.city}
+                    onChange={(e) => {
+                      setCitySearchQueries(prev => ({ ...prev, [office.id]: e.target.value }));
+                      if (e.target.value === "") {
+                        handleOfficeChange(office.id, "city", "");
+                      }
+                    }}
+                    onFocus={() => {
+                      setActiveCitySearchOfficeId(office.id);
+                      if (!citySearchQueries[office.id] && office.city) {
+                        setCitySearchQueries(prev => ({ ...prev, [office.id]: office.city }));
+                      }
+                    }}
+                    placeholder="Search city"
+                    className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] focus:outline-none dark:text-white focus:border-[#1A73E8] placeholder-gray-400"
+                  />
+                  <Icon icon="mynaui:search" className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
+                  
+                  {activeCitySearchOfficeId === office.id && (citySearchQueries[office.id]?.length > 1 || isSearchingCity) && (
+                    <div className="absolute top-[50px] left-0 w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-lg rounded-2xl py-2 z-50 max-h-[200px] overflow-y-auto no-scrollbar">
+                      {isSearchingCity ? (
+                        <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center flex items-center justify-center gap-2">
+                          <Icon icon="eos-icons:loading" className="w-4 h-4 animate-spin" />
+                          Searching...
+                        </div>
+                      ) : citySuggestions.length > 0 ? (
+                        citySuggestions.map((suggestion, i) => (
+                          <div
+                            key={i}
+                            onMouseDown={() => handleCitySelect(office.id, suggestion.placeId, suggestion.displayName)}
+                            className="w-full px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors border-b border-gray-50 dark:border-zinc-800/50 last:border-0"
+                          >
+                            <div className="font-medium text-[14px] text-gray-900 dark:text-white">
+                              {suggestion.displayName}
+                            </div>
+                            <div className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                              {suggestion.description}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                          No cities found
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -196,38 +380,46 @@ export default function CompanyEditAboutTab({ onCancel }: CompanyEditAboutTabPro
               </label>
               <input
                 type="text"
+                autoComplete="new-password"
                 value={office.address}
                 onChange={(e) => handleOfficeChange(office.id, "address", e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
                 className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
               />
             </div>
 
-            {/* Google Map Mock with Pin Marker */}
-            <div className="relative w-full h-[180px] bg-slate-100 rounded-2xl overflow-hidden border border-gray-200 dark:border-zinc-800">
-              <Image
-                src={office.mapUrl}
-                alt="Map View"
-                fill
-                className="object-cover opacity-90"
-                unoptimized
-              />
-              {/* Centered Map Pin */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
-                <MapPin className="w-8 h-8 text-red-500 fill-red-100 drop-shadow-lg animate-bounce" />
+            {/* Interactive Google Map Preview */}
+            <div className="relative w-full h-[180px] bg-[#E5E9F0] dark:bg-[#111827] rounded-[24px] overflow-hidden border border-[#E0E0E7] dark:border-[#1C2840] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none flex items-center justify-center">
+              {office.country || (office.city && office.city !== "Select city") ? (
+                <>
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    className="border-0 relative z-0"
+                    loading="lazy"
+                    allowFullScreen
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent([office.address, office.city === "Select city" ? "" : office.city, office.country].filter(Boolean).join(', '))}&z=${office.city && office.city !== "Select city" ? 14 : 5}&output=embed`}
+                  />
+                  <a
+                    href={`https://maps.google.com/maps?q=${encodeURIComponent([office.address, office.city === "Select city" ? "" : office.city, office.country].filter(Boolean).join(', '))}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute inset-0 z-10 cursor-pointer"
+                    aria-label="Open in Google Maps"
+                  />
+                </>
+              ) : (
+                <div className="text-gray-400 text-sm font-poppins">Select a country or city to view map</div>
+              )}
+
+              <div className="absolute bottom-3.5 px-3.5 py-1 bg-white/95 dark:bg-[#1C2840]/95 rounded-full shadow-sm text-center border border-slate-100 dark:border-[#1C2840]/50 flex items-center gap-1 select-none z-20 pointer-events-none">
+                <Icon icon="mynaui:map" className="w-3.5 h-3.5 text-slate-500 dark:text-[#A1A8B3]" />
+                <span className="text-[10px] font-poppins font-medium text-slate-600 dark:text-[#A1A8B3]">Map Preview</span>
               </div>
             </div>
 
-            {/* Delete button below map */}
-            <div className="flex justify-end w-full">
-              <button
-                type="button"
-                onClick={() => handleRemoveOffice(office.id)}
-                className="p-1 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
-                title="Remove office"
-              >
-                <Icon icon="hugeicons:delete-02" className="w-6 h-6" />
-              </button>
-            </div>
           </div>
         ))}
       </div>
@@ -249,8 +441,17 @@ export default function CompanyEditAboutTab({ onCancel }: CompanyEditAboutTabPro
       {/* Links list */}
       <div className="flex flex-col gap-6 w-full">
         {links.map((link) => (
-          <div key={link.id} className="flex flex-col gap-2 w-full">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+          <div key={link.id} className="flex flex-col gap-2 w-full relative p-5 border border-gray-100 dark:border-zinc-800/60 rounded-2xl bg-white/50 dark:bg-zinc-900/20">
+            {/* Delete button at top right */}
+            <button
+              type="button"
+              onClick={() => handleRemoveLink(link.id)}
+              className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-colors cursor-pointer"
+              title="Remove link"
+            >
+              <Icon icon="hugeicons:delete-02" className="w-5 h-5" />
+            </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full pr-8">
               {/* Label */}
               <div className="flex flex-col gap-2">
                 <label className="text-[14px] font-medium text-[#000000] dark:text-white">
@@ -278,17 +479,6 @@ export default function CompanyEditAboutTab({ onCancel }: CompanyEditAboutTabPro
               </div>
             </div>
 
-            {/* Delete button below link */}
-            <div className="flex justify-end w-full">
-              <button
-                type="button"
-                onClick={() => handleRemoveLink(link.id)}
-                className="p-1 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
-                title="Remove link"
-              >
-                <Icon icon="hugeicons:delete-02" className="w-6 h-6" />
-              </button>
-            </div>
           </div>
         ))}
       </div>
@@ -317,9 +507,14 @@ export default function CompanyEditAboutTab({ onCancel }: CompanyEditAboutTabPro
         </button>
         <button
           type="submit"
-          className="h-10 px-8 rounded-full bg-[#1A73E8] text-white hover:bg-blue-700 font-semibold text-[14px] transition-colors flex items-center justify-center cursor-pointer"
+          disabled={!isDirty || updateMutation.isPending}
+          className={`h-10 px-8 rounded-full font-semibold text-[14px] transition-colors flex items-center justify-center cursor-pointer ${
+            isDirty && !updateMutation.isPending
+              ? "bg-[#1A73E8] text-white hover:bg-blue-700"
+              : "bg-gray-200 text-gray-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed"
+          }`}
         >
-          Save
+          {updateMutation.isPending ? "Saving..." : "Save"}
         </button>
       </div>
 

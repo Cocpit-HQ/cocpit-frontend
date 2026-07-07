@@ -4,16 +4,37 @@ import React from "react";
 import Image from "next/image";
 import { CompanyProfileData } from "../../../types/company-profile.types";
 
+import { useQuery } from "@tanstack/react-query";
+import { companyProfileService } from "../../../services/companyprofile.service";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
+
 interface JobsTabProps {
   data: CompanyProfileData;
   isOwnProfile?: boolean;
 }
 
 export default function JobsTab({ data, isOwnProfile = false }: JobsTabProps) {
-  const jobs = [
-    { id: "1", title: "UI/UX Designer", posted: "Posted 2 hours ago" },
-    { id: "2", title: "Marketing Lead", posted: "Posted 3 weeks ago" },
-  ];
+  const { data: jobsResponse, isLoading } = useQuery({
+    queryKey: ["orgJobs", data.id],
+    queryFn: () => companyProfileService.getOrgJobs(data.id, { scope: "public", limit: 10 }),
+  });
+
+  const jobs = (jobsResponse || []).map((job: any) => ({
+    id: job.job_id,
+    title: job.title,
+    posted: `Posted ${dayjs(job.created_at).fromNow()}`,
+  }));
+
+  if (isLoading) {
+    return (
+      <div className="flex w-full justify-center py-10">
+        <span className="text-zinc-500">Loading jobs...</span>
+      </div>
+    );
+  }
 
   if (jobs.length === 0) {
     return (
@@ -59,7 +80,7 @@ export default function JobsTab({ data, isOwnProfile = false }: JobsTabProps) {
       }}
       className="dark:bg-zinc-950"
     >
-      {jobs.map((job) => (
+      {jobs.map((job: any) => (
         <div
           key={job.id}
           style={{

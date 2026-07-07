@@ -309,7 +309,7 @@ export const FeedPost = (props: FeedPostProps) => {
           </div>
 
           {/* Original Post Header & Content */}
-          <div className="flex flex-col gap-[8px] px-4 md:px-0">
+          <div className={`flex flex-col gap-[8px] ${isProfileView ? 'px-4' : 'px-4 md:px-0'}`}>
             <PostHeader
               {...props}
               shared_post={null}
@@ -397,7 +397,7 @@ export const FeedPost = (props: FeedPostProps) => {
       ) : (
         <>
           {/* Header & Content (Frame 2608598) */}
-          <div className="flex flex-col gap-[8px] px-4 md:px-0">
+          <div className={`flex flex-col gap-[8px] ${isProfileView ? 'px-4 pt-4' : 'px-4 md:px-0'}`}>
             <PostHeader
               {...props}
               isMe={props.isOwnPost || false}
@@ -482,7 +482,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
       {/* Social Proof & Actions */}
       <div className="flex flex-col gap-[8px] px-4 md:px-0">
-        {likeCount > 0 && !(likeCount === 1 && isLiked) && (
+        {likeCount > 0 && !(likeCount === 1 && isLiked) && sampleLikerUsername && (
           <div className="flex items-center">
             <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
               Liked by{" "}

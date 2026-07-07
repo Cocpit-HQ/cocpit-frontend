@@ -2,21 +2,29 @@
 
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { CompanyProfileData } from "../../../types/company-profile.types";
 import { ShieldCheck, ChevronRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { companyProfileService } from "../../../services/companyprofile.service";
 
 interface CoreTeamSectionProps {
   data: CompanyProfileData;
+  isOwnProfile?: boolean;
 }
 
-export default function CoreTeamSection({ data }: CoreTeamSectionProps) {
-  // Use mock data matching the Figma spec if names/roles don't exist
-  const members = [
-    { name: "Emma", role: "HR", avatarUrl: data.coreTeam[0]?.avatarUrl || "/placeholder-avatar1.jpg" },
-    { name: "James", role: "Manager", avatarUrl: data.coreTeam[1]?.avatarUrl || "/placeholder-avatar2.jpg" },
-    { name: "Sophia", role: "SMM", avatarUrl: data.coreTeam[2]?.avatarUrl || "/placeholder-avatar3.jpg" },
-    { name: "Michael", role: "Content manager", avatarUrl: data.coreTeam[3]?.avatarUrl || "/placeholder-avatar4.jpg" }
-  ];
+export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamSectionProps) {
+  const { data: teamData, isLoading: isLoadingTeam } = useQuery({
+    queryKey: ["orgTeam", data.id],
+    queryFn: () => companyProfileService.getOrgTeam(data.id),
+  });
+
+  const teamMembers = teamData?.data || data.coreTeam;
+
+  // Don't render the section at all on public view if there are no core team members
+  if (!isOwnProfile && (!teamMembers || teamMembers.length === 0)) {
+    return null;
+  }
 
   return (
     <div
@@ -61,86 +69,99 @@ export default function CoreTeamSection({ data }: CoreTeamSectionProps) {
           </h2>
 
           {/* Frame 2609121: Manage button */}
-          <button
-            style={{ height: "32px", gap: "8px" }}
-            className="flex flex-row items-center flex-none cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            <span
-              style={{
-                height: "32px",
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: 400,
-                fontSize: "14px",
-                lineHeight: "32px",
-                color: "#000000",
-              }}
-              className="flex items-center flex-none dark:text-zinc-300"
+          {isOwnProfile && (
+            <Link
+              href="/team"
+              style={{ height: "32px", gap: "8px" }}
+              className="flex flex-row items-center flex-none cursor-pointer hover:opacity-80 transition-opacity no-underline"
             >
-              Manage
-            </span>
-            <ChevronRight size={24} className="text-black dark:text-zinc-300 flex-none" />
-          </button>
+              <span
+                style={{
+                  height: "32px",
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: 400,
+                  fontSize: "14px",
+                  lineHeight: "32px",
+                  color: "#000000",
+                }}
+                className="flex items-center flex-none dark:text-zinc-300"
+              >
+                Manage
+              </span>
+              <ChevronRight size={24} className="text-black dark:text-zinc-300 flex-none" />
+            </Link>
+          )}
         </div>
 
         {/* Container for team members */}
         <div
-          style={{ width: "420px", height: "84px", gap: "16px", marginLeft: "-25px" }}
+          style={{ width: "420px", height: "84px", gap: "16px" }}
           className="flex flex-row items-start flex-none self-stretch"
         >
-          {members.map((member, index) => (
-            <div
-              key={index}
-              style={{ width: "90px", height: "84px", gap: "8px" }}
-              className="flex flex-col items-center flex-none"
-            >
-              {/* Ellipse 24 */}
-              <div
-                style={{ width: "40px", height: "40px" }}
-                className="relative rounded-full overflow-hidden flex-none border border-[#E0E0E7] dark:border-zinc-800"
-              >
-                <Image
-                  src={member.avatarUrl}
-                  alt={member.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-
-              {/* Frame 2609075 */}
-              <div
-                style={{ width: "90px", height: "36px", gap: "4px" }}
-                className="flex flex-col items-center flex-none self-stretch"
-              >
-                <span
-                  style={{
-                    width: "90px",
-                    height: "16px",
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 500,
-                    fontSize: "12px",
-                    lineHeight: "16px",
-                    color: "#000000",
-                  }}
-                  className="text-center flex-none self-stretch truncate dark:text-white"
-                >
-                  {member.name}
-                </span>
-                <span
-                  style={{
-                    height: "16px",
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 400,
-                    fontSize: "12px",
-                    lineHeight: "16px",
-                    color: "#6B7280",
-                  }}
-                  className="text-center flex-none truncate dark:text-zinc-400"
-                >
-                  {member.role}
-                </span>
-              </div>
+          {isLoadingTeam ? (
+            <div className="flex items-center justify-center w-full h-full text-zinc-500 dark:text-zinc-400 text-sm ml-[25px]">
+              Loading team...
             </div>
-          ))}
+          ) : teamMembers && teamMembers.length > 0 ? (
+            teamMembers.map((member: any) => (
+              <div
+                key={member.id || member.user_id || member.name}
+                style={{ width: "90px", height: "84px", gap: "8px" }}
+                className="flex flex-col items-center flex-none"
+              >
+                {/* Ellipse 24 */}
+                <div
+                  style={{ width: "40px", height: "40px" }}
+                  className="relative rounded-full overflow-hidden flex-none border border-[#E0E0E7] dark:border-zinc-800"
+                >
+                  <Image
+                    src={member.avatar_url || member.avatarUrl || member.avatar || "/images/companyonboarding/companyprofileDefault.jpg"}
+                    alt={member.full_name || member.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+
+                {/* Frame 2609075 */}
+                <div
+                  style={{ width: "90px", height: "36px", gap: "4px" }}
+                  className="flex flex-col items-center flex-none self-stretch"
+                >
+                  <span
+                    style={{
+                      width: "90px",
+                      height: "16px",
+                      fontFamily: "'Poppins', sans-serif",
+                      fontWeight: 500,
+                      fontSize: "12px",
+                      lineHeight: "16px",
+                      color: "#000000",
+                    }}
+                    className="text-center flex-none self-stretch truncate dark:text-white"
+                  >
+                    {member.full_name || member.name}
+                  </span>
+                  <span
+                    style={{
+                      height: "16px",
+                      fontFamily: "'Poppins', sans-serif",
+                      fontWeight: 400,
+                      fontSize: "12px",
+                      lineHeight: "16px",
+                      color: "#6B7280",
+                    }}
+                    className="text-center flex-none truncate dark:text-zinc-400"
+                  >
+                    {member.role || member.title || "Core Team"}
+                  </span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex items-center justify-center w-full h-full text-zinc-500 dark:text-zinc-400 text-sm ml-[25px]">
+              No core team members yet
+            </div>
+          )}
         </div>
       </div>
 

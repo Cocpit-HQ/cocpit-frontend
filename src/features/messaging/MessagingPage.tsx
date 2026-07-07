@@ -26,6 +26,7 @@ import CreateGroupModal from "./components/group-chat/CreateGroupModal";
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { useToast } from "@/hooks/use-toast";
 import { ChatWindowSkeleton } from "./components/skeletons/ChatWindowSkeleton";
+import { companyService } from "@/services/organization.service";
 
 const routes: Record<string, string> = {
   home: "/feed",
@@ -184,7 +185,7 @@ export default function MessagingPage() {
     const userId = searchParams.get("userId");
     const groupId = searchParams.get("groupId");
     const conversationId = searchParams.get("conversationId");
-
+    const companyId = searchParams.get("companyId");
 
     // Handle conversationId param (from notification click) — works for all chat types
     if (conversationId) {
@@ -198,8 +199,6 @@ export default function MessagingPage() {
 
     // Company profile: handle userId only when companyId is also present (initiated from user profile "Message" button)
     if (activeProfile?.type === "COMPANY") {
-      const companyId = searchParams.get("companyId");
-
       if (userId && companyId === activeProfile.id) {
         // Company wants to message a user — find existing or create draft
         if (userId === processedUserIdRef.current) return;
@@ -311,7 +310,40 @@ export default function MessagingPage() {
         safelySetSelectedChat(groupChat);
         processedUserIdRef.current = groupId;
       }
-    } else if (!userId && !groupId && !conversationId) {
+    } else if (companyId && activeProfile?.type !== "COMPANY") {
+      const existingChat = chats.find(
+        (c) => String(c.otherUserId) === String(companyId)
+      );
+
+      if (existingChat) {
+        safelySetSelectedChat(existingChat);
+        processedUserIdRef.current = companyId;
+      } else {
+        const fetchCompanyAndCreateDraft = async () => {
+          if (!companyId || companyId === "null" || companyId === "undefined") return;
+          try {
+            const response = await companyService.getCompany(companyId);
+            const newChat: ChatThread = {
+              id: "new",
+              otherUserId: companyId,
+              name: response.name,
+              role: response.industry || "Company",
+              avatar: response.logo_url || "gradient-1",
+              lastMessage: "",
+              time: new Date().toISOString(),
+              lastMessageAt: new Date().toISOString(),
+              unread: 0,
+              online: false,
+              otherUserType: "COMPANY",
+            };
+            safelySetSelectedChat(newChat);
+          } catch (err) {
+            console.error("Failed to fetch company details for new chat", err);
+          }
+        };
+        fetchCompanyAndCreateDraft();
+      }
+    } else if (!userId && !groupId && !conversationId && !companyId) {
       processedUserIdRef.current = null;
     }
   }, [searchParams, chats, isMobile, isLoading, activeProfile]); // Added activeProfile

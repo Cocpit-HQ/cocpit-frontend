@@ -1,261 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import Image from "next/image";
-import { Icon } from "@iconify/react";
-import { CompanyProfileData, CompanyPost } from "../../../types/company-profile.types";
-import { MOCK_POSTS } from "../sections/PostsSection";
-import PostsSection from "../sections/PostsSection";
-function PostsTabPostCard({ post }: { post: CompanyPost }) {
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  const likedByText =
-    post.likedBy.length > 0
-      ? post.likedBy[0].isOthers
-        ? `Liked by ${post.likedBy[0].name} and others`
-        : `Liked by ${post.likedBy[0].name}`
-      : null;
-
-  return (
-    <div
-      style={{ width: "560px", height: "645px", gap: "16px" }}
-      className="flex flex-col items-center flex-none flex-grow font-poppins"
-    >
-      {/* Header Row */}
-      <div
-        style={{ width: "560px", height: "56px", gap: "8px" }}
-        className="flex flex-row justify-between items-center flex-none self-stretch"
-      >
-        <div
-          style={{ height: "56px", gap: "8px" }}
-          className="flex flex-row items-center flex-none"
-        >
-          <div className="w-10 h-10 rounded-full overflow-hidden relative flex-none bg-gray-100 dark:bg-zinc-800">
-            <Image
-              src={post.authorAvatarUrl}
-              alt={post.authorName}
-              fill
-              className="object-cover"
-            />
-          </div>
-
-          <div
-            style={{ height: "56px" }}
-            className="flex flex-col items-start flex-none justify-center"
-          >
-            <span
-              style={{
-                fontSize: "16px",
-                lineHeight: "24px",
-              }}
-              className="font-medium text-black dark:text-zinc-100 truncate flex-none"
-            >
-              {post.authorName}
-            </span>
-
-            <span
-              style={{
-                fontSize: "10px",
-                lineHeight: "16px",
-              }}
-              className="font-normal text-gray-500 dark:text-zinc-400 flex-none truncate"
-            >
-              {post.authorSubLabel}
-            </span>
-
-            <span
-              style={{
-                fontSize: "10px",
-                lineHeight: "16px",
-              }}
-              className="font-normal text-gray-500 dark:text-zinc-400 flex-none"
-            >
-              {post.timestamp}
-            </span>
-          </div>
-        </div>
-
-        {/* Action icons */}
-        <div
-          style={{ width: "64px", height: "24px", gap: "16px" }}
-          className="flex flex-row items-center flex-none"
-        >
-          <button
-            title="Tag"
-            className="w-6 h-6 flex-none flex items-center justify-center text-black dark:text-zinc-100 hover:text-blue-600 transition-colors"
-          >
-            <Icon icon="la:user-tag" className="w-6 h-6" />
-          </button>
-          <button
-            title="More"
-            className="w-6 h-6 flex-none flex items-center justify-center text-black dark:text-zinc-100 hover:text-gray-500 transition-colors"
-          >
-            <Icon icon="ph:dots-three-outline-vertical-light" className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Content Area */}
-      <div
-        style={{ width: "560px", height: "533px", gap: "8px" }}
-        className="flex flex-col items-start flex-none self-stretch"
-      >
-        <p
-          style={{
-            width: "560px",
-            minHeight: "32px",
-            fontSize: "12px",
-            lineHeight: "16px",
-          }}
-          className="font-normal text-black dark:text-zinc-200 flex-none self-stretch overflow-hidden"
-        >
-          {post.content}
-        </p>
-
-        <div
-          style={{ width: "560px", height: "465px" }}
-          className="relative flex-grow self-stretch bg-gray-100 dark:bg-zinc-800 overflow-hidden"
-        >
-          {post.imageUrl && (
-            <Image
-              src={post.imageUrl}
-              alt="Post image"
-              fill
-              className="object-cover"
-            />
-          )}
-        </div>
-
-        {/* Liked By Row */}
-        {likedByText && (
-          <div
-            style={{ width: "560px", height: "20px", gap: "10px" }}
-            className="flex flex-row items-center flex-none self-stretch"
-          >
-            <span
-              style={{
-                fontSize: "12px",
-                lineHeight: "16px",
-              }}
-              className="font-normal text-black dark:text-zinc-300 flex-grow"
-            >
-              {likedByText}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Engagement bar */}
-      <div
-        style={{ width: "560px", height: "24px", gap: "8px" }}
-        className="flex flex-row justify-between items-end flex-none self-stretch"
-      >
-        <div
-          style={{ height: "24px", gap: "16px" }}
-          className="flex flex-row items-center flex-none"
-        >
-          {/* Like */}
-          <button
-            onClick={() => setLiked((p) => !p)}
-            style={{ width: "40px", height: "24px", gap: "8px" }}
-            className="flex flex-row items-center flex-none"
-          >
-            <Icon
-              icon={liked ? "solar:like-bold" : "solar:like-broken"}
-              className={`w-6 h-6 flex-none ${liked ? 'text-[#1A73E8]' : 'text-black dark:text-zinc-200'}`}
-            />
-            <span
-              style={{
-                width: "8px",
-                fontSize: "12px",
-                lineHeight: "16px",
-              }}
-              className="font-normal text-black dark:text-zinc-200 flex-none text-center"
-            >
-              {post.likesCount + (liked ? 1 : 0)}
-            </span>
-          </button>
-
-          {/* Comment */}
-          <button
-            style={{ width: "40px", height: "24px", gap: "8px" }}
-            className="flex flex-row items-center flex-none"
-          >
-            <Icon
-              icon="hugeicons:comment-01"
-              className="w-6 h-6 flex-none text-black dark:text-zinc-200"
-            />
-            <span
-              style={{
-                width: "8px",
-                fontSize: "12px",
-                lineHeight: "16px",
-              }}
-              className="font-normal text-black dark:text-zinc-200 flex-none text-center"
-            >
-              {post.commentsCount}
-            </span>
-          </button>
-
-          {/* Repost */}
-          <button
-            style={{ width: "40px", height: "24px", gap: "8px" }}
-            className="flex flex-row items-center flex-none"
-          >
-            <Icon
-              icon="hugeicons:repost"
-              className="w-6 h-6 flex-none text-black dark:text-zinc-200"
-            />
-            <span
-              style={{
-                width: "8px",
-                fontSize: "12px",
-                lineHeight: "16px",
-              }}
-              className="font-normal text-black dark:text-zinc-200 flex-none text-center"
-            >
-              {post.repostsCount}
-            </span>
-          </button>
-
-          {/* Share */}
-          <button
-            style={{ width: "40px", height: "24px", gap: "8px" }}
-            className="flex flex-row items-center flex-none"
-          >
-            <Icon
-              icon="fluent:share-16-regular"
-              className="w-6 h-6 flex-none text-black dark:text-zinc-200"
-            />
-            <span
-              style={{
-                width: "8px",
-                fontSize: "12px",
-                lineHeight: "16px",
-              }}
-              className="font-normal text-black dark:text-zinc-200 flex-none text-center"
-            >
-              {post.sharesCount}
-            </span>
-          </button>
-        </div>
-
-        {/* Save */}
-        <button
-          onClick={() => setSaved((p) => !p)}
-          style={{ width: "24px", height: "24px" }}
-          className="flex flex-row items-center flex-none"
-        >
-          <Icon
-            icon={saved ? "solar:bookmark-bold" : "solar:bookmark-linear"}
-            className="w-6 h-6 flex-none text-black dark:text-zinc-100"
-          />
-        </button>
-      </div>
-    </div>
-  );
-}
+import { CompanyProfileData } from "../../../types/company-profile.types";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { companyProfileService } from "../../../services/companyprofile.service";
+import { FeedPost } from "../../../../feed/components/FeedPost";
+import { FeedPostProps } from "../../../../feed/types";
+import { formatTimeAgo } from "@/lib/timeFormatter";
+import { useInView } from "@/hooks/use-in-view";
 
 interface PostsTabProps {
   data: CompanyProfileData;
@@ -263,16 +16,124 @@ interface PostsTabProps {
 }
 
 export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) {
-  const postsToRender = data.posts && data.posts.length > 0 ? data.posts : MOCK_POSTS;
+  const {
+    data: queryData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+  } = useInfiniteQuery({
+    queryKey: ["orgPosts", data.id],
+    queryFn: async ({ pageParam = "" }) => {
+      const res = await companyProfileService.getOrganizationPosts(data.id, {
+        limit: 10,
+        cursorPostId: pageParam as string,
+      });
+      return res;
+    },
+    getNextPageParam: (lastPage) => {
+      return lastPage.nextCursor || lastPage.next_cursor || null;
+    },
+    initialPageParam: "",
+  });
+
+  const { ref: sentinelRef, inView } = useInView({ threshold: 0, rootMargin: '200px' });
+
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const allRawPosts = queryData?.pages.flatMap((page) => page.posts || page.data || page) || [];
+  const seen = new Set();
+  const rawPosts = allRawPosts.filter((p: any) => {
+    const id = p.post_id || p.id || p._id;
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+
+  const mapPost = (p: any): FeedPostProps => ({
+    id: p.post_id || p.id || p._id,
+    author: p.author?.full_name || data.name,
+    authorId: p.author?.id || (data as any)._id || data.id,
+    authorSlug: data.slug || "",
+    authorAvatar: data.logoUrl || p.author?.avatar_url || "/images/companyonboarding/companyprofileDefault.jpg",
+    authorHeadline: data.tagline || data.industry,
+    location: p.location || data.location,
+    tags: p.tags || [],
+    isCompanyPost: true,
+    timeAgo: (p.created_at || p.timestamp) ? formatTimeAgo(p.created_at || p.timestamp) : "Just now",
+    content: p.content || "",
+    imageSrc: p.image_url || p.imageUrl || (p.media && p.media.length > 0 ? p.media[0].url : undefined),
+    images: p.images || (p.media ? p.media.filter((m:any) => m.type==='image').map((m:any)=>m.url) : []),
+    videoSrc: p.videoSrc || (p.media ? p.media.filter((m:any) => m.type==='video').map((m:any)=>m.url)[0] : undefined),
+    likes: p.like_count || p.likes_count || p.likesCount || 0,
+    comments: (p.comment_count || p.comments_count || p.commentsCount || 0).toString(),
+    shares: (p.share_count || p.shares_count || p.sharesCount || 0).toString(),
+    isLiked: p.isLiked || p.is_liked || false,
+    is_commented: p.isCommented || p.is_commented || false,
+    is_saved: p.isSaved || p.is_saved || false,
+    isOwnPost: isOwnProfile,
+    visibility: p.visibility || 'public',
+    poll: p.poll,
+    shared_post: p.shared_post ? mapPost(p.shared_post) : undefined,
+    category: p.category,
+    title: p.title,
+    articleBody: p.articleBody,
+    sampleLikerUsername: p.sample_liker_username || undefined,
+    isProfileView: true,
+  });
+
+  const postsToRender: FeedPostProps[] = rawPosts.map(mapPost);
+
+  if (status === "pending") {
+    return (
+      <div className="flex w-[600px] justify-center py-10">
+        <span className="text-zinc-500">Loading posts...</span>
+      </div>
+    );
+  }
+
+  if (postsToRender.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 px-4 w-[600px] bg-white dark:bg-zinc-950 rounded-2xl">
+        <div className="relative w-64 h-48 mb-6">
+          <Image
+            src="/images/companyonboarding/EmptyViewOfPost.png"
+            alt="No Posts"
+            fill
+            className="object-contain"
+            unoptimized
+          />
+        </div>
+        <h3 className="font-poppins font-semibold text-lg text-black dark:text-white mb-1">
+          No Posts
+        </h3>
+        <p className="font-poppins text-sm text-gray-500 dark:text-zinc-400 text-center mb-4">
+          <span className="font-semibold text-black dark:text-white">{data.name}</span> hasn't posted anything yet
+        </p>
+        {isOwnProfile && (
+          <button className="h-10 px-6 bg-[#1A73E8] hover:bg-blue-700 text-white rounded-full font-semibold text-[14px] transition-colors cursor-pointer flex items-center justify-center">
+            Create post
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
       style={{ width: "600px", gap: "24px" }}
       className="flex flex-col items-start"
     >
-      {postsToRender.map((post) => (
-        <PostsTabPostCard key={post.id} post={post} />
+      {postsToRender.map((post, index) => (
+        <FeedPost key={post.id || index} {...post} />
       ))}
+
+      {/* Infinite scroll sentinel */}
+      <div ref={sentinelRef} className="py-2" />
     </div>
   );
 }

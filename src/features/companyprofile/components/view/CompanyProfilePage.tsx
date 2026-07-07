@@ -3,69 +3,11 @@
 import React from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { companyService } from "@/services/organization.service";
+import { companyProfileService } from "../../services/companyprofile.service";
 import { CompanyProfileData } from "../../types/company-profile.types";
 import CompanyProfileHeader from "./CompanyProfileHeader";
 import CompanyProfileTabs from "./CompanyProfileTabs";
-
-// Mock Data to develop the UI
-const MOCK_COMPANY_DATA: CompanyProfileData = {
-  id: "c-123",
-  name: "Nexsus Global Systems",
-  isVerified: true,
-  tagline: "SaaS and Fintech Solutions",
-  industry: "Technology",
-  location: "Mumbai, Maharashtra, India",
-  employeeCount: "1 - 50 Members",
-  websiteUrl: "https://www.nexsus.com",
-  description: "Nexsus Global Systems is a global leader in AI-driven operational excellence. Our mission is to bridge the gap between complex data systems and human-centric decision making.",
-  slogan: "Innovating the infrastructure of tomorrow, today.",
-  socialLinks: [
-    { label: "technova.io", url: "https://technova.io" },
-    { label: "twitter", url: "https://twitter.com/nexsus" }
-  ],
-  stats: {
-    following: 120,
-    followers: 12500, // format as 12.5K later
-    subscribers: 989
-  },
-  coreTeam: [
-    { id: "1", name: "Emma", role: "HR", avatarUrl: "https://i.pravatar.cc/150?u=emma" },
-    { id: "2", name: "James", role: "Manager", avatarUrl: "https://i.pravatar.cc/150?u=james" },
-    { id: "3", name: "Sophia", role: "SMM", avatarUrl: "https://i.pravatar.cc/150?u=sophia" },
-    { id: "4", name: "Michael", role: "Content man...", avatarUrl: "https://i.pravatar.cc/150?u=michael" }
-  ],
-  posts: [],
-  entityType: "COMPANY"
-};
-
-const MOCK_EDUCATION_DATA: CompanyProfileData = {
-  id: "e-456",
-  name: "Westbridge University",
-  isVerified: true,
-  tagline: "Empowering future leaders through innovation, research, and excellence in education.",
-  industry: "Higher Education",
-  location: "Mumbai, Maharashtra, India",
-  employeeCount: "1 - 50 Members",
-  websiteUrl: "https://www.westbridge.edu",
-  description: "Westbridge University is dedicated to academic excellence and preparing students to become leaders in their fields.",
-  slogan: "Excellence in Education, Leadership in Life.",
-  socialLinks: [
-    { label: "westbridge.edu", url: "https://www.westbridge.edu" }
-  ],
-  stats: {
-    following: 120,
-    followers: 12500,
-    subscribers: 989
-  },
-  coreTeam: [
-    { id: "1", name: "Alex Rivera", role: "Principal Engineer", avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150" },
-    { id: "2", name: "Jordan Smyth", role: "VP Engineering", avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150" },
-    { id: "3", name: "David Miller", role: "Senior Engineer", avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150" }
-  ],
-  posts: [],
-  entityType: "INSTITUTE"
-};
+import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
 
 interface CompanyProfilePageProps {
   isOwnProfile?: boolean;
@@ -75,28 +17,93 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
   const params = useParams();
   const slug = (params?.slug as string) || "nexsus-global-systems";
 
-  const { data: company } = useQuery({
-    queryKey: ["company", slug],
-    queryFn: () => companyService.getCompany(slug),
+  const { data: profileResponse, isLoading, isError } = useQuery({
+    queryKey: ["companyProfile", slug],
+    queryFn: () => companyProfileService.getOrgProfile(slug),
     retry: false,
   });
 
-  const isEdu = slug === "westbridge-university" || company?.entity_type === "INSTITUTION";
-  const baseMock = isEdu ? MOCK_EDUCATION_DATA : MOCK_COMPANY_DATA;
+  const [logoUrl, setLogoUrl] = React.useState<string | null>(null);
+  const [coverUrl, setCoverUrl] = React.useState<string | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
 
-  const data: CompanyProfileData = company ? {
-    ...baseMock,
-    id: company.company_id || company.org_id || baseMock.id,
-    name: company.name || baseMock.name,
-    tagline: company.headline || company.slogan || baseMock.tagline,
-    industry: company.industry || (isEdu ? "Higher Education" : baseMock.industry),
-    location: company.location || baseMock.location,
-    employeeCount: company.size || baseMock.employeeCount,
-    websiteUrl: company.website || baseMock.websiteUrl,
-    description: company.description || baseMock.description,
-    slogan: company.slogan || baseMock.slogan,
+  React.useEffect(() => {
+    if (profileResponse?.org) {
+      setLogoUrl(profileResponse.org.logo_url || null);
+      setCoverUrl(profileResponse.org.cover_url || null);
+    }
+  }, [profileResponse]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (isError || !profileResponse || !profileResponse.org) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-zinc-950">
+        <h2 className="text-2xl font-semibold mb-2 text-zinc-900 dark:text-zinc-100">Organization not found</h2>
+        <p className="text-zinc-500 dark:text-zinc-400">The profile you are looking for does not exist or has been removed.</p>
+      </div>
+    );
+  }
+
+  const company = profileResponse.org;
+  const isEdu = company.entity_type === "INSTITUTION" || company.entity_type === "INSTITUTE";
+  const ownProfile = profileResponse.is_own_profile || isOwnProfile;
+
+  const data: CompanyProfileData = {
+    id: company.company_id || company.org_id,
+    orgId: company.company_id || company.org_id,
+    name: company.name,
+    slug: slug,
+    logoUrl: logoUrl || company.logo_url,
+    coverUrl: coverUrl || company.cover_url,
+    isVerified: company.verification_status === 'DOMAIN_VERIFIED',
+    tagline: company.headline || company.slogan || "",
+    industry: company.industry || (isEdu ? "Higher Education" : ""),
+    location: company.location || [company.city, company.country].filter(Boolean).join(", ") || "",
+    employeeCount: company.size || "",
+    websiteUrl: company.website || "",
+    description: company.description || "",
+    slogan: company.slogan || "",
+    socialLinks: profileResponse.links ? profileResponse.links.map((link: any) => ({ label: link.display_label || link.platform, url: link.url })) : [],
+    stats: {
+      following: 0, // Not provided by this endpoint currently
+      followers: company.followers_count || 0,
+      subscribers: company.subscribers_count || 0,
+    },
+    coreTeam: profileResponse.core_team ? profileResponse.core_team.map((member: any) => ({
+      id: member.user_id,
+      name: member.full_name,
+      role: member.title || member.role_display || "Member",
+      avatarUrl: member.avatar_url || ""
+    })) : [],
+    posts: profileResponse.latest_posts ? profileResponse.latest_posts.map((p: any) => ({
+      id: p.post_id || p.id || p._id,
+      authorName: p.author?.full_name || p.author_name || company.name,
+      authorAvatarUrl: p.author?.avatar_url || p.author_avatar_url || company.logo_url || "/images/companyonboarding/companyprofileDefault.jpg",
+      authorSubLabel: "Company Post",
+      timestamp: p.created_at || p.timestamp || "Just now",
+      content: p.content || "",
+      imageUrl: p.image_url || p.imageUrl || (p.media && p.media.length > 0 ? p.media[0].url : undefined),
+      likesCount: p.like_count || p.likes_count || p.likesCount || 0,
+      commentsCount: p.comment_count || p.comments_count || p.commentsCount || 0,
+      repostsCount: p.repost_count || p.reposts_count || p.repostsCount || 0,
+      sharesCount: p.share_count || p.shares_count || p.sharesCount || 0,
+      likedBy: p.liked_by || p.likedBy || [],
+      sampleLikerUsername: p.sample_liker_username || p.sampleLikerUsername || undefined,
+      isLiked: p.is_liked || p.isLiked || false,
+    })) : [],
     entityType: isEdu ? "INSTITUTE" : "COMPANY",
-  } : baseMock;
+    isFollowing: profileResponse.relationship?.is_following || false,
+    isSubscribed: profileResponse.relationship?.is_subscribed || false,
+  };
+
+  const orgId = company.company_id || company.org_id;
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 font-poppins pb-20">
@@ -106,15 +113,33 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
         className="w-full max-w-[960px] sm:px-4 md:px-0 pt-[20px]"
       >
 
-        {/* Header Section */}
-        <CompanyProfileHeader data={data} isOwnProfile={isOwnProfile} />
+        <CompanyProfileHeader
+          data={data}
+          isOwnProfile={ownProfile}
+          logoUrl={logoUrl}
+          coverUrl={coverUrl}
+          orgId={orgId}
+          onLogoChange={setLogoUrl}
+          onCoverChange={setCoverUrl}
+          onShareClick={() => setIsShareModalOpen(true)}
+        />
 
         {/* Tabs and Content Section */}
         <div className="mt-4 pl-[40px] pr-0">
-          <CompanyProfileTabs data={data} isOwnProfile={isOwnProfile} />
+          <CompanyProfileTabs data={data} isOwnProfile={ownProfile} />
         </div>
 
       </div>
+
+      <CocpitShareModel
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        profileId={orgId}
+        onShare={(selectedIds) => {
+          console.log("Shared profile with:", selectedIds);
+          setIsShareModalOpen(false);
+        }}
+      />
     </div>
   );
 }
