@@ -72,6 +72,7 @@ const transformUserData = (data: PublicUserProfileResponse): User => {
             fieldOfStudy: apiEdu.field_of_study,
             duration: `${startYear} - ${endYear}`,
             school_logo: apiEdu.school_logo || null,
+            school_org_id: apiEdu.school_org_id || null,
         }
     });
 

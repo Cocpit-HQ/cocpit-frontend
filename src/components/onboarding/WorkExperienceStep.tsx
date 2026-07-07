@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useOnboardingStore } from "@/store/onboarding.store";
-import { saveOnboardingDetails, getCompanyList } from "@/services/api/onboarding";
+import { saveOnboardingDetails, getCompanyList, CompanyOption } from "@/services/api/onboarding";
 import { useToast } from "@/hooks/use-toast";
 import styles from "./WorkExperienceStep.module.css";
 import OnboardingDropdown from "./OnboardingDropdown";
@@ -37,9 +37,10 @@ export default function WorkExperienceStep({ onNext, onBack, currentStep, totalS
   
   const { toast } = useToast();
   const [company, setCompanyLocal] = useState(storeCompany || "");
+  const [orgId, setOrgId] = useState<string | null>(null);
   const [role, setRoleLocal] = useState(storeTitle || "");
   const [isSaving, setIsSaving] = useState(false);
-  const [companyOptions, setCompanyOptions] = useState<string[]>(FALLBACK_COMPANIES);
+  const [companyOptions, setCompanyOptions] = useState<(string | CompanyOption)[]>(FALLBACK_COMPANIES);
   const [roleOptions, setRoleOptions] = useState<string[]>(FALLBACK_ROLES);
   const [loadingOptions, setLoadingOptions] = useState(true);
 
@@ -48,8 +49,8 @@ export default function WorkExperienceStep({ onNext, onBack, currentStep, totalS
     const fetchOptions = async () => {
       try {
         const data = await getCompanyList();
-        if (data.company_names && data.company_names.length > 0) {
-          setCompanyOptions(data.company_names);
+        if (data.companies && data.companies.length > 0) {
+          setCompanyOptions(data.companies);
         }
         if (data.titles && data.titles.length > 0) {
           setRoleOptions(data.titles);
@@ -76,6 +77,7 @@ export default function WorkExperienceStep({ onNext, onBack, currentStep, totalS
         role: userRole,
         company_name: company,
         title: role,
+        org_id: orgId,
       });
       
       setWorkExperience(company, role);
@@ -123,7 +125,10 @@ export default function WorkExperienceStep({ onNext, onBack, currentStep, totalS
             placeholder="Where do you work?"
             options={companyOptions}
             value={company}
-            onChange={setCompanyLocal}
+            onChange={(val, opt) => {
+              setCompanyLocal(val);
+              setOrgId(opt?.org_id || null);
+            }}
             disabled={loadingOptions}
           />
 
@@ -132,7 +137,7 @@ export default function WorkExperienceStep({ onNext, onBack, currentStep, totalS
             placeholder="Your job title"
             options={roleOptions}
             value={role}
-            onChange={setRoleLocal}
+            onChange={(val) => setRoleLocal(val)}
             disabled={loadingOptions}
           />
         </div>

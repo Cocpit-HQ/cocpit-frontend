@@ -3,6 +3,7 @@
 import React from "react";
 import { Education } from "@/types/entities";
 import { Icon } from "@iconify/react";
+import { cn } from "@/lib/utils";
 
 interface EditableEducationItemProps {
     education: Education;
@@ -42,8 +43,19 @@ export function EditableEducationItem({
             {/* Left/Center Content: Icon + Info */}
             <div className="flex gap-4 flex-1 min-w-0">
                 {/* School Icon */}
-                <div className="entity-placeholder">
-                    <Icon icon="qlementine-icons:education-24" className="entity-placeholder-icon" />
+                <div className={cn(
+                    "entity-placeholder",
+                    education.school_logo && "bg-transparent border-none"
+                )}>
+                    {education.school_logo ? (
+                        <img
+                            src={education.school_logo}
+                            alt={education.school_name}
+                            className="w-full h-full object-contain p-2"
+                        />
+                    ) : (
+                        <Icon icon="qlementine-icons:education-24" className="entity-placeholder-icon" />
+                    )}
                 </div>
 
                 {/* Info block */}

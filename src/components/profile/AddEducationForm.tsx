@@ -15,7 +15,7 @@ import { Icon } from '@iconify/react'
 import dayjs from "dayjs"
 import { cn } from "@/lib/utils"
 import { useDebounce } from "@/hooks/use-debounce"
-import { getEducationList } from "@/services/api/onboarding"
+import { getEducationList, SchoolOption } from "@/services/api/onboarding"
 import acStyles from "@/components/ui/LocationAutocomplete.module.css"
 import LocationAutocomplete from "@/components/ui/LocationAutocomplete"
 import {
@@ -75,9 +75,11 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
   })
   const [stillStudying, setStillStudying] = useState(!!initialData && !initialData.end_date)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [schoolOrgId, setSchoolOrgId] = useState<string | null>(() => initialData?.school_org_id ?? null)
+  const [schoolLogo, setSchoolLogo] = useState<string | null>(() => initialData?.school_logo ?? null)
 
   // ── School autocomplete state ─────────────────────────────────────────────
-  const [schoolOptions, setSchoolOptions] = useState<string[]>([])
+  const [schoolOptions, setSchoolOptions] = useState<SchoolOption[]>([])
   const [schoolSearch, setSchoolSearch] = useState(formData.school_name)
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false)
   const [schoolLoading, setSchoolLoading] = useState(false)
@@ -117,7 +119,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
   const specializationDirtyRef = useRef(false)
 
   const lastSchoolQueryRef = useRef(initialData?.school_name ?? "")
-  const schoolCacheRef = useRef<Record<string, string[]>>({})
+  const schoolCacheRef = useRef<Record<string, SchoolOption[]>>({})
 
   const lastDegreeQueryRef = useRef(initialData?.degree ?? "")
   const degreeCacheRef = useRef<Record<string, string[]>>({})
@@ -145,6 +147,8 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
       })
       setStillStudying(!initialData.end_date)
       setSchoolSearch(initialData.school_name ?? "")
+      setSchoolOrgId(initialData.school_org_id ?? null)
+      setSchoolLogo(initialData.school_logo ?? null)
       setDegreeSearch(initialData.degree ?? "")
       setSpecializationSearch(initialData.field_of_study ?? "")
       lastSchoolQueryRef.current = initialData.school_name ?? ""
@@ -164,6 +168,8 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
       })
       setStillStudying(false)
       setSchoolSearch("")
+      setSchoolOrgId(null)
+      setSchoolLogo(null)
       setDegreeSearch("")
       setSpecializationSearch("")
       lastSchoolQueryRef.current = ""
@@ -232,16 +238,15 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
       .then((res) => {
         if (cancelled) return
 
-        const names = res.school_names || []
-        const uniqueNames = Array.from(new Set(names))
+        const schoolsList = res.schools || []
 
         // ✅ Save to cache
-        schoolCacheRef.current[query] = uniqueNames
+        schoolCacheRef.current[query] = schoolsList
 
-        setSchoolOptions(uniqueNames)
+        setSchoolOptions(schoolsList)
 
         if (
-          uniqueNames.length > 0 &&
+          schoolsList.length > 0 &&
           document.activeElement === schoolInputRef.current &&
           schoolSearch.trim() === query
         ) {
@@ -451,11 +456,10 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     setSchoolLoading(true)
     getEducationList(query, "")
       .then((res) => {
-        const names = res.school_names || []
-        const uniqueNames = Array.from(new Set(names))
-        schoolCacheRef.current[query] = uniqueNames
-        setSchoolOptions(uniqueNames)
-        if (uniqueNames.length > 0) {
+        const schoolsList = res.schools || []
+        schoolCacheRef.current[query] = schoolsList
+        setSchoolOptions(schoolsList)
+        if (schoolsList.length > 0) {
           setShowSchoolDropdown(true)
         }
         setSchoolHighlight(-1)
@@ -549,14 +553,23 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
   }, [])
 
   // ── Selection helpers ─────────────────────────────────────────────────────
-  const selectSchool = (name: string) => {
+  const selectSchool = (opt: string | SchoolOption) => {
     schoolSelectedRef.current = true
     schoolDirtyRef.current = false
-    const value = name
-    setFormData(prev => ({ ...prev, school_name: value }))
-    setSchoolSearch(value)
+    if (typeof opt === "string") {
+      setFormData(prev => ({ ...prev, school_name: opt }))
+      setSchoolSearch(opt)
+      setSchoolOrgId(null)
+      setSchoolLogo(null)
+      lastSchoolQueryRef.current = opt.trim()
+    } else {
+      setFormData(prev => ({ ...prev, school_name: opt.name }))
+      setSchoolSearch(opt.name)
+      setSchoolOrgId(opt.org_id)
+      setSchoolLogo(opt.logo_url)
+      lastSchoolQueryRef.current = opt.name.trim()
+    }
     setShowSchoolDropdown(false); setSchoolOptions([])
-    lastSchoolQueryRef.current = value.trim()
   }
   const selectDegree = (deg: string) => {
     degreeSelectedRef.current = true
@@ -578,7 +591,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
   }
 
   // ── "Other" option ── always visible at bottom of dropdown ─────────────────────────
-  const schoolExactMatch = schoolOptions.some(n => n.toLowerCase() === schoolSearch.trim().toLowerCase())
+  const schoolExactMatch = schoolOptions.some(opt => opt.name.toLowerCase() === schoolSearch.trim().toLowerCase())
   const degreeExactMatch = degreeOptions.some(d => d.toLowerCase() === degreeSearch.trim().toLowerCase())
   const specializationExactMatch = specializationOptions.some(s => s.toLowerCase() === specializationSearch.trim().toLowerCase())
   const showOtherSchool = !!schoolSearch.trim() && !schoolExactMatch
@@ -719,6 +732,8 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
     onSave?.({
       ...initialData,
       school_name: formData.school_name,
+      school_org_id: schoolOrgId,
+      school_logo: schoolLogo,
       degree: formData.degree,
       field_of_study: formData.field_of_study,
       location: formData.location,
@@ -803,9 +818,14 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                 </div>
                 {showSchoolDropdown && (
                   <ul ref={schoolListRef} className={acStyles.dropdown}>
-                    {schoolOptions.map((name, idx) => (
-                      <li key={name} data-idx={idx} className={cn(acStyles.item, "date-select-item", idx === schoolHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")} onMouseDown={() => selectSchool(name)} onMouseEnter={() => setSchoolHighlight(idx)}>
-                        <GraduationCap className={acStyles.itemIcon} /><span>{name}</span>
+                    {schoolOptions.map((opt, idx) => (
+                      <li key={opt.org_id || `${opt.name}-${idx}`} data-idx={idx} className={cn(acStyles.item, "date-select-item flex items-center gap-2", idx === schoolHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")} onMouseDown={() => selectSchool(opt)} onMouseEnter={() => setSchoolHighlight(idx)}>
+                        {opt.logo_url ? (
+                          <img src={opt.logo_url} alt={opt.name} className="w-[20px] h-[20px] object-contain rounded bg-white flex-shrink-0" />
+                        ) : (
+                          <GraduationCap className={acStyles.itemIcon} />
+                        )}
+                        <span>{opt.name}</span>
                       </li>
                     ))}
                     {showOtherSchool && (

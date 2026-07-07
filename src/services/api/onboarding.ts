@@ -1,7 +1,13 @@
 import api from "@/lib/axios";
 
+export interface SchoolOption {
+  name: string;
+  org_id: string | null;
+  logo_url: string | null;
+}
+
 export interface EducationListResponse {
-  school_names: string[];
+  schools: SchoolOption[];
   degrees: string[];
   specializations: string[];
 }
@@ -27,8 +33,14 @@ export const getEducationList = async (
   return response.data;
 };
 
+export interface CompanyOption {
+  name: string;
+  org_id: string | null;
+  logo_url: string | null;
+}
+
 export interface CompanyListResponse {
-  company_names: string[];
+  companies: CompanyOption[];
   titles: string[];
 }
 
@@ -74,6 +86,7 @@ export interface SaveDetailsPayload {
   field_of_study?: string | null;
   title?: string;
   company_name?: string;
+  org_id?: string | null;
 }
 
 export const saveOnboardingDetails = async (payload: SaveDetailsPayload): Promise<any> => {

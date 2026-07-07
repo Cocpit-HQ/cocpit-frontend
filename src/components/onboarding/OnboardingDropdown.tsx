@@ -1,15 +1,20 @@
 "use client";
-
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Building2, GraduationCap } from "lucide-react";
 import styles from "./OnboardingDropdown.module.css";
+
+export interface OnboardingDropdownOption {
+  name: string;
+  org_id: string | null;
+  logo_url: string | null;
+}
 
 interface OnboardingDropdownProps {
   label?: string;
   placeholder: string;
-  options: string[];
+  options: (string | OnboardingDropdownOption)[];
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, option?: OnboardingDropdownOption) => void;
   disabled?: boolean;
 }
 
@@ -45,18 +50,28 @@ export default function OnboardingDropdown({
     }
   }, [isOpen]);
 
-  const handleSelect = (option: string) => {
-    onChange(option);
+  const handleSelect = (option: string | OnboardingDropdownOption) => {
+    if (typeof option === "string") {
+      onChange(option);
+    } else {
+      onChange(option.name, option);
+    }
     setSearchTerm("");
     setIsOpen(false);
   };
 
-  const filteredOptions = options.filter(option =>
-    option.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOptions = options.filter((option) => {
+    const text = typeof option === "string" ? option : option.name;
+    return text.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
-  const exactMatch = filteredOptions.some(opt => opt.toLowerCase() === searchTerm.trim().toLowerCase());
+  const exactMatch = filteredOptions.some((opt) => {
+    const text = typeof opt === "string" ? opt : opt.name;
+    return text.toLowerCase() === searchTerm.trim().toLowerCase();
+  });
   const showOther = !!searchTerm.trim() && !exactMatch;
+
+  const isSchoolField = label?.toLowerCase().includes("school") || label?.toLowerCase().includes("university");
 
   return (
     <div className={styles.formGroup} ref={dropdownRef}>
@@ -107,24 +122,45 @@ export default function OnboardingDropdown({
         {isOpen && (
           <div className={styles.optionsList}>
             {filteredOptions.length > 0 ? (
-              filteredOptions.map((option) => (
-                <div
-                  key={option}
-                  className={`${styles.option} ${value === option ? styles.optionSelected : ""}`}
-                  onClick={() => handleSelect(option)}
-                >
-                  {option}
-                </div>
-              ))
+              filteredOptions.map((option) => {
+                const optName = typeof option === "string" ? option : option.name;
+                const optKey = typeof option === "string" ? option : `${option.name}-${option.org_id}`;
+                return (
+                  <div
+                    key={optKey}
+                    className={`${styles.option} ${value === optName ? styles.optionSelected : ""} flex items-center gap-3 py-2 px-3 hover:bg-secondary cursor-pointer`}
+                    onClick={() => handleSelect(option)}
+                  >
+                    {typeof option === "string" ? (
+                      <span>{option}</span>
+                    ) : (
+                      <>
+                        {option.logo_url ? (
+                          <img
+                            src={option.logo_url}
+                            alt={option.name}
+                            className="w-6 h-6 object-contain rounded bg-white p-0.5 border border-border"
+                          />
+                        ) : isSchoolField ? (
+                          <GraduationCap className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                        ) : (
+                          <Building2 className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                        )}
+                        <span className="truncate">{option.name}</span>
+                      </>
+                    )}
+                  </div>
+                );
+              })
             ) : !showOther ? (
               <div className={styles.noOptions}>No options found</div>
             ) : null}
             {showOther && (
               <div
-                className={`${styles.option} ${styles.otherOption}`}
+                className={`${styles.option} ${styles.otherOption} flex items-center gap-2 py-2 px-3 cursor-pointer`}
                 onClick={() => handleSelect(searchTerm.trim())}
               >
-                Other: "{searchTerm.trim()}"
+                <span>Other: "{searchTerm.trim()}"</span>
               </div>
             )}
           </div>

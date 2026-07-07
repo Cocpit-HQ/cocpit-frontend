@@ -48,6 +48,7 @@ export interface Education {
   location?: string;
   description: string | null;
   school_logo?: string | null;
+  school_org_id?: string | null;
 }
 
 export interface Comment {

@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 import LocationAutocomplete from "@/components/ui/LocationAutocomplete"
 import { Input } from "@/components/ui/input"
 import { useDebounce } from "@/hooks/use-debounce"
-import { getCompanyList } from "@/services/api/onboarding"
+import { getCompanyList, CompanyOption } from "@/services/api/onboarding"
 import acStyles from "@/components/ui/LocationAutocomplete.module.css"
 import {
   Select,
@@ -642,7 +642,7 @@ export default function AddExperienceForm({
   }, [initialExperiences, companyName])
 
   // ── Company autocomplete state ─────────────────────────────────────────────
-  const [companyOptions, setCompanyOptions] = useState<string[]>([])
+  const [companyOptions, setCompanyOptions] = useState<CompanyOption[]>([])
   const [companySearch, setCompanySearch] = useState(company)
   const [showCompanyDropdown, setShowCompanyDropdown] = useState(false)
   const [companyLoading, setCompanyLoading] = useState(false)
@@ -663,9 +663,9 @@ export default function AddExperienceForm({
     setCompanyLoading(true)
     getCompanyList(debouncedCompanySearch, "").then(res => {
       if (!cancelled) {
-        const names = res.company_names || []
-        setCompanyOptions(names)
-        if (names.length > 0 && document.activeElement === companyInputRef.current) setShowCompanyDropdown(true)
+        const companiesList = res.companies || []
+        setCompanyOptions(companiesList)
+        if (companiesList.length > 0 && document.activeElement === companyInputRef.current) setShowCompanyDropdown(true)
         setCompanyHighlight(-1)
       }
     }).catch(() => { if (!cancelled) setCompanyOptions([]) }).finally(() => { if (!cancelled) setCompanyLoading(false) })
@@ -677,9 +677,9 @@ export default function AddExperienceForm({
     if (companyOptions.length > 0) setShowCompanyDropdown(true)
     setCompanyLoading(true)
     getCompanyList(companySearch, "").then(res => {
-      const names = res.company_names || []
-      setCompanyOptions(names)
-      if (names.length > 0) setShowCompanyDropdown(true)
+      const companiesList = res.companies || []
+      setCompanyOptions(companiesList)
+      if (companiesList.length > 0) setShowCompanyDropdown(true)
       setCompanyHighlight(-1)
     }).catch(() => { }).finally(() => setCompanyLoading(false))
   }
@@ -694,14 +694,18 @@ export default function AddExperienceForm({
   }, [])
 
   // ── Company selection ──────────────────────────────────────────────────────
-  const selectCompany = (name: string) => {
+  const selectCompany = (opt: string | CompanyOption) => {
     companySelectedRef.current = true
-    setCompany(name); setCompanySearch(name); setOrgId(null); setLogoUrl(null)
+    if (typeof opt === "string") {
+      setCompany(opt); setCompanySearch(opt); setOrgId(null); setLogoUrl(null)
+    } else {
+      setCompany(opt.name); setCompanySearch(opt.name); setOrgId(opt.org_id); setLogoUrl(opt.logo_url)
+    }
     setShowCompanyDropdown(false); setCompanyOptions([])
   }
 
   // ── Company "Other" option ──────────────────────────────────────────────────
-  const companyExactMatch = companyOptions.some(n => n.toLowerCase() === companySearch.trim().toLowerCase())
+  const companyExactMatch = companyOptions.some(opt => opt.name.toLowerCase() === companySearch.trim().toLowerCase())
   const companyTotalItems = companyOptions.length + 1
 
   // ── Company auto-scroll ────────────────────────────────────────────────────
@@ -1175,9 +1179,14 @@ export default function AddExperienceForm({
                 </div>
                 {showCompanyDropdown && (
                   <ul ref={companyListRef} className={acStyles.dropdown}>
-                    {companyOptions.map((name, idx) => (
-                      <li key={name} data-idx={idx} className={cn(acStyles.item, "date-select-item", idx === companyHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")} onMouseDown={() => selectCompany(name)} onMouseEnter={() => setCompanyHighlight(idx)}>
-                        <Building2 className={acStyles.itemIcon} /><span>{name}</span>
+                    {companyOptions.map((opt, idx) => (
+                      <li key={opt.org_id || `${opt.name}-${idx}`} data-idx={idx} className={cn(acStyles.item, "date-select-item flex items-center gap-2", idx === companyHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")} onMouseDown={() => selectCompany(opt)} onMouseEnter={() => setCompanyHighlight(idx)}>
+                        {opt.logo_url ? (
+                          <img src={opt.logo_url} alt={opt.name} className="w-[20px] h-[20px] object-contain rounded bg-white flex-shrink-0" />
+                        ) : (
+                          <Building2 className={acStyles.itemIcon} />
+                        )}
+                        <span>{opt.name}</span>
                       </li>
                     ))}
                     <li data-idx={companyOptions.length} className={cn(acStyles.item, "border-t border-border date-select-item", companyOptions.length === companyHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")}

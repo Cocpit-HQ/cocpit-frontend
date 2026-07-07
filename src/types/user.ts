@@ -169,6 +169,7 @@ export interface AddExperienceResponse {
 
 export interface AddEducationPayload {
   school_name: string;
+  school_org_id?: string | null;
   degree: string;
   field_of_study: string;
   start_date: string;

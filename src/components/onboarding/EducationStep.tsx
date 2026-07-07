@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useOnboardingStore } from "@/store/onboarding.store";
-import { saveOnboardingDetails, getEducationList } from "@/services/api/onboarding";
+import { saveOnboardingDetails, getEducationList, SchoolOption } from "@/services/api/onboarding";
 import { useToast } from "@/hooks/use-toast";
 import styles from "./EducationStep.module.css";
 import OnboardingDropdown from "./OnboardingDropdown";
@@ -19,9 +19,10 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
   const { userRole, schoolName: storeSchool, degree: storeDegree, setEducation } = useOnboardingStore();
   const { toast } = useToast();
   const [education, setEducationLocal] = useState(storeSchool || "");
+  const [schoolOrgId, setSchoolOrgId] = useState<string | null>(null);
   const [specialization, setSpecializationLocal] = useState(storeDegree || "");
   const [isSaving, setIsSaving] = useState(false);
-  const [schoolOptions, setSchoolOptions] = useState<string[]>([]);
+  const [schoolOptions, setSchoolOptions] = useState<(string | SchoolOption)[]>([]);
   const [programOptions, setProgramOptions] = useState<string[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
 
@@ -33,7 +34,7 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
         setLoadingOptions(true);
         const data = await getEducationList();
         if (!isMounted) return;
-        setSchoolOptions(data.school_names || []);
+        setSchoolOptions(data.schools || []);
         setProgramOptions(data.degrees || []);
       } catch (error) {
         if (!isMounted) return;
@@ -64,6 +65,7 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
       await saveOnboardingDetails({
         role: userRole,
         school_name: education,   // Selected school → school_name
+        school_org_id: schoolOrgId,
         degree: specialization,   // Selected program → degree
       });
       
@@ -112,7 +114,10 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
             placeholder={loadingOptions ? "Loading schools..." : "Select your school"}
             options={schoolOptions}
             value={education}
-            onChange={setEducationLocal}
+            onChange={(val, opt) => {
+              setEducationLocal(val);
+              setSchoolOrgId(opt?.org_id || null);
+            }}
             disabled={loadingOptions}
           />
 
@@ -121,7 +126,7 @@ export default function EducationStep({ onNext, onBack, currentStep, totalSteps 
             placeholder={loadingOptions ? "Loading programs..." : "Select your program"}
             options={programOptions}
             value={specialization}
-            onChange={setSpecializationLocal}
+            onChange={(val) => setSpecializationLocal(val)}
             disabled={loadingOptions}
           />
         </div>

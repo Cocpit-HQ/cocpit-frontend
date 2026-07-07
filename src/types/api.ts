@@ -59,6 +59,7 @@ export interface ApiEducation {
   end_date: string | null;
   description: string | null;
   school_logo?: string | null; // School/university logo
+  school_org_id?: string | null; // School/university org id
 }
 
 export interface PublicUserProfileResponse {
