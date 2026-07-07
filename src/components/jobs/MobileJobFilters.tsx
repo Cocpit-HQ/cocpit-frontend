@@ -12,7 +12,7 @@ const WORK_MODES = ["Remote", "Hybrid", "Onsite"]
 const COMPANY_TYPES = ["Startup", "MNC", "Product-based", "Service-based"]
 const INDUSTRIES = ["Technology", "Finance", "Healthcare", "Education", "Retail"]
 const EXPERIENCE_LEVELS = ["All Levels", "Entry Level", "Mid Level", "Senior Level", "Lead / Manager"]
-const SALARY_RANGES = ["Any", "$0 - $50k", "$50k - $100k", "$100k - $150k", "$150k+"]
+const SALARY_RANGES = ["Under 3L", "3L-5L", "6L-10L", "10L+"]
 const DATE_POSTED_OPTIONS = ["Any Time", "Past 24 hours", "Past week", "Past month"]
 
 interface MobileJobFiltersProps {
@@ -153,12 +153,12 @@ export function MobileJobFilters({ showMobileFilters, setShowMobileFilters }: Mo
               {SALARY_RANGES.map((range) => (
                 <label key={range} className="flex items-center gap-3 cursor-pointer group py-1">
                   <div className={cn(
-                    "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
-                    filters.salaryRange === range ? "border-primary" : "border-muted-foreground/50"
+                    "w-5 h-5 rounded border flex items-center justify-center transition-all",
+                    filters.salaryRange.includes(range) ? "bg-primary border-primary" : "border-muted-foreground/50"
                   )}>
-                    {filters.salaryRange === range && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                    {filters.salaryRange.includes(range) && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
                   </div>
-                  <input type="radio" className="hidden" checked={filters.salaryRange === range} onChange={() => updateFilters({ salaryRange: range })} />
+                  <input type="checkbox" className="hidden" checked={filters.salaryRange.includes(range)} onChange={() => toggleArrayFilter('salaryRange', range)} />
                   <span className="text-sm text-foreground">{range}</span>
                 </label>
               ))}

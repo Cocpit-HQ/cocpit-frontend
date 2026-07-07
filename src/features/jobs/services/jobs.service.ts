@@ -68,21 +68,30 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       }
 
       if (filters.salary_range) {
-        switch (filters.salary_range) {
-          case 'Under 3L':
-            params.salary_max = 300000;
-            break;
-          case '3L-5L':
-            params.salary_min = 300000;
-            params.salary_max = 500000;
-            break;
-          case '6L-10L':
-            params.salary_min = 600000;
-            params.salary_max = 1000000;
-            break;
-          case '10L+':
-            params.salary_min = 1000000;
-            break;
+        // Multi-select array → send as comma-separated `salaryRanges` param for backend OR logic
+        if (Array.isArray(filters.salary_range)) {
+          const activeRanges = filters.salary_range.filter(Boolean);
+          if (activeRanges.length > 0) {
+            params.salaryRanges = activeRanges.join(',');
+          }
+        } else {
+          // Legacy single-string fallback: map to numeric min/max
+          switch (filters.salary_range) {
+            case 'Under 3L':
+              params.salary_max = 300000;
+              break;
+            case '3L-5L':
+              params.salary_min = 300000;
+              params.salary_max = 500000;
+              break;
+            case '6L-10L':
+              params.salary_min = 600000;
+              params.salary_max = 1000000;
+              break;
+            case '10L+':
+              params.salary_min = 1000000;
+              break;
+          }
         }
       }
 

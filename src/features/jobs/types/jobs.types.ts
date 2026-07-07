@@ -64,7 +64,7 @@ export interface JobsFilter {
   job_type?: string; // "Full time" | "Part time" etc.
   experience?: string; // "0-2Yrs" etc.
   work_mode?: string; // "Remote" | "Hybrid" | "Onsite"
-  salary_range?: string;
+  salary_range?: string | string[];
   date_posted?: string;
   industry?: string;
 }

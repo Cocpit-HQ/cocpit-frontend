@@ -21,7 +21,7 @@ export interface RecruiterFilters {
   locations: string[];
   companyType: string[];
   industry: string[];
-  salaryRange: string;
+  salaryRange: string[];
   datePosted: string;
 }
 
@@ -45,7 +45,7 @@ export interface JobsUIState {
     job_type?: string;
     work_mode?: string;
     experience?: string;
-    salary_range?: string;
+    salary_range?: string | string[];
     date_posted?: string;
     industry?: string;
   };
@@ -161,7 +161,7 @@ export const useJobStore = create<JobsUIState>()(
       locations: [],
       companyType: [],
       industry: [],
-      salaryRange: 'Any',
+      salaryRange: [],
       datePosted: 'Any Time',
     },
     job_type: '',
@@ -246,7 +246,7 @@ export const useJobStore = create<JobsUIState>()(
           locations: [],
           companyType: [],
           industry: [],
-          salaryRange: 'Any',
+          salaryRange: [],
           datePosted: 'Any Time',
         },
         job_type: '',

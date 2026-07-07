@@ -68,7 +68,7 @@ export interface Job {
 export interface JobFilters {
   jobType: string[];
   experience: string;
-  salaryRange: string;
+  salaryRange: string[];
   datePosted: string;
   workMode: string[];
   companyType: string[];

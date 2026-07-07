@@ -14,6 +14,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     activeTab,
     setActiveTab,
     filters,
+    recruiterFilters,
     setCandidateFilterValue,
     setMultipleFilters,
     explore,
@@ -35,6 +36,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
       activeTab: state.ui.activeCandidateTab,
       setActiveTab: state.setActiveCandidateTab,
       filters: state.filters,
+      recruiterFilters: state.filters.recruiterFilters,
       setCandidateFilterValue: state.setCandidateFilterValue,
       setMultipleFilters: state.setMultipleFilters,
       explore: state.explore,
@@ -119,7 +121,11 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
         job_type: filters.job_type || undefined,
         work_mode: filters.work_mode || undefined,
         experience: filters.experience || undefined,
-        salary_range: filters.salary_range || undefined,
+        // Prefer recruiterFilters.salaryRange[] (sidebar/mobile multi-select)
+        // Fall back to legacy flat candidate filter string
+        salary_range: recruiterFilters.salaryRange.length > 0
+          ? recruiterFilters.salaryRange
+          : (filters.salary_range || undefined),
         date_posted: filters.date_posted || undefined,
         industry: filters.industry || undefined,
       };
@@ -199,6 +205,8 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     filters.salary_range,
     filters.date_posted,
     filters.industry,
+    // recruiter sidebar filters
+    recruiterFilters.salaryRange,
     token
   ]);
 

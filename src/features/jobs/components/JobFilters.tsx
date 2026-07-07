@@ -115,7 +115,9 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
   ) => {
     const isExpanded = expandedSection === sectionKey;
     const currentVal = localFilters[filterKey] || '';
-    const selectedValues = currentVal ? currentVal.split(',').map(s => s.trim()) : [];
+    const selectedValues = currentVal 
+      ? (Array.isArray(currentVal) ? currentVal : currentVal.split(',').map(s => s.trim()))
+      : [];
 
     return (
       <div className="flex flex-col border-b border-indigo-50/50 pb-2">
