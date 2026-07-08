@@ -15,10 +15,10 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
   const isEdu = data.entityType === "INSTITUTE";
   const { data: peopleData, isLoading } = useQuery({
     queryKey: ["orgPeople", data.id, "preview", isEdu],
-    queryFn: () => 
+    queryFn: () =>
       isEdu
-        ? companyProfileService.getOrgAlumni(data.id, { page: 1, limit: 3 })
-        : companyProfileService.getOrgPeople(data.id, { page: 1, limit: 3 }),
+        ? companyProfileService.getOrgAlumni(data.id, { page: 1, limit: 1 })
+        : companyProfileService.getOrgPeople(data.id, { page: 1, limit: 1 }),
   });
 
   const employeesList = (peopleData?.people || []).map((emp: any) => ({
@@ -27,7 +27,7 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
     role: emp.role_display || emp.title || emp.headline || emp.role || "Associate",
     avatar: emp.avatar_url || emp.avatar || emp.profile_image || "/images/companyonboarding/companyprofileDefault.jpg",
   }));
-  const displayEmployees = employeesList.slice(0, 3);
+  const displayEmployees = employeesList.slice(0, 1);
   const totalCount = peopleData?.meta?.total || displayEmployees.length;
   return (
     <div
@@ -39,13 +39,12 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
         gap: "16px",
         width: "960px",
         height: "192px",
-        background: "#FFFFFF",
         borderRadius: "24px",
         flex: "none",
         alignSelf: "stretch",
         flexGrow: 0,
       }}
-      className="dark:bg-zinc-950 dark:border dark:border-zinc-900"
+      className="bg-white dark:bg-zinc-950 max-md:!w-full max-md:!h-auto max-md:!px-4 max-md:!mx-auto"
     >
       {/* Frame 2609076: Header */}
       <div
@@ -62,6 +61,7 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
           alignSelf: "stretch",
           flexGrow: 0,
         }}
+        className="max-md:!w-full max-md:!h-auto"
       >
         {/* People Title */}
         <h2
@@ -74,12 +74,11 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
             lineHeight: "32px",
             display: "flex",
             alignItems: "center",
-            color: "#000000",
             flex: "none",
             order: 0,
             flexGrow: 0,
           }}
-          className="dark:text-white"
+          className="text-black dark:text-white"
         >
           People
         </h2>
@@ -100,6 +99,7 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
           alignSelf: "stretch",
           flexGrow: 0,
         }}
+        className="max-md:!w-full max-md:!h-auto"
       >
         {/* Connections Count */}
         <span
@@ -110,12 +110,11 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
             fontWeight: 400,
             fontSize: "16px",
             lineHeight: "16px",
-            color: "#000000",
             flex: "none",
             order: 0,
             flexGrow: 0,
           }}
-          className="dark:text-zinc-300"
+          className="text-black dark:text-zinc-300"
         >
           {isLoading ? "Loading..." : `${totalCount} Connections`}
         </span>
@@ -135,6 +134,7 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
             alignSelf: "stretch",
             flexGrow: 0,
           }}
+          className="max-md:!w-full max-md:!h-auto"
         >
           {displayEmployees.map((emp: any, idx: number) => (
             <div
@@ -151,6 +151,7 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
                 order: idx,
                 flexGrow: 0,
               }}
+              className="max-md:!w-full"
             >
               {/* Avatar */}
               <div
@@ -211,12 +212,11 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
                       fontWeight: 500,
                       fontSize: "16px",
                       lineHeight: "24px",
-                      color: "#000000",
                       flex: "none",
                       order: 0,
                       flexGrow: 0,
                     }}
-                    className="dark:text-white truncate w-full"
+                    className="text-black dark:text-white truncate w-full"
                   >
                     {emp.name}
                   </span>
@@ -229,12 +229,11 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
                       fontWeight: 400,
                       fontSize: "14px",
                       lineHeight: "20px",
-                      color: "#6B7280",
                       flex: "none",
                       order: 1,
                       flexGrow: 0,
                     }}
-                    className="dark:text-zinc-400 truncate w-full"
+                    className="text-[#6B7280] dark:text-zinc-400 truncate w-full"
                   >
                     {emp.role}
                   </span>
@@ -270,7 +269,6 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
             fontSize: "16px",
             lineHeight: "20px",
             textAlign: "center",
-            color: "#6B7280",
             background: "none",
             border: "none",
             cursor: "pointer",
@@ -279,7 +277,8 @@ export default function PeopleSection({ data, onViewMoreClick }: PeopleSectionPr
             order: 0,
             flexGrow: 0,
           }}
-          className="hover:text-gray-900 dark:hover:text-zinc-200 transition-colors flex items-center justify-center flex-none"
+          type="button"
+          className="text-[#6B7280] hover:text-gray-900 dark:hover:text-zinc-200 transition-colors flex items-center justify-center flex-none"
           onClick={onViewMoreClick}
         >
           View more

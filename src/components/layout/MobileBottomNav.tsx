@@ -3,12 +3,13 @@
 import React from "react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { Home, Briefcase, Sparkles, Calendar } from "lucide-react"
+import { Home, Briefcase, Sparkles, Calendar, Users, LineChart } from "lucide-react"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useAuth } from "@/hooks/use-auth"
 import { ProfileSwitcher } from "@/components/layout/ProfileSwitcher"
 import { useCompanyPermissions } from "@/components/organizations/hooks/use-company"
 import { useNavigationMemoryLink } from "@/hooks/use-navigation-memory"
+import { Icon } from '@iconify/react'
 
 const NAV_ROUTES: Record<string, string> = {
   home: "/feed",
@@ -89,39 +90,80 @@ export function MobileBottomNav() {
           </Link>
         )}
 
-        <Link
-          href="/ai-assistant"
-          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/ai-assistant')}
-          className="flex flex-col items-center gap-1 flex-1"
-        >
-          <Sparkles
-            className={`w-5 h-5 ${isActive("/ai-assistant") ? "text-primary" : "text-muted-foreground"
-              }`}
-          />
-          <span
-            className={`text-xs ${isActive("/ai-assistant") ? "text-primary" : "text-muted-foreground"
-              }`}
-          >
-            AI
-          </span>
-        </Link>
+        {isCompany ? (
+          <>
+            <Link
+              href={activeProfile?.slug ? `/organization/${activeProfile.slug}/analytics` : "/analytics"}
+              onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, activeProfile?.slug ? `/organization/${activeProfile.slug}/analytics` : "/analytics")}
+              className="flex flex-col items-center gap-1 flex-1"
+            >
+              <Icon 
+                icon="hugeicons:analytics-up" 
+                className={`w-5 h-5 ${isActive(activeProfile?.slug ? `/organization/${activeProfile.slug}/analytics` : "/analytics") ? "text-primary" : "text-muted-foreground"
+                  }`} 
+              />
+              <span
+                className={`text-xs ${isActive(activeProfile?.slug ? `/organization/${activeProfile.slug}/analytics` : "/analytics") ? "text-primary" : "text-muted-foreground"
+                  }`}
+              >
+                Analytics
+              </span>
+            </Link>
 
-        <Link
-          href="/events"
-          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/events')}
-          className="flex flex-col items-center gap-1 flex-1"
-        >
-          <Calendar
-            className={`w-5 h-5 ${isActive("/events") ? "text-primary" : "text-muted-foreground"
-              }`}
-          />
-          <span
-            className={`text-xs ${isActive("/events") ? "text-primary" : "text-muted-foreground"
-              }`}
-          >
-            Events
-          </span>
-        </Link>
+            <Link
+              href="/team"
+              onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/team')}
+              className="flex flex-col items-center gap-1 flex-1"
+            >
+              <Users
+                className={`w-5 h-5 ${isActive("/team") ? "text-primary" : "text-muted-foreground"
+                  }`}
+              />
+              <span
+                className={`text-xs ${isActive("/team") ? "text-primary" : "text-muted-foreground"
+                  }`}
+              >
+                Teams
+              </span>
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link
+              href="/ai-assistant"
+              onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/ai-assistant')}
+              className="flex flex-col items-center gap-1 flex-1"
+            >
+              <Sparkles
+                className={`w-5 h-5 ${isActive("/ai-assistant") ? "text-primary" : "text-muted-foreground"
+                  }`}
+              />
+              <span
+                className={`text-xs ${isActive("/ai-assistant") ? "text-primary" : "text-muted-foreground"
+                  }`}
+              >
+                AI
+              </span>
+            </Link>
+
+            <Link
+              href="/events"
+              onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, '/events')}
+              className="flex flex-col items-center gap-1 flex-1"
+            >
+              <Calendar
+                className={`w-5 h-5 ${isActive("/events") ? "text-primary" : "text-muted-foreground"
+                  }`}
+              />
+              <span
+                className={`text-xs ${isActive("/events") ? "text-primary" : "text-muted-foreground"
+                  }`}
+              >
+                Events
+              </span>
+            </Link>
+          </>
+        )}
 
         {isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/organization/${activeProfile.slug}`)) ? (
           <ProfileSwitcher
@@ -136,7 +178,7 @@ export function MobileBottomNav() {
                   />
                 </div>
                 <span className={`text-xs ${isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/organization/${activeProfile.slug}`)) ? "text-primary" : "text-muted-foreground"}`}>
-                  Profile
+                  {activeProfile?.type === "COMPANY" ? "Company" : "Profile"}
                 </span>
               </button>
             }
@@ -157,7 +199,7 @@ export function MobileBottomNav() {
               className={`text-xs ${isActive("/profile") || (activeProfile?.type === "COMPANY" && isActive(`/organization/${activeProfile.slug}`)) ? "text-primary" : "text-muted-foreground"
                 }`}
             >
-              Profile
+              {activeProfile?.type === "COMPANY" ? "Company" : "Profile"}
             </span>
           </Link>
         )}

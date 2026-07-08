@@ -170,7 +170,7 @@ export const PostHeader = ({
 
         {/* Name & Role (Frame 2608568) */}
         <div className="flex flex-col items-start p-0 min-w-0 overflow-hidden">
-          <div className="flex items-center gap-1 h-[24px]">
+          <div className="flex items-center gap-1 min-h-[24px]">
             {isMe || (!isCompanyPost && !authorId) ? (
               <div className="flex items-baseline gap-1.5">
                 <h3 className={`text-[16px] leading-[24px] font-[family-name:var(--font-poppins)] cursor-default ${hideOptions ? 'font-normal text-[#000000] dark:text-foreground' : 'font-medium text-foreground'}`}>

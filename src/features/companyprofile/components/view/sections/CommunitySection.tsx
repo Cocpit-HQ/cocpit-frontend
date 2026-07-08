@@ -60,13 +60,12 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
         padding: "0px",
         gap: "16px",
         width: "960px",
-        background: "#FFFFFF",
         borderRadius: "24px",
         flex: "none",
         alignSelf: "stretch",
         flexGrow: 0,
       }}
-      className="dark:bg-zinc-950 dark:border dark:border-zinc-900"
+      className="bg-white dark:bg-zinc-950 max-md:!w-full max-md:!h-auto max-md:!px-4 max-md:!mx-auto"
     >
       {/* Frame 2609076: Header */}
       <div
@@ -82,6 +81,7 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
           alignSelf: "stretch",
           flexGrow: 0,
         }}
+        className="max-md:!w-full max-md:!h-auto"
       >
         <h2
           style={{
@@ -93,11 +93,10 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
             lineHeight: "32px",
             display: "flex",
             alignItems: "center",
-            color: "#000000",
             flex: "none",
             flexGrow: 0,
           }}
-          className="dark:text-white"
+          className="text-black dark:text-white"
         >
           Community
         </h2>
@@ -117,6 +116,7 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
           alignSelf: "stretch",
           flexGrow: 0,
         }}
+        className="max-md:!flex-col max-md:!w-full max-md:!h-auto max-md:!gap-4"
       >
         {/* Subtract: Banner Image */}
         <div
@@ -129,6 +129,7 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
             flex: "none",
             flexGrow: 0,
           }}
+          className="max-md:!w-full max-md:!h-[150px]"
         >
           <Image
             src="/images/companyonboarding/companycoverphotoDefault.png"
@@ -152,6 +153,7 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
             flex: "none",
             flexGrow: 1,
           }}
+          className="max-md:!w-full max-md:!h-auto max-md:!items-center max-md:!text-center"
         >
           {/* Frame 2609103: Text Details */}
           <div
@@ -177,11 +179,10 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
                 lineHeight: "24px",
                 display: "flex",
                 alignItems: "center",
-                color: "#000000",
                 flex: "none",
                 flexGrow: 0,
               }}
-              className="dark:text-white"
+              className="text-black dark:text-white"
             >
               {data.name}
             </span>
@@ -195,11 +196,10 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
                 lineHeight: "24px",
                 display: "flex",
                 alignItems: "center",
-                color: "#6B7280",
                 flex: "none",
                 flexGrow: 0,
               }}
-              className="dark:text-zinc-400"
+              className="text-[#6B7280] dark:text-zinc-400"
             >
               {data.stats?.subscribers || 0} Subscriber
             </span>
@@ -219,14 +219,13 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
               gap: "10px",
               width: "142px",
               height: "40px",
-              background: data.isSubscribed ? "#EFF4FF" : "#FFFFFF",
               border: "1px solid #1A73E8",
               borderRadius: "24px",
               flex: "none",
               flexGrow: 0,
               cursor: subscribeMutation.isPending ? "not-allowed" : "pointer",
             }}
-            className="hover:bg-blue-50 dark:hover:bg-zinc-900 transition-colors"
+            className={`transition-colors ${data.isSubscribed ? "bg-[#EFF4FF] hover:bg-blue-100 dark:bg-zinc-900 dark:hover:bg-zinc-800" : "bg-white hover:bg-blue-50 dark:bg-transparent dark:hover:bg-zinc-900"}`}
           >
             <span
               style={{

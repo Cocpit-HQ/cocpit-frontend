@@ -3,12 +3,14 @@
 import React, { useEffect } from "react";
 import Image from "next/image";
 import { CompanyProfileData } from "../../../types/company-profile.types";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { companyProfileService } from "../../../services/companyprofile.service";
 import { FeedPost } from "../../../../feed/components/FeedPost";
 import { FeedPostProps } from "../../../../feed/types";
 import { formatTimeAgo } from "@/lib/timeFormatter";
 import { useInView } from "@/hooks/use-in-view";
+import { deletePost as apiDeletePost } from "@/services/api/posts";
+import { useToast } from "@/hooks/use-toast";
 
 interface PostsTabProps {
   data: CompanyProfileData;
@@ -16,6 +18,9 @@ interface PostsTabProps {
 }
 
 export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
   const {
     data: queryData,
     fetchNextPage,
@@ -44,6 +49,34 @@ export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) 
       fetchNextPage();
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const handleDeletePost = async (postId: string) => {
+    try {
+      await apiDeletePost(postId);
+      toast({ title: "Post deleted successfully" });
+      
+      queryClient.setQueryData(["orgPosts", data.id], (oldData: any) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: any) => {
+            const postsArray = page.posts || page.data || page;
+            if (Array.isArray(postsArray)) {
+              const newPosts = postsArray.filter((p: any) => (p.post_id || p.id || p._id) !== postId);
+              if (page.posts) return { ...page, posts: newPosts };
+              if (page.data) return { ...page, data: newPosts };
+              return newPosts;
+            }
+            return page;
+          }),
+        };
+      });
+      queryClient.invalidateQueries({ queryKey: ["orgPostsPreview", data.id] });
+    } catch (error) {
+      console.error("Failed to delete post:", error);
+      toast({ title: "Failed to delete post", variant: "destructive" });
+    }
+  };
 
   const allRawPosts = queryData?.pages.flatMap((page) => page.posts || page.data || page) || [];
   const seen = new Set();
@@ -84,13 +117,14 @@ export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) 
     articleBody: p.articleBody,
     sampleLikerUsername: p.sample_liker_username || undefined,
     isProfileView: true,
+    onDelete: handleDeletePost,
   });
 
   const postsToRender: FeedPostProps[] = rawPosts.map(mapPost);
 
   if (status === "pending") {
     return (
-      <div className="flex w-[600px] justify-center py-10">
+      <div className="flex w-full max-w-[600px] justify-center py-10">
         <span className="text-zinc-500">Loading posts...</span>
       </div>
     );
@@ -98,7 +132,7 @@ export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) 
 
   if (postsToRender.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-4 w-[600px] bg-white dark:bg-zinc-950 rounded-2xl">
+      <div className="flex flex-col items-center justify-center py-12 px-4 w-full max-w-[600px] bg-white dark:bg-zinc-950 rounded-2xl">
         <div className="relative w-64 h-48 mb-6">
           <Image
             src="/images/companyonboarding/EmptyViewOfPost.png"
@@ -125,8 +159,7 @@ export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) 
 
   return (
     <div
-      style={{ width: "600px", gap: "24px" }}
-      className="flex flex-col items-start"
+      className="flex flex-col w-[600px] max-w-full max-md:!max-w-none gap-6 max-md:!-mx-4 max-md:!w-auto"
     >
       {postsToRender.map((post, index) => (
         <FeedPost key={post.id || index} {...post} />

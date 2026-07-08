@@ -11,6 +11,7 @@ interface PostCarouselProps {
   priority?: boolean;
   aspectRatio?: string | number;
   onImageLoad?: (event: React.SyntheticEvent<HTMLImageElement>) => void;
+  imageFit?: 'cover' | 'contain';
 }
 
 export function PostCarousel({
@@ -18,6 +19,7 @@ export function PostCarousel({
   priority = false,
   aspectRatio,
   onImageLoad,
+  imageFit,
 }: PostCarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -76,7 +78,7 @@ export function PostCarousel({
                 src={src}
                 alt={`Post image ${index + 1}`}
                 fill
-                className="object-cover"
+                className={imageFit === 'contain' ? "object-contain bg-black/5 dark:bg-white/5" : "object-cover"}
                 priority={priority && index === 0}
                 sizes="(max-width: 768px) 100vw, 600px"
                 onLoad={(e) => {

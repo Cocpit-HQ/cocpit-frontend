@@ -34,7 +34,7 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
         padding: "0px",
         gap: "16px",
       }}
-      className="flex flex-row items-start flex-none self-stretch dark:bg-transparent"
+      className="flex flex-row items-start flex-none self-stretch dark:bg-transparent max-md:!flex-col max-md:!w-full max-md:!h-auto max-md:!px-0"
     >
       {/* Left Card: Core Team */}
       <div
@@ -43,15 +43,14 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
           height: "168px",
           padding: "16px 16px 16px 0px",
           gap: "16px",
-          background: "#FFFFFF",
           borderRadius: "24px",
         }}
-        className="flex flex-col items-start flex-none self-stretch flex-grow dark:bg-zinc-950"
+        className="flex flex-col items-start flex-none self-stretch flex-grow bg-white dark:bg-zinc-950 max-md:!w-full max-md:!h-auto max-md:!px-0 max-md:!py-2"
       >
         {/* Frame 2609076 */}
         <div
           style={{ width: "420px", height: "32px", gap: "16px" }}
-          className="flex flex-row justify-between items-center flex-none self-stretch"
+          className="flex flex-row justify-between items-center flex-none self-stretch max-md:!w-full max-md:!h-auto"
         >
           {/* Core Team Heading */}
           <h2
@@ -61,9 +60,8 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
               fontWeight: 600,
               fontSize: "24px",
               lineHeight: "32px",
-              color: "#000000",
             }}
-            className="flex items-center flex-none dark:text-white"
+            className="flex items-center flex-none text-black dark:text-white"
           >
             Core Team
           </h2>
@@ -82,13 +80,12 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
                   fontWeight: 400,
                   fontSize: "14px",
                   lineHeight: "32px",
-                  color: "#000000",
                 }}
-                className="flex items-center flex-none dark:text-zinc-300"
+                className="flex items-center flex-none text-black dark:text-zinc-300"
               >
                 Manage
               </span>
-              <ChevronRight size={24} className="text-black dark:text-zinc-300 flex-none" />
+              <ChevronRight size={24} className="text-black dark:text-zinc-300 flex-none max-md:!hidden" />
             </Link>
           )}
         </div>
@@ -96,7 +93,7 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
         {/* Container for team members */}
         <div
           style={{ width: "420px", height: "84px", gap: "16px" }}
-          className="flex flex-row items-start flex-none self-stretch"
+          className="flex flex-row items-start flex-none self-stretch max-md:!w-full max-md:!h-auto max-md:!flex-nowrap max-md:!justify-start max-md:!overflow-x-auto max-md:!pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
           {isLoadingTeam ? (
             <div className="flex items-center justify-center w-full h-full text-zinc-500 dark:text-zinc-400 text-sm ml-[25px]">
@@ -107,7 +104,7 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
               <div
                 key={member.id || member.user_id || member.name}
                 style={{ width: "90px", height: "84px", gap: "8px" }}
-                className="flex flex-col items-center flex-none"
+                className="flex flex-col items-center flex-none max-md:!shrink-0"
               >
                 {/* Ellipse 24 */}
                 <div
@@ -135,9 +132,8 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
                       fontWeight: 500,
                       fontSize: "12px",
                       lineHeight: "16px",
-                      color: "#000000",
                     }}
-                    className="text-center flex-none self-stretch truncate dark:text-white"
+                    className="text-center flex-none self-stretch truncate text-black dark:text-white"
                   >
                     {member.full_name || member.name}
                   </span>
@@ -148,9 +144,8 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
                       fontWeight: 400,
                       fontSize: "12px",
                       lineHeight: "16px",
-                      color: "#6B7280",
                     }}
-                    className="text-center flex-none truncate dark:text-zinc-400"
+                    className="text-center flex-none truncate text-[#6B7280] dark:text-zinc-400"
                   >
                     {member.role || member.title || "Core Team"}
                   </span>
@@ -171,16 +166,15 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
           width: "452px",
           height: "168px",
           padding: "16px",
-          gap: "16px",
           background: "#1A73E8",
           borderRadius: "16px",
         }}
-        className="flex flex-col items-start flex-none flex-grow relative overflow-hidden"
+        className="flex flex-col items-start flex-none flex-grow relative overflow-hidden max-md:!hidden"
       >
         {/* Container (Header) */}
         <div
           style={{ width: "420px", height: "24px", gap: "8px" }}
-          className="flex flex-row justify-between items-center flex-none self-stretch"
+          className="flex flex-row justify-between items-center flex-none self-stretch max-md:!w-full max-md:!h-auto"
         >
           {/* Frame 2609100 */}
           <div
@@ -243,7 +237,7 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
             lineHeight: "20px",
             color: "#FFFFFF",
           }}
-          className="flex items-center flex-none self-stretch text-blue-50"
+          className="flex items-center flex-none self-stretch text-blue-50 max-md:!w-full max-md:!h-auto max-md:!mt-2 max-md:!mb-2"
         >
           Your profile is verified. Maintain updated documentation to preserve status.
         </p>
@@ -254,10 +248,10 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
             width: "420px",
             height: "40px",
             padding: "8px 0px",
-            background: "#FFFFFF",
-            borderRadius: "24px",
+            borderRadius: "9999px",
+            border: "1px solid #EFF4FF",
           }}
-          className="flex flex-row justify-center items-center flex-none self-stretch hover:bg-blue-50 transition-colors cursor-pointer"
+          className="flex flex-row justify-center items-center flex-none bg-white rounded-full transition-colors hover:bg-blue-50 active:bg-blue-100 max-md:!w-full max-md:!h-auto max-md:!py-2"
         >
           <span
             style={{

@@ -23,7 +23,7 @@ export const useFeed = (enableInitialFetch = true) => {
     () => ['feed', activeProfile?.type ?? 'USER', activeProfile?.id ?? currentUser.id] as const,
     [activeProfile?.id, activeProfile?.type, currentUser.id]
   );
-  
+
   const [sessionId, setSessionId] = React.useState<string | null>(null);
 
   const {

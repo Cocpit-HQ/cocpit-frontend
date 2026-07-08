@@ -125,7 +125,7 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
         />
 
         {/* Tabs and Content Section */}
-        <div className="mt-4 pl-[40px] pr-0">
+        <div className="mt-4 pl-[40px] pr-0 max-md:!px-4">
           <CompanyProfileTabs data={data} isOwnProfile={ownProfile} />
         </div>
 

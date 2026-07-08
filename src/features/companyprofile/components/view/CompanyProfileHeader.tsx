@@ -9,6 +9,13 @@ import { companyProfileService } from "../../services/companyprofile.service";
 import { CompanyProfileData } from "../../types/company-profile.types";
 import { Icon } from "@iconify/react";
 import { EditAvatarModal, EditCoverModal } from "@/shared/commonComponents/Cocpitprofileupload";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 interface CompanyProfileHeaderProps {
   data: CompanyProfileData;
@@ -26,6 +33,12 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
   const slug = params.slug as string || "nexsus-global-systems";
   
   const [modalType, setModalType] = useState<"logo" | "cover" | null>(null);
+  const { toast } = useToast();
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast({ title: "Link copied to clipboard" });
+  };
 
   const handleUploadSuccess = (url: string) => {
     if (modalType === "logo" && onLogoChange) {
@@ -98,10 +111,10 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
         </div>
 
         {/* 2. Logo & Buttons Row (Height 64px: from 160px to 224px) */}
-        <div className="relative w-full h-[64px] pl-[30px] pr-[30px]">
+        <div className="relative w-full h-[64px] pl-[30px] pr-[30px] max-md:!px-4 max-md:!h-[36px]">
           
           {/* Logo overlapping the cover */}
-          <div className="absolute -top-12 left-[30px] w-[96px] h-[96px] bg-white rounded-xl border-2 border-white shadow-xl z-10 flex flex-col justify-center items-center">
+          <div className="absolute -top-12 left-[30px] w-[96px] h-[96px] bg-white rounded-xl border-2 border-white shadow-xl z-10 flex flex-col justify-center items-center max-md:!left-4 max-md:!w-[72px] max-md:!h-[72px] max-md:!-top-9">
             <Image
               src={logoUrl || (data.entityType === "INSTITUTE" ? "/images/companyonboarding/AluminiProfilePhoto.png" : "/images/companyonboarding/companyprofileDefault.jpg")}
               alt={`${data.name} Logo`}
@@ -121,14 +134,14 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
 
           {/* Action Buttons overlapping cover right edge (Only for own profile) */}
           {isOwnProfile && (
-            <div className="absolute top-[14px] right-[30px] flex gap-[10px] z-10">
+            <div className="absolute top-[14px] right-[30px] flex gap-[10px] z-10 max-md:!hidden">
               <Link
                 href={`/organization/${slug}/edit`}
-                className="h-[36px] w-[140px] bg-[#1A73E8] text-white font-normal text-[14px] leading-[20px] rounded-[24px] hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center"
+                className="h-[36px] w-[140px] bg-[#1A73E8] text-white font-normal text-[14px] leading-[20px] rounded-[24px] shadow-sm flex items-center justify-center"
               >
                 Edit page
               </Link>
-              <button onClick={onShareClick} className="h-[36px] w-[140px] bg-transparent text-[#6B7280] border border-[#6B7280] font-normal text-[14px] leading-[20px] rounded-[24px] hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center">
+              <button onClick={onShareClick} className="h-[36px] w-[140px] bg-transparent text-[#6B7280] border border-[#6B7280] font-normal text-[14px] leading-[20px] rounded-[24px] shadow-sm flex items-center justify-center">
                 Share profile
               </button>
             </div>
@@ -138,7 +151,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
       </div>
 
       {/* 3. Info & Stats Area (Below the 224px Header Frame) */}
-      <div className="w-full pl-[40px] pr-[40px] pt-[24px] pb-2">
+      <div className="w-full pl-[40px] pr-[40px] pt-[24px] pb-2 max-md:!px-4 max-md:!pt-2">
         {/* Info & Stats Row (Frame 2608525) */}
         <div className="w-full flex flex-col md:flex-row justify-between items-start gap-[16px]">
           
@@ -148,13 +161,34 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
             {/* Name + tagline group (Frame 2608511) */}
             <div className="flex flex-col gap-0 w-full md:w-[608.4px]">
               {/* Title Block (Frame 2609085) */}
-              <div className="flex items-center gap-[8px] w-full md:w-[608.4px] h-[32px]">
-                <h1 className="text-[24px] font-semibold text-[#000000] dark:text-zinc-100 leading-[32px] w-fit tracking-tight">
-                  {data.name}
-                </h1>
-                {data.isVerified && (
-                  <div className="w-8 h-8 flex items-center justify-center relative">
-                    <Icon icon="bitcoin-icons:verify-filled" className="text-[#1A73E8]" width="32" height="32" />
+              <div className="flex justify-between items-start w-full md:w-[608.4px]">
+                <div className="flex items-center gap-[8px] h-[32px] max-md:!h-auto max-md:!flex-wrap max-w-[calc(100%-32px)]">
+                  <h1 className="text-[24px] font-semibold text-[#000000] dark:text-zinc-100 leading-[32px] w-fit tracking-tight max-md:!text-[20px] max-md:!leading-[28px]">
+                    {data.name}
+                  </h1>
+                  {data.isVerified && (
+                    <div className="w-8 h-8 flex items-center justify-center relative">
+                      <Icon icon="bitcoin-icons:verify-filled" className="text-[#1A73E8]" width="32" height="32" />
+                    </div>
+                  )}
+                </div>
+                {isOwnProfile && (
+                  <div className="hidden max-md:flex flex-shrink-0 mt-1">
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger asChild>
+                        <button className="w-8 h-8 flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full outline-none focus:outline-none focus:ring-0">
+                          <Icon icon="ph:dots-three-outline-vertical-light" width="24" height="24" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={handleCopyLink} className="cursor-pointer">
+                          Copy link
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={onShareClick} className="cursor-pointer">
+                          Share profile
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 )}
               </div>
@@ -205,23 +239,23 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
           </div>
 
           {/* Right Stats (Frame 2609070) */}
-          <div className="flex gap-[40px] items-center w-[295.6px] h-[48px] mt-6 md:mt-0">
+          <div className="flex gap-[40px] items-center w-[295.6px] h-[48px] mt-6 md:mt-0 max-md:!gap-2 max-md:!w-full max-md:!h-auto max-md:!justify-start">
             {/* Following */}
-            <div className="flex flex-col gap-[8px] w-[65.3px]">
+            <div className="flex flex-col gap-[8px] w-[65.3px] max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px]">
               <span className="text-[14px] font-semibold leading-[20px] text-[#1A73E8] tracking-[0.14px]">{formatNumber(data.stats?.following || 0)}</span>
-              <span className="text-[14px] font-medium leading-[20px] text-[#6B7280] tracking-[0.14px]">Following</span>
+              <span className="text-[14px] font-medium leading-[20px] text-[#6B7280] tracking-[0.14px] max-md:!font-normal max-md:!text-[14px] max-md:!text-[#000000] max-md:dark:!text-zinc-100 max-md:!text-center">Following</span>
             </div>
 
             {/* Followers */}
-            <div className="flex flex-col gap-[8px] w-[65.3px]">
+            <div className="flex flex-col gap-[8px] w-[65.3px] max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px]">
               <span className="text-[14px] font-semibold leading-[20px] text-[#1A73E8] tracking-[0.14px]">{formatNumber(data.stats?.followers || 0)}</span>
-              <span className="text-[14px] font-medium leading-[20px] text-[#6B7280] tracking-[0.14px]">Followers</span>
+              <span className="text-[14px] font-medium leading-[20px] text-[#6B7280] tracking-[0.14px] max-md:!font-normal max-md:!text-[14px] max-md:!text-[#000000] max-md:dark:!text-zinc-100 max-md:!text-center">Followers</span>
             </div>
 
             {/* Subscribers */}
-            <div className="flex flex-col gap-[8px] w-[85px]">
+            <div className="flex flex-col gap-[8px] w-[85px] max-md:!w-auto max-md:!h-[56px] max-md:!flex-1 max-md:!items-center max-md:!justify-center max-md:!gap-0 max-md:!bg-white max-md:dark:!bg-zinc-950 max-md:!shadow-[0_0_4px_rgba(99,102,241,0.05)] max-md:!rounded-[24px] max-md:!py-[8px] max-md:!px-[10px]">
               <span className="text-[14px] font-semibold leading-[20px] text-[#1A73E8] tracking-[0.14px]">{formatNumber(data.stats?.subscribers || 0)}</span>
-              <span className="text-[14px] font-medium leading-[20px] text-[#6B7280] tracking-[0.14px]">Subscribers</span>
+              <span className="text-[14px] font-medium leading-[20px] text-[#6B7280] tracking-[0.14px] max-md:!font-normal max-md:!text-[14px] max-md:!text-[#000000] max-md:dark:!text-zinc-100 max-md:!text-center">Subscribers</span>
             </div>
           </div>
 

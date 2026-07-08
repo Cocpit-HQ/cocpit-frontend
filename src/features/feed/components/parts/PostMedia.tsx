@@ -10,15 +10,16 @@ interface PostMediaProps {
   aspectRatio?: string;
   onLoad: (event: React.SyntheticEvent<HTMLImageElement | HTMLVideoElement>) => void;
   priority?: boolean;
-  isProfileView?: boolean;
+  forceSquare?: boolean;
   isVerticalVideo?: boolean;
   hasNoCaption?: boolean;
   onClick?: (e: React.MouseEvent) => void;
   achievementTitle?: string;
+  imageFit?: 'cover' | 'contain';
 }
 
 export const PostMedia = ({
-  imageSrc, images = [], videoSrc, videoRef, aspectRatio, onLoad, priority, isProfileView, isVerticalVideo, hasNoCaption, onClick, achievementTitle
+  imageSrc, images = [], videoSrc, videoRef, aspectRatio, onLoad, priority, forceSquare, isVerticalVideo, hasNoCaption, onClick, achievementTitle, imageFit
 }: PostMediaProps) => {
   const validImages = images.length > 0 ? images : (imageSrc ? [imageSrc] : []);
   const hasMultipleImages = validImages.length > 1;
@@ -31,7 +32,7 @@ export const PostMedia = ({
   // Render achievement special styling if title is present
   if (achievementTitle && !videoSrc && !hasMultipleImages && contentImgSrc) {
     return (
-      <div 
+      <div
         onClick={onClick}
         className={`post-image w-full relative flex flex-col justify-center gap-[8px] bg-white ${onClick ? 'cursor-pointer' : ''}`}
       >
@@ -58,10 +59,10 @@ export const PostMedia = ({
   return (
     <div
       onClick={onClick}
-      className={`post-image w-full overflow-hidden bg-card relative group flex flex-col justify-center ${isProfileView ? 'aspect-square' : (isVerticalVideo ? '' : (aspectRatio ? '' : 'h-[420px]'))
-        } ${!isProfileView && hasMedia ? 'mt-0 mb-0' : ''} ${!videoSrc && validImages.length > 0 ? 'border border-[#EEF2FF] dark:border-white/10' : ''} ${onClick ? 'cursor-pointer' : ''} rounded-[12px]`}
+      className={`post-image w-full overflow-hidden bg-card relative group flex flex-col justify-center ${forceSquare ? 'aspect-square' : (isVerticalVideo ? '' : (aspectRatio ? '' : 'h-[420px]'))
+        } ${!forceSquare && hasMedia ? 'mt-0 mb-0' : ''} ${!videoSrc && validImages.length > 0 ? 'border border-[#EEF2FF] dark:border-white/10' : ''} ${onClick ? 'cursor-pointer' : ''} rounded-[12px]`}
       style={
-        !isProfileView
+        !forceSquare
           ? (isVerticalVideo ? { height: '550px' } : (aspectRatio ? { aspectRatio, maxHeight: '700px' } : undefined))
           : undefined
       }
@@ -81,13 +82,14 @@ export const PostMedia = ({
           images={validImages}
           priority={priority}
           onImageLoad={onLoad}
+          imageFit={imageFit}
         />
       ) : contentImgSrc ? (
         <Image
           src={contentImgSrc}
           alt="Post content"
           fill
-          className="object-cover"
+          className={imageFit === 'contain' ? "object-contain bg-black/5 dark:bg-white/5" : "object-cover"}
           priority={priority}
           sizes="(max-width: 768px) 100vw, 600px"
           onLoad={onLoad}

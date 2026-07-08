@@ -97,13 +97,12 @@ export default function PeopleTab({ data }: PeopleTabProps) {
         padding: "0px",
         gap: "16px",
         width: "960px",
-        background: "#FFFFFF",
         borderRadius: "12px",
         flex: "none",
         alignSelf: "stretch",
         flexGrow: 0,
       }}
-      className="dark:bg-zinc-950 font-poppins"
+      className="bg-white dark:bg-zinc-950 font-poppins"
     >
       {/* Frame 2609104: Title & Subtitle */}
       <div
@@ -130,12 +129,11 @@ export default function PeopleTab({ data }: PeopleTabProps) {
             lineHeight: "27px",
             display: "flex",
             alignItems: "center",
-            color: "#000000",
             flex: "none",
             alignSelf: "stretch",
             flexGrow: 0,
           }}
-          className="dark:text-white"
+          className="text-black dark:text-white"
         >
           {isEdu ? "Student at this institute" : "People at this company"}
         </h2>
@@ -149,12 +147,11 @@ export default function PeopleTab({ data }: PeopleTabProps) {
             lineHeight: "24px",
             display: "flex",
             alignItems: "center",
-            color: "#6B7280",
             flex: "none",
             alignSelf: "stretch",
             flexGrow: 0,
           }}
-          className="dark:text-zinc-400"
+          className="text-[#6B7280] dark:text-zinc-400"
         >
           {isEdu ? "Find and explore students" : "Find and explore employees"}
         </span>
@@ -208,12 +205,11 @@ export default function PeopleTab({ data }: PeopleTabProps) {
               fontWeight: 400,
               fontSize: "16px",
               lineHeight: "24px",
-              color: "#6B7280",
               border: "none",
               outline: "none",
               background: "transparent",
             }}
-            className="dark:text-zinc-300"
+            className="text-[#6B7280] dark:text-zinc-300"
           />
           <Search className="w-6 h-6 text-[#6B7280] flex-shrink-0" />
         </div>
@@ -229,13 +225,12 @@ export default function PeopleTab({ data }: PeopleTabProps) {
             gap: "10px",
             width: "133px",
             height: "40px",
-            background: "#EFF4FF",
             borderRadius: "24px",
             flex: "none",
             order: 1,
             flexGrow: 0,
           }}
-          className="dark:bg-zinc-900"
+          className="bg-[#EFF4FF] dark:bg-zinc-900"
         >
           <span
             style={{
@@ -246,12 +241,11 @@ export default function PeopleTab({ data }: PeopleTabProps) {
               fontSize: "14px",
               lineHeight: "16px",
               textAlign: "center",
-              color: "#6B7280",
               flex: "none",
               order: 0,
               flexGrow: 0,
             }}
-            className="dark:text-zinc-300"
+            className="text-[#6B7280] dark:text-zinc-300"
           >
             {isEdu ? `${peopleData?.meta?.total || employeesList.length} Alumni` : `${peopleData?.meta?.total || employeesList.length} Associates`}
           </span>
@@ -293,14 +287,13 @@ export default function PeopleTab({ data }: PeopleTabProps) {
                 gap: "24px",
                 width: "218px",
                 height: "206px",
-                background: "#FFFFFF",
                 border: "1px solid #E8F1FF",
                 borderRadius: "24px",
                 flex: "none",
                 order: idx,
                 flexGrow: 1,
               }}
-              className="dark:bg-zinc-950 dark:border-zinc-900"
+              className="bg-white dark:bg-zinc-950 dark:border-zinc-900"
             >
               {/* Heading 4 */}
               <div
@@ -328,13 +321,12 @@ export default function PeopleTab({ data }: PeopleTabProps) {
                     display: "flex",
                     alignItems: "center",
                     letterSpacing: "0.14px",
-                    color: "#000000",
                     flex: "none",
                     order: 0,
                     alignSelf: "stretch",
                     flexGrow: 0,
                   }}
-                  className="dark:text-white"
+                  className="text-black dark:text-white"
                 >
                   {dist.title}
                 </h4>
@@ -396,14 +388,13 @@ export default function PeopleTab({ data }: PeopleTabProps) {
                           fontWeight: 400,
                           fontSize: "12px",
                           lineHeight: "16px",
-                          color: "#6B7280",
                           flex: "1 1 auto",
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           paddingRight: "8px",
                         }}
-                        className="dark:text-zinc-400 block"
+                        className="text-[#6B7280] dark:text-zinc-400 block"
                         title={item.label}
                       >
                         {item.label}
@@ -417,12 +408,11 @@ export default function PeopleTab({ data }: PeopleTabProps) {
                           lineHeight: "16px",
                           display: "flex",
                           alignItems: "center",
-                          color: "#6B7280",
                           flex: "none",
                           order: 1,
                           flexGrow: 0,
                         }}
-                        className="dark:text-zinc-400"
+                        className="text-[#6B7280] dark:text-zinc-400"
                       >
                         {item.value}%
                       </span>
@@ -476,14 +466,13 @@ export default function PeopleTab({ data }: PeopleTabProps) {
             padding: "8px 0px",
             width: "920px",
             height: "60px",
-            background: "#FFFFFF",
             borderRadius: "12px",
             flex: "none",
             order: empIdx + 3,
             alignSelf: "stretch",
             flexGrow: 0,
           }}
-          className="dark:bg-zinc-950"
+          className="bg-white dark:bg-zinc-950"
         >
           {/* Avatar & Info Row (Frame 2608774) */}
           <div
@@ -554,7 +543,6 @@ export default function PeopleTab({ data }: PeopleTabProps) {
                     fontWeight: 500,
                     fontSize: "16px",
                     lineHeight: "24px",
-                    color: "#000000",
                     flex: "none",
                     order: 0,
                     flexGrow: 0,
@@ -563,7 +551,7 @@ export default function PeopleTab({ data }: PeopleTabProps) {
                     textOverflow: "ellipsis",
                     width: "100%",
                   }}
-                  className="dark:text-white"
+                  className="text-black dark:text-white"
                   title={emp.name}
                 >
                   {emp.name}
@@ -574,7 +562,6 @@ export default function PeopleTab({ data }: PeopleTabProps) {
                     fontWeight: 400,
                     fontSize: "14px",
                     lineHeight: "20px",
-                    color: "#6B7280",
                     flex: "none",
                     order: 1,
                     flexGrow: 0,
@@ -583,7 +570,7 @@ export default function PeopleTab({ data }: PeopleTabProps) {
                     textOverflow: "ellipsis",
                     width: "100%",
                   }}
-                  className="dark:text-zinc-400"
+                  className="text-[#6B7280] dark:text-zinc-400"
                   title={emp.role}
                 >
                   {emp.role}
@@ -606,7 +593,6 @@ export default function PeopleTab({ data }: PeopleTabProps) {
                 gap: "10px",
                 width: "100px",
                 height: "40px",
-                background: "#FFFFFF",
                 border: "1px solid #1A73E8",
                 borderRadius: "24px",
                 flex: "none",
@@ -615,7 +601,7 @@ export default function PeopleTab({ data }: PeopleTabProps) {
                 cursor: "pointer",
                 textDecoration: "none",
               }}
-              className="hover:bg-blue-50 dark:hover:bg-zinc-900 transition-colors"
+              className="bg-white hover:bg-blue-50 dark:bg-transparent dark:hover:bg-zinc-900 transition-colors"
             >
               <span
                 style={{

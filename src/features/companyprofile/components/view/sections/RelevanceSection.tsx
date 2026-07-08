@@ -13,13 +13,12 @@ export default function RelevanceSection() {
         padding: "0px",
         gap: "16px",
         width: "960px",
-        background: "#FFFFFF",
         borderRadius: "24px",
         flex: "none",
         alignSelf: "stretch",
         flexGrow: 0,
       }}
-      className="dark:bg-zinc-950 dark:border dark:border-zinc-900"
+      className="bg-white dark:bg-zinc-950 max-md:!w-full max-md:!h-auto max-md:!px-4 max-md:!mx-auto"
     >
       {/* Frame 2609076: Header */}
       <div
@@ -35,6 +34,7 @@ export default function RelevanceSection() {
           alignSelf: "stretch",
           flexGrow: 0,
         }}
+        className="max-md:!w-full max-md:!h-auto"
       >
         <h2
           style={{
@@ -46,11 +46,10 @@ export default function RelevanceSection() {
             lineHeight: "32px",
             display: "flex",
             alignItems: "center",
-            color: "#000000",
             flex: "none",
             flexGrow: 0,
           }}
-          className="dark:text-white"
+          className="text-black dark:text-white"
         >
           Relevance
         </h2>
@@ -70,7 +69,7 @@ export default function RelevanceSection() {
           alignSelf: "stretch",
           flexGrow: 0,
         }}
-        className="flex-col md:flex-row"
+        className="flex-col md:flex-row max-md:!flex-col max-md:!w-full max-md:!h-auto max-md:!gap-4"
       >
         {/* Frame 2609093: Left Column (Highlights) */}
         <div
@@ -86,6 +85,7 @@ export default function RelevanceSection() {
             alignSelf: "stretch",
             flexGrow: 1,
           }}
+          className="max-md:!w-full max-md:!h-auto"
         >
           {/* Bullet 1: Rocket */}
           <div
@@ -98,13 +98,12 @@ export default function RelevanceSection() {
               gap: "16px",
               width: "448px",
               height: "40px",
-              background: "#EFF4FF",
               borderLeft: "3px solid #0D47A1",
               flex: "none",
               alignSelf: "stretch",
               flexGrow: 0,
             }}
-            className="dark:bg-zinc-900/50 dark:border-blue-500"
+            className="bg-[#EFF4FF] dark:bg-zinc-900/50 dark:border-blue-500"
           >
             <Icon icon="iconoir:rocket" width="24" height="24" className="w-6 h-6 flex-none text-[#0D47A1] dark:text-blue-400" />
             <div
@@ -129,9 +128,8 @@ export default function RelevanceSection() {
                   lineHeight: "16px",
                   display: "flex",
                   alignItems: "center",
-                  color: "#6B7280",
                 }}
-                className="dark:text-zinc-400"
+                className="text-[#6B7280] dark:text-zinc-400"
               >
                 May offer exposure to emerging technologies
               </span>
@@ -149,13 +147,12 @@ export default function RelevanceSection() {
               gap: "16px",
               width: "448px",
               height: "40px",
-              background: "#EFF4FF",
               borderLeft: "3px solid #0D47A1",
               flex: "none",
               alignSelf: "stretch",
               flexGrow: 0,
             }}
-            className="dark:bg-zinc-900/50 dark:border-blue-500"
+            className="bg-[#EFF4FF] dark:bg-zinc-900/50 dark:border-blue-500"
           >
             <Icon icon="iconoir:globe" width="24" height="24" className="w-6 h-6 flex-none text-[#0D47A1] dark:text-blue-400" />
             <div
@@ -180,9 +177,8 @@ export default function RelevanceSection() {
                   lineHeight: "16px",
                   display: "flex",
                   alignItems: "center",
-                  color: "#6B7280",
                 }}
-                className="dark:text-zinc-400"
+                className="text-[#6B7280] dark:text-zinc-400"
               >
                 Operates across multiple markets
               </span>
@@ -200,13 +196,12 @@ export default function RelevanceSection() {
               gap: "16px",
               width: "448px",
               height: "40px",
-              background: "#EFF4FF",
               borderLeft: "3px solid #0D47A1",
               flex: "none",
               alignSelf: "stretch",
               flexGrow: 0,
             }}
-            className="dark:bg-zinc-900/50 dark:border-blue-500"
+            className="bg-[#EFF4FF] dark:bg-zinc-900/50 dark:border-blue-500"
           >
             <Icon icon="streamline:money-graph-arrow-increase-ascend-growth-up-arrow-stats-graph-right-grow" width="24" height="24" className="w-6 h-6 flex-none text-[#0D47A1] dark:text-blue-400" />
             <div
@@ -231,9 +226,8 @@ export default function RelevanceSection() {
                   lineHeight: "16px",
                   display: "flex",
                   alignItems: "center",
-                  color: "#6B7280",
                 }}
-                className="dark:text-zinc-400"
+                className="text-[#6B7280] dark:text-zinc-400"
               >
                 Focuses on innovation and growth
               </span>
@@ -251,13 +245,12 @@ export default function RelevanceSection() {
               gap: "16px",
               width: "448px",
               height: "40px",
-              background: "#EFF4FF",
               borderLeft: "3px solid #0D47A1",
               flex: "none",
               alignSelf: "stretch",
               flexGrow: 0,
             }}
-            className="dark:bg-zinc-900/50 dark:border-blue-500"
+            className="bg-[#EFF4FF] dark:bg-zinc-900/50 dark:border-blue-500"
           >
             <Icon icon="lucide:folder-tree" width="24" height="24" className="w-6 h-6 flex-none text-[#0D47A1] dark:text-blue-400" />
             <div
@@ -282,9 +275,8 @@ export default function RelevanceSection() {
                   lineHeight: "16px",
                   display: "flex",
                   alignItems: "center",
-                  color: "#6B7280",
                 }}
-                className="dark:text-zinc-400"
+                className="text-[#6B7280] dark:text-zinc-400"
               >
                 Diverse project opportunities
               </span>
@@ -343,12 +335,11 @@ export default function RelevanceSection() {
                   fontWeight: 500,
                   fontSize: "16px",
                   lineHeight: "24px",
-                  color: "#000000",
                   flex: "none",
                   alignSelf: "stretch",
                   flexGrow: 0,
                 }}
-                className="dark:text-white"
+                className="text-black dark:text-white"
               >
                 Growth Trends
               </span>
@@ -360,12 +351,11 @@ export default function RelevanceSection() {
                   fontWeight: 400,
                   fontSize: "12px",
                   lineHeight: "18px",
-                  color: "#6B7280",
                   flex: "none",
                   alignSelf: "stretch",
                   flexGrow: 0,
                 }}
-                className="dark:text-zinc-400"
+                className="text-[#6B7280] dark:text-zinc-400"
               >
                 Employee growth
               </span>
@@ -523,11 +513,10 @@ export default function RelevanceSection() {
                     fontWeight: 400,
                     fontSize: "16px",
                     lineHeight: "24px",
-                    color: "#6B7280",
                     flex: "none",
                     flexGrow: 0,
                   }}
-                  className="dark:text-zinc-500"
+                  className="text-[#6B7280] dark:text-zinc-500"
                 >
                   Jan
                 </span>
@@ -540,11 +529,10 @@ export default function RelevanceSection() {
                     fontWeight: 400,
                     fontSize: "16px",
                     lineHeight: "24px",
-                    color: "#6B7280",
                     flex: "none",
                     flexGrow: 0,
                   }}
-                  className="dark:text-zinc-500"
+                  className="text-[#6B7280] dark:text-zinc-500"
                 >
                   Jun
                 </span>

@@ -38,7 +38,7 @@ const DeleteConfirmationModal = dynamic(() => import('@/components/shared/Delete
 const LikesModal = dynamic(() => import('./LikesModal').then(m => m.LikesModal), { ssr: false });
 
 export const FeedPost = (props: FeedPostProps) => {
-  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, sampleLikerUsername, category, title, articleBody, likedUsers } = props;
+  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, sampleLikerUsername, category, title, articleBody, imageFit, forceSquareMedia, likedUsers } = props;
   const { activeProfile, isCompany } = useActiveProfile();
   const { data: session } = useSession();
   const router = useRouter();
@@ -323,7 +323,7 @@ export const FeedPost = (props: FeedPostProps) => {
     <div
       ref={feedCardRef}
       onClick={handleCardClick}
-      className={`feed-card-shell flex w-full max-w-[560px] flex-col gap-[8px] overflow-hidden ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
+      className={`feed-card-shell flex w-full max-w-[560px] max-md:!max-w-full flex-col gap-[8px] overflow-hidden h-full ${isArticleFeedCard ? 'cursor-pointer' : ''}`}
     >
       {isRepostWithoutThoughts ? (
         <>
@@ -394,7 +394,7 @@ export const FeedPost = (props: FeedPostProps) => {
             <div className="w-full h-full bg-gray-200 dark:bg-gray-700" />
           </div>
 
-          {/* Original Post Header & Content */}
+          {/* Original Post Header */}
           <div className={`flex flex-col gap-[8px] ${isProfileView ? 'px-4' : 'px-4 md:px-0'}`}>
             <PostHeader
               {...props}
@@ -417,16 +417,19 @@ export const FeedPost = (props: FeedPostProps) => {
               setShowOptions={setShowInnerOptions}
               optionsPos={innerOptionsPos}
               setOptionsPos={setInnerOptionsPos}
-              onEdit={() => {}}
-              onDelete={() => {}}
-              onToggleVisibility={() => {}}
-              onShowAnalytics={() => {}}
+              onEdit={() => { }}
+              onDelete={() => { }}
+              onToggleVisibility={() => { }}
+              onShowAnalytics={() => { }}
               onReport={() => setIsReportModalOpen(true)}
               onNotInterested={handleNotInterested}
               hideOptions={true}
             />
+          </div>
 
+          <div className={`flex flex-col gap-[8px] ${isProfileView ? 'px-4' : 'px-4 md:px-0'}`}>
             <PostContent
+              isCarouselView={forceSquareMedia}
               content={shared_post.content}
               author={shared_post.author}
               authorSlug={shared_post.authorSlug}
@@ -448,7 +451,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
           {/* Media */}
           {shared_post.imageSrc || shared_post.videoSrc || (shared_post.images && shared_post.images.length > 0) ? (
-            <div className="mt-0">
+            <div className={`mt-0`}>
               <PostMedia
                 imageSrc={shared_post.imageSrc}
                 images={shared_post.images}
@@ -460,6 +463,8 @@ export const FeedPost = (props: FeedPostProps) => {
                 isVerticalVideo={isVerticalVideo}
                 hasNoCaption={!shared_post.content}
                 achievementTitle={shared_post.achievementImageTitle}
+                imageFit={imageFit}
+                forceSquare={forceSquareMedia}
                 onClick={(e) => {
                   e.stopPropagation();
                   router.push(`/post/${shared_post.id}`);
@@ -482,7 +487,7 @@ export const FeedPost = (props: FeedPostProps) => {
         </>
       ) : (
         <>
-          {/* Header & Content (Frame 2608598) */}
+          {/* Header */}
           <div className={`flex flex-col gap-[8px] ${isProfileView ? 'px-4 pt-4' : 'px-4 md:px-0'}`}>
             <PostHeader
               {...props}
@@ -511,8 +516,11 @@ export const FeedPost = (props: FeedPostProps) => {
               tags={tags}
               authorRole={props.authorHeadline || undefined}
             />
+          </div>
 
+          <div className={`flex flex-col gap-[8px] ${isProfileView ? 'px-4' : 'px-4 md:px-0'}`}>
             <PostContent
+              isCarouselView={forceSquareMedia}
               content={content}
               author={author}
               isExpanded={isExpanded}
@@ -535,7 +543,7 @@ export const FeedPost = (props: FeedPostProps) => {
 
           {/* Media (Rectangle 14) */}
           {!isArticlePost && (
-            <div className="mt-0">
+            <div className={`mt-0`}>
               <PostMedia
                 imageSrc={imageSrc}
                 images={props.images}
@@ -547,6 +555,8 @@ export const FeedPost = (props: FeedPostProps) => {
                 isVerticalVideo={isVerticalVideo}
                 hasNoCaption={!content && !shared_post}
                 achievementTitle={props.achievementImageTitle}
+                imageFit={imageFit}
+                forceSquare={forceSquareMedia}
                 onClick={(e) => {
                   e.stopPropagation();
                   router.push(`/post/${id}`);
@@ -567,63 +577,39 @@ export const FeedPost = (props: FeedPostProps) => {
       )}
 
       {/* Social Proof & Actions */}
-      <div className="flex flex-col gap-[8px] px-4 md:px-0">
-        {likeCount > 0 && (
-          <div className="flex items-center gap-2">
-            {likedUsers && likedUsers.length > 0 && (() => {
-              const viewerUsername = (isCompany ? activeProfile?.slug : ((activeProfile as any)?.account_name || (session?.user as any)?.username))?.toLowerCase();
-              const filteredLikedUsers = likedUsers.filter(u => u.username?.toLowerCase() !== viewerUsername);
-              if (filteredLikedUsers.length === 0) return null;
-              return (
-                <div className="flex -space-x-1.5 overflow-hidden">
-                  {filteredLikedUsers.slice(0, 3).map((user, idx) => (
-                    <img
-                      key={idx}
-                      src={user.avatar_url || "/assets/pngegg.png"}
-                      alt={user.username || "user"}
-                      className="inline-block h-5 w-5 rounded-full ring-2 ring-background object-cover flex-shrink-0"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/assets/pngegg.png";
-                      }}
-                    />
-                  ))}
-                </div>
-              );
-            })()}
-            <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
-              {likeCount === 1 && isLiked ? (
-                `${likeCount} like`
-              ) : (
+      <div className="flex flex-col gap-[8px] px-4 md:px-0 mt-auto pb-2">
+        {(forceSquareMedia || (likeCount > 0 && !(likeCount === 1 && isLiked) && sampleLikerUsername)) && (
+          <div className={`flex items-center ${forceSquareMedia ? 'min-h-[16px]' : ''}`}>
+            {likeCount > 0 && !(likeCount === 1 && isLiked) && sampleLikerUsername && (
+              <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
+              Liked by{" "}
+              <span 
+                className="font-semibold cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (sampleLikerUsername) {
+                    router.push(`/profile/${sampleLikerUsername}`);
+                  }
+                }}
+              >
+                @{sampleLikerUsername || 'someone'}
+              </span>
+              {likeCount > 1 && (
                 <>
-                  Liked by{" "}
+                  {" "}and{" "}
                   <span 
                     className="font-semibold cursor-pointer hover:underline"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (sampleLikerUsername) {
-                        router.push(`/profile/${sampleLikerUsername}`);
-                      }
+                      setIsLikesModalOpen(true);
                     }}
                   >
-                    @{sampleLikerUsername || 'someone'}
+                    {likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}
                   </span>
-                  {likeCount > 1 && (
-                    <>
-                      {" "}and{" "}
-                      <span 
-                        className="font-semibold cursor-pointer hover:underline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsLikesModalOpen(true);
-                        }}
-                      >
-                        {likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}
-                      </span>
-                    </>
-                  )}
                 </>
               )}
             </p>
+            )}
           </div>
         )}
 

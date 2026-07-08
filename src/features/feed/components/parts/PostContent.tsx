@@ -20,6 +20,7 @@ interface PostContentProps {
   location?: string;
   timeAgo?: string;
   onToggleExpand?: () => void;
+  isCarouselView?: boolean;
   // Article support props:
   category?: string;
   title?: string | null;
@@ -31,7 +32,7 @@ interface PostContentProps {
 export const PostContent = ({
   content, author, authorSlug, isExpanded, isFullContent,
   shared_post, sharedPollData, isSharedVoting, handleSharedVote, isProfileView,
-  postId, location, timeAgo, onToggleExpand,
+  postId, location, timeAgo, onToggleExpand, isCarouselView,
   category, title, articleBody, imageSrc
 }: PostContentProps) => {
   const isArticle = category === 'Article' || Boolean(articleBody);
@@ -44,6 +45,9 @@ export const PostContent = ({
   const showFullArticle = isArticle && (isFullContent || isExpanded);
 
   if (!content && !shared_post && !isArticle) {
+    if (isCarouselView) {
+      return <div className="h-[40px] w-full flex-shrink-0" />;
+    }
     return null;
   }
 
@@ -125,6 +129,16 @@ export const PostContent = ({
 
       {/* Main post description/caption */}
       {content && !isArticle && (() => {
+        if (isCarouselView) {
+          return (
+            <div className="w-full h-[40px] flex-shrink-0 overflow-hidden">
+              <div className="font-normal font-[family-name:var(--font-poppins)] text-[12px] leading-[16px] text-black dark:text-white line-clamp-2 whitespace-pre-wrap break-words">
+                <RichTextRenderer content={content.trimEnd()} authorName={author} authorSlug={authorSlug} />
+              </div>
+            </div>
+          );
+        }
+
         const truncateLength = 185;
         const trimmedContent = content.trimEnd();
         const nonEmptyLineCount = trimmedContent.split('\n').filter(line => line.trim() !== '').length;

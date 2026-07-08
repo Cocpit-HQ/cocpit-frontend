@@ -21,6 +21,8 @@ export interface FeedPostProps extends Omit<Post, 'commentData'> {
   broadcastOrgName?: string;
   initialShowComments?: boolean;
   sessionId?: string | null;
+  imageFit?: 'cover' | 'contain';
+  forceSquareMedia?: boolean;
 }
 
 export type FeedInteraction = {
