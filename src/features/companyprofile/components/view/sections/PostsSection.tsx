@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { companyProfileService } from "../../../services/companyprofile.service";
 import { deletePost as apiDeletePost } from "@/services/api/posts";
 import { useToast } from "@/hooks/use-toast";
+import { useUIStore } from "@/store/ui.store";
 
 interface PostsSectionProps {
   data: CompanyProfileData;
@@ -22,6 +23,7 @@ interface PostsSectionProps {
 export default function PostsSection({ data, showAll = false, isOwnProfile = false, onSeeAllClick }: PostsSectionProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { setActiveModal } = useUIStore();
 
   const { data: postsData, isLoading } = useQuery({
     queryKey: ["orgPostsPreview", data.id],
@@ -125,7 +127,10 @@ export default function PostsSection({ data, showAll = false, isOwnProfile = fal
             <span className="font-semibold text-black dark:text-white">{data.name}</span> hasn't posted anything yet
           </p>
           {isOwnProfile && (
-            <button className="h-10 px-6 bg-[#1A73E8] hover:bg-blue-700 text-white rounded-full font-semibold text-[14px] transition-colors cursor-pointer flex items-center justify-center">
+            <button 
+              onClick={() => setActiveModal('create-post')}
+              className="h-10 px-6 bg-[#1A73E8] hover:bg-blue-700 text-white rounded-full font-semibold text-[14px] transition-colors cursor-pointer flex items-center justify-center"
+            >
               Create post
             </button>
           )}

@@ -8,6 +8,7 @@ import { CompanyProfileData } from "../../types/company-profile.types";
 import CompanyProfileHeader from "./CompanyProfileHeader";
 import CompanyProfileTabs from "./CompanyProfileTabs";
 import CocpitShareModel from "@/shared/commonComponents/cocpitsharemodel";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 
 interface CompanyProfilePageProps {
   isOwnProfile?: boolean;
@@ -22,6 +23,8 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
     queryFn: () => companyProfileService.getOrgProfile(slug),
     retry: false,
   });
+
+  const { activeProfile } = useActiveProfile();
 
   const [logoUrl, setLogoUrl] = React.useState<string | null>(null);
   const [coverUrl, setCoverUrl] = React.useState<string | null>(null);
@@ -53,7 +56,7 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
 
   const company = profileResponse.org;
   const isEdu = company.entity_type === "INSTITUTION" || company.entity_type === "INSTITUTE";
-  const ownProfile = profileResponse.is_own_profile || isOwnProfile;
+  const ownProfile = activeProfile?.type === "COMPANY" && activeProfile?.id === (company.company_id || company.org_id);
 
   const data: CompanyProfileData = {
     id: company.company_id || company.org_id,

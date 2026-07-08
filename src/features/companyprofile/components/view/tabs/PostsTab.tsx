@@ -11,6 +11,7 @@ import { formatTimeAgo } from "@/lib/timeFormatter";
 import { useInView } from "@/hooks/use-in-view";
 import { deletePost as apiDeletePost } from "@/services/api/posts";
 import { useToast } from "@/hooks/use-toast";
+import { useUIStore } from "@/store/ui.store";
 
 interface PostsTabProps {
   data: CompanyProfileData;
@@ -20,6 +21,7 @@ interface PostsTabProps {
 export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { setActiveModal } = useUIStore();
 
   const {
     data: queryData,
@@ -149,7 +151,10 @@ export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) 
           <span className="font-semibold text-black dark:text-white">{data.name}</span> hasn't posted anything yet
         </p>
         {isOwnProfile && (
-          <button className="h-10 px-6 bg-[#1A73E8] hover:bg-blue-700 text-white rounded-full font-semibold text-[14px] transition-colors cursor-pointer flex items-center justify-center">
+          <button 
+            onClick={() => setActiveModal('create-post')}
+            className="h-10 px-6 bg-[#1A73E8] hover:bg-blue-700 text-white rounded-full font-semibold text-[14px] transition-colors cursor-pointer flex items-center justify-center"
+          >
             Create post
           </button>
         )}
