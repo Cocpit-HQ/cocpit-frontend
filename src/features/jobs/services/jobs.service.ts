@@ -152,6 +152,17 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
   }
 };
 
+export const getIndustries = async (query?: string): Promise<{ industry_name: string }[]> => {
+  try {
+    const params = query ? { q: query } : {};
+    const response = await api.get('/jobs/industries', { params });
+    return response.data || [];
+  } catch (error) {
+    console.error("Failed to fetch industries:", error);
+    return [];
+  }
+};
+
 export const getRecommendations = async (): Promise<Job[]> => {
   try {
     const response = await api.get('/jobs/recommendations');
@@ -645,7 +656,10 @@ export const getMyListings = async (status?: string, cursor?: string, limit: num
       salary_min: job.salary_min,
       salary_max: job.salary_max,
       salary_currency: job.salary_currency,
-      org_id: job.org_id
+      org_id: job.org_id,
+      applicants_count: Number(job.applicants_count || 0),
+      shortlisted_count: Number(job.shortlisted_count || 0),
+      offers_count: Number(job.offers_count || 0)
     })) as JobListing[];
 
     const nextCursor = responseData.nextCursor || null;
@@ -672,12 +686,10 @@ export const initializeJobDraft = async (title: string): Promise<string | null> 
 
 export const generateJobDescription = async (
   jobId: string,
-  rolePrompt: string
+  context: { role: string; company?: string; location?: string; experience?: string; work_type?: string; work_mode?: string }
 ): Promise<any> => {
   try {
-    const response = await api.post(`/jobs/${jobId}/generate`, {
-      role: rolePrompt
-    });
+    const response = await api.post(`/jobs/${jobId}/generate`, context);
     return response.data;
   } catch (error) {
     console.error('Failed to trigger background AI generation:', error);
@@ -736,7 +748,8 @@ export const createJobListing = async (
         salary_currency: details?.salary_currency,
         experience_min: expMin,
         experience_max: expMax,
-        experience_label: details?.experience
+        experience_label: details?.experience,
+        industry: details?.industry
       };
       
       const updateResponse = await api.patch(`/jobs/${jobId}`, updatePayload);
@@ -757,7 +770,7 @@ export const createJobListing = async (
            experience_label: details?.experience || '0 - 2 years',
            work_mode: details?.work_mode || 'Hybrid',
            job_type: details?.work_type || 'Full-time',
-           industry: 'Technology',
+           industry: details?.industry || 'Technology',
            about_company: details?.company ? `About ${details.company}` : 'Tech company',
          }).catch(err => {
             console.error("Error submitting job:", err?.response?.data ? JSON.stringify(err.response.data, null, 2) : err.message || err);

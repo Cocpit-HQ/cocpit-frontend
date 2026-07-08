@@ -301,18 +301,18 @@ Requirements:
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-[360px] p-6 bg-white rounded-3xl shadow-xl flex flex-col items-center gap-4 text-center animate-in zoom-in-95 duration-200">
             <div className="flex flex-col gap-1.5 mt-2">
-              <div className="text-black text-base font-normal font-['Poppins'] leading-5">
-                Are you sure you want to close this job?
+              <div className="text-black text-lg font-medium font-['Poppins'] leading-6">
+                Close Job?
               </div>
-              <div className="text-gray-400 text-xs font-normal font-['Poppins'] leading-4">
-                This listing will no longer accept applications
+              <div className="text-gray-500 text-sm font-normal font-['Poppins'] leading-5">
+                No new applicants will be able to apply after you close this job. Existing offers will remain active for 10 days.
               </div>
             </div>
             <div className="flex justify-center items-center gap-3 w-full mt-2">
               <button
                 onClick={() => setShowCloseConfirm(false)}
                 type="button"
-                className="flex-1 h-10 px-4 rounded-3xl border border-indigo-100 bg-white text-indigo-500 text-sm font-normal font-['Poppins'] hover:bg-slate-50 transition-all active:scale-95 flex justify-center items-center"
+                className="flex-1 h-10 px-4 rounded-3xl border border-indigo-400 bg-white text-indigo-500 text-sm font-medium font-['Poppins'] hover:bg-slate-50 transition-all active:scale-95 flex justify-center items-center"
               >
                 Cancel
               </button>
@@ -320,9 +320,9 @@ Requirements:
                 onClick={handleClose}
                 disabled={isClosing}
                 type="button"
-                className="flex-1 h-10 px-4 rounded-3xl bg-indigo-500 text-white text-sm font-normal font-['Poppins'] hover:bg-indigo-600 transition-all active:scale-95 flex justify-center items-center disabled:opacity-50"
+                className="flex-1 h-10 px-4 rounded-3xl bg-[#FF6B6B] text-white text-sm font-medium font-['Poppins'] hover:bg-red-500 transition-all active:scale-95 flex justify-center items-center disabled:opacity-50"
               >
-                {isClosing ? 'Closing...' : 'Close Job'}
+                {isClosing ? 'Closing...' : 'Close'}
               </button>
             </div>
           </div>

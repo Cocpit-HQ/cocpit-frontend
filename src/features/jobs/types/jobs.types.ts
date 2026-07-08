@@ -22,6 +22,9 @@ export interface Job {
   is_followed?: boolean;
   org_id?: string;
   recruiter_id?: string;
+  applicants_count?: number;
+  shortlisted_count?: number;
+  offers_count?: number;
 
   // AI Recommendation details
   is_recommended?: boolean;
@@ -93,7 +96,11 @@ export interface JobListing {
   salary_min?: number;
   salary_max?: number;
   salary_currency?: string;
+  industry?: string;
   org_id?: string | null;
+  applicants_count?: number;
+  shortlisted_count?: number;
+  offers_count?: number;
 }
 
 export interface ListingsCounts {

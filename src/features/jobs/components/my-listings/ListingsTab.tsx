@@ -12,13 +12,20 @@ interface ListingsTabProps {
   statusFilter: string;
   onStatusFilterChange: (status: string) => void;
   onSelectListing?: (listing: JobListing) => void;
+  onSendOffer?: (listing: JobListing) => void;
+  onCloseListing?: (id: string) => void;
+  onDeleteListing?: (id: string) => void;
+  isLoading?: boolean;
 }
 
 export const ListingsTab: React.FC<ListingsTabProps> = ({ 
   listings, hasMore = false, isFetchingMore = false, loadMore, 
   counts = { all: 0, active: 0, closed: 0, draft: 0, inReview: 0 },
-  statusFilter, onStatusFilterChange, onSelectListing 
+  statusFilter, onStatusFilterChange, onSelectListing,
+  onSendOffer, onCloseListing, onDeleteListing, isLoading = false
 }) => {
+  const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+  const [jobToClose, setJobToClose] = useState<string | null>(null);
 
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0,
@@ -99,11 +106,11 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
     >
       {/* Heading Frame */}
       <div className="w-full flex flex-col gap-[4px] px-0">
-        <h3 className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-black">
-          All Jobs
+        <h3 className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-black capitalize">
+          {statusFilter === 'All' ? 'All Jobs' : statusFilter === 'Drafts' ? 'Drafts' : `${statusFilter} Jobs`}
         </h3>
         <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280]">
-          Total jobs - {counts.all}
+          Total jobs - {filterChips.find(c => c.label.toLowerCase() === statusFilter.toLowerCase())?.count || 0}
         </span>
       </div>
 
@@ -130,8 +137,28 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
       </div>
 
       {/* Job Card List with Scroll */}
-      <div className="w-full flex-1 overflow-y-auto pr-1 flex flex-col gap-[16px] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full">
-        {listings.length === 0 && !isFetchingMore ? (
+      <div className="w-full flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-[16px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {isLoading ? (
+          [1, 2, 3, 4].map((n) => (
+            <div
+              key={n}
+              className="w-full flex flex-row items-center justify-between py-4 px-2 sm:px-4 gap-2 sm:gap-4 bg-white h-[92px] flex-none rounded-[12px] animate-pulse border border-slate-100"
+            >
+              <div className="flex flex-col items-start gap-2 w-1/4 h-[48px] justify-center">
+                <div className="w-3/4 h-5 bg-slate-200 rounded" />
+                <div className="w-1/2 h-4 bg-slate-100 rounded" />
+              </div>
+              <div className="w-[14%] h-8 bg-slate-100 rounded-3xl" />
+              <div className="w-[14%] h-8 bg-slate-100 rounded-3xl" />
+              <div className="w-[14%] h-8 bg-slate-100 rounded-3xl" />
+              <div className="w-[12%] h-[31px] bg-slate-200 rounded-full" />
+              <div className="w-[104px] flex justify-end gap-4">
+                <div className="w-6 h-6 bg-slate-200 rounded-full" />
+                <div className="w-6 h-6 bg-slate-200 rounded-full" />
+              </div>
+            </div>
+          ))
+        ) : listings.length === 0 && !isFetchingMore ? (
           <div className="py-12 flex flex-col items-center justify-center gap-3 text-center w-full">
             <h4 className="text-gray-400 text-sm font-semibold font-['Poppins']">No listings found</h4>
             <p className="text-gray-400 text-xs font-['Poppins'] max-w-xs">
@@ -143,22 +170,89 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
             <div
               key={item.id || `listing-${index}`}
               onClick={() => onSelectListing && onSelectListing(item)}
-              className={`w-full flex flex-row items-center justify-between py-[16px] px-0 gap-[16px] bg-white h-[80px] flex-none border-b border-[#EEF2FF]/60 last:border-b-0 ${
+              className={`w-full flex flex-row items-center justify-between py-4 px-2 sm:px-4 gap-2 sm:gap-4 bg-white h-[92px] flex-none rounded-[12px] hover:bg-slate-50 transition-colors ${
                 onSelectListing ? 'cursor-pointer' : ''
               }`}
             >
-              {/* Text Frame (Frame 2609064) */}
-              <div className="flex flex-col items-start gap-[8px] h-[48px] flex-1 min-w-0">
+              {/* Job Title & Date */}
+              <div className="flex flex-col items-start gap-2 w-1/4 min-w-[140px] justify-center shrink-0">
                 <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black capitalize truncate w-full">
                   {item.title}
                 </span>
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] truncate w-full">
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 truncate w-full">
                   {item.posted_at || item.last_edited || 'Posted recently'}
                 </span>
               </div>
 
-              {/* Status Badge */}
-              {getStatusChip(item.status)}
+              {/* Applications */}
+              <div className="flex flex-col items-start gap-2 w-[14%] min-w-[90px] justify-center shrink-0">
+                <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black">
+                  {item.applicants_count || 0}
+                </span>
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500">
+                  Applications
+                </span>
+              </div>
+
+              {/* Shortlisted */}
+              <div className="flex flex-col items-start gap-2 w-[14%] min-w-[90px] justify-center shrink-0">
+                <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black">
+                  {item.shortlisted_count || 0}
+                </span>
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500">
+                  Shortlisted
+                </span>
+              </div>
+
+              {/* Offer sent */}
+              <div className="flex flex-col items-start gap-2 w-[14%] min-w-[90px] justify-center shrink-0">
+                <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black">
+                  {item.offers_count || 0}
+                </span>
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500">
+                  Offer sent
+                </span>
+              </div>
+
+              {/* Status */}
+              <div className="flex flex-col items-start gap-[10px] w-[12%] min-w-[80px] justify-center shrink-0">
+                <span className="font-['Poppins'] font-medium text-[10px] leading-[15px] uppercase" style={{
+                  color: item.status?.toUpperCase() === 'ACTIVE' ? '#22C55E' : 
+                         item.status?.toUpperCase() === 'IN REVIEW' ? '#4338CA' : 
+                         item.status?.toUpperCase() === 'CLOSED' ? '#EAB308' : '#6B7280'
+                }}>
+                  {item.status || 'DRAFT'}
+                </span>
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500">
+                  Status
+                </span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-4 w-[104px] h-[60px] shrink-0" onClick={(e) => e.stopPropagation()}>
+                {item.status?.toUpperCase() === 'ACTIVE' && (
+                  <>
+                    <button 
+                      onClick={() => onSendOffer && onSendOffer(item)}
+                      className="w-6 h-6 flex items-center justify-center hover:opacity-75 transition-opacity active:scale-95"
+                    >
+                      <Icon icon="lucide:gift" className="w-6 h-6 text-black stroke-[1.5px]" />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setJobToClose(item.id); }}
+                      className="w-6 h-6 flex items-center justify-center hover:opacity-75 transition-opacity active:scale-95"
+                    >
+                      <Icon icon="lucide:x-circle" className="w-6 h-6 text-black stroke-[1.5px]" />
+                    </button>
+                  </>
+                )}
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setJobToDelete(item.id); }}
+                  className="w-6 h-6 flex items-center justify-center hover:opacity-75 transition-opacity active:scale-95"
+                >
+                  <Icon icon="lucide:trash-2" className="w-5 h-5 text-[#FF6B6B]" />
+                </button>
+              </div>
             </div>
           ))
         )}
@@ -183,6 +277,76 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
           </div>
         ) : null}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {jobToDelete && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={(e) => e.stopPropagation()}>
+          <div className="w-[360px] p-6 bg-white rounded-3xl shadow-xl flex flex-col items-center gap-4 text-center animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col gap-1.5 mt-2">
+              <div className="text-black text-base font-normal font-['Poppins'] leading-5">
+                Are you sure you want to delete job?
+              </div>
+              <div className="text-gray-400 text-xs font-normal font-['Poppins'] leading-4">
+                This cannot be undone
+              </div>
+            </div>
+            <div className="flex justify-center items-center gap-3 w-full mt-2">
+              <button
+                onClick={() => setJobToDelete(null)}
+                type="button"
+                className="flex-1 h-10 px-4 rounded-3xl border border-indigo-400 bg-white text-indigo-500 text-sm font-medium font-['Poppins'] hover:bg-slate-50 transition-all active:scale-95 flex justify-center items-center"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { 
+                  if (onDeleteListing) onDeleteListing(jobToDelete); 
+                  setJobToDelete(null); 
+                }}
+                type="button"
+                className="flex-1 h-10 px-4 rounded-3xl bg-[#FF6B6B] text-white text-sm font-medium font-['Poppins'] hover:bg-red-500 transition-all active:scale-95 flex justify-center items-center"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Close Confirmation Modal */}
+      {jobToClose && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={(e) => e.stopPropagation()}>
+          <div className="w-[360px] p-6 bg-white rounded-3xl shadow-xl flex flex-col items-center gap-4 text-center animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col gap-1.5 mt-2">
+              <div className="text-black text-lg font-medium font-['Poppins'] leading-6">
+                Close Job?
+              </div>
+              <div className="text-gray-500 text-sm font-normal font-['Poppins'] leading-5">
+                No new applicants will be able to apply after you close this job. Existing offers will remain active for 10 days.
+              </div>
+            </div>
+            <div className="flex justify-center items-center gap-3 w-full mt-2">
+              <button
+                onClick={() => setJobToClose(null)}
+                type="button"
+                className="flex-1 h-10 px-4 rounded-3xl border border-indigo-400 bg-white text-indigo-500 text-sm font-medium font-['Poppins'] hover:bg-slate-50 transition-all active:scale-95 flex justify-center items-center"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { 
+                  if (onCloseListing) onCloseListing(jobToClose); 
+                  setJobToClose(null); 
+                }}
+                type="button"
+                className="flex-1 h-10 px-4 rounded-3xl bg-[#FF6B6B] text-white text-sm font-medium font-['Poppins'] hover:bg-red-500 transition-all active:scale-95 flex justify-center items-center"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

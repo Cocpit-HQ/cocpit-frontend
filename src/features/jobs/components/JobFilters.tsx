@@ -83,19 +83,14 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
   const salaryOptions = ['', 'Under 3L', '3L-5L', '6L-10L', '10L+'];
   const datePostedOptions = ['', 'Today', 'Last 7 days', 'Last 30 days'];
 
-  const standardIndustries = ['Tech', 'Finance', 'Marketing', 'Design', 'Sales', 'Healthcare', 'Education'];
-  const currentIndustryVals = localFilters.industry ? localFilters.industry.split(',').map(s => s.trim()) : [];
-  const customIndustries = currentIndustryVals.filter(v => v && !standardIndustries.map(i => i.toLowerCase()).includes(v.toLowerCase()));
-  const isCustomIndustry = customIndustries.length > 0;
-  const [customIndustryText, setCustomIndustryText] = useState('');
+  const [availableIndustries, setAvailableIndustries] = useState<string[]>([]);
+  const [industrySearch, setIndustrySearch] = useState('');
 
   useEffect(() => {
-    if (isCustomIndustry) {
-      setCustomIndustryText(customIndustries.join(', '));
-    } else {
-      setCustomIndustryText('');
-    }
-  }, [localFilters.industry, isCustomIndustry]);
+    import('../services/jobs.service').then(({ getIndustries }) => {
+      getIndustries().then(data => setAvailableIndustries(data.map(d => d.industry_name)));
+    }).catch(err => console.error('Failed to load industries', err));
+  }, []);
 
   const hasActiveFilters = !!(
     filters.job_type ||
@@ -290,87 +285,90 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                   />
                 </button>
                 {expandedSection === 'industry' && (
-                  <div className="flex flex-col pl-2 gap-1 max-h-48 overflow-y-auto pr-1 pr-1 scrollbar-hide animate-in fade-in slide-in-from-top-1 duration-150">
-                    {['', ...standardIndustries].map(opt => {
-                      const selectedValues = localFilters.industry ? localFilters.industry.split(',').map(s => s.trim()) : [];
-                      const isSelected = opt === '' ? selectedValues.length === 0 : selectedValues.includes(opt);
-                      return (
-                        <button
-                          key={opt}
-                          onClick={() => {
-                            let nextVal = '';
-                            if (opt === '') {
-                              nextVal = '';
-                            } else {
-                              if (isSelected) {
-                                nextVal = selectedValues.filter(v => v !== opt).join(',');
-                              } else {
-                                nextVal = [...selectedValues, opt].join(',');
-                              }
-                            }
-                            setLocalFilters(prev => ({ ...prev, industry: nextVal }));
-                            onFilterChange('industry', nextVal);
-                          }}
-                          className={`w-full py-1.5 text-left text-[13px] font-['Poppins'] transition-colors ${
-                            isSelected
-                              ? 'text-[#6366F1] font-medium'
-                              : 'text-gray-500 hover:text-black font-normal'
-                          }`}
-                        >
-                          {opt === '' ? 'All' : opt}
-                        </button>
-                      );
-                    })}
-                    <button
-                      onClick={() => {
-                        const selectedValues = localFilters.industry ? localFilters.industry.split(',').map(s => s.trim()) : [];
-                        const isOtherSelected = selectedValues.some(v => !standardIndustries.includes(v)) || isCustomIndustry;
-                        let nextVal = '';
-                        if (isOtherSelected) {
-                          nextVal = selectedValues.filter(v => standardIndustries.includes(v)).join(',');
-                        } else {
-                          nextVal = [...selectedValues, 'Other'].join(',');
-                        }
-                        setLocalFilters(prev => ({ ...prev, industry: nextVal }));
-                        if (!nextVal) {
-                          onFilterChange('industry', '');
-                        }
-                      }}
-                      className={`w-full py-1.5 text-left text-[13px] font-['Poppins'] transition-colors ${
-                        isCustomIndustry || (localFilters.industry ? localFilters.industry.split(',').map(s => s.trim()).includes('Other') : false)
-                          ? 'text-[#6366F1] font-medium'
-                          : 'text-gray-500 hover:text-black font-normal'
-                      }`}
-                    >
-                      Other
-                    </button>
-                    {(isCustomIndustry || (localFilters.industry ? localFilters.industry.split(',').map(s => s.trim()).includes('Other') : false)) && (
-                      <div className="w-full pl-1 pr-2 pb-2">
+                  <div className="flex flex-col gap-1 max-h-56 overflow-y-auto scrollbar-hide animate-in fade-in slide-in-from-top-1 duration-150 relative">
+                    <div className="sticky top-0 bg-white z-10 pb-1">
+                      <div className="border-b border-gray-200 px-1 pb-1">
                         <input
                           type="text"
-                          value={customIndustryText}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setCustomIndustryText(val);
-                            const selectedValues = localFilters.industry ? localFilters.industry.split(',').map(s => s.trim()) : [];
-                            const standardVals = selectedValues.filter(v => standardIndustries.includes(v));
-                            const nextVal = val ? [...standardVals, val].join(',') : standardVals.join(',');
-                            setLocalFilters(prev => ({ ...prev, industry: nextVal || 'Other' }));
-                          }}
-                          onBlur={() => {
-                            onFilterChange('industry', localFilters.industry || '');
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              onFilterChange('industry', localFilters.industry || '');
-                            }
-                          }}
-                          placeholder="Art.."
-                          autoFocus
-                          className="w-full bg-transparent border-b border-black text-[13px] font-['Poppins'] font-normal text-black py-0.5 outline-none placeholder:text-gray-400 mt-1"
+                          placeholder="Search"
+                          value={industrySearch}
+                          onChange={(e) => setIndustrySearch(e.target.value)}
+                          className="w-full text-[13px] font-['Poppins'] font-normal text-black py-1 outline-none placeholder:text-gray-500"
                         />
                       </div>
-                    )}
+                    </div>
+                    <div className="flex flex-col pl-2 pr-1">
+                      {(() => {
+                        const searchLower = industrySearch.toLowerCase().trim();
+                        const selectedValues = localFilters.industry ? localFilters.industry.split(',').map(s => s.trim()).filter(Boolean) : [];
+                        
+                        let filtered = availableIndustries;
+                        if (searchLower) {
+                          filtered = availableIndustries.filter(i => i.toLowerCase().includes(searchLower));
+                        }
+                        
+                        // Sort: selected at the top, then alphabetically
+                        const sorted = [...filtered].sort((a, b) => {
+                          const aSel = selectedValues.includes(a);
+                          const bSel = selectedValues.includes(b);
+                          if (aSel && !bSel) return -1;
+                          if (!aSel && bSel) return 1;
+                          return a.localeCompare(b);
+                        });
+
+                        return (
+                          <>
+                            {/* "All" Option */}
+                            {!searchLower && (
+                              <button
+                                onClick={() => {
+                                  setLocalFilters(prev => ({ ...prev, industry: '' }));
+                                  onFilterChange('industry', '');
+                                }}
+                                className={`w-full py-1.5 text-left text-[13px] font-['Poppins'] transition-colors ${
+                                  selectedValues.length === 0
+                                    ? 'text-[#6366F1] font-medium'
+                                    : 'text-gray-500 hover:text-black font-normal'
+                                }`}
+                              >
+                                All
+                              </button>
+                            )}
+
+                            {/* Mapped Options */}
+                            {sorted.map(opt => {
+                              const isSelected = selectedValues.includes(opt);
+                              return (
+                                <button
+                                  key={opt}
+                                  onClick={() => {
+                                    let nextVal = '';
+                                    if (isSelected) {
+                                      nextVal = selectedValues.filter(v => v !== opt).join(',');
+                                    } else {
+                                      nextVal = [...selectedValues, opt].join(',');
+                                    }
+                                    setLocalFilters(prev => ({ ...prev, industry: nextVal }));
+                                    onFilterChange('industry', nextVal);
+                                  }}
+                                  className={`w-full py-1.5 text-left text-[13px] font-['Poppins'] transition-colors ${
+                                    isSelected
+                                      ? 'text-[#6366F1] font-medium'
+                                      : 'text-gray-500 hover:text-black font-normal'
+                                  }`}
+                                >
+                                  {opt}
+                                </button>
+                              );
+                            })}
+
+                            {sorted.length === 0 && searchLower && (
+                              <div className="py-2 text-[12px] text-gray-400 font-['Poppins']">No industries found</div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
                   </div>
                 )}
               </div>

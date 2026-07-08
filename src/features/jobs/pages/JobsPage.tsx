@@ -433,7 +433,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
               : "bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-[#6366F1]/70 hover:text-[#6366F1]"
             }`}
         >
-          <span>My Listings</span>
+          <span>Posted jobs</span>
           <Icon icon="lucide:chevron-right" className="w-4 h-4" />
         </button>
       </div>

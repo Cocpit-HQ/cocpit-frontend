@@ -15,6 +15,7 @@ interface OfferDetailsScreenProps {
     sentCount: number;
     acceptedCount: number;
     pendingCount: number;
+    declinedCount: number;
     job_type?: string;
     work_mode?: string;
     location?: string;
@@ -64,11 +65,8 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
     if (activeProfile && activeProfile.type === 'COMPANY') {
       return activeProfile.id;
     }
-    if (userCompanies && userCompanies.length > 0) {
-      return userCompanies[0].org_id || userCompanies[0].company_id || '';
-    }
     return '';
-  }, [activeProfile, userCompanies]);
+  }, [activeProfile]);
 
   const fetchRecipients = useCallback(async () => {
     const companyId = getCompanyId();
@@ -153,86 +151,58 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
         </div>
       </div>
 
-      {/* Job Details Card Preview (Frame 2608861) */}
-      <div className="w-[998px] h-[196px] box-border p-[16px] rounded-[24px] border border-[#EEF2FF] flex flex-col items-end gap-[12px] bg-white">
-
-        {/* Frame 2608947: Top row (role, company, full-time, and company logo) */}
-        <div className="w-[966px] h-[80px] self-stretch flex flex-row justify-between items-start p-0 gap-[10px]">
-
-          {/* Frame 2608946: Role details */}
-          <div className="h-[80px] flex flex-col items-start p-0 gap-[8px]">
-            {/* UI/UX Designer */}
-            <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black">
-              {offerGroup.title}
-            </span>
-            {/* Starlight Technologies */}
-            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280]">
-              {offerGroup.company}
-            </span>
-            {/* Full time */}
-            <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-[#6B7280]">
-              {offerGroup.job_type || 'Full time'}
-            </span>
-          </div>
-
-          {/* Company Avatar Frame 2608516 */}
-          <div className="w-[56px] h-[40px] rounded-[24px] bg-indigo-50 flex items-center justify-center border border-indigo-100 flex-shrink-0">
-            <Icon
-              icon="hugeicons:job-search"
-              className="w-[20px] h-[20px] text-indigo-500"
-            />
-          </div>
+      {/* Horizontal Stats Bar (Frame 2609091) */}
+      <div className="box-border flex flex-row justify-between items-center p-[16px_0px_24px] gap-[12px] w-[998px] h-[100px] border-b border-[#EEF2FF] flex-none self-stretch grow-0">
+        
+        {/* Role details (Frame 2608946) */}
+        <div className="flex flex-col items-start p-0 gap-[8px] w-[192px] h-[52px] flex-none order-0 grow-[1]">
+          <span className="w-full font-['Poppins'] font-medium text-[16px] leading-[24px] text-black truncate capitalize">
+            {offerGroup.title}
+          </span>
+          <span className="w-full font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] truncate">
+            {offerGroup.company}
+          </span>
         </div>
 
-        {/* Row 2: Specifications (Experience, location, bullet point, salary) */}
-        <div className="w-[966px] h-[20px] self-stretch flex flex-row justify-between items-center p-0">
-          <div className="flex flex-row items-center p-0">
-            {/* Experience Frame 2608943 */}
-            <div className="flex flex-row items-center p-0 gap-[8px] h-[20px]">
-              <Icon icon="hugeicons:job-search" className="w-[20px] h-[20px] text-black" />
-              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black">
-                {offerGroup.experience_level || '0-2Yrs'}
-              </span>
-            </div>
-
-            {/* Bullet Point / Ellipse 15 */}
-            <div className="w-[6px] h-[6px] bg-black rounded-full mx-[8px]" />
-
-            {/* Location Frame 2608944 */}
-            <div className="flex flex-row items-center p-0 gap-[8px] h-[20px]">
-              <Icon icon="lucide:map-pin" className="w-[20px] h-[20px] text-black" />
-              <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-black">
-                {offerGroup.work_mode && offerGroup.work_mode.toLowerCase() === 'remote'
-                  ? 'Remote'
-                  : `${offerGroup.work_mode || 'Hybrid'} - ${offerGroup.location || 'Kolhapur'}`}
-              </span>
-            </div>
-          </div>
-
-          <div className="py-[2px] flex items-center h-[16px] gap-1">
-            {offerGroup.salary_min || offerGroup.salary_max ? (
-              <>
-                <Icon icon={getCurrencyIcon(offerGroup.salary_currency)} className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
-                <span className="font-['Poppins'] font-medium text-[12px] leading-[16px] text-black">
-                  {formatSalaryRange(offerGroup.salary_min, offerGroup.salary_max, offerGroup.salary_currency)}
-                </span>
-              </>
-            ) : (
-              <span className="opacity-0 select-none">-</span>
-            )}
-          </div>
+        {/* Sent candidates (Frame 2609054) */}
+        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] w-[192px] h-[60px] bg-white rounded-[24px] flex-none order-1 self-stretch grow-[1] mx-auto">
+          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black">
+            {offerGroup.sentCount}
+          </span>
+          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+            Sent candidates
+          </span>
         </div>
 
-        {/* Row 3: Eye Icon Frame 2609037 */}
-        <button
-          onClick={onViewListingDetails}
-          type="button"
-          className="w-[56px] h-[40px] flex items-center justify-center rounded-[24px] hover:bg-[#EEF2FF]/40 active:scale-95 transition-all text-black"
-          title="Open in job details page"
-        >
-          <Icon icon="lucide:eye" className="w-[24px] h-[24px]" />
-        </button>
+        {/* Accepted (Frame 2609055) */}
+        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] w-[192px] h-[60px] bg-white rounded-[24px] flex-none order-2 self-stretch grow-[1] mx-auto">
+          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black">
+            {offerGroup.acceptedCount}
+          </span>
+          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+            Accepted
+          </span>
+        </div>
 
+        {/* Pending (Frame 2609056) */}
+        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] w-[192px] h-[60px] bg-white rounded-[24px] flex-none order-3 self-stretch grow-[1] mx-auto">
+          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black">
+            {offerGroup.pendingCount}
+          </span>
+          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+            Pending
+          </span>
+        </div>
+
+        {/* Declined (Frame 2609057) */}
+        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] w-[192px] h-[60px] bg-white rounded-[24px] flex-none order-4 self-stretch grow-[1] mx-auto">
+          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black">
+            {offerGroup.declinedCount}
+          </span>
+          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+            Declined
+          </span>
+        </div>
       </div>
 
       {/* Note section removed here to display per-candidate notes below */}
@@ -344,7 +314,7 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                     >
                       <div className="flex-1 flex flex-row items-center gap-[4px] min-w-0">
                         <span className="font-['Poppins'] font-medium text-[12px] leading-[16px] text-[#6366F1] flex-shrink-0">
-                          note :
+                          Note :
                         </span>
                         <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] truncate flex-1">
                           {cand.note}

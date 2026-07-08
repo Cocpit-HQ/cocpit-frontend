@@ -9,6 +9,7 @@ import ListingDetailsScreen from './ListingDetailsScreen';
 import ApplicantsDashboard from './ApplicantsDashboard';
 import SendOfferTab from './SendOfferTab';
 import OfferDetailsScreen from './OfferDetailsScreen';
+import SendOfferModal from './SendOfferModal';
 import { toast } from 'sonner';
 import ListingsSkeleton from '../skeletons/ListingsSkeleton';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -18,7 +19,7 @@ interface MyListingsDashboardProps {
   onBack: () => void;
 }
 
-type SubTab = 'Listings' | 'Sent Offers';
+type SubTab = 'Job listings' | 'Sent offers';
 type ViewState = 'dashboard' | 'create-job' | 'view-listing' | 'applicants' | 'offer-details';
 
 export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack }) => {
@@ -37,15 +38,15 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
 
   const urlSubTab = searchParams?.get('subtab');
   const [activeSubTab, setActiveSubTabLocal] = useState<SubTab>(() => {
-    if (urlSubTab === 'Sent Offers' || urlSubTab === 'Send offer') return 'Sent Offers';
-    return 'Listings';
+    if (urlSubTab === 'Sent offers' || urlSubTab === 'Sent Offers') return 'Sent offers';
+    return 'Job listings';
   });
 
   // Wrap setActiveSubTab to also update URL
   const setActiveSubTab = useCallback((tab: SubTab) => {
     setActiveSubTabLocal(tab);
     const params = new URLSearchParams(window.location.search);
-    if (tab === 'Listings') {
+    if (tab === 'Job listings') {
       params.delete('subtab');
     } else {
       params.set('subtab', tab);
@@ -56,6 +57,9 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
     listings, isLoading, isFetchingMore, hasMore, counts,
     statusFilter, setStatusFilter, loadMore, refresh
   } = useMyListings();
+
+  const [initialOfferJobId, setInitialOfferJobId] = useState<string | undefined>(undefined);
+  const [isSendOfferModalOpen, setIsSendOfferModalOpen] = useState(false);
 
   const [selectedListing, setSelectedListing] = useState<JobListing | null>(null);
   const { selectedOfferGroup, setSelectedOfferGroup } = useJobStore();
@@ -69,6 +73,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       params.delete('jobId');
       params.delete('step');
       params.delete('title');
+      params.delete('subtab');
     } else {
       params.set('view', nextView);
       if (nextJobId) {
@@ -118,8 +123,8 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       const newListing = await jobsService.createJobListing(title, status, listingData);
       if (newListing) {
         refresh();
+        setActiveSubTabLocal('Job listings');
         transitionTo('dashboard');
-        setActiveSubTab('Listings');
         if (status === 'ACTIVE') {
           toast.success('Job listing published successfully!');
         } else {
@@ -139,7 +144,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       }
       toast.error(errMsg);
     }
-  }, [selectedListing, refresh, transitionTo, setActiveSubTab]);
+  }, [selectedListing, refresh, transitionTo]);
 
   const handleCloseJob = useCallback(async (id: string) => {
     try {
@@ -174,9 +179,15 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   }, [refresh, transitionTo]);
 
   // Memoize stable callbacks for child components
+  // Memoize stable callbacks for child components
   const handleCreateJobBack = useCallback(() => {
     transitionTo('dashboard');
   }, [transitionTo]);
+
+  const handleSendOfferInit = useCallback((listing: JobListing) => {
+    setInitialOfferJobId(listing.id);
+    setIsSendOfferModalOpen(true);
+  }, []);
 
   const handleSelectListing = useCallback((listing: JobListing) => {
     const status = listing.status?.toUpperCase();
@@ -281,7 +292,8 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   }
 
   return (
-    <div className="w-full flex flex-col gap-6 animate-in fade-in duration-300">
+    <>
+      <div className="w-full flex flex-col gap-6 animate-in fade-in duration-300">
       {/* Header Row */}
       <div className="flex items-center gap-4">
         <button
@@ -291,49 +303,65 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
           <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500" />
         </button>
         <div className="inline-flex flex-col justify-start items-start">
-          <div className="text-center justify-start text-black text-lg font-medium font-['Poppins'] leading-6">My Listings</div>
+          <div className="text-center justify-start text-black text-lg font-medium font-['Poppins'] leading-6">Posted jobs</div>
           <div className="text-center justify-start text-gray-500 text-xs font-normal font-['Poppins'] leading-4">Post, manage, and track all your job listings in one place</div>
         </div>
       </div>
 
-      {/* Sub-Tabs & Action Button Row */}
-      <div className="w-full flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-indigo-50/50">
-        <div className="flex items-center gap-3">
-          {(['Listings', 'Sent Offers'] as SubTab[]).map(tab => {
-            const isActive = activeSubTab === tab;
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveSubTab(tab)}
-                className={`h-10 px-5 py-1.5 rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 ${isActive
-                    ? 'bg-indigo-50 outline-indigo-50 text-indigo-500 shadow-sm'
-                    : 'bg-white outline-indigo-400/50 hover:outline-indigo-400 text-indigo-400/80 hover:text-indigo-400'
-                  }`}
-              >
-                {tab}
-              </button>
-            );
-          })}
+      {/* Hero Banner */}
+      <div className="w-full bg-[#F5F8FF] rounded-3xl p-8 flex justify-between items-center relative overflow-hidden">
+        <div className="flex flex-col justify-start items-start max-w-lg z-10">
+          <h2 className="text-black text-3xl font-bold font-['Poppins'] mb-2">
+            {activeSubTab === 'Job listings' ? 'Post jobs & find talent' : 'Send job offers'}
+          </h2>
+          <p className="text-gray-600 text-sm font-normal font-['Poppins'] mb-6">
+            {activeSubTab === 'Job listings' 
+              ? 'Manage your core network, track subscriber growth, and publish thought leadership across the Cocpit ecosystem.'
+              : 'Hire top talent faster by sending personalized job offers and tracking candidate responses in one place.'}
+          </p>
+          <button
+            onClick={() => {
+              if (activeSubTab === 'Job listings') {
+                transitionTo('create-job');
+              } else {
+                setInitialOfferJobId(undefined);
+                setIsSendOfferModalOpen(true);
+              }
+            }}
+            className="px-6 py-2.5 bg-[#6366F1] hover:bg-indigo-600 rounded-[24px] text-white text-sm font-semibold font-['Poppins'] transition-all active:scale-95 shadow-sm"
+          >
+            {activeSubTab === 'Job listings' ? 'Create job' : 'Send offer'}
+          </button>
         </div>
-
-        {/* Create Job Action Button */}
-        <button
-          onClick={() => {
-            transitionTo('create-job');
-          }}
-          className="w-[140px] h-[40px] bg-white border border-[#818CF8] rounded-[24px] py-[8px] px-[16px] gap-[10px] flex flex-row justify-center items-center font-['Poppins'] font-semibold text-sm text-[#818CF8] hover:bg-indigo-50/10 transition-all duration-200 active:scale-95 cursor-pointer"
-        >
-          <Icon icon="lucide:plus" className="w-4 h-4 text-[#818CF8]" />
-          <span>Create job</span>
-        </button>
+        
+        {/* Placeholder Illustration (replace with real assets when available) */}
+        <div className="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 w-64 h-40 bg-indigo-100 rounded-xl justify-center items-center opacity-50 z-0">
+           <Icon icon="lucide:image" className="w-10 h-10 text-indigo-300" />
+        </div>
       </div>
 
-      {/* Loading state / Content state */}
-      {isLoading ? (
-        <ListingsSkeleton />
-      ) : (
-        <div className="w-full">
-          {activeSubTab === 'Listings' && (
+      {/* Sub-Tabs Row */}
+      <div className="w-full flex justify-start items-center gap-4">
+        {(['Job listings', 'Sent offers'] as SubTab[]).map(tab => {
+          const isActive = activeSubTab === tab;
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveSubTab(tab)}
+              className={`h-10 px-5 py-1.5 rounded-full flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${isActive
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-500'
+                  : 'bg-white border-transparent hover:bg-gray-50 text-gray-500 hover:text-black'
+                }`}
+            >
+              {tab}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Content state */}
+      <div className="w-full">
+        {activeSubTab === 'Job listings' && (
             counts.all === 0 && !isLoading ? (
               <div className="h-[693px] flex flex-col justify-center items-center gap-4 w-full">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-28 flex-shrink-0">
@@ -379,10 +407,14 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
                 statusFilter={statusFilter}
                 onStatusFilterChange={setStatusFilter}
                 onSelectListing={handleSelectListing}
+                onSendOffer={handleSendOfferInit}
+                onCloseListing={handleCloseJob}
+                onDeleteListing={handleDeleteJob}
+                isLoading={isLoading}
               />
             )
           )}
-          {activeSubTab === 'Sent Offers' && (
+          {activeSubTab === 'Sent offers' && (
             <SendOfferTab
               listings={listings}
               onSelectListing={(listing, viewType) => {
@@ -393,11 +425,28 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
                 }
               }}
               onSelectOfferGroup={handleSelectOfferGroup}
+              onOpenSendOfferModal={() => setIsSendOfferModalOpen(true)}
             />
           )}
         </div>
-      )}
-    </div>
+      </div>
+      
+      <SendOfferModal
+        isOpen={isSendOfferModalOpen}
+        onClose={() => {
+          setIsSendOfferModalOpen(false);
+          setInitialOfferJobId(undefined);
+        }}
+        activeListings={listings.filter(l => l.status?.toUpperCase() === 'ACTIVE')}
+        onOfferSent={() => {
+          setIsSendOfferModalOpen(false);
+          setInitialOfferJobId(undefined);
+          // Just refresh to pull the updated counts if needed
+          refresh();
+        }}
+        initialJobId={initialOfferJobId}
+      />
+    </>
   );
 };
 

@@ -411,83 +411,70 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         </div>
       </div>
 
-      {/* Job Details Frame / Job Item Active */}
-      <div 
-        className="box-border flex flex-row items-center p-[16px] gap-[16px] w-[998px] h-[80px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-1 self-stretch grow-0"
-      >
-        {/* Job text frame (Frame 2609064) */}
-        <div className="flex flex-col items-start p-0 gap-[8px] flex-1 min-w-0">
-          <span
-            className="w-full font-['Poppins'] font-medium text-[16px] leading-[24px] flex items-center text-black capitalize flex-none order-0 grow-0 truncate"
-          >
+      {/* Horizontal Stats Bar (Frame 2609091) */}
+      <div className="box-border flex flex-row justify-between items-center p-[16px_0px_24px] gap-[12px] w-[998px] h-[100px] border-b border-[#EEF2FF] flex-none self-stretch grow-0">
+        
+        {/* Role details (Frame 2608946) */}
+        <div className="flex flex-col items-start p-0 gap-[8px] flex-1 h-[52px] order-0">
+          <span className="w-full font-['Poppins'] font-medium text-[16px] leading-[24px] text-black truncate capitalize">
             {listing.title}
           </span>
-          <span
-            className="w-full font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] flex-none order-1 self-stretch grow-0 truncate"
-          >
+          <span className="w-full font-['Poppins'] font-normal text-[14px] leading-[20px] text-[#6B7280] truncate">
             Posted {listing.posted_at || '2 hours ago'}
           </span>
         </div>
 
-        {/* Status Chip (Background+Border) */}
-        <div
-          className="flex flex-col justify-center items-center p-[8px] w-[70px] h-[31px] bg-[#F0FDF4] rounded-[9999px] flex-none order-1 grow-0"
-        >
-          <span className="text-[#22C55E] text-[10px] font-medium font-['Poppins'] uppercase leading-[15px] flex items-center text-center">
-            ACTIVE
-          </span>
-        </div>
-
-        {/* View Details Button (Frame 2608534) */}
-        <button
-          onClick={onViewDetails}
-          type="button"
-          style={{ width: '116px', height: '40px' }}
-          className="box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] bg-white border border-[#818CF8] rounded-[24px] flex-none order-2 grow-0 hover:bg-indigo-50/10 active:scale-95 transition-all"
-        >
-          <span
-            style={{ width: '84px', height: '20px' }}
-            className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#818CF8] flex-none order-0 grow-0"
-          >
-            View details
-          </span>
-        </button>
-      </div>
-
-      {/* Counts Frame (Frame 2609065) */}
-      <div 
-        className="flex flex-row justify-center items-center p-0 gap-[16px] w-[998px] h-[88px] flex-none order-2 self-stretch grow-0"
-      >
-        {/* Applications Card */}
-        <div 
-          className="box-border flex flex-col items-start p-[16px] gap-[8px] w-[491px] h-[88px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-0 grow-[1]"
-        >
-          <span
-            className="w-[82px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] flex-none order-0 grow-0 uppercase tracking-wider"
-          >
-            APPLICATIONS
-          </span>
-          <span 
-            className="w-[458px] h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-[#000000] flex-none order-1 self-stretch grow-0"
-          >
+        {/* Applications (Frame 2609054) */}
+        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white rounded-[24px] order-1 self-stretch mx-auto">
+          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black">
             {appCount}
           </span>
+          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+            Applications
+          </span>
         </div>
 
-        {/* Shortlisted Card */}
-        <div 
-          className="box-border flex flex-col items-start p-[16px] gap-[8px] w-[491px] h-[88px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-1 grow-[1]"
-        >
-          <span
-            className="w-[75px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280] flex-none order-0 grow-0 uppercase tracking-wider"
-          >
-            SHORTLISTED
-          </span>
-          <span 
-            className="w-[458px] h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-[#000000] flex-none order-1 self-stretch grow-0"
-          >
+        {/* Shortlisted (Frame 2609055) */}
+        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white rounded-[24px] order-2 self-stretch mx-auto">
+          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black">
             {shortlistCount}
           </span>
+          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+            Shortlisted
+          </span>
+        </div>
+
+        {/* Offer sent (Frame 2609056) */}
+        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white rounded-[24px] order-3 self-stretch mx-auto">
+          <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-center text-black">
+            {listing.offers_count || 0}
+          </span>
+          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+            Offer sent
+          </span>
+        </div>
+
+        {/* Status (Frame 2609057) */}
+        <div className="flex flex-col justify-center items-start p-[8px_16px] gap-[8px] flex-1 h-[60px] bg-white rounded-[24px] order-4 self-stretch mx-auto">
+          <span className="font-['Poppins'] font-semibold text-[12px] leading-[20px] text-center text-[#22C55E] uppercase tracking-wide">
+            ACTIVE
+          </span>
+          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-center text-[#6B7280]">
+            Status
+          </span>
+        </div>
+
+        {/* View job details Button */}
+        <div className="flex flex-col justify-center items-end p-[8px_16px] flex-1 h-[60px] order-5 self-stretch mx-auto">
+          <button
+            onClick={onViewDetails}
+            type="button"
+            className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-auto h-[40px] rounded-[24px] active:scale-95"
+          >
+            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#6366F1] whitespace-nowrap">
+              View job details
+            </span>
+          </button>
         </div>
       </div>
 
