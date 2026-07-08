@@ -119,8 +119,11 @@ export interface Post {
   aspectRatio?: string;
   likes: number;
   isLiked?: boolean;
+  isReposted?: boolean;
+  repostId?: string | null;
   is_commented?: boolean;
   is_saved?: boolean;
+  likedUsers?: { username: string; avatar_url: string | null }[];
   comments: string;
   shares: string;
   commentData?: Comment[];

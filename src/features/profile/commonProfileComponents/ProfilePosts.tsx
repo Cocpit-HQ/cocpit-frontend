@@ -2,10 +2,22 @@
 
 import { cn } from "@/lib/utils";
 import { Icon } from "@iconify/react";
+
+const formatCompanyName = (name?: string): string => {
+  if (!name) return "";
+  const words = name.trim().split(/\s+/);
+  if (words.length > 2) {
+    return `${words[0]} ${words[1]}...`;
+  }
+  return name;
+};
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
+import { useSession } from "next-auth/react";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { toast } from "sonner";
 
 import { PostCarousel } from "@/components/shared/PostCarousel";
@@ -20,7 +32,7 @@ import { ProfilePostCardSkeleton } from "../components/skeletons/ProfilePostCard
 
 import { mapProfilePostToPost } from "@/lib/mappers/profile.mapper";
 import type { Post } from "@/types/entities";
-import { createRepost, toggleLike, toggleSavePost, updatePost } from "../services/profile.service";
+import { createRepost, toggleLike, toggleSavePost, updatePost, deletePost } from "../services/profile.service";
 
 const SavePostModal = dynamic(() => import('@/components/settings/SavePostModal').then(m => m.SavePostModal), { ssr: false });
 
@@ -61,12 +73,20 @@ const ProfilePostCard = ({
   const [localPost, setLocalPost] = useState(post);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const { setEditMode } = useUIStore();
+  const { activeProfile, isCompany } = useActiveProfile();
+  const { data: session } = useSession();
+
+  const [isReposted, setIsReposted] = useState(post.isReposted || false);
+  const [repostId, setRepostId] = useState<string | null>(post.repostId || null);
+  const [isUndoRepostConfirmOpen, setIsUndoRepostConfirmOpen] = useState(false);
 
   useEffect(() => {
     setLocalPost(post);
     setIsLiked(post.isLiked || false);
     setLikesCount(Number(post.likes) || 0);
     setIsSaved(post.is_saved || false);
+    setIsReposted(post.isReposted || false);
+    setRepostId(post.repostId || null);
   }, [post]);
 
   const _rawImage = localPost.imageSrc || (localPost.images && localPost.images.length > 0 ? localPost.images[0] : null);
@@ -104,21 +124,96 @@ const ProfilePostCard = ({
   };
 
   const handleRepost = async () => {
-    try {
-      await createRepost(localPost.id);
-      setLocalPost(prev => ({
-        ...prev,
-        shares: (Number(prev.shares) || 0) + 1 + ""
-      }));
-      toast.success("Post reposted successfully!");
-    } catch (err: any) {
-      if (err?.response?.status === 409) {
-        toast.error("You have already reposted this post.");
-      } else {
-        toast.error(err.response?.data?.message || "Failed to repost");
+    if (isReposted) {
+      setIsUndoRepostConfirmOpen(true);
+    } else {
+      try {
+        const res = await createRepost(localPost.id) as any;
+        setIsReposted(true);
+        if (res && res.post_id) {
+          setRepostId(res.post_id);
+        }
+        setLocalPost(prev => ({
+          ...prev,
+          shares: (Number(prev.shares) || 0) + 1 + ""
+        }));
+        toast.success("Post reposted successfully!");
+      } catch (err: any) {
+        if (err?.response?.status === 409) {
+          toast.error("You have already reposted this post.");
+        } else {
+          toast.error(err.response?.data?.message || "Failed to repost");
+        }
       }
     }
   };
+
+  const confirmUndoRepost = () => {
+    setIsUndoRepostConfirmOpen(false);
+    if (repostId) {
+      const targetRepostId = repostId;
+      setIsReposted(false);
+      setRepostId(null);
+      setLocalPost(prev => ({
+        ...prev,
+        shares: Math.max(0, (Number(prev.shares) || 0) - 1) + ""
+      }));
+      window.dispatchEvent(new CustomEvent('repostDeleted', { detail: { originalPostId: localPost.id, repostId: targetRepostId } }));
+      deletePost(targetRepostId).catch((err) => {
+        console.error("Background delete failed:", err);
+      });
+      toast.success("Repost removed successfully");
+    }
+  };
+
+  useEffect(() => {
+    const handlePostCreated = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const newPost = customEvent.detail;
+      if (newPost && newPost.shared_post?.id?.toString() === localPost.id.toString()) {
+        setIsReposted(true);
+        setRepostId(newPost.id.toString());
+        const updatedShares = (Number(localPost.shares) || 0) + 1 + "";
+        setLocalPost(prev => {
+          const updated = {
+            ...prev,
+            isReposted: true,
+            repostId: newPost.id.toString(),
+            shares: updatedShares
+          };
+          onUpdate?.(updated);
+          return updated;
+        });
+      }
+    };
+
+    const handleRepostDeleted = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { originalPostId } = customEvent.detail;
+      if (originalPostId?.toString() === localPost.id.toString() && isReposted) {
+        setIsReposted(false);
+        setRepostId(null);
+        const updatedShares = Math.max(0, (Number(localPost.shares) || 0) - 1) + "";
+        setLocalPost(prev => {
+          const updated = {
+            ...prev,
+            isReposted: false,
+            repostId: null,
+            shares: updatedShares
+          };
+          onUpdate?.(updated);
+          return updated;
+        });
+      }
+    };
+
+    window.addEventListener('postCreated', handlePostCreated);
+    window.addEventListener('repostDeleted', handleRepostDeleted);
+    return () => {
+      window.removeEventListener('postCreated', handlePostCreated);
+      window.removeEventListener('repostDeleted', handleRepostDeleted);
+    };
+  }, [localPost.id, isReposted, localPost.shares, onUpdate]);
 
   const handleShare = () => {
     setIsShareModalOpen(true);
@@ -210,7 +305,7 @@ const ProfilePostCard = ({
           </div>
           <div className="flex flex-col justify-center overflow-hidden min-w-0">
             <span className="text-[16px] leading-[24px] font-normal text-foreground truncate font-[family-name:var(--font-poppins)]">
-              {localPost.author || "Anonymous"}
+              {localPost.isCompanyPost ? formatCompanyName(localPost.author) : (localPost.author || "Anonymous")}
             </span>
             <div className="text-[10px] leading-[16px] text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] truncate block w-full" title={localPost.authorHeadline || localPost.title || ""}>
               {localPost.authorHeadline || localPost.title || ""}
@@ -325,7 +420,7 @@ const ProfilePostCard = ({
               <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100 flex-shrink-0">
                 <img src={localPost.shared_post.authorAvatar || "/assets/pngegg.png"} className="w-full h-full object-cover" />
               </div>
-              <span className="text-[10px] font-medium truncate font-[family-name:var(--font-poppins)] text-foreground">{localPost.shared_post.author}</span>
+              <span className="text-[10px] font-medium truncate font-[family-name:var(--font-poppins)] text-foreground">{localPost.shared_post.isCompanyPost ? formatCompanyName(localPost.shared_post.author) : localPost.shared_post.author}</span>
             </div>
             <p className="text-[10px] leading-[14px] text-foreground font-[family-name:var(--font-poppins)] line-clamp-2">{localPost.shared_post.content}</p>
             {localPost.shared_post.poll ? (
@@ -467,7 +562,27 @@ const ProfilePostCard = ({
 
       {/* Liked by Section */}
       {likesCount > 0 && (
-        <div className="w-full px-4 mb-4 flex items-center">
+        <div className="w-full px-4 mb-4 flex items-center gap-2">
+          {localPost.likedUsers && localPost.likedUsers.length > 0 && (() => {
+            const viewerUsername = (isCompany ? activeProfile?.slug : ((activeProfile as any)?.account_name || (session?.user as any)?.username))?.toLowerCase();
+            const filteredLikedUsers = localPost.likedUsers.filter(u => u.username?.toLowerCase() !== viewerUsername);
+            if (filteredLikedUsers.length === 0) return null;
+            return (
+              <div className="flex -space-x-1.5 overflow-hidden">
+                {filteredLikedUsers.slice(0, 3).map((user, idx) => (
+                  <img
+                    key={idx}
+                    src={user.avatar_url || "/assets/pngegg.png"}
+                    alt={user.username || "user"}
+                    className="inline-block h-5 w-5 rounded-full ring-2 ring-background object-cover flex-shrink-0"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/assets/pngegg.png";
+                    }}
+                  />
+                ))}
+              </div>
+            );
+          })()}
           <p className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)] truncate">
             {likesCount === 1 && isLiked ? (
               `${likesCount} like`
@@ -495,9 +610,18 @@ const ProfilePostCard = ({
               <Icon icon="hugeicons:comment-01" className="w-5 h-5 text-foreground" />
               <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.comments || 0}</span>
             </Link>
-            <button onClick={handleRepost} className="flex items-center gap-1 min-w-0 flex-shrink-0 cursor-pointer">
-              <Icon icon="hugeicons:repost" className="w-5 h-5 text-foreground" />
-              <span className="text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]">{localPost.shares || 0}</span>
+            <button
+              disabled={!!localPost.shared_post}
+              onClick={handleRepost}
+              className={cn("flex items-center gap-1 min-w-0 flex-shrink-0 cursor-pointer", !!localPost.shared_post && "opacity-50 cursor-not-allowed")}
+            >
+              <Icon
+                icon="hugeicons:repost"
+                className={cn("w-5 h-5", isReposted ? "text-[#6366F1]" : "text-foreground")}
+              />
+              <span className={cn("text-[12px] leading-[16px] text-foreground font-[family-name:var(--font-poppins)]", isReposted ? "text-[#6366F1]" : "text-foreground")}>
+                {localPost.shares || 0}
+              </span>
             </button>
             <button onClick={handleShare} className="flex items-center min-w-0 flex-shrink-0 cursor-pointer">
               <Icon icon="fluent:share-16-regular" className="w-5 h-5 text-foreground" />
@@ -523,6 +647,16 @@ const ProfilePostCard = ({
           }));
         }}
       />
+
+      {isUndoRepostConfirmOpen && (
+        <DeleteConfirmationModal
+          isOpen={isUndoRepostConfirmOpen}
+          onClose={() => setIsUndoRepostConfirmOpen(false)}
+          onConfirm={confirmUndoRepost}
+          title="Delete Repost"
+          description="Are you sure you want to delete this repost?"
+        />
+      )}
 
       {isEditModalOpen && (
         <EditPostModal

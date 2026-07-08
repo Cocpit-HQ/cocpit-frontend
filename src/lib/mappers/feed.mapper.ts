@@ -211,8 +211,10 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
         //aspectRatio: sp.media?.[0]?.aspect_ratio || undefined,
         likes: sp.like_count || 0,
         isLiked: (sp as any).is_liked, // New field from backend
+        isReposted: (sp as any).is_reposted,
         is_commented: (sp as any).is_commented,
         is_saved: (sp as any).is_saved,
+        likedUsers: (sp as any).liked_users || [],
         comments: (sp.comment_count || 0).toString(),
         shares: (sp.share_count || 0).toString(),
         poll: spPoll,
@@ -250,8 +252,11 @@ export const mapBackendPostToFrontend = (backendPost: BackendPost): Post => {
     // Backend doesn't return likes/comments/shares counts in the list view provided
     likes: backendPost.like_count,
     isLiked: backendPost.is_liked,
+    isReposted: backendPost.is_reposted,
+    repostId: backendPost.repost_id,
     is_commented: backendPost.is_commented,
     is_saved: backendPost.is_saved,
+    likedUsers: backendPost.liked_users || [],
     comments: (backendPost.comment_count || 0).toString(),
     shares: (backendPost.share_count || 0).toString(),
     commentData: [], // Backend doesn't provide comments in feed list

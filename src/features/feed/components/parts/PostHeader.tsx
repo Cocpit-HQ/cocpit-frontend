@@ -43,6 +43,15 @@ interface PostHeaderProps {
   hideOptions?: boolean;
 }
 
+const formatCompanyName = (name?: string): string => {
+  if (!name) return "";
+  const words = name.trim().split(/\s+/);
+  if (words.length > 2) {
+    return `${words[0]} ${words[1]}...`;
+  }
+  return name;
+};
+
 export const PostHeader = ({
   id, author, authorId, authorAvatar, authorSlug, timeAgo, visibility,
   isMe, isOwnPost, isCompanyPost, poll, shared_post, content,
@@ -165,13 +174,13 @@ export const PostHeader = ({
             {isMe || (!isCompanyPost && !authorId) ? (
               <div className="flex items-baseline gap-1.5">
                 <h3 className={`text-[16px] leading-[24px] font-[family-name:var(--font-poppins)] cursor-default ${hideOptions ? 'font-normal text-[#000000] dark:text-foreground' : 'font-medium text-foreground'}`}>
-                  {author}
+                  {isCompanyPost ? formatCompanyName(author) : author}
                 </h3>
               </div>
             ) : (
               <Link href={authorLink} className=" flex items-baseline gap-1.5" onClick={(e) => e.stopPropagation()}>
                 <h3 className={`text-[16px] leading-[24px] font-[family-name:var(--font-poppins)] ${hideOptions ? 'font-normal text-[#000000] dark:text-foreground' : 'font-medium text-foreground'}`}>
-                  {author}
+                  {isCompanyPost ? formatCompanyName(author) : author}
                 </h3>
               </Link>
             )}

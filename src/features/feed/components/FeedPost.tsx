@@ -3,13 +3,15 @@
 import React, { useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { FeedPostProps } from '../types';
 import { usePostInteractions } from '../hooks/use-post-interactions';
 import { usePostOptions } from '../hooks/use-post-options';
 import { usePostMediaObserver } from '../hooks/use-post-media-observer';
 import { trackFeedEvent, hidePost } from '@/services/api/feed';
-import { createRepost } from '@/services/api/posts';
+import { createRepost, deletePost, getPostById } from '@/services/api/posts';
+import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper';
 import { useToast } from "@/hooks/use-toast";
 import { createPortal } from 'react-dom';
 import { Icon } from '@iconify/react';
@@ -36,19 +38,21 @@ const DeleteConfirmationModal = dynamic(() => import('@/components/shared/Delete
 const LikesModal = dynamic(() => import('./LikesModal').then(m => m.LikesModal), { ssr: false });
 
 export const FeedPost = (props: FeedPostProps) => {
-  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, sampleLikerUsername, category, title, articleBody } = props;
+  const { id, author, authorAvatar, imageSrc, videoSrc, content, timeAgo, visibility, isProfileView, shared_post, poll, isCompanyPost, location, tags, sampleLikerUsername, category, title, articleBody, likedUsers } = props;
   const { activeProfile, isCompany } = useActiveProfile();
+  const { data: session } = useSession();
   const router = useRouter();
   const isArticlePost = category === 'Article' || props.post_type === 'article';
   const isArticleFeedCard = isArticlePost && !props.isFullContent;
 
   // Custom Hooks
-  const { updatePostInFeed } = useFeed(false);
+  const { updatePostInFeed, addPost } = useFeed(false);
   const { toast } = useToast();
 
   const {
-    isLiked, likeCount, isCommented, isSaved, pollData, isVoting, commentCount, shareCount,
-    handleLike, handleVote, setIsSaved, setIsCommented, incrementCommentCount, decrementCommentCount, incrementShareCount
+    isLiked, likeCount, isCommented, isSaved, isReposted, pollData, isVoting, commentCount, shareCount,
+    handleLike, handleVote, setIsSaved, setIsCommented, setIsReposted, incrementCommentCount, decrementCommentCount, incrementShareCount, handleRepostToggle, setShareCount,
+    repostId, setRepostId
   } = usePostInteractions(props);
 
   const {
@@ -110,19 +114,101 @@ export const FeedPost = (props: FeedPostProps) => {
     }
   };
 
+  const [isUndoRepostConfirmOpen, setIsUndoRepostConfirmOpen] = useState(false);
+
   const handleDirectRepost = async () => {
-    try {
-      await createRepost(id.toString());
-      incrementShareCount();
-      toast({ title: "Reposted!" });
-    } catch (error: any) {
-      if (error?.response?.status === 409) {
-        toast({ title: "You have already reposted this post." });
-      } else {
-        toast({ title: "Error reposting", variant: "destructive" });
+    if (isReposted) {
+      setIsUndoRepostConfirmOpen(true);
+    } else {
+      try {
+        const result = await handleRepostToggle(isCompany, activeProfile?.id);
+        if (result && result.post_id) {
+          try {
+            const backendPost = await getPostById(result.post_id);
+            const mappedPost = mapBackendPostToFrontend(backendPost);
+            window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
+          } catch (fetchErr) {
+            console.error("Failed to fetch and add new repost to feed:", fetchErr);
+          }
+        }
+      } catch (error: any) {
+        toast({ title: "Error updating repost", variant: "destructive" });
       }
     }
   };
+
+  const confirmUndoRepost = () => {
+    setIsUndoRepostConfirmOpen(false);
+    if (repostId) {
+      const targetRepostId = repostId;
+      setIsReposted(false);
+      setShareCount(prev => Math.max(0, prev - 1));
+      setRepostId(null);
+      try {
+        updatePostInFeed(id.toString(), { isReposted: false, shares: Math.max(0, shareCount - 1).toString(), repostId: null });
+      } catch (feedErr) {
+        console.warn("Failed to update feed cache:", feedErr);
+      }
+      window.dispatchEvent(new CustomEvent('repostDeleted', { detail: { originalPostId: id, repostId: targetRepostId } }));
+      if (props.onDelete) {
+        Promise.resolve(props.onDelete(targetRepostId)).catch((err) => {
+          console.error("Background onDelete failed:", err);
+        });
+      } else {
+        deletePost(targetRepostId).catch((err) => {
+          console.error("Background deletePost failed:", err);
+        });
+      }
+      toast({ title: "Repost removed successfully", variant: "default" });
+    }
+  };
+
+  useEffect(() => {
+    const handlePostCreated = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const newPost = customEvent.detail;
+      if (newPost && newPost.shared_post?.id?.toString() === id.toString()) {
+        setIsReposted(true);
+        setRepostId(newPost.id.toString());
+        setShareCount(prev => prev + 1);
+        try {
+          updatePostInFeed(id.toString(), { 
+            isReposted: true, 
+            shares: (shareCount + 1).toString(), 
+            repostId: newPost.id.toString() 
+          });
+        } catch (feedErr) {
+          console.warn("Failed to update feed cache:", feedErr);
+        }
+      }
+    };
+
+    const handleRepostDeleted = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { originalPostId } = customEvent.detail;
+      if (originalPostId?.toString() === id.toString() && isReposted) {
+        setIsReposted(false);
+        setRepostId(null);
+        setShareCount(prev => Math.max(0, prev - 1));
+        try {
+          updatePostInFeed(id.toString(), { 
+            isReposted: false, 
+            shares: Math.max(0, shareCount - 1).toString(), 
+            repostId: null 
+          });
+        } catch (feedErr) {
+          console.warn("Failed to update feed cache:", feedErr);
+        }
+      }
+    };
+
+    window.addEventListener('postCreated', handlePostCreated);
+    window.addEventListener('repostDeleted', handleRepostDeleted);
+    return () => {
+      window.removeEventListener('postCreated', handlePostCreated);
+      window.removeEventListener('repostDeleted', handleRepostDeleted);
+    };
+  }, [id, shareCount, isReposted, updatePostInFeed, setIsReposted, setRepostId, setShareCount]);
 
   const feedCardRef = useRef<HTMLDivElement>(null);
 
@@ -482,33 +568,59 @@ export const FeedPost = (props: FeedPostProps) => {
 
       {/* Social Proof & Actions */}
       <div className="flex flex-col gap-[8px] px-4 md:px-0">
-        {likeCount > 0 && !(likeCount === 1 && isLiked) && sampleLikerUsername && (
-          <div className="flex items-center">
+        {likeCount > 0 && (
+          <div className="flex items-center gap-2">
+            {likedUsers && likedUsers.length > 0 && (() => {
+              const viewerUsername = (isCompany ? activeProfile?.slug : ((activeProfile as any)?.account_name || (session?.user as any)?.username))?.toLowerCase();
+              const filteredLikedUsers = likedUsers.filter(u => u.username?.toLowerCase() !== viewerUsername);
+              if (filteredLikedUsers.length === 0) return null;
+              return (
+                <div className="flex -space-x-1.5 overflow-hidden">
+                  {filteredLikedUsers.slice(0, 3).map((user, idx) => (
+                    <img
+                      key={idx}
+                      src={user.avatar_url || "/assets/pngegg.png"}
+                      alt={user.username || "user"}
+                      className="inline-block h-5 w-5 rounded-full ring-2 ring-background object-cover flex-shrink-0"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/assets/pngegg.png";
+                      }}
+                    />
+                  ))}
+                </div>
+              );
+            })()}
             <p className="text-[12px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-foreground">
-              Liked by{" "}
-              <span 
-                className="font-semibold cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (sampleLikerUsername) {
-                    router.push(`/profile/${sampleLikerUsername}`);
-                  }
-                }}
-              >
-                @{sampleLikerUsername || 'someone'}
-              </span>
-              {likeCount > 1 && (
+              {likeCount === 1 && isLiked ? (
+                `${likeCount} like`
+              ) : (
                 <>
-                  {" "}and{" "}
+                  Liked by{" "}
                   <span 
                     className="font-semibold cursor-pointer hover:underline"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setIsLikesModalOpen(true);
+                      if (sampleLikerUsername) {
+                        router.push(`/profile/${sampleLikerUsername}`);
+                      }
                     }}
                   >
-                    {likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}
+                    @{sampleLikerUsername || 'someone'}
                   </span>
+                  {likeCount > 1 && (
+                    <>
+                      {" "}and{" "}
+                      <span 
+                        className="font-semibold cursor-pointer hover:underline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsLikesModalOpen(true);
+                        }}
+                      >
+                        {likeCount - 1} {likeCount - 1 === 1 ? 'other' : 'others'}
+                      </span>
+                    </>
+                  )}
                 </>
               )}
             </p>
@@ -530,10 +642,12 @@ export const FeedPost = (props: FeedPostProps) => {
             handleShare={() => setIsShareModalOpen(true)}
             handleRepostWithThoughts={() => setIsRepostModalOpen(true)}
             handleDirectRepost={handleDirectRepost}
+            isReposted={isReposted || false}
             isSaved={isSaved || false}
             setIsSaved={setIsSaved}
             handleSaveToggle={() => setIsSaveModalOpen(true)}
             onShowLikes={() => setIsLikesModalOpen(true)}
+            isSharedPost={!!shared_post}
           />
         </div>
       </div>
@@ -573,6 +687,16 @@ export const FeedPost = (props: FeedPostProps) => {
           isOpen={showPollAnalytics}
           onClose={() => setShowPollAnalytics(false)}
           postId={id.toString()}
+        />
+      )}
+
+      {isUndoRepostConfirmOpen && (
+        <DeleteConfirmationModal
+          isOpen={isUndoRepostConfirmOpen}
+          onClose={() => setIsUndoRepostConfirmOpen(false)}
+          onConfirm={confirmUndoRepost}
+          title="Delete Repost"
+          description="Are you sure you want to delete this repost?"
         />
       )}
 

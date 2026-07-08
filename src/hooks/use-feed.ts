@@ -110,6 +110,12 @@ export const useFeed = (enableInitialFetch = true) => {
   const addPost = useCallback((post: Post) => {
     queryClient.setQueryData<any>(feedQueryKey, (oldData: any) => {
       if (!oldData) return oldData;
+      // Prevent duplicates
+      const exists = oldData.pages.some((page: any) =>
+        page.posts.some((p: Post) => p.id === post.id)
+      );
+      if (exists) return oldData;
+
       const newPages = [...oldData.pages];
       if (newPages.length > 0) {
         newPages[0] = {
@@ -145,6 +151,21 @@ export const useFeed = (enableInitialFetch = true) => {
       console.error("Failed to reset feed session", err);
     }
   }, [feedQueryKey, queryClient]);
+
+  React.useEffect(() => {
+    if (!enableInitialFetch) return;
+
+    const handlePostCreated = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const newPost = customEvent.detail;
+      if (newPost) {
+        addPost(newPost);
+      }
+    };
+
+    window.addEventListener('postCreated', handlePostCreated);
+    return () => window.removeEventListener('postCreated', handlePostCreated);
+  }, [addPost, enableInitialFetch]);
 
   return {
     posts,

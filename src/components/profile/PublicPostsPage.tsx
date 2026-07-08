@@ -1,6 +1,8 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { useActiveProfile } from "@/context/ActiveProfileContext"
 import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -92,6 +94,8 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
   currentUser?: any,
   activeTab?: string
 }) => {
+  const { activeProfile, isCompany } = useActiveProfile();
+  const { data: session } = useSession();
   const isOwner = post.authorId === currentUser?.id || post.author === currentUser?.name;
   const router = useRouter();
   const [showComments, setShowComments] = useState(false);
@@ -422,7 +426,27 @@ const PublicPostCard = ({ post, onLike, onSave, onTogglePrivacy, onDelete, onEdi
         )}
 
         {Number(post.likes || 0) > 0 && (
-          <div className="pt-3 px-0 mb-4 border-t border-transparent">
+          <div className="pt-3 px-0 mb-4 border-t border-transparent flex items-center gap-2">
+            {post.likedUsers && post.likedUsers.length > 0 && (() => {
+              const viewerUsername = (isCompany ? activeProfile?.slug : ((activeProfile as any)?.account_name || (session?.user as any)?.username))?.toLowerCase();
+              const filteredLikedUsers = post.likedUsers.filter(u => u.username?.toLowerCase() !== viewerUsername);
+              if (filteredLikedUsers.length === 0) return null;
+              return (
+                <div className="flex -space-x-1.5 overflow-hidden">
+                  {filteredLikedUsers.slice(0, 3).map((user, idx) => (
+                    <img
+                      key={idx}
+                      src={user.avatar_url || "/assets/pngegg.png"}
+                      alt={user.username || "user"}
+                      className="inline-block h-5 w-5 rounded-full ring-2 ring-background object-cover flex-shrink-0"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/assets/pngegg.png";
+                      }}
+                    />
+                  ))}
+                </div>
+              );
+            })()}
             <p className="font-[family-name:var(--font-poppins)] font-normal text-[12px] text-foreground">
               {Number(post.likes || 0) === 1 && post.isLiked ? (
                 `${Number(post.likes || 0)} like`

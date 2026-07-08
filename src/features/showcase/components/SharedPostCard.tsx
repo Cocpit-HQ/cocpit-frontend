@@ -1,6 +1,15 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 
+const formatCompanyName = (name?: string): string => {
+  if (!name) return "";
+  const words = name.trim().split(/\s+/);
+  if (words.length > 2) {
+    return `${words[0]} ${words[1]}...`;
+  }
+  return name;
+};
+
 interface SharedPostCardProps {
     sharedPost: {
         is_accessible: boolean;
@@ -98,7 +107,7 @@ export const SharedPostCard: React.FC<SharedPostCardProps> = ({ sharedPost, onCl
                     </div>
                     <div className="flex flex-col flex-1 min-w-0">
                         <h4 className="text-base font-semibold text-white truncate">{sharedPost.title}</h4>
-                        <p className="text-sm text-white/90 truncate font-medium">{sharedPost.company_name}</p>
+                        <p className="text-sm text-white/90 truncate font-medium">{formatCompanyName(sharedPost.company_name)}</p>
                         <p className="text-xs text-white/60 truncate mt-0.5">
                             {sharedPost.location}
                             {sharedPost.work_mode ? ` (${sharedPost.work_mode})` : ''}

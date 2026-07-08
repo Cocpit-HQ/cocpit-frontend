@@ -18,17 +18,19 @@ interface PostActionsProps {
   handleShare: () => void;
   handleRepostWithThoughts: () => void;
   handleDirectRepost: () => void;
+  isReposted: boolean;
   isSaved: boolean;
   setIsSaved: (val: boolean) => void;
   handleSaveToggle: () => void;
   onShowLikes?: () => void;
+  isSharedPost?: boolean;
 }
 
 export const PostActions = ({
   id, isLiked, likeCount, handleLike,
   isCommentSectionOpen, isMobileDrawerOpen, isCommented, commentsCount, handleToggleCommentSection,
-  shares, handleShare, handleRepostWithThoughts, handleDirectRepost, isSaved, setIsSaved, handleSaveToggle,
-  onShowLikes
+  shares, handleShare, handleRepostWithThoughts, handleDirectRepost, isReposted, isSaved, setIsSaved, handleSaveToggle,
+  onShowLikes, isSharedPost
 }: PostActionsProps) => {
   return (
     <div className="flex flex-row justify-between items-center px-0 py-[8px] w-full h-[40px]">
@@ -111,6 +113,8 @@ export const PostActions = ({
           shares={shares}
           onRepostWithThoughts={handleRepostWithThoughts}
           onRepost={handleDirectRepost}
+          isReposted={isReposted}
+          isSharedPost={isSharedPost}
         />
 
         {/* Share (Frame 2608597) */}

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Repeat2 } from 'lucide-react';
 import { Icon } from "@iconify/react";
 
-export const RepostMenu = ({ onRepost, onRepostWithThoughts, shares }: { onRepost?: () => void, onRepostWithThoughts?: () => void, shares?: string | number }) => {
+export const RepostMenu = ({ onRepost, onRepostWithThoughts, shares, isReposted, isSharedPost }: { onRepost?: () => void, onRepostWithThoughts?: () => void, shares?: string | number, isReposted?: boolean, isSharedPost?: boolean }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -25,13 +25,21 @@ export const RepostMenu = ({ onRepost, onRepostWithThoughts, shares }: { onRepos
     <div className="relative inline-block" ref={ref}>
       {/* Trigger button */}
       <button
-        onClick={(e) => { e.stopPropagation(); setOpen(prev => !prev); }}
-        className="flex h-[24px] flex-row items-center gap-[16px] group"
+        disabled={isSharedPost}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isReposted) {
+            onRepost?.();
+          } else {
+            setOpen(prev => !prev);
+          }
+        }}
+        className={`flex h-[24px] flex-row items-center gap-[16px] group ${isSharedPost ? "opacity-50 cursor-not-allowed" : ""}`}
         aria-label="Repost"
         title="Repost"
       >
-        <Icon icon="hugeicons:repost" className="w-[24px] h-[24px] text-foreground transition-colors group-hover:text-gray-600" />
-        <span className="text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] text-foreground">
+        <Icon icon="hugeicons:repost" className={`w-[24px] h-[24px] transition-colors ${isReposted ? "text-[#6366F1]" : "text-foreground group-hover:text-gray-600"}`} />
+        <span className={`text-[12px] leading-[16px] font-normal font-[family-name:var(--font-poppins)] ${isReposted ? "text-[#6366F1]" : "text-foreground"}`}>
           {shares}
         </span>
       </button>
@@ -50,7 +58,7 @@ export const RepostMenu = ({ onRepost, onRepostWithThoughts, shares }: { onRepos
             onClick={() => { setOpen(false); onRepost?.(); }}
             className="w-[219px] h-[40px] flex flex-row items-center justify-between px-[16px] py-[8px] gap-[10px] rounded-[24px] hover:bg-gray-50 transition-colors"
           >
-            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#000000]">Repost</span>
+            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#000000]">{isReposted ? "Undo repost" : "Repost"}</span>
             <Icon icon="hugeicons:repost" className="w-[24px] h-[24px] text-black" style={{ strokeWidth: '1.5px' }} />
           </button>
         </div>

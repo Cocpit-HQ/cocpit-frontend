@@ -88,8 +88,11 @@ export interface BackendPost {
   comment_count: number;
   share_count: number;
   is_liked: boolean;
+  is_reposted?: boolean;
+  repost_id?: string | null;
   is_commented: boolean;
   is_saved: boolean;
+  liked_users?: { username: string; avatar_url: string | null }[];
   shared_post?: {
     is_accessible: boolean;
     reason?: 'private' | 'personal_connection' | 'unknown' | 'deleted';
@@ -109,8 +112,10 @@ export interface BackendPost {
     comment_count?: number;
     share_count?: number;
     is_liked?: boolean;
+    is_reposted?: boolean;
     is_commented?: boolean;
     is_saved?: boolean;
+    liked_users?: { username: string; avatar_url: string | null }[];
     poll?: BackendPoll | null;
     shared_entity_type?: 'job' | 'post';
     job_id?: string;

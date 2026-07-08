@@ -46,8 +46,11 @@ export interface ProfilePost {
   media: ProfilePostMedia[];
   like_count: number;
   is_liked: boolean;
+  is_reposted?: boolean;
+  repost_id?: string | null;
   is_commented: boolean;
   is_saved?: boolean;
+  liked_users?: { username: string; avatar_url: string | null }[];
   comment_count: number;
   share_count: number;
   poll: ProfilePostPoll | null;
@@ -75,6 +78,10 @@ export interface ProfilePost {
     comment_count?: number;
     share_count?: number;
     is_liked?: boolean;
+    is_reposted?: boolean;
+    is_commented?: boolean;
+    is_saved?: boolean;
+    liked_users?: { username: string; avatar_url: string | null }[];
     poll?: ProfilePostPoll | null;
   } | null;
 }

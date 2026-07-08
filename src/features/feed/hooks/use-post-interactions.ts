@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { feedApi } from '../api/feed.api';
+import { createRepost } from '@/services/api/posts';
 import { FeedPostProps } from '../types';
 import { Poll } from '@/types/entities';
 import { useSession } from 'next-auth/react';
@@ -16,10 +17,13 @@ export const usePostInteractions = (props: FeedPostProps) => {
     is_saved,
     is_commented: initialIsCommented = false,
     poll,
-    onSaveChange
+    onSaveChange,
+    isReposted: initialIsReposted = false
   } = props;
 
   const [isLiked, setIsLiked] = useState(initialIsLiked);
+  const [isReposted, setIsReposted] = useState(initialIsReposted);
+  const [repostId, setRepostId] = useState<string | null>(props.repostId || null);
   const [isCommented, setIsCommented] = useState(initialIsCommented);
   const [isSaved, setIsSaved] = useState(is_saved);
   const [likeCount, setLikeCount] = useState(typeof likes === 'string' ? parseInt(likes) : likes);
@@ -43,9 +47,11 @@ export const usePostInteractions = (props: FeedPostProps) => {
     setIsLiked(initialIsLiked);
     setIsCommented(initialIsCommented);
     setIsSaved(is_saved);
+    setIsReposted(initialIsReposted);
+    setRepostId(props.repostId || null);
     setPollData(poll);
     setShareCount(typeof props.shares === 'string' ? parseInt(props.shares || '0') : (props.shares || 0));
-  }, [initialIsLiked, initialIsCommented, is_saved, poll, props.shares]);
+  }, [initialIsLiked, initialIsCommented, is_saved, initialIsReposted, poll, props.shares, props.repostId]);
 
   // Sync likeCount from props when no local optimistic like is in flight.
   useEffect(() => {
@@ -148,6 +154,36 @@ export const usePostInteractions = (props: FeedPostProps) => {
     setShareCount(prev => prev + 1);
   };
 
+  const handleRepostToggle = async (isCompany: boolean, activeProfileId?: string) => {
+    const prevReposted = isReposted;
+    const prevCount = shareCount;
+    const prevRepostId = repostId;
+
+    setIsReposted(!isReposted);
+    setShareCount(prev => isReposted ? Math.max(0, prev - 1) : prev + 1);
+
+    try {
+      const result = await createRepost(id.toString()) as any;
+      if (result && result.reposted === false) {
+        setIsReposted(false);
+        setRepostId(null);
+        setShareCount(prev => Math.max(0, prev - 1));
+      } else {
+        setIsReposted(true);
+        if (result && result.post_id) {
+          setRepostId(result.post_id);
+        }
+      }
+      return result;
+    } catch (error) {
+      console.error("Failed to toggle repost:", error);
+      setIsReposted(prevReposted);
+      setShareCount(prevCount);
+      setRepostId(prevRepostId);
+      throw error;
+    }
+  };
+
   // Memoize callbacks to prevent infinite re-renders in usePostSync
   const onLikeUpdated = useCallback((data: { postId: string; liked: boolean; likeCount: number; liker: any }) => {
     // Only update if it's from another user (not us) to avoid double counting local optimistic updates
@@ -177,6 +213,7 @@ export const usePostInteractions = (props: FeedPostProps) => {
     isLiked,
     isCommented,
     isSaved,
+    isReposted,
     likeCount,
     commentCount,
     shareCount,
@@ -185,8 +222,13 @@ export const usePostInteractions = (props: FeedPostProps) => {
     setPollData,
     setIsCommented,
     setIsSaved,
+    setIsReposted,
+    setShareCount,
+    repostId,
+    setRepostId,
     handleLike,
     handleVote,
+    handleRepostToggle,
     incrementCommentCount,
     decrementCommentCount,
     incrementShareCount

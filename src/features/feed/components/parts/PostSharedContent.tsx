@@ -3,6 +3,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { PollCard } from '@/components/home/PollCard';
 
+const formatCompanyName = (name?: string): string => {
+  if (!name) return "";
+  const words = name.trim().split(/\s+/);
+  if (words.length > 2) {
+    return `${words[0]} ${words[1]}...`;
+  }
+  return name;
+};
+
 interface PostSharedContentProps {
   shared_post: any;
   sharedPollData?: any;
@@ -58,7 +67,7 @@ export const PostSharedContent = ({
             </div>
             <div className="flex flex-col flex-1 min-w-0">
               <h4 className="text-base font-semibold text-foreground truncate">{shared_post.jobTitle}</h4>
-              <p className="text-sm text-foreground/90 truncate font-medium">{shared_post.jobCompany}</p>
+              <p className="text-sm text-foreground/90 truncate font-medium">{formatCompanyName(shared_post.jobCompany)}</p>
               <p className="text-xs text-muted-foreground truncate mt-0.5">{shared_post.jobLocation}{shared_post.jobWorkMode ? ` (${shared_post.jobWorkMode})` : ''}</p>
             </div>
           </div>
@@ -73,7 +82,7 @@ export const PostSharedContent = ({
               </div>
               <div className="flex flex-col items-start p-0 min-w-0 overflow-hidden">
                 <span className="text-[16px] leading-[24px] font-[family-name:var(--font-poppins)] font-normal text-[#000000] dark:text-foreground truncate w-full block">
-                  {shared_post.author}
+                  {shared_post.isCompanyPost ? formatCompanyName(shared_post.author) : shared_post.author}
                 </span>
                 <span className="text-[10px] leading-[16px] font-[family-name:var(--font-poppins)] font-normal text-[#6B7280] truncate w-full block">
                   {shared_post.authorHeadline || shared_post.title || 'Member'}
