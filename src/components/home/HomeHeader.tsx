@@ -13,8 +13,10 @@ import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Hash, Plus } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 export const HomeHeader = () => {
+    const { isCompany } = useActiveProfile();
     const router = useRouter();
     const pathname = usePathname();
     const isNotificationsActive = pathname === '/notifications';
@@ -666,7 +668,7 @@ export const HomeHeader = () => {
                     <div className="flex items-center gap-4 shrink-0 xl:w-[406px] xl:justify-end">
                         <button
                             onClick={() => setActiveModal('create-post')}
-                            className="flex items-center justify-center gap-[10px] h-10 px-4 rounded-[24px] bg-[#6366F1] hover:bg-[#5558e3] text-white font-[family-name:var(--font-poppins)] text-[16px] font-normal leading-[24px] text-center transition-all shadow-sm whitespace-nowrap"
+                            className={`flex items-center justify-center gap-[10px] h-10 px-4 rounded-[24px] ${isCompany ? 'bg-[#1A73E8] hover:bg-blue-600' : 'bg-[#6366F1] hover:bg-[#5558e3]'} text-white font-[family-name:var(--font-poppins)] text-[16px] font-normal leading-[24px] text-center transition-all shadow-sm whitespace-nowrap`}
                         >
                             <span>Create post</span>
                             <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">

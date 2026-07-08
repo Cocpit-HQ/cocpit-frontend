@@ -22,10 +22,10 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
       ? companyProfileService.unsubscribeOrganization(orgId!)
       : companyProfileService.subscribeOrganization(orgId!),
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ["company", slug] });
-      const previousProfile = queryClient.getQueryData(["company", slug]);
+      await queryClient.cancelQueries({ queryKey: ["companyProfile", slug] });
+      const previousProfile = queryClient.getQueryData(["companyProfile", slug]);
       
-      queryClient.setQueryData(["company", slug], (old: any) => {
+      queryClient.setQueryData(["companyProfile", slug], (old: any) => {
         if (!old) return old;
         const newIsSubscribed = !data.isSubscribed;
         const countDiff = newIsSubscribed ? 1 : -1;
@@ -46,8 +46,11 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
     },
     onError: (err, variables, context) => {
       if (context?.previousProfile) {
-        queryClient.setQueryData(["company", slug], context.previousProfile);
+        queryClient.setQueryData(["companyProfile", slug], context.previousProfile);
       }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
     }
   });
 

@@ -12,6 +12,7 @@ import { Follower, Following, Connection } from "@/types/social";
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
+import { useSocial } from "@/context/SocialContext";
 import { Icon } from "@iconify/react";
 
 interface FollowListModalProps {
@@ -40,6 +41,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     const queryClient = useQueryClient();
     const { toast } = useToast();
     const { user: currentUser } = useAuth();
+    const { syncFollowStatus } = useSocial();
     const isOwnProfile = currentUser?.id === userId;
 
     useEffect(() => {
@@ -186,16 +188,20 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                 );
             }
 
+            syncFollowStatus(companyId, false);
+
             return { previousStats, previousFollowing };
         },
         onError: (err, companyId, context: any) => {
             queryClient.setQueryData(["profileStats", userId], context.previousStats);
             queryClient.setQueryData(["following", userId, search], context.previousFollowing);
+            syncFollowStatus(companyId, true); // revert sync
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ["following", userId] });
             queryClient.invalidateQueries({ queryKey: ["company_relationship"] });
             queryClient.invalidateQueries({ queryKey: ["company_followers"] });
+            queryClient.invalidateQueries({ queryKey: ["company"] });
             queryClient.invalidateQueries({ queryKey: ["profileStats", userId] });
         },
     });

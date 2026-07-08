@@ -42,3 +42,11 @@ Icon Name: lucide:folder-tree
 Search Name: delete-trash
 Icon Name: hugeicons:delete-02
 
+Search Name: copy-link
+Icon Name: solar:copy-outline # copy action (alternative)
+
+Search Name: copy-profile-link
+Icon Name: lucide-react:LinkIcon # standard profile copy link action
+
+Search Name: share-profile
+Icon Name: lucide-react:Share2 # standard profile share action

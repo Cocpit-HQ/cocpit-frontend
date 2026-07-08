@@ -164,7 +164,7 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
     const newOffice: Office = {
       id: Date.now().toString(),
       country: "India",
-      city: "Select city",
+      city: "",
       address: "",
       mapUrl: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&h=200&fit=crop",
     };
@@ -208,7 +208,8 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
         description: "About info saved successfully!",
       });
       queryClient.invalidateQueries({ queryKey: ["orgAbout", slug] });
-      queryClient.invalidateQueries({ queryKey: ["company", slug] });
+      queryClient.invalidateQueries({ queryKey: ["orgAbout", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
       onCancel();
     },
     onError: (error: any) => {
@@ -322,16 +323,14 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
                   <input
                     type="text"
                     autoComplete="new-password"
-                    value={activeCitySearchOfficeId === office.id ? (citySearchQueries[office.id] ?? office.city) : office.city}
+                    value={activeCitySearchOfficeId === office.id ? (citySearchQueries[office.id] ?? (office.city === "Select city" ? "" : office.city)) : (office.city === "Select city" ? "" : office.city)}
                     onChange={(e) => {
                       setCitySearchQueries(prev => ({ ...prev, [office.id]: e.target.value }));
-                      if (e.target.value === "") {
-                        handleOfficeChange(office.id, "city", "");
-                      }
+                      handleOfficeChange(office.id, "city", e.target.value);
                     }}
                     onFocus={() => {
                       setActiveCitySearchOfficeId(office.id);
-                      if (!citySearchQueries[office.id] && office.city) {
+                      if (!citySearchQueries[office.id] && office.city && office.city !== "Select city") {
                         setCitySearchQueries(prev => ({ ...prev, [office.id]: office.city }));
                       }
                     }}

@@ -133,7 +133,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
         description: "Profile changes saved successfully!",
       });
       queryClient.invalidateQueries({ queryKey: ["orgProfile", slug] });
-      queryClient.invalidateQueries({ queryKey: ["company", slug] });
+      queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
       onCancel();
     },
     onError: (error: any) => {
@@ -296,9 +296,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
               value={isCityDropdownOpen ? (citySearchQuery ?? formData.city) : formData.city}
               onChange={(e) => {
                 setCitySearchQuery(e.target.value);
-                if (e.target.value === "") {
-                  setFormData((prev) => ({ ...prev, city: "" }));
-                }
+                setFormData((prev) => ({ ...prev, city: e.target.value }));
               }}
               onFocus={() => {
                 setIsCityDropdownOpen(true);

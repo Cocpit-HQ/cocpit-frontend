@@ -8,6 +8,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { companyProfileService } from "../../services/companyprofile.service";
 import { CompanyProfileData } from "../../types/company-profile.types";
 import { Icon } from "@iconify/react";
+import { useSocial } from "@/context/SocialContext";
 import { EditAvatarModal, EditCoverModal } from "@/shared/commonComponents/Cocpitprofileupload";
 import {
   DropdownMenu,
@@ -16,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { Link as LinkIcon, Share2 } from "lucide-react";
 
 interface CompanyProfileHeaderProps {
   data: CompanyProfileData;
@@ -34,6 +36,7 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
   
   const [modalType, setModalType] = useState<"logo" | "cover" | null>(null);
   const { toast } = useToast();
+  const { syncFollowStatus } = useSocial();
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -61,9 +64,9 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
       ? companyProfileService.unfollowOrganization(orgId!)
       : companyProfileService.followOrganization(orgId!),
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ["company", slug] });
-      const previousProfile = queryClient.getQueryData(["company", slug]);
-      queryClient.setQueryData(["company", slug], (old: any) => {
+      await queryClient.cancelQueries({ queryKey: ["companyProfile", slug] });
+      const previousProfile = queryClient.getQueryData(["companyProfile", slug]);
+      queryClient.setQueryData(["companyProfile", slug], (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -73,11 +76,26 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
           }
         };
       });
+      if (orgId) {
+        syncFollowStatus(orgId, !data.isFollowing);
+      }
       return { previousProfile };
     },
     onError: (err, variables, context) => {
       if (context?.previousProfile) {
-        queryClient.setQueryData(["company", slug], context.previousProfile);
+        queryClient.setQueryData(["companyProfile", slug], context.previousProfile);
+        if (orgId) {
+          syncFollowStatus(orgId, !!data.isFollowing);
+        }
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
+      if (orgId) {
+        queryClient.invalidateQueries({ queryKey: ["company_relationship", orgId] });
+        queryClient.invalidateQueries({ queryKey: ["company_followers", orgId] });
+        queryClient.invalidateQueries({ queryKey: ["profileStats"] });
+        queryClient.invalidateQueries({ queryKey: ["following"] });
       }
     }
   });
@@ -180,12 +198,14 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
                           <Icon icon="ph:dots-three-outline-vertical-light" width="24" height="24" />
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={handleCopyLink} className="cursor-pointer">
-                          Copy link
+                      <DropdownMenuContent side="right" align="end" className="w-48">
+                        <DropdownMenuItem onClick={handleCopyLink} className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors">
+                          <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Copy Profile</span>
+                          <LinkIcon className="w-4 h-4 text-black dark:text-zinc-400 group-focus:text-[#6366F1] transition-colors" />
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={onShareClick} className="cursor-pointer">
-                          Share profile
+                        <DropdownMenuItem onClick={onShareClick} className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors">
+                          <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Share Profile</span>
+                          <Share2 className="w-4 h-4 text-black dark:text-zinc-400 group-focus:text-[#6366F1] transition-colors" />
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -231,9 +251,23 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
                 >
                   Message
                 </Link>
-                <button className="w-[36px] h-[36px] bg-transparent text-[#1A73E8] border border-[#1A73E8] rounded-full flex items-center justify-center hover:bg-blue-50 transition-colors shadow-sm">
-                  <Icon icon="ph:dots-three-outline-vertical-light" className="w-[18px] h-[18px] text-[#1A73E8]" />
-                </button>
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <button className="w-[36px] h-[36px] bg-transparent text-[#1A73E8] border border-[#1A73E8] rounded-full flex items-center justify-center hover:bg-blue-50 transition-colors shadow-sm outline-none focus:outline-none focus:ring-0">
+                      <Icon icon="ph:dots-three-outline-vertical-light" className="w-[18px] h-[18px] text-[#1A73E8]" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="right" align="end" className="w-48">
+                    <DropdownMenuItem onClick={handleCopyLink} className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors">
+                      <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Copy Profile</span>
+                      <LinkIcon className="w-4 h-4 text-black dark:text-zinc-400 group-focus:text-[#6366F1] transition-colors" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={onShareClick} className="flex items-center justify-between px-3 py-1.5 cursor-pointer focus:bg-[#EEF2FF] focus:text-[#6366F1] rounded-xl outline-none group transition-colors">
+                      <span className="text-sm font-medium text-foreground group-focus:text-[#6366F1]">Share Profile</span>
+                      <Share2 className="w-4 h-4 text-black dark:text-zinc-400 group-focus:text-[#6366F1] transition-colors" />
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             )}
           </div>

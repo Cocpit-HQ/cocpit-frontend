@@ -86,6 +86,10 @@ export const PostHeader = ({
           };
         });
       }
+      queryClient.invalidateQueries({ queryKey: ["company_relationship", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["company_followers", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["profileStats"] });
+      queryClient.invalidateQueries({ queryKey: ["following"] });
     }
   });
 
@@ -105,6 +109,10 @@ export const PostHeader = ({
           };
         });
       }
+      queryClient.invalidateQueries({ queryKey: ["company_relationship", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["company_followers", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["profileStats"] });
+      queryClient.invalidateQueries({ queryKey: ["following"] });
     }
   });
 
