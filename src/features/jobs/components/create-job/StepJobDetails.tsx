@@ -63,7 +63,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   const [currency, setCurrency] = useState(initialDetails?.salary_currency || 'USD');
   const [industry, setIndustry] = useState(initialDetails?.industry || '');
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [regenerateCount, setRegenerateCount] = useState(0);
+  const [regenerateCount, setRegenerateCount] = useState(initialDetails?.ai_generation_count || 0);
 
   // Safely populate defaults when the profile data resolves, if it wasn't cached instantly
   useEffect(() => {
@@ -117,50 +117,59 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
     });
   }, [role, company, location, description, experience, workType, workMode, minSalary, maxSalary, currency, industry, setCreateJobDetails]);
 
-  // Fetch background AI generation if description is empty
+  // Fetch background AI generation if description is empty, and get ai_generation_count
   useEffect(() => {
-    if (!jobId || description.trim() !== '') return;
+    if (!jobId) return;
 
     let isMounted = true;
     let retryCount = 0;
     const maxRetries = 6;
+    const initialDescriptionEmpty = description.trim() === '';
 
     const fetchJob = async () => {
       // Stop if user has already explicitly clicked "Regenerate with AI"
       if (hasManuallyRegenerated.current) return;
 
       try {
-        setIsAiGenerating(true);
+        if (initialDescriptionEmpty) {
+          setIsAiGenerating(true);
+        }
         const response = await api.get(`/jobs/${jobId}`);
         const jobData = response.data;
 
-        if (isMounted && !hasManuallyRegenerated.current && jobData.description && jobData.description.trim() !== '') {
-          setDescription(jobData.description);
-          setIsAiGenerating(false);
-
-          // Auto-fill other fields if provided by AI
-          if (jobData.experience_min !== null && jobData.experience_max !== null) {
-            const min = parseInt(jobData.experience_min, 10);
-            if (isNaN(min) || min === 0) {
-              setExperience('Fresher');
-            } else if (min <= 2) {
-              setExperience('Junior (1-3 yrs)');
-            } else if (min <= 4) {
-              setExperience('Mid-level (3-5 yrs)');
-            } else {
-              setExperience('Senior (5+ yrs)');
-            }
+        if (isMounted) {
+          if (jobData.ai_generation_count !== undefined) {
+            setRegenerateCount(jobData.ai_generation_count);
           }
-        } else if (isMounted && !hasManuallyRegenerated.current && retryCount < maxRetries) {
-          // If description is still empty, retry after 1.5 seconds
-          retryCount++;
-          setTimeout(fetchJob, 1500);
-        } else if (isMounted) {
-          setIsAiGenerating(false);
+
+          if (initialDescriptionEmpty && !hasManuallyRegenerated.current && jobData.description && jobData.description.trim() !== '') {
+            setDescription(jobData.description);
+            setIsAiGenerating(false);
+
+            // Auto-fill other fields if provided by AI
+            if (jobData.experience_min !== null && jobData.experience_max !== null) {
+              const min = parseInt(jobData.experience_min, 10);
+              if (isNaN(min) || min === 0) {
+                setExperience('Fresher');
+              } else if (min <= 2) {
+                setExperience('Junior (1-3 yrs)');
+              } else if (min <= 4) {
+                setExperience('Mid-level (3-5 yrs)');
+              } else {
+                setExperience('Senior (5+ yrs)');
+              }
+            }
+          } else if (initialDescriptionEmpty && !hasManuallyRegenerated.current && retryCount < maxRetries) {
+            // If description is still empty, retry after 1.5 seconds
+            retryCount++;
+            setTimeout(fetchJob, 1500);
+          } else if (initialDescriptionEmpty) {
+            setIsAiGenerating(false);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch generated job details", error);
-        if (isMounted) setIsAiGenerating(false);
+        if (isMounted && initialDescriptionEmpty) setIsAiGenerating(false);
       }
     };
 
@@ -775,7 +784,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
                                 >
                                   <div className="flex-1 flex flex-col">
                                     <span className="text-sm font-medium font-['Poppins'] text-indigo-700">
-                                      Select "Other"
+                                      Select &quot;Other&quot;
                                     </span>
                                   </div>
                                 </button>

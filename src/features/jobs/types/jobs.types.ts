@@ -101,6 +101,7 @@ export interface JobListing {
   applicants_count?: number;
   shortlisted_count?: number;
   offers_count?: number;
+  ai_generation_count?: number;
 }
 
 export interface ListingsCounts {
