@@ -8,6 +8,11 @@ import { Search } from "lucide-react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { companyProfileService } from "../../../services/companyprofile.service";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
+import { sendConnectionRequest } from "@/services/api/connections";
+import { companyService } from "@/services/organization.service";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 
 interface PeopleTabProps {
   data: CompanyProfileData;
@@ -17,6 +22,10 @@ export default function PeopleTab({ data }: PeopleTabProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   const isEdu = data.entityType === "INSTITUTE";
+  const { activeProfile } = useActiveProfile();
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+  const [connectingId, setConnectingId] = useState<string | null>(null);
 
   const { data: peopleData, isLoading } = useQuery({
     queryKey: ["orgPeople", data.id, debouncedSearch, isEdu],
@@ -27,7 +36,6 @@ export default function PeopleTab({ data }: PeopleTabProps) {
     placeholderData: keepPreviousData,
   });
 
-  console.log("PeopleTab API response:", peopleData);
 
   let distributions: any[] = [];
   if (peopleData?.insights) {
@@ -40,15 +48,49 @@ export default function PeopleTab({ data }: PeopleTabProps) {
     ].filter((dist) => dist.items.length > 0);
   }
 
-  const employeesList = (peopleData?.people || []).map((emp: any) => ({
-    id: emp.user_id || emp.id || emp._id,
-    name: emp.full_name || emp.name || "Unknown",
-    role: emp.headline || emp.role_display || emp.title || emp.role || "Associate",
-    avatar: emp.avatar_url || emp.avatar || emp.profile_image || "/images/companyonboarding/companyprofileDefault.jpg",
-    account_name: emp.account_name || emp.id,
-    action: "view",
-    textWidth: "125px",
-  }));
+  const employeesList = (peopleData?.people || []).map((emp: any) => {
+    let action = "connect";
+    const empId = String(emp.user_id || emp.id || emp._id || "").toLowerCase();
+    const currentUserIdStr = String(session?.user?.id || (session?.user as any)?.user_id || (session?.user as any)?.sub || "").toLowerCase();
+
+    if (empId && currentUserIdStr && empId === currentUserIdStr) {
+      action = "empty"; // Hide button for oneself
+    } else if (activeProfile?.type === "COMPANY") {
+      action = "message"; // Show message button for all other users when logged in as company
+    } else if (emp.connection_request_status === "connected") {
+      action = "view";
+    } else if (emp.connection_request_status === "pending") {
+      if (emp.connection_request_sender === "me") {
+        action = "pending";
+      } else {
+        action = "empty";
+      }
+    }
+
+    return {
+      id: empId,
+      name: emp.full_name || emp.name || "Unknown",
+      role: emp.headline || emp.role_display || emp.title || emp.role || "Associate",
+      avatar: emp.avatar_url || emp.avatar || emp.profile_image || "/images/companyonboarding/companyprofileDefault.jpg",
+      account_name: emp.account_name || emp.id,
+      action,
+      textWidth: "125px",
+    };
+  });
+
+  const handleConnect = async (userId: string) => {
+    try {
+      setConnectingId(userId);
+      // Always use user-to-user connection (not company connection)
+      // because on the People tab we are connecting with individual employees
+      await sendConnectionRequest(userId);
+      queryClient.invalidateQueries({ queryKey: ["orgPeople", data.id] });
+    } catch (error) {
+      console.error("Failed to connect:", error);
+    } finally {
+      setConnectingId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -580,7 +622,7 @@ export default function PeopleTab({ data }: PeopleTabProps) {
           </div>
 
           {/* Action Buttons */}
-          {emp.action === "view" ? (
+          {emp.action === "view" && (
             <Link
               href={`/profile/${emp.account_name}`}
               style={{
@@ -619,8 +661,52 @@ export default function PeopleTab({ data }: PeopleTabProps) {
                 View Profile
               </span>
             </Link>
-          ) : (
+          )}
+          
+          {emp.action === "pending" && (
             <button
+              style={{
+                boxSizing: "border-box",
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: "8px 16px",
+                gap: "10px",
+                width: "100px",
+                height: "40px",
+                border: "1px solid #1A73E8",
+                borderRadius: "24px",
+                flex: "none",
+                order: 1,
+                flexGrow: 0,
+                cursor: "default",
+              }}
+              className="bg-white dark:bg-transparent opacity-70"
+              disabled
+            >
+              <span
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: 400,
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  textAlign: "center",
+                  color: "#1A73E8",
+                  flex: "none",
+                  order: 0,
+                  flexGrow: 0,
+                }}
+              >
+                Pending
+              </span>
+            </button>
+          )}
+
+          {emp.action === "connect" && (
+            <button
+              onClick={() => handleConnect(emp.id)}
+              disabled={connectingId === emp.id}
               style={{
                 boxSizing: "border-box",
                 display: "flex",
@@ -654,9 +740,55 @@ export default function PeopleTab({ data }: PeopleTabProps) {
                   flexGrow: 0,
                 }}
               >
-                Connect
+                {connectingId === emp.id ? "..." : "Connect"}
               </span>
             </button>
+          )}
+
+          {emp.action === "empty" && (
+             <div style={{ width: "100px" }} />
+          )}
+
+          {emp.action === "message" && (
+            <Link
+              href={`/messaging?userId=${emp.id}`}
+              style={{
+                boxSizing: "border-box",
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: "8px 16px",
+                gap: "10px",
+                width: "100px",
+                height: "40px",
+                background: "#1A73E8",
+                borderRadius: "24px",
+                flex: "none",
+                order: 1,
+                flexGrow: 0,
+                cursor: "pointer",
+                border: "none",
+                textDecoration: "none",
+              }}
+              className="hover:bg-blue-700 transition-colors"
+            >
+              <span
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: 400,
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  textAlign: "center",
+                  color: "#FFFFFF",
+                  flex: "none",
+                  order: 0,
+                  flexGrow: 0,
+                }}
+              >
+                Message
+              </span>
+            </Link>
           )}
         </div>
       ))}
