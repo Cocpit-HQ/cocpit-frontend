@@ -14,15 +14,17 @@ import { toast } from 'sonner';
 import ListingsSkeleton from '../skeletons/ListingsSkeleton';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useJobStore } from '@/store/job.store';
+import Image from 'next/image';
 
 interface MyListingsDashboardProps {
   onBack: () => void;
+  isCompanyMode?: boolean;
 }
 
 type SubTab = 'Job listings' | 'Sent offers';
 type ViewState = 'dashboard' | 'create-job' | 'view-listing' | 'applicants' | 'offer-details';
 
-export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack }) => {
+export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack, isCompanyMode = false }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlView = searchParams?.get('view') as ViewState | null;
@@ -296,25 +298,27 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       <div className="w-full flex flex-col gap-6 animate-in fade-in duration-300">
       {/* Header Row */}
       <div className="flex items-center gap-4">
-        <button
-          onClick={onBack}
-          className="size-12 p-2 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-300 backdrop-blur-md flex justify-center items-center gap-2.5 hover:bg-slate-50 transition-colors active:scale-95 text-gray-500"
-        >
-          <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500" />
-        </button>
+        {!isCompanyMode && (
+          <button
+            onClick={onBack}
+            className="size-12 p-2 rounded-[100px] outline outline-1 outline-offset-[-1px] outline-zinc-300 dark:outline-[#2E3445] backdrop-blur-md flex justify-center items-center gap-2.5 hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-colors active:scale-95 text-gray-500 dark:text-[#9CA3AF]"
+          >
+            <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500 dark:text-[#9CA3AF]" />
+          </button>
+        )}
         <div className="inline-flex flex-col justify-start items-start">
-          <div className="text-center justify-start text-black text-lg font-medium font-['Poppins'] leading-6">Posted jobs</div>
-          <div className="text-center justify-start text-gray-500 text-xs font-normal font-['Poppins'] leading-4">Post, manage, and track all your job listings in one place</div>
+          <div className={`text-center justify-start text-black text-lg font-medium font-['Poppins'] leading-6 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>Posted jobs</div>
+          <div className={`text-center justify-start text-gray-500 text-xs font-normal font-['Poppins'] leading-4 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>Post, manage, and track all your job listings in one place</div>
         </div>
       </div>
 
       {/* Hero Banner */}
-      <div className="w-full bg-[#F5F8FF] rounded-3xl p-8 flex justify-between items-center relative overflow-hidden">
+      <div className={`w-full rounded-3xl p-8 flex justify-between items-center relative overflow-hidden ${isCompanyMode ? 'bg-[#F0F5FF] dark:bg-[#121B2B]' : 'bg-[#F5F8FF] dark:bg-[#1C2340]'}`}>
         <div className="flex flex-col justify-start items-start max-w-lg z-10">
-          <h2 className="text-black text-3xl font-bold font-['Poppins'] mb-2">
+          <h2 className={`text-black text-3xl font-bold font-['Poppins'] mb-2 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>
             {activeSubTab === 'Job listings' ? 'Post jobs & find talent' : 'Send job offers'}
           </h2>
-          <p className="text-gray-600 text-sm font-normal font-['Poppins'] mb-6">
+          <p className={`text-gray-600 text-sm font-normal font-['Poppins'] mb-6 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>
             {activeSubTab === 'Job listings' 
               ? 'Manage your core network, track subscriber growth, and publish thought leadership across the Cocpit ecosystem.'
               : 'Hire top talent faster by sending personalized job offers and tracking candidate responses in one place.'}
@@ -328,15 +332,24 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
                 setIsSendOfferModalOpen(true);
               }
             }}
-            className="px-6 py-2.5 bg-[#6366F1] hover:bg-indigo-600 rounded-[24px] text-white text-sm font-semibold font-['Poppins'] transition-all active:scale-95 shadow-sm"
+            className={`px-6 py-2.5 rounded-[24px] text-white text-sm font-semibold font-['Poppins'] transition-all active:scale-95 shadow-sm ${
+              isCompanyMode ? 'bg-[#1A73E8] dark:bg-[#4D9CFF]' : 'bg-[#6366F1] dark:bg-[#818CF8]'
+            }`}
           >
             {activeSubTab === 'Job listings' ? 'Create job' : 'Send offer'}
           </button>
         </div>
         
-        {/* Placeholder Illustration (replace with real assets when available) */}
-        <div className="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 w-64 h-40 bg-indigo-100 rounded-xl justify-center items-center opacity-50 z-0">
-           <Icon icon="lucide:image" className="w-10 h-10 text-indigo-300" />
+        {/* Illustration */}
+        <div className="hidden md:flex absolute right-0 top-0 h-full w-auto">
+          <Image
+            src={activeSubTab === 'Job listings' ? "/images/companyonboarding/jobpostcompany.png" : "/images/companyonboarding/companyjoboffer.png"}
+            alt="Jobs illustration"
+            width={350}
+            height={200}
+            className="h-full w-auto object-cover object-right"
+            priority
+          />
         </div>
       </div>
 
@@ -348,10 +361,11 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
             <button
               key={tab}
               onClick={() => setActiveSubTab(tab)}
-              className={`h-10 px-5 py-1.5 rounded-full flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${isActive
-                  ? 'bg-indigo-50 border-indigo-200 text-indigo-500'
-                  : 'bg-white border-transparent hover:bg-gray-50 text-gray-500 hover:text-black'
-                }`}
+              className={`h-10 px-5 py-1.5 rounded-full flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${
+                isActive
+                  ? (isCompanyMode ? 'bg-blue-50 dark:bg-[#1A2435] border-blue-200 dark:border-[#2A2D35] text-[#1A73E8] dark:text-[#4D9CFF]' : 'bg-indigo-50 dark:bg-[#1C2340] border-indigo-200 dark:border-[#2E3445] text-indigo-500 dark:text-[#818CF8]')
+                  : `bg-white border-transparent text-gray-500 hover:text-black hover:bg-gray-50 ${isCompanyMode ? 'dark:bg-[#0F1115] dark:hover:bg-[#2A2D35] dark:text-[#A1A8B3] dark:hover:text-[#FFFFFF]' : 'dark:bg-[#0B0F19] dark:hover:bg-[#2E3445] dark:text-[#9CA3AF] dark:hover:text-[#F9FAFB]'}`
+              }`}
             >
               {tab}
             </button>
@@ -368,30 +382,32 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
                   <g fillRule="evenodd" clipRule="evenodd">
                     {/* Magnifying Glass overlay in Black */}
                     <path
-                      fill="#000000"
+                      className={isCompanyMode ? "fill-[#000000] dark:fill-[#FFFFFF]" : "fill-[#000000] dark:fill-[#F9FAFB]"}
                       d="M21.954 10.509a4.08 4.08 0 0 0 1.995-3.064a6 6 0 0 0-.658-3.602a5.5 5.5 0 0 0-2.395-2.375a5 5 0 0 0-3.393-.38a9.3 9.3 0 0 0-2.664 1.048a5.4 5.4 0 0 0-1.487 1.327a5.54 5.54 0 0 0-.848 4.212a4.99 4.99 0 0 0 2.355 3.532a5.05 5.05 0 0 0 2.235.569c1.108.008 2.212-.15 3.273-.47a.27.27 0 0 0 .19-.219q.232.543.519 1.058q.147.251.329.48a6 6 0 0 0 .38.448c.318.34.658.649.997.998a.32.32 0 0 0 .459 0a.32.32 0 0 0 0-.449c-.24-.39-.45-.788-.688-1.168a6 6 0 0 0-.33-.479a4 4 0 0 0-.36-.449c-.229-.25-.468-.469-.708-.698h.12q.358-.121.679-.32m-4.84.568a4.14 4.14 0 0 1-1.876-.559a4.12 4.12 0 0 1-1.796-2.993a4.56 4.56 0 0 1 .758-3.403a4.5 4.5 0 0 1 1.567-1.247a8.8 8.8 0 0 1 1.996-.719a4 4 0 0 1 2.694.25a4.65 4.65 0 0 1 1.996 1.896a5.1 5.1 0 0 1 .678 3.053a3.4 3.4 0 0 1-1.547 2.575a3.2 3.2 0 0 1-.648.3c-1.188.368-1.397 1.047-3.872.847z"
                     />
                     {/* Briefcase outline in Indigo/Blue */}
                     <path
-                      fill="#6366F1"
+                      className={isCompanyMode ? "fill-[#1A73E8] dark:fill-[#4D9CFF]" : "fill-[#6366F1] dark:fill-[#818CF8]"}
                       d="M19.16 13.722a1.6 1.6 0 0 1-.62.14c-.578.11-1.286.11-2.105.11H14.25c-.798.07-1.527.139-2.076.209v-.4a1.92 1.92 0 0 0-1.307-1.516a1.74 1.74 0 0 0-1.886.638c-.297.368-.487.81-.549 1.278v.15c-.808-.06-2.604-.14-4.2-.32a16 16 0 0 1-1.667-.26a2.2 2.2 0 0 1-.829-.299a2.4 2.4 0 0 1-.788-1.556a14.6 14.6 0 0 1 .05-3.124a.3.3 0 0 0 0-.14c1.297.1 2.584.21 3.892.24h2.445c1.227 0 2.444-.09 3.662-.1a.32.32 0 0 0 .34-.31a.32.32 0 0 0-.36-.338a52 52 0 0 0-3.573-.29H6.317q.082-.659.27-1.297c.053-.259.194-.491.398-.659c.21-.141.449-.236.699-.28q.453-.112.918-.159q.996-.105 1.996-.09a.32.32 0 0 0 .379-.289a.34.34 0 0 0-.3-.36a12.5 12.5 0 0 0-2.514-.239a3.33 3.33 0 0 0-1.826.589a1.9 1.9 0 0 0-.54.998a7 7 0 0 0-.07 1.796H4.372c-1.228.03-2.375.14-3.603.2C.36 8.044 0 11.187 0 11.975c.029.853.387 1.661.998 2.256a4.7 4.7 0 0 0 2.395.728q2.494.126 4.99 0c0 .36.06.719.11.998a.3.3 0 0 0 .308.26a.29.29 0 0 0 .26-.25a5.8 5.8 0 0 1 .11-1.646c.084-.309.245-.59.469-.819a.83.83 0 0 1 .878-.19a.87.87 0 0 1 .569.69c0 .169.05.358.07.548v.17q.045.429 0 .858a2 2 0 0 1-.32.898a1.7 1.7 0 0 1-.569.459a.69.69 0 0 1-.578.09a.36.36 0 0 1-.16-.14c-.06-.1-.11-.21-.16-.31a.33.33 0 0 0-.429-.159a.31.31 0 0 0-.16.43q.09.248.22.478q.132.194.33.32a1.28 1.28 0 0 0 .997.1c.447-.13.85-.379 1.168-.72c.302-.359.51-.787.609-1.247a4.6 4.6 0 0 0 .1-.828c.548 0 1.277.1 2.085.11c.639 0 1.307 0 1.946-.07a8 8 0 0 0 3.323-.788a.33.33 0 0 0 0-.45a.33.33 0 0 0-.4-.03"
                     />
                     <path
-                      fill="#6366F1"
+                      className={isCompanyMode ? "fill-[#1A73E8] dark:fill-[#4D9CFF]" : "fill-[#6366F1] dark:fill-[#818CF8]"}
                       d="M18.89 15.229a.32.32 0 0 0-.34.309l-.209 4.091q.02.605-.1 1.198a.93.93 0 0 1-.289.519a2.5 2.5 0 0 1-1.118.439q-1.037.15-2.085.16h-2.714c-2.146-.07-4.281-.22-6.427-.23a19 19 0 0 1-2.525 0a2.2 2.2 0 0 1-1.317-.48a.9.9 0 0 1-.23-.508a5.6 5.6 0 0 1 0-1.158v-2.993c0-.41 0-.828.05-1.248a.29.29 0 0 0-.469-.245a.28.28 0 0 0-.1.196c-.05.429-.079.858-.099 1.277c-.05.998-.06 1.996-.12 2.994a8 8 0 0 0 0 1.297c.022.369.166.72.41.998a2.7 2.7 0 0 0 1.347.738a15.6 15.6 0 0 0 3.113.21c2.136 0 4.271.21 6.406.26c.929 0 1.857 0 2.795-.05a14 14 0 0 0 2.225-.25a3.4 3.4 0 0 0 1.517-.689c.27-.272.45-.62.519-.998q.11-.689.08-1.387l.05-4.061a.32.32 0 0 0-.213-.38a.3.3 0 0 0-.157-.01"
                     />
                   </g>
                 </svg>
                 <div className="flex flex-col justify-start items-center">
-                  <div className="text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6">No jobs listing yet</div>
-                  <div className="w-80 text-center justify-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4">Create your first job posting and begin receiving applications from top talent.</div>
+                  <div className={`text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6 ${isCompanyMode ? 'dark:text-[#FFFFFF]' : 'dark:text-[#F9FAFB]'}`}>No jobs listing yet</div>
+                  <div className={`w-80 text-center justify-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4 ${isCompanyMode ? 'dark:text-[#A1A8B3]' : 'dark:text-[#9CA3AF]'}`}>Create your first job posting and begin receiving applications from top talent.</div>
                 </div>
                 <button
                   onClick={() => {
                     transitionTo('create-job');
                   }}
                   type="button"
-                  className="w-48 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 transition-all active:scale-95 rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 inline-flex justify-center items-center gap-2.5 text-white"
+                  className={`w-48 px-4 py-2 transition-all active:scale-95 rounded-3xl outline outline-1 outline-offset-[-1px] inline-flex justify-center items-center gap-2.5 text-white ${
+                    isCompanyMode ? 'bg-[#1A73E8] dark:bg-[#4D9CFF] outline-blue-50 dark:outline-[#1A2435]' : 'bg-indigo-500 dark:bg-[#818CF8] outline-indigo-50 dark:outline-[#2E3445]'
+                  }`}
                 >
                   <Icon icon="lucide:plus" className="w-4 h-4 text-white" />
                   <div className="text-center justify-start text-sm font-semibold font-['Poppins'] leading-5">Create job</div>
@@ -426,6 +442,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
               }}
               onSelectOfferGroup={handleSelectOfferGroup}
               onOpenSendOfferModal={() => setIsSendOfferModalOpen(true)}
+              isCompanyMode={isCompanyMode}
             />
           )}
         </div>

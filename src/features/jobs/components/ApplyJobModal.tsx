@@ -121,7 +121,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-[480px] [&>button]:hidden outline-none z-[101]">
-        <div className="relative bg-white rounded-[28px] p-6 w-full shadow-[0px_8px_32px_rgba(0,0,0,0.08)] flex flex-col items-center outline-none border border-indigo-50/50">
+        <div className="relative bg-white dark:bg-[#0B0F19] rounded-[28px] p-6 w-full shadow-[0px_8px_32px_rgba(0,0,0,0.08)] flex flex-col items-center outline-none border border-indigo-50/50 dark:border-[#2E3445]/50">
           
           {/* Top Close Row */}
           <div className="flex justify-end w-full mb-2">
@@ -140,10 +140,10 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
               
               {/* Title Section */}
               <div className="text-center mb-6">
-                <DialogTitle className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-[#000000] text-center">
+                <DialogTitle className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-[#000000] dark:text-[#F9FAFB] text-center">
                   Apply job
                 </DialogTitle>
-                <DialogDescription className="font-['Poppins'] font-normal text-[12px] leading-[18px] text-[#6B7280] mt-1 text-center">
+                <DialogDescription className="font-['Poppins'] font-normal text-[12px] leading-[18px] text-[#6B7280] dark:text-[#9CA3AF] mt-1 text-center">
                   Select or upload your resume to complete your application
                 </DialogDescription>
               </div>
@@ -151,7 +151,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
               {/* Upload Section */}
               <div 
                 onClick={handleUploadAreaClick}
-                className="w-full border-2 border-dashed border-indigo-100 rounded-2xl p-5 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-indigo-50/20 hover:border-indigo-300 transition-all mb-6"
+                className="w-full border-2 border-dashed border-indigo-100 dark:border-[#2E3445] rounded-2xl p-5 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-indigo-50/20 dark:hover:bg-[#2E3445]/20 hover:border-indigo-300 dark:hover:border-[#818CF8] transition-all mb-6"
               >
                 <input 
                   type="file"
@@ -163,15 +163,15 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                 
                 {/* Upload Icon Area */}
                 <div className="w-10 h-10 flex items-center justify-center text-slate-400">
-                  <Icon icon="solar:cloud-upload-linear" className="w-8 h-8 text-[#6B7280]" />
+                  <Icon icon="solar:cloud-upload-linear" className="w-8 h-8 text-[#6B7280] dark:text-[#9CA3AF]" />
                 </div>
 
                 {/* Info Texts */}
                 <div className="flex flex-col items-center">
-                  <span className="font-['Poppins'] font-normal text-[10px] text-[#6B7280] leading-normal uppercase tracking-wider">
+                  <span className="font-['Poppins'] font-normal text-[10px] text-[#6B7280] dark:text-[#9CA3AF] leading-normal uppercase tracking-wider">
                     PDF, DOC, DOCX · Max 5MB
                   </span>
-                  <span className="font-['Poppins'] font-normal text-[12px] text-[#6B7280] leading-normal mt-0.5">
+                  <span className="font-['Poppins'] font-normal text-[12px] text-[#6B7280] dark:text-[#9CA3AF] leading-normal mt-0.5">
                     Upload your latest resume
                   </span>
                 </div>
@@ -179,23 +179,23 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
 
               {/* Recent Resume Section */}
               <div className="w-full flex flex-col gap-3 mb-8">
-                <h4 className="font-['Poppins'] font-normal text-[12px] text-[#000000] text-left">
+                <h4 className="font-['Poppins'] font-normal text-[12px] text-[#000000] dark:text-[#F9FAFB] text-left">
                   Recent resume
                 </h4>
                 
                 {/* Custom uploaded item if present */}
                 {uploadedFile && (
                   <div 
-                    className="p-3 bg-white rounded-xl flex justify-start items-center gap-4 self-stretch border-2 border-[#6366F1] shadow-[0px_4px_12px_rgba(99,102,241,0.04)]"
+                    className="p-3 bg-white dark:bg-[#1C2340] rounded-xl flex justify-start items-center gap-4 self-stretch border-2 border-[#6366F1] dark:border-[#818CF8] shadow-[0px_4px_12px_rgba(99,102,241,0.04)]"
                   >
                     <div className="w-10 h-10 bg-[#F87171] rounded-xl flex items-center justify-center text-white flex-shrink-0">
                       <Icon icon="bi:file-earmark-pdf-fill" className="w-5 h-6 text-white" />
                     </div>
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
-                      <span className="font-['Poppins'] font-semibold text-sm leading-5 text-[#000000] truncate">
+                      <span className="font-['Poppins'] font-semibold text-sm leading-5 text-[#000000] dark:text-[#F9FAFB] truncate">
                         {uploadedFile.name}
                       </span>
-                      <span className="font-['Poppins'] font-normal text-xs text-[#6B7280] mt-0.5">
+                      <span className="font-['Poppins'] font-normal text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
                         Uploaded just now
                       </span>
                     </div>
@@ -213,7 +213,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
 
                 {/* Recent Resumes List */}
                 {fetchedResumes.length === 0 && !uploadedFile && (
-                  <span className="font-['Poppins'] text-sm text-[#6B7280]">No recent resumes found</span>
+                  <span className="font-['Poppins'] text-sm text-[#6B7280] dark:text-[#9CA3AF]">No recent resumes found</span>
                 )}
                 {fetchedResumes.map((resume) => {
                   const isSelected = selectedResumeId === resume.id;
@@ -221,20 +221,20 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
                     <div 
                       key={resume.id}
                       onClick={() => handleResumeSelect(resume.id)}
-                      className={`p-3 bg-white rounded-xl flex justify-start items-center gap-4 self-stretch border cursor-pointer transition-all ${
+                      className={`p-3 bg-white dark:bg-[#0B0F19] rounded-xl flex justify-start items-center gap-4 self-stretch border cursor-pointer transition-all ${
                         isSelected 
-                          ? 'border-2 border-[#6366F1] shadow-[0px_4px_12px_rgba(99,102,241,0.04)]' 
-                          : 'border-[#EEF2FF] hover:border-indigo-100'
+                          ? 'border-2 border-[#6366F1] dark:border-[#818CF8] shadow-[0px_4px_12px_rgba(99,102,241,0.04)]' 
+                          : 'border-[#EEF2FF] dark:border-[#2E3445] hover:border-indigo-100 dark:hover:border-[#818CF8]'
                       }`}
                     >
                       <div className="w-10 h-10 bg-[#F87171] rounded-xl flex items-center justify-center text-white flex-shrink-0">
                         <Icon icon="bi:file-earmark-pdf-fill" className="w-5 h-6 text-white" />
                       </div>
                       <div className="flex-1 min-w-0 flex flex-col justify-center">
-                        <span className="font-['Poppins'] font-semibold text-sm leading-5 text-[#000000] truncate">
+                        <span className="font-['Poppins'] font-semibold text-sm leading-5 text-[#000000] dark:text-[#F9FAFB] truncate">
                           {resume.name}
                         </span>
-                        <span className="font-['Poppins'] font-normal text-xs text-[#6B7280] mt-0.5">
+                        <span className="font-['Poppins'] font-normal text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
                           {resume.type}
                         </span>
                       </div>
@@ -247,17 +247,17 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
               <div className="flex gap-4 w-full self-stretch">
                 <button
                   onClick={handleCancel}
-                  className="flex-1 h-10 px-4 rounded-[24px] border border-[#818CF8] bg-white hover:bg-indigo-50/20 font-['Poppins'] font-normal text-[14px] text-[#818CF8] transition-colors"
+                  className="flex-1 h-10 px-4 rounded-[24px] border border-[#818CF8] dark:border-[#818CF8] bg-white dark:bg-[#0B0F19] hover:bg-indigo-50/20 dark:hover:bg-[#2E3445]/20 font-['Poppins'] font-normal text-[14px] text-[#818CF8] dark:text-[#818CF8] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleContinue}
                   disabled={!selectedResumeId && !uploadedFile}
-                  className={`flex-1 h-10 px-4 rounded-[24px] border border-white font-['Poppins'] font-normal text-[14px] text-white transition-all ${
+                  className={`flex-1 h-10 px-4 rounded-[24px] border border-white dark:border-transparent font-['Poppins'] font-normal text-[14px] text-white dark:text-[#F9FAFB] transition-all ${
                     (selectedResumeId || uploadedFile)
-                      ? 'bg-[#6366F1] hover:bg-[#6366F1]/95 cursor-pointer shadow-md'
-                      : 'bg-[#C7D2FE] cursor-not-allowed'
+                      ? 'bg-[#6366F1] dark:bg-[#818CF8] hover:bg-[#6366F1]/95 dark:hover:bg-[#818CF8]/95 cursor-pointer shadow-md'
+                      : 'bg-[#C7D2FE] dark:bg-[#2E3445] cursor-not-allowed'
                   }`}
                 >
                   Continue
@@ -271,24 +271,24 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
               
               {/* Title Section */}
               <div className="text-center mb-6">
-                <DialogTitle className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-[#000000] text-center">
+                <DialogTitle className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-[#000000] dark:text-[#F9FAFB] text-center">
                   Apply job
                 </DialogTitle>
-                <DialogDescription className="font-['Poppins'] font-normal text-[12px] leading-[18px] text-[#6B7280] mt-1 text-center">
+                <DialogDescription className="font-['Poppins'] font-normal text-[12px] leading-[18px] text-[#6B7280] dark:text-[#9CA3AF] mt-1 text-center">
                   Share what makes your application stand out
                 </DialogDescription>
               </div>
 
               {/* Selected Resume Row */}
-              <div className="w-full p-3 bg-white rounded-xl flex justify-start items-center gap-4 self-stretch border border-[#6366F1] shadow-[0px_4px_12px_rgba(99,102,241,0.04)] mb-6">
+              <div className="w-full p-3 bg-white dark:bg-[#1C2340] rounded-xl flex justify-start items-center gap-4 self-stretch border border-[#6366F1] dark:border-[#818CF8] shadow-[0px_4px_12px_rgba(99,102,241,0.04)] mb-6">
                 <div className="w-10 h-10 bg-[#F87171] rounded-xl flex items-center justify-center text-white flex-shrink-0">
                   <Icon icon="bi:file-earmark-pdf-fill" className="w-5 h-6 text-white" />
                 </div>
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
-                  <span className="font-['Poppins'] font-semibold text-sm leading-5 text-[#000000] truncate">
+                  <span className="font-['Poppins'] font-semibold text-sm leading-5 text-[#000000] dark:text-[#F9FAFB] truncate">
                     {selectedResumeName}
                   </span>
-                  <span className="font-['Poppins'] font-normal text-xs text-[#6B7280] mt-0.5">
+                  <span className="font-['Poppins'] font-normal text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
                     {selectedResumeType}
                   </span>
                 </div>
@@ -304,7 +304,7 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
               {/* Cover Letter Textarea */}
               <div className="w-full flex flex-col gap-1 mb-8">
                 <textarea
-                  className="w-full min-h-[120px] bg-white border border-[#EEF2FF] rounded-[16px] px-4 py-3 font-['Poppins'] text-sm leading-5 text-black placeholder:text-[#9CA3AF] focus:border-[#6366F1] focus:ring-0 resize-none outline-none transition-all shadow-[0px_2px_8px_rgba(0,0,0,0.01)]"
+                  className="w-full min-h-[120px] bg-white dark:bg-[#0B0F19] border border-[#EEF2FF] dark:border-[#2E3445] rounded-[16px] px-4 py-3 font-['Poppins'] text-sm leading-5 text-black dark:text-[#F9FAFB] placeholder:text-[#9CA3AF] dark:placeholder:text-[#9CA3AF] focus:border-[#6366F1] dark:focus:border-[#818CF8] focus:ring-0 resize-none outline-none transition-all shadow-[0px_2px_8px_rgba(0,0,0,0.01)]"
                   placeholder="Tell us what makes you unique..."
                   value={coverLetter}
                   onChange={(e) => setCoverLetter(e.target.value)}
@@ -315,13 +315,13 @@ export const ApplyJobModal: React.FC<ApplyJobModalProps> = ({
               <div className="flex gap-4 w-full self-stretch">
                 <button
                   onClick={() => setStep(1)}
-                  className="flex-1 h-10 px-4 rounded-[24px] border border-[#818CF8] bg-white hover:bg-indigo-50/20 font-['Poppins'] font-normal text-[14px] text-[#818CF8] transition-colors"
+                  className="flex-1 h-10 px-4 rounded-[24px] border border-[#818CF8] dark:border-[#818CF8] bg-white dark:bg-[#0B0F19] hover:bg-indigo-50/20 dark:hover:bg-[#2E3445]/20 font-['Poppins'] font-normal text-[14px] text-[#818CF8] dark:text-[#818CF8] transition-colors"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className="flex-1 h-10 px-4 rounded-[24px] border border-white font-['Poppins'] font-normal text-[14px] text-white bg-[#6366F1] hover:bg-[#6366F1]/95 cursor-pointer shadow-md transition-colors"
+                  className="flex-1 h-10 px-4 rounded-[24px] border border-white dark:border-transparent font-['Poppins'] font-normal text-[14px] text-white dark:text-[#F9FAFB] bg-[#6366F1] dark:bg-[#818CF8] hover:bg-[#6366F1]/95 dark:hover:bg-[#818CF8]/95 cursor-pointer shadow-md transition-colors"
                 >
                   Submit
                 </button>

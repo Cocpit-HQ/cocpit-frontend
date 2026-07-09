@@ -2,6 +2,7 @@ import React, { use, useEffect, useRef } from "react";
 import { useJobs } from "../hooks/useJobs";
 import { useJobStore } from "@/store/job.store";
 import { useShallow } from "zustand/react/shallow";
+import { useActiveProfile } from "@/context/ActiveProfileContext";
 import RecommendedJobCard from "../components/RecommendedJobCard";
 import RecommendedJobCardSkeleton from "../components/skeletons/RecommendedJobCardSkeleton";
 import JobCardSkeleton from "../components/skeletons/JobCardSkeleton";
@@ -33,10 +34,13 @@ const getStatusBgClass = (status: string = "") => {
 
 interface JobsPageProps {
   searchParams?: any;
+  isCompanyMode?: boolean; // Kept for backwards compatibility if needed, but we will override
 }
 
-export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
+export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode: propIsCompanyMode = false }) => {
   const router = useRouter();
+  const { isCompany, activeProfile } = useActiveProfile();
+  const isCompanyMode = propIsCompanyMode || (isCompany && !!activeProfile?.id);
 
   // Use reactive useSearchParams so the list updates on every client-side navigation
   const urlParams = useSearchParams();
@@ -379,24 +383,33 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
     { id: "Saved", label: "Saved" },
   ];
 
-  if (activeTab === "My Listings") {
+  if (activeTab === "My Listings" || isCompanyMode) {
     return (
-      <div className="w-full max-w-[998px] mx-auto min-h-screen bg-white pt-[20px] pb-6 px-4 md:px-0 flex flex-col gap-[20px]">
-        <MyListingsDashboard onBack={() => handleTabChange("Explore")} />
+      <div className={`w-full max-w-[998px] mx-auto min-h-screen bg-white ${isCompanyMode ? "dark:bg-[#0F1115]" : "dark:bg-[#0B0F19]"} pt-[20px] pb-6 px-4 md:px-0 flex flex-col gap-[20px]`}>
+        <MyListingsDashboard 
+          isCompanyMode={isCompanyMode}
+          onBack={() => {
+            if (isCompanyMode) {
+              router.push("/feed");
+            } else {
+              handleTabChange("Explore");
+            }
+          }} 
+        />
       </div>
     );
   }
 
   return (
     <div
-      className={`w-full max-w-[998px] mx-auto bg-white pb-[40px] px-4 md:px-0 flex flex-col items-center gap-[24px] border-slate-100/50 rounded-3xl ${activeTab === "Explore" ? "" : "pt-6"
+      className={`w-full max-w-[998px] mx-auto bg-white dark:bg-[#0B0F19] pb-[40px] px-4 md:px-0 flex flex-col items-center gap-[24px] border-slate-100/50 dark:border-[#2E3445]/50 rounded-3xl ${activeTab === "Explore" ? "" : "pt-6"
         }`}
     >
       {/* Hero Banner */}
       {activeTab === "Explore" && jobs.length > 0 && (
-        <div className="w-full h-auto min-h-[136px] px-6 md:px-8 py-6 bg-[#EEF2FF] border border-[#E0E7FF] rounded-[24px] flex flex-col justify-center items-start box-border flex-none self-stretch overflow-hidden">
+        <div className="w-full h-auto min-h-[136px] px-6 md:px-8 py-6 bg-[#EEF2FF] dark:bg-[#1C2340] border border-[#E0E7FF] dark:border-[#252E54] rounded-[24px] flex flex-col justify-center items-start box-border flex-none self-stretch overflow-hidden">
           <div className="w-full flex flex-col items-start flex-none self-stretch">
-            <div className="w-full font-['Poppins'] font-semibold text-2xl md:text-3xl lg:text-[32px] leading-tight md:leading-[40px] flex items-center text-[#6366F1] flex-none self-stretch">
+            <div className="w-full font-['Poppins'] font-semibold text-2xl md:text-3xl lg:text-[32px] leading-tight md:leading-[40px] flex items-center text-[#6366F1] dark:text-[#818CF8] flex-none self-stretch">
               Your next career move,
               <br />
               made simple.
@@ -406,7 +419,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
       )}
 
       {/* Tabs navigation row */}
-      <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center pb-2 pt-2 gap-4 sticky top-[72px] z-30 bg-white">
+      <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center pb-2 pt-2 gap-4 sticky top-[72px] z-30 bg-white dark:bg-[#0B0F19]">
         <div className="flex flex-wrap justify-start items-center gap-2 md:gap-4 w-full md:w-auto">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -415,8 +428,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
                 className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border ${isActive
-                    ? "bg-[#EEF2FF] border-transparent text-[#6366F1]"
-                    : "bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-[#6366F1]/70 hover:text-[#6366F1]"
+                    ? "bg-[#EEF2FF] dark:bg-[#1C2340] border-transparent text-[#6366F1] dark:text-[#818CF8]"
+                    : "bg-white dark:bg-[#0B0F19] border-[#6366F1]/30 dark:border-[#818CF8]/30 hover:border-[#6366F1] dark:hover:border-[#818CF8] text-[#6366F1]/70 dark:text-[#818CF8]/70 hover:text-[#6366F1] dark:hover:text-[#818CF8]"
                   }`}
               >
                 {tab.label}
@@ -429,8 +442,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
         <button
           onClick={() => handleTabChange("My Listings")}
           className={`h-10 px-4 md:px-5 py-1.5 rounded-3xl flex justify-center items-center gap-2 text-sm font-semibold font-['Poppins'] transition-all duration-200 active:scale-95 border w-full md:w-auto ${activeTab === "My Listings"
-              ? "bg-[#EEF2FF] border-transparent text-[#6366F1]"
-              : "bg-white border-[#6366F1]/30 hover:border-[#6366F1] text-[#6366F1]/70 hover:text-[#6366F1]"
+              ? "bg-[#EEF2FF] dark:bg-[#1C2340] border-transparent text-[#6366F1] dark:text-[#818CF8]"
+              : "bg-white dark:bg-[#0B0F19] border-[#6366F1]/30 dark:border-[#818CF8]/30 hover:border-[#6366F1] dark:hover:border-[#818CF8] text-[#6366F1]/70 dark:text-[#818CF8]/70 hover:text-[#6366F1] dark:hover:text-[#818CF8]"
             }`}
         >
           <span>Posted jobs</span>
@@ -442,7 +455,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
       {activeTab === "Explore" && (isRecommendationsLoading || recommendedJobs.length > 0) && (
         <div className="w-full flex flex-col gap-[20px]">
           <div className="flex justify-start items-center">
-            <h3 className="text-black text-lg font-semibold font-['Poppins'] leading-6">
+            <h3 className="text-black dark:text-[#F9FAFB] text-lg font-semibold font-['Poppins'] leading-6">
               AI recommended jobs
             </h3>
           </div>
@@ -476,12 +489,12 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
           </div>
         ) : jobs.length === 0 ? (
           <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
-            <Icon icon="hugeicons:job-search" className="size-20 text-black flex-shrink-0" />
+            <Icon icon="hugeicons:job-search" className="size-20 text-black dark:text-[#F9FAFB] flex-shrink-0" />
             <div className="flex flex-col justify-start items-center gap-2">
-              <div className="text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6">
+              <div className="text-center justify-center text-black dark:text-[#F9FAFB] text-base font-medium font-['Poppins'] leading-6">
                 No jobs applications yet
               </div>
-              <div className="w-80 text-center justify-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4">
+              <div className="w-80 text-center justify-center text-gray-500 dark:text-[#9CA3AF] text-xs font-normal font-['Poppins'] leading-4">
                 New job applications will appear here when you apply
               </div>
             </div>
@@ -491,26 +504,26 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
             {/* Stats Cards Row */}
             <div className="w-full flex flex-col md:flex-row gap-4 md:gap-[24px]">
               {/* Card 1: Total Applied */}
-              <div className="flex-1 min-h-[94px] p-[16px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
-                <div className="text-[#6366F1] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
+              <div className="flex-1 min-h-[94px] p-[16px] bg-[#FFFFFF] dark:bg-[#0B0F19] border border-[#EEF2FF] dark:border-[#2E3445] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
+                <div className="text-[#6366F1] dark:text-[#818CF8] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
                   {selectedDateFilter !== "All time"
                     ? dateFilteredJobs.length
                     : (applicationStats.totalApplied || jobs.length)}
                 </div>
-                <div className="text-[#000000] text-[14px] font-normal font-['Poppins'] leading-[20px]">
+                <div className="text-[#000000] dark:text-[#F9FAFB] text-[14px] font-normal font-['Poppins'] leading-[20px]">
                   Total Applied
                 </div>
               </div>
               {/* Card 2: Shortlisted */}
-              <div className="flex-1 min-h-[94px] p-[16px] bg-[#FFFFFF] border border-[#EEF2FF] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
-                <div className="text-[#6366F1] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
+              <div className="flex-1 min-h-[94px] p-[16px] bg-[#FFFFFF] dark:bg-[#0B0F19] border border-[#EEF2FF] dark:border-[#2E3445] rounded-[24px] flex flex-col justify-center items-start gap-[8px]">
+                <div className="text-[#6366F1] dark:text-[#818CF8] text-[24px] font-semibold font-['Poppins'] leading-[32px]">
                   {selectedDateFilter !== "All time"
                     ? dateFilteredJobs.filter(
                         (job) => job.application_status?.toLowerCase() === "shortlisted"
                       ).length
                     : (applicationStats.shortlisted || 0)}
                 </div>
-                <div className="text-[#000000] text-[14px] font-normal font-['Poppins'] leading-[20px]">
+                <div className="text-[#000000] dark:text-[#F9FAFB] text-[14px] font-normal font-['Poppins'] leading-[20px]">
                   Shortlisted
                 </div>
               </div>
@@ -520,16 +533,16 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
             <div className="w-full flex flex-col gap-[16px]">
               {/* Top Filter Row */}
               <div className="w-full min-h-[40px] flex flex-col sm:flex-row justify-between items-start sm:items-center relative gap-2">
-                <span className="font-['Poppins'] text-[14px] font-normal text-[#000000] leading-[20px]">
+                <span className="font-['Poppins'] text-[14px] font-normal text-[#000000] dark:text-[#F9FAFB] leading-[20px]">
                   Tracking {selectedDateFilter !== "All time" ? dateFilteredJobs.length : (applicationStats.totalApplied || jobs.length)} active job applications across your network.
                 </span>
                 <div ref={dropdownRef} className="relative">
                   <button
                     onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                    className={`h-[40px] px-4 flex items-center justify-center gap-1.5 hover:bg-slate-100 rounded-full transition-all border ${
+                    className={`h-[40px] px-4 flex items-center justify-center gap-1.5 hover:bg-slate-100 dark:hover:bg-[#1C2340] rounded-full transition-all border ${
                       selectedDateFilter !== "All time"
-                        ? "border-[#6366F1]/30 bg-[#EEF2FF] text-[#6366F1]"
-                        : "border-transparent text-black"
+                        ? "border-[#6366F1]/30 dark:border-[#818CF8]/30 bg-[#EEF2FF] dark:bg-[#1C2340] text-[#6366F1] dark:text-[#818CF8]"
+                        : "border-transparent text-black dark:text-[#F9FAFB]"
                     }`}
                   >
                     <Icon
@@ -545,18 +558,18 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
 
                   {/* Filter Options Dropdown */}
                   {isFilterDropdownOpen && (
-                    <div className="absolute right-0 top-[44px] z-50 w-48 p-2 bg-white rounded-tl-3xl rounded-bl-3xl rounded-br-3xl outline outline-1 outline-offset-[-1px] outline-indigo-200 inline-flex flex-col justify-start items-center overflow-hidden shadow-lg">
+                    <div className="absolute right-0 top-[44px] z-50 w-48 p-2 bg-white dark:bg-[#0B0F19] rounded-tl-3xl rounded-bl-3xl rounded-br-3xl outline outline-1 outline-offset-[-1px] outline-indigo-200 dark:outline-[#818CF8]/30 inline-flex flex-col justify-start items-center overflow-hidden shadow-lg">
                       <div
                         onClick={() => {
                           setSelectedDateFilter("All time");
                           setIsFilterDropdownOpen(false);
                         }}
-                        className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50"
+                        className="self-stretch px-4 py-2 bg-white dark:bg-[#0B0F19] rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2E3445]"
                       >
                         <div
                           className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${selectedDateFilter === "All time"
-                              ? "text-indigo-500"
-                              : "text-gray-500"
+                              ? "text-indigo-500 dark:text-[#818CF8]"
+                              : "text-gray-500 dark:text-[#9CA3AF]"
                             }`}
                         >
                           All time
@@ -567,12 +580,12 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                           setSelectedDateFilter("today");
                           setIsFilterDropdownOpen(false);
                         }}
-                        className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50"
+                        className="self-stretch px-4 py-2 bg-white dark:bg-[#0B0F19] rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2E3445]"
                       >
                         <div
                           className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${selectedDateFilter === "today"
-                              ? "text-indigo-500"
-                              : "text-gray-500"
+                              ? "text-indigo-500 dark:text-[#818CF8]"
+                              : "text-gray-500 dark:text-[#9CA3AF]"
                             }`}
                         >
                           Today
@@ -583,12 +596,12 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                           setSelectedDateFilter("last 7 days");
                           setIsFilterDropdownOpen(false);
                         }}
-                        className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50"
+                        className="self-stretch px-4 py-2 bg-white dark:bg-[#0B0F19] rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2E3445]"
                       >
                         <div
                           className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${selectedDateFilter === "last 7 days"
-                              ? "text-indigo-500"
-                              : "text-gray-500"
+                              ? "text-indigo-500 dark:text-[#818CF8]"
+                              : "text-gray-500 dark:text-[#9CA3AF]"
                             }`}
                         >
                           Last 7 days
@@ -599,12 +612,12 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                           setSelectedDateFilter("last 30 days");
                           setIsFilterDropdownOpen(false);
                         }}
-                        className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50"
+                        className="self-stretch px-4 py-2 bg-white dark:bg-[#0B0F19] rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2E3445]"
                       >
                         <div
                           className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${selectedDateFilter === "last 30 days"
-                              ? "text-indigo-500"
-                              : "text-gray-500"
+                              ? "text-indigo-500 dark:text-[#818CF8]"
+                              : "text-gray-500 dark:text-[#9CA3AF]"
                             }`}
                         >
                           Last 30 days
@@ -626,8 +639,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                         key={chip}
                         onClick={() => setSelectedStatusFilter(chip)}
                         className={`font-['Poppins'] text-[14px] leading-[20px] px-[16px] py-[8px] cursor-pointer transition-all border-b-2 ${isSelected
-                            ? "text-[#6366F1] font-semibold border-[#6366F1]"
-                            : "text-[#000000] font-normal border-transparent hover:text-[#6366F1]/80"
+                            ? "text-[#6366F1] dark:text-[#818CF8] font-semibold border-[#6366F1] dark:border-[#818CF8]"
+                            : "text-[#000000] dark:text-[#F9FAFB] font-normal border-transparent hover:text-[#6366F1]/80 dark:hover:text-[#818CF8]/80"
                           }`}
                       >
                         {chip}
@@ -648,7 +661,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                     ))}
                   </div>
                 ) : filteredJobs.length === 0 ? (
-                  <div className="text-center py-12 text-[#6B7280] font-['Poppins']">
+                  <div className="text-center py-12 text-[#6B7280] dark:text-[#9CA3AF] font-['Poppins']">
                     No applications in this category.
                   </div>
                 ) : (
@@ -706,32 +719,32 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                       <div
                         key={job.id}
                         onClick={() => router.push(`/jobs/${job.id}`)}
-                        className="w-full h-auto p-4 md:p-[16px] gap-4 md:gap-[12px] rounded-[24px] flex flex-col md:flex-row items-start md:items-center justify-between transition-colors bg-white hover:bg-slate-50/50 cursor-pointer border border-[#EEF2FF] md:border-transparent"
+                        className="w-full h-auto p-4 md:p-[16px] gap-4 md:gap-[12px] rounded-[24px] flex flex-col md:flex-row items-start md:items-center justify-between transition-colors bg-white dark:bg-[#0B0F19] hover:bg-slate-50/50 dark:hover:bg-[#2E3445]/50 cursor-pointer border border-[#EEF2FF] dark:border-[#2E3445] md:border-transparent md:dark:border-transparent"
                       >
                         {/* Left: Logo + Info */}
                         <div className="flex flex-row items-center gap-[8px] w-full md:flex-1 min-w-0">
                           {renderCompanyLogo()}
                           <div className="flex flex-col gap-1 md:gap-[8px] min-w-0">
-                            <span className="text-[#000000] text-[16px] font-medium font-['Poppins'] leading-[24px] truncate">
+                            <span className="text-[#000000] dark:text-[#F9FAFB] text-[16px] font-medium font-['Poppins'] leading-[24px] truncate">
                               {job.title}
                             </span>
-                            <span className="text-[#6B7280] text-[14px] font-normal font-['Poppins'] leading-[20px] truncate">
+                            <span className="text-[#6B7280] dark:text-[#9CA3AF] text-[14px] font-normal font-['Poppins'] leading-[20px] truncate">
                               {job.company}
                             </span>
                           </div>
                         </div>
 
                         {/* Middle-left: Applied date */}
-                        <div className="w-full md:flex-1 md:min-w-[120px] flex items-center justify-start md:justify-center text-[#6B7280] text-[14px] font-normal font-['Poppins'] leading-[20px]">
-                          <span className="md:hidden font-semibold mr-2 text-black">Applied:</span>
+                        <div className="w-full md:flex-1 md:min-w-[120px] flex items-center justify-start md:justify-center text-[#6B7280] dark:text-[#9CA3AF] text-[14px] font-normal font-['Poppins'] leading-[20px]">
+                          <span className="md:hidden font-semibold mr-2 text-black dark:text-[#F9FAFB]">Applied:</span>
                           {job.applied_date_display ||
                             `Applied ${job.posted_at}`}
                         </div>
 
                         {/* Middle-right: Status */}
                         <div className="w-full md:flex-1 md:min-w-[120px] flex items-center justify-start md:justify-center">
-                          <span className="md:hidden font-semibold mr-2 text-black">Status:</span>
-                          <span className="text-[#000000] text-[14px] font-normal font-['Poppins'] leading-[20px] text-left md:text-center">
+                          <span className="md:hidden font-semibold mr-2 text-black dark:text-[#F9FAFB]">Status:</span>
+                          <span className="text-[#000000] dark:text-[#F9FAFB] text-[14px] font-normal font-['Poppins'] leading-[20px] text-left md:text-center">
                             {job.application_status?.toLowerCase() === "in-review"
                               ? "In review"
                               : job.application_status?.toLowerCase() === "declined"
@@ -748,7 +761,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                           {job.application_status?.toLowerCase() === "declined" ? (
                             <div className="hidden md:block w-[120px]" />
                           ) : job.is_available === false ? (
-                            <span className="text-[#EF4444] text-[14px] font-normal font-['Poppins'] text-left md:text-center leading-[20px] w-full md:w-[120px]">
+                            <span className="text-[#EF4444] dark:text-[#F87171] text-[14px] font-normal font-['Poppins'] text-left md:text-center leading-[20px] w-full md:w-[120px]">
                               This job is no
                               <br className="hidden md:inline" /> longer available
                             </span>
@@ -759,7 +772,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                                 e.stopPropagation();
                                 router.push("/messaging");
                               }}
-                              className="w-full md:w-[120px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] text-white font-['Poppins'] text-[14px] font-normal leading-[20px] flex items-center justify-center hover:bg-[#6366F1]/90 transition-all active:scale-95 shadow-sm"
+                              className="w-full md:w-[120px] h-[40px] bg-[#6366F1] dark:bg-[#818CF8] border border-white dark:border-[#0B0F19] rounded-[24px] text-white dark:text-[#F9FAFB] font-['Poppins'] text-[14px] font-normal leading-[20px] flex items-center justify-center hover:bg-[#6366F1]/90 dark:hover:bg-[#818CF8]/90 transition-all active:scale-95 shadow-sm"
                             >
                               Chat
                             </button>
@@ -769,7 +782,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                                 e.stopPropagation();
                                 handleApplyClick(job.id);
                               }}
-                              className="w-full md:w-[120px] h-[40px] border border-[#6B7280] rounded-[24px] bg-transparent text-[#6B7280] font-['Poppins'] text-[14px] font-normal leading-[20px] flex items-center justify-center hover:bg-slate-50 transition-all active:scale-95"
+                              className="w-full md:w-[120px] h-[40px] border border-[#6B7280] dark:border-[#9CA3AF] rounded-[24px] bg-transparent text-[#6B7280] dark:text-[#9CA3AF] font-['Poppins'] text-[14px] font-normal leading-[20px] flex items-center justify-center hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-all active:scale-95"
                             >
                               Apply
                             </button>
@@ -779,7 +792,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                                 e.stopPropagation();
                                 handleWithdrawClick(job.id);
                               }}
-                              className="w-full md:w-[120px] h-[40px] border border-[#6B7280] rounded-[24px] bg-transparent text-[#6B7280] font-['Poppins'] text-[14px] font-normal leading-[20px] flex items-center justify-center hover:bg-slate-50 transition-all active:scale-95"
+                              className="w-full md:w-[120px] h-[40px] border border-[#6B7280] dark:border-[#9CA3AF] rounded-[24px] bg-transparent text-[#6B7280] dark:text-[#9CA3AF] font-['Poppins'] text-[14px] font-normal leading-[20px] flex items-center justify-center hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-all active:scale-95"
                             >
                               Withdraw
                             </button>
@@ -800,7 +813,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
         <div className="w-full flex flex-col gap-[20px]">
           {/* Header & Sub-tabs */}
           <div className="w-full flex flex-col items-start gap-4">
-            <h3 className="text-black text-xl font-bold font-['Poppins'] leading-8">
+            <h3 className="text-black dark:text-[#F9FAFB] text-xl font-bold font-['Poppins'] leading-8">
               Official Job Offers
             </h3>
             
@@ -814,7 +827,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
                     className={`flex flex-row justify-center items-center px-4 py-2 gap-[10px] h-[36px] box-border font-['Poppins'] text-sm leading-5 transition-all ${
                       isActive
                         ? 'text-[#6366F1] font-semibold border-b border-[#6366F1] drop-shadow-[0_1px_4px_rgba(99,102,241,0.08)]'
-                        : 'text-black font-normal rounded-3xl hover:bg-gray-50'
+                        : 'text-black dark:text-[#F9FAFB] font-normal rounded-3xl hover:bg-gray-50 dark:hover:bg-[#2E3445]'
                     }`}
                   >
                     {subTab}
@@ -834,12 +847,12 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
               </div>
             ) : filteredOffers.length === 0 ? (
               <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
-                <Icon icon="hugeicons:gift" className="size-20 text-black flex-shrink-0" />
+                <Icon icon="hugeicons:gift" className="size-20 text-black dark:text-[#F9FAFB] flex-shrink-0" />
                 <div className="flex flex-col justify-start items-center gap-2">
-                  <div className="text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6">
+                  <div className="text-center justify-center text-black dark:text-[#F9FAFB] text-base font-medium font-['Poppins'] leading-6">
                     {activeFilter === 'All' ? 'No job offers yet' : 'No offers found'}
                   </div>
-                  <div className="w-80 text-center justify-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4">
+                  <div className="w-80 text-center justify-center text-gray-500 dark:text-[#9CA3AF] text-xs font-normal font-['Poppins'] leading-4">
                     {activeFilter === 'All' 
                       ? 'Job offers from recruiters and hiring teams will appear here when they match your profile.'
                       : 'There are no offers in this category.'}
@@ -877,12 +890,12 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
               </div>
             ) : jobs.length === 0 ? (
               <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
-                <Icon icon="hugeicons:job-search" className="size-20 text-black flex-shrink-0" />
+                <Icon icon="hugeicons:job-search" className="size-20 text-black dark:text-[#F9FAFB] flex-shrink-0" />
                 <div className="flex flex-col justify-start items-center gap-2">
-                  <div className="text-center justify-center text-black text-base font-medium font-['Poppins'] leading-6">
+                  <div className="text-center justify-center text-black dark:text-[#F9FAFB] text-base font-medium font-['Poppins'] leading-6">
                     No saved jobs yet
                   </div>
-                  <div className="w-80 text-center justify-center text-gray-500 text-xs font-normal font-['Poppins'] leading-4">
+                  <div className="w-80 text-center justify-center text-gray-500 dark:text-[#9CA3AF] text-xs font-normal font-['Poppins'] leading-4">
                     New saved jobs will appear here when you save them
                   </div>
                 </div>
@@ -909,7 +922,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams }) => {
       {/* Explore Tab */}
       <div className={`w-full ${activeTab === "Explore" ? "" : "hidden"}`}>
         <div className="w-full flex flex-col gap-[20px]">
-              <h3 className="text-black text-lg font-semibold font-['Poppins'] leading-6">
+              <h3 className="text-black dark:text-[#F9FAFB] text-lg font-semibold font-['Poppins'] leading-6">
                 All jobs
               </h3>
 

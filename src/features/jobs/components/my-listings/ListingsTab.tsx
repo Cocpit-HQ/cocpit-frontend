@@ -48,51 +48,49 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
   ];
 
   const getStatusChip = (status: string) => {
-    let bg = '#F0FDF4';
-    let text = '#22C55E';
+    let bg = 'bg-[#F0FDF4] dark:bg-[#123B23]';
+    let text = 'text-[#22C55E] dark:text-[#4ADE80]';
     let label = 'ACTIVE';
 
     switch (status.toUpperCase()) {
       case 'ACTIVE':
-        bg = '#F0FDF4';
-        text = '#22C55E';
+        bg = 'bg-[#F0FDF4] dark:bg-[#123B23]';
+        text = 'text-[#22C55E] dark:text-[#4ADE80]';
         label = 'ACTIVE';
         break;
       case 'IN REVIEW':
-        bg = '#F1F0FF';
-        text = '#4338CA';
+        bg = 'bg-[#F1F0FF] dark:bg-[#1C2340]';
+        text = 'text-[#4338CA] dark:text-[#818CF8]';
         label = 'IN REVIEW';
         break;
       case 'DRAFT':
-        bg = '#F1F3F9';
-        text = '#6B7280';
+        bg = 'bg-[#F1F3F9] dark:bg-[#2E3445]';
+        text = 'text-[#6B7280] dark:text-[#9CA3AF]';
         label = 'DRAFT';
         break;
       case 'CLOSED':
-        bg = '#F1F3F9';
-        text = '#6B7280';
+        bg = 'bg-[#F1F3F9] dark:bg-[#2E3445]';
+        text = 'text-[#6B7280] dark:text-[#9CA3AF]';
         label = 'CLOSED';
         break;
       default:
-        bg = '#F1F3F9';
-        text = '#6B7280';
+        bg = 'bg-[#F1F3F9] dark:bg-[#2E3445]';
+        text = 'text-[#6B7280] dark:text-[#9CA3AF]';
         label = status.toUpperCase();
         break;
     }
 
     return (
       <div
-        className="flex flex-col justify-center items-center rounded-full flex-shrink-0"
+        className={`flex flex-col justify-center items-center rounded-full flex-shrink-0 ${bg}`}
         style={{
           padding: '8px',
           width: '70px',
           height: '31px',
-          backgroundColor: bg,
         }}
       >
         <span
-          className="font-['Poppins'] font-medium text-[10px] leading-[15px] flex items-center text-center uppercase"
-          style={{ color: text }}
+          className={`font-['Poppins'] font-medium text-[10px] leading-[15px] flex items-center text-center uppercase ${text}`}
         >
           {label}
         </span>
@@ -102,14 +100,14 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
 
   return (
     <div
-      className="w-full max-w-[998px] h-[708px] bg-white rounded-[24px] p-[16px] flex flex-col items-start gap-[16px] box-border"
+      className="w-full max-w-[998px] h-[708px] bg-white dark:bg-[#0B0F19] rounded-[24px] p-[16px] flex flex-col items-start gap-[16px] box-border"
     >
       {/* Heading Frame */}
       <div className="w-full flex flex-col gap-[4px] px-0">
-        <h3 className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-black capitalize">
+        <h3 className="font-['Poppins'] font-medium text-[18px] leading-[26px] text-black dark:text-[#F9FAFB] capitalize">
           {statusFilter === 'All' ? 'All Jobs' : statusFilter === 'Drafts' ? 'Drafts' : `${statusFilter} Jobs`}
         </h3>
-        <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280]">
+        <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] dark:text-[#9CA3AF]">
           Total jobs - {filterChips.find(c => c.label.toLowerCase() === statusFilter.toLowerCase())?.count || 0}
         </span>
       </div>
@@ -125,8 +123,8 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                 onClick={() => onStatusFilterChange(chip.label)}
                 className={`font-['Poppins'] text-[14px] leading-[20px] px-[16px] py-[8px] cursor-pointer transition-all border-b-2 ${
                   isSelected
-                    ? 'text-[#6366F1] font-semibold border-[#6366F1]'
-                    : 'text-[#000000] font-normal border-transparent hover:text-[#6366F1]/80'
+                    ? 'text-[#6366F1] dark:text-[#818CF8] font-semibold border-[#6366F1] dark:border-[#818CF8]'
+                    : 'text-[#000000] dark:text-[#F9FAFB] font-normal border-transparent hover:text-[#6366F1]/80 dark:hover:text-[#818CF8]/80'
                 }`}
               >
                 {chip.label}
@@ -140,28 +138,28 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
       <div className="w-full flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-[16px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {isLoading ? (
           [1, 2, 3, 4].map((n) => (
-            <div
+              <div
               key={n}
-              className="w-full flex flex-row items-center justify-between py-4 px-2 sm:px-4 gap-2 sm:gap-4 bg-white h-[92px] flex-none rounded-[12px] animate-pulse border border-slate-100"
+              className="w-full flex flex-row items-center justify-between py-4 px-2 sm:px-4 gap-2 sm:gap-4 bg-white dark:bg-[#0B0F19] h-[92px] flex-none rounded-[12px] animate-pulse border border-slate-100 dark:border-[#2E3445]"
             >
               <div className="flex flex-col items-start gap-2 w-1/4 h-[48px] justify-center">
-                <div className="w-3/4 h-5 bg-slate-200 rounded" />
-                <div className="w-1/2 h-4 bg-slate-100 rounded" />
+                <div className="w-3/4 h-5 bg-slate-200 dark:bg-[#2E3445] rounded" />
+                <div className="w-1/2 h-4 bg-slate-100 dark:bg-[#1C2340] rounded" />
               </div>
-              <div className="w-[14%] h-8 bg-slate-100 rounded-3xl" />
-              <div className="w-[14%] h-8 bg-slate-100 rounded-3xl" />
-              <div className="w-[14%] h-8 bg-slate-100 rounded-3xl" />
-              <div className="w-[12%] h-[31px] bg-slate-200 rounded-full" />
+              <div className="w-[14%] h-8 bg-slate-100 dark:bg-[#1C2340] rounded-3xl" />
+              <div className="w-[14%] h-8 bg-slate-100 dark:bg-[#1C2340] rounded-3xl" />
+              <div className="w-[14%] h-8 bg-slate-100 dark:bg-[#1C2340] rounded-3xl" />
+              <div className="w-[12%] h-[31px] bg-slate-200 dark:bg-[#2E3445] rounded-full" />
               <div className="w-[104px] flex justify-end gap-4">
-                <div className="w-6 h-6 bg-slate-200 rounded-full" />
-                <div className="w-6 h-6 bg-slate-200 rounded-full" />
+                <div className="w-6 h-6 bg-slate-200 dark:bg-[#2E3445] rounded-full" />
+                <div className="w-6 h-6 bg-slate-200 dark:bg-[#2E3445] rounded-full" />
               </div>
             </div>
           ))
         ) : listings.length === 0 && !isFetchingMore ? (
           <div className="py-12 flex flex-col items-center justify-center gap-3 text-center w-full">
-            <h4 className="text-gray-400 text-sm font-semibold font-['Poppins']">No listings found</h4>
-            <p className="text-gray-400 text-xs font-['Poppins'] max-w-xs">
+            <h4 className="text-gray-400 dark:text-[#9CA3AF] text-sm font-semibold font-['Poppins']">No listings found</h4>
+            <p className="text-gray-400 dark:text-[#9CA3AF] text-xs font-['Poppins'] max-w-xs">
               There are no jobs matching the selected filter status.
             </p>
           </div>
@@ -170,46 +168,46 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
             <div
               key={item.id || `listing-${index}`}
               onClick={() => onSelectListing && onSelectListing(item)}
-              className={`w-full flex flex-row items-center justify-between py-4 px-2 sm:px-4 gap-2 sm:gap-4 bg-white h-[92px] flex-none rounded-[12px] hover:bg-slate-50 transition-colors ${
+              className={`w-full flex flex-row items-center justify-between py-4 px-2 sm:px-4 gap-2 sm:gap-4 bg-white dark:bg-[#0B0F19] h-[92px] flex-none rounded-[12px] hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-colors ${
                 onSelectListing ? 'cursor-pointer' : ''
               }`}
             >
               {/* Job Title & Date */}
               <div className="flex flex-col items-start gap-2 w-1/4 min-w-[140px] justify-center shrink-0">
-                <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black capitalize truncate w-full">
+                <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black dark:text-[#F9FAFB] capitalize truncate w-full">
                   {item.title}
                 </span>
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 truncate w-full">
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF] truncate w-full">
                   {item.posted_at || item.last_edited || 'Posted recently'}
                 </span>
               </div>
 
               {/* Applications */}
               <div className="flex flex-col items-start gap-2 w-[14%] min-w-[90px] justify-center shrink-0">
-                <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black">
+                <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black dark:text-[#F9FAFB]">
                   {item.applicants_count || 0}
                 </span>
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500">
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
                   Applications
                 </span>
               </div>
 
               {/* Shortlisted */}
               <div className="flex flex-col items-start gap-2 w-[14%] min-w-[90px] justify-center shrink-0">
-                <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black">
+                <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black dark:text-[#F9FAFB]">
                   {item.shortlisted_count || 0}
                 </span>
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500">
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
                   Shortlisted
                 </span>
               </div>
 
               {/* Offer sent */}
               <div className="flex flex-col items-start gap-2 w-[14%] min-w-[90px] justify-center shrink-0">
-                <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black">
+                <span className="font-['Poppins'] font-semibold text-[14px] leading-[20px] text-black dark:text-[#F9FAFB]">
                   {item.offers_count || 0}
                 </span>
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500">
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
                   Offer sent
                 </span>
               </div>
@@ -223,7 +221,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                 }}>
                   {item.status || 'DRAFT'}
                 </span>
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500">
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-gray-500 dark:text-[#9CA3AF]">
                   Status
                 </span>
               </div>
@@ -236,13 +234,13 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                       onClick={() => onSendOffer && onSendOffer(item)}
                       className="w-6 h-6 flex items-center justify-center hover:opacity-75 transition-opacity active:scale-95"
                     >
-                      <Icon icon="lucide:gift" className="w-6 h-6 text-black stroke-[1.5px]" />
+                      <Icon icon="lucide:gift" className="w-6 h-6 text-black dark:text-[#F9FAFB] stroke-[1.5px]" />
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); setJobToClose(item.id); }}
                       className="w-6 h-6 flex items-center justify-center hover:opacity-75 transition-opacity active:scale-95"
                     >
-                      <Icon icon="lucide:x-circle" className="w-6 h-6 text-black stroke-[1.5px]" />
+                      <Icon icon="lucide:x-circle" className="w-6 h-6 text-black dark:text-[#F9FAFB] stroke-[1.5px]" />
                     </button>
                   </>
                 )}
@@ -250,7 +248,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                   onClick={(e) => { e.stopPropagation(); setJobToDelete(item.id); }}
                   className="w-6 h-6 flex items-center justify-center hover:opacity-75 transition-opacity active:scale-95"
                 >
-                  <Icon icon="lucide:trash-2" className="w-5 h-5 text-[#FF6B6B]" />
+                  <Icon icon="fluent:delete-16-regular" className="w-5 h-5 text-[#FF6B6B] dark:text-[#F87171]" />
                 </button>
               </div>
             </div>
@@ -261,7 +259,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
         {hasMore ? (
           <div ref={loadMoreRef} className="w-full py-4 flex justify-center items-center flex-shrink-0">
             {isFetchingMore ? (
-              <div className="flex items-center gap-2 text-indigo-500 font-medium text-xs">
+              <div className="flex items-center gap-2 text-indigo-500 dark:text-[#818CF8] font-medium text-xs">
                 <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin" />
                 <span>Loading more listings...</span>
               </div>
@@ -271,7 +269,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
           </div>
         ) : listings.length > 0 ? (
           <div className="w-full py-6 flex justify-center items-center flex-shrink-0">
-            <span className="text-gray-400 text-xs font-['Poppins'] font-medium bg-gray-50 px-4 py-2 rounded-full">
+            <span className="text-gray-400 dark:text-[#9CA3AF] text-xs font-['Poppins'] font-medium bg-gray-50 dark:bg-[#2E3445] px-4 py-2 rounded-full">
               You've reached the end of your listings.
             </span>
           </div>
@@ -281,12 +279,12 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
       {/* Delete Confirmation Modal */}
       {jobToDelete && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={(e) => e.stopPropagation()}>
-          <div className="w-[360px] p-6 bg-white rounded-3xl shadow-xl flex flex-col items-center gap-4 text-center animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+          <div className="w-[360px] p-6 bg-white dark:bg-[#0B0F19] rounded-3xl shadow-xl flex flex-col items-center gap-4 text-center animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
             <div className="flex flex-col gap-1.5 mt-2">
-              <div className="text-black text-base font-normal font-['Poppins'] leading-5">
+              <div className="text-black dark:text-[#F9FAFB] text-base font-normal font-['Poppins'] leading-5">
                 Are you sure you want to delete job?
               </div>
-              <div className="text-gray-400 text-xs font-normal font-['Poppins'] leading-4">
+              <div className="text-gray-400 dark:text-[#9CA3AF] text-xs font-normal font-['Poppins'] leading-4">
                 This cannot be undone
               </div>
             </div>
@@ -294,7 +292,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
               <button
                 onClick={() => setJobToDelete(null)}
                 type="button"
-                className="flex-1 h-10 px-4 rounded-3xl border border-indigo-400 bg-white text-indigo-500 text-sm font-medium font-['Poppins'] hover:bg-slate-50 transition-all active:scale-95 flex justify-center items-center"
+                className="flex-1 h-10 px-4 rounded-3xl border border-indigo-400 dark:border-[#818CF8] bg-white dark:bg-[#0B0F19] text-indigo-500 dark:text-[#818CF8] text-sm font-medium font-['Poppins'] hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-all active:scale-95 flex justify-center items-center"
               >
                 Cancel
               </button>
@@ -304,7 +302,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                   setJobToDelete(null); 
                 }}
                 type="button"
-                className="flex-1 h-10 px-4 rounded-3xl bg-[#FF6B6B] text-white text-sm font-medium font-['Poppins'] hover:bg-red-500 transition-all active:scale-95 flex justify-center items-center"
+                className="flex-1 h-10 px-4 rounded-3xl bg-[#FF6B6B] dark:bg-[#F87171] text-white text-sm font-medium font-['Poppins'] hover:bg-red-500 dark:hover:bg-red-400 transition-all active:scale-95 flex justify-center items-center"
               >
                 Delete
               </button>
@@ -316,12 +314,12 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
       {/* Close Confirmation Modal */}
       {jobToClose && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={(e) => e.stopPropagation()}>
-          <div className="w-[360px] p-6 bg-white rounded-3xl shadow-xl flex flex-col items-center gap-4 text-center animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+          <div className="w-[360px] p-6 bg-white dark:bg-[#0B0F19] rounded-3xl shadow-xl flex flex-col items-center gap-4 text-center animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
             <div className="flex flex-col gap-1.5 mt-2">
-              <div className="text-black text-lg font-medium font-['Poppins'] leading-6">
+              <div className="text-black dark:text-[#F9FAFB] text-lg font-medium font-['Poppins'] leading-6">
                 Close Job?
               </div>
-              <div className="text-gray-500 text-sm font-normal font-['Poppins'] leading-5">
+              <div className="text-gray-500 dark:text-[#9CA3AF] text-sm font-normal font-['Poppins'] leading-5">
                 No new applicants will be able to apply after you close this job. Existing offers will remain active for 10 days.
               </div>
             </div>
@@ -329,7 +327,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
               <button
                 onClick={() => setJobToClose(null)}
                 type="button"
-                className="flex-1 h-10 px-4 rounded-3xl border border-indigo-400 bg-white text-indigo-500 text-sm font-medium font-['Poppins'] hover:bg-slate-50 transition-all active:scale-95 flex justify-center items-center"
+                className="flex-1 h-10 px-4 rounded-3xl border border-indigo-400 dark:border-[#818CF8] bg-white dark:bg-[#0B0F19] text-indigo-500 dark:text-[#818CF8] text-sm font-medium font-['Poppins'] hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-all active:scale-95 flex justify-center items-center"
               >
                 Cancel
               </button>
@@ -339,7 +337,7 @@ export const ListingsTab: React.FC<ListingsTabProps> = ({
                   setJobToClose(null); 
                 }}
                 type="button"
-                className="flex-1 h-10 px-4 rounded-3xl bg-[#FF6B6B] text-white text-sm font-medium font-['Poppins'] hover:bg-red-500 transition-all active:scale-95 flex justify-center items-center"
+                className="flex-1 h-10 px-4 rounded-3xl bg-[#FF6B6B] dark:bg-[#F87171] text-white text-sm font-medium font-['Poppins'] hover:bg-red-500 dark:hover:bg-red-400 transition-all active:scale-95 flex justify-center items-center"
               >
                 Close
               </button>

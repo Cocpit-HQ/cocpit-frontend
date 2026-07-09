@@ -34,14 +34,14 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
       {/* PART 1 — Job Details Frame (Frame 2609038) */}
       <div 
         style={{ borderWidth: '1px', borderStyle: 'solid' }}
-        className="relative w-full h-[90px] rounded-[24px] bg-white p-[16px] flex flex-row justify-between items-center box-border gap-[8px] border-[#EEF2FF] group-hover:border-indigo-200 transition-all duration-300"
+        className="relative w-full h-[90px] rounded-[24px] bg-white dark:bg-[#0B0F19] p-[16px] flex flex-row justify-between items-center box-border gap-[8px] border-[#EEF2FF] dark:border-[#2E3445] group-hover:border-indigo-200 transition-all duration-300"
       >
         
         {/* LEFT — Job info container (Frame 2609060) */}
         <div className="flex flex-col items-start justify-center p-0 gap-[1px] h-[58px]">
           {/* Role + Deadline Row */}
           <div className="flex flex-row items-center gap-[16px]">
-            <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black">
+            <span className="font-['Poppins'] font-medium text-[16px] leading-[24px] text-black dark:text-[#F9FAFB]">
               {offer.job_role}
             </span>
             {expiryText && (
@@ -53,10 +53,10 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
               </span>
             )}
           </div>
-          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] truncate w-full">
+          <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] dark:text-[#9CA3AF] truncate w-full">
             {offer.company_name}
           </span>
-          <span className="font-['Poppins'] font-medium text-[12px] leading-[16px] text-[#6B7280] truncate w-full">
+          <span className="font-['Poppins'] font-medium text-[12px] leading-[16px] text-[#6B7280] dark:text-[#9CA3AF] truncate w-full">
             {offer.location}
           </span>
         </div>
@@ -71,13 +71,13 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
           >
             <button
               onClick={() => setShowDeclineConfirm(true)}
-              className="box-border flex justify-center items-center px-[16px] py-[8px] gap-[10px] w-[140px] h-[40px] bg-white border border-[#818CF8] rounded-[24px] font-['Poppins'] font-normal text-[14px] text-[#818CF8] hover:bg-[#818CF8]/5 transition-all duration-200 active:scale-95 cursor-pointer"
+              className="box-border flex justify-center items-center px-[16px] py-[8px] gap-[10px] w-[140px] h-[40px] bg-white dark:bg-[#0B0F19] border border-[#818CF8] dark:border-[#818CF8] rounded-[24px] font-['Poppins'] font-normal text-[14px] text-[#818CF8] dark:text-[#818CF8] hover:bg-[#818CF8]/5 dark:hover:bg-[#818CF8]/5 transition-all duration-200 active:scale-95 cursor-pointer"
             >
               Decline
             </button>
             <button
               onClick={() => setShowAcceptConfirm(true)}
-              className="box-border flex justify-center items-center px-[16px] py-[8px] gap-[10px] w-[140px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] font-['Poppins'] font-normal text-[14px] text-white hover:bg-[#6366F1]/90 transition-all duration-200 active:scale-95 cursor-pointer"
+              className="box-border flex justify-center items-center px-[16px] py-[8px] gap-[10px] w-[140px] h-[40px] bg-[#6366F1] dark:bg-[#818CF8] border border-white dark:border-[#0B0F19] rounded-[24px] font-['Poppins'] font-normal text-[14px] text-white dark:text-[#F9FAFB] hover:bg-[#6366F1]/90 dark:hover:bg-[#818CF8]/90 transition-all duration-200 active:scale-95 cursor-pointer"
             >
               Accept
             </button>
@@ -88,11 +88,11 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
             className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px] gap-[8px]"
           >
             {offer.is_active === false ? (
-              <span className="font-['Poppins'] text-[12px] font-semibold text-red-500 bg-red-50 px-2 py-1 rounded-md">
+              <span className="font-['Poppins'] text-[12px] font-semibold text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-md">
                 Job Deleted
               </span>
             ) : offer.job_status === 'CLOSED' ? (
-              <span className="font-['Poppins'] text-[12px] font-semibold text-amber-500 bg-amber-50 px-2 py-1 rounded-md">
+              <span className="font-['Poppins'] text-[12px] font-semibold text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-md">
                 Job Closed
               </span>
             ) : null}
@@ -115,7 +115,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
                   toast.error('Recruiter information is unavailable.');
                 }
               }}
-              className="box-border flex justify-center items-center px-[16px] py-[8px] gap-[10px] w-[140px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] font-['Poppins'] font-normal text-[14px] text-white hover:bg-[#6366F1]/90 transition-all duration-200 active:scale-95 cursor-pointer"
+              className="box-border flex justify-center items-center px-[16px] py-[8px] gap-[10px] w-[140px] h-[40px] bg-[#6366F1] dark:bg-[#818CF8] border border-white dark:border-[#0B0F19] rounded-[24px] font-['Poppins'] font-normal text-[14px] text-white dark:text-[#F9FAFB] hover:bg-[#6366F1]/90 dark:hover:bg-[#818CF8]/90 transition-all duration-200 active:scale-95 cursor-pointer"
             >
               Chat
             </button>
@@ -134,7 +134,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
             onClick={(e) => e.stopPropagation()}
             className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px]"
           >
-            <span className="font-['Poppins'] text-sm font-semibold uppercase tracking-wider text-gray-500">
+            <span className="font-['Poppins'] text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-[#9CA3AF]">
               Withdrawn
             </span>
           </div>
@@ -143,7 +143,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
             onClick={(e) => e.stopPropagation()}
             className="flex flex-row items-center justify-end w-[288px] h-[40px] mr-[16px] my-[25px]"
           >
-            <span className="font-['Poppins'] text-sm font-semibold uppercase tracking-wider text-gray-500">
+            <span className="font-['Poppins'] text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-[#9CA3AF]">
               Expired
             </span>
           </div>
@@ -158,11 +158,8 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
               height: '67px',
               left: '25.5px',
               top: '89.5px',
-              borderLeft: '1px solid #EEF2FF',
-              borderBottom: '1px solid #EEF2FF',
-              borderBottomLeftRadius: '24px',
-              pointerEvents: 'none'
             }}
+            className="border-l border-b border-[#EEF2FF] dark:border-[#2E3445] rounded-bl-[24px] pointer-events-none"
           />
         )}
       </div>
@@ -171,13 +168,9 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
       {offer.note && (
         <div 
           style={{
-            borderTop: '1px solid #EEF2FF',
-            borderRight: '1px solid #EEF2FF',
-            borderBottom: '1px solid #EEF2FF',
-            borderLeft: '2px solid #6366F1',
             minHeight: '104px'
           }}
-          className="box-border flex flex-col items-start p-[12px] px-[16px] gap-[8px] w-[calc(100%-60px)] bg-[#F9FAFF] rounded-tr-[16px] rounded-br-[16px] rounded-bl-[16px] mt-[16px] self-end"
+          className="box-border flex flex-col items-start p-[12px] px-[16px] gap-[8px] w-[calc(100%-60px)] bg-[#F9FAFF] dark:bg-[#1C2340] rounded-tr-[16px] rounded-br-[16px] rounded-bl-[16px] mt-[16px] self-end border-t border-r border-b border-[#EEF2FF] dark:border-[#2E3445] border-l-2 border-l-[#6366F1] dark:border-l-[#818CF8]"
         >
           {/* Recruiter info row (Frame 2609033) */}
           <div className="flex flex-row justify-start items-center p-0 gap-[8px] w-full h-[40px]">
@@ -189,18 +182,18 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
                 className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-slate-200 bg-indigo-50 flex items-center justify-center">
-                <Icon icon="solar:user-bold" className="w-5 h-5 text-indigo-400" />
+              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-slate-200 dark:border-[#2E3445] bg-indigo-50 dark:bg-[#2E3445] flex items-center justify-center">
+                <Icon icon="solar:user-bold" className="w-5 h-5 text-indigo-400 dark:text-[#818CF8]" />
               </div>
             )}
             
             {/* Name + Headline container */}
             <div className="flex flex-col justify-center py-[4px] h-[32px] flex-1 min-w-0">
-              <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] uppercase tracking-wider truncate">
+              <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] dark:text-[#818CF8] uppercase tracking-wider truncate">
                 {offer.recruiter.name}
               </span>
               {offer.recruiter.headline && offer.recruiter.headline !== offer.recruiter.name && (
-                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] uppercase tracking-wider truncate">
+                <span className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] dark:text-[#818CF8] uppercase tracking-wider truncate">
                   {offer.recruiter.headline}
                 </span>
               )}
@@ -209,7 +202,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
 
           {/* Note text */}
           <div className="mt-[8px] w-full">
-            <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] whitespace-pre-line">
+            <p className="font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] dark:text-[#9CA3AF] whitespace-pre-line">
               {offer.note}
             </p>
           </div>

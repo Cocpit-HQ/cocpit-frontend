@@ -25,26 +25,27 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
   // Determine color for posted date
   const getPostedDateColor = () => {
     if (job.posted_at.includes('month') || job.posted_at.includes('year')) {
-      return 'text-amber-500 font-medium';
+      return 'text-amber-500 dark:text-amber-400 font-medium';
     }
-    return 'text-gray-400';
+    return 'text-gray-400 dark:text-[#9CA3AF]';
   };
 
   return (
     <div
       onClick={() => onClick?.(job)}
-      className="self-stretch p-4 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-center items-start gap-3 transition-all duration-200 cursor-pointer"
+      className="self-stretch p-4 bg-white dark:bg-[#0B0F19] rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 dark:outline-[#2E3445] flex flex-col justify-center items-start gap-3 transition-all duration-200 cursor-pointer"
     >
       {/* Top Row: Job Info and Badge */}
       <div className="self-stretch inline-flex justify-between items-start">
         <div className="flex justify-start items-start gap-3">
-          {/* Company Logo */}
+          {/* Company Logo - Removed as requested */}
+          {/*
           <div className="w-12 h-12 rounded-xl flex-shrink-0 flex justify-center items-center overflow-hidden bg-indigo-50 border border-indigo-100">
             {job.company_logo && job.company_logo !== 'sphere' ? (
               <img 
                 src={job.company_logo} 
                 alt={`${job.company} logo`}
-                className="w-full h-full object-contain bg-white"
+                className="w-full h-full object-contain bg-white dark:bg-[#0B0F19]"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                   e.currentTarget.nextElementSibling?.classList.remove('hidden');
@@ -58,12 +59,13 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
               className={`w-6 h-6 text-indigo-500 ${(job.company_logo && job.company_logo !== 'sphere') ? 'hidden' : ''}`}
             />
           </div>
+          */}
 
           <div className="inline-flex flex-col justify-start items-start gap-1">
-            <div className="justify-start text-black text-base font-medium font-['Poppins'] leading-6">{job.title}</div>
-            <div className="justify-start text-gray-500 text-sm font-normal font-['Poppins'] leading-5">{job.company}</div>
+            <div className="justify-start text-black dark:text-[#F9FAFB] text-base font-medium font-['Poppins'] leading-6">{job.title}</div>
+            <div className="justify-start text-gray-500 dark:text-[#9CA3AF] text-sm font-normal font-['Poppins'] leading-5">{job.company}</div>
             {(job.work_type || job.job_type) && (
-              <div className="justify-start text-gray-500 text-sm font-normal font-['Poppins'] leading-5">
+              <div className="justify-start text-gray-500 dark:text-[#9CA3AF] text-sm font-normal font-['Poppins'] leading-5">
                 {job.work_type || job.job_type}
               </div>
             )}
@@ -72,8 +74,8 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
         <div onClick={(e) => e.stopPropagation()}>
           <Tooltip delayDuration={100}>
             <TooltipTrigger asChild>
-              <div className="px-2 py-1 bg-indigo-500/10 rounded-full inline-flex flex-col justify-start items-start">
-                <div className="justify-center text-indigo-500 text-[10px] font-medium font-['Poppins']">
+              <div className="px-2 py-1 bg-indigo-500/10 dark:bg-[#818CF8]/10 rounded-full inline-flex flex-col justify-start items-start">
+                <div className="justify-center text-indigo-500 dark:text-[#818CF8] text-[10px] font-medium font-['Poppins']">
                   {badgeText}
                 </div>
               </div>
@@ -82,9 +84,9 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
               side="top"
               align="end"
               sideOffset={8}
-              className="w-[289px] py-3 px-4 bg-[#EEF2FF] rounded-[24px] border-none shadow-[0px_4px_16px_rgba(99,102,241,0.08)] text-black z-[9999]"
+              className="w-[289px] py-3 px-4 bg-[#EEF2FF] dark:bg-[#1C2340] rounded-[24px] border-none shadow-[0px_4px_16px_rgba(99,102,241,0.08)] text-black dark:text-[#F9FAFB] z-[9999]"
             >
-              <span className="w-[257px] flex items-center text-black text-[12px] font-normal font-['Poppins'] leading-[16px] flex-grow">
+              <span className="w-[257px] flex items-center text-black dark:text-[#F9FAFB] text-[12px] font-normal font-['Poppins'] leading-[16px] flex-grow">
                 You&apos;re stronger than {strongerThanPercent}% of applicants for this job based on your profile and skills
               </span>
             </TooltipContent>
@@ -97,17 +99,17 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
         <div className="flex flex-wrap justify-start items-center gap-2">
           {/* Experience */}
           <div className="flex justify-start items-center gap-2">
-            <Icon icon="hugeicons:job-search" className="w-5 h-5 text-black" />
-            <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5">{job.experience || '0-2Yrs'}</div>
+            <Icon icon="hugeicons:job-search" className="w-5 h-5 text-black dark:text-[#F9FAFB]" />
+            <div className="justify-start text-black dark:text-[#F9FAFB] text-sm font-normal font-['Poppins'] leading-5">{job.experience || '0-2Yrs'}</div>
           </div>
 
           {/* Work Mode & Location */}
           {(job.work_mode || job.location) && (
             <>
-              <div className="size-1.5 bg-black rounded-full" />
+              <div className="size-1.5 bg-black dark:bg-[#F9FAFB] rounded-full" />
               <div className="flex justify-start items-center gap-2">
-                <Icon icon="hugeicons:location-05" className="w-5 h-5 text-black" />
-                <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5">
+                <Icon icon="hugeicons:location-05" className="w-5 h-5 text-black dark:text-[#F9FAFB]" />
+                <div className="justify-start text-black dark:text-[#F9FAFB] text-sm font-normal font-['Poppins'] leading-5">
                   {job.work_mode && job.work_mode.toLowerCase() === 'remote'
                     ? 'Remote'
                     : job.work_mode && job.location
@@ -119,7 +121,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
           )}
         </div>
         <div className="size- flex justify-start items-center gap-2">
-          <div className="justify-start text-black text-sm font-normal font-['Poppins'] leading-5 flex items-center gap-1.5">
+          <div className="justify-start text-black dark:text-[#F9FAFB] text-sm font-normal font-['Poppins'] leading-5 flex items-center gap-1.5">
             {job.salary_display || job.salary_min || job.salary_max ? (
               <>
                 <span>
@@ -138,30 +140,30 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
 
       {/* Bottom Row: Posted date and actions */}
       <div className="self-stretch inline-flex justify-between items-center">
-        <div className={`justify-start text-gray-500 text-xs font-normal font-['Poppins'] leading-4 ${getPostedDateColor()}`}>
+        <div className={`justify-start text-gray-500 dark:text-[#9CA3AF] text-xs font-normal font-['Poppins'] leading-4 ${getPostedDateColor()}`}>
           {job.posted_at}
         </div>
         <div className="flex-1 flex flex-row items-center gap-4 justify-end">
           {job.is_offer ? (
             (job.offerStatus === 'accepted' || job.application_status === 'Accepted') ? (
               <div className="flex flex-row items-center gap-3">
-                <span className="text-gray-400 text-sm font-['Poppins'] leading-5">Offer accepted</span>
+                <span className="text-gray-400 dark:text-[#9CA3AF] text-sm font-['Poppins'] leading-5">Offer accepted</span>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     toast.success('Starting chat with recruiter...');
                   }}
-                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] hover:bg-[#6366F1]/90 text-white transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
+                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] dark:bg-[#818CF8] hover:bg-[#6366F1]/90 dark:hover:bg-[#818CF8]/90 text-white dark:text-[#F9FAFB] transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
                 >
                   Chat now
                 </button>
               </div>
             ) : (job.offerStatus === 'declined' || job.application_status === 'Declined') ? (
-              <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Offer declined</span>
+              <span className="text-gray-400 dark:text-[#9CA3AF] text-sm font-['Poppins'] leading-5 pr-2">Offer declined</span>
             ) : (job.offerStatus === 'withdrawn' || job.application_status === 'Withdrawn') ? (
-              <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Offer withdrawn</span>
+              <span className="text-gray-400 dark:text-[#9CA3AF] text-sm font-['Poppins'] leading-5 pr-2">Offer withdrawn</span>
             ) : (job.offerStatus === 'expired' || job.application_status === 'Expired') ? (
-              <span className="text-gray-400 text-sm font-['Poppins'] leading-5 pr-2">Offer expired</span>
+              <span className="text-gray-400 dark:text-[#9CA3AF] text-sm font-['Poppins'] leading-5 pr-2">Offer expired</span>
             ) : (
               <>
                 <button
@@ -169,7 +171,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
                     e.stopPropagation();
                     onDecline?.(job.offer_id || job.id, e);
                   }}
-                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] border border-[#6B7280] text-[#6B7280] bg-white hover:bg-slate-50 transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
+                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] border border-[#6B7280] dark:border-[#9CA3AF] text-[#6B7280] dark:text-[#9CA3AF] bg-white dark:bg-transparent hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
                 >
                   Decline
                 </button>
@@ -178,7 +180,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
                     e.stopPropagation();
                     onAccept?.(job.offer_id || job.id, e);
                   }}
-                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] hover:bg-[#6366F1]/90 text-white transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
+                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] dark:bg-[#818CF8] hover:bg-[#6366F1]/90 dark:hover:bg-[#818CF8]/90 text-white dark:text-[#F9FAFB] transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
                 >
                   Accept
                 </button>
@@ -193,7 +195,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
                     e.stopPropagation();
                     onWithdraw?.(job.id, e);
                   }}
-                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] border border-[#6B7280] text-[#6B7280] bg-white hover:bg-slate-50 transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
+                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] border border-[#6B7280] dark:border-[#9CA3AF] text-[#6B7280] dark:text-[#9CA3AF] bg-white dark:bg-transparent hover:bg-slate-50 dark:hover:bg-[#2E3445] transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
                 >
                   Withdraw
                 </button>
@@ -203,7 +205,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
                     e.stopPropagation();
                     onApply?.(job.id, e);
                   }}
-                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] hover:bg-[#6366F1]/90 text-white transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
+                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] dark:bg-[#818CF8] hover:bg-[#6366F1]/90 dark:hover:bg-[#818CF8]/90 text-white dark:text-[#F9FAFB] transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
                 >
                   Apply
                 </button>
@@ -222,7 +224,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
           >
             <Icon
               icon={job.is_saved ? 'solar:bookmark-bold' : 'solar:bookmark-linear'}
-              className={`w-6 h-6 transition-colors ${job.is_saved ? 'text-[#6366F1]' : 'text-gray-500 hover:text-[#6366F1]'}`}
+              className={`w-6 h-6 transition-colors ${job.is_saved ? 'text-[#6366F1] dark:text-[#818CF8]' : 'text-gray-500 dark:text-[#9CA3AF] hover:text-[#6366F1] dark:hover:text-[#818CF8]'}`}
             />
           </button>
         </div>

@@ -56,13 +56,13 @@ export const JobList: React.FC<JobListProps> = React.memo(({
 
   if (jobs.length === 0 && !hasMore && !isLoading) {
     return (
-      <div className="w-full py-12 flex flex-col items-center justify-center text-center gap-3 bg-slate-50/50 rounded-3xl outline outline-1 outline-indigo-50/50">
-        <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500">
+      <div className="w-full py-12 flex flex-col items-center justify-center text-center gap-3 bg-slate-50/50 dark:bg-[#1C2340]/50 rounded-3xl outline outline-1 outline-indigo-50/50 dark:outline-[#2E3445]/50">
+        <div className="w-12 h-12 rounded-full bg-indigo-50 dark:bg-[#818CF8]/10 flex items-center justify-center text-indigo-500 dark:text-[#818CF8]">
           <Icon icon="lucide:search-slash" className="w-6 h-6" />
         </div>
         <div>
-          <h4 className="text-black font-semibold text-base font-['Poppins']">No jobs found</h4>
-          <p className="text-gray-500 text-xs font-['Poppins'] mt-1 max-w-xs">
+          <h4 className="text-black dark:text-[#F9FAFB] font-semibold text-base font-['Poppins']">No jobs found</h4>
+          <p className="text-gray-500 dark:text-[#9CA3AF] text-xs font-['Poppins'] mt-1 max-w-xs">
             We couldn't find any job listings matching your selection. Try clearing filters or try searching for another role.
           </p>
         </div>
@@ -89,7 +89,7 @@ export const JobList: React.FC<JobListProps> = React.memo(({
       {hasMore && (
         <div ref={loadMoreRef} className="w-full py-4 flex justify-center items-center">
           {isFetchingMore ? (
-            <div className="flex items-center gap-2 text-indigo-500 font-medium text-xs">
+            <div className="flex items-center gap-2 text-indigo-500 dark:text-[#818CF8] font-medium text-xs">
               <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin" />
               <span>Loading more jobs...</span>
             </div>

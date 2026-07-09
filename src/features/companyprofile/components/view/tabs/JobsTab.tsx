@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { CompanyProfileData } from "../../../types/company-profile.types";
 
 import { useQuery } from "@tanstack/react-query";
@@ -17,6 +18,7 @@ interface JobsTabProps {
 }
 
 export default function JobsTab({ data, isOwnProfile = false }: JobsTabProps) {
+  const router = useRouter();
   const { data: jobsResponse, isLoading } = useQuery({
     queryKey: ["orgJobs", data.id],
     queryFn: () => companyProfileService.getOrgJobs(data.id, { scope: "public", limit: 10 }),
@@ -55,7 +57,10 @@ export default function JobsTab({ data, isOwnProfile = false }: JobsTabProps) {
           {data.name} hasn't posted jobs yet
         </p>
         {isOwnProfile && (
-          <button className="h-10 px-6 bg-[#1A73E8] hover:bg-blue-700 text-white rounded-full font-semibold text-[14px] transition-colors cursor-pointer flex items-center justify-center">
+          <button 
+            onClick={() => router.push('/jobs')}
+            className="h-10 px-6 bg-[#1A73E8] hover:bg-blue-700 text-white rounded-full font-semibold text-[14px] transition-colors cursor-pointer flex items-center justify-center"
+          >
             Post jobs
           </button>
         )}
@@ -64,93 +69,106 @@ export default function JobsTab({ data, isOwnProfile = false }: JobsTabProps) {
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        padding: "0px",
-        gap: "16px",
-        width: "960px",
-        background: "#FFFFFF",
-        borderRadius: "12px",
-        flex: "none",
-        alignSelf: "stretch",
-        flexGrow: 0,
-      }}
-      className="dark:bg-zinc-950"
-    >
-      {jobs.map((job: any) => (
-        <div
-          key={job.id}
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "flex-start",
-            padding: "16px 0px",
-            gap: "16px",
-            width: "920px",
-            height: "80px",
-            background: "#FFFFFF",
-            borderRadius: "12px",
-            flex: "none",
-            alignSelf: "stretch",
-            flexGrow: 0,
-          }}
-          className="dark:bg-zinc-950"
-        >
-          {/* Frame 2609064 */}
+    <div className="w-full flex flex-col gap-4">
+      {isOwnProfile && (
+        <div className="flex justify-between items-center w-full max-w-[960px]">
+          <h2 className="text-xl font-semibold font-poppins text-black dark:text-white">Active Jobs</h2>
+          <button 
+            onClick={() => router.push('/jobs')}
+            className="text-[#1A73E8] hover:text-blue-700 font-medium font-poppins text-sm transition-colors cursor-pointer"
+          >
+            Manage jobs →
+          </button>
+        </div>
+      )}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          padding: "0px",
+          gap: "16px",
+          width: "960px",
+          background: "#FFFFFF",
+          borderRadius: "12px",
+          flex: "none",
+          alignSelf: "stretch",
+          flexGrow: 0,
+        }}
+        className="dark:bg-zinc-950"
+      >
+        {jobs.map((job: any) => (
           <div
+            key={job.id}
             style={{
               display: "flex",
-              flexDirection: "column",
+              flexDirection: "row",
               alignItems: "flex-start",
-              padding: "0px",
-              gap: "8px",
+              padding: "16px 0px",
+              gap: "16px",
               width: "920px",
-              height: "48px",
+              height: "80px",
+              background: "#FFFFFF",
+              borderRadius: "12px",
               flex: "none",
-              flexGrow: 1,
+              alignSelf: "stretch",
+              flexGrow: 0,
             }}
+            className="dark:bg-zinc-950"
           >
-            {/* Job Title */}
-            <h3
+            {/* Frame 2609064 */}
+            <div
               style={{
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: 500,
-                fontSize: "16px",
-                lineHeight: "24px",
-                textTransform: "capitalize",
-                color: "#000000",
-                flex: "none",
-                flexGrow: 0,
-              }}
-              className="dark:text-white"
-            >
-              {job.title}
-            </h3>
-
-            {/* Posted Info */}
-            <span
-              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                padding: "0px",
+                gap: "8px",
                 width: "920px",
-                height: "16px",
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: 400,
-                fontSize: "12px",
-                lineHeight: "16px",
-                color: "#6B7280",
+                height: "48px",
                 flex: "none",
-                alignSelf: "stretch",
-                flexGrow: 0,
+                flexGrow: 1,
               }}
-              className="dark:text-zinc-400"
             >
-              {job.posted}
-            </span>
+              {/* Job Title */}
+              <h3
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: 500,
+                  fontSize: "16px",
+                  lineHeight: "24px",
+                  textTransform: "capitalize",
+                  color: "#000000",
+                  flex: "none",
+                  flexGrow: 0,
+                }}
+                className="dark:text-white"
+              >
+                {job.title}
+              </h3>
+
+              {/* Posted Info */}
+              <span
+                style={{
+                  width: "920px",
+                  height: "16px",
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: 400,
+                  fontSize: "12px",
+                  lineHeight: "16px",
+                  color: "#6B7280",
+                  flex: "none",
+                  alignSelf: "stretch",
+                  flexGrow: 0,
+                }}
+                className="dark:text-zinc-400"
+              >
+                {job.posted}
+              </span>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

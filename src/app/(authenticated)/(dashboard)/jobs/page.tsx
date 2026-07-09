@@ -2,8 +2,7 @@
 
 import { useActiveProfile } from "@/context/ActiveProfileContext";
 import { Suspense } from "react";
-import JobsPage from "@/features/jobs/pages/JobsPage";
-import CompanyJobsPage from "@/components/jobs/company/CompanyJobsPage";
+import { JobsPage } from "@/features/jobs/pages/JobsPage";
 import { MemoryRouter } from "@/components/layout/MemoryRouter";
 
 export default function JobsRoute({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
@@ -13,7 +12,7 @@ export default function JobsRoute({ searchParams }: { searchParams: { [key: stri
     return (
       <Suspense fallback={<div>Loading Jobs...</div>}>
         <MemoryRouter section="jobs" />
-        <CompanyJobsPage companyId={activeProfile.id} searchParams={searchParams} />
+        <JobsPage searchParams={searchParams} isCompanyMode={true} />
       </Suspense>
     );
   }
