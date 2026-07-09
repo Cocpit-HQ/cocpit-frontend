@@ -407,22 +407,21 @@ export const useJobStore = create<JobsUIState>()(
     set((state) => {
       const nextOffers = { ...state.respondedOffers, [id]: action };
       const status = action === 'accept' ? 'Accepted' : 'Declined';
+      const offerStatusVal = action === 'accept' ? 'accepted' : 'declined';
 
-      // Update explore cache
-      const nextExploreJobs = state.explore.jobs.map((j) =>
-        j.id === id ? { ...j, application_status: status } : j
-      );
-      // Update offers cache
-      const nextOfferJobs = state.applications.offers.jobs.map((j) =>
-        j.id === id ? { ...j, application_status: status } : j
-      );
+      const updateJob = (j: Job) => 
+        (j.id === id || j.offer_id === id) 
+          ? { ...j, application_status: status, offerStatus: offerStatusVal } 
+          : j;
 
       return {
         respondedOffers: nextOffers,
-        explore: { ...state.explore, jobs: nextExploreJobs },
+        explore: { ...state.explore, jobs: state.explore.jobs.map(updateJob) },
         applications: {
           ...state.applications,
-          offers: { ...state.applications.offers, jobs: nextOfferJobs },
+          offers: { ...state.applications.offers, jobs: state.applications.offers.jobs.map(updateJob) },
+          saved: { ...state.applications.saved, jobs: state.applications.saved.jobs.map(updateJob) },
+          applied: { ...state.applications.applied, jobs: state.applications.applied.jobs.map(updateJob) },
         },
       };
     }),

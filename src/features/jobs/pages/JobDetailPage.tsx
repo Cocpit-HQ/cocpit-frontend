@@ -482,10 +482,22 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 job.application_status === 'Accepted' ? (
                   /* Accepted -> Chat */
                   <button
-                    onClick={() => toast.success('Starting chat with recruiter...')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const params = new URLSearchParams();
+                      if (job.org_id) {
+                        params.set('companyId', job.org_id);
+                      } else if (job.recruiter_id) {
+                        params.set('userId', job.recruiter_id);
+                      }
+                      if (job.offer_id && !job.context_sent) {
+                        params.set('offerContext', job.offer_id);
+                      }
+                      router.push(`/messaging?${params.toString()}`);
+                    }}
                     className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[140px] h-10 bg-[#6366F1] border border-white rounded-[24px] transition-all active:scale-95 cursor-pointer"
                   >
-                    <span className="w-[68px] h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-white">Chat now</span>
+                    <span className="w-[68px] h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-white">Chat</span>
                   </button>
                 ) : job.application_status === 'Declined' ? (
                   /* Declined -> Offer declined */

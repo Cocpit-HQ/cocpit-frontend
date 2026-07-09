@@ -118,13 +118,13 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
                         size="md"
                     />
                 </div>
-                <div className="flex flex-col">
-                    {notification.type !== 'advocacy' && (
-                        <p className="text-base font-medium text-foreground">
-                            {notification.actor_name}
-                        </p>
-                    )}
+                <div className="flex items-center">
                     <p className="text-sm text-muted-foreground">
+                        {notification.type !== 'advocacy' && notification.actor_name && (
+                            <span className="font-medium text-foreground mr-1">
+                                {notification.actor_name}
+                            </span>
+                        )}
                         {notification.type === 'advocacy'
                             ? notification.text
                             : notification.text.replace(notification.actor_name || '', '').trim()

@@ -120,6 +120,12 @@ export const HomeHeader = () => {
 
 
     useEffect(() => {
+        if (isSearchFocused && !searchQuery && history.length === 0) {
+            setIsSearchFocused(false);
+        }
+    }, [history.length, isSearchFocused, searchQuery]);
+
+    useEffect(() => {
         if (debouncedSearchQuery.trim() === '') {
             setSearchResults([]);
             setHashtagResults([]);
@@ -637,6 +643,7 @@ export const HomeHeader = () => {
                                             }}
                                         >
                                             <button
+                                                onMouseDown={(e) => e.preventDefault()}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     clearAll();
@@ -821,6 +828,7 @@ export const HomeHeader = () => {
                                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Recent</span>
                                     {history.length > 0 && (
                                         <button
+                                            onMouseDown={(e) => e.preventDefault()}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 clearAll();
@@ -866,6 +874,7 @@ export const HomeHeader = () => {
                                                     </div>
                                                 )}
                                                 <button
+                                                    onMouseDown={(e) => e.preventDefault()}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         e.preventDefault();

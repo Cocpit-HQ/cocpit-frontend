@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { Job } from '../types/jobs.types';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
@@ -17,6 +18,7 @@ interface JobCardProps {
 }
 
 export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onApply, onWithdraw, onClick, onAccept, onDecline }) => {
+  const router = useRouter();
   const badgeText = job.recommended_badge || 'Top 15%';
   const percentMatch = badgeText.match(/\d+/);
   const percentNum = percentMatch ? parseInt(percentMatch[0], 10) : 15;
@@ -151,11 +153,20 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    toast.success('Starting chat with recruiter...');
+                    const params = new URLSearchParams();
+                    if (job.org_id) {
+                      params.set('companyId', job.org_id);
+                    } else if (job.recruiter_id) {
+                      params.set('userId', job.recruiter_id);
+                    }
+                    if (job.offer_id && !job.context_sent) {
+                      params.set('offerContext', job.offer_id);
+                    }
+                    router.push(`/messaging?${params.toString()}`);
                   }}
                   className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] dark:bg-[#818CF8] hover:bg-[#6366F1]/90 dark:hover:bg-[#818CF8]/90 text-white dark:text-[#F9FAFB] transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
                 >
-                  Chat now
+                  Chat
                 </button>
               </div>
             ) : (job.offerStatus === 'declined' || job.application_status === 'Declined') ? (

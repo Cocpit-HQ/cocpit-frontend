@@ -5,6 +5,7 @@ import { X, ChevronDown } from "lucide-react"
 import { Icon } from '@iconify/react'
 import { cn } from "@/lib/utils"
 import { updateMemberRoleSettings } from "@/services/api/organization"
+import { checkAccountNameAvailability } from "@/services/api/onboarding"
 import {
   Dialog,
   DialogContent,
@@ -74,6 +75,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   const [isSaving, setIsSaving] = useState(false)
   const [initialFormData, setInitialFormData] = useState<any>(null)
   const [lastClickTime, setLastClickTime] = useState(0)
+  
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(true)
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -103,6 +107,34 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
       setInitialFormData(data)
     }
   }, [user])
+
+  useEffect(() => {
+    if (!initialFormData || !formData.account_name) return;
+
+    if (formData.account_name === initialFormData.account_name) {
+      setIsUsernameAvailable(true);
+      return;
+    }
+
+    if (formData.account_name.length < 3) {
+      setIsUsernameAvailable(null); // Or true if we don't want to show "taken" for short ones
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsCheckingUsername(true);
+      try {
+        const isAvailable = await checkAccountNameAvailability(formData.account_name);
+        setIsUsernameAvailable(isAvailable);
+      } catch (error) {
+        setIsUsernameAvailable(false);
+      } finally {
+        setIsCheckingUsername(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData.account_name, initialFormData]);
 
   const toggleOption = (field: "open_to" | "availability" | "work_preference", option: string) => {
     setFormData(prev => {
@@ -172,7 +204,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
           </span>
           <button
             onClick={handleSave}
-            disabled={isSaving || !hasChanges()}
+            disabled={isSaving || !hasChanges() || isUsernameAvailable === false}
             className="px-4 py-1.5 rounded-full bg-secondary text-primary font-medium text-[14px] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isSaving ? "..." : "Save"}
@@ -216,10 +248,29 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                 <Label className={labelStyles}>Username</Label>
                 <Input
                   value={formData.account_name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, account_name: e.target.value }))}
-                  className={inputStyles}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    val = val.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+                    setFormData(prev => ({ ...prev, account_name: val }));
+                  }}
+                  className={cn(inputStyles, isUsernameAvailable === false && "border-destructive focus:border-destructive", isUsernameAvailable === true && formData.account_name !== initialFormData?.account_name && "border-green-500 focus:border-green-500")}
                   placeholder="Username"
                 />
+                {isCheckingUsername && (
+                  <span className="text-[12px] mt-1 text-muted-foreground font-medium">
+                    Checking availability...
+                  </span>
+                )}
+                {!isCheckingUsername && isUsernameAvailable === false && (
+                  <span className="text-[12px] mt-1 text-destructive font-medium">
+                    This username is taken. Please try again.
+                  </span>
+                )}
+                {!isCheckingUsername && isUsernameAvailable === true && formData.account_name !== initialFormData?.account_name && (
+                  <span className="text-[12px] mt-1 text-green-500 font-medium">
+                    This username is available.
+                  </span>
+                )}
               </div>
             </div>
 
@@ -383,7 +434,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={isSaving || !hasChanges()}
+                disabled={isSaving || !hasChanges() || isUsernameAvailable === false}
                 className="w-[142px] h-[40px] rounded-[24px] bg-[#6366F1] hover:bg-[#6366F1] text-white font-medium shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {isSaving ? "Saving..." : "Save"}
