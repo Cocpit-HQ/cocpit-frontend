@@ -5,6 +5,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import StepIdentityVerification from './StepIdentityVerification';
 import StepRoleInput from './StepRoleInput';
 import StepJobDetails from './StepJobDetails';
+
 import { JobListing } from '../../types/jobs.types';
 import * as jobsService from '../../services/jobs.service';
 import { useJobStore } from '@/store/job.store';

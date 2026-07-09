@@ -827,17 +827,17 @@ const mapBackendToJobOffer = (raw: any): JobOffer => {
     context_sent: raw.context_sent,
     job_role: raw.title,
     days_remaining: computeDaysRemaining(raw.expires_at),
-    company_name: raw.company_display_name || raw.company_name,
+    company_name: raw.org_id ? (raw.company_display_name || raw.company_name) : '',
     location: raw.location || 'Remote',
     status: raw.status as 'pending' | 'accepted' | 'declined' | 'withdrawn' | 'expired',
     note: raw.message || undefined,
     is_active: raw.is_active,
     job_status: raw.job_status,
     recruiter: {
-      id: raw.recruiter_id,
+      id: raw.sent_by || raw.recruiter_id,
       name: raw.sent_by_name || 'Recruiter',
-      headline: raw.company_display_name || '',
-      avatar: raw.company_logo || undefined,
+      headline: raw.org_id ? (raw.company_display_name || '') : (raw.sent_by_headline || ''),
+      avatar: raw.org_id ? (raw.company_logo || undefined) : undefined,
     },
   };
 };
