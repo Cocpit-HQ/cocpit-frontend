@@ -67,6 +67,8 @@ export const ProfileHeader = React.memo(function ProfileHeader({
 }: ProfileHeaderProps) {
     const router = useRouter();
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+    const [expImgError, setExpImgError] = useState(false);
+    const [eduImgError, setEduImgError] = useState(false);
 
     const handleLogoutClick = () => {
         if (onLogout) {
@@ -367,16 +369,17 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                                 <div className="flex items-center gap-[10px]">
                                     <div className={cn(
                                         "w-[56px] h-[40px] rounded-[24px] flex items-center justify-center flex-shrink-0 overflow-hidden",
-                                        (latestExperience.logo_url || latestExperience.company_logo) ? "bg-secondary" : "bg-[#E0E7FF] px-[16px] py-[8px]"
+                                        ((latestExperience.logo_url || latestExperience.company_logo) && !expImgError) ? "bg-secondary" : "bg-[#E0E7FF] px-[16px] py-[8px]"
                                     )}>
-                                        {latestExperience.logo_url || latestExperience.company_logo ? (
+                                        {(latestExperience.logo_url || latestExperience.company_logo) && !expImgError ? (
                                             <img
                                                 src={latestExperience.logo_url || latestExperience.company_logo}
                                                 alt={latestExperience.company_name}
                                                 className="w-full h-full object-contain"
+                                                onError={() => setExpImgError(true)}
                                             />
                                         ) : (
-                                            <Icon icon="hugeicons:job-search" className="w-6 h-6 text-primary" style={{ strokeWidth: '1.5px' }} />
+                                            <Icon icon="lucide:building-2" className="w-6 h-6 text-primary" style={{ strokeWidth: '1.5px' }} />
                                         )}
                                     </div>
                                     <div className="flex flex-col">
@@ -392,13 +395,14 @@ export const ProfileHeader = React.memo(function ProfileHeader({
                                 <div className="flex items-center gap-[10px]">
                                     <div className={cn(
                                         "w-[56px] h-[40px] rounded-[24px] flex items-center justify-center flex-shrink-0 overflow-hidden",
-                                        latestEducation.school_logo ? "bg-secondary" : "bg-[#E0E7FF] px-[16px] py-[8px]"
+                                        (latestEducation.school_logo && !eduImgError) ? "bg-secondary" : "bg-[#E0E7FF] px-[16px] py-[8px]"
                                     )}>
-                                        {latestEducation.school_logo ? (
+                                        {latestEducation.school_logo && !eduImgError ? (
                                             <img
                                                 src={latestEducation.school_logo}
                                                 alt="School Logo"
                                                 className="w-full h-full object-contain"
+                                                onError={() => setEduImgError(true)}
                                             />
                                         ) : (
                                             <Icon icon="qlementine-icons:education-24" className="w-6 h-6 text-primary" style={{ strokeWidth: '1.5px' }} />

@@ -16,6 +16,8 @@ export function EditableExperienceItem({
 }: EditableExperienceItemProps) {
     const [isDescExpanded, setIsDescExpanded] = React.useState(false);
 
+    const [imgError, setImgError] = React.useState(false);
+
     const isLongDescription = experience.description && experience.description.length > 160;
 
     const displayDescription = React.useMemo(() => {
@@ -43,16 +45,17 @@ export function EditableExperienceItem({
                 {/* Company Logo */}
                 <div className={cn(
                     "entity-placeholder",
-                    experience.company_logo && "bg-transparent border-none"
+                    (experience.company_logo && !imgError) && "bg-transparent border-none"
                 )}>
-                    {experience.company_logo ? (
+                    {experience.company_logo && !imgError ? (
                         <img
                             src={experience.company_logo}
                             alt={experience.company_name}
                             className="w-full h-full object-contain p-2"
+                            onError={() => setImgError(true)}
                         />
                     ) : (
-                        <Icon icon="lucide:briefcase" className="entity-placeholder-icon" />
+                        <Icon icon="lucide:building-2" className="entity-placeholder-icon" />
                     )}
                 </div>
 

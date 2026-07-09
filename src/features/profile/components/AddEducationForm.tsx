@@ -85,6 +85,7 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false)
   const [schoolLoading, setSchoolLoading] = useState(false)
   const [schoolHighlight, setSchoolHighlight] = useState(-1)
+  const [failedUrls, setFailedUrls] = useState<Record<string, boolean>>({})
   const schoolWrapperRef = useRef<HTMLDivElement>(null)
   const schoolInputRef = useRef<HTMLInputElement>(null)
   const schoolSelectedRef = useRef(false)
@@ -825,8 +826,17 @@ export default function AddEducationForm({ onCancel, onSave, onDelete, initialDa
                   <ul ref={schoolListRef} className={acStyles.dropdown}>
                     {schoolOptions.map((opt, idx) => (
                       <li key={opt.org_id || `${opt.name}-${idx}`} data-idx={idx} className={cn(acStyles.item, "date-select-item flex items-center gap-2", idx === schoolHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")} onMouseDown={() => selectSchool(opt)} onMouseEnter={() => setSchoolHighlight(idx)}>
-                        {opt.logo_url ? (
-                          <img src={opt.logo_url} alt={opt.name} className="w-[20px] h-[20px] object-contain rounded bg-white flex-shrink-0" />
+                        {opt.logo_url && !failedUrls[opt.logo_url] ? (
+                          <img
+                            src={opt.logo_url}
+                            alt={opt.name}
+                            className="w-[20px] h-[20px] object-contain rounded bg-white flex-shrink-0"
+                            onError={() => {
+                              if (opt.logo_url) {
+                                setFailedUrls((prev) => ({ ...prev, [opt.logo_url as string]: true }));
+                              }
+                            }}
+                          />
                         ) : (
                           <GraduationCap className={acStyles.itemIcon} />
                         )}

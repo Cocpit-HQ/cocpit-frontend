@@ -32,6 +32,8 @@ function RoleRow({
 }) {
   const [isDescExpanded, setIsDescExpanded] = React.useState(false);
 
+  const [imgError, setImgError] = React.useState(false);
+
   const isLongDescription = experience.description && experience.description.length > 160;
 
   const displayDescription = React.useMemo(() => {
@@ -54,20 +56,17 @@ function RoleRow({
           {isFirst ? (
             <div className={cn(
               "flex flex-row justify-center items-center w-[56px] h-[40px] rounded-[24px] overflow-hidden flex-none",
-              logoUrl ? "bg-white border border-[#E5E7EB]" : "bg-[#E0E7FF] px-[16px] py-[8px]"
+              (logoUrl && !imgError) ? "bg-white border border-[#E5E7EB]" : "bg-[#E0E7FF] px-[16px] py-[8px]"
             )}>
-              {logoUrl ? (
+              {logoUrl && !imgError ? (
                 <img
                   src={logoUrl}
                   alt={experience.company_name}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      "https://www.gstatic.com/images/branding/product/1x/googleg_48dp.png";
-                  }}
+                  onError={() => setImgError(true)}
                 />
               ) : (
-                <Icon icon="hugeicons:job-search" className="w-6 h-6 text-primary" style={{ strokeWidth: '1.5px' }} />
+                <Icon icon="lucide:building-2" className="w-6 h-6 text-primary" style={{ strokeWidth: '1.5px' }} />
               )}
             </div>
           ) : (

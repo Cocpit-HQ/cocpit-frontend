@@ -21,7 +21,7 @@ export default function HomeTab({ data, isOwnProfile, onTabChange }: HomeTabProp
     <div className="flex flex-col gap-4 w-full">
       <AboutSection data={data} onViewMoreClick={() => onTabChange?.("about")} />
 
-      <CoreTeamSection data={data} isOwnProfile={isOwnProfile} />
+      {isOwnProfile && <CoreTeamSection data={data} isOwnProfile={isOwnProfile} />}
 
       <PostsSection data={data} isOwnProfile={isOwnProfile} onSeeAllClick={() => onTabChange?.("posts")} />
 

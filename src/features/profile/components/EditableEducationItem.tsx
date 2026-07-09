@@ -18,6 +18,8 @@ export function EditableEducationItem({
 }: EditableEducationItemProps) {
     const [isDescExpanded, setIsDescExpanded] = React.useState(false);
 
+    const [imgError, setImgError] = React.useState(false);
+
     const isLongDescription = education.description && education.description.length > 160;
 
     const displayDescription = React.useMemo(() => {
@@ -45,13 +47,14 @@ export function EditableEducationItem({
                 {/* School Icon */}
                 <div className={cn(
                     "entity-placeholder",
-                    education.school_logo && "bg-transparent border-none"
+                    (education.school_logo && !imgError) && "bg-transparent border-none"
                 )}>
-                    {education.school_logo ? (
+                    {education.school_logo && !imgError ? (
                         <img
                             src={education.school_logo}
                             alt={education.school_name}
                             className="w-full h-full object-contain p-2"
+                            onError={() => setImgError(true)}
                         />
                     ) : (
                         <Icon icon="qlementine-icons:education-24" className="entity-placeholder-icon" />

@@ -30,6 +30,7 @@ export default function OnboardingDropdown({
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [failedUrls, setFailedUrls] = useState<Record<string, boolean>>({});
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -135,11 +136,16 @@ export default function OnboardingDropdown({
                       <span>{option}</span>
                     ) : (
                       <>
-                        {option.logo_url ? (
+                        {option.logo_url && !failedUrls[option.logo_url] ? (
                           <img
                             src={option.logo_url}
                             alt={option.name}
                             className="w-6 h-6 object-contain rounded bg-white p-0.5 border border-border"
+                            onError={() => {
+                              if (option.logo_url) {
+                                setFailedUrls((prev) => ({ ...prev, [option.logo_url as string]: true }));
+                              }
+                            }}
                           />
                         ) : isSchoolField ? (
                           <GraduationCap className="w-5 h-5 text-muted-foreground flex-shrink-0" />

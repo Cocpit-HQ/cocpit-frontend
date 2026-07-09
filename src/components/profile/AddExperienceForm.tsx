@@ -647,6 +647,7 @@ export default function AddExperienceForm({
   const [showCompanyDropdown, setShowCompanyDropdown] = useState(false)
   const [companyLoading, setCompanyLoading] = useState(false)
   const [companyHighlight, setCompanyHighlight] = useState(-1)
+  const [failedUrls, setFailedUrls] = useState<Record<string, boolean>>({})
   const companyWrapperRef = useRef<HTMLDivElement>(null)
   const companyInputRef = useRef<HTMLInputElement>(null)
   const companySelectedRef = useRef(false)
@@ -1181,8 +1182,17 @@ export default function AddExperienceForm({
                   <ul ref={companyListRef} className={acStyles.dropdown}>
                     {companyOptions.map((opt, idx) => (
                       <li key={opt.org_id || `${opt.name}-${idx}`} data-idx={idx} className={cn(acStyles.item, "date-select-item flex items-center gap-2", idx === companyHighlight && "bg-[#C7D2FE] text-[#111827] highlighted")} onMouseDown={() => selectCompany(opt)} onMouseEnter={() => setCompanyHighlight(idx)}>
-                        {opt.logo_url ? (
-                          <img src={opt.logo_url} alt={opt.name} className="w-[20px] h-[20px] object-contain rounded bg-white flex-shrink-0" />
+                        {opt.logo_url && !failedUrls[opt.logo_url] ? (
+                          <img
+                            src={opt.logo_url}
+                            alt={opt.name}
+                            className="w-[20px] h-[20px] object-contain rounded bg-white flex-shrink-0"
+                            onError={() => {
+                              if (opt.logo_url) {
+                                setFailedUrls((prev) => ({ ...prev, [opt.logo_url as string]: true }));
+                              }
+                            }}
+                          />
                         ) : (
                           <Building2 className={acStyles.itemIcon} />
                         )}

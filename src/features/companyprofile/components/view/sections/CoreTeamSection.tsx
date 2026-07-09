@@ -8,6 +8,18 @@ import { ShieldCheck, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { companyProfileService } from "../../../services/companyprofile.service";
 
+interface TeamMemberInfo {
+  id?: string;
+  user_id?: string;
+  name?: string;
+  full_name?: string;
+  avatar_url?: string;
+  avatarUrl?: string;
+  avatar?: string;
+  role?: string;
+  title?: string;
+}
+
 interface CoreTeamSectionProps {
   data: CompanyProfileData;
   isOwnProfile?: boolean;
@@ -21,8 +33,8 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
 
   const teamMembers = teamData?.data || data.coreTeam;
 
-  // Don't render the section at all on public view if there are no core team members
-  if (!isOwnProfile && (!teamMembers || teamMembers.length === 0)) {
+  // Don't render the section at all on public view (Global Company Profile)
+  if (!isOwnProfile) {
     return null;
   }
 
@@ -100,7 +112,7 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
               Loading team...
             </div>
           ) : teamMembers && teamMembers.length > 0 ? (
-            teamMembers.map((member: any) => (
+            teamMembers.map((member: TeamMemberInfo) => (
               <div
                 key={member.id || member.user_id || member.name}
                 style={{ width: "90px", height: "84px", gap: "8px" }}
@@ -113,7 +125,7 @@ export default function CoreTeamSection({ data, isOwnProfile = true }: CoreTeamS
                 >
                   <Image
                     src={member.avatar_url || member.avatarUrl || member.avatar || "/images/companyonboarding/companyprofileDefault.jpg"}
-                    alt={member.full_name || member.name}
+                    alt={member.full_name || member.name || "Team Member"}
                     fill
                     className="object-cover"
                   />
