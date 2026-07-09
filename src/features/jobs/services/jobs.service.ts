@@ -128,6 +128,8 @@ export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppl
       offer_id: job.offer_id,
       offerStatus: job.offerStatus,
       tags: job.tags || [],
+      org_id: job.org_id,
+      recruiter_id: job.recruiter_id,
       is_available: job.status !== 'CLOSED' && job.is_active !== false,
       is_closed: job.status === 'CLOSED' || job.is_active === false
     }));
@@ -187,6 +189,8 @@ export const getRecommendations = async (): Promise<Job[]> => {
       is_applied: job.hasApplied || false,
       is_offer: false,
       tags: job.tags || [],
+      org_id: job.org_id,
+      recruiter_id: job.recruiter_id,
       is_recommended: job.is_recommended || false,
       recommended_badge: job.recommended_badge || '',
       response_rate: job.response_rate || '',
@@ -232,6 +236,8 @@ export const getSavedJobs = async (filters?: JobsFilter, cursor?: string) => {
       offer_id: job.offer_id,
       offerStatus: job.offerStatus,
       tags: job.tags || [],
+      org_id: job.org_id,
+      recruiter_id: job.recruiter_id,
       is_available: job.status !== 'CLOSED' && job.is_active !== false,
       is_closed: job.status === 'CLOSED' || job.is_active === false
     }));
@@ -450,6 +456,9 @@ export const getMyApplications = async (): Promise<Job[]> => {
       is_applied: true,
       is_offer: false,
       tags: job.tags || [],
+      org_id: job.org_id,
+      recruiter_id: job.recruiter_id,
+      context_sent: job.context_sent,
       application_status: job.applicationStatus || 'Applied',
       is_available: job.status !== 'CLOSED' && job.is_active !== false,
       is_closed: job.status === 'CLOSED' || job.is_active === false
@@ -833,6 +842,7 @@ const mapBackendToJobOffer = (raw: any): JobOffer => {
     note: raw.message || undefined,
     is_active: raw.is_active,
     job_status: raw.job_status,
+    org_id: raw.org_id || raw.company_id,
     recruiter: {
       id: raw.sent_by || raw.recruiter_id,
       name: raw.sent_by_name || 'Recruiter',

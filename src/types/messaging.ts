@@ -73,7 +73,7 @@ export interface BackendMessage {
   } | null;
   shared_profile_id?: string;
   shared_profile_type?: "user" | "company";
-  entity_type?: "post" | "profile" | "company" | "job" | "event";
+  entity_type?: "post" | "profile" | "company" | "job" | "event" | "offer";
   entity_id?: string;
   media?: { url: string; media_type: string }[];
   reactions?: {
@@ -158,7 +158,7 @@ export interface Message {
   } | null;
   sharedProfileId?: string;
   sharedProfileType?: "user" | "company";
-  entityType?: "post" | "profile" | "company" | "job" | "event";
+  entityType?: "post" | "profile" | "company" | "job" | "event" | "offer";
   entityId?: string;
   is_deleted?: boolean;
   is_deleted_for_everyone?: boolean;

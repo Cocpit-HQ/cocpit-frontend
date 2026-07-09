@@ -99,17 +99,18 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
             <button
               onClick={async () => {
                 if (offer.recruiter.id) {
-                  if (offer.offer_id && !offer.context_sent) {
-                    try {
-                      const { sendOfferChatContext } = await import('@/services/api/offers');
-                      await sendOfferChatContext(offer.offer_id);
-                    } catch (err) {
-                      console.error("Failed to send context message:", err);
-                    }
+                  // We no longer call sendOfferChatContext here. It's handled by UnifiedMessageInput inside the chat.
+                  const params = new URLSearchParams();
+                  
+                  if (offer.org_id) {
+                    params.set('companyId', offer.org_id);
+                  } else {
+                    params.set('userId', offer.recruiter.id);
                   }
-                  const params = new URLSearchParams({ userId: offer.recruiter.id });
-                  if (offer.offer_id) params.set('offerId', offer.offer_id);
-                  if (offer.job_id) params.set('jobId', offer.job_id);
+                  
+                  if (offer.offer_id && !offer.context_sent) {
+                    params.set('offerContext', offer.offer_id);
+                  }
                   router.push(`/messaging?${params.toString()}`);
                 } else {
                   toast.error('Recruiter information is unavailable.');

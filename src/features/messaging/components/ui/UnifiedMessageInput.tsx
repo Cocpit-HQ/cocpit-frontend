@@ -22,6 +22,8 @@ interface UnifiedMessageInputProps {
     onCancelPendingSharedPost?: () => void;
     pendingSharedProfile?: any | null;
     onCancelPendingSharedProfile?: () => void;
+    pendingEntityContext?: { type: 'job' | 'offer', id: string } | null;
+    onDismissEntityContext?: () => void;
 }
 
 const EMOJI_LIST = ["😀", "😂", "😍", "🥺", "🔥", "👍", "👎", "🎉", "❤️", "💼", "🚀", "💯", "👏", "🤔", "👀", "✨", "✅", "❌", "🙌", "😎"];
@@ -39,7 +41,9 @@ export default function UnifiedMessageInput({
     pendingSharedPost,
     onCancelPendingSharedPost,
     pendingSharedProfile,
-    onCancelPendingSharedProfile
+    onCancelPendingSharedProfile,
+    pendingEntityContext,
+    onDismissEntityContext
 }: UnifiedMessageInputProps) {
     const [text, setText] = useState("")
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
@@ -196,6 +200,33 @@ export default function UnifiedMessageInput({
                             onClick={onCancelPendingSharedProfile}
                             className="text-[var(--primary)] dark:text-[#818CF8] hover:bg-[var(--border)]/30 p-1.5 rounded-full transition-colors shrink-0"
                             aria-label="Remove shared profile"
+                        >
+                            <X className="w-[18px] h-[18px]" strokeWidth={2} />
+                        </button>
+                    </div>
+                )}
+
+                {pendingEntityContext && onDismissEntityContext && (
+                    <div className="flex items-center justify-between gap-3 w-full relative px-[16px] py-[12px] bg-[var(--primary-tint)] border border-[var(--border)] rounded-[16px] mb-1.5">
+                        <div className="flex items-center gap-3 overflow-hidden flex-1">
+                            <div className="h-10 w-10 rounded-full overflow-hidden bg-[var(--card)] dark:bg-[#1E293B] flex items-center justify-center shrink-0 border border-[var(--border)]">
+                                <span className="font-semibold text-[var(--primary)]">
+                                    {pendingEntityContext.type === 'job' ? '💼' : '📝'}
+                                </span>
+                            </div>
+                            <div className="flex flex-col text-left overflow-hidden">
+                                <span className="font-['Poppins'] font-semibold text-[13px] text-[var(--foreground)] dark:text-white truncate">
+                                    {pendingEntityContext.type === 'job' ? 'Job Application Context' : 'Job Offer Context'}
+                                </span>
+                                <span className="font-['Poppins'] font-normal text-[12px] text-[var(--primary)] dark:text-[#818CF8] truncate">
+                                    This context will be attached to your first message
+                                </span>
+                            </div>
+                        </div>
+                        <button
+                            onClick={onDismissEntityContext}
+                            className="text-[var(--primary)] dark:text-[#818CF8] hover:bg-[var(--border)]/30 p-1.5 rounded-full transition-colors shrink-0"
+                            aria-label="Remove context"
                         >
                             <X className="w-[18px] h-[18px]" strokeWidth={2} />
                         </button>

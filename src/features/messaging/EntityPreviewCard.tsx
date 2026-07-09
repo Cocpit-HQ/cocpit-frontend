@@ -22,6 +22,7 @@ const ENTITY_ICONS: Record<EntityType, React.ReactNode> = {
     company: <Building2 className="w-3 h-3" />,
     job: <Briefcase className="w-3 h-3" />,
     event: <Calendar className="w-3 h-3" />,
+    offer: <Briefcase className="w-3 h-3" />,
 };
 
 const ENTITY_LABELS: Record<EntityType, string> = {
@@ -30,6 +31,7 @@ const ENTITY_LABELS: Record<EntityType, string> = {
     company: "Company Profile",
     job: "Job Posting",
     event: "Event",
+    offer: "Job Offer",
 };
 
 // ─── Component ──────────────────────────────────────────────

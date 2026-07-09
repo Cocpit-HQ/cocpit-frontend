@@ -46,6 +46,7 @@ interface ChatWindowProps {
   isMobile: boolean
   onBack?: () => void
   onAcceptSuccess?: () => void
+  initialEntityContext?: { type: 'job' | 'offer', id: string }
 }
 
 const getAvatarGradient = (avatar: string) => {
@@ -130,7 +131,7 @@ function ChatHeaderMenu({ selectedMessage, onMessageAction, currentUserId }: { s
   );
 }
 
-export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcceptSuccess }: ChatWindowProps) {
+export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcceptSuccess, initialEntityContext }: ChatWindowProps) {
   const { socket, isUserOnline, setActiveConversationId } = useSocket();
   const { unblockUser, isBlocked, blockUser } = useSocial();
   const { data: session } = useSession();
@@ -157,9 +158,11 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   const sharedProfileIdParam = searchParams?.get("sharedProfileId");
 
   const [pendingSharedPostId, setPendingSharedPostId] = useState<string | null>(null);
+  const [pendingEntityContext, setPendingEntityContext] = useState<{ type: 'job' | 'offer', id: string } | null>(initialEntityContext || null);
   const [pendingSharedPost, setPendingSharedPost] = useState<any | null>(null);
   const [pendingSharedProfileId, setPendingSharedProfileId] = useState<string | null>(null);
   const [pendingSharedProfile, setPendingSharedProfile] = useState<any | null>(null);
+  const processedEntityContextRef = useRef<string | null>(null);
 
   const isBlockedByMe = initialChat.otherUserId ? isBlocked(initialChat.otherUserId) : false;
   const isBlockedByOther = initialChat.isBlockedByOther;
@@ -326,6 +329,46 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
     if (!data) return [];
     return [...data.pages].reverse().flatMap(page => page);
   }, [data]);
+
+  useEffect(() => {
+    if (initialEntityContext && processedEntityContextRef.current !== initialEntityContext.id) {
+      // If we are currently loading the initial messages for an existing chat, wait
+      if (isLoading) return; 
+
+      let isContextAlreadySent = false;
+      if (data?.pages) {
+        isContextAlreadySent = data.pages.some(page => 
+          page.some(m => m.entityId === initialEntityContext.id && m.entityType === initialEntityContext.type)
+        );
+      }
+
+      if (!isContextAlreadySent) {
+        setPendingEntityContext(initialEntityContext);
+      } else {
+        setPendingEntityContext(null);
+      }
+      
+      processedEntityContextRef.current = initialEntityContext.id;
+
+      // Clean up the URL query parameters without a full reload
+      const newParams = new URLSearchParams(window.location.search);
+      let changed = false;
+      if (newParams.has("jobContext")) {
+        newParams.delete("jobContext");
+        changed = true;
+      }
+      if (newParams.has("offerContext")) {
+        newParams.delete("offerContext");
+        changed = true;
+      }
+      
+      if (changed) {
+        const newSearch = newParams.toString();
+        const newPath = window.location.pathname + (newSearch ? `?${newSearch}` : "");
+        window.history.replaceState(null, "", newPath);
+      }
+    }
+  }, [initialEntityContext, data, isLoading]);
 
   // Mark as read on mount or when chat.id changes
   useEffect(() => {
@@ -617,13 +660,13 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   }, [socket, chat.id, chat.isGroup, session?.user?.id, queryClient, activeProfile]); // Depend only on chat.id, not the full chat object
 
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ text, files, replyMessageId, sharedPostId, sharedProfileId }: { text: string, files: File[], replyMessageId?: string, sharedPostId?: string, sharedProfileId?: string }) => {
+    mutationFn: async ({ text, files, replyMessageId, sharedPostId, sharedProfileId, entityType, entityId }: { text: string, files: File[], replyMessageId?: string, sharedPostId?: string, sharedProfileId?: string, entityType?: string, entityId?: string }) => {
       if (chat.isGroup) {
         return sendGroupMessage(chat.id, text, 'text', files, replyMessageId);
       }
 
       if (!chat.otherUserId) throw new Error("Target user ID missing");
-      return sendMessage(chat.otherUserId, text, sharedPostId, files, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined, replyMessageId, sharedProfileId);
+      return sendMessage(chat.otherUserId, text, sharedPostId, files, activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined, replyMessageId, sharedProfileId, entityType, entityId);
     },
     onMutate: async ({ text, files, sharedPostId }) => {
       await queryClient.cancelQueries({ queryKey: ['messages', chat.id] });
@@ -740,14 +783,25 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
       files,
       replyMessageId: replyingTo?.messageId,
       sharedPostId: pendingSharedPostId || undefined,
-      sharedProfileId: pendingSharedProfileId || undefined
+      sharedProfileId: pendingSharedProfileId || undefined,
+      entityType: pendingEntityContext?.type || undefined,
+      entityId: pendingEntityContext?.id || undefined
     });
     setReplyingTo(null);
     setPendingSharedPostId(null);
     setPendingSharedPost(null);
     setPendingSharedProfileId(null);
     setPendingSharedProfile(null);
-  }, [chat.otherUserId, chat.isGroup, chat.id, isBlockedByMe, isBlockedByOther, socket, sendMessageMutation, replyingTo, pendingSharedPostId, pendingSharedProfileId]);
+    setPendingEntityContext(null);
+    
+    // Clear URL parameters for entity contexts if present
+    if (searchParams?.get("jobContext") || searchParams?.get("offerContext")) {
+      const newParams = new URLSearchParams(searchParams.toString());
+      newParams.delete("jobContext");
+      newParams.delete("offerContext");
+      router.replace(`/messaging?${newParams.toString()}`);
+    }
+  }, [chat.otherUserId, chat.isGroup, chat.id, isBlockedByMe, isBlockedByOther, socket, sendMessageMutation, replyingTo, pendingSharedPostId, pendingSharedProfileId, pendingEntityContext, searchParams, router]);
 
   const handleTypingInput = React.useCallback(() => {
     if (!socket || !chat) return;
@@ -1325,6 +1379,8 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
                     sessionDisabled ? "Claim this conversation to reply" :
                       undefined
               }
+              pendingEntityContext={pendingEntityContext}
+              onDismissEntityContext={() => setPendingEntityContext(null)}
               placeholder={sessionDisabled ? "Claim to start typing..." : "Type a message..."}
               replyingTo={replyingTo}
               onCancelReply={() => setReplyingTo(null)}

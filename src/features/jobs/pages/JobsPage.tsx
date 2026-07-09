@@ -770,7 +770,12 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                router.push("/messaging");
+                                const contextQuery = !job.context_sent ? `&jobContext=${job.id}` : '';
+                                if (job.org_id) {
+                                  router.push(`/messaging?companyId=${job.org_id}${contextQuery}`);
+                                } else {
+                                  router.push(`/messaging?userId=${job.recruiter_id}${contextQuery}`);
+                                }
                               }}
                               className="w-full md:w-[120px] h-[40px] bg-[#6366F1] dark:bg-[#818CF8] border border-white dark:border-[#0B0F19] rounded-[24px] text-white dark:text-[#F9FAFB] font-['Poppins'] text-[14px] font-normal leading-[20px] flex items-center justify-center hover:bg-[#6366F1]/90 dark:hover:bg-[#818CF8]/90 transition-all active:scale-95 shadow-sm"
                             >

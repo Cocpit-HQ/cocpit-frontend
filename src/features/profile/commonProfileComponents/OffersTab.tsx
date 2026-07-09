@@ -44,18 +44,7 @@ export function OffersTab({ isOwnProfile }: OffersTabProps) {
             await respondToOffer(offerId, action);
             toast.success(`Offer ${action} successfully`);
             
-            // Trigger chat context directly if accepted
-            if (action === "accepted") {
-                try {
-                    const { sendOfferChatContext } = await import('@/services/api/offers');
-                    const res = await sendOfferChatContext(offerId);
-                    if (res.no_conversation) {
-                        sessionStorage.setItem('pendingOfferContext', offerId);
-                    }
-                } catch (e) {
-                    console.error("Failed to send chat context automatically:", e);
-                }
-            }
+            // The chat context is now handled when the user actively opens the Chat and sends a message.
 
             setOffers(prev =>
                 prev.map(o => (o.offer_id === offerId ? { ...o, status: action, responded_at: new Date().toISOString() } : o))

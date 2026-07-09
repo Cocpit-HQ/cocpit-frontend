@@ -39,6 +39,7 @@ export interface Job {
   applied_at?: string;
   created_at?: string;
   is_available?: boolean;
+  context_sent?: boolean;
 
   // Offer details
   is_offer?: boolean;
@@ -125,6 +126,7 @@ export interface JobOffer {
   note?: string;
   is_active?: boolean;
   job_status?: string;
+  org_id?: string;
   recruiter: {
     id?: string;
     name: string;

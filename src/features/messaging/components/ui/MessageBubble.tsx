@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Message } from "@/types/messaging"
 import { Job } from "@/types/jobs"
 import { getJobById } from "@/services/api/jobs"
+import { useQuery } from "@tanstack/react-query"
 import { MoreVertical, Info, Copy, Pencil, Trash2, Check, CheckCheck, Smile, Reply } from "lucide-react"
 import {
   DropdownMenu,
@@ -137,6 +138,70 @@ const MessageMenu = ({ message, onAction, currentUserId }: { message: Message, o
       </DropdownMenuContent>
     </DropdownMenu>
   )
+}
+
+function JobApplicationContextCard({ entityType, entityId, onClick }: { entityType: 'job' | 'offer', entityId: string, onClick?: () => void }) {
+  const { data: job, isLoading: loading } = useQuery({
+    queryKey: ['jobContext', entityType, entityId],
+    queryFn: async () => {
+      if (entityType === 'job') {
+        return getJobById(entityId);
+      } else if (entityType === 'offer') {
+        const { getOfferDetail } = await import('@/services/api/offers');
+        const data = await getOfferDetail(entityId);
+        if (data && data.job_id) {
+          return getJobById(data.job_id);
+        }
+      }
+      return null;
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    retry: 1,
+  });
+
+  if (loading) {
+    return (
+      <div className="mt-1 mb-2 bg-[#EEF2FF] dark:bg-indigo-950/30 rounded-[12px] p-3 w-full animate-pulse border border-indigo-100 dark:border-indigo-900/50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-indigo-200/50 dark:bg-indigo-900/50 shrink-0" />
+          <div className="flex flex-col gap-2 flex-1">
+            <div className="h-3 bg-indigo-200/50 dark:bg-indigo-900/50 rounded w-3/4" />
+            <div className="h-2 bg-indigo-200/50 dark:bg-indigo-900/50 rounded w-1/2" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!job) return null;
+
+  return (
+    <div 
+      className="mb-[8px] bg-white dark:bg-gray-800 rounded-[32px] p-[8px] pr-[16px] w-[260px] cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+      onClick={onClick}
+    >
+      <div className="flex flex-row items-center gap-[12px]">
+        {/* Company Logo */}
+        <div className="w-[48px] h-[48px] rounded-full bg-black dark:bg-gray-900 border border-gray-100 dark:border-gray-700 flex items-center justify-center overflow-hidden shrink-0">
+          {job.logo || job.companyLogo ? (
+            <img src={job.logo || job.companyLogo} alt={job.company} className="w-full h-full object-cover" />
+          ) : (
+            <span className="font-semibold text-white">{job.company?.[0]?.toUpperCase() || "C"}</span>
+          )}
+        </div>
+        
+        {/* Job Details */}
+        <div className="flex flex-col overflow-hidden text-left flex-1 justify-center">
+          <span className="font-['Poppins'] font-medium text-[15px] leading-[20px] text-gray-900 dark:text-gray-100 truncate block">
+            {job.title} @ {job.company}
+          </span>
+          <span className="font-['Poppins'] font-normal text-[13px] leading-[18px] text-[#6B7280] dark:text-gray-400 truncate mt-[2px] block">
+            {job.workMode || (job as any).work_mode || 'Hybrid'} • {job.location || 'Remote'}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoad?: () => void }) => {
@@ -861,6 +926,7 @@ const JobOfferContextMessage = ({ jobId }: { jobId: string }) => {
 // --- Main Component ---
 
 function MessageBubble(props: MessageBubbleProps) {
+  const router = useRouter()
   const { theme, resolvedTheme } = useTheme()
   const isDarkTheme = resolvedTheme === "dark" || theme === "dark" || theme === "navy"
 
@@ -1155,7 +1221,7 @@ function MessageBubble(props: MessageBubbleProps) {
                       </div>
                     )}
                     {/* Universal Entity Preview — for new share messages */}
-                    {message.entityType && message.entityId && !message.sharedPost && !message.sharedProfileId && (
+                    {message.entityType && message.entityId && !message.sharedPost && !message.sharedProfileId && message.entityType !== 'job' && message.entityType !== 'offer' && (
                       <div className="mt-1 mb-2">
                         <EntityPreviewCard
                           entityType={message.entityType}
@@ -1163,6 +1229,13 @@ function MessageBubble(props: MessageBubbleProps) {
                           onLoad={onMediaLoad}
                         />
                       </div>
+                    )}
+                    {(message.entityType === 'job' || message.entityType === 'offer') && message.entityId && (
+                      <JobApplicationContextCard
+                        entityType={message.entityType as 'job' | 'offer'}
+                        entityId={message.entityId}
+                        onClick={() => router.push(message.entityType === 'job' ? `/jobs/${message.entityId}` : `/messaging`)}
+                      />
                     )}
                     <MessageMedia
                       message={message}

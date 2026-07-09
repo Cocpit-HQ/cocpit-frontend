@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, Briefcase, Calendar, User, Building2, FileText, Loader2 } from "lucide-react";
+import { ExternalLink, Briefcase, Calendar, User, Building2, FileText, Loader2, Tag } from "lucide-react";
 import { fetchEntityPreview, EntityPreview, EntityType } from "@/services/api/shareService";
 
 // ─── Props ──────────────────────────────────────────────────
@@ -21,6 +21,7 @@ const ENTITY_ICONS: Record<EntityType, React.ReactNode> = {
     company: <Building2 className="w-3 h-3" />,
     job: <Briefcase className="w-3 h-3" />,
     event: <Calendar className="w-3 h-3" />,
+    offer: <Tag className="w-3 h-3" />,
 };
 
 const ENTITY_LABELS: Record<EntityType, string> = {
@@ -29,6 +30,7 @@ const ENTITY_LABELS: Record<EntityType, string> = {
     company: "Company Profile",
     job: "Job Posting",
     event: "Event",
+    offer: "Job Offer",
 };
 
 // ─── Component ──────────────────────────────────────────────
