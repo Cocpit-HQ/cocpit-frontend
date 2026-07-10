@@ -40,9 +40,7 @@ export const useRecruiterJobs = (companyId?: string) => {
     published,
     drafts,
     archived,
-    offers,
     setRecruiterList,
-    setApplicationsList,
     addRecruiterJob,
     updateRecruiterJob,
     deleteRecruiterJob,
@@ -58,9 +56,7 @@ export const useRecruiterJobs = (companyId?: string) => {
       published: state.recruiter.published,
       drafts: state.recruiter.drafts,
       archived: state.recruiter.archived,
-      offers: state.applications.offers,
       setRecruiterList: state.setRecruiterList,
-      setApplicationsList: state.setApplicationsList,
       addRecruiterJob: state.addRecruiterJob,
       updateRecruiterJob: state.updateRecruiterJob,
       deleteRecruiterJob: state.deleteRecruiterJob,
@@ -74,18 +70,15 @@ export const useRecruiterJobs = (companyId?: string) => {
   // Helper to fetch list depending on active tab
   const fetchList = useCallback(async (isLoadMore: boolean = false) => {
     if (!companyId) return;
+    // Offers tab is handled by useMyListings — skip here
+    if (activeTab === 'offers') return;
 
-    let targetListKey: 'published' | 'drafts' | 'archived' | 'offers' = 'published';
-    if (activeTab === 'offers') targetListKey = 'offers';
-    else if (activeTab === 'dashboard') targetListKey = 'drafts'; 
+    let targetListKey: 'published' | 'drafts' | 'archived' = 'published';
+    if (activeTab === 'dashboard') targetListKey = 'drafts';
 
-    // Read current list state fresh from the store to avoid stale closure values
     const storeState = useJobStore.getState();
-    const currentList = targetListKey === 'offers'
-      ? storeState.applications.offers
-      : storeState.recruiter[targetListKey as 'published' | 'drafts' | 'archived'];
-    
-    // Don't refetch if already fetched, unless doing loadMore
+    const currentList = storeState.recruiter[targetListKey];
+
     if (!isLoadMore && currentList.hasFetched && currentList.jobs.length > 0) {
       return;
     }
@@ -101,13 +94,7 @@ export const useRecruiterJobs = (companyId?: string) => {
         cursor,
       };
 
-      let rawJobs: any[] = [];
-      if (activeTab === 'offers') {
-        rawJobs = await api.getCompanySentOffers(companyId, params);
-      } else {
-        rawJobs = await api.getCompanyJobs(companyId, params);
-      }
-
+      const rawJobs: any[] = await api.getCompanyJobs(companyId, params);
       const fetchedJobs = rawJobs.map(mapOldToNewJob);
 
       const nextJobs = isLoadMore ? [...currentList.jobs, ...fetchedJobs] : fetchedJobs;
@@ -119,7 +106,7 @@ export const useRecruiterJobs = (companyId?: string) => {
         nextCursor = lastItem.created_at || lastItem.posted_at;
       }
 
-      updateListState(targetListKey, {
+      updateListState(targetListKey as 'published' | 'drafts' | 'archived', {
         jobs: nextJobs,
         nextCursor,
         hasMore,
@@ -129,7 +116,7 @@ export const useRecruiterJobs = (companyId?: string) => {
       });
     } catch (err: any) {
       console.error(`Failed to fetch recruiter ${activeTab} jobs:`, err);
-      updateListState(targetListKey, {
+      updateListState(targetListKey as 'published' | 'drafts' | 'archived', {
         loading: false,
         error: err.message || 'Failed to load jobs list',
       });
@@ -145,12 +132,8 @@ export const useRecruiterJobs = (companyId?: string) => {
 
 
 
-  function updateListState(key: 'published' | 'drafts' | 'archived' | 'offers', updates: any) {
-    if (key === 'offers') {
-      setApplicationsList('offers', updates);
-    } else {
-      setRecruiterList(key, updates);
-    }
+  function updateListState(key: 'published' | 'drafts' | 'archived', updates: any) {
+    setRecruiterList(key, updates);
   }
 
   const loadMore = useCallback(() => {
@@ -159,7 +142,6 @@ export const useRecruiterJobs = (companyId?: string) => {
 
   // Determine which list to return based on active tab
   const getActiveList = () => {
-    if (activeTab === 'offers') return offers;
     if (activeTab === 'dashboard') return drafts;
     return published;
   };

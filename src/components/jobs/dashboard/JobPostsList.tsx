@@ -24,13 +24,14 @@ export function JobPostsList({ selectedJobId, onSelectJob }: JobPostsListProps) 
     const { activeProfile, isCompany } = useActiveProfile()
     const companyId = isCompany && activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined
     const {
-        jobs,
+        jobs: rawJobs,
         isLoading,
         isFetchingNextPage,
         hasNextPage,
         fetchNextPage,
         removeJob
     } = useRecruiterJobs(companyId)
+    const jobs: Job[] = rawJobs || [];
 
     const [editingJob, setEditingJob] = useState<Job | undefined>(undefined)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)

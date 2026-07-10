@@ -18,6 +18,7 @@ import { useRecruiterJobs } from "@/features/jobs/hooks/useRecruiterJobs"
 import { useActiveProfile } from "@/context/ActiveProfileContext"
 import { useCompanyPermissions } from "@/hooks/use-organization"
 import type { Page } from "@/types/common"
+import type { Job } from "@/features/jobs/types/jobs.types"
 
 const routes: Record<string, string> = {
     home: "/feed",
@@ -130,7 +131,7 @@ export default function CompanyJobsPage({ companyId, searchParams }: { companyId
     // The backend already returns jobs for the company based on queryKey injected in `useInfiniteJobs` hook.
     // We just need to separate offers and non-offers if activeTab is "offers"
     // For company mode, `jobs` is the list of company jobs (unless activeTab is dashboard).
-    const myCompanyJobs = (activeTab === "my-jobs" ? myJobs : jobs) || [];
+    const myCompanyJobs: Job[] = (activeTab === "my-jobs" ? myJobs : jobs) || [];
     const openCompanyJobs = myCompanyJobs.filter(j => !j.is_offer);
     const offeredCompanyJobs = myCompanyJobs.filter(j => j.is_offer);
 
