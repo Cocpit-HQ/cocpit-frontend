@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Icon } from '@iconify/react';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { JobListing } from '../../types/jobs.types';
 import {
   getJobApplicants,
@@ -202,6 +203,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
   onBack,
   onViewDetails,
 }) => {
+  const { isCompany, activeProfile } = useActiveProfile();
+  const isCompanyMode = isCompany && !!activeProfile?.id;
+
   const [candidates, setCandidates] = useState<any[]>([]);
   const [selectedCandId, setSelectedCandId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterOption>('Top match');
@@ -471,7 +475,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
             type="button"
             className="box-border flex flex-row justify-center items-center px-[16px] py-[8px] gap-[10px] w-auto h-[40px] rounded-[24px] active:scale-95"
           >
-            <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#6366F1] whitespace-nowrap">
+            <span className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-center whitespace-nowrap ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>
               View job details
             </span>
           </button>
@@ -479,12 +483,12 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
       </div>
 
       {isLoadingList ? (
-        <div className="w-[998px] h-[300px] flex items-center justify-center bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-3 self-stretch grow-0">
-          <Icon icon="svg-spinners:180-ring" className="w-8 h-8 text-[#6366F1]" />
+        <div className={`w-[998px] h-[300px] flex items-center justify-center bg-white border rounded-[24px] flex-none order-3 self-stretch grow-0 ${isCompanyMode ? 'border-[#E8F0FE]' : 'border-[#EEF2FF]'}`}>
+          <Icon icon="svg-spinners:180-ring" className={`w-8 h-8 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`} />
         </div>
       ) : candidates.length === 0 ? (
-        <div className="w-[998px] h-[300px] bg-white border border-[#EEF2FF] rounded-[24px] flex flex-col items-center justify-center gap-4 text-center flex-none order-3 self-stretch grow-0">
-          <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500">
+        <div className={`w-[998px] h-[300px] bg-white border rounded-[24px] flex flex-col items-center justify-center gap-4 text-center flex-none order-3 self-stretch grow-0 ${isCompanyMode ? 'border-[#E8F0FE]' : 'border-[#EEF2FF]'}`}>
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isCompanyMode ? 'bg-blue-50 text-[#1A73E8]' : 'bg-indigo-50 text-indigo-500'}`}>
             <Icon icon="hugeicons:job-search" className="w-6 h-6" />
           </div>
           <div className="flex flex-col gap-1">
@@ -498,7 +502,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
         >
         {/* Left Column: Candidates list (Frame 2609067) */}
         <div
-          className="box-border flex flex-col items-start p-[12px] gap-[16px] w-[294px] h-[574px] border border-[#EEF2FF] rounded-[24px] flex-none order-0 grow-0"
+          className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[294px] h-[574px] border rounded-[24px] flex-none order-0 grow-0 ${isCompanyMode ? 'border-[#E8F0FE]' : 'border-[#EEF2FF]'}`}
         >
           {/* Header Container */}
           <div
@@ -534,7 +538,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 {/* Arrow Right */}
                 <button
                   type="button"
-                  className="w-[16px] h-[16px] flex items-center justify-center p-0 hover:bg-slate-50 rounded flex-none order-2 grow-0 text-[#6366F1]"
+                  className={`w-[16px] h-[16px] flex items-center justify-center p-0 hover:bg-slate-50 rounded flex-none order-2 grow-0 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}
                 >
                   <Icon icon="lucide:chevron-right" className="w-[16px] h-[16px]" />
                 </button>
@@ -553,7 +557,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
               {/* Candidates List Filter Dropdown */}
               {isDropdownOpen && (
-                <div className="absolute right-0 top-[45px] z-50 w-32 p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-50 flex flex-col justify-start items-center overflow-hidden shadow-[0_12px_32px_rgba(99,102,241,0.1)] animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className={`absolute right-0 top-[45px] z-50 w-32 p-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex flex-col justify-start items-center overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${
+                  isCompanyMode ? 'outline-blue-50 shadow-[0_12px_32px_rgba(26,115,232,0.1)]' : 'outline-indigo-50 shadow-[0_12px_32px_rgba(99,102,241,0.1)]'
+                }`}>
                   {(['Top match', 'Recent', 'Shortlisted', 'Noted', 'Pending'] as FilterOption[]).map(
                     (opt) => {
                       const isOptActive = filter === opt;
@@ -564,11 +570,14 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                             setFilter(opt);
                             setIsDropdownOpen(false);
                           }}
-                          className="self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer hover:bg-indigo-50/25 transition-colors"
+                          className={`self-stretch px-4 py-2 bg-white rounded-3xl inline-flex justify-start items-center gap-2.5 cursor-pointer transition-colors ${
+                            isCompanyMode ? 'hover:bg-blue-50/25' : 'hover:bg-indigo-50/25'
+                          }`}
                         >
                           <span
-                            className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${isOptActive ? 'text-indigo-500' : 'text-black'
-                              }`}
+                            className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${
+                              isOptActive ? (isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-500') : 'text-black'
+                            }`}
                           >
                             {opt}
                           </span>
@@ -600,7 +609,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     onClick={() => setSelectedCandId(cand.applicationId)}
                     className="box-border flex flex-row items-center p-[12px] gap-[8px] w-[270px] h-[78px] rounded-[12px] flex-none order-0 self-stretch grow-0 cursor-pointer transition-all duration-200"
                     style={{
-                      backgroundColor: isSelected ? '#EEF2FF' : '#FFFFFF',
+                      backgroundColor: isSelected ? (isCompanyMode ? '#E8F0FE' : '#EEF2FF') : '#FFFFFF',
                     }}
                   >
                     {/* Ellipse 2 (User avatar) */}
@@ -627,7 +636,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                       <div className="flex flex-row items-center p-0 gap-[4px] w-[97px] h-[26px] flex-none">
                         {cand.matchScore != null ? (
                           <>
-                            <span className="w-[38px] h-[26px] font-['Poppins'] font-medium text-[18px] leading-[26px] flex items-center text-[#6366F1]">
+                            <span className={`w-[38px] h-[26px] font-['Poppins'] font-medium text-[18px] leading-[26px] flex items-center ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>
                               {cand.matchScore}%
                             </span>
                             <span className="w-[55px] h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6B7280]">
@@ -707,7 +716,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
               <div className="flex flex-col justify-center items-start p-0 gap-[4px] w-[55px] h-[52px] flex-none order-1 grow-0">
                 {/* Score text */}
                 <span
-                  className="w-[51px] h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center text-[#6366F1] flex-none order-0 grow-0"
+                  className={`w-[51px] h-[32px] font-['Poppins'] font-semibold text-[24px] leading-[32px] flex items-center flex-none order-0 grow-0 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}
                 >
                   {candidateAnalysis?.matchScore}%
                 </span>
@@ -745,10 +754,14 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 onClick={() => handleDecline(selectedCandidate?.applicationId)}
                 disabled={candidateDetail?.status === 'Rejected'}
                 type="button"
-                className="box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border border-[#818CF8] rounded-[24px] flex-none order-0 grow-0 hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-0 grow-0 hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isCompanyMode ? 'border-[#1A73E8]' : 'border-[#818CF8]'
+                }`}
               >
                 <span
-                  className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-[#818CF8] flex-none order-0 grow-0 whitespace-nowrap"
+                  className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-center flex-none order-0 grow-0 whitespace-nowrap ${
+                    isCompanyMode ? 'text-[#1A73E8]' : 'text-[#818CF8]'
+                  }`}
                 >
                   {candidateDetail?.status === 'Rejected' ? 'Declined' : 'Decline'}
                 </span>
@@ -759,7 +772,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 onClick={() => handleShortlist(selectedCandidate?.applicationId)}
                 disabled={candidateDetail?.status === 'Shortlisted'}
                 type="button"
-                className="box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] flex-none order-1 grow-0 hover:bg-[#5558e6] transition-all disabled:opacity-75 disabled:cursor-not-allowed"
+                className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border border-white rounded-[24px] flex-none order-1 grow-0 transition-all disabled:opacity-75 disabled:cursor-not-allowed ${
+                  isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#5558e6]'
+                }`}
               >
                 <span
                   className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white flex-none order-0 grow-0 whitespace-nowrap"
@@ -784,7 +799,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
               {/* Note body frame / Frame 2609030 */}
               <div 
-                className="box-border flex flex-col items-start py-[12px] px-[16px] gap-[8px] w-[688px] bg-[#F9FAFF] border-l-2 border-[#6366F1] rounded-tr-[16px] rounded-bl-[16px] rounded-br-[16px] flex-none order-1 self-stretch grow-0"
+                className={`box-border flex flex-col items-start py-[12px] px-[16px] gap-[8px] w-[688px] border-l-2 rounded-tr-[16px] rounded-bl-[16px] rounded-br-[16px] flex-none order-1 self-stretch grow-0 ${
+                  isCompanyMode ? 'bg-[#F4F8FF] border-l-[#1A73E8]' : 'bg-[#F9FAFF] border-l-[#6366F1]'
+                }`}
               >
                 <span 
                   className={`w-[656px] font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6B7280] flex-none order-0 self-stretch grow-0 whitespace-pre-wrap break-words ${isNoteExpanded ? '' : 'line-clamp-2'}`}
@@ -794,7 +811,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 {candidateDetail?.selfNote && candidateDetail.selfNote.length > 150 && (
                   <button 
                     onClick={() => setIsNoteExpanded(!isNoteExpanded)}
-                    className="text-[#6366F1] text-[12px] font-medium font-['Poppins'] hover:underline"
+                    className={`text-[12px] font-medium font-['Poppins'] hover:underline ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}
                   >
                     {isNoteExpanded ? 'Read less' : 'Read more'}
                   </button>
@@ -852,7 +869,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           {/* AI Executive Summary Block / Section - AI Executive Summary */}
           {candidateAnalysis && (
             <div 
-              className="flex flex-col items-start p-[16px] gap-[16px] w-[688px] bg-[#F9FAFF] rounded-[24px] flex-none order-4 self-stretch grow-0 box-border"
+              className={`flex flex-col items-start p-[16px] gap-[16px] w-[688px] rounded-[24px] flex-none order-4 self-stretch grow-0 box-border ${
+                isCompanyMode ? 'bg-[#F4F8FF]' : 'bg-[#F9FAFF]'
+              }`}
             >
               {/* Title frame */}
               <div className="flex flex-row items-center p-0 gap-[8px] w-[656px] h-auto flex-none order-0 self-stretch grow-0 flex-wrap">
@@ -862,7 +881,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 {/* Heading */}
                 <div className="flex flex-col items-start p-0 h-[16px] flex-none order-1 grow-0">
                   <span
-                    className="h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-[#6366F1] uppercase tracking-wider whitespace-nowrap"
+                    className={`h-[16px] font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center uppercase tracking-wider whitespace-nowrap ${
+                      isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'
+                    }`}
                   >
                     AI Executive Summary
                   </span>
@@ -924,17 +945,21 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
                   {/* Recommendation frame / HorizontalBorder */}
                   <div 
-                    className="box-border flex flex-col items-start pt-[16px] px-0 pb-0 w-[656px] min-h-[49px] h-auto border-t border-[#E0E7FF] flex-none order-2 self-stretch grow-0"
+                    className={`box-border flex flex-col items-start pt-[16px] px-0 pb-0 w-[656px] min-h-[49px] h-auto border-t flex-none order-2 self-stretch grow-0 ${
+                      isCompanyMode ? 'border-t-[#E8F0FE]' : 'border-t-[#E0E7FF]'
+                    }`}
                   >
                     <div className="w-[656px] min-h-[32px] h-auto font-['Poppins'] font-normal text-[12px] leading-[16px] text-black text-left">
-                      <span className="font-semibold text-[#6366F1] mr-1">Recommendation:</span>
+                      <span className={`font-semibold mr-1 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>Recommendation:</span>
                       <span>{candidateAnalysis.summary.recommendation}</span>
                     </div>
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center py-[24px] gap-[16px] w-[656px] border border-dashed border-[#C7D2FE] rounded-[16px] bg-white">
-                  <div className="flex flex-row items-center gap-[8px] text-[#6366F1]">
+                <div className={`flex flex-col items-center justify-center py-[24px] gap-[16px] w-[656px] border border-dashed rounded-[16px] bg-white ${
+                  isCompanyMode ? 'border-[#ADCCFF]' : 'border-[#C7D2FE]'
+                }`}>
+                  <div className={`flex flex-row items-center gap-[8px] ${isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'}`}>
                     <Icon icon="lucide:sparkles" className="w-[20px] h-[20px] animate-pulse" />
                     <span className="font-semibold text-xs uppercase tracking-wider font-['Poppins']">AI Insight Pending</span>
                   </div>
@@ -945,7 +970,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     onClick={handleTriggerAI}
                     disabled={isAnalyzing}
                     type="button"
-                    className="flex flex-row justify-center items-center py-[8px] px-[20px] bg-[#6366F1] text-white text-[12px] font-semibold rounded-[24px] hover:bg-[#5558e6] transition-all disabled:opacity-50 font-['Poppins'] cursor-pointer border-0 outline-0"
+                    className={`flex flex-row justify-center items-center py-[8px] px-[20px] text-white text-[12px] font-semibold rounded-[24px] transition-all disabled:opacity-50 font-['Poppins'] cursor-pointer border-0 outline-0 ${
+                      isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#5558e6]'
+                    }`}
                   >
                     {isAnalyzing ? (
                       <div className="flex flex-row items-center gap-[8px]">
@@ -967,7 +994,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
           {/* Skills match / Skills Match */}
           {(candidateAnalysis?.skills || (candidateDetail?.skills && candidateDetail.skills.length > 0)) && (
             <div 
-              className="box-border flex flex-col items-start p-[12px] gap-[16px] w-[688px] bg-white border border-[#EEF2FF] rounded-[24px] flex-none order-4 self-stretch grow-0"
+              className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[688px] bg-white border rounded-[24px] flex-none order-4 self-stretch grow-0 ${
+                isCompanyMode ? 'border-[#E8F0FE]' : 'border-[#EEF2FF]'
+              }`}
             >
               {/* Title frame / Frame 2609098 */}
               <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-[662px] h-[31px] flex-none self-stretch grow-0">
@@ -977,7 +1006,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   Skills
                 </span>
                 {candidateAnalysis?.skills?.match != null && (
-                  <span className="font-['Poppins'] font-bold text-[11px] leading-[15px] flex items-center text-[#6366F1] uppercase tracking-wider">
+                  <span className={`font-['Poppins'] font-bold text-[11px] leading-[15px] flex items-center uppercase tracking-wider ${
+                    isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'
+                  }`}>
                     {candidateAnalysis.skills.match}% Match
                   </span>
                 )}
@@ -990,11 +1021,11 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                       <div 
                         key={idx}
                         className="flex flex-col justify-center items-center py-[8px] px-[16px] h-[32px] rounded-[9999px] flex-none"
-                        style={{ backgroundColor: tag.matched ? '#EEF2FF' : '#FFF1F1' }}
+                        style={{ backgroundColor: tag.matched ? (isCompanyMode ? '#E8F0FE' : '#EEF2FF') : '#FFF1F1' }}
                       >
                         <span 
                           className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-center"
-                          style={{ color: tag.matched ? '#6366F1' : '#FF6B6B' }}
+                          style={{ color: tag.matched ? (isCompanyMode ? '#1A73E8' : '#6366F1') : '#FF6B6B' }}
                         >
                           {tag.name}
                         </span>
@@ -1006,11 +1037,11 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                         <div 
                           key={idx}
                           className="flex flex-col justify-center items-center py-[8px] px-[16px] h-[32px] rounded-[9999px] flex-none"
-                          style={{ backgroundColor: '#EEF2FF' }}
+                          style={{ backgroundColor: isCompanyMode ? '#E8F0FE' : '#EEF2FF' }}
                         >
                           <span 
                             className="font-['Poppins'] font-normal text-[12px] leading-[16px] flex items-center text-center"
-                            style={{ color: '#6366F1' }}
+                            style={{ color: isCompanyMode ? '#1A73E8' : '#6366F1' }}
                           >
                             {skillName}
                           </span>
@@ -1035,7 +1066,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
             <div className="flex flex-row items-start p-0 gap-[16px] w-[688px] h-[197px] flex-none order-5 self-stretch grow-0">
               {/* Left Experience frame / Experience Match */}
               <div 
-                className="box-border flex flex-col items-start p-[12px] gap-[16px] w-[336px] h-[197px] bg-white border border-[#EEF2FF] rounded-[16px] flex-none order-0 self-stretch grow-[1]"
+                className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[336px] h-[197px] bg-white border rounded-[16px] flex-none order-0 self-stretch grow-[1] ${
+                  isCompanyMode ? 'border-[#E8F0FE]' : 'border-[#EEF2FF]'
+                }`}
               >
                 {/* Title frame */}
                 <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-[310px] h-[31px] flex-none self-stretch grow-0">
@@ -1047,7 +1080,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   
                   {/* Status */}
                   <span 
-                    className="w-[47px] h-[15px] font-['Inter'] font-bold text-[10px] leading-[15px] flex items-center text-[#6366F1] uppercase"
+                    className={`w-[47px] h-[15px] font-['Inter'] font-bold text-[10px] leading-[15px] flex items-center uppercase ${
+                      isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'
+                    }`}
                   >
                     {candidateAnalysis.experience.status}
                   </span>
@@ -1070,7 +1105,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   </div>
 
                   {/* Arrow */}
-                  <div className="flex flex-col justify-end items-center p-0 pb-[6px] h-[52px] flex-none order-1 grow-0 text-[#C7D2FE]">
+                  <div className={`flex flex-col justify-end items-center p-0 pb-[6px] h-[52px] flex-none order-1 grow-0 ${isCompanyMode ? 'text-[#ADCCFF]' : 'text-[#C7D2FE]'}`}>
                     <Icon icon="lucide:arrow-right" className="w-5 h-5" />
                   </div>
 
@@ -1097,7 +1132,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 
               {/* Right Qualification frame / Education Match */}
               <div 
-                className="box-border flex flex-col items-start p-[12px] gap-[16px] w-[336px] h-[197px] bg-white border border-[#EEF2FF] rounded-[16px] flex-none order-1 self-stretch grow-[1]"
+                className={`box-border flex flex-col items-start p-[12px] gap-[16px] w-[336px] h-[197px] bg-white border rounded-[16px] flex-none order-1 self-stretch grow-[1] ${
+                  isCompanyMode ? 'border-[#E8F0FE]' : 'border-[#EEF2FF]'
+                }`}
               >
                 {/* Title frame */}
                 <div className="flex flex-row justify-between items-center p-0 gap-[8px] w-[310px] h-[31px] flex-none self-stretch grow-0">
@@ -1109,7 +1146,9 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                   
                   {/* Status */}
                   <span 
-                    className="w-[45px] h-[15px] font-['Inter'] font-bold text-[10px] leading-[15px] flex items-center text-[#6366F1] uppercase"
+                    className={`w-[45px] h-[15px] font-['Inter'] font-bold text-[10px] leading-[15px] flex items-center uppercase ${
+                      isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'
+                    }`}
                   >
                     PROVIDED
                   </span>
@@ -1164,20 +1203,26 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="Add a personal note...."
-                className="self-stretch h-32 px-4 py-2 bg-white rounded-2xl outline outline-1 outline-offset-[-1px] outline-zinc-200 text-black text-sm font-normal font-['Poppins'] leading-5 resize-none focus:outline-none focus:outline-indigo-400"
+                className={`self-stretch h-32 px-4 py-2 bg-white rounded-2xl outline outline-1 outline-offset-[-1px] outline-zinc-200 text-black text-sm font-normal font-['Poppins'] leading-5 resize-none focus:outline-none ${
+                  isCompanyMode ? 'focus:outline-blue-400' : 'focus:outline-indigo-400'
+                }`}
               />
               <div className="self-stretch inline-flex justify-start items-start gap-4">
                 <button
                   onClick={() => setIsNoteModalOpen(false)}
                   type="button"
-                  className="flex-1 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-400 flex justify-center items-center gap-2.5 hover:bg-indigo-50/10 transition-colors active:scale-95"
+                  className={`flex-1 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 transition-colors active:scale-95 ${
+                    isCompanyMode ? 'outline-blue-400 hover:bg-blue-50/10' : 'outline-indigo-400 hover:bg-indigo-50/10'
+                  }`}
                 >
-                  <span className="text-center justify-start text-indigo-400 text-sm font-normal font-['Poppins'] leading-5">Cancel</span>
+                  <span className={`text-center justify-start text-sm font-normal font-['Poppins'] leading-5 ${isCompanyMode ? 'text-[#1A73E8]' : 'text-indigo-400'}`}>Cancel</span>
                 </button>
                 <button
                   onClick={handleSaveNote}
                   type="button"
-                  className="flex-1 h-10 px-4 py-2 bg-indigo-500 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 hover:bg-indigo-600 transition-colors active:scale-95 shadow-sm"
+                  className={`flex-1 h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 transition-colors active:scale-95 shadow-sm ${
+                    isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-indigo-500 hover:bg-indigo-600'
+                  }`}
                 >
                   <span className="text-center justify-start text-white text-sm font-normal font-['Poppins'] leading-5">Save</span>
                 </button>

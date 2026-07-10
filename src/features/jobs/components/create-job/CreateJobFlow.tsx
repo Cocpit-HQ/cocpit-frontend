@@ -65,8 +65,11 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
     setIsDrafting(true);
     
     // Fire the API immediately so the draft exists in the DB while they are drafting!
+    // Pass actor type/id so company drafts get org_id set correctly.
     try {
-      const newJobId = await jobsService.initializeJobDraft(title);
+      const actorType = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
+      const actorId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+      const newJobId = await jobsService.initializeJobDraft(title, actorType, actorId);
       if (newJobId) {
         setJobId(newJobId);
       }
@@ -91,7 +94,8 @@ export const CreateJobFlow: React.FC<CreateJobFlowProps> = ({ onBack, onSubmit, 
   const handleDeleteDraft = async () => {
     setShowDeleteConfirm(false);
     if (jobId) {
-      const success = await jobsService.deleteJobListing(jobId);
+      const orgId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+      const success = await jobsService.deleteJobListing(jobId, orgId);
       if (success) {
         toast.success("Draft deleted successfully");
       } else {

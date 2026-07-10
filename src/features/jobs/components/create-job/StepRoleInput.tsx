@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from '@iconify/react';
 import api from '@/lib/axios';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
 interface StepRoleInputProps {
   onBack: () => void;
@@ -17,6 +18,8 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
   onContinue,
   isDrafting = false,
 }) => {
+  const { activeProfile } = useActiveProfile();
+  const isCompanyMode = activeProfile?.type === 'COMPANY';
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
@@ -114,11 +117,15 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
                 }}
                 placeholder="e.g. UI/UX Designer"
                 disabled={isDrafting}
-                className="w-full pl-4 pr-11 py-3 bg-white border border-slate-200 rounded-2xl text-black text-sm font-semibold font-['Poppins'] focus:outline-none focus:border-indigo-400 transition-colors shadow-sm disabled:bg-slate-50 disabled:text-gray-400"
+                className={`w-full pl-4 pr-11 py-3 bg-white border border-slate-200 rounded-2xl text-black text-sm font-semibold font-['Poppins'] focus:outline-none transition-colors shadow-sm disabled:bg-slate-50 disabled:text-gray-400 ${
+                  isCompanyMode ? 'focus:border-blue-400' : 'focus:border-indigo-400'
+                }`}
               />
               <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
                 {isFetching ? (
-                   <div className="w-4 h-4 border-2 border-indigo-200 border-t-[#6366F1] rounded-full animate-spin" />
+                   <div className={`w-4 h-4 border-2 rounded-full animate-spin ${
+                     isCompanyMode ? 'border-blue-200 border-t-[#1A73E8]' : 'border-indigo-200 border-t-[#6366F1]'
+                   }`} />
                 ) : (
                    <Icon icon="lucide:search" className="w-4 h-4 text-gray-400" />
                 )}
@@ -135,7 +142,9 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
                          e.preventDefault();
                          handleSelectRole(role);
                       }}
-                      className="px-4 py-2 hover:bg-indigo-50 cursor-pointer text-sm font-['Poppins'] text-gray-700 font-medium transition-colors"
+                      className={`px-4 py-2 cursor-pointer text-sm font-['Poppins'] text-gray-700 font-medium transition-colors ${
+                        isCompanyMode ? 'hover:bg-blue-50' : 'hover:bg-indigo-50'
+                      }`}
                     >
                       {role}
                     </div>
@@ -146,8 +155,12 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
           </div>
 
           {/* AI Banner Tip Box */}
-          <div className="w-full px-4 py-3 bg-indigo-50/50 border border-indigo-50/100 rounded-2xl flex items-center justify-center">
-            <p className="text-[#6366F1] text-[10px] md:text-[11px] font-semibold font-['Poppins'] text-center leading-relaxed">
+          <div className={`w-full px-4 py-3 border rounded-2xl flex items-center justify-center ${
+            isCompanyMode ? 'bg-blue-50/50 border-blue-50/100' : 'bg-indigo-50/50 border-indigo-50/100'
+          }`}>
+            <p className={`text-[10px] md:text-[11px] font-semibold font-['Poppins'] text-center leading-relaxed ${
+              isCompanyMode ? 'text-[#1A73E8]' : 'text-[#6366F1]'
+            }`}>
               Choosing a specific role helps our AI accurately screen candidates for technical skills.
             </p>
           </div>
@@ -157,7 +170,9 @@ export const StepRoleInput: React.FC<StepRoleInputProps> = ({
             <button
               type="submit"
               disabled={!title.trim() || isDrafting}
-              className="px-12 py-3 bg-[#6366F1] hover:bg-[#6366F1]/90 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-[24px] text-sm font-bold font-['Poppins'] transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+              className={`px-12 py-3 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-[24px] text-sm font-bold font-['Poppins'] transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 ${
+                isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#6366F1]/90'
+              }`}
             >
               {isDrafting ? (
                 <>

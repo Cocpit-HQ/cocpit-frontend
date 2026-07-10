@@ -3,10 +3,15 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { JobListing, ListingsCounts } from '../types/jobs.types';
 import * as jobsService from '../services/jobs.service';
 import { toast } from 'sonner';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 
-export const useMyListings = () => {
-  const [statusFilter, setStatusFilterState] = useState<string>('All');
+export const useMyListings = (initialStatus: string = 'All') => {
+  const [statusFilter, setStatusFilterState] = useState<string>(initialStatus);
   const queryClient = useQueryClient();
+  const { activeProfile, isLoading: isActiveProfileLoading } = useActiveProfile();
+
+  const activeProfileId = activeProfile?.id || 'me';
+  const activeProfileType = activeProfile?.type || 'USER';
 
   const {
     data,
@@ -16,10 +21,17 @@ export const useMyListings = () => {
     fetchNextPage,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ['myListings', statusFilter],
+    queryKey: ['myListings', activeProfileType, activeProfileId, statusFilter],
     queryFn: async ({ pageParam }) => {
       try {
-        const res = await jobsService.getMyListings(statusFilter, pageParam as string | undefined);
+        const actorTypeParam = activeProfileType === 'COMPANY' ? 'ORGANIZATION' : 'USER';
+        const res = await jobsService.getMyListings(
+          statusFilter, 
+          pageParam as string | undefined,
+          10,
+          actorTypeParam,
+          activeProfile?.id
+        );
         return res;
       } catch (error) {
         console.error('Failed to load job listings:', error);
@@ -27,8 +39,10 @@ export const useMyListings = () => {
         throw error;
       }
     },
+    staleTime: 1000 * 60 * 3, // 3-minute cache: switching status tabs reuses cache within this window
     getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextCursor : undefined,
     initialPageParam: undefined as string | undefined,
+    enabled: !isActiveProfileLoading && !!activeProfile,
   });
 
   // Extract merged listings

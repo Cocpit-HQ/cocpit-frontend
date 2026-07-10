@@ -44,11 +44,50 @@ export const SendOfferTab: React.FC<SendOfferTabProps> = ({
   const [sentOffers, setSentOffers] = useState<SentOfferGroup[]>([]);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
 
-  const activeListings = listings.filter(item => item.status?.toUpperCase() === 'ACTIVE');
+  // Independently fetch ALL active listings for the Send Offer modal.
+  // We CANNOT rely on the parent's `listings` prop because that array is
+  // paginated and filtered by the current status-filter tab (e.g., "Drafts").
+  const [activeListings, setActiveListings] = useState<JobListing[]>([]);
 
-  // Stats counters
-  const totalOffersSent = sentOffers.reduce((sum, item) => sum + item.sentCount, 0);
-  const totalAccepted = sentOffers.reduce((sum, item) => sum + item.acceptedCount, 0);
+  useEffect(() => {
+    const fetchActiveListings = async () => {
+      try {
+        const isCompany = activeProfile?.type === 'COMPANY';
+        const orgId = isCompany ? activeProfile?.id : null;
+
+        let jobs: any[] = [];
+        if (isCompany && orgId) {
+          // Fetch all ACTIVE company jobs (no limit)
+          const res = await api.get(`/organizations/${orgId}/jobs`, {
+            params: { scope: 'internal', status: 'ACTIVE', limit: 100 }
+          });
+          jobs = res.data?.jobs || res.data || [];
+        } else {
+          // Personal recruiter — fetch their active jobs
+          const res = await api.get('/jobs/my', { params: { status: 'ACTIVE', limit: 100 } });
+          jobs = res.data?.jobs || res.data || [];
+        }
+
+        const mapped: JobListing[] = jobs.map((job: any) => ({
+          id: job.job_id || job.id,
+          title: job.title,
+          status: job.status,
+          org_id: job.org_id,
+          company: job.company_name,
+          location: job.location,
+        }));
+        setActiveListings(mapped);
+      } catch (err) {
+        console.error('Failed to fetch active listings for offer modal:', err);
+        // Fallback: filter parent listings
+        setActiveListings(listings.filter(l => l.status?.toUpperCase() === 'ACTIVE'));
+      }
+    };
+
+    fetchActiveListings();
+  // Re-fetch when profile or parent listings change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeProfile]);
 
   const fetchSentOffers = useCallback(async () => {
     let companyId = '';

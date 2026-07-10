@@ -625,7 +625,13 @@ export const respondToOffer = async (offerId: string, action: 'accept' | 'declin
 // Mock Listings Data
 const DUMMY_JOB_LISTINGS: JobListing[] = [];
 
-export const getMyListings = async (status?: string, cursor?: string, limit: number = 10) => {
+export const getMyListings = async (
+  status?: string, 
+  cursor?: string, 
+  limit: number = 10,
+  actorType?: string,
+  actorId?: string
+) => {
   try {
     const params: Record<string, any> = { limit };
     if (cursor) params.cursor = cursor;
@@ -638,11 +644,11 @@ export const getMyListings = async (status?: string, cursor?: string, limit: num
       params.status = statusParam;
     }
 
-    const actorType = api.defaults.headers.common["x-actor-type"];
-    const actorId = api.defaults.headers.common["x-actor-id"];
+    const currentActorType = actorType || api.defaults.headers.common["x-actor-type"];
+    const currentActorId = actorId || api.defaults.headers.common["x-actor-id"];
     
-    const endpoint = actorType === "ORGANIZATION" && actorId
-      ? `/organizations/${actorId}/jobs?scope=internal`
+    const endpoint = currentActorType === "ORGANIZATION" && currentActorId
+      ? `/organizations/${currentActorId}/jobs?scope=internal`
       : `/jobs/my`;
 
     const response = await api.get(endpoint, { params });
@@ -682,9 +688,21 @@ export const getMyListings = async (status?: string, cursor?: string, limit: num
   }
 };
 
-export const initializeJobDraft = async (title: string): Promise<string | null> => {
+export const initializeJobDraft = async (
+  title: string,
+  actorType?: string,
+  actorId?: string
+): Promise<string | null> => {
   try {
-    const response = await api.post('/jobs', { title });
+    const currentActorType = actorType || api.defaults.headers.common["x-actor-type"];
+    const currentActorId = actorId || api.defaults.headers.common["x-actor-id"];
+
+    const payload: any = { title, status: 'DRAFT' };
+    if (currentActorType === "ORGANIZATION" && currentActorId) {
+      payload.org_id = currentActorId;
+    }
+
+    const response = await api.post('/jobs', payload);
     const newJob = response.data.job || response.data;
     return newJob.job_id || newJob.id;
   } catch (error) {
@@ -709,16 +727,27 @@ export const generateJobDescription = async (
 export const createJobListing = async (
   title: string,
   status: string = 'ACTIVE',
-  details?: Partial<JobListing>
+  details?: Partial<JobListing>,
+  actorType?: string,
+  actorId?: string
 ): Promise<JobListing | null> => {
   try {
+    const currentActorType = actorType || api.defaults.headers.common["x-actor-type"];
+    const currentActorId = actorId || api.defaults.headers.common["x-actor-id"];
+    const isCompany = currentActorType === "ORGANIZATION" && currentActorId;
+
     let jobId = details?.id;
 
     // 1. If we don't have an ID, we MUST create the draft first
     if (!jobId) {
-      const createResponse = await api.post('/jobs', { title });
+      const payload: any = { title, status: 'DRAFT' };
+      if (isCompany) {
+        payload.org_id = currentActorId;
+      }
+      
+      const createResponse = await api.post('/jobs', payload);
       const newBackendJob = createResponse.data.job || createResponse.data;
-      jobId = newBackendJob.job_id;
+      jobId = newBackendJob.job_id || newBackendJob.id;
     }
 
     // 2. Now we have a jobId (either newly created or passed in). 
@@ -746,7 +775,7 @@ export const createJobListing = async (
           sMax = sMin;
       }
 
-      const updatePayload = {
+      const updatePayload: Record<string, any> = {
         title,
         description: details?.description,
         location: details?.location,
@@ -757,38 +786,50 @@ export const createJobListing = async (
         salary_currency: details?.salary_currency,
         experience_min: expMin,
         experience_max: expMax,
-        experience_label: details?.experience,
+        experience_level: details?.experience, // backend column is experience_level
         industry: details?.industry
       };
       
-      const updateResponse = await api.patch(`/jobs/${jobId}`, updatePayload);
-      const backendJob = updateResponse.data.job || updateResponse.data;
-      
-      // 3. If the user hit "Publish" (ACTIVE), submit it
-      if (status === 'ACTIVE') {
+      let backendJob;
 
-         await api.post(`/jobs/${jobId}/submit`, {
-           title,
-           description: details?.description || 'No description provided',
-           location: details?.location || 'Remote',
-           salary_min: sMin || 0,
-           salary_max: sMax || sMin || 0,
-           salary_currency: details?.salary_currency || 'USD',
-           experience_min: expMin !== undefined ? expMin : 0,
-           experience_max: expMax !== undefined ? expMax : 2,
-           experience_label: details?.experience || '0 - 2 years',
-           work_mode: details?.work_mode || 'Hybrid',
-           job_type: details?.work_type || 'Full-time',
-           industry: details?.industry || 'Technology',
-           about_company: details?.company ? `About ${details.company}` : 'Tech company',
-         }).catch(err => {
-            console.error("Error submitting job:", err?.response?.data ? JSON.stringify(err.response.data, null, 2) : err.message || err);
-            throw err; // Re-throw to catch block
-         });
+      if (isCompany) {
+        // For companies, PUT /organizations/:orgId/jobs/:jobId handles both updating and changing status directly
+        updatePayload.status = status;
+        if (status === 'ACTIVE') {
+          updatePayload.is_active = true;
+        }
+        
+        const updateResponse = await api.put(`/organizations/${currentActorId}/jobs/${jobId}`, updatePayload);
+        backendJob = updateResponse.data.job || updateResponse.data;
+      } else {
+        const updateResponse = await api.patch(`/jobs/${jobId}`, updatePayload);
+        backendJob = updateResponse.data.job || updateResponse.data;
+        
+        // 3. If the user hit "Publish" (ACTIVE) in personal mode, submit it
+        if (status === 'ACTIVE') {
+           await api.post(`/jobs/${jobId}/submit`, {
+             title,
+             description: details?.description || 'No description provided',
+             location: details?.location || 'Remote',
+             salary_min: sMin || 0,
+             salary_max: sMax || sMin || 0,
+             salary_currency: details?.salary_currency || 'USD',
+             experience_min: expMin !== undefined ? expMin : 0,
+             experience_max: expMax !== undefined ? expMax : 2,
+             experience_label: details?.experience || '0 - 2 years',
+             work_mode: details?.work_mode || 'Hybrid',
+             job_type: details?.work_type || 'Full-time',
+             industry: details?.industry || 'Technology',
+             about_company: details?.company ? `About ${details.company}` : 'Tech company',
+           }).catch(err => {
+              console.error("Error submitting job:", err?.response?.data ? JSON.stringify(err.response.data, null, 2) : err.message || err);
+              throw err; // Re-throw to catch block
+           });
+        }
       }
 
       return {
-        id: backendJob.job_id,
+        id: backendJob.job_id || backendJob.id,
         title: backendJob.title,
         status: status,
         last_edited: 'Last edited just now'
@@ -802,9 +843,16 @@ export const createJobListing = async (
   }
 };
 
-export const closeJobListing = async (id: string): Promise<boolean> => {
+export const closeJobListing = async (id: string, orgId?: string): Promise<boolean> => {
   try {
-    await api.post(`/jobs/${id}/close`);
+    if (orgId) {
+      await api.put(`/organizations/${orgId}/jobs/${id}`, {
+        status: "CLOSED",
+        is_active: false
+      });
+    } else {
+      await api.post(`/jobs/${id}/close`);
+    }
     return true;
   } catch (error) {
     console.error("Failed to close job listing:", error);
@@ -812,15 +860,27 @@ export const closeJobListing = async (id: string): Promise<boolean> => {
   }
 };
 
-export const deleteJobListing = async (id: string): Promise<boolean> => {
+export const deleteJobListing = async (id: string, orgId?: string): Promise<boolean> => {
   try {
-    await api.delete(`/jobs/${id}`);
+    if (orgId) {
+      // Backend deleteOrganizationJob is a soft-delete (sets status=CLOSED, is_active=false)
+      // but it fails because DELETE requests have no Content-Type header so express.json()
+      // leaves req.body undefined. We call PUT /organizations/:orgId/jobs/:id directly instead,
+      // which is the same underlying operation via updateOrganizationJob.
+      await api.put(`/organizations/${orgId}/jobs/${id}`, {
+        status: 'CLOSED',
+        is_active: false,
+      });
+    } else {
+      await api.delete(`/jobs/${id}`);
+    }
     return true;
   } catch (error) {
     console.error("Failed to delete job listing:", error);
     return false;
   }
 };
+
 
 const mapBackendToJobOffer = (raw: any): JobOffer => {
   const computeDaysRemaining = (expiresAt?: string): number => {

@@ -12,6 +12,7 @@ import OfferDetailsScreen from './OfferDetailsScreen';
 import SendOfferModal from './SendOfferModal';
 import { toast } from 'sonner';
 import ListingsSkeleton from '../skeletons/ListingsSkeleton';
+import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useJobStore } from '@/store/job.store';
 import Image from 'next/image';
@@ -29,6 +30,8 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   const searchParams = useSearchParams();
   const urlView = searchParams?.get('view') as ViewState | null;
   const urlJobId = searchParams?.get('jobId') || null;
+  const { activeProfile } = useActiveProfile();
+  const orgId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
 
   // Initialize the local view state based on URL, defaulting to 'dashboard'
   const [view, setView] = useState<ViewState>(() => {
@@ -44,6 +47,11 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
     return 'Job listings';
   });
 
+  // Read initial status filter from URL so refresh preserves the selected tab
+  const VALID_FILTERS = ['All', 'Active', 'Closed', 'In review', 'Drafts'] as const;
+  const urlFilter = searchParams?.get('filter') || 'All';
+  const initialFilter = (VALID_FILTERS as readonly string[]).includes(urlFilter) ? urlFilter : 'All';
+
   // Wrap setActiveSubTab to also update URL
   const setActiveSubTab = useCallback((tab: SubTab) => {
     setActiveSubTabLocal(tab);
@@ -57,8 +65,20 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   }, [router]);
   const {
     listings, isLoading, isFetchingMore, hasMore, counts,
-    statusFilter, setStatusFilter, loadMore, refresh
-  } = useMyListings();
+    statusFilter, setStatusFilter: setStatusFilterRaw, loadMore, refresh
+  } = useMyListings(initialFilter);
+
+  // Wrap setStatusFilter to also persist the selected filter tab in the URL
+  const setStatusFilter = useCallback((status: string) => {
+    setStatusFilterRaw(status);
+    const params = new URLSearchParams(window.location.search);
+    if (status === 'All') {
+      params.delete('filter');
+    } else {
+      params.set('filter', status);
+    }
+    router.replace(`/jobs?${params.toString()}`);
+  }, [setStatusFilterRaw, router]);
 
   const [initialOfferJobId, setInitialOfferJobId] = useState<string | undefined>(undefined);
   const [isSendOfferModalOpen, setIsSendOfferModalOpen] = useState(false);
@@ -122,7 +142,9 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
   const handleCreateJob = useCallback(async (title: string, status: string, details?: Partial<JobListing>) => {
     try {
       const listingData = selectedListing ? { ...details, id: selectedListing.id } : details;
-      const newListing = await jobsService.createJobListing(title, status, listingData);
+      const actorType = activeProfile?.type === 'COMPANY' ? 'ORGANIZATION' : 'USER';
+      const actorId = activeProfile?.type === 'COMPANY' ? activeProfile.id : undefined;
+      const newListing = await jobsService.createJobListing(title, status, listingData, actorType, actorId);
       if (newListing) {
         refresh();
         setActiveSubTabLocal('Job listings');
@@ -146,11 +168,11 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       }
       toast.error(errMsg);
     }
-  }, [selectedListing, refresh, transitionTo]);
+  }, [selectedListing, refresh, transitionTo, activeProfile]);
 
   const handleCloseJob = useCallback(async (id: string) => {
     try {
-      const success = await jobsService.closeJobListing(id);
+      const success = await jobsService.closeJobListing(id, orgId);
       if (success) {
         refresh();
         setSelectedListing(prev => prev ? { ...prev, status: 'CLOSED' } : null);
@@ -162,11 +184,11 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       console.error('Error closing job listing:', error);
       toast.error('Failed to close job listing.');
     }
-  }, [refresh]);
+  }, [refresh, orgId]);
 
   const handleDeleteJob = useCallback(async (id: string) => {
     try {
-      const success = await jobsService.deleteJobListing(id);
+      const success = await jobsService.deleteJobListing(id, orgId);
       if (success) {
         refresh();
         transitionTo('dashboard');
@@ -178,7 +200,7 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
       console.error('Error deleting job listing:', error);
       toast.error('Failed to delete job listing.');
     }
-  }, [refresh, transitionTo]);
+  }, [refresh, transitionTo, orgId]);
 
   // Memoize stable callbacks for child components
   // Memoize stable callbacks for child components
@@ -454,7 +476,9 @@ export const MyListingsDashboard: React.FC<MyListingsDashboardProps> = ({ onBack
           setIsSendOfferModalOpen(false);
           setInitialOfferJobId(undefined);
         }}
-        activeListings={listings.filter(l => l.status?.toUpperCase() === 'ACTIVE')}
+        activeListings={listings.filter(l => l.status?.toUpperCase() === 'ACTIVE').length > 0
+          ? listings.filter(l => l.status?.toUpperCase() === 'ACTIVE')
+          : listings /* fallback: show all so modal can render something */}
         onOfferSent={() => {
           setIsSendOfferModalOpen(false);
           setInitialOfferJobId(undefined);

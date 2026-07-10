@@ -50,14 +50,9 @@ export interface JobsUIState {
     industry?: string;
   };
 
-  // ─── explore slice ────────────────────────────────────────
-  explore: CachedList<Job>;
-
+  // ─── explore slice (Removed, handled by TanStack Query) ──
   // ─── applications slice ────────────────────────────────────
   applications: {
-    applied: CachedList<Job>;
-    saved: CachedList<Job>;
-    offers: CachedList<Job>;
     stats: { totalApplied: number; shortlisted: number };
   };
 
@@ -86,9 +81,7 @@ export interface JobsUIState {
   setMultipleFilters: (updates: Partial<JobsFilter>) => void;
   resetFilters: () => void;
 
-  // ─── Caching and List Actions ──────────────────────────────
-  setExploreList: (updates: Partial<CachedList<Job>>) => void;
-  setApplicationsList: (listKey: 'applied' | 'saved' | 'offers', updates: Partial<CachedList<Job>>) => void;
+  // ─── Caching and List Actions (Recruiter only) ─────────────
   setRecruiterList: (listKey: 'published' | 'drafts' | 'archived', updates: Partial<CachedList<Job>>) => void;
   setApplicationStats: (stats: { totalApplied: number; shortlisted: number }) => void;
 
@@ -171,11 +164,7 @@ export const useJobStore = create<JobsUIState>()(
     date_posted: '',
     industry: '',
   },
-  explore: createEmptyList<Job>(),
   applications: {
-    applied: createEmptyList<Job>(),
-    saved: createEmptyList<Job>(),
-    offers: createEmptyList<Job>(),
     stats: { totalApplied: 0, shortlisted: 0 },
   },
   recruiter: {
@@ -259,17 +248,6 @@ export const useJobStore = create<JobsUIState>()(
     })),
 
   // ─── Caching and List Actions ──────────────────────────────
-  setExploreList: (updates) =>
-    set((state) => ({
-      explore: { ...state.explore, ...updates },
-    })),
-  setApplicationsList: (listKey, updates) =>
-    set((state) => ({
-      applications: {
-        ...state.applications,
-        [listKey]: { ...state.applications[listKey], ...updates },
-      },
-    })),
   setRecruiterList: (listKey, updates) =>
     set((state) => ({
       recruiter: {
@@ -287,16 +265,7 @@ export const useJobStore = create<JobsUIState>()(
     set((state) => {
       const nextSaved = new Set(state.savedJobIds);
       nextSaved.add(id);
-
-      // Optimistically flag in explore list
-      const nextExploreJobs = state.explore.jobs.map((j) =>
-        j.id === id ? { ...j, is_saved: true } : j
-      );
-
-      return {
-        savedJobIds: nextSaved,
-        explore: { ...state.explore, jobs: nextExploreJobs },
-      };
+      return { savedJobIds: nextSaved };
     }),
 
   addSavedIds: (ids) =>
@@ -309,54 +278,21 @@ export const useJobStore = create<JobsUIState>()(
           changed = true;
         }
       });
-      if (!changed) return {};
-
-      const nextExploreJobs = state.explore.jobs.map((j) =>
-        nextSaved.has(j.id) ? { ...j, is_saved: true } : j
-      );
-
-      return {
-        savedJobIds: nextSaved,
-        explore: { ...state.explore, jobs: nextExploreJobs },
-      };
+      return changed ? { savedJobIds: nextSaved } : {};
     }),
 
   removeSavedId: (id) =>
     set((state) => {
       const nextSaved = new Set(state.savedJobIds);
       nextSaved.delete(id);
-
-      // Unflag in explore list
-      const nextExploreJobs = state.explore.jobs.map((j) =>
-        j.id === id ? { ...j, is_saved: false } : j
-      );
-      // Remove from saved cache
-      const nextSavedJobs = state.applications.saved.jobs.filter((j) => j.id !== id);
-
-      return {
-        savedJobIds: nextSaved,
-        explore: { ...state.explore, jobs: nextExploreJobs },
-        applications: {
-          ...state.applications,
-          saved: { ...state.applications.saved, jobs: nextSavedJobs },
-        },
-      };
+      return { savedJobIds: nextSaved };
     }),
 
   addAppliedId: (id) =>
     set((state) => {
       const nextApplied = new Set(state.appliedJobIds);
       nextApplied.add(id);
-
-      // Flag in explore list
-      const nextExploreJobs = state.explore.jobs.map((j) =>
-        j.id === id ? { ...j, is_applied: true, application_status: 'Applied' } : j
-      );
-
-      return {
-        appliedJobIds: nextApplied,
-        explore: { ...state.explore, jobs: nextExploreJobs },
-      };
+      return { appliedJobIds: nextApplied };
     }),
 
   addAppliedIds: (ids) =>
@@ -369,81 +305,27 @@ export const useJobStore = create<JobsUIState>()(
           changed = true;
         }
       });
-      if (!changed) return {};
-
-      const nextExploreJobs = state.explore.jobs.map((j) =>
-        nextApplied.has(j.id) ? { ...j, is_applied: true } : j
-      );
-
-      return {
-        appliedJobIds: nextApplied,
-        explore: { ...state.explore, jobs: nextExploreJobs },
-      };
+      return changed ? { appliedJobIds: nextApplied } : {};
     }),
 
   removeAppliedId: (id) =>
     set((state) => {
       const nextApplied = new Set(state.appliedJobIds);
       nextApplied.delete(id);
-
-      // Unflag in explore list
-      const nextExploreJobs = state.explore.jobs.map((j) =>
-        j.id === id ? { ...j, is_applied: false, application_status: undefined } : j
-      );
-      // Remove from applied cache
-      const nextAppliedJobs = state.applications.applied.jobs.filter((j) => j.id !== id);
-
-      return {
-        appliedJobIds: nextApplied,
-        explore: { ...state.explore, jobs: nextExploreJobs },
-        applications: {
-          ...state.applications,
-          applied: { ...state.applications.applied, jobs: nextAppliedJobs },
-        },
-      };
+      return { appliedJobIds: nextApplied };
     }),
 
   setOfferResponse: (id, action) =>
-    set((state) => {
-      const nextOffers = { ...state.respondedOffers, [id]: action };
-      const status = action === 'accept' ? 'Accepted' : 'Declined';
-      const offerStatusVal = action === 'accept' ? 'accepted' : 'declined';
-
-      const updateJob = (j: Job) => 
-        (j.id === id || j.offer_id === id) 
-          ? { ...j, application_status: status, offerStatus: offerStatusVal } 
-          : j;
-
-      return {
-        respondedOffers: nextOffers,
-        explore: { ...state.explore, jobs: state.explore.jobs.map(updateJob) },
-        applications: {
-          ...state.applications,
-          offers: { ...state.applications.offers, jobs: state.applications.offers.jobs.map(updateJob) },
-          saved: { ...state.applications.saved, jobs: state.applications.saved.jobs.map(updateJob) },
-          applied: { ...state.applications.applied, jobs: state.applications.applied.jobs.map(updateJob) },
-        },
-      };
-    }),
+    set((state) => ({
+      respondedOffers: { ...state.respondedOffers, [id]: action }
+    })),
 
   toggleFollowCompany: (companyName) =>
     set((state) => {
       const nextFollowed = new Set(state.followedCompanies);
-      if (nextFollowed.has(companyName)) {
-        nextFollowed.delete(companyName);
-      } else {
-        nextFollowed.add(companyName);
-      }
-
-      // Update in explore cache
-      const nextExploreJobs = state.explore.jobs.map((j) =>
-        j.company === companyName ? { ...j, is_followed: nextFollowed.has(companyName) } : j
-      );
-
-      return {
-        followedCompanies: nextFollowed,
-        explore: { ...state.explore, jobs: nextExploreJobs },
-      };
+      if (nextFollowed.has(companyName)) nextFollowed.delete(companyName);
+      else nextFollowed.add(companyName);
+      return { followedCompanies: nextFollowed };
     }),
 
   // Recruiter Mutations
