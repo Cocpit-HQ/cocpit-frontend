@@ -18,6 +18,7 @@ interface LocationAutocompleteProps {
   onSelect: (location: LocationSuggestion | StructuredLocation | string | null) => void;
   value: string | null;
   mode?: "legacy" | "places";
+  allowedCountryCodes?: string[];
 }
 
 type DisplaySuggestion =
@@ -36,11 +37,15 @@ function staticToStructured(loc: StaticLocation): StructuredLocation {
   };
 }
 
-export default function LocationAutocomplete({ onSelect, value }: LocationAutocompleteProps) {
+export default function LocationAutocomplete({ onSelect, value, allowedCountryCodes }: LocationAutocompleteProps) {
   const [query, setQuery] = useState(value ?? "");
   // "idle" = showing popular static cities; "searching" = user typed, use API
   const [mode, setMode] = useState<"idle" | "searching">("idle");
-  const [staticSuggestions] = useState<StaticLocation[]>(POPULAR_LOCATIONS);
+  const [staticSuggestions] = useState<StaticLocation[]>(() => {
+    if (!allowedCountryCodes) return POPULAR_LOCATIONS;
+    const codeMap: Record<string, string> = { "India": "in", "United Arab Emirates": "ae", "Singapore": "sg", "Japan": "jp" };
+    return POPULAR_LOCATIONS.filter(l => allowedCountryCodes.includes(codeMap[l.country]));
+  });
   const [apiSuggestions, setApiSuggestions] = useState<PlacesSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -79,7 +84,7 @@ export default function LocationAutocomplete({ onSelect, value }: LocationAutoco
     const fetch = async () => {
       setLoading(true);
       try {
-        const results = await searchPlaces(debouncedQuery, sessionToken.current);
+        const results = await searchPlaces(debouncedQuery, sessionToken.current, allowedCountryCodes);
         if (!cancelled) setApiSuggestions(results);
       } catch {
         if (!cancelled) {

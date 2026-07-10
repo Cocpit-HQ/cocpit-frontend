@@ -32,9 +32,11 @@ export interface StructuredLocation {
   longitude: number | null;
 }
 
-export const searchPlaces = async (q: string, sessionToken: string): Promise<PlacesSuggestion[]> => {
+export const searchPlaces = async (q: string, sessionToken: string, allowedCountryCodes?: string[]): Promise<PlacesSuggestion[]> => {
   if (!q || q.length < 2) return [];
-  const response = await api.get("/places/autocomplete", { params: { q, sessionToken } });
+  const response = await api.get("/places/autocomplete", { 
+    params: { q, sessionToken, allowedCountryCodes: allowedCountryCodes?.join(',') } 
+  });
   return response.data.data || [];
 };
 
@@ -44,5 +46,17 @@ export const getPlaceDetails = async (placeId: string, sessionToken: string): Pr
     return response.data.data || null;
   } catch (err) {
     return null; // Gracefully fallback if details call fails
+  }
+};
+
+export const reverseGeocode = async (lat: number, lng: number): Promise<StructuredLocation | null> => {
+  try {
+    const response = await api.get("/places/reverse-geocode", { params: { lat, lng } });
+    return response.data.data || null;
+  } catch (err: any) {
+    if (err?.response?.data?.code === "UNSUPPORTED_COUNTRY") {
+      throw new Error("UNSUPPORTED_COUNTRY");
+    }
+    return null;
   }
 };

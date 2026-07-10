@@ -5,6 +5,7 @@ import { Loader2, ChevronLeft } from "lucide-react";
 import LocationAutocomplete from "@/components/ui/LocationAutocomplete";
 import { LocationSuggestion, StructuredLocation } from "@/services/api/location";
 import { updateOnboardingLocation } from "@/services/api/onboarding";
+import { reverseGeocode } from "@/services/api/location";
 import { useToast } from "@/hooks/use-toast";
 import { useOnboardingStore } from "@/store/onboarding.store";
 import { useMemo } from "react";
@@ -23,6 +24,7 @@ export default function TellUsAboutYouStep({ onNext, onBack, currentStep, totalS
     locationCity, locationLat, locationLng, setLocation 
   } = useOnboardingStore();
   const [submitting, setSubmitting] = useState(false);
+  const [detecting, setDetecting] = useState(false);
   const { toast } = useToast();
 
   const selectedLocation = useMemo((): StructuredLocation | null => {
@@ -77,19 +79,35 @@ export default function TellUsAboutYouStep({ onNext, onBack, currentStep, totalS
       return;
     }
 
+    setDetecting(true);
     toast({ title: "Detecting Location", description: "Getting your current position..." });
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        // In a real app, we'd reverse geocode here. 
-        // For now, we'll show a message or try to find a matching city if we had an API.
-        toast({
-          title: "Location Detected",
-          description: `Lat: ${position.coords.latitude.toFixed(2)}, Lon: ${position.coords.longitude.toFixed(2)}. Please select your city manually from the list below.`,
-        });
+        try {
+          const result = await reverseGeocode(position.coords.latitude, position.coords.longitude);
+          if (result) {
+            setSelectedLocation(result);
+            toast({
+              title: "Location Detected",
+              description: `Successfully found your location: ${result.formattedAddress}`,
+            });
+          } else {
+            toast({ title: "Detection Failed", description: "Could not find a city for your coordinates. Please type it manually.", variant: "destructive" });
+          }
+        } catch (err: any) {
+          if (err.message === "UNSUPPORTED_COUNTRY") {
+            toast({ title: "Unsupported Location", description: "We currently only support India, UAE, and Japan.", variant: "destructive" });
+          } else {
+            toast({ title: "Error", description: "Something went wrong while detecting location.", variant: "destructive" });
+          }
+        } finally {
+          setDetecting(false);
+        }
       },
       (error) => {
-        toast({ title: "Detection Failed", description: "Could not get your location. Please type it manually.", variant: "destructive" });
+        setDetecting(false);
+        toast({ title: "Detection Failed", description: "Could not get your location. Please ensure location permissions are granted.", variant: "destructive" });
       }
     );
   };
@@ -126,12 +144,15 @@ export default function TellUsAboutYouStep({ onNext, onBack, currentStep, totalS
           <LocationAutocomplete
             value={selectedLocation?.formattedAddress || null}
             onSelect={setSelectedLocation}
+            allowedCountryCodes={["in", "ae", "jp"]}
           />
           <button
             type="button"
             className={styles.useLocationBtn}
             onClick={handleUseCurrentLocation}
+            disabled={detecting}
           >
+            {detecting ? <Loader2 className="w-4 h-4 animate-spin inline mr-2" /> : null}
             Use current location
           </button>
         </div>

@@ -1101,6 +1101,13 @@ export default function ProfilePage() {
         !uniqueNewSkills.some(newSkill => newSkill.toLowerCase() === curr.name.toLowerCase())
       );
 
+      const resultingSkillsCount = skills.length + skillsToAdd.length - skillsToRemove.length;
+      if (resultingSkillsCount < 3) {
+        toast.error("You must have a minimum of 3 skills on your profile.");
+        setIsSavingSkills(false);
+        return;
+      }
+
       if (skillsToAdd.length > 0) {
         await skillMutations.add.mutateAsync({ name: skillsToAdd });
       }
@@ -1122,6 +1129,10 @@ export default function ProfilePage() {
   const handleDeleteSkill = useCallback((skillName: string) => {
     const skill = skills.find(s => s.name === skillName);
     if (skill) {
+      if (skills.length <= 3) {
+        toast.error("You must have a minimum of 3 skills on your profile.");
+        return;
+      }
       skillMutations.remove.mutate(skill.skill_id);
     }
   }, [skills, skillMutations.remove]);

@@ -60,7 +60,6 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
   const [showAccountSelector, setShowAccountSelector] = useState(false);
   const [photoStep, setPhotoStep] = useState<'edit' | 'caption'>(isEdit ? 'caption' : 'edit');
   const [videoStep, setVideoStep] = useState<'edit' | 'caption'>(isEdit ? 'caption' : 'edit');
-  const [pollStep, setPollStep] = useState<'edit' | 'preview'>('edit');
   const [isGeneratingPreviews, setIsGeneratingPreviews] = useState(false);
   const [previewActiveIndex, setPreviewActiveIndex] = useState(0);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
@@ -185,7 +184,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
     if (!isOpen) {
       setPhotoStep(isEdit ? 'caption' : 'edit');
       setVideoStep(isEdit ? 'caption' : 'edit');
-      setPollStep('edit');
+      setVideoStep(isEdit ? 'caption' : 'edit');
       setShowDiscardConfirm(false);
       setSelectedAchievementOptionId(null);
       setShowTagSelector(false);
@@ -208,11 +207,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
     }
   }, [state.postType, media.uploadedVideos.length, isEdit]);
 
-  useEffect(() => {
-    if (state.postType !== 'poll') {
-      setPollStep('edit');
-    }
-  }, [state.postType]);
+
 
   useEffect(() => {
     if ((state.postType === 'text' || state.postType === 'photo') && state.postCategory === milestoneCategory) return;
@@ -734,7 +729,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                 </div>
                 {/* Header — FIXED */}
                 {(state.postType !== 'article' || !!state.articleData) && (
-                  state.postType === 'poll' && pollStep === 'edit' ? (
+                  state.postType === 'poll' ? (
                     <div className="relative w-full flex flex-col items-center">
                       <h2 className="font-medium text-[18px] leading-[26px] text-[#000000] dark:text-white text-center font-poppins">Create a poll</h2>
                       <p className="font-normal text-[12.5px] leading-[17px] text-muted-foreground text-center mt-1 font-poppins">
@@ -1155,8 +1150,8 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       )}
 
 
-                      {/* Poll Flow Options (Step === edit) */}
-                      {state.postType === 'poll' && pollStep === 'edit' && (
+                      {/* Poll Flow Options */}
+                      {state.postType === 'poll' && (
                         <PollFlow
                           pollQuestion={poll.pollQuestion}
                           onQuestionChange={poll.setPollQuestion}
@@ -1171,67 +1166,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         />
                       )}
 
-                      {/* Poll Preview Card (Step === preview) */}
-                      {state.postType === 'poll' && pollStep === 'preview' && (
-                        <div className="flex flex-col w-full gap-4">
-                          {/* Poll Preview Card */}
-                          <div className="w-full border border-border bg-muted/50 rounded-[24px] p-5 space-y-3.5 shadow-sm">
-                            <h3 className="font-bold text-[15.5px] leading-[22px] text-[#1F2937] dark:text-white text-left font-poppins">
-                              {poll.pollQuestion}
-                            </h3>
-                            <div className="space-y-2">
-                              {poll.pollOptions
-                                .filter((option) => option.text.trim() !== '')
-                                .map((option) => (
-                                  <div
-                                    key={option.id}
-                                    className="w-full h-11 flex items-center justify-start px-5 bg-[#EEF2FF] dark:bg-indigo-500/10 text-gray-800 dark:text-white text-[13.5px] font-medium rounded-full font-poppins select-none"
-                                  >
-                                    {option.text}
-                                  </div>
-                                ))}
-                            </div>
-                            <div className="flex items-center justify-end text-[11.5px] font-semibold text-primary font-poppins w-full pt-1">
-                              <span>0 votes • {poll.pollDuration} left • View result</span>
-                            </div>
-                          </div>
 
-                          {/* Card Controls */}
-                          <div className="flex justify-end gap-3 w-full">
-                            <button
-                              type="button"
-                              onClick={() => setPollStep('edit')}
-                              className="p-1.5 text-gray-500 hover:text-[#6366F1] hover:bg-secondary rounded-full transition-colors"
-                              title="Edit poll"
-                            >
-                              <Pencil className="w-5 h-5 stroke-[1.8]" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                poll.clearPoll();
-                                state.setPostType('text');
-                              }}
-                              className="p-1.5 text-[#FF6B6B] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-full transition-colors"
-                              title="Delete poll"
-                            >
-                              <Icon icon="fluent:delete-16-regular" className="w-5 h-5" />
-                            </button>
-                          </div>
-
-                          {/* Poll Description Input */}
-                          <div className="w-full pt-2 pb-1">
-                            <textarea
-                              ref={composerTextareaRef}
-                              className="w-full resize-none outline-none font-normal text-[14px] leading-[20px] text-foreground placeholder:text-[#6B7280] bg-transparent font-poppins whitespace-pre-wrap"
-                              placeholder="What would you like to share today?"
-                              value={state.description}
-                              onChange={(e) => state.setDescription(e.target.value)}
-                              style={{ overflow: 'hidden', resize: 'none', height: 'auto', minHeight: '40px' }}
-                            />
-                          </div>
-                        </div>
-                      )}
 
                       <SharedPreview sharedPost={state.sharedPost} isMobile={isMobile} />
 
@@ -1265,28 +1200,6 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
 
                 {/* Footer — FIXED */}
                 {(state.postType !== 'article' || !!state.articleData) && (
-                  state.postType === 'poll' && pollStep === 'edit' ? (
-                    <div className="flex flex-row justify-end items-center gap-3.5 w-full mt-auto pt-5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          poll.clearPoll();
-                          state.setPostType('text');
-                        }}
-                        className="flex flex-row items-center justify-center px-6 py-2 border border-[#818CF8] rounded-full bg-transparent text-[#818CF8] hover:bg-[#818CF8]/10 transition-all duration-200 font-poppins text-[13.5px] font-medium"
-                      >
-                        Back
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPollStep('preview')}
-                        disabled={!poll.isPollValid()}
-                        className="flex flex-row items-center justify-center gap-2 px-6 py-2 disabled:bg-[#C7D2FE] bg-[#6366F1] hover:bg-[#6366F1] border border-white/60 rounded-full text-white disabled:opacity-50 transition-all duration-200 shadow-sm font-poppins text-[13.5px] font-medium"
-                      >
-                        <span>Next</span>
-                      </button>
-                    </div>
-                  ) : (
                     <div className="flex flex-col gap-4 w-full mt-auto pt-5">
                       {/* Tag, Location, Smile icons row */}
                       <div className="flex items-center gap-4 px-1">
@@ -1337,7 +1250,6 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         </button>
                       </div>
                     </div>
-                  )
                 )}
               </div>
             </>
