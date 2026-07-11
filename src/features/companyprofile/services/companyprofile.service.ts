@@ -40,6 +40,7 @@ export const companyProfileService = {
     country?: string;
     city?: string;
     established_year?: number;
+    keyOfferings?: string[];
   }): Promise<any> {
     const res = await api.put(`/organizations/${orgId}/profile`, data);
     return res.data;

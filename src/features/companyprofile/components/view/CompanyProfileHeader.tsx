@@ -25,12 +25,10 @@ interface CompanyProfileHeaderProps {
   logoUrl?: string | null;
   coverUrl?: string | null;
   orgId?: string;
-  onLogoChange?: React.Dispatch<React.SetStateAction<string | null>>;
-  onCoverChange?: React.Dispatch<React.SetStateAction<string | null>>;
   onShareClick?: () => void;
 }
 
-export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, coverUrl, orgId, onLogoChange, onCoverChange, onShareClick }: CompanyProfileHeaderProps) {
+export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, coverUrl, orgId, onShareClick }: CompanyProfileHeaderProps) {
   const params = useParams();
   const slug = params.slug as string || "nexsus-global-systems";
   
@@ -41,14 +39,6 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     toast({ title: "Link copied to clipboard" });
-  };
-
-  const handleUploadSuccess = (url: string) => {
-    if (modalType === "logo" && onLogoChange) {
-      onLogoChange(url);
-    } else if (modalType === "cover" && onCoverChange) {
-      onCoverChange(url);
-    }
   };
 
   // Utility to format numbers (e.g. 12500 -> 12.5k)
@@ -302,16 +292,37 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
           onClose={() => setModalType(null)}
           currentAvatarUrl={logoUrl || null}
           onUpload={async (file) => {
-            const data = await companyProfileService.uploadLogo(orgId, file);
-            handleUploadSuccess(data.url);
-            queryClient.invalidateQueries({ queryKey: ["company", slug] });
-            queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
+            const objectUrl = URL.createObjectURL(file);
+            const previousProfile = queryClient.getQueryData(["companyProfile", slug]);
+            queryClient.setQueryData(["companyProfile", slug], (old: any) => {
+              if (!old) return old;
+              return { ...old, org: { ...old.org, logo_url: objectUrl } };
+            });
+
+            try {
+              await companyProfileService.uploadLogo(orgId, file);
+              queryClient.invalidateQueries({ queryKey: ["company", slug] });
+              queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
+            } catch (err) {
+              queryClient.setQueryData(["companyProfile", slug], previousProfile);
+              toast({ title: "Error", description: "Failed to upload logo", variant: "destructive" });
+            }
           }}
           onDelete={async () => {
-            await companyProfileService.deleteLogo(orgId);
-            if (onLogoChange) onLogoChange(null);
-            queryClient.invalidateQueries({ queryKey: ["company", slug] });
-            queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
+            const previousProfile = queryClient.getQueryData(["companyProfile", slug]);
+            queryClient.setQueryData(["companyProfile", slug], (old: any) => {
+              if (!old) return old;
+              return { ...old, org: { ...old.org, logo_url: null } };
+            });
+
+            try {
+              await companyProfileService.deleteLogo(orgId);
+              queryClient.invalidateQueries({ queryKey: ["company", slug] });
+              queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
+            } catch (err) {
+              queryClient.setQueryData(["companyProfile", slug], previousProfile);
+              toast({ title: "Error", description: "Failed to delete logo", variant: "destructive" });
+            }
           }}
         />
       )}
@@ -321,16 +332,37 @@ export default function CompanyProfileHeader({ data, isOwnProfile, logoUrl, cove
           onClose={() => setModalType(null)}
           currentCoverUrl={coverUrl || null}
           onUpload={async (file) => {
-            const data = await companyProfileService.uploadCover(orgId, file);
-            handleUploadSuccess(data.url);
-            queryClient.invalidateQueries({ queryKey: ["company", slug] });
-            queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
+            const objectUrl = URL.createObjectURL(file);
+            const previousProfile = queryClient.getQueryData(["companyProfile", slug]);
+            queryClient.setQueryData(["companyProfile", slug], (old: any) => {
+              if (!old) return old;
+              return { ...old, org: { ...old.org, cover_url: objectUrl } };
+            });
+
+            try {
+              await companyProfileService.uploadCover(orgId, file);
+              queryClient.invalidateQueries({ queryKey: ["company", slug] });
+              queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
+            } catch (err) {
+              queryClient.setQueryData(["companyProfile", slug], previousProfile);
+              toast({ title: "Error", description: "Failed to upload cover", variant: "destructive" });
+            }
           }}
           onDelete={async () => {
-            await companyProfileService.deleteCover(orgId);
-            if (onCoverChange) onCoverChange(null);
-            queryClient.invalidateQueries({ queryKey: ["company", slug] });
-            queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
+            const previousProfile = queryClient.getQueryData(["companyProfile", slug]);
+            queryClient.setQueryData(["companyProfile", slug], (old: any) => {
+              if (!old) return old;
+              return { ...old, org: { ...old.org, cover_url: null } };
+            });
+
+            try {
+              await companyProfileService.deleteCover(orgId);
+              queryClient.invalidateQueries({ queryKey: ["company", slug] });
+              queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
+            } catch (err) {
+              queryClient.setQueryData(["companyProfile", slug], previousProfile);
+              toast({ title: "Error", description: "Failed to delete cover", variant: "destructive" });
+            }
           }}
         />
       )}

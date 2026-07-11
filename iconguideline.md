@@ -24,8 +24,14 @@ Icon Name: catppuccin:certificate # certificate action
 Search Name: when-i-work
 Icon Name: cib:when-i-work # when i work action
 
+Search Name: facebook
+Icon Name: circum:facebook # facebook action
+
 Search Name: github-project
 Icon Name: codicon:github-project # github project action
+
+Search Name: twitter
+Icon Name: codicon:twitter # twitter action
 
 Search Name: fire
 Icon Name: emojione:fire # fire action
@@ -165,6 +171,9 @@ Icon Name: iconoir:chat-plus-in # chat plus in action
 Search Name: cloud-upload
 Icon Name: iconoir:cloud-upload # cloud upload action
 
+Search Name: discord
+Icon Name: iconoir:discord # discord action
+
 Search Name: edit-pencil
 Icon Name: iconoir:edit-pencil # edit pencil action
 
@@ -182,6 +191,9 @@ Icon Name: iconoir:rocket # rocket action
 
 Search Name: text-box
 Icon Name: iconoir:text-box # text box action
+
+Search Name: youtube
+Icon Name: iconoir:youtube # youtube action
 
 Search Name: people-outline
 Icon Name: ion:people-outline # people outline action
@@ -947,6 +959,9 @@ Icon Name: ri:fullscreen-line # fullscreen line action
 
 Search Name: history-line
 Icon Name: ri:history-line # history line action
+
+Search Name: instagram-line
+Icon Name: ri:instagram-line # instagram line action
 
 Search Name: layout-grid-line
 Icon Name: ri:layout-grid-line # layout grid line action

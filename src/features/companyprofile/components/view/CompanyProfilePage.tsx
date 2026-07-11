@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -26,16 +27,7 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
 
   const { activeProfile } = useActiveProfile();
 
-  const [logoUrl, setLogoUrl] = React.useState<string | null>(null);
-  const [coverUrl, setCoverUrl] = React.useState<string | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    if (profileResponse?.org) {
-      setLogoUrl(profileResponse.org.logo_url || null);
-      setCoverUrl(profileResponse.org.cover_url || null);
-    }
-  }, [profileResponse]);
 
   if (isLoading) {
     return (
@@ -63,8 +55,8 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
     orgId: company.company_id || company.org_id,
     name: company.name,
     slug: slug,
-    logoUrl: logoUrl || company.logo_url,
-    coverUrl: coverUrl || company.cover_url,
+    logoUrl: company.logo_url,
+    coverUrl: company.cover_url,
     isVerified: company.verification_status === 'DOMAIN_VERIFIED',
     tagline: company.headline || company.slogan || "",
     industry: company.industry || (isEdu ? "Higher Education" : ""),
@@ -74,6 +66,7 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
     description: company.description || "",
     slogan: company.slogan || "",
     socialLinks: profileResponse.links ? profileResponse.links.map((link: any) => ({ label: link.display_label || link.platform, url: link.url })) : [],
+    keyOfferings: company.key_offerings || company.keyOfferings || [],
     stats: {
       following: 0, // Not provided by this endpoint currently
       followers: company.followers_count || 0,
@@ -119,11 +112,9 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
         <CompanyProfileHeader
           data={data}
           isOwnProfile={ownProfile}
-          logoUrl={logoUrl}
-          coverUrl={coverUrl}
+          logoUrl={company.logo_url}
+          coverUrl={company.cover_url}
           orgId={orgId}
-          onLogoChange={setLogoUrl}
-          onCoverChange={setCoverUrl}
           onShareClick={() => setIsShareModalOpen(true)}
         />
 

@@ -7,7 +7,7 @@ import AboutSection from "../sections/AboutSection";
 import CoreTeamSection from "../sections/CoreTeamSection";
 import PostsSection from "../sections/PostsSection";
 import PeopleSection from "../sections/PeopleSection";
-import RelevanceSection from "../sections/RelevanceSection";
+import KeyOfferingsSection from "../sections/KeyOfferingsSection";
 import CommunitySection from "../sections/CommunitySection";
 
 interface HomeTabProps {
@@ -28,7 +28,7 @@ export default function HomeTab({ data, isOwnProfile, onTabChange }: HomeTabProp
       {!isOwnProfile && (
         <>
           <PeopleSection data={data} onViewMoreClick={() => onTabChange?.("people")} />
-          <RelevanceSection />
+          <KeyOfferingsSection keyOfferings={data.keyOfferings} />
           <CommunitySection data={data} />
         </>
       )}

@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { postApi } from '@/features/create-post/api/post.api';
 import { AxiosError } from 'axios';
+import { useQueryClient } from '@tanstack/react-query';
 
 type PendingUploadPost = {
     id: string;
@@ -19,6 +20,7 @@ type PendingUploadPost = {
 export const usePostUpload = () => {
     const { pendingPosts, setPendingPosts } = useUIStore();
     const { addPost } = useFeed();
+    const queryClient = useQueryClient();
 
     const startUpload = useCallback(async (content: CreatePostRequest, mediaFiles: File[], tagUserIds?: string[]) => {
         const id = Math.random().toString(36).substring(7);
@@ -46,6 +48,10 @@ export const usePostUpload = () => {
                 const { mappedPost } = await postApi.create(content, mediaFiles, tagUserIds);
                 addPost(mappedPost);
                 window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
+                
+                queryClient.invalidateQueries({ queryKey: ["orgPosts"] });
+                queryClient.invalidateQueries({ queryKey: ["orgPostsPreview"] });
+                queryClient.invalidateQueries({ queryKey: ["profile-posts"] });
 
                 // 3. Update Store to success
                 setPendingPosts(prev => prev.map(p =>

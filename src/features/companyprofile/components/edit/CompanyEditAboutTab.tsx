@@ -10,20 +10,15 @@ import { useParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { companyProfileService } from "../../services/companyprofile.service";
 import { useToast } from "@/hooks/use-toast";
+import { useCompanyEditStore, Office, CustomLink } from "../../store/useCompanyEditStore";
 
-interface Office {
-  id: string;
-  country: string;
-  city: string;
-  address: string;
-  mapUrl: string;
-}
-
-interface CustomLink {
-  id: string;
-  label: string;
-  url: string;
-}
+const MEDIA_OPTIONS = [
+  { value: "instagram", label: "Instagram", icon: "ri:instagram-line" },
+  { value: "twitter", label: "Twitter", icon: "codicon:twitter" },
+  { value: "youtube", label: "You tube", icon: "iconoir:youtube" },
+  { value: "discord", label: "Discord", icon: "iconoir:discord" },
+  { value: "facebook", label: "Facebook", icon: "circum:facebook" },
+];
 
 interface CompanyEditAboutTabProps {
   onCancel: () => void;
@@ -40,11 +35,13 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
     queryFn: () => companyProfileService.getOrgAbout(slug),
   });
 
-  const [description, setDescription] = useState("");
-  const [slogan, setSlogan] = useState("");
-  const [offices, setOffices] = useState<Office[]>([]);
-  const [links, setLinks] = useState<CustomLink[]>([]);
-  const [specialties, setSpecialties] = useState("");
+  const { aboutDraft, setAboutDraft, clearAboutDraft } = useCompanyEditStore();
+  const description = aboutDraft.description;
+  const slogan = aboutDraft.slogan;
+  const offices = aboutDraft.offices;
+  const links = aboutDraft.links;
+  const specialties = aboutDraft.specialties;
+
   const [initialDataStr, setInitialDataStr] = useState("");
 
   const sessionToken = useRef(uuidv4());
@@ -54,6 +51,9 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
   const [isSearchingCity, setIsSearchingCity] = useState(false);
   const cityRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
+  const [activeMediaDropdownId, setActiveMediaDropdownId] = useState<string | null>(null);
+  const mediaDropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (activeCitySearchOfficeId && cityRefs.current[activeCitySearchOfficeId]) {
@@ -61,10 +61,15 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
           setActiveCitySearchOfficeId(null);
         }
       }
+      if (activeMediaDropdownId && mediaDropdownRefs.current[activeMediaDropdownId]) {
+        if (!mediaDropdownRefs.current[activeMediaDropdownId]!.contains(event.target as Node)) {
+          setActiveMediaDropdownId(null);
+        }
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [activeCitySearchOfficeId]);
+  }, [activeCitySearchOfficeId, activeMediaDropdownId]);
 
   useEffect(() => {
     if (!activeCitySearchOfficeId) return;
@@ -123,9 +128,6 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
       const officesArr = aboutData.offices || [];
       const linksArr = aboutData.links || [];
       const specialtiesArr = aboutData.specialties || [];
-
-      setDescription(about.description || "");
-      setSlogan(about.slogan || "");
       
       const parsedOffices = officesArr.map((o: any, idx: number) => ({
         id: o.office_id || o.id || String(idx),
@@ -134,18 +136,16 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
         address: o.address || "",
         mapUrl: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&h=200&fit=crop",
       }));
-      setOffices(parsedOffices);
       
       const parsedLinks = linksArr.map((l: any, idx: number) => ({
         id: l.link_id || l.id || String(idx),
         label: l.display_label || l.platform || l.label || "",
+        platform: l.platform || MEDIA_OPTIONS[0].value,
         url: l.url || "",
       }));
-      setLinks(parsedLinks);
       
       // specialties is [{specialty_id, name}] — join the names
       const specString = specialtiesArr.map((s: any) => s.name || s).filter(Boolean).join(", ");
-      setSpecialties(specString);
 
       setInitialDataStr(JSON.stringify({
         description: about.description || "",
@@ -154,8 +154,19 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
         links: parsedLinks,
         specialties: specString,
       }));
+
+      if (!aboutDraft.isInitialized) {
+        setAboutDraft({
+          description: about.description || "",
+          slogan: about.slogan || "",
+          offices: parsedOffices,
+          links: parsedLinks,
+          specialties: specString,
+          isInitialized: true,
+        });
+      }
     }
-  }, [aboutData]);
+  }, [aboutData, aboutDraft.isInitialized, setAboutDraft]);
 
   const currentDataStr = JSON.stringify({ description, slogan, offices, links, specialties });
   const isDirty = initialDataStr !== "" && initialDataStr !== currentDataStr;
@@ -168,36 +179,37 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
       address: "",
       mapUrl: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&h=200&fit=crop",
     };
-    setOffices((prev) => [...prev, newOffice]);
+    setAboutDraft({ offices: [...offices, newOffice] });
   };
 
   const handleRemoveOffice = (id: string) => {
-    setOffices((prev) => prev.filter((o) => o.id !== id));
+    setAboutDraft({ offices: offices.filter((o) => o.id !== id) });
   };
 
   const handleOfficeChange = (id: string, field: keyof Office, value: string) => {
-    setOffices((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, [field]: value } : o))
-    );
+    setAboutDraft({
+      offices: offices.map((o) => (o.id === id ? { ...o, [field]: value } : o))
+    });
   };
 
   const handleAddLink = () => {
     const newLink: CustomLink = {
       id: Date.now().toString(),
       label: "",
+      platform: MEDIA_OPTIONS[0].value,
       url: "",
     };
-    setLinks((prev) => [...prev, newLink]);
+    setAboutDraft({ links: [...links, newLink] });
   };
 
   const handleRemoveLink = (id: string) => {
-    setLinks((prev) => prev.filter((l) => l.id !== id));
+    setAboutDraft({ links: links.filter((l) => l.id !== id) });
   };
 
   const handleLinkChange = (id: string, field: keyof CustomLink, value: string) => {
-    setLinks((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, [field]: value } : l))
-    );
+    setAboutDraft({
+      links: links.map((l) => (l.id === id ? { ...l, [field]: value } : l))
+    });
   };
 
   const updateMutation = useMutation({
@@ -207,6 +219,7 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
         title: "Success",
         description: "About info saved successfully!",
       });
+      clearAboutDraft();
       queryClient.invalidateQueries({ queryKey: ["orgAbout", slug] });
       queryClient.invalidateQueries({ queryKey: ["orgAbout", orgId] });
       queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
@@ -229,7 +242,11 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
       description,
       slogan,
       offices: offices.map((o) => ({ city: o.city, country: o.country, address: o.address })),
-      links: links.map((l) => ({ platform: l.label, display_label: l.label, url: l.url })),
+      links: links.map((l) => ({
+        platform: l.platform,
+        display_label: MEDIA_OPTIONS.find((m) => m.value === l.platform)?.label || l.label,
+        url: l.url,
+      })),
       specialties: specialties.split(",").map(s => s.trim()).filter(Boolean),
     });
   };
@@ -248,7 +265,7 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
         </label>
         <textarea
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={(e) => setAboutDraft({ description: e.target.value })}
           rows={4}
           required
           className="w-full p-4 border border-gray-300 dark:border-zinc-800 rounded-2xl bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8] resize-y"
@@ -263,7 +280,7 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
         <input
           type="text"
           value={slogan}
-          onChange={(e) => setSlogan(e.target.value)}
+          onChange={(e) => setAboutDraft({ slogan: e.target.value })}
           className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
         />
       </div>
@@ -423,10 +440,10 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
         ))}
       </div>
 
-      {/* LINKS Section */}
+      {/* SOCIAL LINKS Section */}
       <div className="flex justify-between items-center w-full pt-6">
         <h3 className="text-[14px] font-bold text-[#1A73E8] tracking-wider uppercase">
-          LINKS
+          SOCIAL LINKS
         </h3>
         <button
           type="button"
@@ -451,17 +468,56 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
               <Icon icon="hugeicons:delete-02" className="w-5 h-5" />
             </button>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full pr-8">
-              {/* Label */}
+              {/* Media */}
               <div className="flex flex-col gap-2">
                 <label className="text-[14px] font-medium text-[#000000] dark:text-white">
-                  Label
+                  Media
                 </label>
-                <input
-                  type="text"
-                  value={link.label}
-                  onChange={(e) => handleLinkChange(link.id, "label", e.target.value)}
-                  className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
-                />
+                <div
+                  className="relative w-full h-11"
+                  ref={(el) => { mediaDropdownRefs.current[link.id] = el; }}
+                >
+                  <div
+                    onClick={() =>
+                      setActiveMediaDropdownId((prev) => (prev === link.id ? null : link.id))
+                    }
+                    className="w-full h-full px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] focus:outline-none dark:text-white focus:border-[#1A73E8] cursor-pointer flex items-center justify-between gap-2 select-none"
+                  >
+                    <span className="flex items-center gap-2 truncate">
+                      <Icon
+                        icon={
+                          MEDIA_OPTIONS.find((m) => m.value === link.platform)?.icon ||
+                          MEDIA_OPTIONS[0].icon
+                        }
+                        className="w-5 h-5 shrink-0 text-gray-600 dark:text-zinc-300"
+                      />
+                      <span className="truncate">
+                        {MEDIA_OPTIONS.find((m) => m.value === link.platform)?.label ||
+                          "Select media"}
+                      </span>
+                    </span>
+                    <ChevronDown className="w-4 h-4 shrink-0 text-gray-400" />
+                  </div>
+
+                  {activeMediaDropdownId === link.id && (
+                    <div className="absolute top-[50px] left-0 w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-lg rounded-2xl py-2 z-50 max-h-[240px] overflow-y-auto no-scrollbar">
+                      {MEDIA_OPTIONS.map((opt) => (
+                        <div
+                          key={opt.value}
+                          onClick={() => {
+                            handleLinkChange(link.id, "platform", opt.value);
+                            handleLinkChange(link.id, "label", opt.label);
+                            setActiveMediaDropdownId(null);
+                          }}
+                          className="w-full px-4 py-2.5 flex items-center gap-3 text-left hover:bg-slate-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors"
+                        >
+                          <Icon icon={opt.icon} className="w-5 h-5 text-gray-600 dark:text-zinc-300" />
+                          <span className="text-[14px] text-gray-900 dark:text-white">{opt.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Link URL */}
@@ -489,7 +545,7 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
         </label>
         <textarea
           value={specialties}
-          onChange={(e) => setSpecialties(e.target.value)}
+          onChange={(e) => setAboutDraft({ specialties: e.target.value })}
           rows={3}
           className="w-full p-4 border border-gray-300 dark:border-zinc-800 rounded-2xl bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8] resize-y"
         />

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import * as Tabs from "@radix-ui/react-tabs";
 import { CompanyProfileData } from "../../types/company-profile.types";
 import HomeTab from "./tabs/HomeTab";
@@ -15,10 +16,20 @@ interface CompanyProfileTabsProps {
 }
 
 export default function CompanyProfileTabs({ data, isOwnProfile }: CompanyProfileTabsProps) {
-  const [activeTab, setActiveTab] = React.useState("home");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const tabParam = searchParams.get("tab");
+  const activeTab = tabParam || "home";
+
+  const handleTabChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", value);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   return (
-    <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="w-full mt-0">
+    <Tabs.Root value={activeTab} onValueChange={handleTabChange} className="w-full mt-0">
 
       {/* Scrollable Tabs List */}
       <Tabs.List className="flex w-full md:w-[428px] h-[36px] items-start gap-[16px] p-0 overflow-x-auto whitespace-nowrap scrollbar-hide">
@@ -41,9 +52,8 @@ export default function CompanyProfileTabs({ data, isOwnProfile }: CompanyProfil
         })}
       </Tabs.List>
 
-      {/* Home Tab Content */}
       <Tabs.Content value="home" className="mt-6 outline-none">
-        <HomeTab data={data} isOwnProfile={isOwnProfile} onTabChange={setActiveTab} />
+        <HomeTab data={data} isOwnProfile={isOwnProfile} onTabChange={handleTabChange} />
       </Tabs.Content>
 
       <Tabs.Content value="about" className="mt-6 outline-none">

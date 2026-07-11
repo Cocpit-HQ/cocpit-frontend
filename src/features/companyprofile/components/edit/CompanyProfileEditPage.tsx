@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import * as Tabs from "@radix-ui/react-tabs";
 import { ChevronLeft } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +14,14 @@ export default function CompanyProfileEditPage() {
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string || "nexsus-global-systems";
-  const [activeTab, setActiveTab] = useState("profile");
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get("tab") || "profile";
+
+  const setActiveTab = (tab: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    router.replace(`/organization/${slug}/edit?${params.toString()}`);
+  };
 
   const { data: profileData } = useQuery({
     queryKey: ["orgProfile", slug],

@@ -342,18 +342,18 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
 
   const handleAchievementDialogSelect = (option: any) => {
     state.handleSetPostCategory('Achievement');
-    
+
     // Convert new_project to new-project if needed
     const mappedId = typeof option === 'string' ? option.replace('_', '-') : (option.id ? option.id.replace('_', '-') : 'new-project');
     setSelectedAchievementOptionId(mappedId as AchievementOptionId);
-    
+
     const label = ({
       'new-project': 'Launched a project',
       'new-role': 'New role',
       'academic-milestone': 'Academic milestone',
       'certificate': 'Certificate',
     } as Record<string, string>)[mappedId] || 'Achievement';
-    
+
     state.setAchievementTitle(label);
     handleAchievementOptionSelect(mappedId as AchievementOptionId);
   };
@@ -604,7 +604,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                           <button
                             onClick={() => media.setActiveImageIndex(idx)}
                             className={`relative w-[68px] h-[48px] rounded-[10px] overflow-hidden border-[2px] transition-all duration-200 shadow-sm ${isActive
-                              ? 'border-[#6366F1] scale-[0.98]'
+                              ? (state.isCompanyPost ? 'border-[#1A73E8] scale-[0.98]' : 'border-[#6366F1] scale-[0.98]')
                               : 'border-transparent opacity-75 hover:opacity-100'
                               }`}
                             type="button"
@@ -631,15 +631,15 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                     </span>
                     <div className="relative flex flex-row items-center w-full h-8 gap-0">
                       <div
-                        className="h-2 rounded-l-[16px] rounded-r-[2px] bg-[#6366F1]"
+                        className={`h-2 rounded-l-[16px] rounded-r-[2px] ${state.isCompanyPost ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'}`}
                         style={{
                           width: `${(((isVideoEditorMode ? media.uploadedVideos[0] : activeImage)?.zoom || 1) - 1) / 2 * 100}%`,
                           minWidth: '4px'
                         }}
                       />
-                      <div className="w-[2px] h-8 bg-[#6366F1] rounded-[2px] flex-shrink-0" />
-                      <div className="h-2 rounded-l-[2px] rounded-r-[16px] bg-[#E0E7FF] dark:bg-[#2a2a4a] flex-1 relative">
-                        <div className="absolute w-1 h-1 rounded-full bg-[#6366F1] right-1 top-1/2 -translate-y-1/2" />
+                      <div className={`w-[2px] h-8 rounded-[2px] flex-shrink-0 ${state.isCompanyPost ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'}`} />
+                      <div className={`h-2 rounded-l-[2px] rounded-r-[16px] flex-1 relative ${state.isCompanyPost ? 'bg-[#1A73E8]/20 dark:bg-[#1A73E8]/20' : 'bg-[#E0E7FF] dark:bg-[#2a2a4a]'}`}>
+                        <div className={`absolute w-1 h-1 rounded-full right-1 top-1/2 -translate-y-1/2 ${state.isCompanyPost ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'}`} />
                       </div>
                       <input
                         type="range"
@@ -667,9 +667,9 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       media.clearMedia();
                       state.setPostType('text');
                     }}
-                    className="flex-1 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] outline-indigo-400 flex justify-center items-center gap-2.5"
+                    className={`flex-1 h-10 px-4 py-2 bg-white rounded-3xl outline outline-1 outline-offset-[-1px] flex justify-center items-center gap-2.5 ${state.isCompanyPost ? 'outline-[#1A73E8]' : 'outline-indigo-400'}`}
                   >
-                    <span className="text-center text-indigo-400 text-sm font-normal font-['Poppins'] leading-5">Back</span>
+                    <span className={`text-center text-sm font-normal font-['Poppins'] leading-5 ${state.isCompanyPost ? 'text-[#1A73E8]' : 'text-indigo-400'}`}>Back</span>
                   </button>
                   <button
                     onClick={async () => {
@@ -690,7 +690,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       }
                     }}
                     disabled={isGeneratingPreviews}
-                    className="flex-1 h-10 px-4 py-2 bg-indigo-500 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 disabled:opacity-50"
+                    className={`flex-1 h-10 px-4 py-2 rounded-3xl outline outline-1 outline-offset-[-1px] outline-white flex justify-center items-center gap-2.5 disabled:opacity-50 ${state.isCompanyPost ? 'bg-[#1A73E8]' : 'bg-indigo-500'}`}
                   >
                     {isGeneratingPreviews ? (
                       <Loader2 className="w-4 h-4 text-white animate-spin" />
@@ -975,7 +975,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                     />
                                   </div>
                                 </div>
-                                
+
                                 {/* Controls row for large preview */}
                                 <div className="flex items-center justify-between w-full px-1">
                                   {/* Left: counter pill */}
@@ -1006,14 +1006,14 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                                   )}
                                   {/* Right: eye + edit + delete */}
                                   <div className="flex items-center gap-2">
-                                      <button
-                                        type="button"
-                                        onClick={() => setIsCompactView(true)}
-                                        className="p-1.5 text-[#000000] rounded-full transition-colors"
-                                        title="Hide full preview"
-                                      >
-                                        <Icon icon="fluent:eye-24-regular" className="w-[24px] h-[24px]" />
-                                      </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setIsCompactView(true)}
+                                      className="p-1.5 text-[#000000] rounded-full transition-colors"
+                                      title="Hide full preview"
+                                    >
+                                      <Icon icon="fluent:eye-24-regular" className="w-[24px] h-[24px]" />
+                                    </button>
                                     <button
                                       type="button"
                                       onClick={() => setPhotoStep('edit')}
@@ -1206,7 +1206,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         <button className="flex items-center gap-2 relative transition-colors group" title="Tag people" onClick={() => { setShowTagSelector(true); }}>
                           <Icon icon="la:user-tag" className="w-6 h-6 text-foreground" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
                           {taggedUsers.length > 0 && (
-                            <span className="text-[14px] leading-[20px] font-normal text-[#818CF8] font-poppins">
+                            <span className={`text-[14px] leading-[20px] font-normal font-poppins ${state.isCompanyPost ? 'text-[#1A73E8]' : 'text-[#818CF8]'}`}>
                               + {taggedUsers.length}
                             </span>
                           )}
@@ -1214,7 +1214,7 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                         <button className="flex items-center gap-2 relative transition-colors group" title="Location" onClick={() => { setShowLocationSelector(true); }}>
                           <Icon icon="hugeicons:location-05" className="w-6 h-6 text-foreground" style={{ strokeWidth: '0.5px', stroke: 'currentColor' }} />
                           {state.selectedLocation && (
-                            <span className="text-[14px] leading-[20px] font-normal text-[#818CF8] font-poppins truncate max-w-[200px] text-left">
+                            <span className={`text-[14px] leading-[20px] font-normal font-poppins truncate max-w-[200px] text-left ${state.isCompanyPost ? 'text-[#1A73E8]' : 'text-[#818CF8]'}`}>
                               {(state.selectedLocation as any).name || (state.selectedLocation as any).formattedAddress}
                             </span>
                           )}
@@ -1231,15 +1231,18 @@ export const CreatePostModal = (props: CreatePostCommonProps) => {
                       </div>
 
                       <div className="flex flex-row justify-between items-center w-full">
-                        <button className="flex flex-row items-center justify-center gap-2 px-5 py-2.5 border border-[#818CF8] rounded-full bg-transparent hover:bg-[#818CF8]/10 dark:hover:bg-[#818CF8]/10 transition-all duration-200 group">
-                          <Sparkles className="w-4 h-4 text-[#818CF8] group-hover:scale-110 transition-transform" />
-                          <span className="font-medium text-[13.5px] leading-[20px] text-[#818CF8]">Enhance with AI</span>
+                        <button className={`flex flex-row items-center justify-center gap-2 px-5 py-2.5 border rounded-full bg-transparent transition-all duration-200 group ${state.isCompanyPost ? 'border-[#1A73E8] hover:bg-[#1A73E8]/10 dark:hover:bg-[#1A73E8]/10' : 'border-[#818CF8] hover:bg-[#818CF8]/10 dark:hover:bg-[#818CF8]/10'}`}>
+                          <Sparkles className={`w-4 h-4 group-hover:scale-110 transition-transform ${state.isCompanyPost ? 'text-[#1A73E8]' : 'text-[#818CF8]'}`} />
+                          <span className={`font-medium text-[13.5px] leading-[20px] ${state.isCompanyPost ? 'text-[#1A73E8]' : 'text-[#818CF8]'}`}>Enhance with AI</span>
                         </button>
 
                         <button
                           onClick={handlePostClick}
                           disabled={isPostButtonDisabled}
-                          className={`flex flex-row items-center justify-center gap-2 px-7 py-2.5 border border-white/60 rounded-full transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none group shadow-sm ${isPostButtonDisabled ? 'bg-indigo-200' : 'bg-indigo-500'}`}
+                          className={`flex flex-row items-center justify-center gap-2 px-7 py-2.5 border border-white/60 rounded-full transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none group shadow-sm ${isPostButtonDisabled
+                              ? (state.isCompanyPost ? 'bg-[#1A73E8]/50' : 'bg-indigo-200')
+                              : (state.isCompanyPost ? 'bg-[#1A73E8]' : 'bg-indigo-500')
+                            }`}
                         >
                           {state.isSubmitting ? (
                             <Loader2 className="w-4 h-4 text-white animate-spin" />

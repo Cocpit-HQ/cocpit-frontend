@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { v4 as uuidv4 } from "uuid";
 import { getPlacesAutocomplete, getPlaceDetails } from "@/features/company-onboarding/services/company-onboarding.api";
@@ -9,11 +9,24 @@ import { useParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { companyProfileService } from "../../services/companyprofile.service";
 import { useToast } from "@/hooks/use-toast";
+import { useCompanyEditStore } from "../../store/useCompanyEditStore";
 
 interface CompanyEditProfileTabProps {
   onCancel: () => void;
   orgId: string;
 }
+
+interface KeyOffering {
+  id: string;
+  text: string;
+}
+
+const DEFAULT_OFFERINGS = [
+  "May offer exposure to emerging technologies",
+  "Operates across multiple markets",
+  "Focuses on innovation and growth",
+  "Diverse project opportunities",
+];
 
 export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditProfileTabProps) {
   const { slug } = useParams() as { slug: string };
@@ -25,7 +38,11 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
     queryFn: () => companyProfileService.getOrgProfile(slug),
   });
 
-  const [formData, setFormData] = useState({
+  const { profileDraft, setProfileDraft, clearProfileDraft } = useCompanyEditStore();
+  const formData = profileDraft;
+  const keyOfferings = profileDraft.keyOfferings;
+
+  const [initialData, setInitialData] = useState({
     name: "",
     industry: "Technology",
     foundedYear: "",
@@ -36,7 +53,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
     headline: "",
   });
 
-  const [initialData, setInitialData] = useState({ ...formData });
+  const [initialOfferings, setInitialOfferings] = useState<KeyOffering[]>([]);
 
   const sessionToken = useRef(uuidv4());
   const [citySearchQuery, setCitySearchQuery] = useState<string | null>(null);
@@ -84,16 +101,15 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
     setIsCityDropdownOpen(false);
     setCitySearchQuery(null);
     
-    setFormData((prev) => ({ ...prev, city: displayName }));
+    setProfileDraft({ city: displayName });
     
     try {
       const res = await getPlaceDetails(placeId, sessionToken.current);
       if (res.success && res.data) {
-        setFormData((prev) => ({
-          ...prev,
+        setProfileDraft({
           city: res.data.city || displayName,
           ...(res.data.country && { country: res.data.country }),
-        }));
+        });
       }
     } catch (e) {
       console.error("Failed to get place details", e);
@@ -113,17 +129,48 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
         city: org.city || (org.location ? org.location.split(',')[0] : "Mumbai"),
         headline: org.headline || org.tagline || "",
       };
-      setFormData(newForm);
       setInitialData(newForm);
+
+      const existingOfferings: string[] = org.key_offerings || org.keyOfferings || [];
+      const offeringsSource: string[] = existingOfferings.length ? existingOfferings : DEFAULT_OFFERINGS;
+      const newOfferings = offeringsSource.map((text: string, idx: number) => ({ id: String(idx), text }));
+      setInitialOfferings(newOfferings);
+
+      if (!profileDraft.isInitialized) {
+        setProfileDraft({
+          ...newForm,
+          keyOfferings: newOfferings,
+          isInitialized: true,
+        });
+      }
     }
-  }, [profileData]);
+  }, [profileData, profileDraft.isInitialized, setProfileDraft]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setProfileDraft({ [name]: value });
   };
 
-  const isDirty = JSON.stringify(formData) !== JSON.stringify(initialData);
+  const handleAddOffering = () => {
+    setProfileDraft({ keyOfferings: [...keyOfferings, { id: Date.now().toString(), text: "" }] });
+  };
+
+  const handleOfferingChange = (id: string, value: string) => {
+    setProfileDraft({
+      keyOfferings: keyOfferings.map((o) => (o.id === id ? { ...o, text: value } : o))
+    });
+  };
+
+  const isDirty =
+    profileDraft.name !== initialData.name ||
+    profileDraft.industry !== initialData.industry ||
+    profileDraft.foundedYear !== initialData.foundedYear ||
+    profileDraft.size !== initialData.size ||
+    profileDraft.website !== initialData.website ||
+    profileDraft.country !== initialData.country ||
+    profileDraft.city !== initialData.city ||
+    profileDraft.headline !== initialData.headline ||
+    JSON.stringify(keyOfferings) !== JSON.stringify(initialOfferings);
 
   const updateMutation = useMutation({
     mutationFn: (data: any) => companyProfileService.updateOrgProfile(orgId, data),
@@ -132,6 +179,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
         title: "Success",
         description: "Profile changes saved successfully!",
       });
+      clearProfileDraft();
       queryClient.invalidateQueries({ queryKey: ["orgProfile", slug] });
       queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
       onCancel();
@@ -158,6 +206,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
       country: formData.country,
       city: formData.city,
       established_year: parseInt(formData.foundedYear) || undefined,
+      keyOfferings: keyOfferings.map((o) => o.text).filter(Boolean),
     });
   };
 
@@ -296,7 +345,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
               value={isCityDropdownOpen ? (citySearchQuery ?? formData.city) : formData.city}
               onChange={(e) => {
                 setCitySearchQuery(e.target.value);
-                setFormData((prev) => ({ ...prev, city: e.target.value }));
+                setProfileDraft({ city: e.target.value });
               }}
               onFocus={() => {
                 setIsCityDropdownOpen(true);
@@ -355,6 +404,34 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
           required
           className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-xl bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
         />
+      </div>
+
+      {/* Key Offerings Section */}
+      <div className="flex flex-col gap-2 w-full">
+        <div className="flex justify-between items-center w-full">
+          <label className="text-[14px] font-medium text-[#000000] dark:text-white">
+            Key offerings
+          </label>
+          <button
+            type="button"
+            onClick={handleAddOffering}
+            className="w-6 h-6 flex items-center justify-center text-[#1A73E8] hover:scale-110 transition-transform cursor-pointer"
+          >
+            <Plus className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex flex-col gap-3 w-full">
+          {keyOfferings.map((offering) => (
+            <input
+              key={offering.id}
+              type="text"
+              value={offering.text}
+              onChange={(e) => handleOfferingChange(offering.id, e.target.value)}
+              placeholder="Add a key offering"
+              className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-xl bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
+            />
+          ))}
+        </div>
       </div>
 
       {/* Form Action Buttons at Footer */}

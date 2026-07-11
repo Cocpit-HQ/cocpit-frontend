@@ -29,7 +29,7 @@
     - `[x]` **CoreTeamSection** (`isOwnProfile` only): Two-column layout side-by-side with Verification Status Card (solid blue-600, rounded-2xl).
     - `[ ]` **PostsSection**: Grid layout, circular avatars, 2-line clamped caption, social icons row.
     - `[ ]` **PeopleSection**: Add connections preview UI.
-    - `[ ]` **RelevanceSection**: Implement info bullets and Growth Trends chart.
+    - `[ ]` **KeyOfferingsSection**: Implement info bullets and Growth Trends chart.
     - `[ ]` **CommunitySection**: Build Newsletter subscription card.
 
 ## Phase 2: Edit Flow

@@ -3,7 +3,26 @@
 import React from "react";
 import { Icon } from "@iconify/react";
 
-export default function RelevanceSection() {
+interface KeyOfferingsSectionProps {
+  keyOfferings?: string[];
+}
+
+const DEFAULT_OFFERINGS = [
+  "May offer exposure to emerging technologies",
+  "Operates across multiple markets",
+  "Focuses on innovation and growth",
+  "Diverse project opportunities",
+];
+
+const OFFERING_ICONS = [
+  "iconoir:rocket",
+  "iconoir:globe",
+  "streamline:money-graph-arrow-increase-ascend-growth-up-arrow-stats-graph-right-grow",
+  "lucide:folder-tree",
+];
+
+export default function KeyOfferingsSection({ keyOfferings }: KeyOfferingsSectionProps) {
+  const offerings = keyOfferings && keyOfferings.length > 0 ? keyOfferings : DEFAULT_OFFERINGS;
   return (
     <div
       style={{
@@ -38,7 +57,8 @@ export default function RelevanceSection() {
       >
         <h2
           style={{
-            width: "128px",
+            width: "auto",
+            whiteSpace: "nowrap",
             height: "32px",
             fontFamily: "'Poppins', sans-serif",
             fontWeight: 600,
@@ -51,7 +71,7 @@ export default function RelevanceSection() {
           }}
           className="text-black dark:text-white"
         >
-          Relevance
+          Key offerings
         </h2>
       </div>
 
@@ -87,201 +107,52 @@ export default function RelevanceSection() {
           }}
           className="max-md:!w-full max-md:!h-auto"
         >
-          {/* Bullet 1: Rocket */}
-          <div
-            style={{
-              boxSizing: "border-box",
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              padding: "8px 16px",
-              gap: "16px",
-              width: "448px",
-              height: "40px",
-              borderLeft: "3px solid #0D47A1",
-              flex: "none",
-              alignSelf: "stretch",
-              flexGrow: 0,
-            }}
-            className="bg-[#EFF4FF] dark:bg-zinc-900/50 dark:border-blue-500"
-          >
-            <Icon icon="iconoir:rocket" width="24" height="24" className="w-6 h-6 flex-none text-[#0D47A1] dark:text-blue-400" />
+          {offerings.map((text, idx) => (
             <div
+              key={idx}
               style={{
+                boxSizing: "border-box",
                 display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-start",
-                padding: "0px",
-                width: "366px",
-                height: "16px",
+                flexDirection: "row",
+                alignItems: "center",
+                padding: "8px 16px",
+                gap: "16px",
+                width: "448px",
+                height: "40px",
+                borderLeft: "3px solid #0D47A1",
                 flex: "none",
+                alignSelf: "stretch",
                 flexGrow: 0,
               }}
+              className="bg-[#EFF4FF] dark:bg-zinc-900/50 dark:border-blue-500"
             >
-              <span
+              <Icon icon={OFFERING_ICONS[idx % OFFERING_ICONS.length]} width="24" height="24" className="w-6 h-6 flex-none text-[#0D47A1] dark:text-blue-400" />
+              <div
                 style={{
-                  width: "366px",
-                  height: "16px",
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: 500,
-                  fontSize: "16px",
-                  lineHeight: "16px",
                   display: "flex",
-                  alignItems: "center",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  padding: "0px",
+                  flex: "none",
+                  flexGrow: 0,
                 }}
-                className="text-[#6B7280] dark:text-zinc-400"
               >
-                May offer exposure to emerging technologies
-              </span>
+                <span
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: 500,
+                    fontSize: "16px",
+                    lineHeight: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  className="text-[#6B7280] dark:text-zinc-400"
+                >
+                  {text}
+                </span>
+              </div>
             </div>
-          </div>
-
-          {/* Bullet 2: Globe */}
-          <div
-            style={{
-              boxSizing: "border-box",
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              padding: "8px 16px",
-              gap: "16px",
-              width: "448px",
-              height: "40px",
-              borderLeft: "3px solid #0D47A1",
-              flex: "none",
-              alignSelf: "stretch",
-              flexGrow: 0,
-            }}
-            className="bg-[#EFF4FF] dark:bg-zinc-900/50 dark:border-blue-500"
-          >
-            <Icon icon="iconoir:globe" width="24" height="24" className="w-6 h-6 flex-none text-[#0D47A1] dark:text-blue-400" />
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-start",
-                padding: "0px",
-                width: "275px",
-                height: "16px",
-                flex: "none",
-                flexGrow: 0,
-              }}
-            >
-              <span
-                style={{
-                  width: "275px",
-                  height: "16px",
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: 500,
-                  fontSize: "16px",
-                  lineHeight: "16px",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-                className="text-[#6B7280] dark:text-zinc-400"
-              >
-                Operates across multiple markets
-              </span>
-            </div>
-          </div>
-
-          {/* Bullet 3: Growth */}
-          <div
-            style={{
-              boxSizing: "border-box",
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              padding: "8px 16px",
-              gap: "16px",
-              width: "448px",
-              height: "40px",
-              borderLeft: "3px solid #0D47A1",
-              flex: "none",
-              alignSelf: "stretch",
-              flexGrow: 0,
-            }}
-            className="bg-[#EFF4FF] dark:bg-zinc-900/50 dark:border-blue-500"
-          >
-            <Icon icon="streamline:money-graph-arrow-increase-ascend-growth-up-arrow-stats-graph-right-grow" width="24" height="24" className="w-6 h-6 flex-none text-[#0D47A1] dark:text-blue-400" />
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-start",
-                padding: "0px",
-                width: "278px",
-                height: "16px",
-                flex: "none",
-                flexGrow: 0,
-              }}
-            >
-              <span
-                style={{
-                  width: "278px",
-                  height: "16px",
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: 500,
-                  fontSize: "16px",
-                  lineHeight: "16px",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-                className="text-[#6B7280] dark:text-zinc-400"
-              >
-                Focuses on innovation and growth
-              </span>
-            </div>
-          </div>
-
-          {/* Bullet 4: Tree */}
-          <div
-            style={{
-              boxSizing: "border-box",
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              padding: "8px 16px",
-              gap: "16px",
-              width: "448px",
-              height: "40px",
-              borderLeft: "3px solid #0D47A1",
-              flex: "none",
-              alignSelf: "stretch",
-              flexGrow: 0,
-            }}
-            className="bg-[#EFF4FF] dark:bg-zinc-900/50 dark:border-blue-500"
-          >
-            <Icon icon="lucide:folder-tree" width="24" height="24" className="w-6 h-6 flex-none text-[#0D47A1] dark:text-blue-400" />
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-start",
-                padding: "0px",
-                width: "233px",
-                height: "16px",
-                flex: "none",
-                flexGrow: 0,
-              }}
-            >
-              <span
-                style={{
-                  width: "233px",
-                  height: "16px",
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: 500,
-                  fontSize: "16px",
-                  lineHeight: "16px",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-                className="text-[#6B7280] dark:text-zinc-400"
-              >
-                Diverse project opportunities
-              </span>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Frame 2609096: Right Column (Growth Trends) */}

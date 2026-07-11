@@ -13,7 +13,7 @@ import { Post, PostVisibility } from '@/types/entities';
 import { LocationSuggestion, StructuredLocation } from '@/services/api/location';
 import { useUIStore } from '@/store/ui.store';
 import { uploadMedia } from '@/services/api/upload';
-
+import { useQueryClient } from '@tanstack/react-query';
 const USER_CATEGORIES: CategoryType[] = ['Professional', 'Achievement'];
 const COMPANY_CATEGORIES: CategoryType[] = ['Update', 'Hiring', 'Milestone', 'Insight'];
 const INSTITUTION_CATEGORIES: CategoryType[] = ['Announcement', 'Academic', 'Admission', 'Campus Life', 'Research', 'Club Activity', 'General'];
@@ -37,6 +37,7 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
   const { activeProfile, userCompanies } = useActiveProfile();
   const { startUpload } = usePostUpload();
   const { addPost } = useFeed();
+  const queryClient = useQueryClient();
 
   // --- Form State ---
   const [postType, setPostType] = useState<PostType>(initialPostType);
@@ -419,6 +420,9 @@ export const useCreatePostForm = (props: CreatePostModalProps & { isMobile: bool
         const { mappedPost } = await postApi.create(payload, filesToUpload, tagUserIds);
         addPost(mappedPost);
         window.dispatchEvent(new CustomEvent('postCreated', { detail: mappedPost }));
+        queryClient.invalidateQueries({ queryKey: ["orgPosts"] });
+        queryClient.invalidateQueries({ queryKey: ["orgPostsPreview"] });
+        queryClient.invalidateQueries({ queryKey: ["profile-posts"] });
         if (notifyEmployees) {
           await postApi.notifyEmployees(postAsCompanyId!, mappedPost.id);
           toast.success("Post created and employees notified!");
