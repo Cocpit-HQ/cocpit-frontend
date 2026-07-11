@@ -848,7 +848,7 @@ export const closeJobListing = async (id: string, orgId?: string): Promise<boole
     if (orgId) {
       await api.put(`/organizations/${orgId}/jobs/${id}`, {
         status: "CLOSED",
-        is_active: false
+        is_active: true
       });
     } else {
       await api.post(`/jobs/${id}/close`);
@@ -863,14 +863,7 @@ export const closeJobListing = async (id: string, orgId?: string): Promise<boole
 export const deleteJobListing = async (id: string, orgId?: string): Promise<boolean> => {
   try {
     if (orgId) {
-      // Backend deleteOrganizationJob is a soft-delete (sets status=CLOSED, is_active=false)
-      // but it fails because DELETE requests have no Content-Type header so express.json()
-      // leaves req.body undefined. We call PUT /organizations/:orgId/jobs/:id directly instead,
-      // which is the same underlying operation via updateOrganizationJob.
-      await api.put(`/organizations/${orgId}/jobs/${id}`, {
-        status: 'CLOSED',
-        is_active: false,
-      });
+      await api.delete(`/organizations/${orgId}/jobs/${id}`);
     } else {
       await api.delete(`/jobs/${id}`);
     }
