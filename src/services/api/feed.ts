@@ -205,20 +205,18 @@ export interface CreatePostResponse {
   } | Record<string, never> | null;
 }
 
-export const getFeed = async (cursor?: string, companyId?: string): Promise<FeedResponse> => {
-  const params = new URLSearchParams();
-  if (cursor && typeof cursor === 'string') {
-    params.append("cursor", cursor);
-  }
-  void companyId; // Feed context might not use this in the same way, but keeping it for now
-
-  const response = await api.get<EngineFeedResponse>(`/feed?${params.toString()}`);
-
-  if (!response.data.ok || !response.data.data) {
+/**
+ * Shared shape-mapping from the /feed engine response into the FeedResponse
+ * shape the frontend feed hooks expect. Used by both the client-side
+ * getFeed() below and the server-side prefetch (lib/server-feed.ts) so SSR
+ * and client always agree on post/cursor shape.
+ */
+export const mapEngineResponseToFeedResponse = (data: EngineFeedResponse): FeedResponse => {
+  if (!data.ok || !data.data) {
     return { posts: [], nextCursor: null };
   }
 
-  const { items, cursor: nextCursorString, session_id } = response.data.data;
+  const { items, cursor: nextCursorString, session_id } = data.data;
 
   if (!items || items.length === 0) {
     return {
@@ -248,6 +246,17 @@ export const getFeed = async (cursor?: string, companyId?: string): Promise<Feed
     nextCursor: items.length === 0 ? null : nextCursorString,
     session_id
   };
+};
+
+export const getFeed = async (cursor?: string, companyId?: string): Promise<FeedResponse> => {
+  const params = new URLSearchParams();
+  if (cursor && typeof cursor === 'string') {
+    params.append("cursor", cursor);
+  }
+  void companyId; // Feed context might not use this in the same way, but keeping it for now
+
+  const response = await api.get<EngineFeedResponse>(`/feed?${params.toString()}`);
+  return mapEngineResponseToFeedResponse(response.data);
 };
 
 export const getFeedSession = async (): Promise<EngineFeedSession> => {

@@ -427,14 +427,15 @@ export const getRecentResumes = async (): Promise<any[]> => {
   }
 };
 
-export const getMyApplications = async (): Promise<Job[]> => {
+export const getMyApplications = async (status: string = 'all', cursor?: string) => {
   try {
-    const response = await api.get('/jobs/applications/me', {
-      params: { limit: 100 }
-    });
-    const jobs = response.data;
+    const params: Record<string, any> = { limit: 10, status };
+    if (cursor) params.cursor = cursor;
     
-    return jobs.map((job: any) => ({
+    const response = await api.get('/jobs/applications/me', { params });
+    const fetchedJobs = response.data;
+    
+    const paginatedJobs = fetchedJobs.map((job: any) => ({
       id: job.job_id,
       title: job.title,
       company: job.company_name,
@@ -459,13 +460,22 @@ export const getMyApplications = async (): Promise<Job[]> => {
       org_id: job.org_id,
       recruiter_id: job.recruiter_id,
       context_sent: job.context_sent,
-      application_status: job.applicationStatus || 'Applied',
+      application_status: job.applicationStatus || job.current_status || 'Applied',
       is_available: job.status !== 'CLOSED' && job.is_active !== false,
       is_closed: job.status === 'CLOSED' || job.is_active === false
     }));
+
+    const hasMore = fetchedJobs.length === 10;
+    const nextCursor = hasMore ? fetchedJobs[fetchedJobs.length - 1].applied_at : null;
+
+    return {
+      data: paginatedJobs,
+      nextCursor,
+      hasMore
+    };
   } catch (error) {
     console.error("Failed to fetch applications:", error);
-    return [];
+    return { data: [], nextCursor: null, hasMore: false };
   }
 };
 

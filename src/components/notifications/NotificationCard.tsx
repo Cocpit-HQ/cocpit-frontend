@@ -154,7 +154,7 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notification
                     {formatShortTime(notification.created_at)}
                 </span>
                 {!notification.is_read && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    <div className="w-2 h-2 rounded-full bg-[#6366F1] shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
                 )}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>

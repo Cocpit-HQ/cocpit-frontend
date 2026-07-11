@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { getServerStories } from '@/lib/server-stories'
 import { getServerFeed } from '@/lib/server-feed'
+import { getServerActorContext } from '@/lib/server-actor-context'
 import { mapBackendPostToFrontend } from '@/lib/mappers/feed.mapper'
 import HomePage from '@/components/home/HomePage'
 
@@ -25,17 +26,30 @@ export default async function FeedRoute() {
   const session = await getServerSession(authOptions)
   const userId = session?.user?.id
 
-  const cookieStore = await cookies()
-  const activeActorCookie = cookieStore.get('activeActor')?.value || ''
-  const [actorType, actorId] = activeActorCookie.split(':')
+  // Resolve the authoritative active actor server-side — mirrors what
+  // ActiveProfileContext resolves client-side. The `activeActor` cookie is
+  // only used as a fallback: it cannot exist yet on a user's first page
+  // load after login (it's set as a side-effect of the *client* calling
+  // this same backend endpoint, which happens after SSR has responded).
+  const resolvedActor = await getServerActorContext()
 
-  // Resolve active scope for query keys
-  const activeType = normalizeActorType(actorType)
-  const activeId = actorId || userId || 'me'
+  let activeType: ActorType
+  let activeId: string
+
+  if (resolvedActor) {
+    activeType = resolvedActor.type
+    activeId = resolvedActor.id
+  } else {
+    const cookieStore = await cookies()
+    const activeActorCookie = cookieStore.get('activeActor')?.value || ''
+    const [actorType, actorId] = activeActorCookie.split(':')
+    activeType = normalizeActorType(actorType)
+    activeId = actorId || userId || 'me'
+  }
 
   // Prefetch stories and feed
   const [feedData, storiesData] = await Promise.all([
-    getServerFeed(),
+    getServerFeed(resolvedActor),
     getServerStories()
   ]);
 

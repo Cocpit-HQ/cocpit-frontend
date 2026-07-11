@@ -73,7 +73,7 @@ export function LocationSelector({
     let isActive = true;
     setLoading(true);
 
-    searchPlaces(debouncedQuery.trim(), sessionToken.current)
+    searchPlaces(debouncedQuery.trim(), sessionToken.current, undefined, true)
       .then((results) => {
         if (isActive) setSuggestions(results);
       })
@@ -111,7 +111,7 @@ export function LocationSelector({
       return;
     }
 
-    const details = await getPlaceDetails(location.placeId, sessionToken.current);
+    const details = await getPlaceDetails(location.placeId, sessionToken.current, true);
     sessionToken.current = uuidv4();
     if (details) {
       setDraftLocation(details);

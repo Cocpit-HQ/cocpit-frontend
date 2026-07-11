@@ -265,22 +265,9 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
   }, [jobs, selectedDateFilter, activeTab]);
 
   const filteredJobs = React.useMemo(() => {
-    let result = dateFilteredJobs;
-
-    if (selectedStatusFilter !== "All") {
-      result = result.filter((job) => {
-        const status = job.application_status?.toLowerCase() || "";
-        const filterVal = selectedStatusFilter.toLowerCase();
-        if (filterVal === "in review" && status === "in-review") return true;
-        if (filterVal === "declined") {
-          return status === "declined" || status === "rejected";
-        }
-        return status === filterVal;
-      });
-    }
-
-    return result;
-  }, [dateFilteredJobs, selectedStatusFilter]);
+    // The backend now handles status filtering for My Applications.
+    return dateFilteredJobs;
+  }, [dateFilteredJobs]);
 
   const appliedCount = React.useMemo(() => {
     return jobs.filter(
@@ -481,13 +468,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
 
       {/* My Applications Tab */}
       <div className={`w-full ${activeTab === "My Applications" ? "" : "hidden"}`}>
-        {isLoading ? (
-          <div className="w-full flex flex-col gap-4 py-4">
-            {[1, 2, 3].map((n) => (
-              <JobCardSkeleton key={n} />
-            ))}
-          </div>
-        ) : jobs.length === 0 ? (
+        {(jobs.length === 0 && selectedStatusFilter === "All" && selectedDateFilter === "All time" && !isLoading) ? (
           <div className="h-[706px] flex flex-col justify-center items-center gap-4 w-full animate-in fade-in duration-300">
             <Icon icon="hugeicons:job-search" className="size-20 text-black dark:text-[#F9FAFB] flex-shrink-0" />
             <div className="flex flex-col justify-start items-center gap-2">
@@ -806,6 +787,19 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                       </div>
                     );
                   })
+                )}
+                
+                {/* Load More Button */}
+                {hasMore && (
+                  <div className="w-full flex justify-center py-4">
+                    <button
+                      onClick={loadMore}
+                      disabled={isFetchingMore}
+                      className="h-10 px-6 rounded-[24px] border border-[#6366F1] dark:border-[#818CF8] bg-transparent text-[#6366F1] dark:text-[#818CF8] font-['Poppins'] text-[14px] font-semibold leading-[20px] flex items-center justify-center hover:bg-[#EEF2FF] dark:hover:bg-[#1C2340] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isFetchingMore ? 'Loading...' : 'Load More'}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

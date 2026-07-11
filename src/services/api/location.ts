@@ -32,17 +32,17 @@ export interface StructuredLocation {
   longitude: number | null;
 }
 
-export const searchPlaces = async (q: string, sessionToken: string, allowedCountryCodes?: string[]): Promise<PlacesSuggestion[]> => {
+export const searchPlaces = async (q: string, sessionToken: string, allowedCountryCodes?: string[], isGlobal?: boolean): Promise<PlacesSuggestion[]> => {
   if (!q || q.length < 2) return [];
   const response = await api.get("/places/autocomplete", { 
-    params: { q, sessionToken, allowedCountryCodes: allowedCountryCodes?.join(',') } 
+    params: { q, sessionToken, allowedCountryCodes: allowedCountryCodes?.join(','), global: isGlobal } 
   });
   return response.data.data || [];
 };
 
-export const getPlaceDetails = async (placeId: string, sessionToken: string): Promise<StructuredLocation | null> => {
+export const getPlaceDetails = async (placeId: string, sessionToken: string, isGlobal?: boolean): Promise<StructuredLocation | null> => {
   try {
-    const response = await api.get("/places/details", { params: { placeId, sessionToken } });
+    const response = await api.get("/places/details", { params: { placeId, sessionToken, global: isGlobal } });
     return response.data.data || null;
   } catch (err) {
     return null; // Gracefully fallback if details call fails

@@ -123,19 +123,23 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
   });
 
   // 3. My Applications Query
+  const selectedStatusFilter = filters.selectedStatusFilter || 'All';
   const {
     data: appliedData,
+    fetchNextPage: loadMoreApplied,
+    hasNextPage: hasMoreApplied,
+    isFetchingNextPage: isFetchingMoreApplied,
     isLoading: isLoadingApplied
-  } = useQuery({
-    queryKey: ['jobs', 'applied'],
-    queryFn: async () => {
-      const [jobs, stats] = await Promise.all([
-        jobsService.getMyApplications(),
-        jobsService.getApplicationStats()
-      ]);
-      setApplicationStats(stats);
-      return jobs;
+  } = useInfiniteQuery({
+    queryKey: ['jobs', 'applied', selectedStatusFilter],
+    queryFn: async ({ pageParam }) => {
+      if (!pageParam) {
+        jobsService.getApplicationStats().then(stats => setApplicationStats(stats)).catch(console.error);
+      }
+      return jobsService.getMyApplications(selectedStatusFilter, pageParam as string | undefined);
     },
+    getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.nextCursor : undefined,
+    initialPageParam: undefined as string | undefined,
     staleTime: 1000 * 60 * 3,
     enabled: !isCompanyMode && !!token && activeTab === 'My Applications',
   });
@@ -175,7 +179,7 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     let jobs: Job[] = [];
     if (activeTab === 'Explore') jobs = exploreData?.pages.flatMap(p => p.data).map(enhanceJob) || [];
     else if (activeTab === 'Saved') jobs = savedData?.pages.flatMap(p => p.data).map(enhanceJob) || [];
-    else if (activeTab === 'My Applications') jobs = (appliedData || []).map(enhanceJob);
+    else if (activeTab === 'My Applications') jobs = appliedData?.pages.flatMap(p => p.data).map(enhanceJob) || [];
     else if (activeTab === 'Offers') jobs = (offersData || []).map(enhanceJob);
     
     // Deduplicate jobs by ID to prevent React duplicate key errors
@@ -196,16 +200,19 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
 
   const isFetchingMore = 
     (activeTab === 'Explore' && isFetchingMoreExplore) ||
-    (activeTab === 'Saved' && isFetchingMoreSaved);
+    (activeTab === 'Saved' && isFetchingMoreSaved) ||
+    (activeTab === 'My Applications' && isFetchingMoreApplied);
 
   const hasMore = 
     (activeTab === 'Explore' && hasMoreExplore) ||
-    (activeTab === 'Saved' && hasMoreSaved) || false;
+    (activeTab === 'Saved' && hasMoreSaved) ||
+    (activeTab === 'My Applications' && hasMoreApplied) || false;
 
   const loadMore = useCallback(() => {
     if (activeTab === 'Explore' && hasMoreExplore) loadMoreExplore();
     if (activeTab === 'Saved' && hasMoreSaved) loadMoreSaved();
-  }, [activeTab, hasMoreExplore, loadMoreExplore, hasMoreSaved, loadMoreSaved]);
+    if (activeTab === 'My Applications' && hasMoreApplied) loadMoreApplied();
+  }, [activeTab, hasMoreExplore, loadMoreExplore, hasMoreSaved, loadMoreSaved, hasMoreApplied, loadMoreApplied]);
 
   const selectJob = useCallback((job: Job) => {
     setSelectedJob(job);
