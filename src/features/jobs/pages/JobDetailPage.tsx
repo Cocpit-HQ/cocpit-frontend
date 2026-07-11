@@ -261,9 +261,25 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           {job.is_offer ? (
             job.recruiter_message ? (
               <div className="box-border w-full max-w-full min-h-[104px] bg-[#F9FAFF] border-l-2 border-l-[#6366F1] rounded-tr-[16px] rounded-br-[16px] rounded-bl-[16px] rounded-tl-none py-3 px-4 flex flex-col justify-start items-start gap-2 self-stretch">
-                {/* Recruiter Info Row */}
+                {/* Recruiter / Company Info Row */}
                 <div className="flex flex-row justify-start items-center p-0 gap-2 h-10 w-full">
-                  {job.recruiter_avatar ? (
+                  {job.org_id ? (
+                    job.company_logo === 'sphere' ? (
+                      <div className="w-10 h-10 bg-slate-100 rounded-full flex justify-center items-center overflow-hidden flex-shrink-0">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-300 to-indigo-500 shadow-sm" />
+                      </div>
+                    ) : job.company_logo ? (
+                      <img
+                        src={job.company_logo}
+                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                        alt={job.company || 'Company'}
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#6366F1] flex-shrink-0">
+                        <Icon icon="hugeicons:building-03" className="w-5 h-5" />
+                      </div>
+                    )
+                  ) : job.recruiter_avatar ? (
                     <img
                       src={job.recruiter_avatar}
                       className="w-10 h-10 rounded-full object-cover flex-shrink-0"
@@ -275,15 +291,23 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                     </div>
                   )}
                   <div className="flex flex-col justify-center items-start gap-1">
-                    {job.recruiter_name && (
-                      <div className="text-left font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] uppercase">
-                        {job.recruiter_name}
+                    {job.org_id ? (
+                      <div className="text-left font-['Poppins'] font-semibold text-[12px] leading-[16px] text-[#6366F1] uppercase">
+                        {job.company}
                       </div>
-                    )}
-                    {job.recruiter_title && (
-                      <div className="text-left font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] uppercase">
-                        {job.recruiter_title}
-                      </div>
+                    ) : (
+                      <>
+                        {job.recruiter_name && (
+                          <div className="text-left font-['Poppins'] font-semibold text-[12px] leading-[16px] text-[#6366F1] uppercase">
+                            {job.recruiter_name}
+                          </div>
+                        )}
+                        {job.recruiter_title && (
+                          <div className="text-left font-['Poppins'] font-normal text-[12px] leading-[16px] text-[#6366F1] uppercase">
+                            {job.recruiter_title}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

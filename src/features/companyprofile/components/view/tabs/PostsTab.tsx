@@ -64,7 +64,7 @@ export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) 
           pages: oldData.pages.map((page: any) => {
             const postsArray = page.posts || page.data || page;
             if (Array.isArray(postsArray)) {
-              const newPosts = postsArray.filter((p: any) => (p.post_id || p.id || p._id) !== postId);
+              const newPosts = postsArray.filter((p: any) => String(p.post_id || p.id || p._id) !== String(postId));
               if (page.posts) return { ...page, posts: newPosts };
               if (page.data) return { ...page, data: newPosts };
               return newPosts;
@@ -74,6 +74,8 @@ export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) 
         };
       });
       queryClient.invalidateQueries({ queryKey: ["orgPostsPreview", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["orgPosts", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["orgProfile"] });
     } catch (error) {
       console.error("Failed to delete post:", error);
       toast({ title: "Failed to delete post", variant: "destructive" });

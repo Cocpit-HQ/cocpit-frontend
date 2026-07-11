@@ -382,6 +382,15 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
   };
 
   const handleSaveDraftClick = () => {
+    setValidationError(null);
+    if (minSalary && maxSalary) {
+      const min = parseFloat(minSalary.replace(/,/g, ''));
+      const max = parseFloat(maxSalary.replace(/,/g, ''));
+      if (max < min) {
+        setValidationError("Maximum salary cannot be less than minimum salary");
+        return;
+      }
+    }
     onSaveDraft(buildDetailsObject());
   };
 
@@ -395,6 +404,16 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
       setValidationError("Job description must be at least 100 characters long");
       return;
     }
+
+    if (minSalary && maxSalary) {
+      const min = parseFloat(minSalary.replace(/,/g, ''));
+      const max = parseFloat(maxSalary.replace(/,/g, ''));
+      if (max < min) {
+        setValidationError("Maximum salary cannot be less than minimum salary");
+        return;
+      }
+    }
+
     onPublish(buildDetailsObject());
   };
 

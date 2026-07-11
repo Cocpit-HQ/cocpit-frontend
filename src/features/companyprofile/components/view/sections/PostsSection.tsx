@@ -39,7 +39,7 @@ export default function PostsSection({ data, showAll = false, isOwnProfile = fal
         if (!oldData) return oldData;
         const postsArray = oldData.posts || oldData.data || oldData;
         if (Array.isArray(postsArray)) {
-          const newPosts = postsArray.filter((p: any) => (p.post_id || p.id || p._id) !== postId);
+          const newPosts = postsArray.filter((p: any) => String(p.post_id || p.id || p._id) !== String(postId));
           if (oldData.posts) return { ...oldData, posts: newPosts };
           if (oldData.data) return { ...oldData, data: newPosts };
           return newPosts;
@@ -47,6 +47,8 @@ export default function PostsSection({ data, showAll = false, isOwnProfile = fal
         return oldData;
       });
       queryClient.invalidateQueries({ queryKey: ["orgPosts", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["orgPostsPreview", data.id] });
+      queryClient.invalidateQueries({ queryKey: ["orgProfile"] });
     } catch (error) {
       console.error("Failed to delete post:", error);
       toast({ title: "Failed to delete post", variant: "destructive" });
@@ -195,7 +197,7 @@ export default function PostsSection({ data, showAll = false, isOwnProfile = fal
           });
 
           const feedPostData: FeedPostProps = {
-            id: post.id || post._id || index.toString(),
+            id: post.post_id || post.id || post._id || index.toString(),
             author: post.author?.full_name || post.authorName || data.name,
             authorId: post.author?.user_id || data.id || data._id || "",
             authorSlug: post.author?.author_slug || data.slug || "",
