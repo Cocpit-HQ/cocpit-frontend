@@ -50,7 +50,10 @@ export const PostSharedContent = ({
             <p className="text-xs text-muted-foreground mt-2">This post is Private or restricted.</p>
           )}
           {shared_post.author && shared_post.author !== 'Unknown' && (
-            <Link href={`/profile/${shared_post.authorSlug || shared_post.authorId}`} className="text-sm text-primary hover:underline mt-2">
+            <Link 
+              href={shared_post.isCompanyPost ? `/organization/${shared_post.authorSlug}` : `/profile/${shared_post.authorSlug || shared_post.authorId}`} 
+              className="text-sm text-primary hover:underline mt-2"
+            >
               View {shared_post.author}&apos;s Profile
             </Link>
           )}

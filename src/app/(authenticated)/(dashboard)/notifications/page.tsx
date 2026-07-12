@@ -63,11 +63,13 @@ export default function NotificationsPage() {
   const handleRead = (id: string) => {
     setNotifications(prev => prev.map(n =>
       n.notification_id === id ? { ...n, is_read: true } : n
-    ))
+    ));
+    window.dispatchEvent(new CustomEvent('notifications-updated'));
   }
 
   const handleDeleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.notification_id !== id))
+    setNotifications(prev => prev.filter(n => n.notification_id !== id));
+    window.dispatchEvent(new CustomEvent('notifications-updated'));
   }
 
   const handleMarkAllAsRead = async () => {
@@ -75,6 +77,7 @@ export default function NotificationsPage() {
       const companyId = (isCompany && activeProfile) ? activeProfile.id : undefined;
       await markAllNotificationsRead(companyId);
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      window.dispatchEvent(new CustomEvent('notifications-updated'));
     } catch (error) {
       console.error('Failed to mark all as read:', error);
     }
@@ -95,6 +98,7 @@ export default function NotificationsPage() {
       if (idsToDelete.length > 0) {
         await deleteNotifications(idsToDelete)
         setNotifications(prev => prev.filter(n => !idsToDelete.includes(n.notification_id)))
+        window.dispatchEvent(new CustomEvent('notifications-updated'));
       }
     } catch (error) {
       console.error("Failed to clear notifications:", error)

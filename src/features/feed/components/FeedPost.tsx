@@ -3,6 +3,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { FeedPostProps } from '../types';
@@ -331,7 +332,14 @@ export const FeedPost = (props: FeedPostProps) => {
           <div className="flex flex-row justify-between items-center px-4 md:px-0 w-full h-[32px] mt-2 mb-1 select-none">
             <div className="flex items-center gap-1.5 text-muted-foreground text-[12px] font-normal font-poppins">
               <Icon icon="lucide:repeat" className="w-4 h-4 text-[#6B7280]" style={{ strokeWidth: '1.5px' }} />
-              <span className="text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] text-[12px] leading-[16px] text-center">{author} reposted</span>
+              <Link 
+                href={props.isCompanyPost ? `/organization/${props.authorSlug}` : `/profile/${props.authorSlug || props.authorId}`}
+                className="text-[#6B7280] font-medium hover:underline font-[family-name:var(--font-poppins)] text-[12px] leading-[16px]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {author}
+              </Link>
+              <span className="text-[#6B7280] font-normal font-[family-name:var(--font-poppins)] text-[12px] leading-[16px] text-center">reposted</span>
             </div>
             <div className="relative">
               <button

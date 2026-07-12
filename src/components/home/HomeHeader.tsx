@@ -14,9 +14,13 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Hash, Plus } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
+import { getNotifications } from '@/services/api/notifications';
+import { useSocket } from '@/context/SocketContext';
 
 export const HomeHeader = () => {
-    const { isCompany } = useActiveProfile();
+    const { activeProfile, isCompany } = useActiveProfile();
+    const { socket } = useSocket();
+    const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
     const router = useRouter();
     const pathname = usePathname();
     const isNotificationsActive = pathname === '/notifications';
@@ -28,6 +32,45 @@ export const HomeHeader = () => {
             setIsPopoverOpen(false);
         }
     }, [pathname]);
+
+    const fetchUnreadCount = async () => {
+        try {
+            const companyId = (isCompany && activeProfile) ? activeProfile.id : undefined;
+            const notifs = await getNotifications(companyId);
+            const count = notifs.filter((n: any) => !n.is_read).length;
+            setUnreadNotificationsCount(count);
+        } catch (error) {
+            console.error("Failed to fetch unread notifications count:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchUnreadCount();
+    }, [activeProfile, isCompany, pathname]);
+
+    useEffect(() => {
+        const handleUpdate = () => {
+            fetchUnreadCount();
+        };
+        window.addEventListener('notifications-updated', handleUpdate);
+        return () => {
+            window.removeEventListener('notifications-updated', handleUpdate);
+        };
+    }, [activeProfile, isCompany]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewNotification = () => {
+            fetchUnreadCount();
+        };
+
+        socket.on('notification', handleNewNotification);
+
+        return () => {
+            socket.off('notification', handleNewNotification);
+        };
+    }, [socket, activeProfile, isCompany]);
     const { setActiveModal } = useUIStore();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<SearchedUser[]>([]);
@@ -689,7 +732,22 @@ export const HomeHeader = () => {
                                 href="/notifications"
                                 className={`flex items-center justify-center w-14 h-10 rounded-[24px] transition-colors ${isNotificationsActive ? 'bg-primary-tint text-primary-tint-foreground' : 'text-foreground hover:bg-profile-hover'}`}
                             >
-                                <Bell width={24} height={24} strokeWidth={1.5} />
+                                <div className="relative">
+                                    <Bell width={24} height={24} strokeWidth={1.5} />
+                                    {unreadNotificationsCount > 0 && (
+                                        <span 
+                                            style={{
+                                                position: 'absolute',
+                                                width: '6px',
+                                                height: '6px',
+                                                left: '19px',
+                                                top: '-3px',
+                                                backgroundColor: '#6366F1',
+                                                borderRadius: '50%'
+                                            }}
+                                        />
+                                    )}
+                                </div>
                             </Link>
                             <Link
                                 href="/messaging"
@@ -903,9 +961,24 @@ export const HomeHeader = () => {
                         <div className="flex items-center gap-1">
                             <Link
                                 href="/notifications"
-                                className={`relative flex items-center justify-center transition-colors hover:text-foreground ${isNotificationsActive ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-primary dark:text-[#818CF8] w-14 h-10 px-4 py-2 rounded-[24px]' : 'text-muted-foreground hover:bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 p-2 rounded-full'}`}
+                                className={`flex items-center justify-center transition-colors hover:text-foreground ${isNotificationsActive ? 'bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 text-primary dark:text-[#818CF8] w-14 h-10 px-4 py-2 rounded-[24px]' : 'text-muted-foreground hover:bg-[#EEF2FF] dark:bg-[#1e1b4b]/50 p-2 rounded-full'}`}
                             >
-                                <Bell className="w-5 h-5" />
+                                <div className="relative">
+                                    <Bell className="w-5 h-5" />
+                                    {unreadNotificationsCount > 0 && (
+                                        <span 
+                                            style={{
+                                                position: 'absolute',
+                                                width: '6px',
+                                                height: '6px',
+                                                left: '16px',
+                                                top: '-3px',
+                                                backgroundColor: '#6366F1',
+                                                borderRadius: '50%'
+                                            }}
+                                        />
+                                    )}
+                                </div>
                             </Link>
                             <Link
                                 href="/messaging"
