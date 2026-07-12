@@ -74,13 +74,13 @@ export const FeedPost = (props: FeedPostProps) => {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (props.isFullContent || searchParams?.get("comments") === "true" || !!searchParams?.get("commentId")) {
+    if (props.isFullContent || searchParams?.get("comments") === "true" || !!searchParams?.get("commentId") || props.initialShowComments) {
       setIsCommentSectionOpen(true);
       if (typeof window !== 'undefined' && window.innerWidth < 768) {
         setIsMobileDrawerOpen(true);
       }
     }
-  }, [searchParams, props.isFullContent]);
+  }, [searchParams, props.isFullContent, props.initialShowComments]);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showPollAnalytics, setShowPollAnalytics] = useState(false);
@@ -108,6 +108,11 @@ export const FeedPost = (props: FeedPostProps) => {
   };
 
   const handleToggleCommentSection = () => {
+    if (props.onCommentClickOverride) {
+      props.onCommentClickOverride();
+      return;
+    }
+
     if (window.innerWidth < 768) {
       setIsMobileDrawerOpen(true);
     } else {
@@ -244,6 +249,14 @@ export const FeedPost = (props: FeedPostProps) => {
     observer.observe(feedCardRef.current);
     return () => observer.disconnect();
   }, [id, props.sessionId, props.position, props.slotType, props.rankingScore, props.isJob]);
+
+  useEffect(() => {
+    if (props.initialShowComments && feedCardRef.current) {
+      setTimeout(() => {
+        feedCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  }, [props.initialShowComments]);
 
   // Click tracking
   const handleCardClick = (e: React.MouseEvent) => {

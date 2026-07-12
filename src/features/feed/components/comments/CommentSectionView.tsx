@@ -57,25 +57,7 @@ export default function CommentSectionView({
   };
 
   return (
-    <div className="flex flex-col flex-1 h-full min-h-0 md:max-h-[450px] bg-background relative font-poppins">
-      <div className="p-3 md:p-4 border-t border-border bg-card z-10 sticky bottom-0">
-        <CommentInput
-          onAddComment={(text) => {
-            if (editingComment) {
-              onEditComment?.(editingComment.id, text);
-            } else {
-              onAddComment(text, replyingTo?.id);
-            }
-            handleCancelAll();
-          }}
-          replyingTo={replyingTo}
-          onCancelReply={handleCancelAll}
-          editingComment={editingComment}
-          onCancelEdit={handleCancelAll}
-          currentUserAvatar={activeProfile?.avatar_url || "/assets/pngegg.png"}
-        />
-      </div>
-
+    <div className="flex flex-col min-h-0 md:max-h-[450px] bg-background relative font-poppins">
       <div className="flex-1 overflow-y-auto min-h-0 p-4 pb-6 scrollbar-hide">
         {isLoading && !comments.length ? (
           <CommentListSkeleton />
@@ -96,6 +78,24 @@ export default function CommentSectionView({
             postId={postId}
           />
         )}
+      </div>
+
+      <div className="p-3 md:p-4 border-t border-border bg-card z-10 sticky bottom-0">
+        <CommentInput
+          onAddComment={(text) => {
+            if (editingComment) {
+              onEditComment?.(editingComment.id, text);
+            } else {
+              onAddComment(text, replyingTo?.id);
+            }
+            handleCancelAll();
+          }}
+          replyingTo={replyingTo}
+          onCancelReply={handleCancelAll}
+          editingComment={editingComment}
+          onCancelEdit={handleCancelAll}
+          currentUserAvatar={activeProfile?.avatar_url || "/assets/pngegg.png"}
+        />
       </div>
 
       {reportTargetId && (

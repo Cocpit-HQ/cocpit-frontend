@@ -237,7 +237,7 @@ export default function PeopleTab({ data }: PeopleTabProps) {
         >
           <input
             type="text"
-            placeholder="Search keyword"
+            placeholder="Search by name or role"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{

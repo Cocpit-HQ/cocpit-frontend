@@ -109,7 +109,7 @@ export const companyProfileService = {
     return res.data;
   },
 
-  async getOrganizationPosts(orgId: string, params: { limit?: number; cursorCreatedAt?: string; cursorPostId?: string }): Promise<any> {
+  async getOrganizationPosts(orgId: string, params: { limit?: number; cursorCreatedAt?: string; cursorPostId?: string; filter?: string }): Promise<any> {
     const res = await api.get(`/organizations/${orgId}/posts`, { params });
     return res.data;
   },

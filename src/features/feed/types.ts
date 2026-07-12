@@ -23,6 +23,7 @@ export interface FeedPostProps extends Omit<Post, 'commentData'> {
   sessionId?: string | null;
   imageFit?: 'cover' | 'contain';
   forceSquareMedia?: boolean;
+  onCommentClickOverride?: () => void;
 }
 
 export type FeedInteraction = {

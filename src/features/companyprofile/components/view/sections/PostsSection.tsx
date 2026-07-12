@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { CompanyProfileData, CompanyPost } from "../../../types/company-profile.types";
 import { FeedPost } from "../../../../feed/components/FeedPost";
 import { FeedPostProps } from "../../../../feed/types";
@@ -24,6 +25,7 @@ export default function PostsSection({ data, showAll = false, isOwnProfile = fal
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { setActiveModal } = useUIStore();
+  const router = useRouter();
 
   const { data: postsData, isLoading } = useQuery({
     queryKey: ["orgPostsPreview", data.id],
@@ -66,6 +68,8 @@ export default function PostsSection({ data, showAll = false, isOwnProfile = fal
 
   // Filter out empty posts (e.g. shared posts missing data) before slicing
   const validPosts = rawPosts.filter((post: any) => {
+    if (post.visibility === 'private') return false;
+
     const content = post.content || "";
     const imageSrc = post.imageUrl || post.image_url || (post.media && post.media.length > 0 ? post.media[0].url : undefined);
     const hasContent = !!(content && content.trim() !== '');
@@ -229,6 +233,9 @@ export default function PostsSection({ data, showAll = false, isOwnProfile = fal
             imageFit: 'cover',
             forceSquareMedia: true,
             onDelete: handleDeletePost,
+            onCommentClickOverride: () => {
+              router.push(`?tab=posts&commentPostId=${post.post_id || post.id || post._id}`);
+            }
           };
 
           return (
