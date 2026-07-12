@@ -37,6 +37,7 @@ interface ArticleFlowProps {
   isCompanyPost: boolean;
   onPreviewStepChange?: (isPreview: boolean) => void;
   onArticleComplete?: (data: { coverImage: MediaItem | null; title: string; subtitle: string; content: string }) => void;
+  skipNextStep?: boolean;
 }
 
 const ArticleFlow = ({
@@ -58,7 +59,8 @@ const ArticleFlow = ({
   currentPoster,
   isCompanyPost,
   onPreviewStepChange,
-  onArticleComplete
+  onArticleComplete,
+  skipNextStep
 }: ArticleFlowProps) => {
   const [step, setStep] = useState(1);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
@@ -498,7 +500,7 @@ const ArticleFlow = ({
             <button
               disabled={!isNextActive || isSubmitting}
               onClick={() => {
-                if (isEdit) {
+                if (isEdit || skipNextStep) {
                   onPost();
                 } else {
                   console.log("NEXT CLICKED");
@@ -514,7 +516,7 @@ const ArticleFlow = ({
               }}
               className="flex flex-row justify-center items-center border border-[#FFFFFF] rounded-[24px] transition-all"
               style={{
-                width: isEdit ? '100px' : '90px',
+                width: (isEdit || skipNextStep) ? '100px' : '90px',
                 height: '40px',
                 padding: '8px 16px',
                 gap: '10px',
@@ -522,9 +524,9 @@ const ArticleFlow = ({
                 cursor: isNextActive ? 'pointer' : 'not-allowed'
               }}
             >
-              {isSubmitting && isEdit && <Loader2 className="w-4 h-4 animate-spin text-white" />}
+              {isSubmitting && (isEdit || skipNextStep) && <Loader2 className="w-4 h-4 animate-spin text-white" />}
               <span className="text-center text-[#FFFFFF]" style={{ display: 'inline-block', fontFamily: 'Poppins', fontWeight: 400, fontSize: '14px', lineHeight: '20px' }}>
-                {isEdit ? (isSubmitting ? 'Saving' : 'Save') : 'Next'}
+                {isEdit ? (isSubmitting ? 'Saving' : 'Save') : (skipNextStep ? (isSubmitting ? 'Posting' : 'Post') : 'Next')}
               </span>
             </button>
           </div>

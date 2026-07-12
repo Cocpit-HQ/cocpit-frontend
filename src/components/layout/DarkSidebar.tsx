@@ -49,7 +49,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
           title: 'Core',
           items: [
             { icon: IconoirHome, label: 'Feed', href: '/feed', show: true },
-            { icon: Users, label: 'Community', href: '/community', show: true },
+            { icon: (props: any) => <Icon icon="quill:inbox-newsletter" {...props} />, label: 'Channel', href: '/channel', show: true },
             { icon: Compass, label: 'Explore', href: '/explore', show: false },
             { icon: Sparkles, label: 'AI', href: '/ai-assistant', show: false },
           ]
@@ -64,7 +64,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
         {
           title: 'Insights',
           items: [
-            { icon: Users, label: 'Team', href: '/team', show: true },
+            { icon: (props: any) => <Icon icon="streamline-ultimate:team-meeting" {...props} />, label: 'Team', href: '/team', show: true },
             { icon: (props: any) => <Icon icon="hugeicons:analytics-up" {...props} />, label: 'Analytics', href: analyticsHref, show: checkPermission('VIEW_ANALYTICS') },
           ]
         },

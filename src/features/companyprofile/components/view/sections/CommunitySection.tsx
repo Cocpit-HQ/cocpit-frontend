@@ -101,7 +101,7 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
           }}
           className="text-black dark:text-white"
         >
-          Community
+          Channel
         </h2>
       </div>
 

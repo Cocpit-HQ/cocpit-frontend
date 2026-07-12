@@ -1084,7 +1084,208 @@ Search Name: edit
 Icon Name: tdesign:edit # edit action
 
 Search Name: calender
+Icon Name: mynaui:plus # plus action
+
+Search Name: search
+Icon Name: mynaui:search # search action
+
+Search Name: trash
+Icon Name: mynaui:trash # trash action
+
+Search Name: upload
+Icon Name: mynaui:upload # upload action
+
+Search Name: article
+Icon Name: ph:article # article action
+
+Search Name: check-bold
+Icon Name: ph:check-bold # check bold action
+
+Search Name: dots-three-outline-vertical-light
+Icon Name: ph:dots-three-outline-vertical-light # dots three outline vertical light action
+
+Search Name: graduation-cap-light
+Icon Name: ph:graduation-cap-light # graduation cap light action
+
+Search Name: magnifying-glass-light
+Icon Name: ph:magnifying-glass-light # magnifying glass light action
+
+Search Name: map-pin
+Icon Name: ph:map-pin # map pin action
+
+Search Name: push-pin-slash-light
+Icon Name: ph:push-pin-slash-light # push pin slash light action
+
+Search Name: smiley
+Icon Name: ph:smiley # smiley action
+
+Search Name: users-three
+Icon Name: ph:users-three # users three action
+
+Search Name: expand
+Icon Name: prime:expand # expand action
+
+Search Name: chat
+Icon Name: proicons:chat # chat action
+
+Search Name: info
+Icon Name: proicons:info # info action
+
+Search Name: pencil
+Icon Name: proicons:pencil # pencil action
+
+Search Name: volume
+Icon Name: proicons:volume # volume action
+
+Search Name: education-24
+Icon Name: qlementine-icons:education-24 # education 24 action
+
+Search Name: close-line
+Icon Name: ri:close-line # close line action
+
+Search Name: compass-discover-line
+Icon Name: ri:compass-discover-line # compass discover line action
+
+Search Name: error-warning-line
+Icon Name: ri:error-warning-line # error warning line action
+
+Search Name: fullscreen-line
+Icon Name: ri:fullscreen-line # fullscreen line action
+
+Search Name: history-line
+Icon Name: ri:history-line # history line action
+
+Search Name: instagram-line
+Icon Name: ri:instagram-line # instagram line action
+
+Search Name: layout-grid-line
+Icon Name: ri:layout-grid-line # layout grid line action
+
+Search Name: link
+Icon Name: ri:link # link action
+
+Search Name: refresh-line
+Icon Name: ri:refresh-line # refresh line action
+
+Search Name: share-box-line
+Icon Name: ri:share-box-line # share box line action
+
+Search Name: add-circle-linear
+Icon Name: solar:add-circle-linear # add circle linear action
+
+Search Name: atom-linear
+Icon Name: solar:atom-linear # atom linear action
+
+Search Name: bell-linear
+Icon Name: solar:bell-linear # bell linear action
+
+Search Name: buildings-linear
+Icon Name: solar:buildings-linear # buildings linear action
+
+Search Name: calendar-linear
+Icon Name: solar:calendar-linear # calendar linear action
+
+Search Name: case-linear
+Icon Name: solar:case-linear # case linear action
+
+Search Name: chat-line-linear
+Icon Name: solar:chat-line-linear # chat line linear action
+
+Search Name: close-circle-bold
+Icon Name: solar:close-circle-bold # close circle bold action
+
+Search Name: cloud-upload-linear
+Icon Name: solar:cloud-upload-linear # cloud upload linear action
+
+Search Name: copy-linear
+Icon Name: solar:copy-linear # copy linear action
+
+Search Name: copy-outline
+Icon Name: solar:copy-outline # copy outline action
+
+Search Name: document-text-linear
+Icon Name: solar:document-text-linear # document text linear action
+
+Search Name: eye-linear
+Icon Name: solar:eye-linear # eye linear action
+
+Search Name: feed-linear
+Icon Name: solar:feed-linear # feed linear action
+
+Search Name: fire-linear
+Icon Name: solar:fire-linear # fire linear action
+
+Search Name: folder-linear
+Icon Name: solar:folder-linear # folder linear action
+
+Search Name: globus-linear
+Icon Name: solar:globus-linear # globus linear action
+
+Search Name: image-linear
+Icon Name: solar:image-linear # image linear action
+
+Search Name: info-circle-linear
+Icon Name: solar:info-circle-linear # info circle linear action
+
+Search Name: letter-linear
+Icon Name: solar:letter-linear # letter linear action
+
+Search Name: magic-stick-bold
+Icon Name: solar:magic-stick-bold # magic stick bold action
+
+Search Name: map-point-linear
+Icon Name: solar:map-point-linear # map point linear action
+
+Search Name: phone-calling-linear
+Icon Name: solar:phone-calling-linear # phone calling linear action
+
+Search Name: share-linear
+Icon Name: solar:share-linear # share linear action
+
+Search Name: shield-keyhole-linear
+Icon Name: solar:shield-keyhole-linear # shield keyhole linear action
+
+Search Name: shield-minus-linear
+Icon Name: solar:shield-minus-linear # shield minus linear action
+
+Search Name: upload-linear
+Icon Name: solar:upload-linear # upload linear action
+
+Search Name: user-bold
+Icon Name: solar:user-bold # user bold action
+
+Search Name: user-linear
+Icon Name: solar:user-linear # user linear action
+
+Search Name: users-group-two-rounded-linear
+Icon Name: solar:users-group-two-rounded-linear # users group two rounded linear action
+
+Search Name: image
+Icon Name: stash:image # image action
+
+Search Name: security-computer-shield
+Icon Name: streamline-freehand-color:security-computer-shield # security computer shield action
+
+Search Name: graphic-template-website-ui-flat
+Icon Name: streamline-plump-color:graphic-template-website-ui-flat # graphic template website ui flat action
+
+Search Name: money-graph-arrow-increase-ascend-growth-up-arrow-stats-graph-right-grow
+Icon Name: streamline:money-graph-arrow-increase-ascend-growth-up-arrow-stats-graph-right-grow # money graph arrow increase ascend growth up arrow stats graph right grow action
+
+Search Name: 180-ring
+Icon Name: svg-spinners:180-ring # 180 ring action
+
+Search Name: edit
+Icon Name: tdesign:edit # edit action
+
+Search Name: calender
 Icon Name: uit:calender # calender action
 
 Search Name: rotate-left
 Icon Name: wordpress:rotate-left # rotate left action
+
+Search Name: arrow-undo-outline
+Icon Name: ion:arrow-undo-outline # hollow curving left reply arrow
+
+Search Name: ai-star-custom
+Icon Name: /assets/AI 2.svg # Custom 4-pointed blue star icon used for AI insights in jobs and channels
