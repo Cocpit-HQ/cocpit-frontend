@@ -23,9 +23,10 @@ interface MessageListProps {
   onReply?: (message: Message) => void
   onReaction?: (message: Message, emoji: string) => void
   currentUserId?: string
+  conversationId?: string
 }
 
-const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, onMessageClick, onMediaClick, unreadCount = 0, isOpponentOnline, isGroup, onReply, onReaction, currentUserId }, ref) => {
+const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, onLoadMore, hasMore, isLoadingMore, onAction, editingMessageId, onSaveEdit, onCancelEdit, selectedMessageId, onMessageClick, onMediaClick, unreadCount = 0, isOpponentOnline, isGroup, onReply, onReaction, currentUserId, conversationId }, ref) => {
   const localRef = useRef<HTMLDivElement>(null)
   const scrollRef = (ref as React.RefObject<HTMLDivElement>) || localRef
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true)
@@ -353,6 +354,7 @@ const MessageList = forwardRef<HTMLDivElement, MessageListProps>(({ messages, on
                 isHighlighted={highlightedMessageId === msg.id}
                 onReaction={onReaction}
                 currentUserId={currentUserId}
+                conversationId={conversationId}
                 onMediaLoad={() => {
                   if (shouldScrollToBottomRef.current && scrollRef.current) {
                     scrollRef.current.scrollTop = scrollRef.current.scrollHeight

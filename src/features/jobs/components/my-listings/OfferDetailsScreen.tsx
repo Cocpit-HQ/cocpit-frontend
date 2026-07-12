@@ -268,7 +268,20 @@ export const OfferDetailsScreen: React.FC<OfferDetailsScreenProps> = ({
                   {/* Button Frame 2608617 */}
                   {cand.status === 'chat' && (
                     <button
-                      onClick={() => router.push('/messaging')}
+                      onClick={() => {
+                        // Same pattern as the candidate-side "Chat" button (OfferCard.tsx):
+                        // navigate with the target + offer context via URL params. ChatWindow
+                        // stages it as a pinned card and attaches it to the recruiter's next
+                        // sent message — it is not sent as its own message here.
+                        const params = new URLSearchParams();
+                        params.set('userId', cand.userId);
+                        const companyId = getCompanyId();
+                        if (companyId) {
+                          params.set('companyId', companyId);
+                        }
+                        params.set('offerContext', cand.id);
+                        router.push(`/messaging?${params.toString()}`);
+                      }}
                       type="button"
                       className="box-sizing: border-box w-[120px] h-[40px] bg-[#6366F1] border border-white rounded-[24px] flex flex-row justify-center items-center p-[8px_16px] gap-[10px] hover:opacity-90 transition-all active:scale-95 cursor-pointer"
                     >

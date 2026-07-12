@@ -43,10 +43,12 @@ export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) 
     status,
   } = useInfiniteQuery({
     queryKey: ["orgPosts", data.id, activeTab],
-    queryFn: async ({ pageParam = "" }) => {
+    queryFn: async ({ pageParam }) => {
+      const cursor = pageParam as { cursorCreatedAt?: string; cursorPostId?: string } | undefined;
       const res = await companyProfileService.getOrganizationPosts(data.id, {
         limit: 10,
-        cursorPostId: pageParam as string,
+        cursorCreatedAt: cursor?.cursorCreatedAt,
+        cursorPostId: cursor?.cursorPostId,
         filter: getBackendFilter(activeTab),
       });
       return res;
@@ -54,7 +56,7 @@ export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) 
     getNextPageParam: (lastPage) => {
       return lastPage.nextCursor || lastPage.next_cursor || null;
     },
-    initialPageParam: "",
+    initialPageParam: undefined as { cursorCreatedAt?: string; cursorPostId?: string } | undefined,
   });
 
   const { ref: sentinelRef, inView } = useInView({ threshold: 0, rootMargin: '200px' });

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useJobDetail } from '../hooks/useJobDetail';
 import { Icon } from '@iconify/react';
 import { useSmartBack } from '@/hooks/use-smart-back';
@@ -55,6 +55,17 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
   } = useJobDetail(jobId);
   const { goBack } = useSmartBack();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // If we arrived here from a chat's job context card, "back" should return
+  // to that specific conversation instead of the generic jobs section.
+  const returnTo = searchParams.get('returnTo');
+  const handleBack = () => {
+    if (returnTo) {
+      router.push(returnTo);
+      return;
+    }
+    goBack('/jobs');
+  };
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
@@ -82,7 +93,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
           The job listing you are looking for does not exist or may have been filled or expired.
         </p>
         <button
-          onClick={() => goBack('/jobs')}
+          onClick={handleBack}
           className="mt-2 px-6 py-2.5 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white rounded-3xl text-sm font-semibold font-['Poppins'] transition-all flex items-center gap-2"
         >
           <Icon icon="lucide:arrow-left" className="w-4 h-4" />
@@ -120,7 +131,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
         {/* Header chevron and Title block */}
         <div className="w-full min-h-[48px] self-stretch flex flex-row items-start p-0 gap-[16px]">
           <button
-            onClick={() => goBack('/jobs')}
+            onClick={handleBack}
             className="w-12 h-12 box-border p-2 rounded-[100px] border border-[#DADADA] backdrop-blur-[12px] flex flex-row justify-center items-center gap-2.5 hover:bg-slate-50 transition-colors active:scale-95 flex-shrink-0"
           >
             <Icon icon="lucide:chevron-left" className="w-6 h-6 text-gray-500" />

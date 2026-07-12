@@ -92,6 +92,8 @@ export interface JobListing {
   location?: string;
   description?: string;
   experience?: string;
+  experience_min?: number;
+  experience_max?: number;
   work_type?: string;
   work_mode?: string;
   salary_min?: number;

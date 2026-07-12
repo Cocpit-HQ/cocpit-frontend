@@ -81,6 +81,8 @@ export function useCreateJobHydration({ initialListing }: UseCreateJobHydrationO
             location: jobData.location || '',
             description: jobData.description || '',
             experience: jobData.experience_level || '',
+            experience_min: jobData.experience_min,
+            experience_max: jobData.experience_max,
             work_type: jobData.job_type || 'Full time',
             work_mode: jobData.work_mode || 'Hybrid',
             salary_min: jobData.salary_min,

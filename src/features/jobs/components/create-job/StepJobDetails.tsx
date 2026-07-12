@@ -3,7 +3,7 @@ import { Icon } from '@iconify/react';
 import { JobListing } from '../../types/jobs.types';
 import { useMyProfile } from '@/hooks/use-my-profile';
 import api from '@/lib/axios';
-import { generateJobDescription, getIndustries } from '../../services/jobs.service';
+import { generateJobDescription, getIndustries, parseExperienceRange, resolveExperienceSelection } from '../../services/jobs.service';
 import { useJobStore } from '@/store/job.store';
 import { CURRENCIES } from '../../utils/currency.utils';
 import { toast } from 'sonner';
@@ -96,7 +96,17 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
     if (initialDetails.company && !company) setCompany(initialDetails.company);
     if (initialDetails.location && !location) setLocation(initialDetails.location);
     if (initialDetails.description && !description) setDescription(initialDetails.description);
-    if (initialDetails.experience) setExperience(normalizeExperience(initialDetails.experience));
+    // Prefer resolving from the raw persisted range so a custom "Other" entry
+    // (e.g. 12-14 yrs) reopens as Other with the exact values, instead of
+    // trusting a display string that may have lossily bucketed it (e.g. "5+ Yrs").
+    const resolvedExperience = resolveExperienceSelection(initialDetails.experience_min, initialDetails.experience_max);
+    if (resolvedExperience) {
+      setExperience(resolvedExperience.experience);
+      if (resolvedExperience.minExperience != null) setMinExperience(String(resolvedExperience.minExperience));
+      if (resolvedExperience.maxExperience != null) setMaxExperience(String(resolvedExperience.maxExperience));
+    } else if (initialDetails.experience) {
+      setExperience(normalizeExperience(initialDetails.experience));
+    }
     if (initialDetails.work_type) setWorkType(normalizeWorkType(initialDetails.work_type));
     if (initialDetails.work_mode) setWorkMode(initialDetails.work_mode);
     if (initialDetails.salary_min) setMinSalary(String(initialDetails.salary_min));
@@ -120,7 +130,7 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
       salary_currency: currency,
       industry: industry,
     });
-  }, [role, company, location, description, experience, workType, workMode, minSalary, maxSalary, currency, industry, setCreateJobDetails]);
+  }, [role, company, location, description, experience, minExperience, maxExperience, workType, workMode, minSalary, maxSalary, currency, industry, setCreateJobDetails]);
 
   // Fetch background AI generation if description is empty, and get ai_generation_count
   useEffect(() => {
@@ -269,13 +279,17 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
     setIsAiGenerating(true);
     try {
       // Pass the full form context for a richer AI generation
+      const experienceLabel = experience === 'Other' ? `${minExperience}-${maxExperience} yrs` : experience;
+      const { min: experienceMin, max: experienceMax } = parseExperienceRange(experienceLabel);
       const context = {
         role,
         company,
         location,
-        experience: experience === 'Other' ? `${minExperience}-${maxExperience} yrs` : experience,
+        experience: experienceLabel,
         work_type: workType,
         work_mode: workMode,
+        experience_min: experienceMin,
+        experience_max: experienceMax,
       };
       console.log('[Regenerate] Sending context to API:', context);
       const response = await generateJobDescription(jobId, context);
@@ -330,10 +344,19 @@ export const StepJobDetails: React.FC<StepJobDetailsProps> = ({
         }
       }
       
-      // Update experience dropdown if AI provides a new range based on the new role
+      // Sync the experience range from the persisted job — this is always an
+      // echo of what we just sent (experience_min/experience_max come from the
+      // form, never the AI), so this only matters when it differs from local
+      // state (e.g. a value persisted in an earlier session).
       if (jobData.experience_min != null && jobData.experience_max != null) {
         const min = parseInt(jobData.experience_min, 10);
-        if (isNaN(min)) {
+        const max = parseInt(jobData.experience_max, 10);
+        if (experience === 'Other') {
+          // Preserve the exact custom range instead of bucketing it into a
+          // lossy preset (e.g. 6-12 must stay 6-12, not become "Senior (5+ yrs)" = 5-10).
+          if (!isNaN(min)) setMinExperience(String(min));
+          if (!isNaN(max)) setMaxExperience(String(max));
+        } else if (isNaN(min)) {
           setExperience('Junior (1-3 yrs)');
         } else if (min === 0) {
           setExperience('Fresher');

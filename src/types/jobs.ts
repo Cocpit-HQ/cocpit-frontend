@@ -28,6 +28,7 @@ export interface Job {
   salary: string;
   logo: string;
   companyLogo?: string;
+  recruiterAvatar?: string; // Job poster's own avatar — fallback when the job has no org (personal posting, no company logo)
   companySlug?: string;
   companyId?: string;
   isOffer?: boolean;

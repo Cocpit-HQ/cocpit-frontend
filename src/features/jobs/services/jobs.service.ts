@@ -17,6 +17,43 @@ export const formatExperience = (min?: number, max?: number, level?: string, lab
   return level || '0-2 Yrs';
 };
 
+// Inverse of formatExperience: parses an experience label (e.g. "0 - 2 years",
+// "Mid-level (3-5 yrs)", "6-9 yrs" for a custom range) into numeric bounds.
+// Used for both Publish and Regenerate JD so the two never disagree.
+export const parseExperienceRange = (experience?: string): { min?: number; max?: number } => {
+  if (!experience) return {};
+  const match = experience.match(/(\d+)\s*-\s*(\d+)/);
+  if (match) {
+    return { min: parseInt(match[1]), max: parseInt(match[2]) };
+  }
+  if (experience.includes('5+')) {
+    return { min: 5, max: 10 };
+  }
+  return {};
+};
+
+// Canonical dropdown presets the Create Job form offers (excluding 'Other').
+const EXPERIENCE_PRESETS = ['Junior (1-3 yrs)', 'Mid-level (3-5 yrs)', 'Senior (5+ yrs)'];
+
+// Resolves a persisted experience_min/experience_max back into what the
+// Create Job form should show when reopening a draft: a matching preset
+// label, or 'Other' with the exact values preserved — never lossily
+// bucketed (e.g. 12-14 must stay 12-14, not collapse into "Senior (5+ yrs)" = 5-10).
+// Returns null when there's nothing precise to resolve (caller should fall
+// back to the stored experience_level/experience_label string).
+export const resolveExperienceSelection = (
+  min?: number | null,
+  max?: number | null
+): { experience: string; minExperience?: number; maxExperience?: number } | null => {
+  if (min == null || max == null) return null;
+  const matchedPreset = EXPERIENCE_PRESETS.find((label) => {
+    const range = parseExperienceRange(label);
+    return range.min === min && range.max === max;
+  });
+  if (matchedPreset) return { experience: matchedPreset };
+  return { experience: 'Other', minExperience: min, maxExperience: max };
+};
+
 
 export const getJobs = async (filters?: JobsFilter, cursor?: string, excludeAppliedAndOffers?: boolean) => {
   try {
@@ -676,6 +713,8 @@ export const getMyListings = async (
       location: job.location,
       description: job.description,
       experience: formatExperience(job.experience_min, job.experience_max, job.experience_level, job.experience_label),
+      experience_min: job.experience_min,
+      experience_max: job.experience_max,
       work_type: job.job_type,
       work_mode: job.work_mode,
       salary_min: job.salary_min,
@@ -723,7 +762,7 @@ export const initializeJobDraft = async (
 
 export const generateJobDescription = async (
   jobId: string,
-  context: { role: string; company?: string; location?: string; experience?: string; work_type?: string; work_mode?: string }
+  context: { role: string; company?: string; location?: string; experience?: string; work_type?: string; work_mode?: string; experience_min?: number; experience_max?: number }
 ): Promise<any> => {
   try {
     const response = await api.post(`/jobs/${jobId}/generate`, context);
@@ -763,19 +802,7 @@ export const createJobListing = async (
     // 2. Now we have a jobId (either newly created or passed in). 
     //    We need to update it with the rest of the details.
     if (jobId) {
-      // Parse experience string like "0 - 2 years" into min/max numbers
-      let expMin = undefined;
-      let expMax = undefined;
-      if (details?.experience) {
-        const match = details.experience.match(/(\d+)\s*-\s*(\d+)/);
-        if (match) {
-           expMin = parseInt(match[1]);
-           expMax = parseInt(match[2]);
-        } else if (details.experience.includes('5+')) {
-           expMin = 5;
-           expMax = 10;
-        }
-      }
+      const { min: expMin, max: expMax } = parseExperienceRange(details?.experience);
 
       let sMin = details?.salary_min;
       let sMax = details?.salary_max;

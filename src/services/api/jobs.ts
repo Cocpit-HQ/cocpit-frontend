@@ -36,6 +36,7 @@ function transformJob(backendJob: any): Job {
         salary: formatSalaryRange(backendJob.salary_min, backendJob.salary_max, backendJob.salary_currency) || "Competitive",
         logo: `gradient-${(parseInt(backendJob.job_id.slice(0, 8), 16) % 6) + 1}`,
         companyLogo: backendJob.company_logo,
+        recruiterAvatar: backendJob.recruiter_avatar,
         companySlug: backendJob.company_slug,
         companyId: backendJob.org_id || backendJob.company_id,
         isOffer: backendJob.is_offer,

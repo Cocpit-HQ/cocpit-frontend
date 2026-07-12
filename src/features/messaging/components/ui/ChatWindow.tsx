@@ -804,7 +804,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   }, [chat.otherUserId, chat.isGroup, chat.id, isBlockedByMe, isBlockedByOther, socket, sendMessageMutation, replyingTo, pendingSharedPostId, pendingSharedProfileId, pendingEntityContext, searchParams, router]);
 
   const handleTypingInput = React.useCallback(() => {
-    if (!socket || !chat) return;
+    if (!socket || !chat || chat.id === "new") return;
 
     const now = Date.now();
     if (now - lastTypingRef.current > 2000) {
@@ -1314,6 +1314,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
             })}
             onReaction={handleReactionSelect}
             currentUserId={currentUserId}
+            conversationId={chat.id}
           />
         )
       )}

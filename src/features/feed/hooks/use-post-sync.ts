@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSocket } from '@/context/SocketContext';
 
 export function usePostSync(
@@ -12,6 +12,16 @@ export function usePostSync(
 ) {
     const { socket } = useSocket();
 
+    // Callers commonly pass an inline callbacks object, which is a new
+    // reference every render. Route through a ref instead of putting
+    // `callbacks` in the effect's dependency array, so room join/leave and
+    // listener (de)registration only happen when the room itself actually
+    // needs to change, not on every parent re-render.
+    const callbacksRef = useRef(callbacks);
+    useEffect(() => {
+        callbacksRef.current = callbacks;
+    });
+
     useEffect(() => {
         if (!socket || !postId) return;
 
@@ -22,20 +32,20 @@ export function usePostSync(
         }
 
         const handleLikeUpdated = (data: { postId: string; liked: boolean; likeCount: number; liker: any }) => {
-            if (data.postId === roomId && callbacks.onLikeUpdated) {
-                callbacks.onLikeUpdated(data);
+            if (data.postId === roomId) {
+                callbacksRef.current.onLikeUpdated?.(data);
             }
         };
 
         const handleCommentAdded = (data: { postId: string; comment: any }) => {
-            if (data.postId === roomId && callbacks.onCommentAdded) {
-                callbacks.onCommentAdded(data);
+            if (data.postId === roomId) {
+                callbacksRef.current.onCommentAdded?.(data);
             }
         };
 
         const handleCommentLikeUpdated = (data: { postId: string; commentId: string; liked: boolean; likeCount: number }) => {
-            if (data.postId === roomId && callbacks.onCommentLikeUpdated) {
-                callbacks.onCommentLikeUpdated(data);
+            if (data.postId === roomId) {
+                callbacksRef.current.onCommentLikeUpdated?.(data);
             }
         };
 
@@ -52,5 +62,5 @@ export function usePostSync(
                 socket.emit('leavePost', { postId: roomId });
             }
         };
-    }, [socket, postId, callbacks, manageRoom]);
+    }, [socket, postId, manageRoom]);
 }

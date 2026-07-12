@@ -52,6 +52,7 @@ interface MessageBubbleProps {
   isHighlighted?: boolean
   onReaction?: (message: Message, emoji: string) => void
   currentUserId?: string
+  conversationId?: string
 }
 
 // --- Hooks ---
@@ -140,7 +141,8 @@ const MessageMenu = ({ message, onAction, currentUserId }: { message: Message, o
   )
 }
 
-function JobApplicationContextCard({ entityType, entityId, onClick }: { entityType: 'job' | 'offer', entityId: string, onClick?: () => void }) {
+function JobApplicationContextCard({ entityType, entityId, conversationId }: { entityType: 'job' | 'offer', entityId: string, conversationId?: string }) {
+  const router = useRouter()
   const { data: job, isLoading: loading } = useQuery({
     queryKey: ['jobContext', entityType, entityId],
     queryFn: async () => {
@@ -175,21 +177,35 @@ function JobApplicationContextCard({ entityType, entityId, onClick }: { entityTy
 
   if (!job) return null;
 
+  const jobId = (job as any).jobId || job.id;
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Prevent the click from bubbling to the message row, which would
+    // otherwise toggle message selection instead of navigating.
+    e.stopPropagation();
+    const returnTo = conversationId ? `/messaging?conversationId=${conversationId}` : '/messaging';
+    router.push(`/jobs/${jobId}?returnTo=${encodeURIComponent(returnTo)}`);
+  };
+
   return (
-    <div 
+    <div
       className="mb-[8px] bg-white dark:bg-gray-800 rounded-[32px] p-[8px] pr-[16px] w-[260px] cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
-      onClick={onClick}
+      onClick={handleClick}
     >
       <div className="flex flex-row items-center gap-[12px]">
-        {/* Company Logo */}
+        {/* Job poster's avatar: the org's logo if this job was posted by a
+            company, or the individual recruiter's own picture if it's a
+            personal posting — always the job's poster, regardless of which
+            side of the conversation shared this card. job.logo is a gradient
+            placeholder key (e.g. "gradient-3"), not a URL — never used as an img src. */}
         <div className="w-[48px] h-[48px] rounded-full bg-black dark:bg-gray-900 border border-gray-100 dark:border-gray-700 flex items-center justify-center overflow-hidden shrink-0">
-          {job.logo || job.companyLogo ? (
-            <img src={job.logo || job.companyLogo} alt={job.company} className="w-full h-full object-cover" />
+          {job.companyLogo || job.recruiterAvatar ? (
+            <img src={job.companyLogo || job.recruiterAvatar} alt={job.company} className="w-full h-full object-cover" />
           ) : (
             <span className="font-semibold text-white">{job.company?.[0]?.toUpperCase() || "C"}</span>
           )}
         </div>
-        
+
         {/* Job Details */}
         <div className="flex flex-col overflow-hidden text-left flex-1 justify-center">
           <span className="font-['Poppins'] font-medium text-[15px] leading-[20px] text-gray-900 dark:text-gray-100 truncate block">
@@ -926,7 +942,6 @@ const JobOfferContextMessage = ({ jobId }: { jobId: string }) => {
 // --- Main Component ---
 
 function MessageBubble(props: MessageBubbleProps) {
-  const router = useRouter()
   const { theme, resolvedTheme } = useTheme()
   const isDarkTheme = resolvedTheme === "dark" || theme === "dark" || theme === "navy"
 
@@ -950,6 +965,7 @@ function MessageBubble(props: MessageBubbleProps) {
     isHighlighted,
     onReaction,
     currentUserId,
+    conversationId,
   } = props
 
   const isMe = message.sender === "me"
@@ -1234,7 +1250,7 @@ function MessageBubble(props: MessageBubbleProps) {
                       <JobApplicationContextCard
                         entityType={message.entityType as 'job' | 'offer'}
                         entityId={message.entityId}
-                        onClick={() => router.push(message.entityType === 'job' ? `/jobs/${message.entityId}` : `/messaging`)}
+                        conversationId={conversationId}
                       />
                     )}
                     <MessageMedia
