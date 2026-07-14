@@ -109,6 +109,16 @@ export const companyProfileService = {
     return res.data;
   },
 
+  async subscribeCommunity(communityId: string): Promise<any> {
+    const res = await api.post(`/communities/${communityId}/subscribe`);
+    return res.data;
+  },
+
+  async unsubscribeCommunity(communityId: string): Promise<any> {
+    const res = await api.delete(`/communities/${communityId}/unsubscribe`);
+    return res.data;
+  },
+
   async getOrganizationPosts(orgId: string, params: { limit?: number; cursorCreatedAt?: string; cursorPostId?: string; filter?: string }): Promise<any> {
     const res = await api.get(`/organizations/${orgId}/posts`, { params });
     return res.data;

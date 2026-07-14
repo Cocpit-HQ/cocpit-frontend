@@ -97,6 +97,14 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
     entityType: isEdu ? "INSTITUTE" : "COMPANY",
     isFollowing: profileResponse.relationship?.is_following || false,
     isSubscribed: profileResponse.relationship?.is_subscribed || false,
+    community: profileResponse.community_details ? {
+      communityId: profileResponse.community_details.community_id,
+      name: profileResponse.community_details.name,
+      bannerUrl: profileResponse.community_details.banner_url,
+      description: profileResponse.community_details.description,
+      isSubscribed: profileResponse.community_details.is_subscribed || false,
+      subscriberCount: profileResponse.community_details.subscriber_count || 0,
+    } : undefined,
   };
 
   const orgId = company.company_id || company.org_id;

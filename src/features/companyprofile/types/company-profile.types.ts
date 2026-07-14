@@ -27,6 +27,15 @@ export interface CompanyPost {
   sampleLikerUsername?: string;
 }
 
+export interface CompanyCommunityData {
+  communityId: string;
+  name: string;
+  bannerUrl?: string;
+  description?: string;
+  isSubscribed: boolean;
+  subscriberCount: number;
+}
+
 export interface CompanyProfileData {
   id: string;
   _id?: string;
@@ -55,4 +64,5 @@ export interface CompanyProfileData {
   entityType?: 'COMPANY' | 'INSTITUTE';
   isFollowing?: boolean;
   isSubscribed?: boolean;
+  community?: CompanyCommunityData;
 }

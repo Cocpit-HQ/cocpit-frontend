@@ -15,19 +15,23 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
   const queryClient = useQueryClient();
   const params = useParams();
   const slug = params.slug as string || "nexsus-global-systems";
-  const orgId = data.orgId || data.id;
+  const community = data.community;
 
   const subscribeMutation = useMutation({
-    mutationFn: () => data.isSubscribed
-      ? companyProfileService.unsubscribeOrganization(orgId!)
-      : companyProfileService.subscribeOrganization(orgId!),
+    mutationFn: () => {
+      if (!community) return Promise.resolve();
+      return community.isSubscribed
+        ? companyProfileService.unsubscribeCommunity(community.communityId)
+        : companyProfileService.subscribeCommunity(community.communityId);
+    },
     onMutate: async () => {
+      if (!community) return;
       await queryClient.cancelQueries({ queryKey: ["companyProfile", slug] });
       const previousProfile = queryClient.getQueryData(["companyProfile", slug]);
       
       queryClient.setQueryData(["companyProfile", slug], (old: any) => {
         if (!old) return old;
-        const newIsSubscribed = !data.isSubscribed;
+        const newIsSubscribed = !community.isSubscribed;
         const countDiff = newIsSubscribed ? 1 : -1;
         return {
           ...old,
@@ -35,9 +39,10 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
             ...old.org,
             subscribers_count: Math.max(0, (old.org?.subscribers_count || 0) + countDiff)
           },
-          relationship: {
-            ...(old.relationship || {}),
-            is_subscribed: newIsSubscribed
+          community_details: {
+            ...old.community_details,
+            is_subscribed: newIsSubscribed,
+            subscriber_count: Math.max(0, (old.community_details?.subscriber_count || 0) + countDiff)
           }
         };
       });
@@ -53,6 +58,8 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
       queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
     }
   });
+
+  if (!community) return null;
 
   return (
     <div
@@ -135,7 +142,7 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
           className="max-md:!w-full max-md:!h-[150px]"
         >
           <Image
-            src="/images/companyonboarding/companycoverphotoDefault.png"
+            src={community.bannerUrl || "/images/companyonboarding/companycoverphotoDefault.png"}
             alt="Newsletter Cover"
             fill
             className="object-cover"
@@ -166,7 +173,7 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
               alignItems: "flex-start",
               padding: "0px",
               gap: "4px",
-              width: "187px",
+              width: "auto",
               height: "52px",
               flex: "none",
               flexGrow: 0,
@@ -174,7 +181,7 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
           >
             <span
               style={{
-                width: "187px",
+                width: "auto",
                 height: "24px",
                 fontFamily: "'Poppins', sans-serif",
                 fontWeight: 500,
@@ -187,11 +194,11 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
               }}
               className="text-black dark:text-white"
             >
-              {data.name}
+              {community.name}
             </span>
             <span
               style={{
-                width: "90px",
+                width: "auto",
                 height: "24px",
                 fontFamily: "'Poppins', sans-serif",
                 fontWeight: 400,
@@ -204,14 +211,14 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
               }}
               className="text-[#6B7280] dark:text-zinc-400"
             >
-              {data.stats?.subscribers || 0} Subscriber
+              {community.subscriberCount || 0} Subscriber
             </span>
           </div>
 
           {/* Frame 2608519: Subscribe Button */}
           <button
             onClick={() => subscribeMutation.mutate()}
-            disabled={subscribeMutation.isPending || !orgId}
+            disabled={subscribeMutation.isPending || !community.communityId}
             style={{
               boxSizing: "border-box",
               display: "flex",
@@ -228,7 +235,7 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
               flexGrow: 0,
               cursor: subscribeMutation.isPending ? "not-allowed" : "pointer",
             }}
-            className={`transition-colors ${data.isSubscribed ? "bg-[#EFF4FF] hover:bg-blue-100 dark:bg-zinc-900 dark:hover:bg-zinc-800" : "bg-white hover:bg-blue-50 dark:bg-transparent dark:hover:bg-zinc-900"}`}
+            className={`transition-colors ${community.isSubscribed ? "bg-[#EFF4FF] hover:bg-blue-100 dark:bg-zinc-900 dark:hover:bg-zinc-800" : "bg-white hover:bg-blue-50 dark:bg-transparent dark:hover:bg-zinc-900"}`}
           >
             <span
               style={{
@@ -244,7 +251,7 @@ export default function CommunitySection({ data }: CommunitySectionProps) {
                 flexGrow: 0,
               }}
             >
-              {subscribeMutation.isPending ? "..." : (data.isSubscribed ? "Unsubscribe" : "Subscribe")}
+              {subscribeMutation.isPending ? "..." : (community.isSubscribed ? "Unsubscribe" : "Subscribe")}
             </span>
           </button>
         </div>
