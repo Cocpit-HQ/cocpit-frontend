@@ -281,9 +281,9 @@ export const HomeHeader = () => {
                     {/* Header Left Section — route-aware search */}
                     {isJobsPage ? (
                         /* === JOB SEARCH UI === */
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                             {/* Job title / keywords pill */}
-                            <div className="w-44 px-4 py-2 rounded-[24px] border border-[#6B7280] flex items-center gap-2 h-10 bg-transparent">
+                            <div className="w-36 md:w-40 lg:w-44 px-4 py-2 rounded-[24px] border border-[#6B7280] flex items-center gap-2 h-10 bg-transparent">
                                 <Search className="w-[18px] h-[18px] text-[#6B7280] flex-shrink-0" />
                                 <input
                                     type="text"
@@ -300,7 +300,7 @@ export const HomeHeader = () => {
                             </div>
 
                             {/* City / remote pill */}
-                            <div className="w-44 px-4 py-2 rounded-[24px] border border-[#6B7280] flex items-center gap-2 h-10 bg-transparent">
+                            <div className="w-36 md:w-40 lg:w-44 px-4 py-2 rounded-[24px] border border-[#6B7280] flex items-center gap-2 h-10 bg-transparent">
                                 {/* Location pin icon — SVG matching Figma design */}
                                 <svg className="w-[18px] h-[18px] flex-shrink-0 text-[#6B7280]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
@@ -715,7 +715,7 @@ export const HomeHeader = () => {
                     )}
 
                     {/* Header Right Section (Action Buttons) */}
-                    <div className="flex items-center gap-4 shrink-0 xl:w-[406px] xl:justify-end">
+                    <div className="flex items-center gap-4 shrink-0 min-w-0 xl:w-[406px] xl:justify-end">
                         {!pathname.startsWith('/channel') && (
                             <button
                                 onClick={() => setActiveModal('create-post')}

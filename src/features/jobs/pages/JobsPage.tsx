@@ -739,7 +739,8 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
                           className="w-full md:w-[120px] flex items-center justify-start md:justify-end"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {job.application_status?.toLowerCase() === "declined" ? (
+                          {job.application_status?.toLowerCase() === "declined" ||
+                           job.application_status?.toLowerCase() === "rejected" ? (
                             <div className="hidden md:block w-[120px]" />
                           ) : job.is_available === false ? (
                             <span className="text-[#EF4444] dark:text-[#F87171] text-[14px] font-normal font-['Poppins'] text-left md:text-center leading-[20px] w-full md:w-[120px]">

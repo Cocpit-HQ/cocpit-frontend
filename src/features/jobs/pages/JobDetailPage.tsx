@@ -572,6 +572,13 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                     </button>
                   </div>
                 )
+              ) : job.application_status === 'Rejected' ? (
+                /* Rejected — no further action available */
+                <div className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[160px] h-10 rounded-[24px]">
+                  <span className="font-['Poppins'] font-normal text-sm leading-[20px] text-center text-[#6B7280]">
+                    Application Rejected
+                  </span>
+                </div>
               ) : job.is_applied ? (
                 /* Applied State -> Withdraw (even if closed) */
                 <button

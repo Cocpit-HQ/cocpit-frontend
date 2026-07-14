@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { useActiveProfile } from '@/context/ActiveProfileContext';
 import { JobListing } from '../../types/jobs.types';
@@ -205,6 +206,7 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
 }) => {
   const { isCompany, activeProfile } = useActiveProfile();
   const isCompanyMode = isCompany && !!activeProfile?.id;
+  const router = useRouter();
 
   const [candidates, setCandidates] = useState<any[]>([]);
   const [selectedCandId, setSelectedCandId] = useState<string | null>(null);
@@ -747,41 +749,86 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
               </span>
             </button>
 
-            {/* Decline / Shortlist Buttons / Frame 2608841 */}
+            {/* Action Buttons — conditional on application status */}
             <div className="flex flex-row items-center p-0 gap-[16px] w-auto h-[40px] flex-none order-1 grow-0">
-              {/* Decline Button / Frame 2608618 */}
-              <button
-                onClick={() => handleDecline(selectedCandidate?.applicationId)}
-                disabled={candidateDetail?.status === 'Rejected'}
-                type="button"
-                className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-0 grow-0 hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                  isCompanyMode ? 'border-[#1A73E8]' : 'border-[#818CF8]'
-                }`}
-              >
-                <span
-                  className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-center flex-none order-0 grow-0 whitespace-nowrap ${
-                    isCompanyMode ? 'text-[#1A73E8]' : 'text-[#818CF8]'
+              {candidateDetail?.status === 'Shortlisted' ? (
+                // Shortlisted: hide Decline, show disabled Shortlisted pill + Chat
+                <>
+                  {/* Disabled Shortlisted pill */}
+                  <button
+                    disabled
+                    type="button"
+                    className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border border-white rounded-[24px] flex-none order-0 grow-0 opacity-75 cursor-not-allowed ${
+                      isCompanyMode ? 'bg-[#1A73E8]' : 'bg-[#6366F1]'
+                    }`}
+                  >
+                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white flex-none order-0 grow-0 whitespace-nowrap">
+                      Shortlisted
+                    </span>
+                  </button>
+
+                  {/* Chat button */}
+                  <button
+                    onClick={() => router.push(`/messaging?userId=${candidateDetail.applicantId}`)}
+                    type="button"
+                    className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-1 grow-0 hover:bg-slate-50 transition-all active:scale-95 ${
+                      isCompanyMode ? 'border-[#1A73E8]' : 'border-[#818CF8]'
+                    }`}
+                  >
+                    <span className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-center flex-none order-0 grow-0 whitespace-nowrap ${
+                      isCompanyMode ? 'text-[#1A73E8]' : 'text-[#818CF8]'
+                    }`}>
+                      Chat
+                    </span>
+                  </button>
+                </>
+              ) : candidateDetail?.status === 'Rejected' ? (
+                // Rejected: show only disabled Declined button; hide Shortlist
+                <button
+                  disabled
+                  type="button"
+                  className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-0 grow-0 opacity-50 cursor-not-allowed ${
+                    isCompanyMode ? 'border-[#1A73E8]' : 'border-[#818CF8]'
                   }`}
                 >
-                  {candidateDetail?.status === 'Rejected' ? 'Declined' : 'Decline'}
-                </span>
-              </button>
+                  <span className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-center flex-none order-0 grow-0 whitespace-nowrap ${
+                    isCompanyMode ? 'text-[#1A73E8]' : 'text-[#818CF8]'
+                  }`}>
+                    Declined
+                  </span>
+                </button>
+              ) : (
+                // Default (Applied / in-review): show Decline + Shortlist
+                <>
+                  {/* Decline Button */}
+                  <button
+                    onClick={() => handleDecline(selectedCandidate?.applicationId)}
+                    type="button"
+                    className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-0 grow-0 hover:bg-slate-50 transition-all active:scale-95 ${
+                      isCompanyMode ? 'border-[#1A73E8]' : 'border-[#818CF8]'
+                    }`}
+                  >
+                    <span className={`font-['Poppins'] font-normal text-[14px] leading-[20px] text-center flex-none order-0 grow-0 whitespace-nowrap ${
+                      isCompanyMode ? 'text-[#1A73E8]' : 'text-[#818CF8]'
+                    }`}>
+                      Decline
+                    </span>
+                  </button>
 
-              {/* Shortlist Button / Frame 2608617 */}
-              <button
-                onClick={() => handleShortlist(selectedCandidate?.applicationId)}
-                disabled={candidateDetail?.status === 'Shortlisted'}
-                type="button"
-                className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border border-white rounded-[24px] flex-none order-1 grow-0 transition-all disabled:opacity-75 disabled:cursor-not-allowed ${
-                  isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#5558e6]'
-                }`}
-              >
-                <span
-                  className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white flex-none order-0 grow-0 whitespace-nowrap"
-                >
-                  {candidateDetail?.status === 'Shortlisted' ? 'Shortlisted' : 'Shortlist'}
-                </span>
-              </button>
+                  {/* Shortlist Button */}
+                  <button
+                    onClick={() => handleShortlist(selectedCandidate?.applicationId)}
+                    type="button"
+                    className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border border-white rounded-[24px] flex-none order-1 grow-0 transition-all active:scale-95 ${
+                      isCompanyMode ? 'bg-[#1A73E8] hover:bg-[#1557B0]' : 'bg-[#6366F1] hover:bg-[#5558e6]'
+                    }`}
+                  >
+                    <span className="font-['Poppins'] font-normal text-[14px] leading-[20px] text-center text-white flex-none order-0 grow-0 whitespace-nowrap">
+                      Shortlist
+                    </span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
 

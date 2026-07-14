@@ -220,22 +220,22 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
 
   // Mutations
   const toggleSaveMutation = useMutation({
-    mutationFn: async (jobId: string) => {
-      const isCurrentlySaved = savedJobIds.has(jobId);
-      await jobsService.saveJob(jobId, !isCurrentlySaved);
-      return { jobId, isSaved: !isCurrentlySaved };
+    mutationFn: async ({ jobId, shouldSave }: { jobId: string; shouldSave: boolean }) => {
+      // shouldSave is captured BEFORE onMutate toggles the store — avoids race condition
+      await jobsService.saveJob(jobId, shouldSave);
+      return { jobId, isSaved: shouldSave };
     },
-    onMutate: async (jobId) => {
-      const isCurrentlySaved = savedJobIds.has(jobId);
-      if (isCurrentlySaved) removeSavedId(jobId);
-      else addSavedId(jobId);
+    onMutate: async ({ jobId, shouldSave }) => {
+      if (shouldSave) addSavedId(jobId);
+      else removeSavedId(jobId);
       
       if (selectedJob?.id === jobId) {
-        setSelectedJob(prev => prev ? { ...prev, is_saved: !isCurrentlySaved } : null);
+        setSelectedJob(prev => prev ? { ...prev, is_saved: shouldSave } : null);
       }
-      return { wasSaved: isCurrentlySaved };
+      return { wasSaved: !shouldSave };
     },
-    onError: (err, jobId, context) => {
+    onError: (err, { jobId }, context) => {
+      // Roll back: restore previous state
       if (context?.wasSaved) addSavedId(jobId);
       else removeSavedId(jobId);
       toast.error('Failed to toggle save status.');
@@ -342,7 +342,11 @@ export const useJobs = (initialTab: string = 'Explore', initialSearch: string = 
     filters,
     setFilterValue: setCandidateFilterValue,
     setMultipleFilters,
-    toggleSave: (jobId: string) => toggleSaveMutation.mutate(jobId),
+    toggleSave: (jobId: string) => {
+      // Capture the current saved state HERE, before onMutate has a chance to flip it
+      const shouldSave = !savedJobIds.has(jobId);
+      toggleSaveMutation.mutate({ jobId, shouldSave });
+    },
     applyToJob,
     withdrawJob: (jobId: string) => withdrawMutation.mutate(jobId),
     respondToOffer: (offerId: string, action: 'accept' | 'decline') => respondOfferMutation.mutate({ offerId, action }),
