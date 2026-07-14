@@ -122,7 +122,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
   }
 
   return (
-    <aside className={`sidebar ${className || ''}`} aria-label="Primary navigation">
+    <aside className={`sidebar ${isCompany ? 'sidebar--company' : ''} ${className || ''}`} aria-label="Primary navigation">
       {/* Logo */}
       <div className="sidebar__logo">
         <Link 

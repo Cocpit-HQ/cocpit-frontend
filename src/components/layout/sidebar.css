@@ -164,6 +164,12 @@
   border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+[data-theme="dark"] .sidebar.sidebar--company,
+[data-theme="navy"] .sidebar.sidebar--company {
+  background-color: #0F1115;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 [data-theme="dark"] .sidebar__section-title,
 [data-theme="navy"] .sidebar__section-title {
   color: #9CA3AF;
@@ -187,9 +193,7 @@
 [data-theme="dark"] .sidebar__item:hover,
 [data-theme="navy"] .sidebar__item:hover,
 [data-theme="dark"] .sidebar__item--active,
-[data-theme="navy"] .sidebar__item--active,
-[data-theme="dark"] .sidebar__item--company-active,
-[data-theme="navy"] .sidebar__item--company-active {
+[data-theme="navy"] .sidebar__item--active {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -204,12 +208,28 @@
   color: #F9FAFB;
 }
 
+[data-theme="dark"] .sidebar__item--company-active,
+[data-theme="navy"] .sidebar__item--company-active,
+[data-theme="dark"] .sidebar__item--company:not(.sidebar__item--company-active):hover,
+[data-theme="navy"] .sidebar__item--company:not(.sidebar__item--company-active):hover {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 8px 16px;
+  gap: 8px;
+  width: 200px;
+  height: 40px;
+  background-color: #16365F;
+  border-right: 3px solid #4D9CFF;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: #4D9CFF;
+}
+
 [data-theme="dark"] .sidebar__item:hover .sidebar__item-label,
 [data-theme="navy"] .sidebar__item:hover .sidebar__item-label,
 [data-theme="dark"] .sidebar__item--active .sidebar__item-label,
-[data-theme="navy"] .sidebar__item--active .sidebar__item-label,
-[data-theme="dark"] .sidebar__item--company-active .sidebar__item-label,
-[data-theme="navy"] .sidebar__item--company-active .sidebar__item-label {
+[data-theme="navy"] .sidebar__item--active .sidebar__item-label {
   font-family: var(--font-poppins), 'Poppins', sans-serif;
   font-weight: 500;
   font-size: 16px;
@@ -217,15 +237,33 @@
   color: #F9FAFB;
 }
 
+[data-theme="dark"] .sidebar__item--company-active .sidebar__item-label,
+[data-theme="navy"] .sidebar__item--company-active .sidebar__item-label,
+[data-theme="dark"] .sidebar__item--company:not(.sidebar__item--company-active):hover .sidebar__item-label,
+[data-theme="navy"] .sidebar__item--company:not(.sidebar__item--company-active):hover .sidebar__item-label {
+  font-family: var(--font-poppins), 'Poppins', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  color: #4D9CFF;
+}
+
 [data-theme="dark"] .sidebar__item:hover .sidebar__item-icon,
 [data-theme="navy"] .sidebar__item:hover .sidebar__item-icon,
 [data-theme="dark"] .sidebar__item--active .sidebar__item-icon,
-[data-theme="navy"] .sidebar__item--active .sidebar__item-icon,
-[data-theme="dark"] .sidebar__item--company-active .sidebar__item-icon,
-[data-theme="navy"] .sidebar__item--company-active .sidebar__item-icon {
+[data-theme="navy"] .sidebar__item--active .sidebar__item-icon {
   width: 24px;
   height: 24px;
   color: #F9FAFB;
+}
+
+[data-theme="dark"] .sidebar__item--company-active .sidebar__item-icon,
+[data-theme="navy"] .sidebar__item--company-active .sidebar__item-icon,
+[data-theme="dark"] .sidebar__item--company:not(.sidebar__item--company-active):hover .sidebar__item-icon,
+[data-theme="navy"] .sidebar__item--company:not(.sidebar__item--company-active):hover .sidebar__item-icon {
+  width: 24px;
+  height: 24px;
+  color: #4D9CFF;
 }
 
 [data-theme="dark"] .sidebar__business-btn,

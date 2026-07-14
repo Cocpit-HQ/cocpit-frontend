@@ -73,9 +73,9 @@ export default function ChannelArticleEditor({ articleId, onClose, onSuccess }: 
   const persist = async (status: 'published' | 'draft') => {
     if (!channel) return;
     if (existingArticle) {
-      await updateArticle.mutateAsync({ id: existingArticle.id, input: buildInput(status) });
+      await updateArticle.mutateAsync({ id: existingArticle.id, channelId: channel.orgId, input: buildInput(status) });
     } else {
-      await createArticle.mutateAsync({ channelId: channel.id, input: buildInput(status) });
+      await createArticle.mutateAsync({ channelId: channel.orgId, input: buildInput(status) });
     }
   };
 
@@ -94,14 +94,14 @@ export default function ChannelArticleEditor({ articleId, onClose, onSuccess }: 
 
   if (isChannelLoading || (articleId && isArticleLoading)) {
     return (
-      <div className="w-full bg-white dark:bg-[#1a1a2e] rounded-2xl min-h-[600px] flex items-center justify-center">
+      <div className="w-full bg-white dark:bg-[#0F1115] rounded-2xl min-h-[600px] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#1A73E8]" />
       </div>
     );
   }
 
   return (
-    <div className="w-full bg-white dark:bg-[#1a1a2e] rounded-2xl min-h-[800px] flex flex-col relative z-10">
+    <div className="w-full bg-white dark:bg-[#0F1115] rounded-2xl min-h-[800px] flex flex-col relative z-10">
       <ArticleFlow
         title={title}
         onTitleChange={setTitle}
@@ -118,7 +118,12 @@ export default function ChannelArticleEditor({ articleId, onClose, onSuccess }: 
         isSubmitting={isSubmitting}
         onClose={handleClose}
         currentUser={{ name: activeProfile?.name, image: activeProfile?.avatar_url }}
-        currentPoster={{ name: activeProfile?.name, org_slug: activeProfile?.slug, logo_url: activeProfile?.avatar_url }}
+        currentPoster={{ 
+          name: channel?.name || activeProfile?.name, 
+          company_name: activeProfile?.name,
+          org_slug: activeProfile?.slug, 
+          logo_url: channel?.bannerUrl || activeProfile?.avatar_url 
+        }}
         isCompanyPost={true}
         skipNextStep={true}
       />

@@ -135,6 +135,8 @@ export default function PostsTab({ data, isOwnProfile = false }: PostsTabProps) 
     if (activeTab === 'Private posts' && vis !== 'private') return false;
     if (activeTab !== 'Private posts' && vis === 'private') return false;
 
+    if (p.post_type === 'article') return false;
+
     return true;
   });
 

@@ -25,14 +25,21 @@ const insertTools = [
   { icon: <Code2 className="w-4 h-4" />, title: 'Code block' },
 ];
 
+import { useActiveProfile } from '@/context/ActiveProfileContext';
+
 export default function ChannelCollaborationBar({ mode, onModeChange }: ChannelCollaborationBarProps) {
+  const { activeProfile } = useActiveProfile();
+
   const requestEdit = useMutation({
-    mutationFn: () => channelService.requestEditAccess(),
+    mutationFn: () => {
+      const orgId = activeProfile?.id || '';
+      return channelService.requestEditAccess(orgId);
+    },
     onSuccess: () => toast.success('Edit access requested from the channel owner.'),
   });
 
   return (
-    <div className="fixed bottom-6 left-1/2 md:left-[calc(50%+116px)] -translate-x-1/2 z-50 flex items-center gap-1 bg-white dark:bg-[#0B0F19] border border-gray-200 dark:border-[#2E3445] rounded-full shadow-lg px-2 py-2">
+    <div className="fixed bottom-6 left-1/2 md:left-[calc(50%+116px)] -translate-x-1/2 z-50 flex items-center gap-1 bg-white dark:bg-[#0F1115] border border-gray-200 dark:border-[#2A2D35] rounded-full shadow-lg px-2 py-2">
       {modeButtons.map((btn) => (
         <button
           key={btn.mode}
@@ -41,7 +48,7 @@ export default function ChannelCollaborationBar({ mode, onModeChange }: ChannelC
           className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${
             mode === btn.mode
               ? 'bg-[#1A73E8] text-white'
-              : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1C2340]'
+              : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-[#121B2B]'
           }`}
         >
           {btn.icon}
@@ -56,14 +63,14 @@ export default function ChannelCollaborationBar({ mode, onModeChange }: ChannelC
         Ask to edit
       </button>
 
-      <div className="w-px h-6 bg-gray-200 dark:bg-[#2E3445] mx-1" />
+      <div className="w-px h-6 bg-gray-200 dark:bg-[#2A2D35] mx-1" />
 
       {insertTools.map((tool) => (
         <button
           key={tool.title}
           title={`${tool.title} (open the editor to use this)`}
           onClick={() => toast.info(`${tool.title} is available while writing an article.`)}
-          className="w-9 h-9 flex items-center justify-center rounded-full text-gray-300 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-[#1C2340] transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-full text-gray-300 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-[#121B2B] transition-colors"
         >
           {tool.icon}
         </button>

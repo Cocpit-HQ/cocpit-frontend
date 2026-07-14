@@ -20,7 +20,9 @@ interface ChannelHomePageProps {
 
 export default function ChannelHomePage({ channel }: ChannelHomePageProps) {
   const router = useRouter();
-  const { articles } = useChannelArticles();
+  const { articles: publishedArticles } = useChannelArticles(channel.id, 'published');
+  const { articles: draftArticles } = useChannelArticles(channel.id, 'draft');
+  const articles = [...publishedArticles, ...draftArticles];
   const { growth } = useSubscriberGrowth();
   const updateChannel = useUpdateChannel();
   const deleteArticle = useDeleteArticle();
@@ -68,7 +70,7 @@ export default function ChannelHomePage({ channel }: ChannelHomePageProps) {
         cancelText="Cancel"
         onConfirm={() => {
           if (deleteTarget) {
-            deleteArticle.mutate(deleteTarget.id);
+            deleteArticle.mutate({ id: deleteTarget.id, orgId: channel.orgId });
             setDeleteTarget(null);
           }
         }}

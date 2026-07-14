@@ -23,8 +23,8 @@ export const useUpdateArticle = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: Partial<ArticleInput> }) =>
-      channelService.updateArticle(id, input),
+    mutationFn: ({ id, channelId, input }: { id: string; channelId: string; input: Partial<ArticleInput> }) =>
+      channelService.updateArticle(id, channelId, input),
     onSuccess: (article) => {
       toast.success(article.status === 'published' ? 'Article published!' : 'Draft saved.');
       queryClient.invalidateQueries({ queryKey: ['channel', 'articles'] });

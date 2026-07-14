@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import * as channelService from '../services/channel.service';
 
-export const useChannelArticles = (status?: 'published' | 'draft') => {
+export const useChannelArticles = (communityId: string | undefined, status?: 'published' | 'draft') => {
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['channel', 'articles', status],
-    queryFn: () => channelService.getArticles(status),
+    queryKey: ['channel', 'articles', communityId, status],
+    queryFn: () => channelService.getArticles(communityId!, status),
     staleTime: 1000 * 60 * 2,
+    enabled: !!communityId,
   });
 
   return {

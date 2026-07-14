@@ -27,15 +27,16 @@ interface PostContentProps {
   articleBody?: string;
   imageSrc?: string;
   authorAvatar?: string;
+  postType?: string;
 }
 
 export const PostContent = ({
   content, author, authorSlug, isExpanded, isFullContent,
   shared_post, sharedPollData, isSharedVoting, handleSharedVote, isProfileView,
   postId, location, timeAgo, onToggleExpand, isCarouselView,
-  category, title, articleBody, imageSrc
+  category, title, articleBody, imageSrc, postType
 }: PostContentProps) => {
-  const isArticle = category === 'Article' || Boolean(articleBody);
+  const isArticle = category === 'Article' || Boolean(articleBody) || postType === 'article';
   const articleHref = postId ? `/post/${postId}` : undefined;
   const normalizedArticleBody = (articleBody || '').trim();
   const articleDescription = (content || '').trim();

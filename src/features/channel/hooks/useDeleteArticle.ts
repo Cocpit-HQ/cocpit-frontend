@@ -6,7 +6,7 @@ export const useDeleteArticle = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => channelService.deleteArticle(id),
+    mutationFn: ({ id, orgId }: { id: string; orgId: string }) => channelService.deleteArticle(id, orgId),
     onSuccess: () => {
       toast.success('Article deleted.');
       queryClient.invalidateQueries({ queryKey: ['channel', 'articles'] });

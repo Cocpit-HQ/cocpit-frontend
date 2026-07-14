@@ -42,9 +42,9 @@ export default function ChannelThoughtsPanel({ articleId }: ChannelThoughtsPanel
   );
 
   return (
-    <div className="w-full h-full flex flex-col bg-white dark:bg-[#0B0F19]">
+    <div className="w-full h-full flex flex-col bg-white dark:bg-[#0F1115]">
       <div className="px-4 pt-6 pb-4">
-        <h3 className="text-black dark:text-[#F9FAFB] text-[16px] font-semibold font-['Poppins'] flex items-center gap-2">
+        <h3 className="text-black dark:text-[#FFFFFF] text-[16px] font-semibold font-['Poppins'] flex items-center gap-2">
           Thoughts <span className="text-[#9CA3AF] text-[14px] font-normal">({thoughts.length})</span>
         </h3>
       </div>
@@ -56,7 +56,7 @@ export default function ChannelThoughtsPanel({ articleId }: ChannelThoughtsPanel
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
             placeholder="Write your thoughts"
-            className="w-full h-[56px] pl-[16px] pr-[64px] rounded-[24px] border border-[#E0E0E7] dark:border-[#2E3445] bg-white dark:bg-[#1C2340] text-[12px] font-['Poppins'] text-black dark:text-[#F9FAFB] outline-none focus:border-[#1A73E8] placeholder:text-[#6B7280]"
+            className="w-full h-[56px] pl-[16px] pr-[64px] rounded-[24px] border border-[#E0E0E7] dark:border-[#2A2D35] bg-white dark:bg-[#121B2B] text-[12px] font-['Poppins'] text-black dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] placeholder:text-[#6B7280]"
           />
           <button
             onClick={handleSubmit}
@@ -72,9 +72,9 @@ export default function ChannelThoughtsPanel({ articleId }: ChannelThoughtsPanel
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search thoughts"
-            className="w-full h-[40px] pl-[16px] pr-[32px] rounded-[24px] border border-[#E0E0E7] dark:border-[#2E3445] bg-white dark:bg-[#1C2340] text-[12px] font-['Poppins'] text-black dark:text-[#F9FAFB] outline-none focus:border-[#1A73E8] placeholder:text-[#6B7280]"
+            className="w-full h-[40px] pl-[16px] pr-[32px] rounded-[24px] border border-[#E0E0E7] dark:border-[#2A2D35] bg-white dark:bg-[#121B2B] text-[12px] font-['Poppins'] text-black dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] placeholder:text-[#6B7280]"
           />
-          <div className="absolute right-[16px] top-1/2 -translate-y-1/2 flex items-center justify-center text-[#000000] dark:text-gray-400 pointer-events-none">
+          <div className="absolute right-[16px] top-1/2 -translate-y-1/2 flex items-center justify-center text-[#000000] dark:text-[#A1A8B3] pointer-events-none">
             <Icon icon="lucide:search" className="w-[24px] h-[24px]" style={{ strokeWidth: '1.5px' }} />
           </div>
         </div>
@@ -95,14 +95,14 @@ export default function ChannelThoughtsPanel({ articleId }: ChannelThoughtsPanel
               />
               <div className="min-w-0 flex-1 flex flex-col">
                 <div className="flex items-center justify-between">
-                  <span className="text-[#000000] dark:text-[#F9FAFB] text-[14px] font-medium leading-[20px] font-['Poppins']">
+                  <span className="text-[#000000] dark:text-[#FFFFFF] text-[14px] font-medium leading-[20px] font-['Poppins']">
                     {thought.authorName}
                   </span>
-                  <span className="text-[#6B7280] dark:text-gray-400 text-[12px] font-normal leading-[18px] font-['Poppins']">
+                  <span className="text-[#6B7280] dark:text-[#A1A8B3] text-[12px] font-normal leading-[18px] font-['Poppins']">
                     {timeAgo(thought.createdAt)}
                   </span>
                 </div>
-                <p className="text-[#6B7280] dark:text-[#D1D5DB] text-[14px] font-normal font-['Poppins'] mt-1 leading-[21px]">
+                <p className="text-[#6B7280] dark:text-[#A1A8B3] text-[14px] font-normal font-['Poppins'] mt-1 leading-[21px]">
                   {thought.text}
                 </p>
                 <div className="flex items-center justify-between w-full mt-3">

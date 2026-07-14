@@ -13,6 +13,7 @@ type ArticleIdentity = {
   username?: string | null;
   image?: string | null;
   org_slug?: string | null;
+  company_name?: string | null;
   logo_url?: string | null;
   avatar_url?: string | null;
 } | null | undefined;
@@ -252,7 +253,9 @@ const ArticleFlow = ({
   const isNextActive = title.trim().length > 0 && hasContent && coverImage !== null;
 
   const authorName = isCompanyPost ? (currentPoster?.name || 'Company') : (currentUser?.name || 'User');
-  const authorSlug = isCompanyPost ? (currentPoster?.org_slug || 'company') : (currentUser?.username || 'user');
+  const subtitleText = isCompanyPost 
+    ? (currentPoster?.company_name || currentPoster?.org_slug || 'company')
+    : `@${currentUser?.username || 'user'}`;
   const avatarSrc = isCompanyPost
     ? (currentPoster?.logo_url || currentPoster?.avatar_url || '/assets/pngegg.png')
     : (currentUser?.image || '/assets/pngegg.png');
@@ -284,7 +287,7 @@ const ArticleFlow = ({
           <img src={avatarSrc} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
           <div className="flex min-w-0 flex-col">
             <h5 className="font-semibold text-[15px] text-foreground leading-tight truncate">{authorName}</h5>
-            <p className="text-[12px] text-muted-foreground truncate">@{authorSlug}</p>
+            <p className="text-[12px] text-muted-foreground truncate">{subtitleText}</p>
           </div>
         </div>
 
@@ -340,7 +343,11 @@ const ArticleFlow = ({
           <button
             disabled={isSubmitting}
             onClick={onPost}
-            className="flex items-center gap-2 px-8 py-2 bg-[#6366F1] hover:bg-[#4F46E5] text-white rounded-full text-[14px] font-normal transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            className={`flex items-center gap-2 px-8 py-2 rounded-full text-[14px] font-normal transition-colors disabled:cursor-not-allowed ${
+              isCompanyPost 
+                ? 'bg-[#1A73E8] hover:bg-[#1A73E8]/90 dark:bg-[#4D9CFF] dark:hover:bg-[#4D9CFF]/90 text-white disabled:bg-gray-200 dark:disabled:bg-[#2A2D35] disabled:text-gray-400 dark:disabled:text-[#A1A8B3]'
+                : 'bg-[#6366F1] hover:bg-[#4F46E5] text-white disabled:opacity-70'
+            }`}
           >
             {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             {isSubmitting ? (isEdit ? 'Saving...' : 'Posting...') : (isEdit ? 'Save' : 'Post')}
@@ -415,7 +422,7 @@ const ArticleFlow = ({
                   {authorName}
                 </h4>
                 <p className="text-[#6B7280]" style={{ fontFamily: 'var(--font-poppins), Poppins, sans-serif', fontWeight: 400, fontSize: '12px', lineHeight: '16px' }}>
-                  @{authorSlug}
+                  {subtitleText}
                 </p>
               </div>
             </div>
@@ -490,10 +497,10 @@ const ArticleFlow = ({
           <div className="ml-auto flex flex-row justify-center items-center gap-[8px]" style={{ width: '188px', height: '40px' }}>
             <button
               onClick={onClose}
-              className="flex flex-row justify-center items-center bg-[#FFFFFF] border border-[#818CF8] rounded-[24px] transition-all"
+              className={`flex flex-row justify-center items-center rounded-[24px] transition-all border ${isCompanyPost ? 'bg-white dark:bg-[#0F1115] border-gray-200 dark:border-[#2A2D35] text-gray-500 dark:text-[#A1A8B3] hover:bg-gray-50 dark:hover:bg-[#121B2B]' : 'bg-white dark:bg-[#0B0F19] border-[#818CF8] text-[#818CF8]'}`}
               style={{ width: '90px', height: '40px', padding: '8px 16px', gap: '10px' }}
             >
-              <span className="text-center text-[#818CF8]" style={{ display: 'inline-block', width: '50px', height: '20px', fontFamily: 'Poppins', fontWeight: 400, fontSize: '14px', lineHeight: '20px' }}>
+              <span className="text-center" style={{ display: 'inline-block', width: '50px', height: '20px', fontFamily: 'Poppins', fontWeight: 400, fontSize: '14px', lineHeight: '20px' }}>
                 Cancel
               </span>
             </button>
@@ -514,18 +521,21 @@ const ArticleFlow = ({
                   });
                 }
               }}
-              className="flex flex-row justify-center items-center border border-[#FFFFFF] rounded-[24px] transition-all"
+              className={`flex flex-row justify-center items-center rounded-[24px] transition-all ${
+                isNextActive 
+                  ? (isCompanyPost ? 'bg-[#1A73E8] hover:bg-[#1A73E8]/90 dark:bg-[#4D9CFF] dark:hover:bg-[#4D9CFF]/90 text-white dark:text-white' : 'bg-[#6366F1] text-white')
+                  : (isCompanyPost ? 'bg-gray-100 dark:bg-[#2A2D35] text-gray-400 dark:text-[#A1A8B3]' : 'bg-[#C7D2FE] text-white')
+              }`}
               style={{
                 width: (isEdit || skipNextStep) ? '100px' : '90px',
                 height: '40px',
                 padding: '8px 16px',
                 gap: '10px',
-                background: isNextActive ? '#6366F1' : '#C7D2FE',
                 cursor: isNextActive ? 'pointer' : 'not-allowed'
               }}
             >
-              {isSubmitting && (isEdit || skipNextStep) && <Loader2 className="w-4 h-4 animate-spin text-white" />}
-              <span className="text-center text-[#FFFFFF]" style={{ display: 'inline-block', fontFamily: 'Poppins', fontWeight: 400, fontSize: '14px', lineHeight: '20px' }}>
+              {isSubmitting && (isEdit || skipNextStep) && <Loader2 className={`w-4 h-4 animate-spin ${isCompanyPost ? 'text-white' : 'text-white'}`} />}
+              <span className="text-center" style={{ display: 'inline-block', fontFamily: 'Poppins', fontWeight: 400, fontSize: '14px', lineHeight: '20px' }}>
                 {isEdit ? (isSubmitting ? 'Saving' : 'Save') : (skipNextStep ? (isSubmitting ? 'Posting' : 'Post') : 'Next')}
               </span>
             </button>

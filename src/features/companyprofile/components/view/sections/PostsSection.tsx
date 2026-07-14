@@ -69,6 +69,7 @@ export default function PostsSection({ data, showAll = false, isOwnProfile = fal
   // Filter out empty posts (e.g. shared posts missing data) before slicing
   const validPosts = rawPosts.filter((post: any) => {
     if (post.visibility === 'private') return false;
+    if (post.post_type === 'article') return false;
 
     const content = post.content || "";
     const imageSrc = post.imageUrl || post.image_url || (post.media && post.media.length > 0 ? post.media[0].url : undefined);

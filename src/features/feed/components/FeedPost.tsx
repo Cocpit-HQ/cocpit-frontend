@@ -467,6 +467,7 @@ export const FeedPost = (props: FeedPostProps) => {
               articleBody={shared_post.articleBody}
               imageSrc={shared_post.imageSrc}
               authorAvatar={shared_post.authorAvatar}
+              postType={shared_post.post_type}
             />
           </div>
 
@@ -559,6 +560,7 @@ export const FeedPost = (props: FeedPostProps) => {
               imageSrc={imageSrc}
               authorAvatar={authorAvatar}
               authorSlug={props.authorSlug}
+              postType={props.post_type}
             />
           </div>
 

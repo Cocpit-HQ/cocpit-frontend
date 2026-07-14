@@ -93,28 +93,31 @@ export const getPollAnalytics = async (postId: string): Promise<any> => {
 
 // Comments
 export const addComment = async (postId: string, content: string, parent_id?: string | number | null, companyId?: string) => {
-  void companyId;
-  const response = await api.post(`/post/${postId}/comments`, { content, parent_id: parent_id || null });
+  const payload: any = { content, parent_id: parent_id || null };
+  if (companyId) payload.companyId = companyId;
+  const response = await api.post(`/post/${postId}/comments`, payload);
   return response.data;
 };
 
 export const updateComment = async (commentId: string, content: string, companyId?: string) => {
-  void companyId;
-  const response = await api.put(`/comments/${commentId}`, { content });
+  const payload: any = { content };
+  if (companyId) payload.companyId = companyId;
+  const response = await api.put(`/comments/${commentId}`, payload);
   return response.data;
 };
 
 export const getComments = async (postId: string, companyId?: string, targetCommentId?: string) => {
-  void companyId;
   const params = new URLSearchParams();
+  if (companyId) params.append('companyId', companyId);
   if (targetCommentId) params.append('target_comment_id', targetCommentId);
   const response = await api.get(`/post/${postId}/comments?${params.toString()}`);
   return response.data;
 };
 
 export const deleteComment = async (commentId: string, companyId?: string) => {
-  void companyId;
-  const response = await api.delete(`/comments/${commentId}`);
+  const config: any = {};
+  if (companyId) config.data = { companyId };
+  const response = await api.delete(`/comments/${commentId}`, config);
   return response.data;
 };
 

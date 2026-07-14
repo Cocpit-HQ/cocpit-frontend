@@ -75,15 +75,15 @@ export default function ChannelArticlePage() {
         {/* Article content */}
         <div className="flex flex-col gap-5 min-w-0 pb-12">
           {/* Article Header (Author / Channel Info) */}
-          <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-[#2E3445] border-dashed">
+          <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-[#2A2D35] border-dashed">
             <button
               onClick={() => router.push('/channel')}
-              className="w-10 h-10 rounded-full border border-gray-200 dark:border-[#2E3445] flex items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-[#1C2340] transition-colors flex-shrink-0"
+              className="w-10 h-10 rounded-full border border-gray-200 dark:border-[#2A2D35] flex items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-[#121B2B] transition-colors flex-shrink-0"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <div className="flex flex-col">
-              <h2 className="text-black dark:text-[#F9FAFB] text-[15px] font-semibold font-['Poppins'] leading-tight">
+              <h2 className="text-black dark:text-[#FFFFFF] text-[15px] font-semibold font-['Poppins'] leading-tight">
                 {channel?.name || 'Channel Name'}
               </h2>
               <p className="text-gray-500 text-[11px] font-['Poppins'] mt-0.5">
@@ -94,19 +94,19 @@ export default function ChannelArticlePage() {
 
           {/* Cover Image */}
           {article.coverImage && (
-            <div className="w-full h-[240px] lg:h-[320px] rounded-[24px] overflow-hidden bg-gray-100 dark:bg-[#1C2340]">
+            <div className="w-full h-[240px] lg:h-[320px] rounded-[24px] overflow-hidden bg-gray-100 dark:bg-[#121B2B]">
               <img src={article.coverImage} alt={article.title} className="w-full h-full object-cover" />
             </div>
           )}
           
           {/* Article Title */}
-          <h1 className="text-black dark:text-[#F9FAFB] text-[24px] lg:text-[28px] font-regular font-['Poppins'] leading-tight mt-2">
+          <h1 className="text-black dark:text-[#FFFFFF] text-[24px] lg:text-[28px] font-regular font-['Poppins'] leading-tight mt-2">
             {article.title}
           </h1>
 
           {/* Article HTML Content */}
           <div
-            className="article-content prose prose-gray dark:prose-invert max-w-none font-['Poppins'] text-gray-800 dark:text-gray-200 mt-2"
+            className="article-content prose prose-gray dark:prose-invert max-w-none font-['Poppins'] text-gray-800 dark:text-[#FFFFFF] mt-2"
             dangerouslySetInnerHTML={{ __html: article.content }}
           />
         </div>

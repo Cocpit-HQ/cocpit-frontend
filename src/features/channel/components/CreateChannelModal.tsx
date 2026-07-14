@@ -63,7 +63,7 @@ export default function CreateChannelModal({
 
         <div className="flex flex-col gap-4 py-2">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-black dark:text-[#F9FAFB] font-['Poppins']">
+            <label className="text-sm font-medium text-black dark:text-[#FFFFFF] font-['Poppins']">
               Channel name*
             </label>
             <input
@@ -71,17 +71,17 @@ export default function CreateChannelModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Nexsus Global Systems"
-              className="w-full px-4 py-2.5 rounded-2xl border border-gray-200 dark:border-[#2E3445] bg-white dark:bg-[#0B0F19] text-sm font-['Poppins'] text-black dark:text-[#F9FAFB] outline-none focus:border-[#1A73E8] placeholder:text-gray-400"
+              className="w-full px-4 py-2.5 rounded-2xl border border-gray-200 dark:border-[#2A2D35] bg-white dark:bg-[#0F1115] text-sm font-['Poppins'] text-black dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] placeholder:text-gray-400"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-black dark:text-[#F9FAFB] font-['Poppins']">
+            <label className="text-sm font-medium text-black dark:text-[#FFFFFF] font-['Poppins']">
               Channel banner*
             </label>
             <div
               onClick={() => bannerInputRef.current?.click()}
-              className="relative w-full h-[110px] rounded-2xl border-2 border-dashed border-gray-200 dark:border-[#2E3445] flex items-center justify-center cursor-pointer overflow-hidden hover:border-[#1A73E8]/50 transition-colors bg-gray-50 dark:bg-[#0B0F19]"
+              className="relative w-full h-[110px] rounded-2xl border-2 border-dashed border-gray-200 dark:border-[#2A2D35] flex items-center justify-center cursor-pointer overflow-hidden hover:border-[#1A73E8]/50 transition-colors bg-gray-50 dark:bg-[#0F1115]"
             >
               {bannerUrl ? (
                 <img src={bannerUrl} alt="Channel banner" className="absolute inset-0 w-full h-full object-cover" />
@@ -107,7 +107,7 @@ export default function CreateChannelModal({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-black dark:text-[#F9FAFB] font-['Poppins']">
+            <label className="text-sm font-medium text-black dark:text-[#FFFFFF] font-['Poppins']">
               Channel description
             </label>
             <textarea
@@ -115,7 +115,7 @@ export default function CreateChannelModal({
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               placeholder="Describe what this channel is about"
-              className="w-full px-4 py-2.5 rounded-2xl border border-gray-200 dark:border-[#2E3445] bg-white dark:bg-[#0B0F19] text-sm font-['Poppins'] text-black dark:text-[#F9FAFB] outline-none focus:border-[#1A73E8] resize-none placeholder:text-gray-400"
+              className="w-full px-4 py-2.5 rounded-2xl border border-gray-200 dark:border-[#2A2D35] bg-white dark:bg-[#0F1115] text-sm font-['Poppins'] text-black dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] resize-none placeholder:text-gray-400"
             />
           </div>
         </div>

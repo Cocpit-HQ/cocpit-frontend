@@ -42,7 +42,7 @@ export default function SubscriberGrowthChart({ data, totalSubscribers }: Subscr
     <div className="w-full">
       <div className="flex items-center justify-between mb-2">
         <div className="flex flex-col">
-          <h3 className="text-black dark:text-[#F9FAFB] text-sm font-semibold font-['Poppins']">
+          <h3 className="text-black dark:text-[#FFFFFF] text-sm font-semibold font-['Poppins']">
             Subscriber growth
           </h3>
           <span className="text-gray-400 text-xs font-['Poppins']">

@@ -30,16 +30,20 @@ export default function ChannelHeader({ channel, onEdit, onInvite }: ChannelHead
         </button>
       </div>
 
-      <div className="relative w-full h-[140px] md:h-[160px] rounded-3xl overflow-hidden">
-        <img src={channel.bannerUrl} alt={channel.name} className="w-full h-full object-cover" />
+      <div className="relative w-full h-[140px] md:h-[160px] rounded-3xl overflow-hidden bg-gradient-to-r from-[#EFF4FF] to-[#E5EDFF] dark:from-[#121B2B] dark:to-[#1A2435] flex items-center justify-center">
+        {channel.bannerUrl ? (
+          <img src={channel.bannerUrl} alt={channel.name} className="w-full h-full object-cover" />
+        ) : (
+          <Icon icon="lucide:image" className="w-12 h-12 text-[#1A73E8] opacity-20" />
+        )}
       </div>
 
       <div className="w-full flex items-center justify-between gap-4">
         <div className="flex flex-col gap-0.5 min-w-0">
-          <h2 className="text-black dark:text-[#F9FAFB] text-lg font-semibold font-['Poppins'] truncate">
+          <h2 className="text-black dark:text-[#FFFFFF] text-lg font-semibold font-['Poppins'] truncate">
             {channel.name}
           </h2>
-          <p className="text-gray-500 dark:text-[#9CA3AF] text-xs font-['Poppins'] truncate">
+          <p className="text-gray-500 dark:text-[#A1A8B3] text-xs font-['Poppins'] truncate">
             {channel.description}
           </p>
         </div>

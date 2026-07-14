@@ -50,7 +50,7 @@ export default function InviteChannelModal({ isOpen, onClose }: InviteChannelMod
 
         <div className="flex flex-col items-center gap-4 w-full h-full max-w-[412px] mx-auto pt-2">
           <DialogHeader className="flex flex-col items-center gap-2 space-y-0 w-full p-0">
-            <DialogTitle className="font-['Poppins'] text-[18px] leading-[26px] font-medium text-center text-black dark:text-white">
+            <DialogTitle className="font-['Poppins'] text-[18px] leading-[26px] font-medium text-center text-black dark:text-[#FFFFFF]">
               Invite people
             </DialogTitle>
             <p className="text-[12px] leading-[16px] text-[#6B7280] font-['Poppins'] text-center">
@@ -63,7 +63,7 @@ export default function InviteChannelModal({ isOpen, onClose }: InviteChannelMod
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search"
-              className="w-full h-full pl-4 pr-10 rounded-full border border-[#6B7280] bg-white dark:bg-[#0B0F19] text-[16px] font-['Poppins'] text-black dark:text-[#F9FAFB] outline-none focus:border-[#1A73E8] placeholder:text-[#6B7280]"
+              className="w-full h-full pl-4 pr-10 rounded-full border border-[#6B7280] bg-white dark:bg-[#0F1115] text-[16px] font-['Poppins'] text-black dark:text-[#FFFFFF] outline-none focus:border-[#1A73E8] placeholder:text-[#6B7280]"
             />
             <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-[#6B7280]" />
           </div>
@@ -81,12 +81,12 @@ export default function InviteChannelModal({ isOpen, onClose }: InviteChannelMod
                     key={user.id}
                     onClick={() => !user.invited && toggle(user.id)}
                     className={`flex items-center justify-between h-[48px] rounded-xl transition-colors ${
-                      user.invited ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1C2340]'
+                      user.invited ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-[#121B2B]'
                     }`}
                   >
                     <div className="flex items-center gap-[9px] min-w-0 h-[32px]">
                       <img src={user.avatarUrl} alt={user.name} className="w-[32px] h-[32px] rounded-full object-cover flex-shrink-0" />
-                      <p className="text-[16px] leading-[24px] font-normal font-['Poppins'] text-black dark:text-white truncate">
+                      <p className="text-[16px] leading-[24px] font-normal font-['Poppins'] text-black dark:text-[#FFFFFF] truncate">
                         {user.name}
                       </p>
                     </div>

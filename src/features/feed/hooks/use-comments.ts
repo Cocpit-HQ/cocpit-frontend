@@ -22,14 +22,15 @@ export const useComments = (postId: string) => {
     if (!postId) return;
     try {
       setIsLoading(true);
-      const data = await getComments(postId, undefined, targetCommentId);
+      const companyId = isCompany ? activeProfile?.id : undefined;
+      const data = await getComments(postId, companyId, targetCommentId);
       setComments(data.map(mapBackendCommentToFrontend));
     } catch (error) {
       console.error('Failed to fetch comments:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [postId, targetCommentId]);
+  }, [postId, targetCommentId, isCompany, activeProfile?.id]);
 
   useEffect(() => {
     fetchComments();
