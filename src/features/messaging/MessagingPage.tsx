@@ -182,6 +182,8 @@ export default function MessagingPage() {
 
   // Handle userId param to start a new chat or select existing
   useEffect(() => {
+    if (isLoading) return;
+
     const userId = searchParams.get("userId");
     const groupId = searchParams.get("groupId");
     const conversationId = searchParams.get("conversationId");
@@ -193,6 +195,9 @@ export default function MessagingPage() {
       if (targetChat) {
         setSelectedChat(targetChat);
         processedUserIdRef.current = conversationId;
+        if (!isMobile && typeof window !== 'undefined') {
+          window.history.replaceState(null, "", "/messaging");
+        }
       }
       return;
     }
@@ -200,15 +205,16 @@ export default function MessagingPage() {
     // Company profile: handle userId only when companyId is also present (initiated from user profile "Message" button)
     if (activeProfile?.type === "COMPANY") {
       if (userId && companyId === activeProfile.id) {
-        // Company wants to message a user — find existing or create draft
-        if (userId === processedUserIdRef.current) return;
-
         const existingChat = chats.find((c) => c.otherUserId === userId);
         if (existingChat) {
           setSelectedChat(existingChat);
           processedUserIdRef.current = userId;
+          if (!isMobile && typeof window !== 'undefined') {
+            window.history.replaceState(null, "", "/messaging");
+          }
         } else {
           if (processedUserIdRef.current === userId) return;
+          processedUserIdRef.current = userId;
           const fetchAndCreateDraft = async () => {
             if (!userId || userId === "null" || userId === "undefined") return;
             try {
@@ -227,7 +233,6 @@ export default function MessagingPage() {
                 online: false,
               };
               setSelectedChat(newChat);
-              processedUserIdRef.current = userId;
             } catch (err) {
               console.error(
                 "Failed to fetch user details for company chat draft",
@@ -246,6 +251,9 @@ export default function MessagingPage() {
         if (groupChat) {
           setSelectedChat(groupChat);
           processedUserIdRef.current = groupId;
+          if (!isMobile && typeof window !== 'undefined') {
+            window.history.replaceState(null, "", "/messaging");
+          }
         }
         return;
       }
@@ -278,7 +286,13 @@ export default function MessagingPage() {
 
       if (existingChat) {
         safelySetSelectedChat(existingChat);
+        processedUserIdRef.current = userId;
+        if (!isMobile && typeof window !== 'undefined') {
+          window.history.replaceState(null, "", "/messaging");
+        }
       } else {
+        if (userId === processedUserIdRef.current) return;
+        processedUserIdRef.current = userId;
         // No existing chat, fetch user details to create a draft
         const fetchUserAndCreateDraft = async () => {
           if (!userId || userId === "null" || userId === "undefined") return;
@@ -309,6 +323,9 @@ export default function MessagingPage() {
       if (groupChat) {
         safelySetSelectedChat(groupChat);
         processedUserIdRef.current = groupId;
+        if (!isMobile && typeof window !== 'undefined') {
+          window.history.replaceState(null, "", "/messaging");
+        }
       }
     } else if (companyId && activeProfile?.type !== "COMPANY") {
       const existingChat = chats.find(
@@ -318,14 +335,19 @@ export default function MessagingPage() {
       if (existingChat) {
         safelySetSelectedChat(existingChat);
         processedUserIdRef.current = companyId;
+        if (!isMobile && typeof window !== 'undefined') {
+          window.history.replaceState(null, "", "/messaging");
+        }
       } else {
+        if (companyId === processedUserIdRef.current) return;
+        processedUserIdRef.current = companyId;
         const fetchCompanyAndCreateDraft = async () => {
           if (!companyId || companyId === "null" || companyId === "undefined") return;
           try {
             const response = await companyService.getCompany(companyId);
             const newChat: ChatThread = {
               id: "new",
-              otherUserId: companyId,
+              otherUserId: response.org_id || response.company_id || companyId,
               name: response.name,
               role: response.industry || "Company",
               avatar: response.logo_url || "gradient-1",
@@ -943,6 +965,9 @@ export default function MessagingPage() {
                     router.push(`/messaging?groupId=${chat.id}`);
                   } else {
                     setSelectedChat(chat);
+                    if (typeof window !== 'undefined') {
+                      window.history.replaceState(null, "", "/messaging");
+                    }
                   }
                 },
                 [isMobile, router],

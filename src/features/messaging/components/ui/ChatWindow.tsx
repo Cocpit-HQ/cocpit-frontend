@@ -760,6 +760,13 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
       });
 
       queryClient.invalidateQueries({ queryKey: ['conversations', activeProfile?.type ?? 'USER', activeProfile?.id ?? 'me'] });
+
+      if (chat.id === 'new') {
+        const newConversationId = data.data?.conversation_id || data.conversation_id;
+        if (newConversationId) {
+          router.replace(`/messaging?conversationId=${newConversationId}`);
+        }
+      }
     },
   });
 

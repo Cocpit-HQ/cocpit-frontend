@@ -256,8 +256,8 @@ const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoa
             media: media
           })
         }
-      } catch (err) {
-        console.error("Error fetching shared post in SharedPostCard:", err)
+      } catch (err: any) {
+        console.error("Error fetching shared post in SharedPostCard:", err.response?.data || err)
       } finally {
         if (isMounted) {
           setLoading(false)
