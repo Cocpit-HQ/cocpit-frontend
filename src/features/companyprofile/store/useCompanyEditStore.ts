@@ -34,6 +34,7 @@ interface CompanyEditState {
     headline: string;
     keyOfferings: KeyOffering[];
     isInitialized: boolean;
+    draftSlug: string | null;
   };
 
   // About Tab State
@@ -44,11 +45,24 @@ interface CompanyEditState {
     links: CustomLink[];
     specialties: string;
     isInitialized: boolean;
+    draftSlug: string | null;
   };
 
   // Actions
   setProfileDraft: (data: Partial<CompanyEditState["profileDraft"]>) => void;
+  // Replaces the draft with server-truth data and atomically marks it initialized
+  // for `slug`, so isInitialized/draftSlug can never be set out of sync with the data.
+  hydrateProfileDraft: (
+    data: Omit<CompanyEditState["profileDraft"], "isInitialized" | "draftSlug">,
+    slug: string
+  ) => void;
   setAboutDraft: (data: Partial<CompanyEditState["aboutDraft"]>) => void;
+  // Same rationale as hydrateProfileDraft: keeps isInitialized/draftSlug in
+  // lockstep with the data so a stale/malformed cached draft can't linger.
+  hydrateAboutDraft: (
+    data: Omit<CompanyEditState["aboutDraft"], "isInitialized" | "draftSlug">,
+    slug: string
+  ) => void;
   clearProfileDraft: () => void;
   clearAboutDraft: () => void;
 }
@@ -64,6 +78,7 @@ const defaultProfileDraft = {
   headline: "",
   keyOfferings: [],
   isInitialized: false,
+  draftSlug: null,
 };
 
 const defaultAboutDraft = {
@@ -73,6 +88,7 @@ const defaultAboutDraft = {
   links: [],
   specialties: "",
   isInitialized: false,
+  draftSlug: null,
 };
 
 export const useCompanyEditStore = create<CompanyEditState>()(
@@ -86,9 +102,19 @@ export const useCompanyEditStore = create<CompanyEditState>()(
           profileDraft: { ...state.profileDraft, ...data },
         })),
 
+      hydrateProfileDraft: (data, slug) =>
+        set(() => ({
+          profileDraft: { ...data, isInitialized: true, draftSlug: slug },
+        })),
+
       setAboutDraft: (data) =>
         set((state) => ({
           aboutDraft: { ...state.aboutDraft, ...data },
+        })),
+
+      hydrateAboutDraft: (data, slug) =>
+        set(() => ({
+          aboutDraft: { ...data, isInitialized: true, draftSlug: slug },
         })),
 
       clearProfileDraft: () =>

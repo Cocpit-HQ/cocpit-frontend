@@ -25,6 +25,45 @@ interface CompanyEditAboutTabProps {
   orgId: string;
 }
 
+// Shared by the initial load (GET /about) and the post-save mutation response
+// (PUT /about now returns the same about/offices/links/specialties shape) so
+// both paths can never parse the payload differently.
+function parseAboutPayload(raw: any) {
+  const about = raw.about || raw;
+  const officesArr = raw.offices || [];
+  const linksArr = raw.links || [];
+  const specialtiesArr = raw.specialties || [];
+
+  const offices: Office[] = officesArr.map((o: any, idx: number) => ({
+    id: o.office_id || o.id || String(idx),
+    country: o.country || "India",
+    city: o.city || "Mumbai",
+    address: o.address || "",
+    mapUrl: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&h=200&fit=crop",
+  }));
+
+  const links: CustomLink[] = linksArr.map((l: any, idx: number) => {
+    const p = (l.platform || "").toLowerCase();
+    const matched = MEDIA_OPTIONS.find((m) => m.value === p);
+    return {
+      id: l.link_id || l.id || String(idx),
+      label: l.display_label || matched?.label || l.label || "",
+      platform: matched ? matched.value : MEDIA_OPTIONS[0].value,
+      url: l.url || "",
+    };
+  });
+
+  const specialties = specialtiesArr.map((s: any) => s.name || s).filter(Boolean).join(", ");
+
+  return {
+    description: about.description || "",
+    slogan: about.slogan || "",
+    offices,
+    links,
+    specialties,
+  };
+}
+
 export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAboutTabProps) {
   const { slug } = useParams() as { slug: string };
   const { toast } = useToast();
@@ -35,7 +74,7 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
     queryFn: () => companyProfileService.getOrgAbout(slug),
   });
 
-  const { aboutDraft, setAboutDraft, clearAboutDraft } = useCompanyEditStore();
+  const { aboutDraft, setAboutDraft, clearAboutDraft, hydrateAboutDraft } = useCompanyEditStore();
   const description = aboutDraft.description;
   const slogan = aboutDraft.slogan;
   const offices = aboutDraft.offices;
@@ -123,50 +162,14 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
 
   useEffect(() => {
     if (aboutData) {
-      // Backend returns { about: {...}, offices: [...], links: [...], specialties: [{specialty_id, name}] }
-      const about = aboutData.about || aboutData;
-      const officesArr = aboutData.offices || [];
-      const linksArr = aboutData.links || [];
-      const specialtiesArr = aboutData.specialties || [];
-      
-      const parsedOffices = officesArr.map((o: any, idx: number) => ({
-        id: o.office_id || o.id || String(idx),
-        country: o.country || "India",
-        city: o.city || "Mumbai",
-        address: o.address || "",
-        mapUrl: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&h=200&fit=crop",
-      }));
-      
-      const parsedLinks = linksArr.map((l: any, idx: number) => ({
-        id: l.link_id || l.id || String(idx),
-        label: l.display_label || l.platform || l.label || "",
-        platform: l.platform || MEDIA_OPTIONS[0].value,
-        url: l.url || "",
-      }));
-      
-      // specialties is [{specialty_id, name}] — join the names
-      const specString = specialtiesArr.map((s: any) => s.name || s).filter(Boolean).join(", ");
+      const parsed = parseAboutPayload(aboutData);
+      setInitialDataStr(JSON.stringify(parsed));
 
-      setInitialDataStr(JSON.stringify({
-        description: about.description || "",
-        slogan: about.slogan || "",
-        offices: parsedOffices,
-        links: parsedLinks,
-        specialties: specString,
-      }));
-
-      if (!aboutDraft.isInitialized) {
-        setAboutDraft({
-          description: about.description || "",
-          slogan: about.slogan || "",
-          offices: parsedOffices,
-          links: parsedLinks,
-          specialties: specString,
-          isInitialized: true,
-        });
+      if (!aboutDraft.isInitialized || aboutDraft.draftSlug !== slug) {
+        hydrateAboutDraft(parsed, slug);
       }
     }
-  }, [aboutData, aboutDraft.isInitialized, setAboutDraft]);
+  }, [aboutData, aboutDraft.isInitialized, slug, hydrateAboutDraft]);
 
   const currentDataStr = JSON.stringify({ description, slogan, offices, links, specialties });
   const isDirty = initialDataStr !== "" && initialDataStr !== currentDataStr;
@@ -193,36 +196,60 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
   };
 
   const handleAddLink = () => {
-    const newLink: CustomLink = {
-      id: Date.now().toString(),
-      label: "",
-      platform: MEDIA_OPTIONS[0].value,
-      url: "",
-    };
-    setAboutDraft({ links: [...links, newLink] });
+    setAboutDraft({
+      links: [
+        ...links,
+        {
+          id: uuidv4(),
+          label: MEDIA_OPTIONS[0].label,
+          platform: MEDIA_OPTIONS[0].value,
+          url: "",
+        },
+      ],
+    });
   };
 
   const handleRemoveLink = (id: string) => {
     setAboutDraft({ links: links.filter((l) => l.id !== id) });
   };
 
-  const handleLinkChange = (id: string, field: keyof CustomLink, value: string) => {
+  const handleLinkChange = (id: string, updates: Partial<CustomLink>) => {
     setAboutDraft({
-      links: links.map((l) => (l.id === id ? { ...l, [field]: value } : l))
+      links: links.map((l) => (l.id === id ? { ...l, ...updates } : l))
     });
   };
 
   const updateMutation = useMutation({
     mutationFn: (data: any) => companyProfileService.updateOrgAbout(orgId, data),
-    onSuccess: () => {
+    onSuccess: (response) => {
       toast({
         title: "Success",
         description: "About info saved successfully!",
       });
+
+      // Merge the authoritative saved state (returned by the mutation itself)
+      // straight into the query cache. Synchronous — no refetch round trip —
+      // so there's no window where `aboutData` can still be stale when
+      // clearAboutDraft() runs right after.
+      queryClient.setQueryData(["orgAbout", slug], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          about: { ...(old.about || {}), ...response.about },
+          offices: response.offices,
+          links: response.links,
+          specialties: response.specialties,
+        };
+      });
+
       clearAboutDraft();
-      queryClient.invalidateQueries({ queryKey: ["orgAbout", slug] });
+
+      // Background revalidation only — not relied on for correctness, since
+      // setQueryData above already made the cache correct.
+      queryClient.invalidateQueries({ queryKey: ["orgAbout", slug], refetchType: "none" });
       queryClient.invalidateQueries({ queryKey: ["orgAbout", orgId] });
       queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
+
       onCancel();
     },
     onError: (error: any) => {
@@ -241,8 +268,9 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
     updateMutation.mutate({
       description,
       slogan,
-      offices: offices.map((o) => ({ city: o.city, country: o.country, address: o.address })),
+      offices: offices.map((o) => ({ office_id: o.id, city: o.city, country: o.country, address: o.address })),
       links: links.map((l) => ({
+        link_id: l.id,
         platform: l.platform,
         display_label: MEDIA_OPTIONS.find((m) => m.value === l.platform)?.label || l.label,
         url: l.url,
@@ -505,8 +533,7 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
                         <div
                           key={opt.value}
                           onClick={() => {
-                            handleLinkChange(link.id, "platform", opt.value);
-                            handleLinkChange(link.id, "label", opt.label);
+                            handleLinkChange(link.id, { platform: opt.value, label: opt.label });
                             setActiveMediaDropdownId(null);
                           }}
                           className="w-full px-4 py-2.5 flex items-center gap-3 text-left hover:bg-slate-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors"
@@ -528,7 +555,7 @@ export default function CompanyEditAboutTab({ onCancel, orgId }: CompanyEditAbou
                 <input
                   type="url"
                   value={link.url}
-                  onChange={(e) => handleLinkChange(link.id, "url", e.target.value)}
+                  onChange={(e) => handleLinkChange(link.id, { url: e.target.value })}
                   className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
                 />
               </div>

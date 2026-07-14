@@ -65,7 +65,7 @@ export default function CompanyProfilePage({ isOwnProfile = false }: CompanyProf
     websiteUrl: company.website || "",
     description: company.description || "",
     slogan: company.slogan || "",
-    socialLinks: profileResponse.links ? profileResponse.links.map((link: any) => ({ label: link.display_label || link.platform, url: link.url })) : [],
+    socialLinks: profileResponse.links ? profileResponse.links.map((link: any) => ({ label: link.display_label || link.platform, platform: link.platform, url: link.url })) : [],
     keyOfferings: company.key_offerings || company.keyOfferings || [],
     stats: {
       following: 0, // Not provided by this endpoint currently

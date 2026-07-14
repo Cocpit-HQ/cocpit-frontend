@@ -3,6 +3,7 @@
 import React from "react";
 import { Icon } from "@iconify/react";
 import { CompanyProfileData } from "../../../types/company-profile.types";
+import { getSocialPlatformMeta, DEFAULT_SOCIAL_PLATFORM_ICON } from "../../../constants/socialPlatforms";
 import { useQuery } from "@tanstack/react-query";
 import { companyProfileService } from "../../../services/companyprofile.service";
 
@@ -198,17 +199,23 @@ export default function AboutTab({ data }: AboutTabProps) {
             Links
           </h2>
           <div className="flex flex-wrap gap-[8px]">
-            {socialLinks.map((link: any, idx: number) => (
-              <a
-                key={idx}
-                href={link.url}
-                target="_blank"
-                rel="noreferrer"
-                className="px-[16px] py-[6px] border border-[#1A73E8] rounded-full font-poppins text-[#1A73E8] dark:text-blue-400 text-[14px] leading-[20px] font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-              >
-                {link.display_label || link.label || link.platform}
-              </a>
-            ))}
+            {socialLinks.map((link: any, idx: number) => {
+              const meta = getSocialPlatformMeta(link.platform);
+              const label = link.display_label || link.label || meta?.label || link.platform || "Social link";
+              return (
+                <a
+                  key={idx}
+                  href={link.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={label}
+                  aria-label={label}
+                  className="flex items-center justify-center w-[36px] h-[36px] rounded-full text-[#1A73E8] dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                >
+                  <Icon icon={meta?.icon || DEFAULT_SOCIAL_PLATFORM_ICON} className="w-[24px] h-[24px] shrink-0" />
+                </a>
+              );
+            })}
           </div>
         </div>
       )}

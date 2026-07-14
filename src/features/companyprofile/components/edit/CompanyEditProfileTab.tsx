@@ -38,7 +38,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
     queryFn: () => companyProfileService.getOrgProfile(slug),
   });
 
-  const { profileDraft, setProfileDraft, clearProfileDraft } = useCompanyEditStore();
+  const { profileDraft, setProfileDraft, clearProfileDraft, hydrateProfileDraft } = useCompanyEditStore();
   const formData = profileDraft;
   const keyOfferings = profileDraft.keyOfferings;
 
@@ -132,27 +132,22 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
       setInitialData(newForm);
 
       const existingOfferings: string[] = org.key_offerings || org.keyOfferings || [];
-      const offeringsSource: string[] = existingOfferings.length ? existingOfferings : DEFAULT_OFFERINGS;
-      const newOfferings = offeringsSource.map((text: string, idx: number) => ({ id: String(idx), text }));
+      const source = existingOfferings.length > 0 ? existingOfferings : DEFAULT_OFFERINGS;
+      const newOfferings = Array.from({ length: 4 }).map((_, idx) => ({
+        id: String(idx),
+        text: source[idx] || DEFAULT_OFFERINGS[idx]
+      }));
       setInitialOfferings(newOfferings);
 
-      if (!profileDraft.isInitialized) {
-        setProfileDraft({
-          ...newForm,
-          keyOfferings: newOfferings,
-          isInitialized: true,
-        });
+      if (!profileDraft.isInitialized || profileDraft.draftSlug !== slug) {
+        hydrateProfileDraft({ ...newForm, keyOfferings: newOfferings }, slug);
       }
     }
-  }, [profileData, profileDraft.isInitialized, setProfileDraft]);
+  }, [profileData, profileDraft.isInitialized, slug, hydrateProfileDraft]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setProfileDraft({ [name]: value });
-  };
-
-  const handleAddOffering = () => {
-    setProfileDraft({ keyOfferings: [...keyOfferings, { id: Date.now().toString(), text: "" }] });
   };
 
   const handleOfferingChange = (id: string, value: string) => {
@@ -174,14 +169,31 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
 
   const updateMutation = useMutation({
     mutationFn: (data: any) => companyProfileService.updateOrgProfile(orgId, data),
-    onSuccess: () => {
+    onSuccess: (response) => {
       toast({
         title: "Success",
         description: "Profile changes saved successfully!",
       });
+
+      // Merge the authoritative saved fields (returned by the mutation itself)
+      // straight into the query cache. This is synchronous — unlike a refetch,
+      // there's no network round trip, so there's no window where `profileData`
+      // can still be stale when clearProfileDraft() runs right after.
+      queryClient.setQueryData(["orgProfile", slug], (old: any) => {
+        if (!old) return old;
+        const wrapped = "org" in old;
+        const prevOrg = wrapped ? old.org : old;
+        const nextOrg = { ...prevOrg, ...response.organization };
+        return wrapped ? { ...old, org: nextOrg } : nextOrg;
+      });
+
       clearProfileDraft();
-      queryClient.invalidateQueries({ queryKey: ["orgProfile", slug] });
+
+      // Background revalidation only — not awaited and not relied on for
+      // correctness, since setQueryData above already made the cache correct.
+      queryClient.invalidateQueries({ queryKey: ["orgProfile", slug], refetchType: "none" });
       queryClient.invalidateQueries({ queryKey: ["companyProfile", slug] });
+
       onCancel();
     },
     onError: (error: any) => {
@@ -222,7 +234,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
         {/* Name */}
         <div className="flex flex-col gap-2">
           <label className="text-[14px] font-medium text-[#000000] dark:text-white">
-            Organization Name *
+            Organization name *
           </label>
           <input
             type="text"
@@ -230,21 +242,21 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-xl bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
+            className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
           />
         </div>
 
         {/* Industry */}
         <div className="flex flex-col gap-2">
           <label className="text-[14px] font-medium text-[#000000] dark:text-white">
-            Industry Selection
+            Industry selection
           </label>
           <div className="relative w-full h-11">
             <select
               name="industry"
               value={formData.industry}
               onChange={handleChange}
-              className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-xl bg-transparent text-[16px] appearance-none focus:outline-none dark:text-white focus:border-[#1A73E8]"
+              className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] appearance-none focus:outline-none dark:text-white focus:border-[#1A73E8]"
             >
               <option value="Technology">Technology</option>
               <option value="Finance">Finance</option>
@@ -261,28 +273,28 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
         {/* Founded Year */}
         <div className="flex flex-col gap-2">
           <label className="text-[14px] font-medium text-[#000000] dark:text-white">
-            Founded Year
+            Founded year
           </label>
           <input
             type="text"
             name="foundedYear"
             value={formData.foundedYear}
             onChange={handleChange}
-            className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-xl bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
+            className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
           />
         </div>
 
         {/* Organization Size */}
         <div className="flex flex-col gap-2">
           <label className="text-[14px] font-medium text-[#000000] dark:text-white">
-            Organization Size
+            Organization size
           </label>
           <div className="relative w-full h-11">
             <select
               name="size"
               value={formData.size}
               onChange={handleChange}
-              className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-xl bg-transparent text-[16px] appearance-none focus:outline-none dark:text-white focus:border-[#1A73E8]"
+              className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] appearance-none focus:outline-none dark:text-white focus:border-[#1A73E8]"
             >
               <option value="1 - 10 Members">1 - 10 Members</option>
               <option value="11 - 50 Members">11 - 50 Members</option>
@@ -304,7 +316,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
           name="website"
           value={formData.website}
           onChange={handleChange}
-          className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-xl bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
+          className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
         />
       </div>
 
@@ -328,7 +340,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
               name="country"
               value="India"
               readOnly
-              className="w-full h-full px-4 border border-gray-300 dark:border-zinc-800 rounded-xl bg-gray-50 dark:bg-zinc-900/50 text-[16px] focus:outline-none dark:text-white cursor-not-allowed"
+              className="w-full h-full px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-gray-50 dark:bg-zinc-900/50 text-[16px] focus:outline-none dark:text-white cursor-not-allowed"
             />
           </div>
         </div>
@@ -354,7 +366,7 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
                 }
               }}
               placeholder="Search city"
-              className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-xl bg-transparent text-[16px] focus:outline-none dark:text-white focus:border-[#1A73E8] placeholder-gray-400"
+              className="w-full h-full px-4 pr-10 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] focus:outline-none dark:text-white focus:border-[#1A73E8] placeholder-gray-400"
             />
             <Icon icon="mynaui:search" className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
             
@@ -402,34 +414,26 @@ export default function CompanyEditProfileTab({ onCancel, orgId }: CompanyEditPr
           value={formData.headline}
           onChange={handleChange}
           required
-          className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-xl bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
+          className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
         />
       </div>
 
       {/* Key Offerings Section */}
       <div className="flex flex-col gap-2 w-full">
-        <div className="flex justify-between items-center w-full">
-          <label className="text-[14px] font-medium text-[#000000] dark:text-white">
-            Key offerings
-          </label>
-          <button
-            type="button"
-            onClick={handleAddOffering}
-            className="w-6 h-6 flex items-center justify-center text-[#1A73E8] hover:scale-110 transition-transform cursor-pointer"
-          >
-            <Plus className="w-5 h-5" />
-          </button>
-        </div>
+        <label className="text-[14px] font-medium text-[#000000] dark:text-white">
+          Key offerings
+        </label>
         <div className="flex flex-col gap-3 w-full">
           {keyOfferings.map((offering) => (
-            <input
-              key={offering.id}
-              type="text"
-              value={offering.text}
-              onChange={(e) => handleOfferingChange(offering.id, e.target.value)}
-              placeholder="Add a key offering"
-              className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-xl bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
-            />
+            <div key={offering.id} className="w-full">
+              <input
+                type="text"
+                value={offering.text}
+                onChange={(e) => handleOfferingChange(offering.id, e.target.value)}
+                placeholder="Add a key offering"
+                className="w-full h-11 px-4 border border-gray-300 dark:border-zinc-800 rounded-full bg-transparent text-[16px] placeholder-gray-400 focus:outline-none dark:text-white focus:border-[#1A73E8]"
+              />
+            </div>
           ))}
         </div>
       </div>
