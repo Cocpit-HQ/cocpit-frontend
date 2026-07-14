@@ -170,10 +170,10 @@ export default function AboutTab({ data }: AboutTabProps) {
                       className="border-0 relative z-0"
                       loading="lazy"
                       allowFullScreen
-                      src={`https://maps.google.com/maps?q=${encodeURIComponent([office.city, office.country].filter(Boolean).join(', '))}&z=${office.city ? 12 : 5}&output=embed`}
+                      src={`https://maps.google.com/maps?q=${encodeURIComponent([office.address, office.city, office.country].filter(Boolean).join(', '))}&z=${office.city ? 12 : 5}&output=embed`}
                     />
                     <a
-                      href={`https://maps.google.com/maps?q=${encodeURIComponent([office.city, office.country].filter(Boolean).join(', '))}`}
+                      href={`https://maps.google.com/maps?q=${encodeURIComponent([office.address, office.city, office.country].filter(Boolean).join(', '))}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="absolute inset-0 z-10 cursor-pointer"
