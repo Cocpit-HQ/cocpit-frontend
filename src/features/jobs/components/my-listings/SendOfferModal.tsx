@@ -40,6 +40,7 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
   const [allFetchedCandidates, setAllFetchedCandidates] = useState<Record<string, SelectableCandidate>>({});
   const [isLoadingCandidates, setIsLoadingCandidates] = useState(false);
   const [alreadyOfferedCandidates, setAlreadyOfferedCandidates] = useState<Record<string, string>>({});
+  const [appliedCandidates, setAppliedCandidates] = useState<Set<string>>(new Set());
   const [isFetchingRecipients, setIsFetchingRecipients] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const queryClient = useQueryClient();
@@ -59,14 +60,24 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
             ? `/jobs/companies/${companyId}/offers/job/${initialJobId}/recipients`
             : `/jobs/offers/job/${initialJobId}/recipients`;
           
-          const res = await api.get(endpoint);
+          const [res, applicantsRes] = await Promise.all([
+            api.get(endpoint),
+            api.get(`/jobs/${initialJobId}/applicants`).catch(() => ({ data: [] }))
+          ]);
+
           const offeredMap: Record<string, string> = {};
           res.data.forEach((r: any) => {
             offeredMap[r.user_id] = r.status;
           });
-          if (isMounted) setAlreadyOfferedCandidates(offeredMap);
+
+          const appliedSet = new Set<string>(applicantsRes.data.map((a: any) => a.applicantId));
+
+          if (isMounted) {
+            setAlreadyOfferedCandidates(offeredMap);
+            setAppliedCandidates(appliedSet);
+          }
         } catch (err) {
-          console.error("Failed to fetch initial recipients", err);
+          console.error("Failed to fetch initial recipients or applicants", err);
         } finally {
           if (isMounted) {
             setIsFetchingRecipients(false);
@@ -303,16 +314,25 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                       const endpoint = companyId 
                         ? `/jobs/companies/${companyId}/offers/job/${selectedJobId}/recipients`
                         : `/jobs/offers/job/${selectedJobId}/recipients`;
-                      const res = await api.get(endpoint);
+                      
+                      const [res, applicantsRes] = await Promise.all([
+                        api.get(endpoint),
+                        api.get(`/jobs/${selectedJobId}/applicants`).catch(() => ({ data: [] }))
+                      ]);
+
                       const offeredMap: Record<string, string> = {};
                       res.data.forEach((r: any) => {
                         offeredMap[r.user_id] = r.status;
                       });
+
+                      const appliedSet = new Set<string>(applicantsRes.data.map((a: any) => a.applicantId));
+
                       setAlreadyOfferedCandidates(offeredMap);
+                      setAppliedCandidates(appliedSet);
                       setStage(2);
                       setSearchQuery('');
                     } catch (err) {
-                      console.error("Failed to fetch recipients", err);
+                      console.error("Failed to fetch recipients or applicants", err);
                       setStage(2);
                       setSearchQuery('');
                     } finally {
@@ -379,7 +399,8 @@ export const SendOfferModal: React.FC<SendOfferModalProps> = ({
                     const availableCandidates = candidatesList.filter((cand) => {
                       const offerStatus = alreadyOfferedCandidates[cand.id];
                       const isAlreadyOffered = offerStatus && ['pending', 'accepted', 'declined'].includes(offerStatus.toLowerCase());
-                      return !isAlreadyOffered;
+                      const hasApplied = appliedCandidates.has(cand.id);
+                      return !isAlreadyOffered && !hasApplied;
                     });
 
                     if (availableCandidates.length === 0) {

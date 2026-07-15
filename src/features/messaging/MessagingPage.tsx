@@ -49,7 +49,7 @@ export default function MessagingPage() {
   const [activeTab, setActiveTab] = useState<'chat' | 'requests'>('chat');
   const processedUserIdRef = React.useRef<string | null>(null);
   const processedMessagesRef = React.useRef<Set<string>>(new Set());
-  const [initialEntityContext, setInitialEntityContext] = useState<{ type: 'job' | 'offer' | 'event', id: string } | null>(null);
+  const [initialEntityContext, setInitialEntityContext] = useState<{ type: 'job' | 'offer' | 'event', id: string; targetId: string } | null>(null);
 
   // Capture context from search parameters as soon as they are available, and preserve it
   useEffect(() => {
@@ -57,20 +57,26 @@ export default function MessagingPage() {
     const jobContext = searchParams.get("jobContext");
     const offerContext = searchParams.get("offerContext");
     const eventContext = searchParams.get("eventContext");
+    const userId = searchParams.get("userId");
+    const companyId = searchParams.get("companyId");
+    const targetId = userId || companyId || "";
 
     if (jobContext) {
-      setInitialEntityContext({ type: 'job', id: jobContext });
+      setInitialEntityContext({ type: 'job', id: jobContext, targetId });
     } else if (offerContext) {
-      setInitialEntityContext({ type: 'offer', id: offerContext });
+      setInitialEntityContext({ type: 'offer', id: offerContext, targetId });
     } else if (eventContext) {
-      setInitialEntityContext({ type: 'event', id: eventContext });
+      setInitialEntityContext({ type: 'event', id: eventContext, targetId });
     }
   }, [searchParams]);
 
-  // Reset context whenever selected chat changes
   useEffect(() => {
-    setInitialEntityContext(null);
-  }, [selectedChat?.id, selectedChat?.otherUserId]);
+    if (!selectedChat || !initialEntityContext) return;
+    const chatOtherId = selectedChat.otherUserId || "";
+    if (chatOtherId !== initialEntityContext.targetId) {
+      setInitialEntityContext(null);
+    }
+  }, [selectedChat?.id, selectedChat?.otherUserId, initialEntityContext?.targetId]);
 
   const { activeProfile } = useActiveProfile();
 
