@@ -1022,7 +1022,9 @@ export default function MessagingPage() {
                       ? { type: 'job', id: searchParams.get("jobContext") as string }
                       : searchParams.get("offerContext")
                         ? { type: 'offer', id: searchParams.get("offerContext") as string }
-                        : undefined
+                        : searchParams.get("eventContext")
+                          ? { type: 'event', id: searchParams.get("eventContext") as string }
+                          : undefined
                   }
                 />
               )

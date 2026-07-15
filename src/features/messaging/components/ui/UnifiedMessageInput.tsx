@@ -22,7 +22,7 @@ interface UnifiedMessageInputProps {
     onCancelPendingSharedPost?: () => void;
     pendingSharedProfile?: any | null;
     onCancelPendingSharedProfile?: () => void;
-    pendingEntityContext?: { type: 'job' | 'offer', id: string } | null;
+    pendingEntityContext?: { type: 'job' | 'offer' | 'event', id: string } | null;
     onDismissEntityContext?: () => void;
 }
 
@@ -211,12 +211,12 @@ export default function UnifiedMessageInput({
                         <div className="flex items-center gap-3 overflow-hidden flex-1">
                             <div className="h-10 w-10 rounded-full overflow-hidden bg-[var(--card)] dark:bg-[#1E293B] flex items-center justify-center shrink-0 border border-[var(--border)]">
                                 <span className="font-semibold text-[var(--primary)]">
-                                    {pendingEntityContext.type === 'job' ? '💼' : '📝'}
+                                    {pendingEntityContext.type === 'job' ? '💼' : pendingEntityContext.type === 'event' ? '📅' : '📝'}
                                 </span>
                             </div>
                             <div className="flex flex-col text-left overflow-hidden">
                                 <span className="font-['Poppins'] font-semibold text-[13px] text-[var(--foreground)] dark:text-white truncate">
-                                    {pendingEntityContext.type === 'job' ? 'Job Application Context' : 'Job Offer Context'}
+                                    {pendingEntityContext.type === 'job' ? 'Job Application Context' : pendingEntityContext.type === 'event' ? 'Event Context' : 'Job Offer Context'}
                                 </span>
                                 <span className="font-['Poppins'] font-normal text-[12px] text-[var(--primary)] dark:text-[#818CF8] truncate">
                                     This context will be attached to your first message

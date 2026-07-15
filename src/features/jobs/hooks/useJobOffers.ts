@@ -52,16 +52,6 @@ export const useJobOffers = () => {
     onSuccess: async (_res, id) => {
       useJobStore.getState().setOfferResponse(id, 'accept');
       toast.success('Offer accepted!');
-      // Automatically send chat context
-      try {
-        const { sendOfferChatContext } = await import('@/services/api/offers');
-        const contextRes = await sendOfferChatContext(id);
-        if (contextRes.no_conversation) {
-          sessionStorage.setItem('pendingOfferContext', id);
-        }
-      } catch (e) {
-        console.error('Failed to send chat context automatically:', e);
-      }
     },
     // Always re-sync from server after mutation settles (success or error)
     onSettled: () => queryClient.invalidateQueries({ queryKey: JOB_OFFERS_QUERY_KEY }),

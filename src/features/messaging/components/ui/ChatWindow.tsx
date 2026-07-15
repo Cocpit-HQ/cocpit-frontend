@@ -46,7 +46,7 @@ interface ChatWindowProps {
   isMobile: boolean
   onBack?: () => void
   onAcceptSuccess?: () => void
-  initialEntityContext?: { type: 'job' | 'offer', id: string }
+  initialEntityContext?: { type: 'job' | 'offer' | 'event', id: string }
 }
 
 const getAvatarGradient = (avatar: string) => {
@@ -158,7 +158,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   const sharedProfileIdParam = searchParams?.get("sharedProfileId");
 
   const [pendingSharedPostId, setPendingSharedPostId] = useState<string | null>(null);
-  const [pendingEntityContext, setPendingEntityContext] = useState<{ type: 'job' | 'offer', id: string } | null>(null);
+  const [pendingEntityContext, setPendingEntityContext] = useState<{ type: 'job' | 'offer' | 'event', id: string } | null>(null);
   const [pendingSharedPost, setPendingSharedPost] = useState<any | null>(null);
   const [pendingSharedProfileId, setPendingSharedProfileId] = useState<string | null>(null);
   const [pendingSharedProfile, setPendingSharedProfile] = useState<any | null>(null);
@@ -331,10 +331,11 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   }, [data]);
 
   useEffect(() => {
-    if (!initialEntityContext || processedEntityContextRef.current === initialEntityContext.id) return;
+    const contextKey = `${chat.id}:${initialEntityContext?.id}`;
+    if (!initialEntityContext || processedEntityContextRef.current === contextKey) return;
 
     // Mark as processed immediately to prevent duplicate calls from dependency re-evaluations
-    processedEntityContextRef.current = initialEntityContext.id;
+    processedEntityContextRef.current = contextKey;
 
     const checkContext = async () => {
       // New conversation — show card right away, no API check needed
@@ -358,6 +359,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
       let changed = false;
       if (newParams.has("jobContext")) { newParams.delete("jobContext"); changed = true; }
       if (newParams.has("offerContext")) { newParams.delete("offerContext"); changed = true; }
+      if (newParams.has("eventContext")) { newParams.delete("eventContext"); changed = true; }
       if (changed) {
         const newSearch = newParams.toString();
         window.history.replaceState(null, "", window.location.pathname + (newSearch ? `?${newSearch}` : ""));
@@ -800,10 +802,11 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
     setPendingEntityContext(null);
     
     // Clear URL parameters for entity contexts if present
-    if (searchParams?.get("jobContext") || searchParams?.get("offerContext")) {
+    if (searchParams?.get("jobContext") || searchParams?.get("offerContext") || searchParams?.get("eventContext")) {
       const newParams = new URLSearchParams(searchParams.toString());
       newParams.delete("jobContext");
       newParams.delete("offerContext");
+      newParams.delete("eventContext");
       router.replace(`/messaging?${newParams.toString()}`);
     }
   }, [chat.otherUserId, chat.isGroup, chat.id, isBlockedByMe, isBlockedByOther, socket, sendMessageMutation, replyingTo, pendingSharedPostId, pendingSharedProfileId, pendingEntityContext, searchParams, router]);

@@ -767,9 +767,8 @@ export const ApplicantsDashboard: React.FC<ApplicantsDashboardProps> = ({
                     </span>
                   </button>
 
-                  {/* Chat button */}
                   <button
-                    onClick={() => router.push(`/messaging?userId=${candidateDetail.applicantId}`)}
+                    onClick={() => router.push(`/messaging?userId=${candidateDetail.applicantId}&jobContext=${listing.id}`)}
                     type="button"
                     className={`box-border flex flex-row justify-center items-center py-[8px] px-[16px] gap-[10px] w-auto min-w-[100px] h-[40px] border rounded-[24px] flex-none order-1 grow-0 hover:bg-slate-50 transition-all active:scale-95 ${
                       isCompanyMode ? 'border-[#1A73E8]' : 'border-[#818CF8]'
