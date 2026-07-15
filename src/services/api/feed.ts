@@ -248,10 +248,13 @@ export const mapEngineResponseToFeedResponse = (data: EngineFeedResponse): FeedR
   };
 };
 
-export const getFeed = async (cursor?: string, companyId?: string): Promise<FeedResponse> => {
+export const getFeed = async (cursor?: string, companyId?: string, algorithm?: boolean): Promise<FeedResponse> => {
   const params = new URLSearchParams();
   if (cursor && typeof cursor === 'string') {
     params.append("cursor", cursor);
+  }
+  if (algorithm !== undefined) {
+    params.append("algorithm", String(algorithm));
   }
   void companyId; // Feed context might not use this in the same way, but keeping it for now
 
