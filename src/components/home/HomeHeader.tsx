@@ -87,10 +87,16 @@ export const HomeHeader = () => {
     const lastScrollY = useRef(0);
     const isFeedPage = pathname === '/feed' || pathname === '/';
     const isJobsPage = pathname === '/jobs' || pathname.startsWith('/jobs');
+    const isChannelPage = pathname === '/channels' || pathname.startsWith('/channels/');
+    const isChannelSearchPage = pathname === '/channels/search';
+    const isChannelDetailPage = isChannelPage && !isChannelSearchPage && pathname !== '/channels';
 
     // Job search state
     const [jobTitleQuery, setJobTitleQuery] = useState('');
     const [jobLocationQuery, setJobLocationQuery] = useState('');
+
+    // Channel search state
+    const [channelSearchQuery, setChannelSearchQuery] = useState('');
 
     // Read URL params on the jobs page to pre-fill the inputs
     const urlSearchParams = useSearchParams();
@@ -276,8 +282,57 @@ export const HomeHeader = () => {
                 } md:translate-y-0`}
         >
             <div className="mx-auto flex min-h-12 min-w-0 max-w-[1128px] items-center px-0 md:min-h-[72px] md:px-4 xl:px-0">
-                {/* --- Desktop Header (Visible from md screens up) --- */}
-                <div className="hidden flex-1 min-w-0 md:flex items-center justify-between md:mx-auto max-w-[998px] h-full gap-4">
+                {isChannelPage ? (
+                    <div className="w-full max-w-[998px] mx-auto flex items-center justify-between h-full px-4 xl:px-0">
+                        <div className="flex items-center gap-4">
+                            <button 
+                                onClick={() => router.back()}
+                                className="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-800 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors shrink-0"
+                            >
+                                <Icon icon="lucide:arrow-left" className="w-5 h-5 text-black dark:text-white" />
+                            </button>
+                            <div className="flex flex-col">
+                                <h1 className="text-black dark:text-white text-[20px] font-semibold font-['Poppins'] leading-tight">
+                                    {isChannelSearchPage ? 'Search channel' : 'Channel'}
+                                </h1>
+                                <p className="text-gray-500 dark:text-gray-400 text-xs font-['Poppins'] hidden sm:block">
+                                    {isChannelSearchPage ? 'Find the channel you want' : 
+                                     isChannelDetailPage ? 'Explore articles, insights, and updates shared by the channel' : 
+                                     'Explore channels that match your interests'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {!isChannelDetailPage && (
+                            <div className="relative w-[200px] sm:w-[300px]">
+                                <input 
+                                    type="text" 
+                                    placeholder="Search channel"
+                                    value={channelSearchQuery}
+                                    onChange={(e) => setChannelSearchQuery(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && channelSearchQuery.trim()) {
+                                            router.push(`/channels/search?q=${encodeURIComponent(channelSearchQuery.trim())}`);
+                                        }
+                                    }}
+                                    className="w-full pl-4 pr-10 py-2.5 rounded-full border border-gray-200 dark:border-gray-800 bg-transparent text-sm text-black dark:text-white focus:outline-none focus:border-gray-300 dark:focus:border-gray-700 font-['Poppins']"
+                                />
+                                <Icon 
+                                    icon="lucide:search" 
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" 
+                                    onClick={() => {
+                                        if (channelSearchQuery.trim()) {
+                                            router.push(`/channels/search?q=${encodeURIComponent(channelSearchQuery.trim())}`);
+                                        }
+                                    }}
+                                />
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <>
+                        {/* --- Desktop Header (Visible from md screens up) --- */}
+                        <div className="hidden flex-1 min-w-0 md:flex items-center justify-between md:mx-auto max-w-[998px] h-full gap-4">
                     {/* Header Left Section — route-aware search */}
                     {isJobsPage ? (
                         /* === JOB SEARCH UI === */
@@ -991,6 +1046,8 @@ export const HomeHeader = () => {
                         </div>
                     )}
                 </div>
+                </>
+                )}
             </div>
         </header>
     );

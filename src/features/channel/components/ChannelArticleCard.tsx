@@ -35,6 +35,8 @@ const formatDate = (iso?: string) => {
 export default function ChannelArticleCard({ article, onClick, onEdit, onDelete }: ChannelArticleCardProps) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
+  const showOwnerActions = !!onEdit || !!onDelete;
+
   return (
     <>
       <div
@@ -47,52 +49,53 @@ export default function ChannelArticleCard({ article, onClick, onEdit, onDelete 
           )}
         </div>
 
-        <div className="flex-1 min-w-0 flex flex-col gap-1.5 justify-center py-2">
-          <div className="flex items-center gap-2">
+        <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center py-2">
+          <div className="flex items-center gap-2 mb-0.5">
             {article.status === 'draft' && (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold font-['Poppins'] uppercase bg-slate-100 dark:bg-[#2A2D35] text-slate-500 dark:text-[#A1A8B3]">
                 Draft
               </span>
             )}
-            <span className="text-[#9CA3AF] text-[12px] font-medium font-['Poppins']">
+            <span className="text-gray-400 dark:text-[#A1A8B3] text-[10px] font-['Poppins']">
               {formatDate(article.publishedAt || article.updatedAt)}
             </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-[#F3F4F6] dark:bg-[#2A2D35] text-[#6B7280] dark:text-[#A1A8B3] text-[10px] font-medium font-['Poppins']">
-              Edited {timeAgo(article.updatedAt)}
-            </span>
           </div>
-          <h4 className="text-black dark:text-[#FFFFFF] text-[16px] font-semibold font-['Poppins'] truncate">
+          <h4 className="text-black dark:text-[#FFFFFF] text-[14px] font-bold font-['Poppins'] truncate">
             {article.title}
           </h4>
-          <p className="text-[#6B7280] dark:text-[#A1A8B3] text-[13px] font-medium font-['Poppins'] truncate">
+          <p className="text-gray-400 dark:text-[#6B7280] text-[12px] font-['Poppins'] truncate">
             {article.excerpt}
           </p>
         </div>
 
         <div
-          className="flex items-center gap-4 flex-shrink-0 ml-4"
+          className="flex items-center gap-4 flex-shrink-0 ml-4 h-full"
           onClick={(e) => e.stopPropagation()}
         >
-          <button
-            onClick={onEdit}
-            className="text-gray-600 dark:text-[#A1A8B3] hover:text-[#1A73E8] transition-colors"
-            title="Edit"
-          >
-            <Icon icon="fluent:edit-24-regular" className="w-5 h-5" />
-          </button>
-          <button
-            onClick={onDelete}
-            className="text-gray-600 dark:text-[#A1A8B3] hover:text-red-500 transition-colors"
-            title="Delete"
-          >
-            <Icon icon="fluent:delete-24-regular" className="w-5 h-5" />
-          </button>
+          {showOwnerActions && (
+            <>
+              <button
+                onClick={onEdit}
+                className="text-gray-600 dark:text-[#A1A8B3] hover:text-[#1A73E8] transition-colors"
+                title="Edit"
+              >
+                <Icon icon="fluent:edit-24-regular" className="w-5 h-5" />
+              </button>
+              <button
+                onClick={onDelete}
+                className="text-gray-600 dark:text-[#A1A8B3] hover:text-red-500 transition-colors"
+                title="Delete"
+              >
+                <Icon icon="fluent:delete-24-regular" className="w-5 h-5" />
+              </button>
+            </>
+          )}
           <button
             onClick={() => setIsShareModalOpen(true)}
-            className="text-gray-600 dark:text-[#A1A8B3] hover:text-[#1A73E8] transition-colors"
+            className="text-black dark:text-[#FFFFFF] hover:text-[#1A73E8] transition-colors self-center"
             title="Share"
           >
-            <Icon icon="fluent:share-28-regular" className="w-5 h-5" />
+            <Icon icon="lucide:share" className="w-[18px] h-[18px]" />
           </button>
         </div>
       </div>

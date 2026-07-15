@@ -83,6 +83,7 @@ export function DarkSidebar({ className }: DarkSidebarProps) {
         title: 'Core',
         items: [
           { icon: IconoirHome, label: 'Feed', href: '/feed', show: true },
+          { icon: (props: any) => <Icon icon="quill:inbox-newsletter" {...props} />, label: 'Channel', href: '/channels', show: true },
           { icon: Users, label: 'Connection', href: '/connections', show: true },
           { icon: Compass, label: 'Explore', href: '/explore', show: false },
           { icon: Sparkles, label: 'AI', href: '/ai-assistant', show: false },
