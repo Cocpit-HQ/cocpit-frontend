@@ -902,6 +902,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ searchParams, isCompanyMode:
             ) : (
               <JobList
                 jobs={jobs}
+                isSavedTab={true}
                 isLoading={isLoading}
                 isFetchingMore={isFetchingMore}
                 hasMore={hasMore}

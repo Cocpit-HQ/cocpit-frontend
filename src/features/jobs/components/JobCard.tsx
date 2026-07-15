@@ -15,9 +15,10 @@ interface JobCardProps {
   onClick?: (job: Job) => void;
   onAccept?: (offerId: string, e: React.MouseEvent) => void;
   onDecline?: (offerId: string, e: React.MouseEvent) => void;
+  isSavedTab?: boolean;
 }
 
-export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onApply, onWithdraw, onClick, onAccept, onDecline }) => {
+export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onApply, onWithdraw, onClick, onAccept, onDecline, isSavedTab }) => {
   const router = useRouter();
   const badgeText = job.recommended_badge || 'Top 15%';
   const percentMatch = badgeText.match(/\d+/);
@@ -74,25 +75,47 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
           </div>
         </div>
         <div onClick={(e) => e.stopPropagation()}>
-          <Tooltip delayDuration={100}>
-            <TooltipTrigger asChild>
-              <div className="px-2 py-1 bg-indigo-500/10 dark:bg-[#818CF8]/10 rounded-full inline-flex flex-col justify-start items-start">
-                <div className="justify-center text-indigo-500 dark:text-[#818CF8] text-[10px] font-medium font-['Poppins']">
-                  {badgeText}
-                </div>
+          {isSavedTab ? (
+            job.is_offer ? (
+              <div className="px-3 py-1 bg-[#EEF2FF] dark:bg-indigo-950/30 border border-[#6366F1] dark:border-indigo-800 rounded-full inline-flex flex-col justify-start items-start">
+                <span className="justify-center text-[#6366F1] dark:text-[#818CF8] text-[10px] font-semibold font-['Poppins']">
+                  Offer
+                </span>
               </div>
-            </TooltipTrigger>
-            <TooltipContent
-              side="top"
-              align="end"
-              sideOffset={8}
-              className="w-[289px] py-3 px-4 bg-[#EEF2FF] dark:bg-[#1C2340] rounded-[24px] border-none shadow-[0px_4px_16px_rgba(99,102,241,0.08)] text-black dark:text-[#F9FAFB] z-[9999]"
-            >
-              <span className="w-[257px] flex items-center text-black dark:text-[#F9FAFB] text-[12px] font-normal font-['Poppins'] leading-[16px] flex-grow">
-                You&apos;re stronger than {strongerThanPercent}% of applicants for this job based on your profile and skills
-              </span>
-            </TooltipContent>
-          </Tooltip>
+            ) : job.is_closed ? (
+              <div className="px-3 py-1 bg-[#FEF3C7] dark:bg-amber-950/30 border border-[#FBBF24] dark:border-amber-800 rounded-full inline-flex flex-col justify-start items-start">
+                <span className="justify-center text-[#D97706] dark:text-amber-400 text-[10px] font-semibold font-['Poppins']">
+                  Closed
+                </span>
+              </div>
+            ) : (
+              <div className="px-3 py-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-full inline-flex flex-col justify-start items-start">
+                <span className="justify-center text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold font-['Poppins']">
+                  Active
+                </span>
+              </div>
+            )
+          ) : (
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <div className="px-2 py-1 bg-indigo-500/10 dark:bg-[#818CF8]/10 rounded-full inline-flex flex-col justify-start items-start">
+                  <div className="justify-center text-indigo-500 dark:text-[#818CF8] text-[10px] font-medium font-['Poppins']">
+                    {badgeText}
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                align="end"
+                sideOffset={8}
+                className="w-[289px] py-3 px-4 bg-[#EEF2FF] dark:bg-[#1C2340] rounded-[24px] border-none shadow-[0px_4px_16px_rgba(99,102,241,0.08)] text-black dark:text-[#F9FAFB] z-[9999]"
+              >
+                <span className="w-[257px] flex items-center text-black dark:text-[#F9FAFB] text-[12px] font-normal font-['Poppins'] leading-[16px] flex-grow">
+                  You&apos;re stronger than {strongerThanPercent}% of applicants for this job based on your profile and skills
+                </span>
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </div>
 
@@ -217,6 +240,13 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
                 >
                   Chat
                 </button>
+              ) : (isSavedTab && job.is_closed) ? (
+                /* Closed Job in Saved Tab -> show NO action buttons/text next to bookmark */
+                null
+              ) : job.is_closed ? (
+                <span className="text-[#EF4444] dark:text-[#F87171] text-[14px] font-normal font-['Poppins'] leading-[20px] pr-2 font-medium">
+                  Job No Longer Available
+                </span>
               ) : job.is_applied ? (
                 <button
                   onClick={(e) => {

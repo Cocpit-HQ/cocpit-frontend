@@ -43,6 +43,8 @@ export function useNavigationTracker() {
         sessionStorage.removeItem(`jobs_scroll_container_${tab}`);
       });
       sessionStorage.removeItem('coming_from_job_detail');
+      sessionStorage.removeItem('nav_memory_jobs');
+      sessionStorage.removeItem('nav_memory_jobs_base');
       useJobStore.getState().setActiveCandidateTab('Explore');
     }
   }, [pathname, searchParams]);

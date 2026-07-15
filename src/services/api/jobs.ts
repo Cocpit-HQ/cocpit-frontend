@@ -41,6 +41,7 @@ function transformJob(backendJob: any): Job {
         companyId: backendJob.org_id || backendJob.company_id,
         isOffer: backendJob.is_offer,
         isSaved: backendJob.isSaved,
+        is_closed: backendJob.status === 'CLOSED' || !backendJob.is_active,
         createdAt: backendJob.latest_offer_at || backendJob.created_at,
         savedAt: backendJob.saved_at,
         appliedAt: backendJob.applied_at || backendJob.appliedAt, // Handle inconsistent naming if any

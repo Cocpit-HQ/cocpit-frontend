@@ -17,6 +17,7 @@ interface JobListProps {
   onSelect?: (job: Job) => void;
   onAccept?: (offerId: string, e: React.MouseEvent) => void;
   onDecline?: (offerId: string, e: React.MouseEvent) => void;
+  isSavedTab?: boolean;
 }
 
 export const JobList: React.FC<JobListProps> = React.memo(({
@@ -30,7 +31,8 @@ export const JobList: React.FC<JobListProps> = React.memo(({
   onWithdraw,
   onSelect,
   onAccept,
-  onDecline
+  onDecline,
+  isSavedTab
 }) => {
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0,
@@ -76,6 +78,7 @@ export const JobList: React.FC<JobListProps> = React.memo(({
         <JobCard
           key={job.id}
           job={job}
+          isSavedTab={isSavedTab}
           onSave={onSave}
           onApply={onApply}
           onWithdraw={onWithdraw}

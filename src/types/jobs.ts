@@ -38,6 +38,7 @@ export interface Job {
   applicationStatus?: string;
   applicationId?: string;
   applicationScreening?: Screening;
+  is_closed?: boolean;
 
 
   // New fields

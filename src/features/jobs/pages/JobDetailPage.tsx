@@ -597,23 +597,21 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                 >
                   <span className="w-auto h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-white">Chat</span>
                 </button>
+              ) : job.is_closed ? (
+                /* Closed Job State -> display Follow / Unfollow button */
+                <button
+                  onClick={toggleFollow}
+                  className="w-full sm:w-40 h-10 px-4 py-2 rounded-[100px] bg-[#6366F1] hover:bg-[#6366F1]/90 text-white flex justify-center items-center transition-all active:scale-95 shadow-md text-sm font-normal font-['Poppins'] leading-5"
+                >
+                  {job.is_followed ? 'Unfollow' : 'Follow'}
+                </button>
               ) : job.is_applied ? (
-                /* Applied State -> Withdraw (even if closed) */
+                /* Applied State -> Withdraw */
                 <button
                   onClick={() => setShowWithdrawConfirm(true)}
                   className="w-full sm:w-40 h-10 px-4 py-2 rounded-[100px] border border-[#6B7280] text-[#6B7280] bg-white hover:bg-slate-50 flex justify-center items-center transition-all active:scale-95 text-sm font-normal font-['Poppins'] leading-5"
                 >
                   Withdraw
-                </button>
-              ) : job.is_closed ? (
-                /* Closed and NOT Applied -> Follow / Unfollow */
-                <button
-                  onClick={toggleFollow}
-                  className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[160px] h-10 bg-[#6366F1] border border-white rounded-[24px] transition-all active:scale-95 cursor-pointer"
-                >
-                  <span className="w-fit h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-white">
-                    {job.is_followed ? 'Unfollow' : 'Follow'}
-                  </span>
                 </button>
               ) : (
                 /* Normal Active Job State -> Apply */
