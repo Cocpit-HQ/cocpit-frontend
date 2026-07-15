@@ -141,41 +141,65 @@ const MessageMenu = ({ message, onAction, currentUserId }: { message: Message, o
   )
 }
 
+const safeGetJobById = async (id: string): Promise<Job | { notFound: boolean; message: string }> => {
+  try {
+    const job = await getJobById(id);
+    return job;
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Job not found';
+    return { notFound: true, message: msg };
+  }
+};
+
 function JobApplicationContextCard({ entityType, entityId, conversationId }: { entityType: 'job' | 'offer', entityId: string, conversationId?: string }) {
   const router = useRouter()
-  const { data: job, isLoading: loading } = useQuery({
+  const { data: job, isLoading: loading, error } = useQuery({
     queryKey: ['jobContext', entityType, entityId],
     queryFn: async () => {
       if (entityType === 'job') {
-        return getJobById(entityId);
+        return safeGetJobById(entityId);
       } else if (entityType === 'offer') {
         const { getOfferDetail } = await import('@/services/api/offers');
         const data = await getOfferDetail(entityId);
         if (data && data.job_id) {
-          return getJobById(data.job_id);
+          return safeGetJobById(data.job_id);
         }
       }
       return null;
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    retry: 1,
+    retry: false,
   });
+
+  const wrapperClass = "mb-[8px] rounded-[32px] p-[8px] pr-[16px] w-[260px] h-[66px] min-h-[66px] flex items-center justify-start border box-border shadow-sm overflow-hidden";
 
   if (loading) {
     return (
-      <div className="mt-1 mb-2 bg-[#EEF2FF] dark:bg-indigo-950/30 rounded-[12px] p-3 w-full animate-pulse border border-indigo-100 dark:border-indigo-900/50">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-indigo-200/50 dark:bg-indigo-900/50 shrink-0" />
-          <div className="flex flex-col gap-2 flex-1">
-            <div className="h-3 bg-indigo-200/50 dark:bg-indigo-900/50 rounded w-3/4" />
-            <div className="h-2 bg-indigo-200/50 dark:bg-indigo-900/50 rounded w-1/2" />
+      <div className={cn(wrapperClass, "bg-[#EEF2FF] dark:bg-indigo-950/30 border-indigo-100 dark:border-indigo-900/50 animate-pulse")}>
+        <div className="flex flex-row items-center gap-[12px] w-full">
+          <div className="w-[48px] h-[48px] rounded-full bg-indigo-200/50 dark:bg-indigo-900/50 shrink-0" />
+          <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+            <div className="h-3.5 bg-indigo-200/50 dark:bg-indigo-900/50 rounded w-3/4" />
+            <div className="h-3 bg-indigo-200/50 dark:bg-indigo-900/50 rounded w-1/2" />
           </div>
         </div>
       </div>
     );
   }
 
-  if (!job) return null;
+  const isNotFound = job && typeof job === 'object' && 'notFound' in job;
+
+  if (error || !job || isNotFound) {
+    const errMsg = isNotFound ? (job as any).message : ((error as any)?.response?.data?.message || (error as any)?.message || 'Job not found');
+    return (
+      <div className={cn(wrapperClass, "bg-[#EEF2FF] dark:bg-indigo-950/30 border-indigo-100 dark:border-indigo-900/50 gap-[10px]")}>
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-[20px] h-[20px] text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z" />
+        </svg>
+        <p className="text-xs text-indigo-500 dark:text-indigo-400 font-['Poppins'] font-normal italic truncate">{errMsg}</p>
+      </div>
+    );
+  }
 
   const jobId = (job as any).jobId || job.id;
 
@@ -189,10 +213,10 @@ function JobApplicationContextCard({ entityType, entityId, conversationId }: { e
 
   return (
     <div
-      className="mb-[8px] bg-white dark:bg-gray-800 rounded-[32px] p-[8px] pr-[16px] w-[260px] cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+      className={cn(wrapperClass, "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors")}
       onClick={handleClick}
     >
-      <div className="flex flex-row items-center gap-[12px]">
+      <div className="flex flex-row items-center gap-[12px] w-full min-w-0">
         {/* Job poster's avatar: the org's logo if this job was posted by a
             company, or the individual recruiter's own picture if it's a
             personal posting — always the job's poster, regardless of which
@@ -207,11 +231,11 @@ function JobApplicationContextCard({ entityType, entityId, conversationId }: { e
         </div>
 
         {/* Job Details */}
-        <div className="flex flex-col overflow-hidden text-left flex-1 justify-center">
-          <span className="font-['Poppins'] font-medium text-[15px] leading-[20px] text-gray-900 dark:text-gray-100 truncate block">
+        <div className="flex flex-col overflow-hidden text-left flex-1 justify-center min-w-0">
+          <span className="font-['Poppins'] font-medium text-[15px] leading-[18px] text-gray-900 dark:text-gray-100 truncate block">
             {job.title} @ {job.company}
           </span>
-          <span className="font-['Poppins'] font-normal text-[13px] leading-[18px] text-[#6B7280] dark:text-gray-400 truncate mt-[2px] block">
+          <span className="font-['Poppins'] font-normal text-[13px] leading-[16px] text-[#6B7280] dark:text-gray-400 truncate mt-[2px] block">
             {job.workMode || (job as any).work_mode || 'Hybrid'} • {job.location || 'Remote'}
           </span>
         </div>
@@ -219,6 +243,7 @@ function JobApplicationContextCard({ entityType, entityId, conversationId }: { e
     </div>
   );
 }
+
 
 const SharedPostCard = ({ message, onMediaLoad }: { message: Message, onMediaLoad?: () => void }) => {
   const router = useRouter()
@@ -638,51 +663,84 @@ const JobCard = ({ job, onClick }: { job: Job, onClick: (e: React.MouseEvent) =>
 };
 
 const JobPreview = ({ jobId }: { jobId: string }) => {
-  const [job, setJob] = useState<Job | null>(null);
-  const [error, setError] = useState(false);
+  const [job, setJob] = useState<Job | { notFound: boolean; message: string } | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     let mounted = true;
-    getJobById(jobId)
+    safeGetJobById(jobId)
       .then(data => {
-        if (mounted) setJob(data);
-      })
-      .catch(err => {
-        console.error("Failed to load job", err);
-        if (mounted) setError(true);
+        if (mounted) {
+          setJob(data);
+          setLoading(false);
+        }
       });
     return () => { mounted = false; };
   }, [jobId]);
 
-  if (error) {
+  const wrapperClass = "mb-[8px] rounded-[32px] p-[8px] pr-[16px] w-[260px] h-[66px] min-h-[66px] flex items-center justify-start border box-border shadow-sm overflow-hidden";
+
+  if (loading) {
     return (
-      <a
-        href={`/jobs/${jobId}`}
-        className="text-blue-500 underline font-medium break-all hover:text-blue-600"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          router.push(`/jobs/${jobId}`);
-        }}
-      >
-        View Job
-      </a>
+      <div className={cn(wrapperClass, "bg-[#EEF2FF] dark:bg-indigo-950/30 border-indigo-100 dark:border-indigo-900/50 animate-pulse")}>
+        <div className="flex flex-row items-center gap-[12px] w-full">
+          <div className="w-[48px] h-[48px] rounded-full bg-indigo-200/50 dark:bg-indigo-900/50 shrink-0" />
+          <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+            <div className="h-3.5 bg-indigo-200/50 dark:bg-indigo-900/50 rounded w-3/4" />
+            <div className="h-3 bg-indigo-200/50 dark:bg-indigo-900/50 rounded w-1/2" />
+          </div>
+        </div>
+      </div>
     );
   }
 
-  if (!job) return <JobCardSkeleton />;
+  const isNotFound = job && typeof job === 'object' && 'notFound' in job;
+
+  if (!job || isNotFound) {
+    const errMsg = isNotFound ? (job as any).message : 'Job not found';
+    return (
+      <div className={cn(wrapperClass, "bg-[#EEF2FF] dark:bg-indigo-950/30 border-indigo-100 dark:border-indigo-900/50 gap-[10px]")}>
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-[20px] h-[20px] text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z" />
+        </svg>
+        <p className="text-xs text-indigo-500 dark:text-indigo-400 font-['Poppins'] font-normal italic truncate">{errMsg}</p>
+      </div>
+    );
+  }
 
   return (
-    <JobCard
-      job={job}
+    <div
+      className={cn(wrapperClass, "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors")}
       onClick={(e) => {
         e.stopPropagation();
         router.push(`/jobs/${jobId}`);
       }}
-    />
+    >
+      <div className="flex flex-row items-center gap-[12px] w-full min-w-0">
+        {/* Job poster's avatar */}
+        <div className="w-[48px] h-[48px] rounded-full bg-black dark:bg-gray-900 border border-gray-100 dark:border-gray-700 flex items-center justify-center overflow-hidden shrink-0">
+          {job.companyLogo || (job as any).recruiterAvatar ? (
+            <img src={job.companyLogo || (job as any).recruiterAvatar} alt={job.company} className="w-full h-full object-cover" />
+          ) : (
+            <span className="font-semibold text-white">{job.company?.[0]?.toUpperCase() || "C"}</span>
+          )}
+        </div>
+
+        {/* Job Details */}
+        <div className="flex flex-col overflow-hidden text-left flex-1 justify-center min-w-0">
+          <span className="font-['Poppins'] font-medium text-[15px] leading-[18px] text-gray-900 dark:text-gray-100 truncate block">
+            {job.title} @ {job.company}
+          </span>
+          <span className="font-['Poppins'] font-normal text-[13px] leading-[16px] text-[#6B7280] dark:text-gray-400 truncate mt-[2px] block">
+            {job.workMode || (job as any).work_mode || 'Hybrid'} • {job.location || 'Remote'}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 };
+
 
 const MessageText = ({
   message,
@@ -843,7 +901,7 @@ const MessageEditor = ({
 }
 
 const JobOfferContextMessage = ({ jobId }: { jobId: string }) => {
-  const [job, setJob] = useState<Job | null>(null);
+  const [job, setJob] = useState<Job | { notFound: boolean; message: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -853,16 +911,12 @@ const JobOfferContextMessage = ({ jobId }: { jobId: string }) => {
       return;
     }
     let mounted = true;
-    getJobById(jobId)
+    safeGetJobById(jobId)
       .then(data => {
         if (mounted) {
           setJob(data);
           setLoading(false);
         }
-      })
-      .catch(err => {
-        console.error("Failed to load job for offer context", err);
-        if (mounted) setLoading(false);
       });
     return () => { mounted = false; };
   }, [jobId]);
@@ -892,7 +946,20 @@ const JobOfferContextMessage = ({ jobId }: { jobId: string }) => {
     );
   }
 
-  if (!job) return null;
+  const isNotFound = job && typeof job === 'object' && 'notFound' in job;
+
+  if (!job || isNotFound) {
+    const errMsg = isNotFound ? (job as any).message : 'Job not found';
+    return (
+      <div className="w-full max-w-[740px] min-h-[116px] border border-[#EEF2FF] dark:border-zinc-800 rounded-[24px] p-[16px] bg-white dark:bg-zinc-950 flex items-center gap-3 mr-auto my-3">
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z" />
+        </svg>
+        <p className="font-['Poppins'] font-normal text-[14px] text-[#6B7280] italic">{errMsg}</p>
+      </div>
+    );
+  }
+
 
   return (
     <div 
@@ -1124,13 +1191,13 @@ function MessageBubble(props: MessageBubbleProps) {
   // Display user's reaction if exists, else the last reaction in the list
   const displayReaction = myReaction || validReactions[validReactions.length - 1]
 
-  if (message.messageType === 'offer_context') {
-    return (
-      <div className="w-full py-2 flex justify-start">
-        <JobOfferContextMessage jobId={message.entityId || ''} />
-      </div>
-    );
-  }
+  // if (message.messageType === 'offer_context') {
+  //   return (
+  //     <div className="w-full py-2 flex justify-start">
+  //       <JobOfferContextMessage jobId={message.entityId || ''} />
+  //     </div>
+  //   );
+  // }
 
   return (
     <>

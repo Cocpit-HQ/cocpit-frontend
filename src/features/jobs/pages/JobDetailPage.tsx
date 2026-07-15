@@ -525,7 +525,7 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                       } else if (job.recruiter_id) {
                         params.set('userId', job.recruiter_id);
                       }
-                      if (job.offer_id && !job.context_sent) {
+                      if (job.offer_id) {
                         params.set('offerContext', job.offer_id);
                       }
                       router.push(`/messaging?${params.toString()}`);
@@ -579,6 +579,24 @@ export const JobDetailPage: React.FC<JobDetailPageProps> = ({ jobId }) => {
                     Application Rejected
                   </span>
                 </div>
+              ) : job.application_status?.toLowerCase() === 'shortlisted' ? (
+                /* Shortlisted -> Chat */
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const params = new URLSearchParams();
+                    if (job.org_id) {
+                      params.set('companyId', job.org_id);
+                    } else if (job.recruiter_id) {
+                      params.set('userId', job.recruiter_id);
+                    }
+                    params.set('jobContext', job.id);
+                    router.push(`/messaging?${params.toString()}`);
+                  }}
+                  className="box-border flex flex-row justify-center items-center px-4 py-2 gap-[10px] w-full sm:w-[140px] h-10 bg-[#6366F1] border border-white rounded-[24px] transition-all active:scale-95 cursor-pointer"
+                >
+                  <span className="w-auto h-5 font-['Poppins'] font-normal text-sm leading-[20px] text-center text-white">Chat</span>
+                </button>
               ) : job.is_applied ? (
                 /* Applied State -> Withdraw (even if closed) */
                 <button

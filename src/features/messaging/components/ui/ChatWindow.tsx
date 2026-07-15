@@ -158,7 +158,7 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   const sharedProfileIdParam = searchParams?.get("sharedProfileId");
 
   const [pendingSharedPostId, setPendingSharedPostId] = useState<string | null>(null);
-  const [pendingEntityContext, setPendingEntityContext] = useState<{ type: 'job' | 'offer', id: string } | null>(initialEntityContext || null);
+  const [pendingEntityContext, setPendingEntityContext] = useState<{ type: 'job' | 'offer', id: string } | null>(null);
   const [pendingSharedPost, setPendingSharedPost] = useState<any | null>(null);
   const [pendingSharedProfileId, setPendingSharedProfileId] = useState<string | null>(null);
   const [pendingSharedProfile, setPendingSharedProfile] = useState<any | null>(null);
@@ -331,44 +331,42 @@ export default function ChatWindow({ chat: initialChat, isMobile, onBack, onAcce
   }, [data]);
 
   useEffect(() => {
-    if (initialEntityContext && processedEntityContextRef.current !== initialEntityContext.id) {
-      // If we are currently loading the initial messages for an existing chat, wait
-      if (isLoading) return; 
+    if (!initialEntityContext || processedEntityContextRef.current === initialEntityContext.id) return;
 
-      let isContextAlreadySent = false;
-      if (data?.pages) {
-        isContextAlreadySent = data.pages.some(page => 
-          page.some(m => m.entityId === initialEntityContext.id && m.entityType === initialEntityContext.type)
-        );
-      }
+    // Mark as processed immediately to prevent duplicate calls from dependency re-evaluations
+    processedEntityContextRef.current = initialEntityContext.id;
 
-      if (!isContextAlreadySent) {
+    const checkContext = async () => {
+      // New conversation — show card right away, no API check needed
+      if (chat.id === 'new') {
         setPendingEntityContext(initialEntityContext);
-      } else {
-        setPendingEntityContext(null);
+        return;
       }
-      
-      processedEntityContextRef.current = initialEntityContext.id;
+
+      try {
+        const { checkContextSent } = await import('@/services/api/messaging');
+        const res = await checkContextSent(chat.id, initialEntityContext.id, initialEntityContext.type);
+        setPendingEntityContext(res && !res.sent ? initialEntityContext : null);
+      } catch (e) {
+        console.error("Failed to check if context is sent:", e);
+        // Fallback: show card by default so user isn't stuck
+        setPendingEntityContext(initialEntityContext);
+      }
 
       // Clean up the URL query parameters without a full reload
       const newParams = new URLSearchParams(window.location.search);
       let changed = false;
-      if (newParams.has("jobContext")) {
-        newParams.delete("jobContext");
-        changed = true;
-      }
-      if (newParams.has("offerContext")) {
-        newParams.delete("offerContext");
-        changed = true;
-      }
-      
+      if (newParams.has("jobContext")) { newParams.delete("jobContext"); changed = true; }
+      if (newParams.has("offerContext")) { newParams.delete("offerContext"); changed = true; }
       if (changed) {
         const newSearch = newParams.toString();
-        const newPath = window.location.pathname + (newSearch ? `?${newSearch}` : "");
-        window.history.replaceState(null, "", newPath);
+        window.history.replaceState(null, "", window.location.pathname + (newSearch ? `?${newSearch}` : ""));
       }
-    }
-  }, [initialEntityContext, data, isLoading]);
+    };
+
+    checkContext();
+    // Only re-run if the entity context id or chat changes — NOT on every message page load
+  }, [initialEntityContext?.id, chat.id]);
 
   // Mark as read on mount or when chat.id changes
   useEffect(() => {

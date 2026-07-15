@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, Briefcase, Calendar, User, Building2, FileText, Loader2 } from "lucide-react";
+import { ExternalLink, Briefcase, Calendar, User, Building2, FileText, Loader2, AlertCircle } from "lucide-react";
 import { fetchEntityPreview, EntityPreview, EntityType } from "@/services/api/shareService";
 
 // ─── Props ──────────────────────────────────────────────────
@@ -40,7 +40,7 @@ export function EntityPreviewCard({ entityType, entityId, onLoad }: EntityPrevie
     const router = useRouter();
     const [preview, setPreview] = useState<EntityPreview | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -48,11 +48,18 @@ export function EntityPreviewCard({ entityType, entityId, onLoad }: EntityPrevie
         const loadPreview = async () => {
             try {
                 setLoading(true);
-                setError(false);
+                setErrorMessage(null);
                 const data = await fetchEntityPreview(entityType, entityId);
                 if (!cancelled) setPreview(data);
-            } catch {
-                if (!cancelled) setError(true);
+            } catch (err: any) {
+                if (!cancelled) {
+                    // Extract the message from the API error response if available
+                    const apiMessage =
+                        err?.response?.data?.message ||
+                        err?.message ||
+                        null;
+                    setErrorMessage(apiMessage);
+                }
             } finally {
                 if (!cancelled) setLoading(false);
             }
@@ -93,10 +100,13 @@ export function EntityPreviewCard({ entityType, entityId, onLoad }: EntityPrevie
         );
     }
 
-    if (error || !preview) {
+    if (errorMessage || !preview) {
         return (
-            <div className="mt-1 mb-2 rounded-xl bg-background/60 backdrop-blur-sm border border-white/10 p-3 max-w-[280px]">
-                <p className="text-xs text-muted-foreground italic">Preview unavailable</p>
+            <div className="mt-1 mb-2 rounded-xl bg-background/60 backdrop-blur-sm border border-white/10 p-3 max-w-[280px] flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-muted-foreground shrink-0" />
+                <p className="text-xs text-muted-foreground italic">
+                    {errorMessage ?? "Preview unavailable"}
+                </p>
             </div>
         );
     }

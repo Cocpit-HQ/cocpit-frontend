@@ -159,7 +159,7 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
                     } else if (job.recruiter_id) {
                       params.set('userId', job.recruiter_id);
                     }
-                    if (job.offer_id && !job.context_sent) {
+                    if (job.offer_id) {
                       params.set('offerContext', job.offer_id);
                     }
                     router.push(`/messaging?${params.toString()}`);
@@ -199,8 +199,25 @@ export const JobCard: React.FC<JobCardProps> = React.memo(({ job, onSave, onAppl
             )
           ) : (
             <>
-              {/* Apply / Withdraw Button */}
-              {job.is_applied ? (
+              {/* Apply / Withdraw / Chat Button */}
+              {job.application_status?.toLowerCase() === 'shortlisted' ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const params = new URLSearchParams();
+                    if (job.org_id) {
+                      params.set('companyId', job.org_id);
+                    } else if (job.recruiter_id) {
+                      params.set('userId', job.recruiter_id);
+                    }
+                    params.set('jobContext', job.id);
+                    router.push(`/messaging?${params.toString()}`);
+                  }}
+                  className="box-border flex flex-row justify-center items-center px-4 py-2 w-[120px] h-10 rounded-[100px] bg-[#6366F1] dark:bg-[#818CF8] hover:bg-[#6366F1]/90 dark:hover:bg-[#818CF8]/90 text-white dark:text-[#F9FAFB] transition-all duration-200 active:scale-95 flex-none text-sm font-normal font-['Poppins'] leading-5"
+                >
+                  Chat
+                </button>
+              ) : job.is_applied ? (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

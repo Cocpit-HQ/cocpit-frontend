@@ -170,4 +170,12 @@ export const getShareUsers = async (query?: string, cursor?: string, limit?: num
   return response.data as { success: boolean; data: any[]; nextCursor: string | null; hasMore: boolean };
 };
 
+export const checkContextSent = async (conversationId: string, entityId: string, entityType: string): Promise<{ sent: boolean }> => {
+  const response = await api.get(`/conversations/${conversationId}/check-context`, {
+    params: { entityId, entityType }
+  });
+  return response.data;
+};
+
+
 

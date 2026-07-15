@@ -108,7 +108,7 @@ export const OfferCard: React.FC<OfferCardProps> = ({ offer, onAccept, onDecline
                     params.set('userId', offer.recruiter.id);
                   }
                   
-                  if (offer.offer_id && !offer.context_sent) {
+                  if (offer.offer_id) {
                     params.set('offerContext', offer.offer_id);
                   }
                   router.push(`/messaging?${params.toString()}`);
